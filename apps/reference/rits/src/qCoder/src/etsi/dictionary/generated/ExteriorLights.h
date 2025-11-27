@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_ExteriorLights_H_
-#define	_ExteriorLights_H_
-
+#ifndef _ExteriorLights_H_
+#define _ExteriorLights_H_
 
 #include <asn_application.h>
 
@@ -20,18 +19,18 @@ extern "C" {
 
 /* Dependencies */
 typedef enum ExteriorLights {
-	ExteriorLights_lowBeamHeadlightsOn	= 0,
-	ExteriorLights_highBeamHeadlightsOn	= 1,
-	ExteriorLights_leftTurnSignalOn	= 2,
-	ExteriorLights_rightTurnSignalOn	= 3,
-	ExteriorLights_daytimeRunningLightsOn	= 4,
-	ExteriorLights_reverseLightOn	= 5,
-	ExteriorLights_fogLightOn	= 6,
-	ExteriorLights_parkingLightsOn	= 7
+    ExteriorLights_lowBeamHeadlightsOn    = 0,
+    ExteriorLights_highBeamHeadlightsOn   = 1,
+    ExteriorLights_leftTurnSignalOn       = 2,
+    ExteriorLights_rightTurnSignalOn      = 3,
+    ExteriorLights_daytimeRunningLightsOn = 4,
+    ExteriorLights_reverseLightOn         = 5,
+    ExteriorLights_fogLightOn             = 6,
+    ExteriorLights_parkingLightsOn        = 7
 } e_ExteriorLights;
 
 /* ExteriorLights */
-typedef BIT_STRING_t	 ExteriorLights_t;
+typedef BIT_STRING_t ExteriorLights_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_ExteriorLights;
@@ -49,5 +48,5 @@ per_type_encoder_f ExteriorLights_encode_uper;
 }
 #endif
 
-#endif	/* _ExteriorLights_H_ */
+#endif /* _ExteriorLights_H_ */
 #include <asn_internal.h>

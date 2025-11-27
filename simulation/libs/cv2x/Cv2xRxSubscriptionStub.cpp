@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -15,9 +15,8 @@ namespace cv2x {
 
 atomic<uint32_t> Cv2xRxSubscription::Id{0};
 
-Cv2xRxSubscription::Cv2xRxSubscription(
-    int sock, const struct sockaddr_in6 &sockAddr, TrafficIpType type,
-    const std::shared_ptr<std::vector<uint32_t>> idList)
+Cv2xRxSubscription::Cv2xRxSubscription(int sock, const struct sockaddr_in6 &sockAddr,
+    TrafficIpType type, const std::shared_ptr<std::vector<uint32_t>> idList)
    : id_(Cv2xRxSubscription::Id++)
    , sock_(sock)
    , sockAddr_(sockAddr)

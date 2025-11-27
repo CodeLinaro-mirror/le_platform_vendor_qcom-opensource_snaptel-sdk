@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_DecentralizedEnvironmentalNotificationMessage_H_
-#define	_DecentralizedEnvironmentalNotificationMessage_H_
-
+#ifndef _DecentralizedEnvironmentalNotificationMessage_H_
+#define _DecentralizedEnvironmentalNotificationMessage_H_
 
 #include <asn_application.h>
 
@@ -26,13 +25,13 @@ struct AlacarteContainer;
 
 /* DecentralizedEnvironmentalNotificationMessage */
 typedef struct DecentralizedEnvironmentalNotificationMessage {
-	ManagementContainer_t	 management;
-	struct SituationContainer	*situation	/* OPTIONAL */;
-	struct LocationContainer	*location	/* OPTIONAL */;
-	struct AlacarteContainer	*alacarte	/* OPTIONAL */;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    ManagementContainer_t management;
+    struct SituationContainer *situation /* OPTIONAL */;
+    struct LocationContainer *location /* OPTIONAL */;
+    struct AlacarteContainer *alacarte /* OPTIONAL */;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } DecentralizedEnvironmentalNotificationMessage_t;
 
 /* Implementation */
@@ -47,5 +46,5 @@ extern asn_TYPE_descriptor_t asn_DEF_DecentralizedEnvironmentalNotificationMessa
 #include "LocationContainer.h"
 #include "AlacarteContainer.h"
 
-#endif	/* _DecentralizedEnvironmentalNotificationMessage_H_ */
+#endif /* _DecentralizedEnvironmentalNotificationMessage_H_ */
 #include <asn_internal.h>

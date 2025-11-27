@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <thread>
@@ -20,10 +20,11 @@ using grpc::Status;
 namespace telux {
 namespace data {
 
-KeepAliveManagerStub::KeepAliveManagerStub (SlotId slotId) : slotId_(slotId) {
+KeepAliveManagerStub::KeepAliveManagerStub(SlotId slotId)
+   : slotId_(slotId) {
     LOG(DEBUG, __FUNCTION__);
-    taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
-    listenerMgr_ = std::make_shared<telux::common::ListenerManager<IKeepAliveListener>>();
+    taskQ_           = std::make_shared<AsyncTaskQueue<void>>();
+    listenerMgr_     = std::make_shared<telux::common::ListenerManager<IKeepAliveListener>>();
     subSystemStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
 }
 
@@ -38,9 +39,8 @@ telux::common::Status KeepAliveManagerStub::init(telux::common::InitResponseCb c
     LOG(DEBUG, __FUNCTION__);
 
     initCb_ = callback;
-    auto f =
-        std::async(std::launch::async, [this, callback]() {
-        this->initSync(callback);}).share();
+    auto f
+        = std::async(std::launch::async, [this, callback]() { this->initSync(callback); }).share();
     taskQ_->add(f);
 
     return telux::common::Status::SUCCESS;
@@ -57,10 +57,9 @@ void KeepAliveManagerStub::initSync(telux::common::InitResponseCb callback) {
     ClientContext context;
 
     request.set_operation_type(::dataStub::OperationType(oprType_));
-    grpc::Status reqStatus = stub_->InitService(&context, request, &response);
-    telux::common::ServiceStatus cbStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
-    int cbDelay = DEFAULT_DELAY;
+    grpc::Status reqStatus                = stub_->InitService(&context, request, &response);
+    telux::common::ServiceStatus cbStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    int cbDelay                           = DEFAULT_DELAY;
 
     do {
         if (!reqStatus.ok()) {
@@ -68,9 +67,8 @@ void KeepAliveManagerStub::initSync(telux::common::InitResponseCb callback) {
             break;
         }
 
-        cbStatus =
-            static_cast<telux::common::ServiceStatus>(response.service_status());
-        cbDelay = static_cast<int>(response.delay());
+        cbStatus = static_cast<telux::common::ServiceStatus>(response.service_status());
+        cbDelay  = static_cast<int>(response.delay());
 
         this->onServiceStatusChange(cbStatus);
         LOG(DEBUG, __FUNCTION__, " ServiceStatus: ", static_cast<int>(cbStatus));
@@ -80,8 +78,7 @@ void KeepAliveManagerStub::initSync(telux::common::InitResponseCb callback) {
 
     if (callback && (cbDelay != SKIP_CALLBACK)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay,
-            " cbStatus::", static_cast<int>(cbStatus));
+        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", static_cast<int>(cbStatus));
         invokeInitCallback(cbStatus);
     }
 }
@@ -131,35 +128,36 @@ telux::common::Status KeepAliveManagerStub::deregisterListener(
     return listenerMgr_->deRegisterListener(listener);
 }
 
-telux::common::ErrorCode  KeepAliveManagerStub::enableTCPMonitor(
+telux::common::ErrorCode KeepAliveManagerStub::enableTCPMonitor(
     const TCPKAParams &tcpKaParams, MonitorHandleType &monHandle) {
     LOG(DEBUG, __FUNCTION__);
     return telux::common::ErrorCode::NOT_SUPPORTED;
 }
 
-telux::common::ErrorCode  KeepAliveManagerStub::disableTCPMonitor(
+telux::common::ErrorCode KeepAliveManagerStub::disableTCPMonitor(
     const MonitorHandleType monHandle) {
     LOG(DEBUG, __FUNCTION__);
     return telux::common::ErrorCode::NOT_SUPPORTED;
 }
 
-telux::common::ErrorCode  KeepAliveManagerStub::startTCPKeepAliveOffload(
+telux::common::ErrorCode KeepAliveManagerStub::startTCPKeepAliveOffload(
     const TCPKAParams &tcpKaParams, const TCPSessionParams &tcpSessionParams,
     const uint32_t interval, TCPKAOffloadHandle &handle) {
     LOG(DEBUG, __FUNCTION__);
     return telux::common::ErrorCode::NOT_SUPPORTED;
 }
 
-telux::common::ErrorCode  KeepAliveManagerStub::startTCPKeepAliveOffload(
+telux::common::ErrorCode KeepAliveManagerStub::startTCPKeepAliveOffload(
     const MonitorHandleType monHandle, const uint32_t interval, TCPKAOffloadHandle &handle) {
     LOG(DEBUG, __FUNCTION__);
     return telux::common::ErrorCode::NOT_SUPPORTED;
 }
 
-telux::common::ErrorCode  KeepAliveManagerStub::stopTCPKeepAliveOffload(const TCPKAOffloadHandle handle) {
+telux::common::ErrorCode KeepAliveManagerStub::stopTCPKeepAliveOffload(
+    const TCPKAOffloadHandle handle) {
     LOG(DEBUG, __FUNCTION__);
     return telux::common::ErrorCode::NOT_SUPPORTED;
 }
 
-} // end of namespace data
-} // end of namespace telux
+}  // end of namespace data
+}  // end of namespace telux

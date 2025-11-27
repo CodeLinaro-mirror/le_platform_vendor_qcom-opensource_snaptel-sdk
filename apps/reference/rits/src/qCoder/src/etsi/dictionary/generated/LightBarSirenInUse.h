@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_LightBarSirenInUse_H_
-#define	_LightBarSirenInUse_H_
-
+#ifndef _LightBarSirenInUse_H_
+#define _LightBarSirenInUse_H_
 
 #include <asn_application.h>
 
@@ -20,12 +19,12 @@ extern "C" {
 
 /* Dependencies */
 typedef enum LightBarSirenInUse {
-	LightBarSirenInUse_lightBarActivated	= 0,
-	LightBarSirenInUse_sirenActivated	= 1
+    LightBarSirenInUse_lightBarActivated = 0,
+    LightBarSirenInUse_sirenActivated    = 1
 } e_LightBarSirenInUse;
 
 /* LightBarSirenInUse */
-typedef BIT_STRING_t	 LightBarSirenInUse_t;
+typedef BIT_STRING_t LightBarSirenInUse_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_LightBarSirenInUse;
@@ -43,5 +42,5 @@ per_type_encoder_f LightBarSirenInUse_encode_uper;
 }
 #endif
 
-#endif	/* _LightBarSirenInUse_H_ */
+#endif /* _LightBarSirenInUse_H_ */
 #include <asn_internal.h>

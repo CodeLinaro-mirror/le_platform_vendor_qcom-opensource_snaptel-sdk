@@ -1,21 +1,19 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 
 #include "common/Logger.hpp"
 
 #include "PlayStreamImpl.hpp"
 #include "AudioDefinesLibInternal.hpp"
 
-
 namespace telux {
 namespace audio {
 
-PlayStreamImpl::PlayStreamImpl(uint32_t streamId, uint32_t writeMinSize,
-        uint32_t writeMaxSize, std::shared_ptr<ICommunicator> transportClient)
-        : AudioStreamImpl(streamId, StreamType::PLAY, transportClient) {
+PlayStreamImpl::PlayStreamImpl(uint32_t streamId, uint32_t writeMinSize, uint32_t writeMaxSize,
+    std::shared_ptr<ICommunicator> transportClient)
+   : AudioStreamImpl(streamId, StreamType::PLAY, transportClient) {
 
     writeMinSize_ = writeMinSize;
     writeMaxSize_ = writeMaxSize;
@@ -30,14 +28,14 @@ telux::common::Status PlayStreamImpl::init() {
      * to the registered client (application) */
     try {
         eventListenerMgr_ = std::make_shared<telux::common::ListenerManager<IPlayListener>>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         LOG(ERROR, __FUNCTION__, " can't create ListenerManager");
         return telux::common::Status::FAILED;
     }
 
     /* Register to get drain done and write ready events */
     return transportClient_->registerForPlayStreamEvents(
-                downcasted_shared_from_this<PlayStreamImpl>());
+        downcasted_shared_from_this<PlayStreamImpl>());
 }
 
 /*
@@ -50,9 +48,8 @@ telux::common::Status PlayStreamImpl::init() {
 std::shared_ptr<IStreamBuffer> PlayStreamImpl::getStreamBuffer() {
 
     try {
-        return std::make_shared<StreamBufferImpl>(writeMinSize_, writeMaxSize_,
-            0, writeMaxSize_);
-    } catch (const std::exception& e) {
+        return std::make_shared<StreamBufferImpl>(writeMinSize_, writeMaxSize_, 0, writeMaxSize_);
+    } catch (const std::exception &e) {
         LOG(ERROR, __FUNCTION__, " can't create StreamBufferImpl");
     }
 
@@ -97,8 +94,8 @@ std::shared_ptr<IStreamBuffer> PlayStreamImpl::getStreamBuffer() {
  * c. If the write() returns and error, it should be treated as error and handled as per
  * application's business logic.
  */
-telux::common::Status PlayStreamImpl::write(std::shared_ptr<IStreamBuffer> buffer,
-        WriteResponseCb callback) {
+telux::common::Status PlayStreamImpl::write(
+    std::shared_ptr<IStreamBuffer> buffer, WriteResponseCb callback) {
 
     uint32_t numBytesToWrite = 0;
     telux::common::Status status;
@@ -146,8 +143,7 @@ telux::common::Status PlayStreamImpl::write(std::shared_ptr<IStreamBuffer> buffe
 
     /* 0 - isLastBuffer is not applicable for regular playback stream */
     status = transportClient_->write(streamId_, transportBuffer, 0,
-                downcasted_shared_from_this<PlayStreamImpl>(), audioUserData,
-                numBytesToWrite);
+        downcasted_shared_from_this<PlayStreamImpl>(), audioUserData, numBytesToWrite);
     if (status != telux::common::Status::SUCCESS) {
         if (callback) {
             cmdCallbackMgr_.findAndRemoveCallback(audioUserData->cmdCallbackId);
@@ -163,7 +159,7 @@ telux::common::Status PlayStreamImpl::write(std::shared_ptr<IStreamBuffer> buffe
  * invocation, it calls that callback method otherwise simply drops the result.
  */
 void PlayStreamImpl::onWriteResult(telux::common::ErrorCode ec, uint32_t streamId,
-        uint32_t bytesWritten, AudioUserData *audioUserData) {
+    uint32_t bytesWritten, AudioUserData *audioUserData) {
 
     std::shared_ptr<telux::common::ICommandCallback> resultListener;
 
@@ -174,8 +170,7 @@ void PlayStreamImpl::onWriteResult(telux::common::ErrorCode ec, uint32_t streamI
         return;
     }
 
-    cmdCallbackMgr_.executeCallback(resultListener, audioUserData->streamBuffer,
-        bytesWritten, ec);
+    cmdCallbackMgr_.executeCallback(resultListener, audioUserData->streamBuffer, bytesWritten, ec);
 }
 
 /*
@@ -184,8 +179,8 @@ void PlayStreamImpl::onWriteResult(telux::common::ErrorCode ec, uint32_t streamI
  * Indicates that there is no more data to be played and stream is about to be
  * closed.
  */
-telux::common::Status PlayStreamImpl::stopAudio(StopType stopType,
-        telux::common::ResponseCallback callback) {
+telux::common::Status PlayStreamImpl::stopAudio(
+    StopType stopType, telux::common::ResponseCallback callback) {
     intptr_t cmdId;
     telux::common::Status status;
 
@@ -196,12 +191,12 @@ telux::common::Status PlayStreamImpl::stopAudio(StopType stopType,
 
     switch (stopType) {
         case StopType::FORCE_STOP:
-            status = transportClient_->flush(streamId_, downcasted_shared_from_this<PlayStreamImpl>(
-                ), cmdId);
+            status = transportClient_->flush(
+                streamId_, downcasted_shared_from_this<PlayStreamImpl>(), cmdId);
             break;
         case StopType::STOP_AFTER_PLAY:
-            status = transportClient_->drain(streamId_, downcasted_shared_from_this<PlayStreamImpl>(
-                ), cmdId);
+            status = transportClient_->drain(
+                streamId_, downcasted_shared_from_this<PlayStreamImpl>(), cmdId);
             break;
         default:
             LOG(ERROR, __FUNCTION__, " invalid stop type ", static_cast<int>(stopType));
@@ -211,19 +206,19 @@ telux::common::Status PlayStreamImpl::stopAudio(StopType stopType,
             return telux::common::Status::INVALIDPARAM;
     }
 
-    if(status != telux::common::Status::SUCCESS && callback){
+    if (status != telux::common::Status::SUCCESS && callback) {
         cmdCallbackMgr_.findAndRemoveCallback(cmdId);
     }
 
-    return status;;
+    return status;
+    ;
 }
 
 /*
  * If application provided a callback to receive the result of PlayStreamImpl::stopAudio
  * invocation, it calls that callback method otherwise simply drops the result.
  */
-void PlayStreamImpl::onFlushResult(telux::common::ErrorCode ec, uint32_t streamId,
-        int cmdId) {
+void PlayStreamImpl::onFlushResult(telux::common::ErrorCode ec, uint32_t streamId, int cmdId) {
 
     std::shared_ptr<telux::common::ICommandCallback> resultListener;
 
@@ -240,8 +235,7 @@ void PlayStreamImpl::onFlushResult(telux::common::ErrorCode ec, uint32_t streamI
  * If application provided a callback to receive the result of PlayStreamImpl::stopAudio
  * invocation, it calls that callback method otherwise simply drops the result.
  */
-void PlayStreamImpl::onDrainResult(telux::common::ErrorCode ec, uint32_t streamId,
-        int cmdId) {
+void PlayStreamImpl::onDrainResult(telux::common::ErrorCode ec, uint32_t streamId, int cmdId) {
 
     std::shared_ptr<telux::common::ICommandCallback> resultListener;
 
@@ -253,7 +247,6 @@ void PlayStreamImpl::onDrainResult(telux::common::ErrorCode ec, uint32_t streamI
 
     cmdCallbackMgr_.executeCallback(resultListener, ec);
 }
-
 
 /*
  * When AMR* format audio is played, these listeners, listen for drain, flush
@@ -273,8 +266,7 @@ void PlayStreamImpl::onDrainResult(telux::common::ErrorCode ec, uint32_t streamI
  * the HAL/PAL. When indication comes, it confirms that the HAL/PAL has actually
  * completed requested operation or can accept the next buffer.
  */
-telux::common::Status PlayStreamImpl::registerListener(
-        std::weak_ptr<IPlayListener> listener) {
+telux::common::Status PlayStreamImpl::registerListener(std::weak_ptr<IPlayListener> listener) {
 
     std::vector<std::weak_ptr<IPlayListener>> playListener;
 
@@ -283,8 +275,7 @@ telux::common::Status PlayStreamImpl::registerListener(
     return eventListenerMgr_->registerListener(listener);
 }
 
-telux::common::Status PlayStreamImpl::deRegisterListener(
-        std::weak_ptr<IPlayListener> listener) {
+telux::common::Status PlayStreamImpl::deRegisterListener(std::weak_ptr<IPlayListener> listener) {
 
     return eventListenerMgr_->deRegisterListener(listener);
 }

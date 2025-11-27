@@ -26,10 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <chrono>
@@ -50,10 +51,10 @@
 
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
-const std::string GREEN = "\033[0;32m";
-const std::string RED = "\033[0;31m";
+const std::string GREEN    = "\033[0;32m";
+const std::string RED      = "\033[0;31m";
 const std::string BOLD_RED = "\033[1;31m";
-const std::string DONE = "\033[0m";  // No color
+const std::string DONE     = "\033[0m";  // No color
 
 /**
  * Main routine
@@ -68,9 +69,7 @@ int main(int, char **) {
     std::promise<telux::common::ServiceStatus> subscriptionMgrprom;
     telux::common::Status status;
     auto subscriptionMgr = telux::tel::PhoneFactory::getInstance().getSubscriptionManager(
-                    [&](telux::common::ServiceStatus status) {
-        subscriptionMgrprom.set_value(status);
-    });
+        [&](telux::common::ServiceStatus status) { subscriptionMgrprom.set_value(status); });
     if (!subscriptionMgr) {
         std::cout << "ERROR - Failed to get SubscriptionManager instance \n";
         return 0;
@@ -90,9 +89,9 @@ int main(int, char **) {
         return 0;
     }
     auto subscription = subscriptionMgr->getSubscription(DEFAULT_SLOT_ID, &status);
-        if(!subscription) {
-            std::cout << " *** ERROR - Subscription is empty" << std::endl;
-            return 0;
+    if (!subscription) {
+        std::cout << " *** ERROR - Subscription is empty" << std::endl;
+        return 0;
     }
 
     std::cout << "\n\n";
@@ -103,29 +102,32 @@ int main(int, char **) {
     // [4] Get the LocationFactory and LocationManager instances
     auto &locationFactory = telux::loc::LocationFactory::getInstance();
 
-    std::shared_ptr<telux::loc::ILocationManager> locationMgr = locationFactory.getLocationManager();
+    std::shared_ptr<telux::loc::ILocationManager> locationMgr
+        = locationFactory.getLocationManager();
 
     // [5] Check if location subsystem is ready
     std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-    startTime = std::chrono::system_clock::now();
+    startTime                = std::chrono::system_clock::now();
     bool locSubSystemsStatus = locationMgr->isSubsystemReady();
 
     // [6.1] If location subsystem is not ready, wait for it to be ready
-    if(!locSubSystemsStatus) {
-        // std::cout << "GNSS Location subsystem is not ready, wait for it to be ready " << std::endl;
+    if (!locSubSystemsStatus) {
+        // std::cout << "GNSS Location subsystem is not ready, wait for it to be ready " <<
+        // std::endl;
         std::future<bool> f = locationMgr->onSubsystemReady();
         locSubSystemsStatus = f.get();
     }
 
     // [6.2] Exit the application, if SDK is unable to initialize location subsystems
-    if(locSubSystemsStatus) {
-        endTime = std::chrono::system_clock::now();
+    if (locSubSystemsStatus) {
+        endTime                                   = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsedTime = endTime - startTime;
         std::cout << std::endl << "Send SMS in the following format";
         std::cout << std::endl
-                << "to the phone number " << subscription->getPhoneNumber()
-                << " to get current location" << std::endl;
-        std::cout << std::endl << "Format: " << GREEN << "Location <SMS Token>" << DONE << std::endl;
+                  << "to the phone number " << subscription->getPhoneNumber()
+                  << " to get current location" << std::endl;
+        std::cout << std::endl
+                  << "Format: " << GREEN << "Location <SMS Token>" << DONE << std::endl;
         std::cout << "Example: Location 1234" << std::endl;
     } else {
         std::cout << " *** ERROR - Unable to initialize GNSS Location subsystem" << std::endl;
@@ -137,8 +139,8 @@ int main(int, char **) {
 
     // [8] Instantiate LocationListener, SmsListener
     std::shared_ptr<MyLocationListener> myLocationListener = std::make_shared<MyLocationListener>();
-    std::shared_ptr<MySmsListener> mySmsListener = std::make_shared<MySmsListener>();
-    if(smsManager) {
+    std::shared_ptr<MySmsListener> mySmsListener           = std::make_shared<MySmsListener>();
+    if (smsManager) {
         mySmsListener->setLocationListener(myLocationListener);
         smsManager->registerListener(mySmsListener);
     } else {
@@ -149,7 +151,7 @@ int main(int, char **) {
     // [9] Instantiate global ILocationListener
     locationMgr->registerListenerEx(myLocationListener);
     // [10]Starting the reports for fixes
-    locationMgr->startDetailedReports(1000,NULL);
+    locationMgr->startDetailedReports(1000, NULL);
     // [11] Exit logic is specific to an application
     std::cout << "Press enter to exit" << std::endl;
     std::string input;

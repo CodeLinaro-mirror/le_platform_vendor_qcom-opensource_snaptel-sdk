@@ -1,7 +1,6 @@
 /*
- *
- *    Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *    SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -43,7 +42,8 @@ class SatcomFactory {
      *
      */
     virtual std::shared_ptr<telux::satcom::INtnManager> getNtnManager(
-        telux::common::InitResponseCb clientCallback) = 0;
+        telux::common::InitResponseCb clientCallback)
+        = 0;
 #ifndef TELUX_DOXY_SKIP
  protected:
     SatcomFactory();

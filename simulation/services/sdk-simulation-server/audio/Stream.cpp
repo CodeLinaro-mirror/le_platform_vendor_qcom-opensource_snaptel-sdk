@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "Stream.hpp"
@@ -9,18 +9,18 @@
 namespace telux {
 namespace audio {
 
-Stream::Stream( std::shared_ptr<IAudioBackend> audioBackend,
-        std::shared_ptr<ClientCache> clientCache) {
+Stream::Stream(
+    std::shared_ptr<IAudioBackend> audioBackend, std::shared_ptr<ClientCache> clientCache) {
 
-    clientCache_ = clientCache;
+    clientCache_  = clientCache;
     audioBackend_ = audioBackend;
     /* Every stream has a private worker thread that communicates with HAL/PAL,
      * performs actual audio operation in background and finally, sends result
      * of the operation to the application asynchronously. This thread also sends
      * stream events like write ready, drain complete and dtmf detected to the
      * application. */
-    streamTaskExecutor_ = std::unique_ptr<telux::common::TaskDispatcher>(
-        new telux::common::TaskDispatcher());
+    streamTaskExecutor_
+        = std::unique_ptr<telux::common::TaskDispatcher>(new telux::common::TaskDispatcher());
     /* Max no. of bufffers after which pipeline full notification is sent. */
     maxPipeLineLen = rand() % 100;
 }
@@ -30,59 +30,59 @@ Stream::~Stream() {
     streamTaskExecutor_ = nullptr;
 }
 
-telux::common::ErrorCode Stream::setupStream(StreamConfiguration config,
-        uint32_t streamId, uint32_t& readMinSize, uint32_t& writeMinSize) {
+telux::common::ErrorCode Stream::setupStream(
+    StreamConfiguration config, uint32_t streamId, uint32_t &readMinSize, uint32_t &writeMinSize) {
 
     telux::common::ErrorCode ec = telux::common::ErrorCode::SUCCESS;
     StreamVolume volume{};
     ChannelVolume chlVol{};
     streamHandle_.type = config.streamConfig.type;
 
-    streamParams_.config = config;
-    streamParams_.streamId = streamId;
+    streamParams_.config              = config;
+    streamParams_.streamId            = streamId;
     streamParams_.streamEventListener = shared_from_this();
-    switch(config.streamConfig.type) {
+    switch (config.streamConfig.type) {
         case StreamType::VOICE_CALL:
             /* For voice call, canned responses are supported and hence storing the stream config*/
-            if(config.streamConfig.deviceTypes.size() != 2){
+            if (config.streamConfig.deviceTypes.size() != 2) {
                 LOG(ERROR, __FUNCTION__, " can't create stream, missing sink or source device");
                 return telux::common::ErrorCode::INVALID_ARG;
             }
 
-            if((config.streamConfig.deviceTypes[0] == DEVICE_TYPE_BT_SCO_SPEAKER) ||
-                (config.streamConfig.deviceTypes[0] == DEVICE_TYPE_BT_SCO_MIC)) {
+            if ((config.streamConfig.deviceTypes[0] == DEVICE_TYPE_BT_SCO_SPEAKER)
+                || (config.streamConfig.deviceTypes[0] == DEVICE_TYPE_BT_SCO_MIC)) {
                 isBtStream = true;
             }
             chlVol.channelType = ChannelType::LEFT;
-            chlVol.vol = 0.4f;
+            chlVol.vol         = 0.4f;
             volume.volume.push_back(chlVol);
-            volume.dir = StreamDirection::RX;
-            streamParams_.streamVols = volume;
+            volume.dir                      = StreamDirection::RX;
+            streamParams_.streamVols        = volume;
             streamParams_.muteStatus.enable = false;
-            streamParams_.muteStatus.dir = StreamDirection::RX;
-            if(config.streamConfig.enableHpcm){
+            streamParams_.muteStatus.dir    = StreamDirection::RX;
+            if (config.streamConfig.enableHpcm) {
                 isHpcmStream = true;
             }
             break;
         case StreamType::PLAY:
             chlVol.channelType = ChannelType::LEFT;
-            chlVol.vol = 1.0f;
+            chlVol.vol         = 1.0f;
             volume.volume.push_back(chlVol);
-            volume.dir = StreamDirection::RX;
+            volume.dir               = StreamDirection::RX;
             streamParams_.streamVols = volume;
-            if(config.streamConfig.voicePaths.size() > 0){
+            if (config.streamConfig.voicePaths.size() > 0) {
                 isIncallStream = true;
-                writeMinSize = MAX_BUFFER_SIZE;
+                writeMinSize   = MAX_BUFFER_SIZE;
             }
 
-            if(config.streamConfig.deviceTypes[0] == DEVICE_TYPE_BT_SCO_SPEAKER) {
-                isBtStream = true;
+            if (config.streamConfig.deviceTypes[0] == DEVICE_TYPE_BT_SCO_SPEAKER) {
+                isBtStream   = true;
                 writeMinSize = MAX_BUFFER_SIZE;
             }
 
             streamParams_.muteStatus.enable = false;
-            streamParams_.muteStatus.dir = StreamDirection::RX;
-            if(config.streamConfig.enableHpcm){
+            streamParams_.muteStatus.dir    = StreamDirection::RX;
+            if (config.streamConfig.enableHpcm) {
                 isHpcmStream = true;
                 writeMinSize = MAX_BUFFER_SIZE;
             }
@@ -103,30 +103,30 @@ telux::common::ErrorCode Stream::setupStream(StreamConfiguration config,
              */
             try {
                 buffer_ = std::make_shared<std::vector<uint8_t>>(MAX_BUFFER_SIZE);
-            } catch (const std::exception& e) {
+            } catch (const std::exception &e) {
                 LOG(ERROR, __FUNCTION__, " can't allocate memory for stream");
                 return telux::common::ErrorCode::NO_MEMORY;
             }
             chlVol.channelType = ChannelType::LEFT;
-            chlVol.vol = 1.0f;
+            chlVol.vol         = 1.0f;
             volume.volume.push_back(chlVol);
-            volume.dir = StreamDirection::TX;
+            volume.dir               = StreamDirection::TX;
             streamParams_.streamVols = volume;
-            if(config.streamConfig.voicePaths.size() > 0){
+            if (config.streamConfig.voicePaths.size() > 0) {
                 isIncallStream = true;
-                readMinSize = MAX_BUFFER_SIZE;
+                readMinSize    = MAX_BUFFER_SIZE;
             }
 
-            if(config.streamConfig.deviceTypes[0] == DEVICE_TYPE_BT_SCO_MIC) {
-                isBtStream = true;
+            if (config.streamConfig.deviceTypes[0] == DEVICE_TYPE_BT_SCO_MIC) {
+                isBtStream  = true;
                 readMinSize = MAX_BUFFER_SIZE;
             }
 
             streamParams_.muteStatus.enable = false;
-            streamParams_.muteStatus.dir = StreamDirection::TX;
-            if(config.streamConfig.enableHpcm){
+            streamParams_.muteStatus.dir    = StreamDirection::TX;
+            if (config.streamConfig.enableHpcm) {
                 isHpcmStream = true;
-                readMinSize = MAX_BUFFER_SIZE;
+                readMinSize  = MAX_BUFFER_SIZE;
             }
             break;
         case StreamType::LOOPBACK:
@@ -135,12 +135,12 @@ telux::common::ErrorCode Stream::setupStream(StreamConfiguration config,
             streamParams_.config.streamConfig.channelTypeMask = 1;
             break;
         default:
-            LOG(ERROR, __FUNCTION__, " invalid stream type ", static_cast<int>(
-                config.streamConfig.type));
+            LOG(ERROR, __FUNCTION__, " invalid stream type ",
+                static_cast<int>(config.streamConfig.type));
             return telux::common::ErrorCode::INVALID_ARGUMENTS;
     }
 
-    if(!isIncallStream && !isBtStream && !isHpcmStream) {
+    if (!isIncallStream && !isBtStream && !isHpcmStream) {
         ec = audioBackend_->createStream(streamHandle_, streamParams_, readMinSize, writeMinSize);
         if (ec != telux::common::ErrorCode::SUCCESS) {
             buffer_ = nullptr;
@@ -153,14 +153,14 @@ telux::common::ErrorCode Stream::setupStream(StreamConfiguration config,
         return telux::common::ErrorCode::NO_MEMORY;
     }
 
-    streamHandle_.privateStreamData->streamId = streamId;
+    streamHandle_.privateStreamData->streamId            = streamId;
     streamHandle_.privateStreamData->streamEventListener = shared_from_this();
 
     return ec;
 }
 
-telux::common::ErrorCode Stream::setupInTranscodeStream(TranscodingFormatInfo inInfo,
-        CreatedTranscoderInfo *createdTranscoderInfo) {
+telux::common::ErrorCode Stream::setupInTranscodeStream(
+    TranscodingFormatInfo inInfo, CreatedTranscoderInfo *createdTranscoderInfo) {
 
     telux::common::ErrorCode ec;
 
@@ -168,14 +168,13 @@ telux::common::ErrorCode Stream::setupInTranscodeStream(TranscodingFormatInfo in
 
     try {
         buffer_ = std::make_shared<std::vector<uint8_t>>(MAX_BUFFER_SIZE);
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         LOG(ERROR, __FUNCTION__, " can't allocate memory for stream");
         return telux::common::ErrorCode::NO_MEMORY;
     }
 
-    ec = audioBackend_->setupInTranscodeStream(streamHandle_,
-            createdTranscoderInfo->inStreamId, inInfo,
-            shared_from_this(), createdTranscoderInfo->writeMinSize);
+    ec = audioBackend_->setupInTranscodeStream(streamHandle_, createdTranscoderInfo->inStreamId,
+        inInfo, shared_from_this(), createdTranscoderInfo->writeMinSize);
 
     if (ec != telux::common::ErrorCode::SUCCESS) {
         buffer_ = nullptr;
@@ -184,8 +183,8 @@ telux::common::ErrorCode Stream::setupInTranscodeStream(TranscodingFormatInfo in
     return ec;
 }
 
-telux::common::ErrorCode Stream::setupOutTranscodeStream(TranscodingFormatInfo outInfo,
-        CreatedTranscoderInfo *createdTranscoderInfo) {
+telux::common::ErrorCode Stream::setupOutTranscodeStream(
+    TranscodingFormatInfo outInfo, CreatedTranscoderInfo *createdTranscoderInfo) {
 
     telux::common::ErrorCode ec;
 
@@ -193,14 +192,13 @@ telux::common::ErrorCode Stream::setupOutTranscodeStream(TranscodingFormatInfo o
 
     try {
         buffer_ = std::make_shared<std::vector<uint8_t>>(MAX_BUFFER_SIZE);
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         LOG(ERROR, __FUNCTION__, " can't allocate memory for stream");
         return telux::common::ErrorCode::NO_MEMORY;
     }
 
-    ec = audioBackend_->setupOutTranscodeStream(streamHandle_,
-            createdTranscoderInfo->outStreamId, outInfo,
-            shared_from_this(), createdTranscoderInfo->readMinSize);
+    ec = audioBackend_->setupOutTranscodeStream(streamHandle_, createdTranscoderInfo->outStreamId,
+        outInfo, shared_from_this(), createdTranscoderInfo->readMinSize);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         buffer_ = nullptr;
     }
@@ -208,18 +206,18 @@ telux::common::ErrorCode Stream::setupOutTranscodeStream(TranscodingFormatInfo o
     return ec;
 }
 
-telux::common::ErrorCode Stream::cleanupStream(std::vector<int>& voiceCallList) {
+telux::common::ErrorCode Stream::cleanupStream(std::vector<int> &voiceCallList) {
     telux::common::ErrorCode ec = telux::common::ErrorCode::SUCCESS;
 
     streamTaskExecutor_->shutdown();
-    if(!isIncallStream && !isBtStream && !isHpcmStream) {
+    if (!isIncallStream && !isBtStream && !isHpcmStream) {
         ec = audioBackend_->deleteStream(streamHandle_);
         if (ec != telux::common::ErrorCode::SUCCESS) {
             LOG(ERROR, __FUNCTION__, " can't close stream");
         }
     }
 
-    if(streamHandle_.type == telux::audio::StreamType::VOICE_CALL) {
+    if (streamHandle_.type == telux::audio::StreamType::VOICE_CALL) {
         voiceCallList[streamParams_.config.streamConfig.slotId] = 0;
     }
 
@@ -268,7 +266,7 @@ result:
 
 void Stream::start(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) {
 
-    streamTaskExecutor_->submitTask( [=]{ doStart(audioReq, streamId); });
+    streamTaskExecutor_->submitTask([=] { doStart(audioReq, streamId); });
 }
 
 void Stream::doStop(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) {
@@ -302,7 +300,7 @@ result:
 
 void Stream::stop(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) {
 
-    streamTaskExecutor_->submitTask( [=]{ doStop(audioReq, streamId); });
+    streamTaskExecutor_->submitTask([=] { doStop(audioReq, streamId); });
 }
 
 /*
@@ -313,8 +311,8 @@ void Stream::stop(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) {
  * @duration - possible upto 65 seconds
  * @toneFrequencies - 1st value in the vector is used as frequency value, rest ignored
  */
-void Stream::doStartTone(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-        uint16_t gain, uint16_t duration, std::vector<uint16_t> toneFrequencies) {
+void Stream::doStartTone(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, uint16_t gain,
+    uint16_t duration, std::vector<uint16_t> toneFrequencies) {
 
     telux::common::ErrorCode ec;
 
@@ -340,10 +338,10 @@ result:
     audioMsgDispatcher->sendStartToneResponse(audioReq, ec, streamId);
 }
 
-void Stream::startTone(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-            uint16_t gain, uint16_t duration, std::vector<uint16_t> toneFrequencies) {
-    streamTaskExecutor_->submitTask( [=]{ doStartTone(audioReq, streamId, gain,
-        duration, toneFrequencies); });
+void Stream::startTone(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, uint16_t gain,
+    uint16_t duration, std::vector<uint16_t> toneFrequencies) {
+    streamTaskExecutor_->submitTask(
+        [=] { doStartTone(audioReq, streamId, gain, duration, toneFrequencies); });
 }
 
 void Stream::doStopTone(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) {
@@ -375,7 +373,7 @@ result:
 }
 
 void Stream::stopTone(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) {
-    streamTaskExecutor_->submitTask( [=]{ doStopTone(audioReq, streamId); });
+    streamTaskExecutor_->submitTask([=] { doStopTone(audioReq, streamId); });
 }
 
 /*
@@ -393,8 +391,8 @@ void Stream::stopTone(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId)
  * For capture, if invalid device is given, default mic will be used.
  * For voice call, stream must be started to make the set device effective.
  */
-void Stream::doSetDevice(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-        std::vector<DeviceType> devices) {
+void Stream::doSetDevice(
+    std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, std::vector<DeviceType> devices) {
 
     telux::common::ErrorCode ec = telux::common::ErrorCode::SUCCESS;
 
@@ -405,7 +403,7 @@ void Stream::doSetDevice(std::shared_ptr<AudioRequest> audioReq, uint32_t stream
 
     switch (streamHandle_.type) {
         case StreamType::VOICE_CALL:
-            if(devices.size() != 2){
+            if (devices.size() != 2) {
                 LOG(ERROR, __FUNCTION__, " missing sink or source device");
                 ec = telux::common::ErrorCode::INVALID_ARG;
             }
@@ -432,9 +430,9 @@ result:
 }
 
 void Stream::setDevice(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-        std::vector<DeviceType> const &devices) {
+    std::vector<DeviceType> const &devices) {
 
-    streamTaskExecutor_->submitTask( [=]{ doSetDevice(audioReq, streamId, devices); });
+    streamTaskExecutor_->submitTask([=] { doSetDevice(audioReq, streamId, devices); });
 }
 
 void Stream::doGetDevice(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) {
@@ -458,17 +456,16 @@ void Stream::doGetDevice(std::shared_ptr<AudioRequest> audioReq, uint32_t stream
             goto result;
     };
 
-
     LOG(DEBUG, __FUNCTION__, " got stream's device, strmid: ", streamId);
 
 result:
-    audioMsgDispatcher->sendGetDeviceResponse(audioReq, ec, streamId,
-        streamParams_.config.streamConfig.deviceTypes);
+    audioMsgDispatcher->sendGetDeviceResponse(
+        audioReq, ec, streamId, streamParams_.config.streamConfig.deviceTypes);
 }
 
 void Stream::getDevice(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) {
 
-    streamTaskExecutor_->submitTask( [=]{ doGetDevice(audioReq, streamId); });
+    streamTaskExecutor_->submitTask([=] { doGetDevice(audioReq, streamId); });
 }
 
 /*
@@ -493,7 +490,7 @@ void Stream::getDevice(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId
  * change other PP parameters.
  */
 void Stream::doSetVolume(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-        StreamDirection direction, std::vector<ChannelVolume> channelsVolume) {
+    StreamDirection direction, std::vector<ChannelVolume> channelsVolume) {
 
     telux::common::ErrorCode ec = telux::common::ErrorCode::SUCCESS;
     StreamVolume volume;
@@ -512,15 +509,14 @@ void Stream::doSetVolume(std::shared_ptr<AudioRequest> audioReq, uint32_t stream
                 LOG(ERROR, __FUNCTION__, " stream not started");
                 goto result;
             }
-            if ((channelsVolume.at(0).vol < 0.0) ||
-                (channelsVolume.at(0).vol > 1.0)) {
+            if ((channelsVolume.at(0).vol < 0.0) || (channelsVolume.at(0).vol > 1.0)) {
                 ec = telux::common::ErrorCode::INVALID_ARG;
                 LOG(ERROR, __FUNCTION__, " out-of-range volume value");
                 goto result;
             }
 
-            volume.volume =  channelsVolume;
-            volume.dir = direction;
+            volume.volume            = channelsVolume;
+            volume.dir               = direction;
             streamParams_.streamVols = volume;
             break;
         /* For playback and capture, ALSA respone is supported. Hence, the volume is set at the ALSA
@@ -529,24 +525,23 @@ void Stream::doSetVolume(std::shared_ptr<AudioRequest> audioReq, uint32_t stream
            returns SUCCESS.*/
         case StreamType::PLAY:
         case StreamType::CAPTURE:
-            if ((channelsVolume.size() > 1) &&
-                (channelsVolume.at(0).vol != channelsVolume.at(1).vol)) {
+            if ((channelsVolume.size() > 1)
+                && (channelsVolume.at(0).vol != channelsVolume.at(1).vol)) {
                 ec = telux::common::ErrorCode::INVALID_ARG;
                 LOG(ERROR, __FUNCTION__, " mismatched left & right values");
                 goto result;
             }
-            if ((channelsVolume.at(0).vol < 0.0) ||
-                (channelsVolume.at(0).vol > 1.0)) {
+            if ((channelsVolume.at(0).vol < 0.0) || (channelsVolume.at(0).vol > 1.0)) {
                 ec = telux::common::ErrorCode::INVALID_ARG;
                 LOG(ERROR, __FUNCTION__, " out-of-range volume value");
                 goto result;
             }
 
-            volume.volume =  channelsVolume;
-            volume.dir = direction;
+            volume.volume            = channelsVolume;
+            volume.dir               = direction;
             streamParams_.streamVols = volume;
 
-            if(!isIncallStream && !isBtStream && !isHpcmStream) {
+            if (!isIncallStream && !isBtStream && !isHpcmStream) {
                 ec = audioBackend_->setVolume(streamHandle_, direction, channelsVolume);
                 if (ec != telux::common::ErrorCode::SUCCESS) {
                     goto result;
@@ -566,14 +561,14 @@ result:
 }
 
 void Stream::setVolume(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-        StreamDirection direction, std::vector<ChannelVolume> channelsVolume) {
+    StreamDirection direction, std::vector<ChannelVolume> channelsVolume) {
 
-    streamTaskExecutor_->submitTask( [=]{ doSetVolume(audioReq, streamId,
-            direction, channelsVolume); });
+    streamTaskExecutor_->submitTask(
+        [=] { doSetVolume(audioReq, streamId, direction, channelsVolume); });
 }
 
-void Stream::doGetVolume(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-        StreamDirection direction) {
+void Stream::doGetVolume(
+    std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, StreamDirection direction) {
 
     telux::common::ErrorCode ec = telux::common::ErrorCode::SUCCESS;
     std::vector<ChannelVolume> channelsVolume{};
@@ -600,7 +595,7 @@ void Stream::doGetVolume(std::shared_ptr<AudioRequest> audioReq, uint32_t stream
            streams, in that case values stored in streamParams_.streamVols structure is returned. */
         case StreamType::PLAY:
         case StreamType::CAPTURE:
-            if(!isIncallStream && !isBtStream && !isHpcmStream) {
+            if (!isIncallStream && !isBtStream && !isHpcmStream) {
                 ec = audioBackend_->getVolume(streamHandle_,
                     streamParams_.config.streamConfig.channelTypeMask, channelsVolume);
                 if (ec != telux::common::ErrorCode::SUCCESS) {
@@ -619,15 +614,13 @@ void Stream::doGetVolume(std::shared_ptr<AudioRequest> audioReq, uint32_t stream
     LOG(DEBUG, __FUNCTION__, " volume retrieved, strmid: ", streamId);
 
 result:
-    audioMsgDispatcher->sendGetVolumeResponse(audioReq, ec, streamId, direction,
-        channelsVolume);
+    audioMsgDispatcher->sendGetVolumeResponse(audioReq, ec, streamId, direction, channelsVolume);
 }
 
-void Stream::getVolume(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-        StreamDirection direction) {
+void Stream::getVolume(
+    std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, StreamDirection direction) {
 
-    streamTaskExecutor_->submitTask( [=]{ doGetVolume(audioReq, streamId,
-        direction); });
+    streamTaskExecutor_->submitTask([=] { doGetVolume(audioReq, streamId, direction); });
 }
 
 /*
@@ -647,8 +640,8 @@ void Stream::getVolume(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId
  *  because mute information is fetched from lower layers, whereas for playback
  *  and capture, cached info is returned.
  */
-void Stream::doSetMuteState(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-        StreamMute muteInfo) {
+void Stream::doSetMuteState(
+    std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, StreamMute muteInfo) {
 
     telux::common::ErrorCode ec = telux::common::ErrorCode::SUCCESS;
 
@@ -667,7 +660,7 @@ void Stream::doSetMuteState(std::shared_ptr<AudioRequest> audioReq, uint32_t str
             break;
         case StreamType::PLAY:
         case StreamType::CAPTURE:
-            if(!isIncallStream && !isBtStream && !isHpcmStream) {
+            if (!isIncallStream && !isBtStream && !isHpcmStream) {
                 ec = audioBackend_->setMuteState(streamHandle_, muteInfo,
                     streamParams_.streamVols.volume, streamParams_.muteStatus.enable);
                 if (ec != telux::common::ErrorCode::SUCCESS) {
@@ -688,14 +681,14 @@ result:
     audioMsgDispatcher->sendSetMuteStateResponse(audioReq, ec, streamId);
 }
 
-void Stream::setMuteState(std::shared_ptr<AudioRequest> audioReq,
-        uint32_t streamId, StreamMute muteInfo) {
+void Stream::setMuteState(
+    std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, StreamMute muteInfo) {
 
-    streamTaskExecutor_->submitTask( [=]{ doSetMuteState(audioReq, streamId, muteInfo); });
+    streamTaskExecutor_->submitTask([=] { doSetMuteState(audioReq, streamId, muteInfo); });
 }
 
-void Stream::doGetMuteState(std::shared_ptr<AudioRequest> audioReq,
-        uint32_t streamId, StreamDirection direction) {
+void Stream::doGetMuteState(
+    std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, StreamDirection direction) {
 
     StreamMute muteInfo;
     telux::common::ErrorCode ec = telux::common::ErrorCode::SUCCESS;
@@ -728,11 +721,10 @@ result:
     audioMsgDispatcher->sendGetMuteStateResponse(audioReq, ec, streamId, muteInfo);
 }
 
-void Stream::getMuteState(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-        StreamDirection direction) {
+void Stream::getMuteState(
+    std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, StreamDirection direction) {
 
-    streamTaskExecutor_->submitTask( [=]{ doGetMuteState(audioReq,
-        streamId, direction); });
+    streamTaskExecutor_->submitTask([=] { doGetMuteState(audioReq, streamId, direction); });
 }
 
 /*
@@ -767,8 +759,8 @@ void Stream::getMuteState(std::shared_ptr<AudioRequest> audioReq, uint32_t strea
  *  |              941  |  *   |  0   |  #   |  D   |
  *   -----------------------------------------------
  */
-void Stream::doStartDtmf(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-        uint16_t gain, uint16_t duration, DtmfTone dtmfTone) {
+void Stream::doStartDtmf(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, uint16_t gain,
+    uint16_t duration, DtmfTone dtmfTone) {
 
     telux::common::ErrorCode ec = telux::common::ErrorCode::SUCCESS;
 
@@ -805,8 +797,7 @@ void Stream::doStartDtmf(std::shared_ptr<AudioRequest> audioReq, uint32_t stream
             break;
         default:
             ec = telux::common::ErrorCode::INVALID_ARG;
-            LOG(ERROR, __FUNCTION__, " invalid low frquency ",
-                static_cast<int>(dtmfTone.lowFreq));
+            LOG(ERROR, __FUNCTION__, " invalid low frquency ", static_cast<int>(dtmfTone.lowFreq));
             goto result;
     }
 
@@ -816,15 +807,15 @@ result:
     audioMsgDispatcher->sendStartDtmfResponse(audioReq, ec, streamId);
 }
 
-void Stream::startDtmf(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-        uint16_t gain, uint16_t duration, DtmfTone dtmfTone) {
+void Stream::startDtmf(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, uint16_t gain,
+    uint16_t duration, DtmfTone dtmfTone) {
 
-    streamTaskExecutor_->submitTask( [=]{ doStartDtmf(audioReq, streamId, gain,
-        duration, dtmfTone); });
+    streamTaskExecutor_->submitTask(
+        [=] { doStartDtmf(audioReq, streamId, gain, duration, dtmfTone); });
 }
 
-void Stream::doStopDtmf(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-        StreamDirection direction) {
+void Stream::doStopDtmf(
+    std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, StreamDirection direction) {
 
     telux::common::ErrorCode ec = telux::common::ErrorCode::SUCCESS;
 
@@ -833,28 +824,27 @@ void Stream::doStopDtmf(std::shared_ptr<AudioRequest> audioReq, uint32_t streamI
         return;
     }
 
-
     LOG(DEBUG, __FUNCTION__, " dtmf stopped, strmid: ", streamId);
 
     audioMsgDispatcher->sendStopDtmfResponse(audioReq, ec, streamId);
 }
 
-void Stream::stopDtmf(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-        StreamDirection direction) {
+void Stream::stopDtmf(
+    std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, StreamDirection direction) {
 
-    streamTaskExecutor_->submitTask( [=]{ doStopDtmf(audioReq, streamId, direction); });
+    streamTaskExecutor_->submitTask([=] { doStopDtmf(audioReq, streamId, direction); });
 }
 
 void Stream::doRead(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-        uint32_t readLengthRequested, std::vector<int> voiceCallList) {
+    uint32_t readLengthRequested, std::vector<int> voiceCallList) {
 
-    int64_t actualReadLength = 0;
+    int64_t actualReadLength    = 0;
     telux::common::ErrorCode ec = telux::common::ErrorCode::SUCCESS;
 
-    if(!isIncallStream && !isBtStream && !isHpcmStream) {
+    if (!isIncallStream && !isBtStream && !isHpcmStream) {
         ec = audioBackend_->read(streamHandle_, buffer_, readLengthRequested, actualReadLength);
     } else {
-        if(!voiceCallList[streamParams_.config.streamConfig.slotId] && isIncallStream) {
+        if (!voiceCallList[streamParams_.config.streamConfig.slotId] && isIncallStream) {
             ec = telux::common::ErrorCode::SYSTEM_ERR;
         } else {
             actualReadLength = readLengthRequested;
@@ -862,23 +852,22 @@ void Stream::doRead(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
     }
 
     /* Don't log on data path */
-    LOG(DEBUG, __FUNCTION__,
-          " stream data read, strmid: ", streamId, " length ", actualReadLength);
+    LOG(DEBUG, __FUNCTION__, " stream data read, strmid: ", streamId, " length ", actualReadLength);
 
     auto audioMsgDispatcher = audioReq->getAudioMsgDispatcher().lock();
     if (!audioMsgDispatcher) {
         return;
     }
 
-    audioMsgDispatcher->sendReadResponse(audioReq, ec, streamId, buffer_,
-        actualReadLength, 0, 0, isIncallStream, isHpcmStream);
+    audioMsgDispatcher->sendReadResponse(
+        audioReq, ec, streamId, buffer_, actualReadLength, 0, 0, isIncallStream, isHpcmStream);
 }
 
 void Stream::read(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-        uint32_t readLengthRequested, std::vector<int> &voiceCallList) {
+    uint32_t readLengthRequested, std::vector<int> &voiceCallList) {
 
-    streamTaskExecutor_->submitTask( [=]{ doRead(audioReq, streamId, readLengthRequested,
-        voiceCallList); });
+    streamTaskExecutor_->submitTask(
+        [=] { doRead(audioReq, streamId, readLengthRequested, voiceCallList); });
 }
 
 /*
@@ -918,23 +907,23 @@ void Stream::read(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
  * application's business logic.
  */
 void Stream::doWrite(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-        uint32_t writeLengthRequested, uint32_t offset, int64_t timeStamp,
-        bool isLastBuffer, uint8_t *data, std::vector<int> voiceCallList) {
+    uint32_t writeLengthRequested, uint32_t offset, int64_t timeStamp, bool isLastBuffer,
+    uint8_t *data, std::vector<int> voiceCallList) {
 
     int64_t actualLengthWritten = 0;
     telux::common::ErrorCode ec = telux::common::ErrorCode::SUCCESS;
 
-    if(streamHandle_.isAMR) {
+    if (streamHandle_.isAMR) {
         pipelineLength += 1;
         sendPipelineFull += 1;
-        if(sendPipelineFull%maxPipeLineLen == 0 && (!isLastBuffer) && (pipelineLength>0)){
+        if (sendPipelineFull % maxPipeLineLen == 0 && (!isLastBuffer) && (pipelineLength > 0)) {
             auto audioMsgDispatcher = audioReq->getAudioMsgDispatcher().lock();
             if (!audioMsgDispatcher) {
                 return;
             }
 
-            audioMsgDispatcher->sendWriteResponse(audioReq, ec, streamId, actualLengthWritten,
-                isIncallStream, isHpcmStream);
+            audioMsgDispatcher->sendWriteResponse(
+                audioReq, ec, streamId, actualLengthWritten, isIncallStream, isHpcmStream);
 
             pipelineLength -= 1;
 
@@ -945,11 +934,11 @@ void Stream::doWrite(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
         }
     }
 
-    if(!isIncallStream && !isBtStream && !isHpcmStream) {
-        ec = audioBackend_->write(streamHandle_, data, writeLengthRequested, offset,
-            timeStamp, isLastBuffer, actualLengthWritten);
+    if (!isIncallStream && !isBtStream && !isHpcmStream) {
+        ec = audioBackend_->write(streamHandle_, data, writeLengthRequested, offset, timeStamp,
+            isLastBuffer, actualLengthWritten);
     } else {
-        if(!voiceCallList[streamParams_.config.streamConfig.slotId] && isIncallStream) {
+        if (!voiceCallList[streamParams_.config.streamConfig.slotId] && isIncallStream) {
             ec = telux::common::ErrorCode::SYSTEM_ERR;
         } else {
             actualLengthWritten = writeLengthRequested;
@@ -960,7 +949,7 @@ void Stream::doWrite(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
     /* LOG(DEBUG, __FUNCTION__,
         " data written, strmid: ", streamId, " length ", actualLengthWritten); */
 
-    if(streamHandle_.isAMR && (actualLengthWritten == 0)) {
+    if (streamHandle_.isAMR && (actualLengthWritten == 0)) {
         onWriteReadyEvent(streamId);
     }
 
@@ -969,23 +958,25 @@ void Stream::doWrite(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
         return;
     }
 
-    audioMsgDispatcher->sendWriteResponse(audioReq, ec, streamId, actualLengthWritten,
-        isIncallStream, isHpcmStream);
+    audioMsgDispatcher->sendWriteResponse(
+        audioReq, ec, streamId, actualLengthWritten, isIncallStream, isHpcmStream);
 
     pipelineLength -= 1;
 
-    if(isLastBuffer){
+    if (isLastBuffer) {
         sendPipelineFull = 0;
-        pipelineLength = 0;
+        pipelineLength   = 0;
     }
 }
 
-void Stream::write(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-        uint8_t *data, uint32_t writeLengthRequested, uint32_t offset,
-        int64_t timeStamp, bool isLastBuffer, std::vector<int> &voiceCallList) {
+void Stream::write(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, uint8_t *data,
+    uint32_t writeLengthRequested, uint32_t offset, int64_t timeStamp, bool isLastBuffer,
+    std::vector<int> &voiceCallList) {
 
-    streamTaskExecutor_->submitTask( [=]{ doWrite(audioReq, streamId, writeLengthRequested,
-        offset, timeStamp, isLastBuffer, data, voiceCallList); });
+    streamTaskExecutor_->submitTask([=] {
+        doWrite(audioReq, streamId, writeLengthRequested, offset, timeStamp, isLastBuffer, data,
+            voiceCallList);
+    });
 }
 
 /*
@@ -1013,7 +1004,7 @@ result:
 
 void Stream::drain(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) {
 
-    streamTaskExecutor_->submitTask( [=]{ doDrain(audioReq, streamId); });
+    streamTaskExecutor_->submitTask([=] { doDrain(audioReq, streamId); });
 }
 
 /*
@@ -1041,9 +1032,8 @@ result:
 
 void Stream::flush(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) {
 
-    streamTaskExecutor_->submitTask( [=]{ doFlush(audioReq, streamId); });
+    streamTaskExecutor_->submitTask([=] { doFlush(audioReq, streamId); });
 }
-
 
 /*
  * ADSP/Q6 is about to finish playing audio samples. Inform application about
@@ -1064,9 +1054,8 @@ void Stream::doOnDrainDoneEvent(uint32_t streamId) {
 }
 
 void Stream::onDrainDoneEvent(uint32_t streamId) {
-    streamTaskExecutor_->submitTask( [=]{ doOnDrainDoneEvent(streamId); });
+    streamTaskExecutor_->submitTask([=] { doOnDrainDoneEvent(streamId); });
 }
-
 
 /*
  * ADSP/Q6 just finished playing current buffer. It is not ready to accept the
@@ -1088,15 +1077,15 @@ void Stream::doOnWriteReadyEvent(uint32_t streamId) {
 }
 
 void Stream::onWriteReadyEvent(uint32_t streamId) {
-    streamTaskExecutor_->submitTask( [=]{ doOnWriteReadyEvent(streamId); });
+    streamTaskExecutor_->submitTask([=] { doOnWriteReadyEvent(streamId); });
 }
 
 /*
  * DTMF signal has been detected on a given audio stream. Send this signal
  * to the applcation.
  */
-void Stream::doOnDTMFDetectedEvent(uint32_t streamId, uint32_t lowFreq,
-        uint32_t highFreq, StreamDirection streamDirection) {
+void Stream::doOnDTMFDetectedEvent(
+    uint32_t streamId, uint32_t lowFreq, uint32_t highFreq, StreamDirection streamDirection) {
 
     std::shared_ptr<AudioClient> audioClient;
 
@@ -1107,15 +1096,15 @@ void Stream::doOnDTMFDetectedEvent(uint32_t streamId, uint32_t lowFreq,
         return;
     }
 
-    audioMsgDispatcher->sendDTMFDetectedEvent(audioClient->getClientId(), streamId, lowFreq,
-        highFreq, streamDirection);
+    audioMsgDispatcher->sendDTMFDetectedEvent(
+        audioClient->getClientId(), streamId, lowFreq, highFreq, streamDirection);
 }
 
-void Stream::onDTMFDetectedEvent(uint32_t streamId, uint32_t lowFreq,
-        uint32_t highFreq, StreamDirection streamDirection) {
+void Stream::onDTMFDetectedEvent(
+    uint32_t streamId, uint32_t lowFreq, uint32_t highFreq, StreamDirection streamDirection) {
 
-    streamTaskExecutor_->submitTask( [=]{ doOnDTMFDetectedEvent(streamId,
-        lowFreq, highFreq, streamDirection); });
+    streamTaskExecutor_->submitTask(
+        [=] { doOnDTMFDetectedEvent(streamId, lowFreq, highFreq, streamDirection); });
 }
 
 }  // end of namespace audio

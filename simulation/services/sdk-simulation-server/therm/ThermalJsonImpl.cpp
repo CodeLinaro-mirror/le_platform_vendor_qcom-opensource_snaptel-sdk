@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "ThermalJsonImpl.hpp"
@@ -9,29 +9,27 @@
 #define THERMAL_MANAGER_API_JSON "api/therm/IThermalManager.json"
 #define THERMAL_STATE_JSON "system-info/therm/ThermalState.json"
 
-ThermalJsonImpl::ThermalJsonImpl(){
+ThermalJsonImpl::ThermalJsonImpl() {
     LOG(DEBUG, __FUNCTION__);
 }
 
-ThermalJsonImpl::~ThermalJsonImpl(){
+ThermalJsonImpl::~ThermalJsonImpl() {
     LOG(DEBUG, __FUNCTION__);
 }
 
 telux::common::Status ThermalJsonImpl::readJsonObjects() {
     LOG(DEBUG, __FUNCTION__, ":: State Json Path: ", THERMAL_STATE_JSON,
-            " Api Json Path: ", THERMAL_MANAGER_API_JSON);
+        " Api Json Path: ", THERMAL_MANAGER_API_JSON);
 
-    telux::common::ErrorCode error =
-        JsonParser::readFromJsonFile(thermState_, THERMAL_STATE_JSON);
+    telux::common::ErrorCode error = JsonParser::readFromJsonFile(thermState_, THERMAL_STATE_JSON);
     if (error != telux::common::ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, ":: Reading JSON File failed! " );
+        LOG(ERROR, __FUNCTION__, ":: Reading JSON File failed! ");
         return telux::common::Status::NOSUCH;
     }
 
-    error =
-        JsonParser::readFromJsonFile(thermMgrApi_, THERMAL_MANAGER_API_JSON);
+    error = JsonParser::readFromJsonFile(thermMgrApi_, THERMAL_MANAGER_API_JSON);
     if (error != telux::common::ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, ":: Reading JSON File failed! " );
+        LOG(ERROR, __FUNCTION__, ":: Reading JSON File failed! ");
         return telux::common::Status::NOSUCH;
     }
     return telux::common::Status::SUCCESS;
@@ -74,12 +72,11 @@ telux::therm::TripType ThermalJsonImpl::getTripType(std::string tripType) {
 }
 
 telux::common::Status ThermalJsonImpl::getThermalZones(
-        std::vector<std::shared_ptr<telux::therm::ThermalZoneImpl>> &tZones) {
+    std::vector<std::shared_ptr<telux::therm::ThermalZoneImpl>> &tZones) {
 
-    auto error =
-        JsonParser::readFromJsonFile(thermMgrApi_, THERMAL_MANAGER_API_JSON);
+    auto error = JsonParser::readFromJsonFile(thermMgrApi_, THERMAL_MANAGER_API_JSON);
     if (error != telux::common::ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, ":: Reading JSON File failed! " );
+        LOG(ERROR, __FUNCTION__, ":: Reading JSON File failed! ");
         return telux::common::Status::NOSUCH;
     }
 
@@ -93,12 +90,11 @@ telux::common::Status ThermalJsonImpl::getThermalZones(
 }
 
 telux::common::Status ThermalJsonImpl::getCoolingDevices(
-        std::vector<std::shared_ptr<telux::therm::CoolingDeviceImpl>> &cDevs) {
+    std::vector<std::shared_ptr<telux::therm::CoolingDeviceImpl>> &cDevs) {
 
-    auto error =
-        JsonParser::readFromJsonFile(thermMgrApi_, THERMAL_MANAGER_API_JSON);
+    auto error = JsonParser::readFromJsonFile(thermMgrApi_, THERMAL_MANAGER_API_JSON);
     if (error != telux::common::ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, ":: Reading JSON File failed! " );
+        LOG(ERROR, __FUNCTION__, ":: Reading JSON File failed! ");
         return telux::common::Status::NOSUCH;
     }
 
@@ -115,8 +111,8 @@ telux::common::Status ThermalJsonImpl::getThermalZones() {
 
     auto tzs = thermState_["thermalZones"];
     for (Json::Value tz : tzs) {
-        std::shared_ptr<telux::therm::ThermalZoneImpl> tZone =
-            std::make_shared<telux::therm::ThermalZoneImpl>();
+        std::shared_ptr<telux::therm::ThermalZoneImpl> tZone
+            = std::make_shared<telux::therm::ThermalZoneImpl>();
         tZone->setId(tz["id"].asInt());
         tZone->setDescription(tz["desc"].asString());
         tZone->setCurrentTemp(tz["temp"].asInt());
@@ -124,8 +120,8 @@ telux::common::Status ThermalJsonImpl::getThermalZones() {
         std::vector<std::shared_ptr<telux::therm::TripPointImpl>> tripInfo;
         auto tps = tz["tripPoints"];
         for (Json::Value tp : tps) {
-            std::shared_ptr<telux::therm::TripPointImpl> tripPoint =
-                std::make_shared<telux::therm::TripPointImpl>();
+            std::shared_ptr<telux::therm::TripPointImpl> tripPoint
+                = std::make_shared<telux::therm::TripPointImpl>();
             tripPoint->setType(getTripType(tp["type"].asString()));
             tripPoint->setThresholdTemp(tp["temp"].asInt());
             tripPoint->setHysteresis(tp["hyst"].asInt());
@@ -143,10 +139,10 @@ telux::common::Status ThermalJsonImpl::getThermalZones() {
             std::vector<std::shared_ptr<telux::therm::ITripPoint>> bindingInfo;
             auto bTps = cd["tripPoints"];
             for (auto bTp : bTps) {
-                std::shared_ptr<telux::therm::TripPointImpl> tripPoint =
-                    std::make_shared<telux::therm::TripPointImpl>();
+                std::shared_ptr<telux::therm::TripPointImpl> tripPoint
+                    = std::make_shared<telux::therm::TripPointImpl>();
                 tripPoint->setTZoneId(tZone->getId());
-                for(auto tp : tripInfo) {
+                for (auto tp : tripInfo) {
                     if (tp->getTripId() == bTp["id"].asInt()) {
                         tp->setTZoneId(tZone->getId());
                         bindingInfo.push_back(tp);
@@ -178,18 +174,18 @@ telux::common::Status ThermalJsonImpl::getCoolingDevices() {
     return telux::common::Status::SUCCESS;
 }
 
-telux::common::Status ThermalJsonImpl::getThermalZoneById(int tZoneId,
-        std::shared_ptr<telux::therm::ThermalZoneImpl> &tz) {
+telux::common::Status ThermalJsonImpl::getThermalZoneById(
+    int tZoneId, std::shared_ptr<telux::therm::ThermalZoneImpl> &tz) {
 
     auto status = findId("getThermalZone", tZoneId);
     if (status != telux::common::Status::SUCCESS) {
         return telux::common::Status::NOTALLOWED;
     }
 
-    auto itr = std::find_if(tZoneList_.begin(), tZoneList_.end(), [tZoneId](
-                std::shared_ptr<telux::therm::ThermalZoneImpl> tz)
-            { return (tz->getId() == tZoneId);
-            });
+    auto itr = std::find_if(tZoneList_.begin(), tZoneList_.end(),
+        [tZoneId](std::shared_ptr<telux::therm::ThermalZoneImpl> tz) {
+            return (tz->getId() == tZoneId);
+        });
     if (itr == tZoneList_.end()) {
         return telux::common::Status::FAILED;
     }
@@ -198,19 +194,18 @@ telux::common::Status ThermalJsonImpl::getThermalZoneById(int tZoneId,
     return telux::common::Status::SUCCESS;
 }
 
-
-telux::common::Status ThermalJsonImpl::getCoolingDeviceById(int cDevId,
-        std::shared_ptr<telux::therm::CoolingDeviceImpl> &cDev) {
+telux::common::Status ThermalJsonImpl::getCoolingDeviceById(
+    int cDevId, std::shared_ptr<telux::therm::CoolingDeviceImpl> &cDev) {
 
     auto status = findId("getCoolingDevice", cDevId);
     if (status != telux::common::Status::SUCCESS) {
         return telux::common::Status::NOTALLOWED;
     }
 
-    auto itr = std::find_if(cDevList_.begin(), cDevList_.end(), [cDevId](
-                std::shared_ptr<telux::therm::CoolingDeviceImpl> cd)
-            { return (cd->getId() == cDevId);
-            });
+    auto itr = std::find_if(cDevList_.begin(), cDevList_.end(),
+        [cDevId](std::shared_ptr<telux::therm::CoolingDeviceImpl> cd) {
+            return (cd->getId() == cDevId);
+        });
     if (itr == cDevList_.end()) {
         return telux::common::Status::FAILED;
     }
@@ -221,10 +216,9 @@ telux::common::Status ThermalJsonImpl::getCoolingDeviceById(int cDevId,
 
 telux::common::Status ThermalJsonImpl::findId(std::string api, int id) {
 
-    auto error =
-        JsonParser::readFromJsonFile(thermMgrApi_, THERMAL_MANAGER_API_JSON);
+    auto error = JsonParser::readFromJsonFile(thermMgrApi_, THERMAL_MANAGER_API_JSON);
     if (error != telux::common::ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, ":: Reading JSON File failed! " );
+        LOG(ERROR, __FUNCTION__, ":: Reading JSON File failed! ");
         return telux::common::Status::NOSUCH;
     }
 
@@ -233,16 +227,15 @@ telux::common::Status ThermalJsonImpl::findId(std::string api, int id) {
 
     if (resp["error"].asString() == "SUCCESS") {
         return telux::common::Status::SUCCESS;
-    } else if(resp["error"].asString() == "FAILED") {
+    } else if (resp["error"].asString() == "FAILED") {
         return telux::common::Status::NOTALLOWED;
     }
     return telux::common::Status::NOTALLOWED;
 }
 
 std::map<int, int> ThermalJsonImpl::getCoolingDeviceLevel(
-        int tZoneId, int tripId, int trend, int cDevId) {
-    LOG(DEBUG, __FUNCTION__, "tZoneId: ", tZoneId, ", tripId: ", tripId,
-            ", trend: ", trend);
+    int tZoneId, int tripId, int trend, int cDevId) {
+    LOG(DEBUG, __FUNCTION__, "tZoneId: ", tZoneId, ", tripId: ", tripId, ", trend: ", trend);
 
     // map of cdevId and cDevNextLevel
     std::map<int, int> cDevLevels;

@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -45,16 +45,15 @@ namespace data {
 /** @addtogroup telematics_data
  * @{ */
 
-enum class DualDataUsageRecommendation
-{
-    ALLOWED = 0,            /** Long running data calls on both SIM slots is allowed. */
-    NOT_ALLOWED = 1,        /** Long running data calls are not allowed on both SIM slots.
-                                Data activities must be stopped on the nDDS slot. */
-    NOT_RECOMMENDED = 2,    /** Recommendation is to have long running data calls only on the
-                                DDS SIM slot. In this case, it is expected that data activities
-                                on nDDS SIM slot are stopped. If data activities are continued
-                                on both the slots for longer duration, the performance would be
-                                degraded. */
+enum class DualDataUsageRecommendation {
+    ALLOWED     = 0, /** Long running data calls on both SIM slots is allowed. */
+    NOT_ALLOWED = 1, /** Long running data calls are not allowed on both SIM slots.
+                         Data activities must be stopped on the nDDS slot. */
+    NOT_RECOMMENDED = 2, /** Recommendation is to have long running data calls only on the
+                             DDS SIM slot. In this case, it is expected that data activities
+                             on nDDS SIM slot are stopped. If data activities are continued
+                             on both the slots for longer duration, the performance would be
+                             degraded. */
 };
 
 /**
@@ -67,8 +66,8 @@ enum class DualDataUsageRecommendation
  * @param [in] error         Return code for whether the operation succeeded or failed.
  *
  */
-using RequestCurrentDdsRespCb = std::function<void(DdsInfo currentState,
-    telux::common::ErrorCode error)>;
+using RequestCurrentDdsRespCb
+    = std::function<void(DdsInfo currentState, telux::common::ErrorCode error)>;
 
 /**
  * Specifies which factor should be considered when the modem makes a recommendation of DDS. For
@@ -76,17 +75,17 @@ using RequestCurrentDdsRespCb = std::function<void(DdsInfo currentState,
  * SIM slot which is capable of higher throughput when making a recommendation for DDS.
  */
 enum class DDSRecommendationBasis {
-    THROUGHPUT = 1,     /**< DDS recommendation based on throughput */
-    LATENCY             /**< DDS recommendation based on latency */
+    THROUGHPUT = 1, /**< DDS recommendation based on throughput */
+    LATENCY /**< DDS recommendation based on latency */
 };
 
 /**
  * Configuration for DDS recommendation
  */
 struct DdsSwitchRecommendationConfig {
-    DDSRecommendationBasis recommBasis;     /**< DDS recommendation based on throughput or latency */
-    bool enableTemporaryRecommendations;    /**< Enable recommendations for temporary DDS switches */
-    bool enablePermanentRecommendations;    /**< Enable recommendations for permanent DDS switches */
+    DDSRecommendationBasis recommBasis; /**< DDS recommendation based on throughput or latency */
+    bool enableTemporaryRecommendations; /**< Enable recommendations for temporary DDS switches */
+    bool enablePermanentRecommendations; /**< Enable recommendations for permanent DDS switches */
 };
 
 /**
@@ -94,14 +93,17 @@ struct DdsSwitchRecommendationConfig {
  */
 enum class TemporaryRecommendationType {
     UNKNOWN = 0,
-    REVOKE,     /**< Revoke the previous temporary DDS recommendation sent.
-                    - If not acted on previous recommendation then no need to switch.
-                    - If the client already switched based on the previous temporary recommendation,
-                      switch back. User recommended to switch to SIM slot mentioned in
-                      @ref DdsInfo::slotId.
-                     Actions to be performed upon revocation depend on the specific scenario. For more information about scenarios, refer to @ref TemporaryRecommendationCauseCode. */
-    LOW,        /**< Recommends switching with low priority. Switching will enhance data service quality. */
-    HIGH        /**< Highly recommends switching DDS immediately. Failure to switch will result in loss of data service. */
+    REVOKE, /**< Revoke the previous temporary DDS recommendation sent.
+                - If not acted on previous recommendation then no need to switch.
+                - If the client already switched based on the previous temporary recommendation,
+                  switch back. User recommended to switch to SIM slot mentioned in
+                  @ref DdsInfo::slotId.
+                 Actions to be performed upon revocation depend on the specific scenario. For more
+               information about scenarios, refer to @ref TemporaryRecommendationCauseCode. */
+    LOW, /**< Recommends switching with low priority. Switching will enhance data service quality.
+          */
+    HIGH /**< Highly recommends switching DDS immediately. Failure to switch will result in loss of
+            data service. */
 };
 
 /**
@@ -109,18 +111,58 @@ enum class TemporaryRecommendationType {
  */
 enum TemporaryRecommendationCauseCode {
     TEMP_CAUSE_CODE_UNKNOWN = 0,
-    TEMP_CAUSE_CODE_DSDA_IMPOSSIBLE = (1 << 0), /**< Voice call started on nDDS SIM slot and device is in DSDS mode or moved from DSDA mode to DSDS mode. It is recommended to perform a temporary switch to nDDS SIM slot. */
-    TEMP_CAUSE_CODE_DDS_INTERNET_UNAVAIL = (1 << 1), /**< Device is in DSDA mode, voice call started on nDDS SIM slot and then DDS internet throttled or DDS out of service. It is recommended to perform a temporary switch to nDDS SIM slot. */
-    TEMP_CAUSE_CODE_TX_SHARING = (1 << 2), /**< In DSDA mode, voice call started on nDDS SIM slot and device moved to Tx sharing state. It is recommended to perform a temporary switch to nDDS SIM slot. */
+    TEMP_CAUSE_CODE_DSDA_IMPOSSIBLE
+        = (1 << 0), /**< Voice call started on nDDS SIM slot and device is in DSDS mode or moved
+                       from DSDA mode to DSDS mode. It is recommended to perform a temporary switch
+                       to nDDS SIM slot. */
+    TEMP_CAUSE_CODE_DDS_INTERNET_UNAVAIL
+        = (1 << 1), /**< Device is in DSDA mode, voice call started on nDDS SIM slot and then DDS
+                       internet throttled or DDS out of service. It is recommended to perform a
+                       temporary switch to nDDS SIM slot. */
+    TEMP_CAUSE_CODE_TX_SHARING
+        = (1 << 2), /**< In DSDA mode, voice call started on nDDS SIM slot and device moved to Tx
+                       sharing state. It is recommended to perform a temporary switch to nDDS SIM
+                       slot. */
     // 4th bit (1 << 3) is reserved for future use case
-    TEMP_CAUSE_CODE_CALL_STATUS_CHANGED = (1 << 4), /**< Voice call/e-call ended. Temporary recommendation type will be revoke and it is recommended to do a permanent switch back to original DDS SIM slot i.e., SIM slot specified in the @ref DdsSwitchRecommendation */
-    TEMP_CAUSE_CODE_ACTIVE_CALL_ON_DDS = (1 << 5), /**< There was a voice call on nDDS which caused a temporary recommendation. But now the current DDS voice call is on hold, and there is an active voice call on the original DDS SIM slot for more than 20 seconds. It will result in a temporary recommendation type revoke and the user is expected to perform a temporary switch back to the original DDS. */
-    TEMP_CAUSE_CODE_TEMP_REC_DISABLED = (1 << 6), /**< A temporary recommendation was previously sent (temporary switch to nDDS). Now, temporary DDS switch disabled via @ref configureDdsSwitchRecommendation. This results in a temporary recommendation type revoke as there will be no more temporary recommendations forthcoming. */
+    TEMP_CAUSE_CODE_CALL_STATUS_CHANGED
+        = (1 << 4), /**< Voice call/e-call ended. Temporary recommendation type will be revoke and
+                       it is recommended to do a permanent switch back to original DDS SIM slot
+                       i.e., SIM slot specified in the @ref DdsSwitchRecommendation */
+    TEMP_CAUSE_CODE_ACTIVE_CALL_ON_DDS
+        = (1 << 5), /**< There was a voice call on nDDS which caused a temporary recommendation. But
+                       now the current DDS voice call is on hold, and there is an active voice call
+                       on the original DDS SIM slot for more than 20 seconds. It will result in a
+                       temporary recommendation type revoke and the user is expected to perform a
+                       temporary switch back to the original DDS. */
+    TEMP_CAUSE_CODE_TEMP_REC_DISABLED
+        = (1 << 6), /**< A temporary recommendation was previously sent (temporary switch to nDDS).
+                       Now, temporary DDS switch disabled via @ref configureDdsSwitchRecommendation.
+                       This results in a temporary recommendation type revoke as there will be no
+                       more temporary recommendations forthcoming. */
     // 8th bit (1 << 7) is reserved for future use case
-    TEMP_CAUSE_CODE_NON_DDS_INTERNET_UNAVAIL = (1 << 8), /**< There was a temporary recommendation to switch to nDDS in the past and the user has not acted on it (performed switch) yet. Now conditions have changed as a result of nDDS internet throttling. This results in nDDS no longer being recommended. This cause code comes along with a temporary recommendation type revoke to indicate the previous recommendation is no longer valid. */
-    TEMP_CAUSE_CODE_DATA_OFF = (1 << 9), /**< There was a temporary recommendation to switch to nDDS in the past and the user has not acted on it (performed switch) yet. Now conditions have changed as a result of nDDS data being disabled, or roaming setting being disabled and the device is in a roaming area. This results in nDDS no longer being recommended. This cause code comes along with a temporary recommendation type revoke to indicate the previous recommendation is no longer valid. */
-    TEMP_CAUSE_CODE_EMERGENCY_CALL_ON_GOING = (1 << 10), /**< Emergency call started on nDDS SIM slot. It is recommended to perform a temporary switch to nDDS SIM slot. */
-    TEMP_CAUSE_CODE_DDS_SIM_REMOVED = (1 << 11) /**< As a result of a voice call, there was a temporary recommendation to switch to nDDS in the past. Subsequently, the original DDS SIM slot was removed. Now, after the voice call ends, it will result in this cause code with a revocation of the previous temporary recommendation. The expectation from the user in this case is to perform a permanent switch to nDDS as the DDS SIM slot has been removed. */
+    TEMP_CAUSE_CODE_NON_DDS_INTERNET_UNAVAIL
+        = (1 << 8), /**< There was a temporary recommendation to switch to nDDS in the past and the
+                       user has not acted on it (performed switch) yet. Now conditions have changed
+                       as a result of nDDS internet throttling. This results in nDDS no longer being
+                       recommended. This cause code comes along with a temporary recommendation type
+                       revoke to indicate the previous recommendation is no longer valid. */
+    TEMP_CAUSE_CODE_DATA_OFF
+        = (1 << 9), /**< There was a temporary recommendation to switch to nDDS in the past and the
+                       user has not acted on it (performed switch) yet. Now conditions have changed
+                       as a result of nDDS data being disabled, or roaming setting being disabled
+                       and the device is in a roaming area. This results in nDDS no longer being
+                       recommended. This cause code comes along with a temporary recommendation type
+                       revoke to indicate the previous recommendation is no longer valid. */
+    TEMP_CAUSE_CODE_EMERGENCY_CALL_ON_GOING
+        = (1 << 10), /**< Emergency call started on nDDS SIM slot. It is recommended to perform a
+                        temporary switch to nDDS SIM slot. */
+    TEMP_CAUSE_CODE_DDS_SIM_REMOVED
+        = (1 << 11) /**< As a result of a voice call, there was a temporary recommendation to switch
+                       to nDDS in the past. Subsequently, the original DDS SIM slot was removed.
+                       Now, after the voice call ends, it will result in this cause code with a
+                       revocation of the previous temporary recommendation. The expectation from the
+                       user in this case is to perform a permanent switch to nDDS as the DDS SIM
+                       slot has been removed. */
 };
 
 /**
@@ -133,11 +175,21 @@ using TemporaryRecommendationCauseCodes = uint64_t;
  * Cause code for permanent recommendation.
  */
 enum PermanentRecommendationCauseCode {
-    PERM_CAUSE_CODE_UNKNOWN = 0,                 /**< Unknown cause. */
-    PERM_CAUSE_CODE_TEMP_CLEAN_UP = (1 << 0),    /**< A temporary recommendation was previously sent (temporary switch to nDDS). Now, the modem is evaluating a permanent switch recommendation due to reasons such as the SIM slot being out of service, data being off, or roaming data being off while in a roaming area, etc. It is recommended to make a permanent switch to the SIM slot specified in the @ref DdsSwitchRecommendation. */
-    PERM_CAUSE_CODE_DATA_SETTING_OFF = (1 << 1), /**< Data setting, for example, roaming, is not enabled, and the DDS SIM slot entered a roaming area. */
-    PERM_CAUSE_CODE_PS_INVALID = (1 << 2),       /**< PS (Packet Switching) became invalid, resulting in the internet PDU session being released on the DDS SIM slot. */
-    PERM_CAUSE_CODE_INTERNET_NOT_AVAIL = (1 << 3)/**< The DDS internet is disconnected, and the remaining throttle timer exceeds 1 minute. */
+    PERM_CAUSE_CODE_UNKNOWN = 0, /**< Unknown cause. */
+    PERM_CAUSE_CODE_TEMP_CLEAN_UP
+        = (1 << 0), /**< A temporary recommendation was previously sent (temporary switch to nDDS).
+                       Now, the modem is evaluating a permanent switch recommendation due to reasons
+                       such as the SIM slot being out of service, data being off, or roaming data
+                       being off while in a roaming area, etc. It is recommended to make a permanent
+                       switch to the SIM slot specified in the @ref DdsSwitchRecommendation. */
+    PERM_CAUSE_CODE_DATA_SETTING_OFF
+        = (1 << 1), /**< Data setting, for example, roaming, is not enabled, and the DDS SIM slot
+                       entered a roaming area. */
+    PERM_CAUSE_CODE_PS_INVALID
+        = (1 << 2), /**< PS (Packet Switching) became invalid, resulting in the internet PDU session
+                       being released on the DDS SIM slot. */
+    PERM_CAUSE_CODE_INTERNET_NOT_AVAIL = (1 << 3) /**< The DDS internet is disconnected, and the
+                                                     remaining throttle timer exceeds 1 minute. */
 };
 
 /**
@@ -151,9 +203,9 @@ using PermanentRecommendationCauseCodes = uint64_t;
  * Parameters for permanent and temporary recommendations are mutually exclusive.
  */
 struct RecommendationDetails {
-    TemporaryRecommendationType tempType;             /**< Temporary recommendation type */
-    TemporaryRecommendationCauseCodes tempCause;      /**< Cause code for temporary recommendation */
-    PermanentRecommendationCauseCodes permCause;      /**< Cause code for permanent recommendation */
+    TemporaryRecommendationType tempType; /**< Temporary recommendation type */
+    TemporaryRecommendationCauseCodes tempCause; /**< Cause code for temporary recommendation */
+    PermanentRecommendationCauseCodes permCause; /**< Cause code for permanent recommendation */
 };
 
 /**
@@ -162,15 +214,15 @@ struct RecommendationDetails {
  * action.
  */
 struct DdsSwitchRecommendation {
-    DdsInfo recommendedDdsInfo;                     /**< Recommended DDS information */
-    RecommendationDetails recommendationDetails;    /**< Details indicating the cause for the recommendation */
+    DdsInfo recommendedDdsInfo; /**< Recommended DDS information */
+    RecommendationDetails recommendationDetails; /**< Details indicating the cause for the
+                                                    recommendation */
 };
 
 class IDualDataListener;
 
 class IDualDataManager {
-public:
-
+ public:
     /**
      * Checks the status of the DualDataManager object and returns the result.
      *
@@ -210,8 +262,9 @@ public:
      * @returns Status of requestDdsSwitch, i.e., success or suitable status code.
      *
      */
-    virtual telux::common::Status requestDdsSwitch(DdsInfo request,
-        telux::common::ResponseCallback callback = nullptr) = 0;
+    virtual telux::common::Status requestDdsSwitch(
+        DdsInfo request, telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Request the current DDS slot information.
@@ -264,7 +317,8 @@ public:
      *          and could break backwards compatibility.
      */
     virtual telux::common::ErrorCode getDualDataUsageRecommendation(
-        DualDataUsageRecommendation &recommendation) = 0;
+        DualDataUsageRecommendation &recommendation)
+        = 0;
 
     /**
      * Configure DDS recommendation.
@@ -284,7 +338,8 @@ public:
      *
      */
     virtual telux::common::ErrorCode configureDdsSwitchRecommendation(
-        const DdsSwitchRecommendationConfig ddsSwitchRecommendationConfig) = 0;
+        const DdsSwitchRecommendationConfig ddsSwitchRecommendationConfig)
+        = 0;
 
     /**
      * Request the current default data subscription (DDS) SIM slot recommendation.
@@ -311,7 +366,8 @@ public:
      * backwards compatibility.
      */
     virtual telux::common::ErrorCode getDdsSwitchRecommendation(
-        DdsSwitchRecommendation &ddsSwitchRecommendation) = 0;
+        DdsSwitchRecommendation &ddsSwitchRecommendation)
+        = 0;
 
     /**
      * Registers with the DualDataManager as a listener for service status and other events.
@@ -322,8 +378,7 @@ public:
      * @returns Status of registerListener.
      *
      */
-    virtual telux::common::Status registerListener(
-        std::weak_ptr<IDualDataListener> listener) = 0;
+    virtual telux::common::Status registerListener(std::weak_ptr<IDualDataListener> listener) = 0;
 
     /**
      * Removes a previously added listener.
@@ -333,8 +388,7 @@ public:
      * @returns Status of deregisterListener.
      *
      */
-    virtual telux::common::Status deregisterListener(
-        std::weak_ptr<IDualDataListener> listener) = 0;
+    virtual telux::common::Status deregisterListener(std::weak_ptr<IDualDataListener> listener) = 0;
 
     /**
      * Destructor for IDualDataManager
@@ -343,13 +397,14 @@ public:
 };
 
 class IDualDataListener : public telux::common::ISDKListener {
-public:
+ public:
     /**
      * This function is called when the service status changes.
      *
      * @param [in] status - @ref ServiceStatus
      */
-    virtual void onServiceStatusChange(telux::common::ServiceStatus status) {}
+    virtual void onServiceStatusChange(telux::common::ServiceStatus status) {
+    }
 
     /**
      * Provides the current DDS state and is called whenever a DDS switch occurs.
@@ -358,7 +413,8 @@ public:
      *                               - Slot ID on which the DDS switch occurred.
      *                               - DDS switch type @ref telux::data::DdsType.
      */
-    virtual void onDdsChange(DdsInfo currentState) {}
+    virtual void onDdsChange(DdsInfo currentState) {
+    }
 
     /**
      * This function is called when the dual data capability changes.
@@ -366,7 +422,8 @@ public:
      * @param [in] isDualDataCapable - Dual data capability.
      *
      */
-    virtual void onDualDataCapabilityChange(bool isDualDataCapable) {}
+    virtual void onDualDataCapabilityChange(bool isDualDataCapable) {
+    }
 
     /**
      * This function is called when the dual data usage recommendation changes.
@@ -374,8 +431,8 @@ public:
      * @param [in] recommendation - Provides dual data usage recommendation.
      *
      */
-    virtual void onDualDataUsageRecommendationChange(
-        DualDataUsageRecommendation recommendation) {}
+    virtual void onDualDataUsageRecommendationChange(DualDataUsageRecommendation recommendation) {
+    }
 
     /**
      * This function is called when the DDS (Default Data Subscription) recommendation
@@ -392,13 +449,15 @@ public:
      * @note Eval: This is a new indication and is being evaluated. It is subject to change and
      * could break backwards compatibility.
      */
-    virtual void onDdsSwitchRecommendation(const DdsSwitchRecommendation ddsSwitchRecommendation) {}
+    virtual void onDdsSwitchRecommendation(const DdsSwitchRecommendation ddsSwitchRecommendation) {
+    }
 
-    virtual ~IDualDataListener() {}
+    virtual ~IDualDataListener() {
+    }
 };
 
 /** @} */ /* end_addtogroup telematics_data */
 }  // namespace data
 }  // namespace telux
 
-#endif  //TELUX_DUAL_DATA_MANAGER_HPP
+#endif  // TELUX_DUAL_DATA_MANAGER_HPP

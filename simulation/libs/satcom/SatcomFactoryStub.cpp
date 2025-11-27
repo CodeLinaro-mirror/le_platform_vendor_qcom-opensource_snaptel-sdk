@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "SatcomFactoryStub.hpp"
@@ -42,11 +42,11 @@ SatcomFactory &SatcomFactory::getInstance() {
 std::shared_ptr<INtnManager> SatcomFactoryStub::getNtnManager(
     telux::common::InitResponseCb clientCallback) {
     std::function<std::shared_ptr<telux::satcom::INtnManager>(telux::common::InitResponseCb)>
-        createAndInit = [this](telux::common::InitResponseCb initCb)
-        -> std::shared_ptr<telux::satcom::INtnManager> {
+        createAndInit
+        = [this](
+              telux::common::InitResponseCb initCb) -> std::shared_ptr<telux::satcom::INtnManager> {
         std::shared_ptr<telux::satcom::NtnManagerStub> manager
-            = std::make_shared<telux::satcom::NtnManagerStub>(
-              );
+            = std::make_shared<telux::satcom::NtnManagerStub>();
         if (manager && telux::common::Status::SUCCESS != manager->init(initCb)) {
             LOG(ERROR, __FUNCTION__, " DataFactory unable to initialize Ntn Manager");
             return nullptr;

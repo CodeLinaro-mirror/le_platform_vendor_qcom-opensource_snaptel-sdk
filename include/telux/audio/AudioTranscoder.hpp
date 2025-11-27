@@ -1,65 +1,36 @@
 /*
-*  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
-*
-*  Redistribution and use in source and binary forms, with or without
-*  modification, are permitted provided that the following conditions are
-*  met:
-*    * Redistributions of source code must retain the above copyright
-*      notice, this list of conditions and the following disclaimer.
-*    * Redistributions in binary form must reproduce the above
-*      copyright notice, this list of conditions and the following
-*      disclaimer in the documentation and/or other materials provided
-*      with the distribution.
-*    * Neither the name of The Linux Foundation nor the names of its
-*      contributors may be used to endorse or promote products derived
-*      from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
-*  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-*  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
-*  ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
-*  BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-*  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-*  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
-*  BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-*  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-*  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
-*  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions are
+ *  met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above
+ *      copyright notice, this list of conditions and the following
+ *      disclaimer in the documentation and/or other materials provided
+ *      with the distribution.
+ *    * Neither the name of The Linux Foundation nor the names of its
+ *      contributors may be used to endorse or promote products derived
+ *      from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
+ *  ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+ *  BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ *  BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -98,8 +69,8 @@ class IAudioBuffer;
  * @param [in] error        @ref telux::common::ErrorCode::SUCCESS if the transcoding
  *                          was successful, an appropriate error code otherwise
  */
-using TranscoderReadResponseCb = std::function<void(std::shared_ptr<IAudioBuffer> buffer,
-        uint32_t isLastBuffer, telux::common::ErrorCode error)>;
+using TranscoderReadResponseCb = std::function<void(
+    std::shared_ptr<IAudioBuffer> buffer, uint32_t isLastBuffer, telux::common::ErrorCode error)>;
 
 /**
  * Called when the compressed data has been sent for transcoding. Used with
@@ -114,8 +85,8 @@ using TranscoderReadResponseCb = std::function<void(std::shared_ptr<IAudioBuffer
  * @param [in] error        @ref telux::common::ErrorCode::SUCCESS if the data was sent
  *                          successfully, an appropriate error code otherwise
  */
-using TranscoderWriteResponseCb = std::function<void(std::shared_ptr<IAudioBuffer> buffer,
-        uint32_t bytesWritten, telux::common::ErrorCode error)>;
+using TranscoderWriteResponseCb = std::function<void(
+    std::shared_ptr<IAudioBuffer> buffer, uint32_t bytesWritten, telux::common::ErrorCode error)>;
 
 /**
  *  Provides the methods for transcoding the compressed audio data.
@@ -147,13 +118,15 @@ class ITranscoder {
      *
      * @param [in] isLastBuffer  Marks that this is the last chunk of the data to transcode
      *
-     * @param [in] callback      Optional, invoked to pass the status of pushing the data in the pipeline
+     * @param [in] callback      Optional, invoked to pass the status of pushing the data in the
+     * pipeline
      *
      * @returns @ref telux::common::Status::SUCCESS if the data is sent, otherwise,
      *          an appropriate error code
      */
-    virtual telux::common::Status write(std::shared_ptr<IAudioBuffer> buffer,
-        uint32_t isLastBuffer, TranscoderWriteResponseCb callback = nullptr) = 0;
+    virtual telux::common::Status write(std::shared_ptr<IAudioBuffer> buffer, uint32_t isLastBuffer,
+        TranscoderWriteResponseCb callback = nullptr)
+        = 0;
 
     /**
      * Destroys the ITranscoder instance created with @ref IAudioManager::createTranscoder().
@@ -164,8 +137,7 @@ class ITranscoder {
      * @returns @ref telux::common::Status::SUCCESS if the teardown was initiated,
      *          otherwise, an appropriate error code
      */
-    virtual telux::common::Status tearDown(
-        telux::common::ResponseCallback callback = nullptr) = 0;
+    virtual telux::common::Status tearDown(telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
      * Initiates a read request to fetch the transcoded data. Transcoded data will be by the
@@ -180,8 +152,9 @@ class ITranscoder {
      * @returns @ref telux::common::Status::SUCCESS if the request is sent,
      *          otherwise, an appropriate error code
      */
-    virtual telux::common::Status read(std::shared_ptr<IAudioBuffer> buffer,
-        uint32_t bytesToRead, TranscoderReadResponseCb callback = nullptr) = 0;
+    virtual telux::common::Status read(std::shared_ptr<IAudioBuffer> buffer, uint32_t bytesToRead,
+        TranscoderReadResponseCb callback = nullptr)
+        = 0;
 
     /**
      * Registers the given listener to know 'when the pipeline is ready to accept the next buffer'
@@ -193,8 +166,7 @@ class ITranscoder {
      * @returns @ref telux::common::Status::SUCCESS if the listener is registered,
      *          otherwise, an appropriate error code
      */
-    virtual telux::common::Status registerListener(
-        std::weak_ptr<ITranscodeListener> listener) = 0;
+    virtual telux::common::Status registerListener(std::weak_ptr<ITranscodeListener> listener) = 0;
 
     /**
      * Unregisters the given listener registered with @ref ITranscoder::registerListener().
@@ -204,13 +176,13 @@ class ITranscoder {
      * @returns @ref telux::common::Status::SUCCESS if the listener is unregistered,
      *          otherwise, an appropriate error code
      */
-    virtual telux::common::Status deRegisterListener(
-        std::weak_ptr<ITranscodeListener> listener) = 0;
+    virtual telux::common::Status deRegisterListener(std::weak_ptr<ITranscodeListener> listener)
+        = 0;
 
     /**
      * Destructor of the ITranscoder.
      */
-    virtual ~ITranscoder() {};
+    virtual ~ITranscoder(){};
 };
 
 /** @} */ /* end_addtogroup telematics_audio_transcoder */
@@ -218,4 +190,4 @@ class ITranscoder {
 }  // End of namespace audio
 }  // End of namespace telux
 
-#endif // TELUX_AUDIO_AUDIOTRANSCODER_HPP
+#endif  // TELUX_AUDIO_AUDIOTRANSCODER_HPP

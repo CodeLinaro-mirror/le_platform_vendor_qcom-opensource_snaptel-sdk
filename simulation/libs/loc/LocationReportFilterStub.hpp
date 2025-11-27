@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef LOCATIONREPORTFILTER_HPP
@@ -25,13 +25,13 @@ enum class ReportType {
 };
 
 class TimeWindow {
-public:
+ public:
     TimeWindow(uint64_t timeInterval);
     bool isInWindow(const uint64_t currentTimestamp);
     void setTimeInterval(uint64_t timeInterval);
     void resetWindow();
 
-private:
+ private:
     bool isTimeStampValid();
     void updateTimeStamp(uint64_t timestamp);
     uint32_t timeInterval_;
@@ -40,7 +40,7 @@ private:
 };
 
 class LocationReportFilter {
-public:
+ public:
     LocationReportFilter();
     Status startReportFilter(uint64_t timeInterval, ReportType reportType);
     /* returns a boolean which conveys the following:
@@ -49,12 +49,13 @@ public:
      */
     bool isReportIgnored(const uint64_t timestamp, const ReportType reportType);
     void resetAllFilters();
-private:
+
+ private:
     std::map<ReportType, std::shared_ptr<TimeWindow>> windows_;
     std::mutex mutex_;
 };
 
-} // end of namespace loc
-} // end of namespace telux
+}  // end of namespace loc
+}  // end of namespace telux
 
-#endif // end of LOCATIONREPORTFILTER_HPP
+#endif  // end of LOCATIONREPORTFILTER_HPP

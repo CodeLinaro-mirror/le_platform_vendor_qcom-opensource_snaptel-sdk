@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <iostream>
@@ -20,7 +20,7 @@
  * Constructor.
  */
 DiagODLApp::DiagODLApp(std::string appName, std::string cursor)
-    : ConsoleApp(appName, cursor) {
+   : ConsoleApp(appName, cursor) {
 }
 
 /*
@@ -37,7 +37,7 @@ void DiagODLApp::fileMethodMenu() {
 
     try {
         fileMenu = std::make_shared<FileMethod>("File method", "file> ", diagMgr_);
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "can't allocate FileMethod" << std::endl;
         return;
     }
@@ -54,7 +54,7 @@ void DiagODLApp::callbackMethodMenu() {
 
     try {
         cbMenu = std::make_shared<CallbackMethod>("Callback method", "callback> ", diagMgr_);
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "can't allocate CallbackMethod" << std::endl;
         return;
     }
@@ -72,17 +72,14 @@ void DiagODLApp::callbackMethodMenu() {
  */
 void DiagODLApp::showMainMenu() {
 
-    std::shared_ptr<ConsoleAppCommand> fileMethod = std::make_shared<
-        ConsoleAppCommand>(ConsoleAppCommand("1", "File method", {},
-        std::bind(&DiagODLApp::fileMethodMenu, this)));
+    std::shared_ptr<ConsoleAppCommand> fileMethod = std::make_shared<ConsoleAppCommand>(
+        ConsoleAppCommand("1", "File method", {}, std::bind(&DiagODLApp::fileMethodMenu, this)));
 
-    std::shared_ptr<ConsoleAppCommand> callbackMethod = std::make_shared<
-        ConsoleAppCommand>(ConsoleAppCommand("2", "Callback method", {},
-        std::bind(&DiagODLApp::callbackMethodMenu, this)));
+    std::shared_ptr<ConsoleAppCommand> callbackMethod
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "2", "Callback method", {}, std::bind(&DiagODLApp::callbackMethodMenu, this)));
 
-    std::vector<std::shared_ptr<ConsoleAppCommand>> mainCmds = {
-        fileMethod, callbackMethod
-    };
+    std::vector<std::shared_ptr<ConsoleAppCommand>> mainCmds = {fileMethod, callbackMethod};
 
     ConsoleApp::addCommands(mainCmds);
     ConsoleApp::displayMenu();
@@ -98,9 +95,7 @@ int DiagODLApp::init() {
     auto &diagFactory = telux::platform::diag::DiagnosticsFactory::getInstance();
 
     diagMgr_ = diagFactory.getDiagLogManager(
-        [&p](telux::common::ServiceStatus srvStatus) {
-            p.set_value(srvStatus);
-    });
+        [&p](telux::common::ServiceStatus srvStatus) { p.set_value(srvStatus); });
 
     if (!diagMgr_) {
         std::cout << "Can't get IDiagLogManager" << std::endl;
@@ -109,8 +104,8 @@ int DiagODLApp::init() {
 
     srvStatus = p.get_future().get();
     if (srvStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "Diag service unavailable, status " <<
-            static_cast<int>(srvStatus) << std::endl;
+        std::cout << "Diag service unavailable, status " << static_cast<int>(srvStatus)
+                  << std::endl;
         return -EIO;
     }
 
@@ -122,14 +117,13 @@ int DiagODLApp::init() {
  */
 int main(int argc, char **argv) {
 
-    auto sdkVersion = telux::common::Version::getSdkVersion();
+    auto sdkVersion            = telux::common::Version::getSdkVersion();
     std::string sdkReleaseName = telux::common::Version::getReleaseName();
 
-    std::string appName = "Diag ODL console app - SDK v"
-                            + std::to_string(sdkVersion.major) + "."
-                            + std::to_string(sdkVersion.minor) + "."
-                            + std::to_string(sdkVersion.patch) + "\n"
-                            + "Release name: " + sdkReleaseName;
+    std::string appName = "Diag ODL console app - SDK v" + std::to_string(sdkVersion.major) + "."
+                          + std::to_string(sdkVersion.minor) + "."
+                          + std::to_string(sdkVersion.patch) + "\n"
+                          + "Release name: " + sdkReleaseName;
 
     auto diagOdlApp = std::make_shared<DiagODLApp>(appName, "diag> ");
 

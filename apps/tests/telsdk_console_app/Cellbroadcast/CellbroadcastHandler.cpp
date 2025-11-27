@@ -27,52 +27,57 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include "CellbroadcastHandler.hpp"
 #include "Utils.hpp"
 
 #define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
 
 void CellbroadcastCallbackHandler::requestMsgFilterResponse(
-    std::vector<telux::tel::CellBroadcastFilter> filters,
-    telux::common::ErrorCode errorCode) {
+    std::vector<telux::tel::CellBroadcastFilter> filters, telux::common::ErrorCode errorCode) {
     if (errorCode == telux::common::ErrorCode::SUCCESS) {
         PRINT_CB << "Request for get message filters executed successfully" << std::endl;
         for (int index = 0; index < filters.size(); index++) {
-            PRINT_CB << "Filter: " << index + 1 << ", StartMsgId: " <<
-            filters[index].startMessageId << ", EndMsgId: " <<
-            filters[index].endMessageId << std::endl;
+            PRINT_CB << "Filter: " << index + 1 << ", StartMsgId: " << filters[index].startMessageId
+                     << ", EndMsgId: " << filters[index].endMessageId << std::endl;
         }
     } else {
-        PRINT_CB << "Request for message filters failed, ErrorCode: " <<static_cast<int>(errorCode)
-                 << " description : " << Utils::getErrorCodeAsString(errorCode)<< std::endl;
+        PRINT_CB << "Request for message filters failed, ErrorCode: " << static_cast<int>(errorCode)
+                 << " description : " << Utils::getErrorCodeAsString(errorCode) << std::endl;
     }
 }
 
 void CellbroadcastCallbackHandler::updateMsgFilterResponse(telux::common::ErrorCode error) {
-    if(error == telux::common::ErrorCode::SUCCESS) {
+    if (error == telux::common::ErrorCode::SUCCESS) {
         PRINT_CB << "Update message filter request executed successfully" << std::endl;
     } else {
         PRINT_CB << "Update message filter request failed, errorCode: " << static_cast<int>(error)
-            << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+                 << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     }
 }
 
 void CellbroadcastCallbackHandler::setActivationStatusResponse(telux::common::ErrorCode error) {
-    if(error == telux::common::ErrorCode::SUCCESS) {
+    if (error == telux::common::ErrorCode::SUCCESS) {
         PRINT_CB << "Set Activation status request executed successfully" << std::endl;
     } else {
         PRINT_CB << "Set Activation status request failed, errorCode: " << static_cast<int>(error)
-            << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+                 << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     }
 }
 
-void CellbroadcastCallbackHandler::requestActivationStatusResponse(bool isActivated,
-    telux::common::ErrorCode errorCode) {
+void CellbroadcastCallbackHandler::requestActivationStatusResponse(
+    bool isActivated, telux::common::ErrorCode errorCode) {
     if (errorCode == telux::common::ErrorCode::SUCCESS) {
         PRINT_CB << "Request for get activation status executed successfully" << std::endl;
-        PRINT_CB << "isActivated : " << isActivated <<std::endl;
+        PRINT_CB << "isActivated : " << isActivated << std::endl;
     } else {
-        PRINT_CB << "Request for activation status failed, ErrorCode: " <<static_cast<int>(errorCode)
-                 << " description : " << Utils::getErrorCodeAsString(errorCode)<< std::endl;
+        PRINT_CB
+            << "Request for activation status failed, ErrorCode: " << static_cast<int>(errorCode)
+            << " description : " << Utils::getErrorCodeAsString(errorCode) << std::endl;
     }
 }

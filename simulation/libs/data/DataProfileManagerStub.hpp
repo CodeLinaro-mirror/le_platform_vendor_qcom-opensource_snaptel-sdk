@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef DATA_PROFILE_MANAGER_STUB_HPP
@@ -18,10 +18,8 @@ using dataStub::DataProfileManager;
 namespace telux {
 namespace data {
 
-class DataProfileManagerStub : public IDataProfileManager,
-                               public IDataProfileListener {
-public:
-
+class DataProfileManagerStub : public IDataProfileManager, public IDataProfileListener {
+ public:
     DataProfileManagerStub(SlotId slotId, telux::common::InitResponseCb clientCallback);
     ~DataProfileManagerStub();
 
@@ -40,27 +38,26 @@ public:
         std::shared_ptr<IDataProfileListCallback> callback = nullptr) override;
     telux::common::Status requestProfile(uint8_t profileId, TechPreference techPreference,
         std::shared_ptr<IDataProfileCallback> callback = nullptr) override;
-    telux::common::Status
-        requestProfileList(std::shared_ptr<IDataProfileListCallback> callback
-        = nullptr) override;
+    telux::common::Status requestProfileList(
+        std::shared_ptr<IDataProfileListCallback> callback = nullptr) override;
 
     int getSlotId() override;
 
     telux::common::Status registerListener(
-      std::weak_ptr<telux::data::IDataProfileListener> listener) override;
+        std::weak_ptr<telux::data::IDataProfileListener> listener) override;
     telux::common::Status deregisterListener(
-      std::weak_ptr<telux::data::IDataProfileListener> listener) override;
+        std::weak_ptr<telux::data::IDataProfileListener> listener) override;
 
-    void onProfileUpdate(int profileId,
-        TechPreference techPreference, ProfileChangeEvent event) override;
+    void onProfileUpdate(
+        int profileId, TechPreference techPreference, ProfileChangeEvent event) override;
     telux::common::Status cleanup();
 
-private:
+ private:
     std::mutex initMtx_;
     std::mutex mtx_;
     std::condition_variable cv_;
     SlotId slotId_ = DEFAULT_SLOT_ID;
-    bool ready_ = false;
+    bool ready_    = false;
     telux::common::ServiceStatus subSystemStatus_;
 
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
@@ -79,7 +76,7 @@ private:
     static telux::data::ApnTypes convertApnTypeStringToEnum(std::string apn);
 };
 
-} // end of namespace data
-} // end of namespace telux
+}  // end of namespace data
+}  // end of namespace telux
 
-#endif // DATA_PROFILE_MANAGER_STUB_HPP
+#endif  // DATA_PROFILE_MANAGER_STUB_HPP

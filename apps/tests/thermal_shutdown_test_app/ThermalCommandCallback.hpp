@@ -26,9 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -42,17 +43,17 @@
 using namespace telux::therm;
 
 class ThermalCommandCallback : public telux::common::ICommandResponseCallback {
-public:
-   ThermalCommandCallback(std::string cmdName);
-   void commandResponse(telux::common::ErrorCode error);
-   void getCmdResponse(AutoShutdownMode state);
-   std::future<bool> getPromValue();
-   std::future<bool> commandResponseStatus();
+ public:
+    ThermalCommandCallback(std::string cmdName);
+    void commandResponse(telux::common::ErrorCode error);
+    void getCmdResponse(AutoShutdownMode state);
+    std::future<bool> getPromValue();
+    std::future<bool> commandResponseStatus();
 
-private:
-   std::promise<bool> prom_;
-   std::promise<bool> respStatusProm_;
-   std::string commandName_;
+ private:
+    std::promise<bool> prom_;
+    std::promise<bool> respStatusProm_;
+    std::string commandName_;
 };
 
 #endif  // THERMALCOMMANDCALLACK_HPP

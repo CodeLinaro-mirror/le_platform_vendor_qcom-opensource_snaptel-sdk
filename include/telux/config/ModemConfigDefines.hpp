@@ -26,19 +26,20 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
-* @file       ModemConfigDefines.hpp
-*
-* @brief      ModemConfigDefines contains enumerations and variables used for
-*             modem config subsystem.
-*
-*/
+ * @file       ModemConfigDefines.hpp
+ *
+ * @brief      ModemConfigDefines contains enumerations and variables used for
+ *             modem config subsystem.
+ *
+ */
 
 #include <telux/common/CommonDefines.hpp>
 
@@ -61,9 +62,9 @@ enum class ConfigType {
 };
 
 struct ConfigInfo {
-    ConfigId id;  /**< stores the id of the configuration */
+    ConfigId id; /**< stores the id of the configuration */
     ConfigType type; /**< stores config type */
-    uint32_t size;   /**< stores the size of the configuration */
+    uint32_t size; /**< stores the size of the configuration */
     std::string desc; /**< stores the configuration description */
     uint32_t version; /**< stores version of the config file */
 };
@@ -85,10 +86,9 @@ enum class ConfigUpdateStatus {
     COMPLETE, /**< end of updation process */
 };
 
-
 /** @} */ /* end_addtogroup telematics_config_manager */
 }  // end of namespace config
 
 }  // end of namespace telux
 
-#endif // TELUX_CONFIG_MODEMCONFIGDEFINES_HPP
+#endif  // TELUX_CONFIG_MODEMCONFIGDEFINES_HPP

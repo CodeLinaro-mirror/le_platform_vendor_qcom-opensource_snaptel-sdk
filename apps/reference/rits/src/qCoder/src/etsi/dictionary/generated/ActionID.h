@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_ActionID_H_
-#define	_ActionID_H_
-
+#ifndef _ActionID_H_
+#define _ActionID_H_
 
 #include <asn_application.h>
 
@@ -22,11 +21,11 @@ extern "C" {
 
 /* ActionID */
 typedef struct ActionID {
-	StationID_t	 originatingStationID;
-	SequenceNumber_t	 sequenceNumber;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    StationID_t originatingStationID;
+    SequenceNumber_t sequenceNumber;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } ActionID_t;
 
 /* Implementation */
@@ -36,5 +35,5 @@ extern asn_TYPE_descriptor_t asn_DEF_ActionID;
 }
 #endif
 
-#endif	/* _ActionID_H_ */
+#endif /* _ActionID_H_ */
 #include <asn_internal.h>

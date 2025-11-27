@@ -28,10 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <iostream>
@@ -41,63 +40,62 @@
 
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
-void ImsSettingsListener::onImsServiceConfigsChange(SlotId slotId,
-    telux::tel::ImsServiceConfig config) {
-    PRINT_NOTIFICATION << "onImsServiceConfigChange, SlotId: " << static_cast<int>(slotId)
-                       << "\n";
-    //For VOIMS configuration
+void ImsSettingsListener::onImsServiceConfigsChange(
+    SlotId slotId, telux::tel::ImsServiceConfig config) {
+    PRINT_NOTIFICATION << "onImsServiceConfigChange, SlotId: " << static_cast<int>(slotId) << "\n";
+    // For VOIMS configuration
     if (config.configValidityMask[telux::tel::ImsServiceConfigType::IMSSETTINGS_VOIMS]) {
-       if (config.voImsEnabled) {
-           PRINT_NOTIFICATION << "VOIMS is enabled \n";
-       } else {
-           PRINT_NOTIFICATION << "VOIMS is disabled \n";
-       }
+        if (config.voImsEnabled) {
+            PRINT_NOTIFICATION << "VOIMS is enabled \n";
+        } else {
+            PRINT_NOTIFICATION << "VOIMS is disabled \n";
+        }
     }
-    //For IMS service configuration
+    // For IMS service configuration
     if (config.configValidityMask[telux::tel::ImsServiceConfigType::IMSSETTINGS_IMS_SERVICE]) {
-       if (config.imsServiceEnabled) {
-           PRINT_NOTIFICATION << "IMS service is enabled \n";
-       } else {
-           PRINT_NOTIFICATION << "IMS service is disabled \n";
-       }
+        if (config.imsServiceEnabled) {
+            PRINT_NOTIFICATION << "IMS service is enabled \n";
+        } else {
+            PRINT_NOTIFICATION << "IMS service is disabled \n";
+        }
     }
-    //For SMS over IMS configuration
+    // For SMS over IMS configuration
     if (config.configValidityMask[telux::tel::ImsServiceConfigType::IMSSETTINGS_SMS]) {
-       if (config.smsEnabled) {
-           PRINT_NOTIFICATION << "SMS over IMS is enabled \n";
-       } else {
-           PRINT_NOTIFICATION << "SMS over IMS is disabled \n";
-       }
+        if (config.smsEnabled) {
+            PRINT_NOTIFICATION << "SMS over IMS is enabled \n";
+        } else {
+            PRINT_NOTIFICATION << "SMS over IMS is disabled \n";
+        }
     }
-    //For RTT configuration
+    // For RTT configuration
     if (config.configValidityMask[telux::tel::ImsServiceConfigType::IMSSETTINGS_RTT]) {
-       if (config.rttEnabled) {
-           PRINT_NOTIFICATION << "RTT is enabled \n";
-       } else {
-           PRINT_NOTIFICATION << "RTT is disabled \n";
-       }
+        if (config.rttEnabled) {
+            PRINT_NOTIFICATION << "RTT is enabled \n";
+        } else {
+            PRINT_NOTIFICATION << "RTT is disabled \n";
+        }
     }
 }
 
 // Notify ImsSettingsManager subsystem status
 void ImsSettingsListener::onServiceStatusChange(telux::common::ServiceStatus status) {
-   std::string stat = "";
-   switch(status) {
-      case telux::common::ServiceStatus::SERVICE_AVAILABLE:
-         stat = " SERVICE_AVAILABLE";
-         break;
-      case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
-         stat =  " SERVICE_UNAVAILABLE";
-         break;
-      default:
-         stat = " Unknown service status";
-         break;
-   }
-   PRINT_NOTIFICATION << " IMS Settings onServiceStatusChange" << stat << "\n";
+    std::string stat = "";
+    switch (status) {
+        case telux::common::ServiceStatus::SERVICE_AVAILABLE:
+            stat = " SERVICE_AVAILABLE";
+            break;
+        case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
+            stat = " SERVICE_UNAVAILABLE";
+            break;
+        default:
+            stat = " Unknown service status";
+            break;
+    }
+    PRINT_NOTIFICATION << " IMS Settings onServiceStatusChange" << stat << "\n";
 }
 
 void ImsSettingsListener::onImsSipUserAgentChange(SlotId slotId, std::string sipUserAgent) {
 
-   PRINT_NOTIFICATION << " IMS SIP user agent is " << sipUserAgent << " on slot "
-      << static_cast<int>(slotId) << "\n";
+    PRINT_NOTIFICATION << " IMS SIP user agent is " << sipUserAgent << " on slot "
+                       << static_cast<int>(slotId) << "\n";
 }

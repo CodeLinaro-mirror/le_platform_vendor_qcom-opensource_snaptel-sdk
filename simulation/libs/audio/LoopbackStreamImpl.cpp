@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "common/Logger.hpp"
@@ -10,9 +10,9 @@
 namespace telux {
 namespace audio {
 
-LoopbackStreamImpl::LoopbackStreamImpl(uint32_t streamId,
-        std::shared_ptr<ICommunicator> transportClient)
-            : AudioStreamImpl(streamId, StreamType::LOOPBACK, transportClient) {
+LoopbackStreamImpl::LoopbackStreamImpl(
+    uint32_t streamId, std::shared_ptr<ICommunicator> transportClient)
+   : AudioStreamImpl(streamId, StreamType::LOOPBACK, transportClient) {
 }
 
 LoopbackStreamImpl::~LoopbackStreamImpl() {
@@ -23,8 +23,7 @@ LoopbackStreamImpl::~LoopbackStreamImpl() {
  * The loopback-type stream was created using createStream() API. This method
  * starts actual loopback operation at physical level.
  */
-telux::common::Status LoopbackStreamImpl::startLoopback(
-        telux::common::ResponseCallback callback) {
+telux::common::Status LoopbackStreamImpl::startLoopback(telux::common::ResponseCallback callback) {
 
     intptr_t cmdId;
     telux::common::Status status;
@@ -34,8 +33,8 @@ telux::common::Status LoopbackStreamImpl::startLoopback(
         cmdId = cmdCallbackMgr_.addCallback(callback);
     }
 
-    status = transportClient_->startStream(streamId_,
-            downcasted_shared_from_this<LoopbackStreamImpl>(), cmdId);
+    status = transportClient_->startStream(
+        streamId_, downcasted_shared_from_this<LoopbackStreamImpl>(), cmdId);
 
     if (status != telux::common::Status::SUCCESS && callback) {
         cmdCallbackMgr_.findAndRemoveCallback(cmdId);
@@ -49,8 +48,8 @@ telux::common::Status LoopbackStreamImpl::startLoopback(
  * LoopbackStreamImpl::startLoopback() invocation, it calls that callback
  * method otherwise simply drops the result.
  */
-void LoopbackStreamImpl::onStreamStartResult(telux::common::ErrorCode ec,
-        uint32_t streamId, int cmdId) {
+void LoopbackStreamImpl::onStreamStartResult(
+    telux::common::ErrorCode ec, uint32_t streamId, int cmdId) {
 
     std::shared_ptr<telux::common::ICommandCallback> resultListener;
 
@@ -65,8 +64,7 @@ void LoopbackStreamImpl::onStreamStartResult(telux::common::ErrorCode ec,
 /*
  * Stops looping-back audio started with LoopbackStreamImpl::startLoopback().
  */
-telux::common::Status LoopbackStreamImpl::stopLoopback(
-        telux::common::ResponseCallback callback) {
+telux::common::Status LoopbackStreamImpl::stopLoopback(telux::common::ResponseCallback callback) {
 
     intptr_t cmdId;
     telux::common::Status status;
@@ -76,8 +74,8 @@ telux::common::Status LoopbackStreamImpl::stopLoopback(
         cmdId = cmdCallbackMgr_.addCallback(callback);
     }
 
-    status = transportClient_->stopStream(streamId_,
-            downcasted_shared_from_this<LoopbackStreamImpl>(), cmdId);
+    status = transportClient_->stopStream(
+        streamId_, downcasted_shared_from_this<LoopbackStreamImpl>(), cmdId);
 
     if (status != telux::common::Status::SUCCESS && callback) {
         cmdCallbackMgr_.findAndRemoveCallback(cmdId);
@@ -91,8 +89,8 @@ telux::common::Status LoopbackStreamImpl::stopLoopback(
  * LoopbackStreamImpl::stopLoopback() invocation, it calls that callback
  * method otherwise simply drops the result.
  */
-void LoopbackStreamImpl::onStreamStopResult(telux::common::ErrorCode ec,
-        uint32_t streamId, int cmdId) {
+void LoopbackStreamImpl::onStreamStopResult(
+    telux::common::ErrorCode ec, uint32_t streamId, int cmdId) {
 
     std::shared_ptr<telux::common::ICommandCallback> resultListener;
 

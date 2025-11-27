@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_PathDeltaTime_H_
-#define	_PathDeltaTime_H_
-
+#ifndef _PathDeltaTime_H_
+#define _PathDeltaTime_H_
 
 #include <asn_application.h>
 
@@ -20,11 +19,11 @@ extern "C" {
 
 /* Dependencies */
 typedef enum PathDeltaTime {
-	PathDeltaTime_tenMilliSecondsInPast	= 1
+    PathDeltaTime_tenMilliSecondsInPast = 1
 } e_PathDeltaTime;
 
 /* PathDeltaTime */
-typedef long	 PathDeltaTime_t;
+typedef long PathDeltaTime_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_PathDeltaTime;
@@ -42,5 +41,5 @@ per_type_encoder_f PathDeltaTime_encode_uper;
 }
 #endif
 
-#endif	/* _PathDeltaTime_H_ */
+#endif /* _PathDeltaTime_H_ */
 #include <asn_internal.h>

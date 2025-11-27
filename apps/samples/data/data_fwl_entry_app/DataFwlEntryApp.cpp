@@ -26,10 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -114,12 +114,12 @@ class Utils {
     }
 
     void populateIPv4Info(telux::data::IPv4Info &v4Info, int proto) {
-        v4Info.nextProtoId = proto;
-        v4Info.srcAddr = configParser_->getValue(std::string("SOURCE_ADDR"));
-        v4Info.destAddr= configParser_->getValue(std::string("DEST_ADDR"));
-        v4Info.srcSubnetMask = configParser_->getValue(std::string("IPV4_SRC_SUBNET_MASK"));
+        v4Info.nextProtoId    = proto;
+        v4Info.srcAddr        = configParser_->getValue(std::string("SOURCE_ADDR"));
+        v4Info.destAddr       = configParser_->getValue(std::string("DEST_ADDR"));
+        v4Info.srcSubnetMask  = configParser_->getValue(std::string("IPV4_SRC_SUBNET_MASK"));
         v4Info.destSubnetMask = configParser_->getValue(std::string("IPV4_DEST_SUBNET_MASK"));
-        v4Info.value = static_cast<uint8_t>(
+        v4Info.value          = static_cast<uint8_t>(
             std::atoi(configParser_->getValue(std::string("IPV4_SERVICE_TYPE")).c_str()));
         v4Info.mask = static_cast<uint8_t>(
             std::atoi(configParser_->getValue(std::string("IPV4_SERVICE_TYPE_MASK")).c_str()));
@@ -127,9 +127,9 @@ class Utils {
 
     void populateIPv6Info(telux::data::IPv6Info &v6Info, int proto) {
         v6Info.nextProtoId = proto;
-        v6Info.srcAddr = configParser_->getValue(std::string("SOURCE_ADDR"));
-        v6Info.destAddr= configParser_->getValue(std::string("DEST_ADDR"));
-        v6Info.val = static_cast<uint8_t>(
+        v6Info.srcAddr     = configParser_->getValue(std::string("SOURCE_ADDR"));
+        v6Info.destAddr    = configParser_->getValue(std::string("DEST_ADDR"));
+        v6Info.val         = static_cast<uint8_t>(
             std::atoi(configParser_->getValue(std::string("IPV6_TRAFFIC_CLASS")).c_str()));
         v6Info.mask = static_cast<uint8_t>(
             std::atoi(configParser_->getValue(std::string("IPV6_TRAFFIC_CLASS_MASK")).c_str()));
@@ -137,16 +137,12 @@ class Utils {
             std::atoi(configParser_->getValue(std::string("IPV6_FLOW_LABEL")).c_str()));
     }
 
-    void populateProtocolInfo(uint16_t srcPort,
-        uint16_t srcRange, uint16_t destPort, uint16_t destRange) {
-        srcPort = std::atoi(
-            configParser_->getValue(std::string("PROTOCOL_SRC_PORT")).c_str());
-        srcRange = std::atoi(
-            configParser_->getValue(std::string("PROTOCOL_SRC_RANGE")).c_str());
-        destPort = std::atoi(
-            configParser_->getValue(std::string("PROTOCOL_DEST_PORT")).c_str());
-        destRange = std::atoi(
-            configParser_->getValue(std::string("PROTOCOL_DEST_RANGE")).c_str());
+    void populateProtocolInfo(
+        uint16_t srcPort, uint16_t srcRange, uint16_t destPort, uint16_t destRange) {
+        srcPort   = std::atoi(configParser_->getValue(std::string("PROTOCOL_SRC_PORT")).c_str());
+        srcRange  = std::atoi(configParser_->getValue(std::string("PROTOCOL_SRC_RANGE")).c_str());
+        destPort  = std::atoi(configParser_->getValue(std::string("PROTOCOL_DEST_PORT")).c_str());
+        destRange = std::atoi(configParser_->getValue(std::string("PROTOCOL_DEST_RANGE")).c_str());
     }
 
  private:
@@ -168,9 +164,7 @@ class FirewallEntryCreator : public std::enable_shared_from_this<FirewallEntryCr
 
         /* Step - 2 */
         dataFwMgr_ = dataFactory.getFirewallManager(utils_->getOperationType(),
-                [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+            [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!dataFwMgr_) {
             std::cout << "Can't get IFirewallManager" << std::endl;
@@ -180,8 +174,8 @@ class FirewallEntryCreator : public std::enable_shared_from_this<FirewallEntryCr
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Firewall service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Firewall service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
@@ -201,8 +195,8 @@ class FirewallEntryCreator : public std::enable_shared_from_this<FirewallEntryCr
         std::shared_ptr<telux::data::IIpFilter> ipFilter;
         std::shared_ptr<telux::data::net::IFirewallEntry> fwEntry;
 
-        proto = utils_->getProtocol();
-        direction = utils_->getDirection();
+        proto        = utils_->getProtocol();
+        direction    = utils_->getDirection();
         ipFamilyType = utils_->getIPFamilyType();
 
         auto &dataFactory = telux::data::DataFactory::getInstance();
@@ -229,8 +223,7 @@ class FirewallEntryCreator : public std::enable_shared_from_this<FirewallEntryCr
             utils_->populateIPv6Info(v6Info, proto);
             ipFilter->setIPv6Info(v6Info);
         } else {
-            std::cout << "Invalid family type " <<
-                static_cast<int>(ipFamilyType) << std::endl;
+            std::cout << "Invalid family type " << static_cast<int>(ipFamilyType) << std::endl;
             return -EINVAL;
         }
 
@@ -239,37 +232,35 @@ class FirewallEntryCreator : public std::enable_shared_from_this<FirewallEntryCr
             utils_->populateProtocolInfo(
                 tcpInfo.src.port, tcpInfo.src.range, tcpInfo.dest.port, tcpInfo.dest.range);
             auto tcpFilter = std::dynamic_pointer_cast<telux::data::ITcpFilter>(ipFilter);
-            if(tcpFilter) {
+            if (tcpFilter) {
                 tcpFilter->setTcpInfo(tcpInfo);
             }
         } else {
             utils_->populateProtocolInfo(
                 udpInfo.src.port, udpInfo.src.range, udpInfo.dest.port, udpInfo.dest.range);
             auto udpFilter = std::dynamic_pointer_cast<telux::data::IUdpFilter>(ipFilter);
-            if(udpFilter) {
+            if (udpFilter) {
                 udpFilter->setUdpInfo(udpInfo);
             }
         }
 
-        telux::data::BackhaulInfo bhInfo = {};
+        telux::data::BackhaulInfo bhInfo              = {};
         telux::data::net::FirewallEntryInfo entryInfo = {};
 
-        bhInfo.slotId = utils_->getSlotId();
-        bhInfo.backhaul = telux::data::BackhaulType::WWAN;
+        bhInfo.slotId    = utils_->getSlotId();
+        bhInfo.backhaul  = telux::data::BackhaulType::WWAN;
         bhInfo.profileId = utils_->getProfileId();
 
-        entryInfo.bhInfo = bhInfo;
+        entryInfo.bhInfo  = bhInfo;
         entryInfo.fwEntry = fwEntry;
 
-        auto respCb = std::bind(
-            &FirewallEntryCreator::fwEntryResponse, this, std::placeholders::_1,
+        auto respCb = std::bind(&FirewallEntryCreator::fwEntryResponse, this, std::placeholders::_1,
             std::placeholders::_2);
 
         /* Step - 8 */
         status = dataFwMgr_->addFirewallEntry(entryInfo, respCb);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't add entry, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't add entry, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -301,8 +292,8 @@ int main(int argc, char *argv[]) {
 
     try {
         utils = std::make_shared<Utils>(argv[1]);
-        app = std::make_shared<FirewallEntryCreator>(utils);
-    } catch (const std::exception& e) {
+        app   = std::make_shared<FirewallEntryCreator>(utils);
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate Utils/FirewallEntryCreator" << std::endl;
         return -ENOMEM;
     }

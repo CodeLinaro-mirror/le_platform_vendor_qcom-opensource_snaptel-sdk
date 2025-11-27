@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <cstdio>
@@ -10,8 +10,8 @@
 #include "common/utils/Utils.hpp"
 #include "WiFiConnectionSecurityApp.hpp"
 
-WiFiConnectionSecurityApp::WiFiConnectionSecurityApp(
-    std::string appName, std::string cursor) : ConsoleApp(appName, cursor) {
+WiFiConnectionSecurityApp::WiFiConnectionSecurityApp(std::string appName, std::string cursor)
+   : ConsoleApp(appName, cursor) {
 }
 
 WiFiConnectionSecurityApp::~WiFiConnectionSecurityApp() {
@@ -20,10 +20,10 @@ WiFiConnectionSecurityApp::~WiFiConnectionSecurityApp() {
 /*
  *  Helper to get input from user.
  */
-void WiFiConnectionSecurityApp::getStringFromUser(const std::string promptToDisplay,
-        std::string& usrInput) {
+void WiFiConnectionSecurityApp::getStringFromUser(
+    const std::string promptToDisplay, std::string &usrInput) {
 
-    while(1) {
+    while (1) {
         std::cout << promptToDisplay;
 
         if ((!std::getline(std::cin, usrInput)) || usrInput.empty()) {
@@ -38,54 +38,50 @@ void WiFiConnectionSecurityApp::getStringFromUser(const std::string promptToDisp
 /*
  *  Listener to receive ML analysis result.
  */
-void WiFiSecurityReportListener::onReportAvailable(
-        telux::sec::WiFiSecurityReport report) {
+void WiFiSecurityReportListener::onReportAvailable(telux::sec::WiFiSecurityReport report) {
 
     std::cout << "ssid             : " << report.ssid << std::endl;
     std::cout << "bssid            : " << report.bssid << std::endl;
     std::cout << "is connected     : " << report.isConnectedToAP << std::endl;
     std::cout << "is open          : " << report.isOpenAP << std::endl;
-    std::cout << "ml threat score  : " <<
-        report.mlAlgorithmAnalysis.threatScore << std::endl;
-    std::cout << "ml result        : " <<
-        static_cast<int>(report.mlAlgorithmAnalysis.result) << std::endl;
-    std::cout << "summoning result : " <<
-        static_cast<int>(report.summoningAnalysis.result) << std::endl;
+    std::cout << "ml threat score  : " << report.mlAlgorithmAnalysis.threatScore << std::endl;
+    std::cout << "ml result        : " << static_cast<int>(report.mlAlgorithmAnalysis.result)
+              << std::endl;
+    std::cout << "summoning result : " << static_cast<int>(report.summoningAnalysis.result)
+              << std::endl;
 }
 
 /*
  *  Listener to receive deauthentication attack info.
  */
 void WiFiSecurityReportListener::onDeauthenticationAttack(
-        telux::sec::DeauthenticationInfo deauthenticationInfo) {
+    telux::sec::DeauthenticationInfo deauthenticationInfo) {
 
-    std::cout << "disconnect reason : " <<
-        deauthenticationInfo.deauthenticationReason << std::endl;
-    std::cout << "did AP initiated  : " <<
-        deauthenticationInfo.didAPInitiateDisconnect << std::endl;
-    std::cout << "threat score      : " <<
-        deauthenticationInfo.threatScore << std::endl;
+    std::cout << "disconnect reason : " << deauthenticationInfo.deauthenticationReason << std::endl;
+    std::cout << "did AP initiated  : " << deauthenticationInfo.didAPInitiateDisconnect
+              << std::endl;
+    std::cout << "threat score      : " << deauthenticationInfo.threatScore << std::endl;
 }
 
 /*
  *  Sets the value based on selection made by user with the help of UI previously.
  */
-void WiFiSecurityReportListener::isTrustedAP(telux::sec::ApInfo apInfo, bool& isTrusted) {
+void WiFiSecurityReportListener::isTrustedAP(telux::sec::ApInfo apInfo, bool &isTrusted) {
 
-    std::cout << "Please press 3 to trust/distrust AP " << apInfo.ssid <<
-    " with bssid " << apInfo.bssid << std::endl;
+    std::cout << "Please press 3 to trust/distrust AP " << apInfo.ssid << " with bssid "
+              << apInfo.bssid << std::endl;
 
     /* Wait until user makes confirms to trust or distrust AP */
     std::unique_lock<std::mutex> lock(trustMutex_);
     promptUserForTrustingAP_ = true;
-    trustCV_.wait(lock, [this]{return trustAPSelectionMade_;});
+    trustCV_.wait(lock, [this] { return trustAPSelectionMade_; });
 
     /* Return user selection */
     isTrusted = trustGivenAP_;
 
     /* Reset local state */
-    trustAPSelectionMade_ = false;
-    trustGivenAP_ = false;
+    trustAPSelectionMade_    = false;
+    trustGivenAP_            = false;
     promptUserForTrustingAP_ = false;
 }
 
@@ -100,7 +96,7 @@ void WiFiSecurityReportListener::setTrustAPSelection(bool trust) {
         return;
     }
 
-    trustGivenAP_ = trust;
+    trustGivenAP_         = trust;
     trustAPSelectionMade_ = true;
 
     /* Pass the user selection to the waiter thread */
@@ -121,7 +117,7 @@ void WiFiConnectionSecurityApp::getTrustAPSelection() {
         return;
     }
 
-    while(1) {
+    while (1) {
         std::cout << "do you trust this AP (yes/no): ";
 
         if ((!std::getline(std::cin, usrInput)) || usrInput.empty()) {
@@ -160,7 +156,7 @@ void WiFiConnectionSecurityApp::registerListener() {
 
     try {
         reportListener_ = std::make_shared<WiFiSecurityReportListener>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "can't allocate WiFiReportListener" << std::endl;
         return;
     }
@@ -184,7 +180,7 @@ void WiFiConnectionSecurityApp::deregisterListener() {
 
     {
         std::lock_guard<std::mutex> lock(reportListener_->trustMutex_);
-        reportListener_->trustGivenAP_ = false;
+        reportListener_->trustGivenAP_         = false;
         reportListener_->trustAPSelectionMade_ = true;
         /* Unblock callback thread by sending false before deregistration.*/
         reportListener_->trustCV_.notify_all();
@@ -265,10 +261,8 @@ void WiFiConnectionSecurityApp::init() {
     //  Get the ConnectionSecurityFactory and WiFiSecurityManager instances.
     auto &wifiConSecFact = telux::sec::ConnectionSecurityFactory::getInstance();
 
-    wifiConSecMgr_ = wifiConSecFact.getWiFiSecurityManager([&](telux::common::ServiceStatus
-        srvStatus) {
-            prom.set_value(srvStatus);
-        });
+    wifiConSecMgr_ = wifiConSecFact.getWiFiSecurityManager(
+        [&](telux::common::ServiceStatus srvStatus) { prom.set_value(srvStatus); });
 
     if (!wifiConSecMgr_) {
         std::cout << "failed to get IWiFiSecurityManager" << std::endl;
@@ -279,11 +273,12 @@ void WiFiConnectionSecurityApp::init() {
     serviceStatus = prom.get_future().get();
 
     //  Exit the application, if SDK is unable to initialize security subsystems.
-    if(serviceStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+    if (serviceStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "security service is ready" << std::endl;
     } else {
-        std::cout << "can't initialize IWiFiSecurityManager, status: " <<
-            static_cast<int>(serviceStatus) << std::endl;
+        std::cout
+            << "can't initialize IWiFiSecurityManager, status: " << static_cast<int>(serviceStatus)
+            << std::endl;
         return;
     }
 
@@ -306,29 +301,28 @@ void WiFiConnectionSecurityApp::onServiceStatusChange(telux::common::ServiceStat
 }
 
 void WiFiConnectionSecurityApp::initConsole() {
-    std::shared_ptr<ConsoleAppCommand> regListener = std::make_shared<
-        ConsoleAppCommand>(ConsoleAppCommand("1", "Start listening to security reports", {},
-        std::bind(&WiFiConnectionSecurityApp::registerListener, this)));
+    std::shared_ptr<ConsoleAppCommand> regListener = std::make_shared<ConsoleAppCommand>(
+        ConsoleAppCommand("1", "Start listening to security reports", {},
+            std::bind(&WiFiConnectionSecurityApp::registerListener, this)));
 
-    std::shared_ptr<ConsoleAppCommand> deregListener = std::make_shared<
-        ConsoleAppCommand>(ConsoleAppCommand("2", "Stop listening to security reports", {},
-        std::bind(&WiFiConnectionSecurityApp::deregisterListener, this)));
+    std::shared_ptr<ConsoleAppCommand> deregListener = std::make_shared<ConsoleAppCommand>(
+        ConsoleAppCommand("2", "Stop listening to security reports", {},
+            std::bind(&WiFiConnectionSecurityApp::deregisterListener, this)));
 
-    std::shared_ptr<ConsoleAppCommand> getTrustAPSelection = std::make_shared<
-        ConsoleAppCommand>(ConsoleAppCommand("3", "Trust the AP (yes/no)", {},
-        std::bind(&WiFiConnectionSecurityApp::getTrustAPSelection, this)));
+    std::shared_ptr<ConsoleAppCommand> getTrustAPSelection
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "Trust the AP (yes/no)", {},
+            std::bind(&WiFiConnectionSecurityApp::getTrustAPSelection, this)));
 
-    std::shared_ptr<ConsoleAppCommand> getTrustedApList = std::make_shared<
-        ConsoleAppCommand>(ConsoleAppCommand("4", "List trusted APs", {},
-        std::bind(&WiFiConnectionSecurityApp::getTrustedApList, this)));
+    std::shared_ptr<ConsoleAppCommand> getTrustedApList
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "List trusted APs", {},
+            std::bind(&WiFiConnectionSecurityApp::getTrustedApList, this)));
 
-    std::shared_ptr<ConsoleAppCommand> removeApFromTrustedList = std::make_shared<
-        ConsoleAppCommand>(ConsoleAppCommand("5", "Remove trusted AP", {},
-        std::bind(&WiFiConnectionSecurityApp::removeApFromTrustedList, this)));
+    std::shared_ptr<ConsoleAppCommand> removeApFromTrustedList
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "Remove trusted AP", {},
+            std::bind(&WiFiConnectionSecurityApp::removeApFromTrustedList, this)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> mainCmds = {
-        regListener, deregListener, getTrustAPSelection,
-        getTrustedApList, removeApFromTrustedList };
+        regListener, deregListener, getTrustAPSelection, getTrustedApList, removeApFromTrustedList};
 
     ConsoleApp::addCommands(mainCmds);
     ConsoleApp::displayMenu();
@@ -340,11 +334,10 @@ int main(int argc, char **argv) {
 
     std::string sdkReleaseName = telux::common::Version::getReleaseName();
 
-    std::string appName = "WiFi connection security console app - SDK v"
-                            + std::to_string(sdkVersion.major) + "."
-                            + std::to_string(sdkVersion.minor) + "."
-                            + std::to_string(sdkVersion.patch) + "\n"
-                            + "Release name: " + sdkReleaseName;
+    std::string appName
+        = "WiFi connection security console app - SDK v" + std::to_string(sdkVersion.major) + "."
+          + std::to_string(sdkVersion.minor) + "." + std::to_string(sdkVersion.patch) + "\n"
+          + "Release name: " + sdkReleaseName;
 
     auto wcsApp = std::make_shared<WiFiConnectionSecurityApp>(appName, "wificonsec> ");
 

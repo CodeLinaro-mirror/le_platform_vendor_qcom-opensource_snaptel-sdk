@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_StationID_H_
-#define	_StationID_H_
-
+#ifndef _StationID_H_
+#define _StationID_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* StationID */
-typedef unsigned long	 StationID_t;
+typedef unsigned long StationID_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_StationID;
@@ -37,5 +36,5 @@ per_type_encoder_f StationID_encode_uper;
 }
 #endif
 
-#endif	/* _StationID_H_ */
+#endif /* _StationID_H_ */
 #include <asn_internal.h>

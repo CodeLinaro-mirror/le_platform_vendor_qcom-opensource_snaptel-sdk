@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef FIREWALLENTRYIMPL_HPP
@@ -61,7 +61,7 @@ class FirewallEntryImpl : public IFirewallEntry {
     IpFamilyType ipFamilyType_;
     uint32_t handle_;
 };
-}
-}
-}
+}  // namespace net
+}  // namespace data
+}  // namespace telux
 #endif

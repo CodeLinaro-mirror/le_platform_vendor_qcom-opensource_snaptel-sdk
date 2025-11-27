@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_HazardousLocation_AnimalOnTheRoadSubCauseCode_H_
-#define	_HazardousLocation_AnimalOnTheRoadSubCauseCode_H_
-
+#ifndef _HazardousLocation_AnimalOnTheRoadSubCauseCode_H_
+#define _HazardousLocation_AnimalOnTheRoadSubCauseCode_H_
 
 #include <asn_application.h>
 
@@ -20,15 +19,15 @@ extern "C" {
 
 /* Dependencies */
 typedef enum HazardousLocation_AnimalOnTheRoadSubCauseCode {
-	HazardousLocation_AnimalOnTheRoadSubCauseCode_unavailable	= 0,
-	HazardousLocation_AnimalOnTheRoadSubCauseCode_wildAnimals	= 1,
-	HazardousLocation_AnimalOnTheRoadSubCauseCode_herdOfAnimals	= 2,
-	HazardousLocation_AnimalOnTheRoadSubCauseCode_smallAnimals	= 3,
-	HazardousLocation_AnimalOnTheRoadSubCauseCode_largeAnimals	= 4
+    HazardousLocation_AnimalOnTheRoadSubCauseCode_unavailable   = 0,
+    HazardousLocation_AnimalOnTheRoadSubCauseCode_wildAnimals   = 1,
+    HazardousLocation_AnimalOnTheRoadSubCauseCode_herdOfAnimals = 2,
+    HazardousLocation_AnimalOnTheRoadSubCauseCode_smallAnimals  = 3,
+    HazardousLocation_AnimalOnTheRoadSubCauseCode_largeAnimals  = 4
 } e_HazardousLocation_AnimalOnTheRoadSubCauseCode;
 
 /* HazardousLocation-AnimalOnTheRoadSubCauseCode */
-typedef long	 HazardousLocation_AnimalOnTheRoadSubCauseCode_t;
+typedef long HazardousLocation_AnimalOnTheRoadSubCauseCode_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_HazardousLocation_AnimalOnTheRoadSubCauseCode;
@@ -46,5 +45,5 @@ per_type_encoder_f HazardousLocation_AnimalOnTheRoadSubCauseCode_encode_uper;
 }
 #endif
 
-#endif	/* _HazardousLocation_AnimalOnTheRoadSubCauseCode_H_ */
+#endif /* _HazardousLocation_AnimalOnTheRoadSubCauseCode_H_ */
 #include <asn_internal.h>

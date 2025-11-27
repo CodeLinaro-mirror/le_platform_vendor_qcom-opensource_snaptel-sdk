@@ -28,40 +28,11 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
-
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 /**
  * @file       DataFilterManager.hpp
  *
@@ -100,8 +71,8 @@ namespace data {
  * @param [in] error      Return code which indicates whether the operation
  *                        succeeded or not.  @ref ErrorCode.
  */
-using DataRestrictModeCb =
-    std::function<void(DataRestrictMode mode, telux::common::ErrorCode error)>;
+using DataRestrictModeCb
+    = std::function<void(DataRestrictMode mode, telux::common::ErrorCode error)>;
 
 /**
  * @brief   IDataFilterManager class provides interface to enable/disable the data restrict filters
@@ -115,7 +86,7 @@ using DataRestrictModeCb =
  *
  */
 class IDataFilterManager {
-public:
+ public:
     /**
      * Checks the status of data filter manager and returns the result.
      *
@@ -142,8 +113,8 @@ public:
      * @returns Status of deregisterListener, success or suitable status code
      *
      */
-    virtual telux::common::Status
-    deregisterListener(std::weak_ptr<IDataFilterListener> listener) = 0;
+    virtual telux::common::Status deregisterListener(std::weak_ptr<IDataFilterListener> listener)
+        = 0;
 
     /**
      * Changes the Data Powersave filter mode and auto exit feature.
@@ -162,8 +133,8 @@ public:
      *
      */
     virtual telux::common::Status setDataRestrictMode(
-        DataRestrictMode mode,
-        telux::common::ResponseCallback callback = nullptr) = 0;
+        DataRestrictMode mode, telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Get the current Data Powersave filter mode
@@ -192,8 +163,8 @@ public:
      *
      */
     virtual telux::common::Status addDataRestrictFilter(
-        std::shared_ptr<IIpFilter> &filter,
-        telux::common::ResponseCallback callback = nullptr) = 0;
+        std::shared_ptr<IIpFilter> &filter, telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * This API removes all the previously added powersave filter.
@@ -207,7 +178,8 @@ public:
      *
      */
     virtual telux::common::Status removeAllDataRestrictFilters(
-        telux::common::ResponseCallback callback = nullptr) = 0;
+        telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Get associated slot id for the Data Filter Manager.
@@ -253,21 +225,20 @@ public:
      *                         the profile id, then the API applies to all the currently running
      *                         data connection. If user wants to apply the changes to any specific
      *                         data connection, then its profile id can be specified as input.
-     * @param [in] ipFamilyType - Optional IP Family type @ref IpFamilyType . If user does not specify
-     *                         the ip family type, then the API applies to all the currently running
-     *                         data connection. If user wants to apply the changes to any specific
-     *                         data connection, then its ip family type can be specified as input.
+     * @param [in] ipFamilyType - Optional IP Family type @ref IpFamilyType . If user does not
+     * specify the ip family type, then the API applies to all the currently running data
+     * connection. If user wants to apply the changes to any specific data connection, then its ip
+     * family type can be specified as input.
      *
      * @returns Status of setDataRestrictMode i.e. success or suitable status code.
      *
      * @deprecated because NAO IP filters are global (not per profile) filters. Use
      *      @ref setDataRestrictMode(DataRestrictMode, telux::common::ResponseCallback)
      */
-    virtual telux::common::Status
-    setDataRestrictMode(DataRestrictMode mode,
-                        telux::common::ResponseCallback callback,
-                        int profileId,
-                        IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN) = 0;
+    virtual telux::common::Status setDataRestrictMode(DataRestrictMode mode,
+        telux::common::ResponseCallback callback, int profileId,
+        IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN)
+        = 0;
 
     /**
      * Get the current Data Powersave filter mode
@@ -284,7 +255,8 @@ public:
      *
      */
     virtual telux::common::Status requestDataRestrictMode(
-        std::string ifaceName, DataRestrictModeCb callback) = 0;
+        std::string ifaceName, DataRestrictModeCb callback)
+        = 0;
 
     /**
      * This API adds a filter rules for a packet data session to achieve power savings.
@@ -314,11 +286,10 @@ public:
      *      @ref addDataRestrictFilter(std::shared_ptr<IIpFilter>&, telux::common::ResponseCallback)
      */
 
-    virtual telux::common::Status
-    addDataRestrictFilter(std::shared_ptr<IIpFilter> &filter,
-                          telux::common::ResponseCallback callback,
-                          int profileId,
-                          IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN) = 0;
+    virtual telux::common::Status addDataRestrictFilter(std::shared_ptr<IIpFilter> &filter,
+        telux::common::ResponseCallback callback, int profileId,
+        IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN)
+        = 0;
 
     /**
      * This API removes all the previous added powersave filter for a packet data session
@@ -342,10 +313,10 @@ public:
      * @deprecated because NAO IP filters are global (not per profile) filters. Use
      *      @ref removeAllDataRestrictFilters(telux::common::ResponseCallback)
      */
-    virtual telux::common::Status
-    removeAllDataRestrictFilters(telux::common::ResponseCallback callback,
-                                 int profileId,
-                                 IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN) = 0;
+    virtual telux::common::Status removeAllDataRestrictFilters(
+        telux::common::ResponseCallback callback, int profileId,
+        IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN)
+        = 0;
 
     /**
      * Destructor of IDataFilterManager
@@ -354,7 +325,7 @@ public:
 };
 /** @} */ /* end_addtogroup telematics_data */
 
-} // namespace data
-} // end of namespace telux
+}  // namespace data
+}  // end of namespace telux
 
-#endif // TELUX_DATA_DATAFILTERMANAGER_HPP
+#endif  // TELUX_DATA_DATAFILTERMANAGER_HPP

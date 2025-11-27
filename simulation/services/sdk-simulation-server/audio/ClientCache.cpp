@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "ClientCache.hpp"
@@ -42,8 +42,8 @@ void ClientCache::unCacheClient(std::shared_ptr<AudioClient> audioClient) {
  * Locking is not needed as creating and deleting stream happens on same thread
  * hence serialized.
  */
-void ClientCache::associateStream(std::shared_ptr<AudioClient> audioClient,
-        StreamType type, uint32_t streamId) {
+void ClientCache::associateStream(
+    std::shared_ptr<AudioClient> audioClient, StreamType type, uint32_t streamId) {
 
     audioClient->associateStream(streamId, type);
 }
@@ -70,7 +70,7 @@ void ClientCache::disassociateStream(uint32_t streamId) {
  * Locking to protect against concurrent create stream and SSR handling is not
  * needed because both of them executes on same thread hence serialized.
  */
-std::map<int,std::shared_ptr<AudioClient>>& ClientCache::getClientsList() {
+std::map<int, std::shared_ptr<AudioClient>> &ClientCache::getClientsList() {
 
     return audioClientsList_;
 }
@@ -95,7 +95,7 @@ std::shared_ptr<AudioClient> ClientCache::getAudioClientFromClientId(int clientI
     /* Protect against create stream for a client and the same client disconnecting */
     std::lock_guard<std::mutex> lock(clientListGuard_);
 
-    if(audioClientsList_.find(clientId)!= audioClientsList_.end()){
+    if (audioClientsList_.find(clientId) != audioClientsList_.end()) {
         return audioClientsList_[clientId];
     }
 
@@ -116,7 +116,7 @@ std::shared_ptr<AudioClient> ClientCache::getAudioClientByStreamId(uint32_t stre
         streamIdList = it->second->getAssociatedStreamIdList();
         for (auto stream : streamIdList) {
             auto itr = std::find_if(stream.second.begin(), stream.second.end(),
-                    [streamId](uint32_t id) { return(id == streamId); });
+                [streamId](uint32_t id) { return (id == streamId); });
             if (itr != stream.second.end()) {
                 return it->second;
             }

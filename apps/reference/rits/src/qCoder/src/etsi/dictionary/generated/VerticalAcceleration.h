@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_VerticalAcceleration_H_
-#define	_VerticalAcceleration_H_
-
+#ifndef _VerticalAcceleration_H_
+#define _VerticalAcceleration_H_
 
 #include <asn_application.h>
 
@@ -22,11 +21,11 @@ extern "C" {
 
 /* VerticalAcceleration */
 typedef struct VerticalAcceleration {
-	VerticalAccelerationValue_t	 verticalAccelerationValue;
-	AccelerationConfidence_t	 verticalAccelerationConfidence;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    VerticalAccelerationValue_t verticalAccelerationValue;
+    AccelerationConfidence_t verticalAccelerationConfidence;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } VerticalAcceleration_t;
 
 /* Implementation */
@@ -36,5 +35,5 @@ extern asn_TYPE_descriptor_t asn_DEF_VerticalAcceleration;
 }
 #endif
 
-#endif	/* _VerticalAcceleration_H_ */
+#endif /* _VerticalAcceleration_H_ */
 #include <asn_internal.h>

@@ -26,9 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -55,17 +56,17 @@ namespace tel {
  * Defines the card error cause, sent to the modem by the SIM provider
  */
 enum class CardErrorCause {
-    INVALID = -1,               /**< Card error cause value will not be passed to modem */
-    UNKNOWN_ERROR = 0,          /**< Unknown error */
-    NO_LINK_ESTABLISHED = 1,    /**< No link was established */
-    COMMAND_TIMEOUT = 2,        /**< Command timeout */
-    POWER_DOWN = 3,             /**< Error due to a card power down */
+    INVALID             = -1, /**< Card error cause value will not be passed to modem */
+    UNKNOWN_ERROR       = 0, /**< Unknown error */
+    NO_LINK_ESTABLISHED = 1, /**< No link was established */
+    COMMAND_TIMEOUT     = 2, /**< Command timeout */
+    POWER_DOWN          = 3, /**< Error due to a card power down */
 };
 
 /** @} */ /* end_addtogroup telematics_remote_sim */
 
-} // End of namespace tel
+}  // End of namespace tel
 
-} // End of namespace telux
+}  // End of namespace telux
 
-#endif // TELUX_TEL_REMOTESIMDEFINES_HPP
+#endif  // TELUX_TEL_REMOTESIMDEFINES_HPP

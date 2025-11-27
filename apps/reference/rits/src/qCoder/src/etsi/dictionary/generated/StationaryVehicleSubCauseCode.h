@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_StationaryVehicleSubCauseCode_H_
-#define	_StationaryVehicleSubCauseCode_H_
-
+#ifndef _StationaryVehicleSubCauseCode_H_
+#define _StationaryVehicleSubCauseCode_H_
 
 #include <asn_application.h>
 
@@ -20,16 +19,16 @@ extern "C" {
 
 /* Dependencies */
 typedef enum StationaryVehicleSubCauseCode {
-	StationaryVehicleSubCauseCode_unavailable	= 0,
-	StationaryVehicleSubCauseCode_humanProblem	= 1,
-	StationaryVehicleSubCauseCode_vehicleBreakdown	= 2,
-	StationaryVehicleSubCauseCode_postCrash	= 3,
-	StationaryVehicleSubCauseCode_publicTransportStop	= 4,
-	StationaryVehicleSubCauseCode_carryingDangerousGoods	= 5
+    StationaryVehicleSubCauseCode_unavailable            = 0,
+    StationaryVehicleSubCauseCode_humanProblem           = 1,
+    StationaryVehicleSubCauseCode_vehicleBreakdown       = 2,
+    StationaryVehicleSubCauseCode_postCrash              = 3,
+    StationaryVehicleSubCauseCode_publicTransportStop    = 4,
+    StationaryVehicleSubCauseCode_carryingDangerousGoods = 5
 } e_StationaryVehicleSubCauseCode;
 
 /* StationaryVehicleSubCauseCode */
-typedef long	 StationaryVehicleSubCauseCode_t;
+typedef long StationaryVehicleSubCauseCode_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_StationaryVehicleSubCauseCode;
@@ -47,5 +46,5 @@ per_type_encoder_f StationaryVehicleSubCauseCode_encode_uper;
 }
 #endif
 
-#endif	/* _StationaryVehicleSubCauseCode_H_ */
+#endif /* _StationaryVehicleSubCauseCode_H_ */
 #include <asn_internal.h>

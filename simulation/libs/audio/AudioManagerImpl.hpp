@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef AUDIOMANAGERIMPL_HPP
@@ -16,7 +16,6 @@
 #include "ICommunicator.hpp"
 #include "AudioStreamImpl.hpp"
 #include "TranscoderImpl.hpp"
-
 
 namespace telux {
 namespace audio {
@@ -69,29 +68,27 @@ class AudioManagerImpl : public IAudioManager,
         FormatInfo input, FormatInfo output, CreateTranscoderResponseCb callback) override;
 
     /* IGetDevices overrides */
-    void onGetDevicesResult(telux::common::ErrorCode ec,
-        std::vector<DeviceType> deviceTypes,
+    void onGetDevicesResult(telux::common::ErrorCode ec, std::vector<DeviceType> deviceTypes,
         std::vector<DeviceDirection> deviceDirections, int cmdId) override;
 
     /* IGetStreams overrides */
-    void onGetStreamsResult(telux::common::ErrorCode ec,
-                    std::vector<StreamType> streams, int cmdId) override;
+    void onGetStreamsResult(
+        telux::common::ErrorCode ec, std::vector<StreamType> streams, int cmdId) override;
 
     /* IGetCalInitStatus overrides */
-    void onGetCalInitStatusResult(telux::common::ErrorCode ec,
-                    CalibrationInitStatus calibrationStatus, int cmdId) override;
+    void onGetCalInitStatusResult(
+        telux::common::ErrorCode ec, CalibrationInitStatus calibrationStatus, int cmdId) override;
 
     /* ICreateStream overrides */
-    void onCreateStreamResult(telux::common::ErrorCode ec,
-                    CreatedStreamInfo createdStreamInfo, int cmdId) override;
+    void onCreateStreamResult(
+        telux::common::ErrorCode ec, CreatedStreamInfo createdStreamInfo, int cmdId) override;
 
     /* IDeleteStream overrides */
-    void onDeleteStreamResult(telux::common::ErrorCode ec,
-                    uint32_t streamId, int cmdId) override;
+    void onDeleteStreamResult(telux::common::ErrorCode ec, uint32_t streamId, int cmdId) override;
 
     /* ITranscode overrides */
-    void onCreateTranscoderResult(telux::common::ErrorCode ec,
-        CreatedTranscoderInfo transcoderInfo, int cmdId) override;
+    void onCreateTranscoderResult(
+        telux::common::ErrorCode ec, CreatedTranscoderInfo transcoderInfo, int cmdId) override;
 
     /* deprecated */
     bool isSubsystemReady() override;
@@ -122,7 +119,7 @@ class AudioManagerImpl : public IAudioManager,
     bool waitForInitialization(void);
     void sendNewStatusToClients(telux::common::ServiceStatus newStatus);
 
-    AudioManagerImpl(AudioManagerImpl const &) = delete;
+    AudioManagerImpl(AudioManagerImpl const &)            = delete;
     AudioManagerImpl &operator=(AudioManagerImpl const &) = delete;
 };
 

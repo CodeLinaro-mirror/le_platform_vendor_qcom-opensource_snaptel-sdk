@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -20,15 +20,15 @@ using telux::common::Status;
 
 class ApSimProfileMenu : public ConsoleApp {
  public:
-     bool init();
-     void cleanup();
-     ApSimProfileMenu(std::string appName, std::string cursor);
-     ~ApSimProfileMenu();
+    bool init();
+    void cleanup();
+    ApSimProfileMenu(std::string appName, std::string cursor);
+    ~ApSimProfileMenu();
 
  private:
-     void requestProfileList();
-     void enableProfile();
-     void disableProfile();
+    void requestProfileList();
+    void enableProfile();
+    void disableProfile();
 
     std::shared_ptr<ApSimProfileClient> apSimProfileClient_ = nullptr;
 };

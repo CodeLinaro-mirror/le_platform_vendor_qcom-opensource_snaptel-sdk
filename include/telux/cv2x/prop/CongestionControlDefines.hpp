@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef TELUX_CV2X_PROP_CONGESTIONCONTROLDEFINES_HPP
 #define TELUX_CV2X_PROP_CONGESTIONCONTROLDEFINES_HPP
-
 
 #include <vector>
 #include <string>
@@ -20,9 +19,9 @@ namespace prop {
  * @{ */
 
 enum class CCErrorCode {
-   SUCCESS = 0,                          /**< No error */
-   GENERIC_FAILURE = 1,                  /**< Generic Failure */
-   NO_PERMISSION = 2,                    /**< No permission */
+    SUCCESS         = 0, /**< No error */
+    GENERIC_FAILURE = 1, /**< Generic Failure */
+    NO_PERMISSION   = 2, /**< No permission */
 };
 
 /**
@@ -37,7 +36,7 @@ enum class CongestionControlType {
 /**
  * Position in terms of latitude, longitude, and elevation along with its heading.
  */
-struct Position  {
+struct Position {
     /** Latitude, in unit of degrees, range [-90.0, 90.0].*/
     double posLat;
     /** Longitude, in unit of degrees, range [-180.0, 180.0]. */
@@ -45,13 +44,13 @@ struct Position  {
     /** Heading, in unit of degrees, range [0 to 359.999]. */
     double heading;
     /**  Altitude above the WGS 84 reference ellipsoid, in unit of meters.*/
-    double elev; // unused
+    double elev;  // unused
 };
 
 /**
  * sub per interval data (5 times per RV)
  */
-struct SubPERInterData  {
+struct SubPERInterData {
     /** First message count of a vehicle in a PacketErrorRate sub interval */
     uint64_t msgCntFirst;
     /** Last message count of a vehicle in a PacketErrorRate sub interval */
@@ -65,7 +64,7 @@ struct SubPERInterData  {
 /**
  * per interval data (1 time per RV)
  */
-struct PERInterData  {
+struct PERInterData {
     /** First message count of a vehicle in a PacketErrorRate interval */
     uint64_t msgCntFirst;
     /** Last message count of a vehicle in a PacketErrorRate interval */
@@ -79,12 +78,12 @@ struct PERInterData  {
      * PacketErrorRate interval */
     uint64_t totalRxMsgs;
     /** Total calculated missed messages from a Remote Vehicle in a
-      * PacketErrorRate interval */
+     * PacketErrorRate interval */
     uint64_t totalMissMsgs;
     /** Calculated Packet Error Rate for a Remote Vehicle based on
-      * totalExpectMsgs, totalRxMsgs, totalMissMsgs in this PacketErrorRate interval */
+     * totalExpectMsgs, totalRxMsgs, totalMissMsgs in this PacketErrorRate interval */
     double packetErrRate;
-      /** The most recent PacketErrorRate */
+    /** The most recent PacketErrorRate */
     double lastPacketErrRate;
 };
 
@@ -100,7 +99,7 @@ struct CongestionControlData {
     /** Latest speed of this vehicle */
     double speed;
     /** Latest received message time stamp of this vehicle */
-    uint64_t rxTimeStamp; //ms
+    uint64_t rxTimeStamp;  // ms
     /** Latest msg cnt of this per interval (filled by the client) */
     uint64_t currMsgCnt;
     /** Packet error rate data for this vehicle updated every PER sub interval */
@@ -112,7 +111,7 @@ struct CongestionControlData {
     /** Flag indicating this vehicle is in range within a specified threshold */
     bool inRange;
     /** Timestamp of last sent message */
-    uint64_t lastTxMsgTime; //ms
+    uint64_t lastTxMsgTime;  // ms
     /** Latest GNSS fix time */
     uint64_t lastGnssFixTime;
     /** Latest calculated tracking error. The difference between the last assumed known
@@ -135,7 +134,6 @@ struct ChannelData {
     /**  Latest channel quality indication value */
     double channQualInd;
 };
-
 
 /**
  * Output for sps enhancements
@@ -204,13 +202,13 @@ struct CongestionControlCalculations {
  */
 struct CongestionControlUserData {
     /** Pointer to be set to a TransmitFlow based class or data struct */
-    void* spsTransmit;
+    void *spsTransmit;
     /** Flag to let the manager know that sps enhancements are enabled */
     bool spsEnhancementsEnabled;
     /** Output for the congestion control algorithm for user */
     std::shared_ptr<CongestionControlCalculations> congestionControlCalculations;
     /** Semaphore to prevent any race conditions when using output */
-    sem_t* congestionControlSem;
+    sem_t *congestionControlSem;
 };
 
 /**
@@ -222,7 +220,7 @@ struct SPSEnhanceConfig {
     uint64_t spsPeriodicity;
     /** The chance for actually updating maximum inter-transmit time
      *  and also the SPS periodicity of the current SPS flow. */
-    uint64_t changeFrequency; // default is 1/5 or 20%
+    uint64_t changeFrequency;  // default is 1/5 or 20%
     /** A percentage which expands the range of hysteresis thresholds
      *  to prevent volatile changes in maximum inter-transmit time and
      *  SPS periodicity. */
@@ -263,7 +261,7 @@ struct PERConfig {
  */
 struct CQIConfig {
     /** Channel quality indication threshold */
-    uint64_t threshold; // for capping channel quality indication
+    uint64_t threshold;  // for capping channel quality indication
 };
 
 /**
@@ -322,7 +320,7 @@ struct ITTConfig {
  */
 struct PowerConfig {
     /** Minimum permitted radiated power */
-   uint64_t minRadiPwr;
+    uint64_t minRadiPwr;
     /** Maximum permitted radiated power */
     uint64_t maxRadiPwr;
 };
@@ -358,81 +356,81 @@ struct CongestionControlConfig {
  * @param [in] position - position struct reference
  * @todo use the TelSDK Logger mechanism which has options for console
  */
-void printPosition(Position& position);
+void printPosition(Position &position);
 
 /**
  * Print ChannelData items
  * @param [in] channelData - channel data struct reference
  * @todo use the TelSDK Logger mechanism which has options for console
  */
-void printChannelData(ChannelData& channelData);
+void printChannelData(ChannelData &channelData);
 
 /**
  * Print TrackingErrorData items
  * @param [in] teData - tracking error input struct reference
  * @todo use the TelSDK Logger mechanism which has options for console
  */
-void printTrackingErrorData(TrackingErrorData& teData);
+void printTrackingErrorData(TrackingErrorData &teData);
 
 /**
  * Print SPSEnhanceConfig items
  * @param [in] spsEnhanceConfig - sps enhancements config struct reference
  * @todo use the TelSDK Logger mechanism which has options for console
  */
-void printSPSEnhanceConfig(SPSEnhanceConfig& spsEnhanceConfig);
+void printSPSEnhanceConfig(SPSEnhanceConfig &spsEnhanceConfig);
 
 /**
  * Print DensityConfig items
  * @param [in] densConfig - density config struct reference
  * @todo use the TelSDK Logger mechanism which has options for console
  */
-void printDensityConfig(DensityConfig& densConfig);
+void printDensityConfig(DensityConfig &densConfig);
 
 /**
  * Print PERConfig items
  * @param [in] perConfig - packet error rate config struct reference
  * @todo use the TelSDK Logger mechanism which has options for console
  */
-void printPERConfig(PERConfig& perConfig);
+void printPERConfig(PERConfig &perConfig);
 
 /**
  * Print CQIConfig
  * @param [in] cqiConfig - channel quality indication config struct reference
  * @todo use the TelSDK Logger mechanism which has options for console
  */
-void printCQIConfig(CQIConfig& cqiConfig);
+void printCQIConfig(CQIConfig &cqiConfig);
 
 /**
  * Print CBPConfig items
  * @param [in] cbpConfig - channel busy percentage config struct reference
  * @todo use the TelSDK Logger mechanism which has options for console
  */
-void printCBPConfig(CBPConfig& cbpConfig);
+void printCBPConfig(CBPConfig &cbpConfig);
 
 /**
  * Print TEConfig items
  * @param [in] teConfig - tracking error config struct reference
  * @todo use the TelSDK Logger mechanism which has options for console
  */
-void printTEConfig(TEConfig& teConfig);
+void printTEConfig(TEConfig &teConfig);
 
 /**
  * Print ITTConfig items
  * @param [in] ittConfig - inter transmit time config struct reference
  * @todo use the TelSDK Logger mechanism which has options for console
  */
-void printITTConfig(ITTConfig& ittConfig);
+void printITTConfig(ITTConfig &ittConfig);
 
 /**
  * Print PowerConfig items
  * @param [in] powerConfig - power config struct reference
  * @todo use the TelSDK Logger mechanism which has options for console
  */
-void printPowerConfig(PowerConfig& powerConfig);
+void printPowerConfig(PowerConfig &powerConfig);
 
 /** @} */ /* end_addtogroup telematics_cv2x_cpp */
-} // namespace prop
-} // namespace cv2x
-} // namespace telux
+}  // namespace prop
+}  // namespace cv2x
+}  // namespace telux
 
-#endif // TELUX_CV2X_PROP_CONGESTIONCONTROLDEFINES_HPP
+#endif  // TELUX_CV2X_PROP_CONGESTIONCONTROLDEFINES_HPP

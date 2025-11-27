@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -19,7 +19,7 @@ namespace telux {
 namespace common {
 
 class Utils {
-public:
+ public:
     /**
      * Converts @ref telux::common::ErrorCode to string.
      *
@@ -37,10 +37,9 @@ public:
      * @returns string description of the @ref telux::common::ErrorCode.
      */
     static std::string getErrorCodeAsString(int error);
-
 };
 
 }  // End of namespace common
 }  // End of namespace telux
 
-#endif // TELUX_COMMON_UTILS_HPP
+#endif  // TELUX_COMMON_UTILS_HPP

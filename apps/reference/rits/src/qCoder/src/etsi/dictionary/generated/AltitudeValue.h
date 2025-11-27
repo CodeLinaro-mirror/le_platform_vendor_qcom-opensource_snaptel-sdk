@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_AltitudeValue_H_
-#define	_AltitudeValue_H_
-
+#ifndef _AltitudeValue_H_
+#define _AltitudeValue_H_
 
 #include <asn_application.h>
 
@@ -20,13 +19,13 @@ extern "C" {
 
 /* Dependencies */
 typedef enum AltitudeValue {
-	AltitudeValue_referenceEllipsoidSurface	= 0,
-	AltitudeValue_oneCentimeter	= 1,
-	AltitudeValue_unavailable	= 800001
+    AltitudeValue_referenceEllipsoidSurface = 0,
+    AltitudeValue_oneCentimeter             = 1,
+    AltitudeValue_unavailable               = 800001
 } e_AltitudeValue;
 
 /* AltitudeValue */
-typedef long	 AltitudeValue_t;
+typedef long AltitudeValue_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_AltitudeValue;
@@ -44,5 +43,5 @@ per_type_encoder_f AltitudeValue_encode_uper;
 }
 #endif
 
-#endif	/* _AltitudeValue_H_ */
+#endif /* _AltitudeValue_H_ */
 #include <asn_internal.h>

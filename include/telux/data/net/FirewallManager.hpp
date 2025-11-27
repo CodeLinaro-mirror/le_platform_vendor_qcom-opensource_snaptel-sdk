@@ -28,39 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -100,18 +70,18 @@ class IFirewallListener;
  * Firewall configuration parameters
  */
 struct FirewallConfig {
-    BackhaulInfo bhInfo;        /**< Backhaul Information to apply firewal settings on       */
-    bool   enable;              /**< True: Firewall enabled. False: Firewall disabled        */
-    bool   allowPackets;        /**< True: Packets that match rules will be allowed.         */
-                                /**< False: Packets that match rules will be dropped         */
+    BackhaulInfo bhInfo; /**< Backhaul Information to apply firewal settings on       */
+    bool enable; /**< True: Firewall enabled. False: Firewall disabled        */
+    bool allowPackets; /**< True: Packets that match rules will be allowed.         */
+    /**< False: Packets that match rules will be dropped         */
 };
 
 /**
  * DMZ configuration parameters
  */
 struct DmzConfig {
-    BackhaulInfo bhInfo;        /**< Backhaul Information to apply firewal settings on       */
-    std::string ipAddr;         /**< IP address for which DMZ will be enabled                */
+    BackhaulInfo bhInfo; /**< Backhaul Information to apply firewal settings on       */
+    std::string ipAddr; /**< IP address for which DMZ will be enabled                */
 };
 
 /**
@@ -119,8 +89,8 @@ struct DmzConfig {
  */
 struct FirewallEntryInfo {
     std::shared_ptr<IFirewallEntry> fwEntry;
-                                 /**< Shared pointer to firewall rules for the backhaul       */
-    BackhaulInfo bhInfo;       /**< Backhaul Information to add firewal rules on       */
+    /**< Shared pointer to firewall rules for the backhaul       */
+    BackhaulInfo bhInfo; /**< Backhaul Information to add firewal rules on       */
 };
 
 /**
@@ -131,9 +101,8 @@ struct FirewallEntryInfo {
  * @param [in] error             Return code which indicates whether the operation
  *                               succeeded or not. @ref telux::common::ErrorCode
  *
-*/
-using FirewallConfigCb
-    = std::function<void(FirewallConfig status, telux::common::ErrorCode error)>;
+ */
+using FirewallConfigCb = std::function<void(FirewallConfig status, telux::common::ErrorCode error)>;
 
 /**
  * This function is called as a response to @ref requestFirewallEntries()
@@ -143,8 +112,8 @@ using FirewallConfigCb
  *                               succeeded or not. @ref telux::common::ErrorCode
  *
  */
-using FirewallEntryInfoCb = std::function<void(
-    std::vector<FirewallEntryInfo> entry, telux::common::ErrorCode error)>;
+using FirewallEntryInfoCb
+    = std::function<void(std::vector<FirewallEntryInfo> entry, telux::common::ErrorCode error)>;
 
 /**
  * This function is called as a response to @ref requestDmzEntries()
@@ -156,7 +125,6 @@ using FirewallEntryInfoCb = std::function<void(
  */
 using DmzEntryInfoCb
     = std::function<void(std::vector<DmzConfig> dmzEntries, telux::common::ErrorCode error)>;
-
 
 /**
  * This function is called as a response to @ref requestFirewallStatus()
@@ -220,7 +188,8 @@ class IFirewallManager {
      *
      * @returns SERVICE_AVAILABLE    If Firewall manager object is ready for service.
      *          SERVICE_UNAVAILABLE  If Firewall manager object is temporarily unavailable.
-     *          SERVICE_FAILED       If Firewall manager object encountered an irrecoverable failure.
+     *          SERVICE_FAILED       If Firewall manager object encountered an irrecoverable
+     * failure.
      *
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
@@ -256,8 +225,9 @@ class IFirewallManager {
      * @returns Status of setFirewallConfig i.e. success or suitable status code.
      *
      */
-    virtual telux::common::Status setFirewallConfig(FirewallConfig fwConfig,
-        telux::common::ResponseCallback callback = nullptr) = 0;
+    virtual telux::common::Status setFirewallConfig(
+        FirewallConfig fwConfig, telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Request status of firewall settings on specific backhaul
@@ -268,8 +238,9 @@ class IFirewallManager {
      * @returns Status of requestFirewallConfig i.e. success or suitable status code.
      *
      */
-    virtual telux::common::Status requestFirewallConfig(BackhaulInfo bhInfo,
-        FirewallConfigCb callback) = 0;
+    virtual telux::common::Status requestFirewallConfig(
+        BackhaulInfo bhInfo, FirewallConfigCb callback)
+        = 0;
 
     /**
      * Adds the firewall rule to specific backhaul
@@ -283,8 +254,9 @@ class IFirewallManager {
      * @returns Status of addFirewallEntry i.e. success or suitable status code.
      *
      */
-    virtual telux::common::Status addFirewallEntry(FirewallEntryInfo entry,
-        AddFirewallEntryCb callback = nullptr) = 0;
+    virtual telux::common::Status addFirewallEntry(
+        FirewallEntryInfo entry, AddFirewallEntryCb callback = nullptr)
+        = 0;
 
     /**
      * Request Firewall rules for specific backhaul
@@ -295,8 +267,9 @@ class IFirewallManager {
      * @returns Status of requestFirewallEntries i.e. success or suitable status code.
      *
      */
-    virtual telux::common::Status requestFirewallEntries(BackhaulInfo bhInfo,
-        FirewallEntryInfoCb callback) = 0;
+    virtual telux::common::Status requestFirewallEntries(
+        BackhaulInfo bhInfo, FirewallEntryInfoCb callback)
+        = 0;
 
     /**
      * Add Hardware Acceleration Rule
@@ -321,8 +294,9 @@ class IFirewallManager {
      * @returns Status of addHwAccelerationFirewallEntry i.e. success or suitable status code.
      *
      */
-    virtual telux::common::Status addHwAccelerationFirewallEntry(FirewallEntryInfo entry,
-        AddFirewallEntryCb callback = nullptr) = 0;
+    virtual telux::common::Status addHwAccelerationFirewallEntry(
+        FirewallEntryInfo entry, AddFirewallEntryCb callback = nullptr)
+        = 0;
 
     /**
      * Request Hardware Acceleration rules
@@ -334,8 +308,9 @@ class IFirewallManager {
      * @returns Status of requestHwAccelerationFirewallEntries i.e. success or suitable status code.
      *
      */
-    virtual telux::common::Status requestHwAccelerationFirewallEntries(BackhaulInfo bhInfo,
-        FirewallEntryInfoCb callback) = 0;
+    virtual telux::common::Status requestHwAccelerationFirewallEntries(
+        BackhaulInfo bhInfo, FirewallEntryInfoCb callback)
+        = 0;
 
     /**
      * Remove firewall entry set on particular backhaul
@@ -349,8 +324,9 @@ class IFirewallManager {
      * @returns Status of removeFirewallEntry i.e. success or suitable status code.
      *
      */
-    virtual telux::common::Status removeFirewallEntry(BackhaulInfo bhInfo, uint32_t handle,
-        telux::common::ResponseCallback callback = nullptr) = 0;
+    virtual telux::common::Status removeFirewallEntry(
+        BackhaulInfo bhInfo, uint32_t handle, telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Enable demilitarized zone (DMZ) on particular backhaul
@@ -361,8 +337,9 @@ class IFirewallManager {
      * @returns Status of enableDmz i.e. success or suitable status code.
      *
      */
-    virtual telux::common::Status enableDmz(DmzConfig config,
-        telux::common::ResponseCallback callback = nullptr) = 0;
+    virtual telux::common::Status enableDmz(
+        DmzConfig config, telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Disable demilitarized zone (DMZ) on particular backhaul
@@ -375,7 +352,8 @@ class IFirewallManager {
      *
      */
     virtual telux::common::Status disableDmz(BackhaulInfo bhInfo, const IpFamilyType ipType,
-        telux::common::ResponseCallback callback = nullptr) = 0;
+        telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Request DMZ entry on particulat backhaul that was previously set using enableDmz API
@@ -438,7 +416,8 @@ class IFirewallManager {
      *
      */
     virtual telux::common::Status setFirewall(int profileId, bool enable, bool allowPackets,
-        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID)
+        = 0;
 
     /**
      * Request status of firewall
@@ -452,8 +431,9 @@ class IFirewallManager {
      * @deprecated Use @ref telux::data::requestFirewallConfig API to request firewall status
      *             on any backhaul
      */
-    virtual telux::common::Status requestFirewallStatus(int profileId,
-        FirewallStatusCb callback, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+    virtual telux::common::Status requestFirewallStatus(
+        int profileId, FirewallStatusCb callback, SlotId slotId = DEFAULT_SLOT_ID)
+        = 0;
 
     /**
      * Adds the firewall rule
@@ -472,7 +452,8 @@ class IFirewallManager {
      */
     virtual telux::common::Status addFirewallEntry(int profileId,
         std::shared_ptr<IFirewallEntry> entry, telux::common::ResponseCallback callback = nullptr,
-        SlotId slotId = DEFAULT_SLOT_ID) = 0;
+        SlotId slotId = DEFAULT_SLOT_ID)
+        = 0;
 
     /**
      * Add Hardware Acceleration Rule
@@ -504,7 +485,8 @@ class IFirewallManager {
      */
     virtual telux::common::Status addHwAccelerationFirewallEntry(int profileId,
         std::shared_ptr<IFirewallEntry> entry, AddFirewallEntryCb callback = nullptr,
-        SlotId slotId = DEFAULT_SLOT_ID) = 0;
+        SlotId slotId = DEFAULT_SLOT_ID)
+        = 0;
 
     /**
      * Request Hardware Acceleration rules
@@ -519,8 +501,9 @@ class IFirewallManager {
      * @deprecated  Use @ref telux::data::requestHwAccelerationFirewallEntries API to request
      *              hardware acceleration firewall rule on any backhaul
      */
-    virtual telux::common::Status requestHwAccelerationFirewallEntries(int profileId,
-        FirewallEntriesCb callback, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+    virtual telux::common::Status requestHwAccelerationFirewallEntries(
+        int profileId, FirewallEntriesCb callback, SlotId slotId = DEFAULT_SLOT_ID)
+        = 0;
 
     /**
      * Request Firewall rules
@@ -534,8 +517,9 @@ class IFirewallManager {
      * @deprecated Use @ref telux::data::requestFirewallEntries API to request firewall rules on
      *             any backhaul
      */
-    virtual telux::common::Status requestFirewallEntries(int profileId,
-        FirewallEntriesCb callback, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+    virtual telux::common::Status requestFirewallEntries(
+        int profileId, FirewallEntriesCb callback, SlotId slotId = DEFAULT_SLOT_ID)
+        = 0;
 
     /**
      * Remove firewall entry
@@ -558,7 +542,8 @@ class IFirewallManager {
      *             from any backhaul
      */
     virtual telux::common::Status removeFirewallEntry(int profileId, uint32_t handle,
-        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID)
+        = 0;
 
     /**
      * Enable demilitarized zone (DMZ)
@@ -576,7 +561,8 @@ class IFirewallManager {
      * @deprecated Use @ref telux::data::enableDmz API to enable DMZ on any backhaul
      */
     virtual telux::common::Status enableDmz(int profileId, const std::string ipAddr,
-        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID)
+        = 0;
 
     /**
      * Disable demilitarized zone (DMZ)
@@ -594,7 +580,8 @@ class IFirewallManager {
      * @deprecated Use @ref telux::data::disableDmz API to Disable DMZ on any backhaul
      */
     virtual telux::common::Status disableDmz(int profileId, const telux::data::IpFamilyType ipType,
-        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID)
+        = 0;
 
     /**
      * Request DMZ entry that was previously set using enableDmz API
@@ -607,8 +594,9 @@ class IFirewallManager {
      *
      * @deprecated Use @ref telux::data::requestDmzEntry API to request DMZ on any backhaul
      */
-    virtual telux::common::Status requestDmzEntry(int profileId,
-        DmzEntriesCb dmzCb, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+    virtual telux::common::Status requestDmzEntry(
+        int profileId, DmzEntriesCb dmzCb, SlotId slotId = DEFAULT_SLOT_ID)
+        = 0;
 
     /**
      * Destructor for IFirewallManager
@@ -676,7 +664,8 @@ class IFirewallListener : public telux::common::ISDKListener {
      *
      * @param [in] status - @ref ServiceStatus
      */
-    virtual void onServiceStatusChange(telux::common::ServiceStatus status) {}
+    virtual void onServiceStatusChange(telux::common::ServiceStatus status) {
+    }
 
     /**
      * Destructor for IFirewallListener
@@ -685,7 +674,7 @@ class IFirewallListener : public telux::common::ISDKListener {
 };
 
 /** @} */ /* end_addtogroup telematics_data_net */
-}
-}
-}
-#endif // TELUX_DATA_NET_FIREWALLMANAGER_HPP
+}  // namespace net
+}  // namespace data
+}  // namespace telux
+#endif  // TELUX_DATA_NET_FIREWALLMANAGER_HPP

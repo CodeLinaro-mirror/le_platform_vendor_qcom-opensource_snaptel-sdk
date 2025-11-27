@@ -26,42 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * @file       CardManager.hpp
@@ -128,9 +98,8 @@ using EidResponseCallback
  * @note   Eval: This is a new API and is being evaluated. It is subject to
  *         change and could break backwards compatibility.
  */
-using refreshLastEventResponseCallback
-    = std::function<void(RefreshStage stage, RefreshMode mode, std::vector<IccFile> efFiles,
-    RefreshParams refreshParams, telux::common::ErrorCode error)>;
+using refreshLastEventResponseCallback = std::function<void(RefreshStage stage, RefreshMode mode,
+    std::vector<IccFile> efFiles, RefreshParams refreshParams, telux::common::ErrorCode error)>;
 
 /**
  * ICardManager provide APIs for slot count, retrieve slot ids, get card state and get card.
@@ -157,14 +126,14 @@ class ICardManager {
     virtual std::future<bool> onSubsystemReady() = 0;
 
     /**
-    * This status indicates whether the ICardManager object is in a usable state.
-    *
-    * @returns SERVICE_AVAILABLE    - If Card Manager is ready for service.
-    *          SERVICE_UNAVAILABLE  - If Card Manager is temporarily unavailable.
-    *          SERVICE_FAILED       - If Card Manager encountered an irrecoverable
-    *                                 failure.
-    *
-    */
+     * This status indicates whether the ICardManager object is in a usable state.
+     *
+     * @returns SERVICE_AVAILABLE    - If Card Manager is ready for service.
+     *          SERVICE_UNAVAILABLE  - If Card Manager is temporarily unavailable.
+     *          SERVICE_FAILED       - If Card Manager encountered an irrecoverable
+     *                                 failure.
+     *
+     */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
@@ -210,8 +179,8 @@ class ICardManager {
      * @returns Status of cardPowerUp i.e. success or suitable status code.
      *
      */
-    virtual telux::common::Status cardPowerUp(SlotId slotId,
-        telux::common::ResponseCallback callback = nullptr)
+    virtual telux::common::Status cardPowerUp(
+        SlotId slotId, telux::common::ResponseCallback callback = nullptr)
         = 0;
 
     /**
@@ -229,8 +198,8 @@ class ICardManager {
      * @returns Status of cardPowerDown i.e. success or suitable status code.
      *
      */
-    virtual telux::common::Status cardPowerDown(SlotId slotId,
-        telux::common::ResponseCallback callback = nullptr)
+    virtual telux::common::Status cardPowerDown(
+        SlotId slotId, telux::common::ResponseCallback callback = nullptr)
         = 0;
 
     /**
@@ -274,9 +243,10 @@ class ICardManager {
      * @note   Eval: This is a new API and is being evaluated. It is subject to
      *         change and could break backwards compatibility.
      */
-    virtual telux::common::Status setupRefreshConfig(
-        SlotId slotId, bool isRegister, bool doVoting, std::vector<IccFile> efFiles,
-        RefreshParams refreshParams, common::ResponseCallback callback = nullptr) = 0;
+    virtual telux::common::Status setupRefreshConfig(SlotId slotId, bool isRegister, bool doVoting,
+        std::vector<IccFile> efFiles, RefreshParams refreshParams,
+        common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Allow or disallow the initiation of the card refresh procedure. This function enables
@@ -311,7 +281,8 @@ class ICardManager {
      *         change and could break backwards compatibility.
      */
     virtual telux::common::Status allowCardRefresh(SlotId slotId, bool allowRefresh,
-        RefreshParams refreshParams, common::ResponseCallback callback = nullptr) = 0;
+        RefreshParams refreshParams, common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Indicates that the card refresh procedure is completed from the client application's
@@ -399,9 +370,9 @@ class ICardManager {
      * @note   Eval: This is a new API and is being evaluated. It is subject to
      *         change and could break backwards compatibility.
      */
-    virtual telux::common::Status confirmRefreshHandlingCompleted(SlotId slotId,
-        bool isCompleted, RefreshParams refreshParams,
-        common::ResponseCallback callback = nullptr) = 0;
+    virtual telux::common::Status confirmRefreshHandlingCompleted(SlotId slotId, bool isCompleted,
+        RefreshParams refreshParams, common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Provides ability to retrieve content similar to that previously received on
@@ -424,8 +395,9 @@ class ICardManager {
      * @note   Eval: This is a new API and is being evaluated. It is subject to
      *         change and could break backwards compatibility.
      */
-    virtual telux::common::Status requestLastRefreshEvent(SlotId slotId,
-        RefreshParams refreshParams, refreshLastEventResponseCallback callback) = 0;
+    virtual telux::common::Status requestLastRefreshEvent(
+        SlotId slotId, RefreshParams refreshParams, refreshLastEventResponseCallback callback)
+        = 0;
 
     /**
      * Register a listener for card events.
@@ -610,17 +582,17 @@ class ICard {
      */
     virtual std::shared_ptr<ICardFileHandler> getFileHandler() = 0;
 
-   /**
-    * Checks whether the NTN profile is activated on a given slot.
-    *
-    * @returns If true NTN profile is activated or else not-activated.
-    *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to
-    *         change and could break backwards compatibility.
-    */
-   virtual bool isNtnProfileActive() = 0;
+    /**
+     * Checks whether the NTN profile is activated on a given slot.
+     *
+     * @returns If true NTN profile is activated or else not-activated.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual bool isNtnProfileActive() = 0;
 
-   virtual ~ICard() {};
+    virtual ~ICard(){};
 };
 
 /**
@@ -761,9 +733,8 @@ class ICardListener : public common::IServiceStatusListener {
      * @note   Eval: This is a new API and is being evaluated. It is subject to
      *         change and could break backwards compatibility.
      */
-    virtual void onRefreshEvent(
-        int slotId, RefreshStage stage, RefreshMode mode, std::vector<IccFile> efFiles,
-        RefreshParams refreshParams) {
+    virtual void onRefreshEvent(int slotId, RefreshStage stage, RefreshMode mode,
+        std::vector<IccFile> efFiles, RefreshParams refreshParams) {
     }
 
     virtual ~ICardListener() {
@@ -776,4 +747,4 @@ class ICardListener : public common::IServiceStatusListener {
 
 }  // End of namespace telux
 
-#endif // TELUX_TEL_CARDMANAGER_HPP
+#endif  // TELUX_TEL_CARDMANAGER_HPP

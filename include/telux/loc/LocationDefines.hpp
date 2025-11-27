@@ -26,11 +26,13 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
  * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 /**
  * @file       LocationDefines.hpp
  *
@@ -53,12 +55,12 @@ namespace telux {
 
 namespace loc {
 /** @addtogroup telematics_location
-* @{ */
+ * @{ */
 
-const float UNKNOWN_CARRIER_FREQ = -1;
-const int UNKNOWN_SIGNAL_MASK = 0;
+const float UNKNOWN_CARRIER_FREQ            = -1;
+const int UNKNOWN_SIGNAL_MASK               = 0;
 const double UNKNOWN_BASEBAND_CARRIER_NOISE = 0.0;
-const uint64_t UNKNOWN_TIMESTAMP = 0;
+const uint64_t UNKNOWN_TIMESTAMP            = 0;
 const float DEFAULT_TUNC_THRESHOLD = 0.0; /**< Default value for threshold of time uncertainty.
                                                Units: milli-seconds. */
 const int DEFAULT_TUNC_ENERGY_THRESHOLD = 0; /**< Default value for energy consumed of time
@@ -73,89 +75,89 @@ const float UNKNOWN_SV_TIME_SUB_NS = -1; /**< Unknown Sub nanoseconds portion of
 /**
  * Defines RTCM injection data format
  */
-enum class DgnssDataFormat{
-  /** Source data format is unknown */
-  DATA_FORMAT_UNKNOWN                = 0,
-  /** Source data format is RTCM_3 */
-  DATA_FORMAT_RTCM_3                 = 1,
-  /** Source data format is 3GPP RTK Rel-15 */
-  DATA_FORMAT_3GPP_RTK_R15           = 2
+enum class DgnssDataFormat {
+    /** Source data format is unknown */
+    DATA_FORMAT_UNKNOWN = 0,
+    /** Source data format is RTCM_3 */
+    DATA_FORMAT_RTCM_3 = 1,
+    /** Source data format is 3GPP RTK Rel-15 */
+    DATA_FORMAT_3GPP_RTK_R15 = 2
 };
 
 /**
  * Defines status reported by cdfw for RTCM injection.
  */
-enum class DgnssStatus{
-  /** Dgnss subsystem doesn't support the data source */
-  DATA_SOURCE_NOT_SUPPORTED          = 1,
-  /** Dgnss subsystem doesn't support the data format */
-  DATA_FORMAT_NOT_SUPPORTED          = 2,
-  /** After the source injects the data, dgnss subsystem discovers there is
-   *  another higher priority source injecting the data at the
-   *  same time, and the current injected data is dropped */
-  OTHER_SOURCE_IN_USE                = 3,
-  /** There is a parsing error such as unrecognized format, CRC
-   *  check failure, value range check failure, etc.; the injected
-   *  data is dropped */
-  MESSAGE_PARSE_ERROR                = 4,
-  /** Data source is usable */
-  DATA_SOURCE_USABLE                 = 5,
-  /** Data source is not usable, for example,
-   * the reference station is too far away to improve the potion accuracy */
-  DATA_SOURCE_NOT_USABLE             = 6,
-  /** The CDFW service askes the source client to stop
-   *  injecting the correction data */
-  CDFW_STOP_SOURCE_INJECT            = 7
+enum class DgnssStatus {
+    /** Dgnss subsystem doesn't support the data source */
+    DATA_SOURCE_NOT_SUPPORTED = 1,
+    /** Dgnss subsystem doesn't support the data format */
+    DATA_FORMAT_NOT_SUPPORTED = 2,
+    /** After the source injects the data, dgnss subsystem discovers there is
+     *  another higher priority source injecting the data at the
+     *  same time, and the current injected data is dropped */
+    OTHER_SOURCE_IN_USE = 3,
+    /** There is a parsing error such as unrecognized format, CRC
+     *  check failure, value range check failure, etc.; the injected
+     *  data is dropped */
+    MESSAGE_PARSE_ERROR = 4,
+    /** Data source is usable */
+    DATA_SOURCE_USABLE = 5,
+    /** Data source is not usable, for example,
+     * the reference station is too far away to improve the potion accuracy */
+    DATA_SOURCE_NOT_USABLE = 6,
+    /** The CDFW service askes the source client to stop
+     *  injecting the correction data */
+    CDFW_STOP_SOURCE_INJECT = 7
 };
 
 /**
  * Defines the horizontal accuracy level of the fix.
  */
 enum class HorizontalAccuracyLevel {
-  LOW = 1,        /**< Client requires low horizontal accuracy */
-  MEDIUM = 2, /**< Client requires medium horizontal accuracy */
-  HIGH = 3    /**< Client requires high horizontal accuracy */
+    LOW    = 1, /**< Client requires low horizontal accuracy */
+    MEDIUM = 2, /**< Client requires medium horizontal accuracy */
+    HIGH   = 3 /**< Client requires high horizontal accuracy */
 };
 
 /**
  * Specifies the reliability of the position.
  */
 enum class LocationReliability {
-  UNKNOWN = -1, /**< Unknown location reliability*/
-  NOT_SET = 0, /**<  Location reliability is not set. The reliability of this position report
-                     could not be determined. It could be unreliable/reliable */
-  VERY_LOW = 1, /**<  Location reliability is very low */
-  LOW = 2, /**<  Location reliability is low, little or no cross-checking is possible */
-  MEDIUM = 3, /**<  Location reliability is medium, limited cross-check passed */
-  HIGH = 4 /**<  Location reliability is high, strong cross-check passed */
+    UNKNOWN = -1, /**< Unknown location reliability*/
+    NOT_SET = 0, /**<  Location reliability is not set. The reliability of this position report
+                       could not be determined. It could be unreliable/reliable */
+    VERY_LOW = 1, /**<  Location reliability is very low */
+    LOW      = 2, /**<  Location reliability is low, little or no cross-checking is possible */
+    MEDIUM   = 3, /**<  Location reliability is medium, limited cross-check passed */
+    HIGH     = 4 /**<  Location reliability is high, strong cross-check passed */
 };
 
 /**
  * Specify the set of navigation solutions that contribute to the Gnss Location.
  */
 enum NavigationSolutionType {
-    NAV_SBAS_SOLUTION_IONO,       /**< Bit mask to specify whether
-                                        SBAS ionospheric solution is used */
-    NAV_SBAS_SOLUTION_FAST,       /**< Bit mask to specify whether
-                                        SBAS fast solution is used */
-    NAV_SBAS_SOLUTION_LONG,       /**< Bit mask to specify whether
-                                        SBAS long solution is used */
-    NAV_SBAS_INTEGRITY,             /**< Bit mask to specify whether
-                                        SBAS integrity information is used */
-    NAV_DGNSS_SOLUTION,           /**< Bit mask to specify whether
-                                        DGNSS solution is used */
-    NAV_RTK_SOLUTION,             /**< Bit mask to specify whether
-                                        RTK solution is used */
-    NAV_PPP_SOLUTION,             /**< Bit mask to specify whether
-                                        PPP solution is used */
-    NAV_RTK_FIXED_SOLUTION,       /**< Bit mask to specify whether RTK fixed solution is used.
-                                        If only solution RTK is set,
-                                        fixes shall be treated as RTK_FLOAT solution.
-                                        If both solutions RTK & RTK_FIXED are set,
-                                        fixes shall be treated as RTK_FIXED solution. */
-    NAV_ONLY_SBAS_CORRECTED_SV_USED,   /**< Bit mask to specify
-                                           only SBAS corrected SV is used */
-    NAV_COUNT  /**< Bitset */
+    NAV_SBAS_SOLUTION_IONO, /**< Bit mask to specify whether
+                                  SBAS ionospheric solution is used */
+    NAV_SBAS_SOLUTION_FAST, /**< Bit mask to specify whether
+                                  SBAS fast solution is used */
+    NAV_SBAS_SOLUTION_LONG, /**< Bit mask to specify whether
+                                  SBAS long solution is used */
+    NAV_SBAS_INTEGRITY, /**< Bit mask to specify whether
+                            SBAS integrity information is used */
+    NAV_DGNSS_SOLUTION, /**< Bit mask to specify whether
+                              DGNSS solution is used */
+    NAV_RTK_SOLUTION, /**< Bit mask to specify whether
+                            RTK solution is used */
+    NAV_PPP_SOLUTION, /**< Bit mask to specify whether
+                            PPP solution is used */
+    NAV_RTK_FIXED_SOLUTION, /**< Bit mask to specify whether RTK fixed solution is used.
+                                  If only solution RTK is set,
+                                  fixes shall be treated as RTK_FLOAT solution.
+                                  If both solutions RTK & RTK_FIXED are set,
+                                  fixes shall be treated as RTK_FIXED solution. */
+    NAV_ONLY_SBAS_CORRECTED_SV_USED, /**< Bit mask to specify
+                                         only SBAS corrected SV is used */
+    NAV_COUNT /**< Bitset */
 };
 
 /**
@@ -168,26 +170,26 @@ using NavigationSolution = std::bitset<NAV_COUNT>;
  * Indicates whether altitude is assumed or calculated.
  */
 enum class AltitudeType {
-  UNKNOWN = -1, /**< Unknown altitude type*/
-  CALCULATED = 0, /**< Altitude is calculated  */
-  ASSUMED = 1, /**< Altitude is assumed, there may not be enough
-                    satellites to determine the precise altitude */
+    UNKNOWN    = -1, /**< Unknown altitude type*/
+    CALCULATED = 0, /**< Altitude is calculated  */
+    ASSUMED    = 1, /**< Altitude is assumed, there may not be enough
+                         satellites to determine the precise altitude */
 };
 
 /**
  * Defines constellation type of GNSS.
  */
 enum class GnssConstellationType {
-  UNKNOWN = -1, /**< Unknown constellation type*/
-  GPS = 1, /**< GPS satellite */
-  GALILEO = 2, /**< GALILEO satellite */
-  SBAS = 3, /**< SBAS satellite */
-  COMPASS = 4, /**< COMPASS satellite.
-               @deprecated constellation type is not supported.*/
-  GLONASS = 5, /**< GLONASS satellite */
-  BDS = 6, /**< BDS satellite */
-  QZSS = 7, /**< QZSS satellite */
-  NAVIC = 8 /**< NAVIC satellite*/
+    UNKNOWN = -1, /**< Unknown constellation type*/
+    GPS     = 1, /**< GPS satellite */
+    GALILEO = 2, /**< GALILEO satellite */
+    SBAS    = 3, /**< SBAS satellite */
+    COMPASS = 4, /**< COMPASS satellite.
+                 @deprecated constellation type is not supported.*/
+    GLONASS = 5, /**< GLONASS satellite */
+    BDS     = 6, /**< BDS satellite */
+    QZSS    = 7, /**< QZSS satellite */
+    NAVIC   = 8 /**< NAVIC satellite*/
 };
 
 /**
@@ -196,20 +198,20 @@ enum class GnssConstellationType {
  * almanacs.
  */
 enum class SVHealthStatus {
-  UNKNOWN = -1, /**< Unknown sv health status*/
-  UNHEALTHY = 0, /**< satellite is not operational and cannot be
-                      used in position calculations */
-  HEALTHY = 1 /**< satellite is fully operational */
+    UNKNOWN   = -1, /**< Unknown sv health status*/
+    UNHEALTHY = 0, /**< satellite is not operational and cannot be
+                        used in position calculations */
+    HEALTHY = 1 /**< satellite is fully operational */
 };
 
 /**
  * Satellite vehicle processing status.
  */
 enum class SVStatus {
-  UNKNOWN = -1, /**< Unknown sv status*/
-  IDLE = 0, /**< SV is not being actively processed  */
-  SEARCH = 1, /**< The system is searching for this SV */
-  TRACK = 2 /**< SV is being tracked */
+    UNKNOWN = -1, /**< Unknown sv status*/
+    IDLE    = 0, /**< SV is not being actively processed  */
+    SEARCH  = 1, /**< The system is searching for this SV */
+    TRACK   = 2 /**< SV is being tracked */
 };
 
 /**
@@ -217,9 +219,9 @@ enum class SVStatus {
  * almanac are present or not
  */
 enum class SVInfoAvailability {
-  UNKNOWN = -1, /**< Unknown sv info availability*/
-  YES = 0, /**< Ephemeris or Almanac exits  */
-  NO = 1 /**< Ephemeris or Almanac doesn't exist */
+    UNKNOWN = -1, /**< Unknown sv info availability*/
+    YES     = 0, /**< Ephemeris or Almanac exits  */
+    NO      = 1 /**< Ephemeris or Almanac doesn't exist */
 };
 
 /**
@@ -227,36 +229,36 @@ enum class SVInfoAvailability {
  * information in the @ref ILocationInfoEx.
  */
 enum GnssPositionTechType {
-  /** Technology used to generate location info
-   *  is unknown.*/
-  GNSS_DEFAULT = 0,
-  /** Satellites-based technology was used to generate
-   *  location info.*/
-  GNSS_SATELLITE = (1 << 0),
-  /** Cell towers were used to generate location info.*/
-  GNSS_CELLID = (1 << 1),
-  /** Wi-Fi access points were used to generate location info.*/
-  GNSS_WIFI = (1 << 2),
-  /** Sensors were used to generate location info.*/
-  GNSS_SENSORS = (1 << 3),
-  /**  Reference location was used to generate location info.*/
-  GNSS_REFERENCE_LOCATION = (1 << 4),
-  /** Coarse position injected into the location engine was used to
-   *  generate location info.*/
-  GNSS_INJECTED_COARSE_POSITION= (1 << 5),
-  /** AFLT was used to generate location info.*/
-  GNSS_AFLT = (1 << 6),
-  /** GNSS and network-provided measurements were used to generate
-   *  location info.*/
-  GNSS_HYBRID = (1 << 7),
-  /** Precise position engine was used to generate location info.*/
-  GNSS_PPE = (1 << 8),
-  /** Location was calculated using Vehicular data. */
-  GNSS_VEHICLE = (1 << 9),
-  /** Location was calculated using Visual data. */
-  GNSS_VISUAL = (1 << 10),
-  /** Location was calculated using Propagation logic, which uses cached measurements. */
-  GNSS_PROPAGATED = (1 << 11),
+    /** Technology used to generate location info
+     *  is unknown.*/
+    GNSS_DEFAULT = 0,
+    /** Satellites-based technology was used to generate
+     *  location info.*/
+    GNSS_SATELLITE = (1 << 0),
+    /** Cell towers were used to generate location info.*/
+    GNSS_CELLID = (1 << 1),
+    /** Wi-Fi access points were used to generate location info.*/
+    GNSS_WIFI = (1 << 2),
+    /** Sensors were used to generate location info.*/
+    GNSS_SENSORS = (1 << 3),
+    /**  Reference location was used to generate location info.*/
+    GNSS_REFERENCE_LOCATION = (1 << 4),
+    /** Coarse position injected into the location engine was used to
+     *  generate location info.*/
+    GNSS_INJECTED_COARSE_POSITION = (1 << 5),
+    /** AFLT was used to generate location info.*/
+    GNSS_AFLT = (1 << 6),
+    /** GNSS and network-provided measurements were used to generate
+     *  location info.*/
+    GNSS_HYBRID = (1 << 7),
+    /** Precise position engine was used to generate location info.*/
+    GNSS_PPE = (1 << 8),
+    /** Location was calculated using Vehicular data. */
+    GNSS_VEHICLE = (1 << 9),
+    /** Location was calculated using Visual data. */
+    GNSS_VISUAL = (1 << 10),
+    /** Location was calculated using Propagation logic, which uses cached measurements. */
+    GNSS_PROPAGATED = (1 << 11),
 };
 
 /*Bit mask containing bits from GnssPositionTechType */
@@ -266,42 +268,42 @@ using GnssPositionTech = uint32_t;
  * Specifies related kinematics mask
  */
 enum KinematicDataValidityType {
-  /** Navigation data has Forward Acceleration  */
-  HAS_LONG_ACCEL = (1 << 0),
-  /** Navigation data has Sideward Acceleration */
-  HAS_LAT_ACCEL = (1 << 1),
-  /** Navigation data has Vertical Acceleration */
-  HAS_VERT_ACCEL = (1 << 2),
-  /** Navigation data has Heading Rate */
-  HAS_YAW_RATE = (1 << 3),
-  /** Navigation data has Body pitch */
-  HAS_PITCH = (1 << 4),
-  /** Navigation data has Forward Acceleration  */
-  HAS_LONG_ACCEL_UNC = (1 << 5),
-  /** Navigation data has Sideward Acceleration */
-  HAS_LAT_ACCEL_UNC = (1 << 6),
-  /** Navigation data has Vertical Acceleration */
-  HAS_VERT_ACCEL_UNC = (1 << 7),
-  /** Navigation data has Heading Rate */
-  HAS_YAW_RATE_UNC = (1 << 8),
-  /** Navigation data has Body pitch */
-  HAS_PITCH_UNC = (1 << 9),
-  /** Navigation data has Body pitch rate */
-  HAS_PITCH_RATE_BIT = (1<<10),
-  /** Navigation data has Body pitch rate uncertainty */
-  HAS_PITCH_RATE_UNC_BIT = (1<<11),
-  /** Navigation data has roll */
-  HAS_ROLL_BIT = (1<<12),
-  /** Navigation data has roll uncertainty */
-  HAS_ROLL_UNC_BIT = (1<<13),
-  /** Navigation data has roll rate */
-  HAS_ROLL_RATE_BIT = (1<<14),
-  /** Navigation data has roll rate uncertainty */
-  HAS_ROLL_RATE_UNC_BIT = (1<<15),
-  /** Navigation data has yaw */
-  HAS_YAW_BIT = (1<<16),
-  /** Navigation data has yaw uncertainty */
-  HAS_YAW_UNC_BIT = (1<<17)
+    /** Navigation data has Forward Acceleration  */
+    HAS_LONG_ACCEL = (1 << 0),
+    /** Navigation data has Sideward Acceleration */
+    HAS_LAT_ACCEL = (1 << 1),
+    /** Navigation data has Vertical Acceleration */
+    HAS_VERT_ACCEL = (1 << 2),
+    /** Navigation data has Heading Rate */
+    HAS_YAW_RATE = (1 << 3),
+    /** Navigation data has Body pitch */
+    HAS_PITCH = (1 << 4),
+    /** Navigation data has Forward Acceleration  */
+    HAS_LONG_ACCEL_UNC = (1 << 5),
+    /** Navigation data has Sideward Acceleration */
+    HAS_LAT_ACCEL_UNC = (1 << 6),
+    /** Navigation data has Vertical Acceleration */
+    HAS_VERT_ACCEL_UNC = (1 << 7),
+    /** Navigation data has Heading Rate */
+    HAS_YAW_RATE_UNC = (1 << 8),
+    /** Navigation data has Body pitch */
+    HAS_PITCH_UNC = (1 << 9),
+    /** Navigation data has Body pitch rate */
+    HAS_PITCH_RATE_BIT = (1 << 10),
+    /** Navigation data has Body pitch rate uncertainty */
+    HAS_PITCH_RATE_UNC_BIT = (1 << 11),
+    /** Navigation data has roll */
+    HAS_ROLL_BIT = (1 << 12),
+    /** Navigation data has roll uncertainty */
+    HAS_ROLL_UNC_BIT = (1 << 13),
+    /** Navigation data has roll rate */
+    HAS_ROLL_RATE_BIT = (1 << 14),
+    /** Navigation data has roll rate uncertainty */
+    HAS_ROLL_RATE_UNC_BIT = (1 << 15),
+    /** Navigation data has yaw */
+    HAS_YAW_BIT = (1 << 16),
+    /** Navigation data has yaw uncertainty */
+    HAS_YAW_UNC_BIT = (1 << 17)
 };
 
 /*Bit mask containing bits from KinematicDataValidityType */
@@ -312,57 +314,57 @@ using KinematicDataValidity = uint32_t;
  * body frame parameters.
  */
 struct GnssKinematicsData {
-  /** Contains Body frame data valid bits. */
-  KinematicDataValidity bodyFrameDataMask;
-  /** Forward Acceleration in body frame (meters/second^2)*/
-  float longAccel;
-  /** Sideward Acceleration in body frame (meters/second^2)*/
-  float latAccel;
-  /** Vertical Acceleration in body frame (meters/second^2)*/
-  float vertAccel;
-  /** Heading Rate (Radians/second) */
-  float yawRate;
-  /** Body pitch (Radians) */
-  float pitch;
-  /** Uncertainty of Forward Acceleration in body
-   *  frame (meters/second^2)
-   *  Uncertainty is defined with 68% confidence level. */
-  float longAccelUnc;
-  /** Uncertainty of Side-ward Acceleration in body
-   *  frame meters/second^2)
-   *  Uncertainty is defined with 68% confidence level. */
-  float latAccelUnc;
-  /** Uncertainty of Vertical Acceleration in body
-   *  frame (meters/second^2)
-   *  Uncertainty is defined with 68% confidence level. */
-  float vertAccelUnc;
-  /** Uncertainty of Heading Rate (Radians/second)
-   *  Uncertainty is defined with 68% confidence level. */
-  float yawRateUnc;
-  /** Uncertainty of Body pitch (Radians)
-   *  Uncertainty is defined with 68% confidence level. */
-  float pitchUnc;
-  /** Body pitch rate, in unit of radians/second.*/
-  float pitchRate;
-  /** Uncertainty of pitch rate, in unit of radians/second.
-   *  Uncertainty is defined with 68% confidence level. */
-  float pitchRateUnc;
-  /** Roll of body frame, clockwise is positive, in unit of radian. */
-  float roll;
-  /** Uncertainty of roll, in unit of radian.
-   *  Uncertainty is defined with 68% confidence level. */
-  float rollUnc;
-  /** Roll rate of body frame, clockwise is positive, in unit of
-   *  radian/second.*/
-  float rollRate;
-  /** Uncertainty of roll rate, in unit of radian/second.
-   *  Uncertainty is defined with 68% confidence level. */
-  float rollRateUnc;
-  /** Yaw of body frame, clockwise is positive, in unit of radian. */
-  float yaw;
-  /** Uncertainty of yaw, in unit of radian.
-   *  Uncertainty is defined with 68% confidence level. */
-  float yawUnc;
+    /** Contains Body frame data valid bits. */
+    KinematicDataValidity bodyFrameDataMask;
+    /** Forward Acceleration in body frame (meters/second^2)*/
+    float longAccel;
+    /** Sideward Acceleration in body frame (meters/second^2)*/
+    float latAccel;
+    /** Vertical Acceleration in body frame (meters/second^2)*/
+    float vertAccel;
+    /** Heading Rate (Radians/second) */
+    float yawRate;
+    /** Body pitch (Radians) */
+    float pitch;
+    /** Uncertainty of Forward Acceleration in body
+     *  frame (meters/second^2)
+     *  Uncertainty is defined with 68% confidence level. */
+    float longAccelUnc;
+    /** Uncertainty of Side-ward Acceleration in body
+     *  frame meters/second^2)
+     *  Uncertainty is defined with 68% confidence level. */
+    float latAccelUnc;
+    /** Uncertainty of Vertical Acceleration in body
+     *  frame (meters/second^2)
+     *  Uncertainty is defined with 68% confidence level. */
+    float vertAccelUnc;
+    /** Uncertainty of Heading Rate (Radians/second)
+     *  Uncertainty is defined with 68% confidence level. */
+    float yawRateUnc;
+    /** Uncertainty of Body pitch (Radians)
+     *  Uncertainty is defined with 68% confidence level. */
+    float pitchUnc;
+    /** Body pitch rate, in unit of radians/second.*/
+    float pitchRate;
+    /** Uncertainty of pitch rate, in unit of radians/second.
+     *  Uncertainty is defined with 68% confidence level. */
+    float pitchRateUnc;
+    /** Roll of body frame, clockwise is positive, in unit of radian. */
+    float roll;
+    /** Uncertainty of roll, in unit of radian.
+     *  Uncertainty is defined with 68% confidence level. */
+    float rollUnc;
+    /** Roll rate of body frame, clockwise is positive, in unit of
+     *  radian/second.*/
+    float rollRate;
+    /** Uncertainty of roll rate, in unit of radian/second.
+     *  Uncertainty is defined with 68% confidence level. */
+    float rollRateUnc;
+    /** Yaw of body frame, clockwise is positive, in unit of radian. */
+    float yaw;
+    /** Uncertainty of yaw, in unit of radian.
+     *  Uncertainty is defined with 68% confidence level. */
+    float yawUnc;
 };
 
 /**
@@ -374,56 +376,56 @@ struct GnssKinematicsData {
  * LLAInfo specifies latitude, longitude and altitude info of location for VRP-based.
  */
 struct LLAInfo {
-  /** Latitude, in unit of degrees, range [-90.0, 90.0]. */
-  double latitude;
-  /** Longitude, in unit of degrees, range [-180.0, 180.0]. */
-  double longitude;
-  /** Altitude above the WGS 84 reference ellipsoid, in unit of meters. */
-  float altitude;
+    /** Latitude, in unit of degrees, range [-90.0, 90.0]. */
+    double latitude;
+    /** Longitude, in unit of degrees, range [-180.0, 180.0]. */
+    double longitude;
+    /** Altitude above the WGS 84 reference ellipsoid, in unit of meters. */
+    float altitude;
 };
 
 /**
  * Specify the different types of constellation supported.
  */
 enum class GnssSystem {
-  /** UNKNOWN satellite. */
-  GNSS_LOC_SV_SYSTEM_UNKNOWN = -1,
-  /** GPS satellite. */
-  GNSS_LOC_SV_SYSTEM_GPS = 1,
-  /** GALILEO satellite. */
-  GNSS_LOC_SV_SYSTEM_GALILEO = 2,
-  /** SBAS satellite. */
-  GNSS_LOC_SV_SYSTEM_SBAS = 3,
-  /** COMPASS satellite.
-  @deprecated constellation type
-  is not supported.*/
-  GNSS_LOC_SV_SYSTEM_COMPASS = 4,
-  /** GLONASS satellite. */
-  GNSS_LOC_SV_SYSTEM_GLONASS = 5,
-  /** BDS satellite. */
-  GNSS_LOC_SV_SYSTEM_BDS = 6,
-  /** QZSS satellite. */
-  GNSS_LOC_SV_SYSTEM_QZSS = 7,
-  /** NAVIC satellite. */
-  GNSS_LOC_SV_SYSTEM_NAVIC = 8
+    /** UNKNOWN satellite. */
+    GNSS_LOC_SV_SYSTEM_UNKNOWN = -1,
+    /** GPS satellite. */
+    GNSS_LOC_SV_SYSTEM_GPS = 1,
+    /** GALILEO satellite. */
+    GNSS_LOC_SV_SYSTEM_GALILEO = 2,
+    /** SBAS satellite. */
+    GNSS_LOC_SV_SYSTEM_SBAS = 3,
+    /** COMPASS satellite.
+    @deprecated constellation type
+    is not supported.*/
+    GNSS_LOC_SV_SYSTEM_COMPASS = 4,
+    /** GLONASS satellite. */
+    GNSS_LOC_SV_SYSTEM_GLONASS = 5,
+    /** BDS satellite. */
+    GNSS_LOC_SV_SYSTEM_BDS = 6,
+    /** QZSS satellite. */
+    GNSS_LOC_SV_SYSTEM_QZSS = 7,
+    /** NAVIC satellite. */
+    GNSS_LOC_SV_SYSTEM_NAVIC = 8
 };
 
 /**
  * Validity field for different system time in struct TimeInfo.
  */
 enum GnssTimeValidityType {
-  /** valid systemWeek.*/
-  GNSS_SYSTEM_TIME_WEEK_VALID = (1 << 0),
-  /** valid systemMsec*/
-  GNSS_SYSTEM_TIME_WEEK_MS_VALID = (1 << 1),
-  /** valid systemClkTimeBias*/
-  GNSS_SYSTEM_CLK_TIME_BIAS_VALID = (1 << 2),
-  /** valid systemClkTimeUncMs*/
-  GNSS_SYSTEM_CLK_TIME_BIAS_UNC_VALID = (1 << 3),
-  /** valid refFCount*/
-  GNSS_SYSTEM_REF_FCOUNT_VALID = (1 << 4),
-  /** valid numClockResets*/
-  GNSS_SYSTEM_NUM_CLOCK_RESETS_VALID = (1 << 5)
+    /** valid systemWeek.*/
+    GNSS_SYSTEM_TIME_WEEK_VALID = (1 << 0),
+    /** valid systemMsec*/
+    GNSS_SYSTEM_TIME_WEEK_MS_VALID = (1 << 1),
+    /** valid systemClkTimeBias*/
+    GNSS_SYSTEM_CLK_TIME_BIAS_VALID = (1 << 2),
+    /** valid systemClkTimeUncMs*/
+    GNSS_SYSTEM_CLK_TIME_BIAS_UNC_VALID = (1 << 3),
+    /** valid refFCount*/
+    GNSS_SYSTEM_REF_FCOUNT_VALID = (1 << 4),
+    /** valid numClockResets*/
+    GNSS_SYSTEM_NUM_CLOCK_RESETS_VALID = (1 << 5)
 };
 
 /*Bit mask containing bits from GnssTimeValidityType */
@@ -431,59 +433,59 @@ using GnssTimeValidity = uint32_t;
 
 /** Specify non-Glonass Gnss system time info.*/
 struct TimeInfo {
-  /** Validity mask for below fields */
-  GnssTimeValidity validityMask;
-  /** Extended week number at reference tick.
-   *  Unit: Week.
-   *  Set to 65535 if week number is unknown.
-   *  For GPS:
-   *  Calculated from midnight, Jan. 6, 1980.
-   *  OTA decoded 10 bit GPS week is extended to map between:
-   *  [NV6264 to (NV6264 + 1023)].
-   *  For BDS:
-   *  Calculated from 00:00:00 on January 1, 2006 of Coordinated Universal Time
-   *  (UTC).
-   *  For GAL:
-   *  Calculated from 00:00 UT on Sunday August 22, 1999
-   *  (midnight between August 21 and August 22).*/
-  uint16_t systemWeek;
-  /** Time in to the current week at reference tick.
-   *  Unit: Millisecond. Range: 0 to 604799999.*/
-  uint32_t systemMsec;
-  /** System clock time bias
-   *  Units: Millisecond
-   *  Note: System time (TOW Millisecond) = systemMsec - systemClkTimeBias.*/
-  float systemClkTimeBias;
-  /** Single sided maximum time bias uncertainty
-   *  Units: Millisecond */
-  float systemClkTimeUncMs;
-  /** FCount (free running HW timer) value. Don't use for relative time purpose
-   *  due to possible discontinuities.
-   *  Unit: Millisecond */
-  uint32_t refFCount;
-  /** Number of clock resets/discontinuities detected,
-   *  affecting the local hardware counter value. */
-  uint32_t numClockResets;
+    /** Validity mask for below fields */
+    GnssTimeValidity validityMask;
+    /** Extended week number at reference tick.
+     *  Unit: Week.
+     *  Set to 65535 if week number is unknown.
+     *  For GPS:
+     *  Calculated from midnight, Jan. 6, 1980.
+     *  OTA decoded 10 bit GPS week is extended to map between:
+     *  [NV6264 to (NV6264 + 1023)].
+     *  For BDS:
+     *  Calculated from 00:00:00 on January 1, 2006 of Coordinated Universal Time
+     *  (UTC).
+     *  For GAL:
+     *  Calculated from 00:00 UT on Sunday August 22, 1999
+     *  (midnight between August 21 and August 22).*/
+    uint16_t systemWeek;
+    /** Time in to the current week at reference tick.
+     *  Unit: Millisecond. Range: 0 to 604799999.*/
+    uint32_t systemMsec;
+    /** System clock time bias
+     *  Units: Millisecond
+     *  Note: System time (TOW Millisecond) = systemMsec - systemClkTimeBias.*/
+    float systemClkTimeBias;
+    /** Single sided maximum time bias uncertainty
+     *  Units: Millisecond */
+    float systemClkTimeUncMs;
+    /** FCount (free running HW timer) value. Don't use for relative time purpose
+     *  due to possible discontinuities.
+     *  Unit: Millisecond */
+    uint32_t refFCount;
+    /** Number of clock resets/discontinuities detected,
+     *  affecting the local hardware counter value. */
+    uint32_t numClockResets;
 };
 
 /**
  * Validity field for GLONASS time in struct GlonassTimeInfo.
  */
 enum GlonassTimeValidity {
-  /** valid gloDays*/
-  GNSS_CLO_DAYS_VALID = (1 << 0),
-  /** valid gloMsec*/
-  GNSS_GLOS_MSEC_VALID = (1 << 1),
-  /** valid gloClkTimeBias*/
-  GNSS_GLO_CLK_TIME_BIAS_VALID = (1 << 2),
-  /** valid gloClkTimeUncMs*/
-  GNSS_GLO_CLK_TIME_BIAS_UNC_VALID = (1 << 3),
-  /** valid refFCount*/
-  GNSS_GLO_REF_FCOUNT_VALID = (1 << 4),
-  /** valid numClockResets*/
-  GNSS_GLO_NUM_CLOCK_RESETS_VALID = (1 << 5),
-  /** valid gloFourYear*/
-  GNSS_GLO_FOUR_YEAR_VALID = (1 << 6)
+    /** valid gloDays*/
+    GNSS_CLO_DAYS_VALID = (1 << 0),
+    /** valid gloMsec*/
+    GNSS_GLOS_MSEC_VALID = (1 << 1),
+    /** valid gloClkTimeBias*/
+    GNSS_GLO_CLK_TIME_BIAS_VALID = (1 << 2),
+    /** valid gloClkTimeUncMs*/
+    GNSS_GLO_CLK_TIME_BIAS_UNC_VALID = (1 << 3),
+    /** valid refFCount*/
+    GNSS_GLO_REF_FCOUNT_VALID = (1 << 4),
+    /** valid numClockResets*/
+    GNSS_GLO_NUM_CLOCK_RESETS_VALID = (1 << 5),
+    /** valid gloFourYear*/
+    GNSS_GLO_FOUR_YEAR_VALID = (1 << 6)
 };
 
 /*Bit mask containing bits from GlonassTimeValidity */
@@ -491,113 +493,113 @@ using TimeValidity = uint32_t;
 
 /** Specifies Glonass system time info.*/
 struct GlonassTimeInfo {
-  /** GLONASS day number in four years. Refer to GLONASS ICD.
-   *  Applicable only for GLONASS and shall be ignored for other constellations.
-   *  If unknown shall be set to 65535 */
-  uint16_t gloDays;
-  /** Validity mask for GlonassTimeInfo fields */
-  TimeValidity validityMask;
-  /** GLONASS time of day in Millisecond. Refer to GLONASS ICD.
-   *  Units: Millisecond.*/
-  uint32_t gloMsec;
-  /** GLONASS clock time bias.
-   *  Units: Millisecond
-   *  Note: GLO time (TOD Millisecond) = gloMsec - gloClkTimeBias.
-   *  Check for gloClkTimeUncMs before use. */
-  float gloClkTimeBias;
-  /** Single sided maximum time bias uncertainty
-   *  Units: Millisecond */
-  float gloClkTimeUncMs;
-  /** FCount (free running HW timer) value. Don't use for relative time purpose
-   *  due to possible discontinuities.
-   *  Unit: Millisecond */
-  uint32_t refFCount;
-  /** Number of clock resets/discontinuities detected,
-   *  affecting the local hardware counter value. */
-  uint32_t numClockResets;
-  /** GLONASS four year number from 1996. Refer to GLONASS ICD.
-   *  Applicable only for GLONASS and shall be ignored for other constellations.*/
-  uint8_t gloFourYear;
+    /** GLONASS day number in four years. Refer to GLONASS ICD.
+     *  Applicable only for GLONASS and shall be ignored for other constellations.
+     *  If unknown shall be set to 65535 */
+    uint16_t gloDays;
+    /** Validity mask for GlonassTimeInfo fields */
+    TimeValidity validityMask;
+    /** GLONASS time of day in Millisecond. Refer to GLONASS ICD.
+     *  Units: Millisecond.*/
+    uint32_t gloMsec;
+    /** GLONASS clock time bias.
+     *  Units: Millisecond
+     *  Note: GLO time (TOD Millisecond) = gloMsec - gloClkTimeBias.
+     *  Check for gloClkTimeUncMs before use. */
+    float gloClkTimeBias;
+    /** Single sided maximum time bias uncertainty
+     *  Units: Millisecond */
+    float gloClkTimeUncMs;
+    /** FCount (free running HW timer) value. Don't use for relative time purpose
+     *  due to possible discontinuities.
+     *  Unit: Millisecond */
+    uint32_t refFCount;
+    /** Number of clock resets/discontinuities detected,
+     *  affecting the local hardware counter value. */
+    uint32_t numClockResets;
+    /** GLONASS four year number from 1996. Refer to GLONASS ICD.
+     *  Applicable only for GLONASS and shall be ignored for other constellations.*/
+    uint8_t gloFourYear;
 };
 
 /** Union to hold GNSS system time from different constellations in
  *  SystemTime.*/
 union SystemTimeInfo {
-  /** System time info from GPS constellation.*/
-  TimeInfo gps;
-  /** System time info from GALILEO constellation.*/
-  TimeInfo gal;
-  /** System time info from BEIDOU constellation.*/
-  TimeInfo bds;
-  /** System time info from QZSS constellation.*/
-  TimeInfo qzss;
-  /** System time info from GLONASS constellation.*/
-  GlonassTimeInfo glo;
-  /** System time info from NAVIC constellation.*/
-  TimeInfo navic;
+    /** System time info from GPS constellation.*/
+    TimeInfo gps;
+    /** System time info from GALILEO constellation.*/
+    TimeInfo gal;
+    /** System time info from BEIDOU constellation.*/
+    TimeInfo bds;
+    /** System time info from QZSS constellation.*/
+    TimeInfo qzss;
+    /** System time info from GLONASS constellation.*/
+    GlonassTimeInfo glo;
+    /** System time info from NAVIC constellation.*/
+    TimeInfo navic;
 };
 
 /** GNSS system time in @ref ILocationInfoEx.*/
 struct SystemTime {
-  /** Specify the source constellation for GNSS system time. */
-  GnssSystem gnssSystemTimeSrc;
-  /** Specify the GNSS system time corresponding to the source.*/
-  SystemTimeInfo time;
+    /** Specify the source constellation for GNSS system time. */
+    GnssSystem gnssSystemTimeSrc;
+    /** Specify the GNSS system time corresponding to the source.*/
+    SystemTimeInfo time;
 };
 
 /** Specify GNSS Signal Type and RF Band used in struct GnssMeasurementInfo
  *  and ISVInfo class.*/
 enum GnssSignalType {
-  /** Gnss signal is of GPS L1CA RF Band. */
-  GPS_L1CA = (1<<0),
-  /** Gnss signal is of GPS L1C RF Band. */
-  GPS_L1C = (1<<1),
-  /** Gnss signal is of GPS L2 RF Band. */
-  GPS_L2 = (1<<2),
-  /** Gnss signal is of GPS L5 RF Band. */
-  GPS_L5 = (1<<3),
-  /** Gnss signal is of GLONASS G1 (L1OF) RF Band. */
-  GLONASS_G1 = (1<<4),
-  /** Gnss signal is of GLONASS G2 (L2OF) RF Band. */
-  GLONASS_G2 = (1<<5),
-  /** Gnss signal is of GALILEO E1 RF Band. */
-  GALILEO_E1 = (1<<6),
-  /** Gnss signal is of GALILEO E5A RF Band. */
-  GALILEO_E5A = (1<<7),
-  /** Gnss signal is of GALILEO E5B RF Band. */
-  GALILIEO_E5B = (1<<8),
-  /** Gnss signal is of BEIDOU B1 RF Band. */
-  BEIDOU_B1 = (1<<9),
-  /** Gnss signal is of BEIDOU B2 RF Band. */
-  BEIDOU_B2 = (1<<10),
-  /** Gnss signal is of QZSS L1CA RF Band. */
-  QZSS_L1CA = (1<<11),
-  /** Gnss signal is of QZSS L1S RF Band. */
-  QZSS_L1S = (1<<12),
-  /** Gnss signal is of QZSS L2 RF Band. */
-  QZSS_L2 = (1<<13),
-  /** Gnss signal is of QZSS L5 RF Band. */
-  QZSS_L5 = (1<<14),
-  /** Gnss signal is of SBAS L1 RF Band. */
-  SBAS_L1 = (1<<15),
-  /** Gnss signal is of BEIDOU B1I RF Band. */
-  BEIDOU_B1I = (1<<16),
-  /** Gnss signal is of BEIDOU B1C RF Band. */
-  BEIDOU_B1C = (1<<17),
-  /** Gnss signal is of BEIDOU B2I RF Band. */
-  BEIDOU_B2I = (1<<18),
-  /** Gnss signal is of BEIDOU B2AI RF Band. */
-  BEIDOU_B2AI = (1<<19),
-  /** Gnss signal is of NAVIC L5 RF Band. */
-  NAVIC_L5 = (1<<20),
-  /** Gnss signal is of BEIDOU B2A_Q RF Band. */
-  BEIDOU_B2AQ = (1<<21),
-  /** Gnss signal is of BEIDOU B2B_I RF Band. */
-  BEIDOU_B2BI = (1<<22),
-  /** Gnss signal is of BEIDOU B2B_Q RF Band. */
-  BEIDOU_B2BQ = (1<<23),
-  /** Gnss signal is of NAVIC L1 RF Band. */
-  NAVIC_L1 = (1<<24)
+    /** Gnss signal is of GPS L1CA RF Band. */
+    GPS_L1CA = (1 << 0),
+    /** Gnss signal is of GPS L1C RF Band. */
+    GPS_L1C = (1 << 1),
+    /** Gnss signal is of GPS L2 RF Band. */
+    GPS_L2 = (1 << 2),
+    /** Gnss signal is of GPS L5 RF Band. */
+    GPS_L5 = (1 << 3),
+    /** Gnss signal is of GLONASS G1 (L1OF) RF Band. */
+    GLONASS_G1 = (1 << 4),
+    /** Gnss signal is of GLONASS G2 (L2OF) RF Band. */
+    GLONASS_G2 = (1 << 5),
+    /** Gnss signal is of GALILEO E1 RF Band. */
+    GALILEO_E1 = (1 << 6),
+    /** Gnss signal is of GALILEO E5A RF Band. */
+    GALILEO_E5A = (1 << 7),
+    /** Gnss signal is of GALILEO E5B RF Band. */
+    GALILIEO_E5B = (1 << 8),
+    /** Gnss signal is of BEIDOU B1 RF Band. */
+    BEIDOU_B1 = (1 << 9),
+    /** Gnss signal is of BEIDOU B2 RF Band. */
+    BEIDOU_B2 = (1 << 10),
+    /** Gnss signal is of QZSS L1CA RF Band. */
+    QZSS_L1CA = (1 << 11),
+    /** Gnss signal is of QZSS L1S RF Band. */
+    QZSS_L1S = (1 << 12),
+    /** Gnss signal is of QZSS L2 RF Band. */
+    QZSS_L2 = (1 << 13),
+    /** Gnss signal is of QZSS L5 RF Band. */
+    QZSS_L5 = (1 << 14),
+    /** Gnss signal is of SBAS L1 RF Band. */
+    SBAS_L1 = (1 << 15),
+    /** Gnss signal is of BEIDOU B1I RF Band. */
+    BEIDOU_B1I = (1 << 16),
+    /** Gnss signal is of BEIDOU B1C RF Band. */
+    BEIDOU_B1C = (1 << 17),
+    /** Gnss signal is of BEIDOU B2I RF Band. */
+    BEIDOU_B2I = (1 << 18),
+    /** Gnss signal is of BEIDOU B2AI RF Band. */
+    BEIDOU_B2AI = (1 << 19),
+    /** Gnss signal is of NAVIC L5 RF Band. */
+    NAVIC_L5 = (1 << 20),
+    /** Gnss signal is of BEIDOU B2A_Q RF Band. */
+    BEIDOU_B2AQ = (1 << 21),
+    /** Gnss signal is of BEIDOU B2B_I RF Band. */
+    BEIDOU_B2BI = (1 << 22),
+    /** Gnss signal is of BEIDOU B2B_Q RF Band. */
+    BEIDOU_B2BQ = (1 << 23),
+    /** Gnss signal is of NAVIC L1 RF Band. */
+    NAVIC_L1 = (1 << 24)
 };
 
 /*Bit mask containing bits from GnssSignalType */
@@ -605,57 +607,57 @@ using GnssSignal = uint32_t;
 
 /** Specify Location Capabilities Type.*/
 enum LocCapabilityType {
-  /** Support time based tracking session via @ref ILocationManager::startDetailedReports,
-   *  @ref ILocationManager::startDetailedEngineReports and
-   *  @ref ILocationManager::startBasicReports with distanceInMeters set to 0.
-   */
-  TIME_BASED_TRACKING = (1<<0),
-  /** Support distance based tracking session via @ref ILocationManager::startBasicReports with
-   *  distanceInMeters specified.
-   */
-  DISTANCE_BASED_TRACKING = (1<<1),
-  /** Support Gnss Measurement data via @ref ILocationListener::onGnssMeasurementsInfo when a
-   *  tracking session is enabled.
-   */
-  GNSS_MEASUREMENTS = (1<<2),
-  /** Support configure constellations via @ref ILocationConfigurator::configureConstellations. */
-  CONSTELLATION_ENABLEMENT = (1<<3),
-  /** Support carrier phase for Precise Positioning Measurement Engine (PPME). */
-  CARRIER_PHASE = (1<<4),
-  /** Support GNSS Single Frequency feature. */
-  QWES_GNSS_SINGLE_FREQUENCY = (1<<5),
-  /** Supports GNSS Multi Frequency feature. */
-  QWES_GNSS_MULTI_FREQUENCY = (1<<6),
-  /** Support VEPP license bundle is enabled. VEPP bundle include Carrier Phase features. */
-  QWES_VPE = (1<<7),
-  /** Support for CV2X Location basic features. This includes features for
-   *  GTS Time & Freq, @ref ILocationConfigurator::configureCTunc.
-   */
-  QWES_CV2X_LOCATION_BASIC = (1<<8),
-  /** Support for CV2X Location premium features. This includes features for
-   *  CV2X Location Basic features, QDR3 feature and @ref ILocationConfigurator::configurePACE.
-   */
-  QWES_CV2X_LOCATION_PREMIUM = (1<<9),
-  /** Support PPE (Precise Positioning Engine) library is enabled or Precise Positioning Framework
-   *  (PPF) is available. This includes features for Carrier Phase and SV Ephermeris.
-   */
-  QWES_PPE = (1<<10),
-  /** Support QDR2_C license bundle is enabled. */
-  QWES_QDR2 = (1<<11),
-  /** Support QDR3_C license bundle is enabled. */
-  QWES_QDR3 = (1<<12),
-  /** support time-based batching session. */
-  TIME_BASED_BATCHING = (1<<13),
-  /** support distance-based batching session. */
-  DISTANCE_BASED_BATCHING = (1<<14),
-  /** Support geofencing. */
-  GEOFENCE = (1<<15),
-  /** Support outdoor trip batching session. */
-  OUTDOOR_TRIP_BATCHING = (1<<16),
-  /** Support SV Polynomial */
-  SV_POLYNOMIAL = (1<<17),
-  /** Indicates presence of ML Inference capability for Pseudo Range Measurements. */
-  NLOS_ML20 = (1<<18)
+    /** Support time based tracking session via @ref ILocationManager::startDetailedReports,
+     *  @ref ILocationManager::startDetailedEngineReports and
+     *  @ref ILocationManager::startBasicReports with distanceInMeters set to 0.
+     */
+    TIME_BASED_TRACKING = (1 << 0),
+    /** Support distance based tracking session via @ref ILocationManager::startBasicReports with
+     *  distanceInMeters specified.
+     */
+    DISTANCE_BASED_TRACKING = (1 << 1),
+    /** Support Gnss Measurement data via @ref ILocationListener::onGnssMeasurementsInfo when a
+     *  tracking session is enabled.
+     */
+    GNSS_MEASUREMENTS = (1 << 2),
+    /** Support configure constellations via @ref ILocationConfigurator::configureConstellations. */
+    CONSTELLATION_ENABLEMENT = (1 << 3),
+    /** Support carrier phase for Precise Positioning Measurement Engine (PPME). */
+    CARRIER_PHASE = (1 << 4),
+    /** Support GNSS Single Frequency feature. */
+    QWES_GNSS_SINGLE_FREQUENCY = (1 << 5),
+    /** Supports GNSS Multi Frequency feature. */
+    QWES_GNSS_MULTI_FREQUENCY = (1 << 6),
+    /** Support VEPP license bundle is enabled. VEPP bundle include Carrier Phase features. */
+    QWES_VPE = (1 << 7),
+    /** Support for CV2X Location basic features. This includes features for
+     *  GTS Time & Freq, @ref ILocationConfigurator::configureCTunc.
+     */
+    QWES_CV2X_LOCATION_BASIC = (1 << 8),
+    /** Support for CV2X Location premium features. This includes features for
+     *  CV2X Location Basic features, QDR3 feature and @ref ILocationConfigurator::configurePACE.
+     */
+    QWES_CV2X_LOCATION_PREMIUM = (1 << 9),
+    /** Support PPE (Precise Positioning Engine) library is enabled or Precise Positioning Framework
+     *  (PPF) is available. This includes features for Carrier Phase and SV Ephermeris.
+     */
+    QWES_PPE = (1 << 10),
+    /** Support QDR2_C license bundle is enabled. */
+    QWES_QDR2 = (1 << 11),
+    /** Support QDR3_C license bundle is enabled. */
+    QWES_QDR3 = (1 << 12),
+    /** support time-based batching session. */
+    TIME_BASED_BATCHING = (1 << 13),
+    /** support distance-based batching session. */
+    DISTANCE_BASED_BATCHING = (1 << 14),
+    /** Support geofencing. */
+    GEOFENCE = (1 << 15),
+    /** Support outdoor trip batching session. */
+    OUTDOOR_TRIP_BATCHING = (1 << 16),
+    /** Support SV Polynomial */
+    SV_POLYNOMIAL = (1 << 17),
+    /** Indicates presence of ML Inference capability for Pseudo Range Measurements. */
+    NLOS_ML20 = (1 << 18)
 };
 
 /*Bit mask containing bits from LocCapabilityType */
@@ -664,22 +666,22 @@ using LocCapability = uint32_t;
 /** Specify the satellite vehicle measurements that are used
  *  to calculate location in @ref ILocationInfoEx.*/
 struct GnssMeasurementInfo {
-  /** GnssSignalType mask */
-  GnssSignal gnssSignalType;
-  /** Specifies GNSS Constellation Type */
-  GnssSystem gnssConstellation;
-  /** GNSS SV ID.
-   *  For GPS:      1 to 32.
-   *  For GLONASS:  [65, 96] or [97, 110].
-                    [65, 96] if orbital slot number(OSN) is known.
-                    [97, 110] as frequency channel number(FCN) [-7, 6] plus 104.
-                    i.e. encode FCN (-7) as 97, FCN (0) as 104, FCN (6) as 110.
-   *  For SBAS:     120 to 158 and 183 to 191.
-   *  For QZSS:     193 to 197.
-   *  For BDS:      201 to 263.
-   *  For GAL:      301 to 336.
-   *  For NAVIC:    401 to 420.*/
-  uint16_t gnssSvId;
+    /** GnssSignalType mask */
+    GnssSignal gnssSignalType;
+    /** Specifies GNSS Constellation Type */
+    GnssSystem gnssConstellation;
+    /** GNSS SV ID.
+     *  For GPS:      1 to 32.
+     *  For GLONASS:  [65, 96] or [97, 110].
+                      [65, 96] if orbital slot number(OSN) is known.
+                      [97, 110] as frequency channel number(FCN) [-7, 6] plus 104.
+                      i.e. encode FCN (-7) as 97, FCN (0) as 104, FCN (6) as 110.
+     *  For SBAS:     120 to 158 and 183 to 191.
+     *  For QZSS:     193 to 197.
+     *  For BDS:      201 to 263.
+     *  For GAL:      301 to 336.
+     *  For NAVIC:    401 to 420.*/
+    uint16_t gnssSvId;
 };
 
 /** Specify the set of SVs that are used to calculate
@@ -715,30 +717,30 @@ struct SvUsedInPosition {
  *  ILocationInfoBase.
  */
 enum LocationTechnologyType {
-  /** Location was calculated using GNSS-based technology. */
-  LOC_GNSS = (1 << 0),
-  /** Location was calculated using Cell-based technology. */
-  LOC_CELL = (1 << 1),
-  /** Location was calculated using WiFi-based technology. */
-  LOC_WIFI = (1 << 2),
-  /** Location was calculated using Sensors-based technology. */
-  LOC_SENSORS = (1 << 3),
-  /** Location was calculated using Reference location. */
-  LOC_REFERENCE_LOCATION = (1 << 4),
-  /** Location was calculated using Coarse position injected into the location engine. */
-  LOC_INJECTED_COARSE_POSITION = (1 << 5),
-  /** Location was calculated using AFLT. */
-  LOC_AFLT = (1 << 6),
-  /** Location was calculated using GNSS and network-provided measurements. */
-  LOC_HYBRID = (1 << 7),
-  /** Location was calculated using Precise position engine. */
-  LOC_PPE = (1 << 8),
-  /** Location was calculated using Vehicular data. */
-  LOC_VEH = (1 << 9),
-  /** Location was calculated using Visual data. */
-  LOC_VIS = (1 << 10),
-  /** Location was calculated using Propagation logic, which uses cached measurements. */
-  LOC_PROPAGATED = (1 << 11),
+    /** Location was calculated using GNSS-based technology. */
+    LOC_GNSS = (1 << 0),
+    /** Location was calculated using Cell-based technology. */
+    LOC_CELL = (1 << 1),
+    /** Location was calculated using WiFi-based technology. */
+    LOC_WIFI = (1 << 2),
+    /** Location was calculated using Sensors-based technology. */
+    LOC_SENSORS = (1 << 3),
+    /** Location was calculated using Reference location. */
+    LOC_REFERENCE_LOCATION = (1 << 4),
+    /** Location was calculated using Coarse position injected into the location engine. */
+    LOC_INJECTED_COARSE_POSITION = (1 << 5),
+    /** Location was calculated using AFLT. */
+    LOC_AFLT = (1 << 6),
+    /** Location was calculated using GNSS and network-provided measurements. */
+    LOC_HYBRID = (1 << 7),
+    /** Location was calculated using Precise position engine. */
+    LOC_PPE = (1 << 8),
+    /** Location was calculated using Vehicular data. */
+    LOC_VEH = (1 << 9),
+    /** Location was calculated using Visual data. */
+    LOC_VIS = (1 << 10),
+    /** Location was calculated using Propagation logic, which uses cached measurements. */
+    LOC_PROPAGATED = (1 << 11),
 };
 
 /*Bit mask containing bits from LocationTechnologyType */
@@ -749,34 +751,34 @@ using LocationTechnology = uint32_t;
  *  is valid or not by checking the corresponding bit is set or not.
  */
 enum LocationValidityType {
-  /** Location has valid latitude and longitude.*/
-    HAS_LAT_LONG_BIT          = (1<<0),
+    /** Location has valid latitude and longitude.*/
+    HAS_LAT_LONG_BIT = (1 << 0),
     /** Location has valid altitude.*/
-    HAS_ALTITUDE_BIT          = (1<<1),
+    HAS_ALTITUDE_BIT = (1 << 1),
     /** Location has valid speed.*/
-    HAS_SPEED_BIT             = (1<<2),
+    HAS_SPEED_BIT = (1 << 2),
     /** Location has valid heading.*/
-    HAS_HEADING_BIT           = (1<<3),
+    HAS_HEADING_BIT = (1 << 3),
     /* Location has valid horizontal accuracy. */
-    HAS_HORIZONTAL_ACCURACY_BIT = (1<<4),
+    HAS_HORIZONTAL_ACCURACY_BIT = (1 << 4),
     /** Location has valid vertical accuracy.*/
-    HAS_VERTICAL_ACCURACY_BIT = (1<<5),
+    HAS_VERTICAL_ACCURACY_BIT = (1 << 5),
     /** Location has valid speed accuracy.*/
-    HAS_SPEED_ACCURACY_BIT    = (1<<6),
+    HAS_SPEED_ACCURACY_BIT = (1 << 6),
     /** Location has valid heading accuracy.*/
-    HAS_HEADING_ACCURACY_BIT  = (1<<7),
+    HAS_HEADING_ACCURACY_BIT = (1 << 7),
     /** Location has valid timestamp.*/
-    HAS_TIMESTAMP_BIT         = (1<<8),
+    HAS_TIMESTAMP_BIT = (1 << 8),
     /** Location has valid elapsed real time.*/
-    HAS_ELAPSED_REAL_TIME_BIT = (1<<9),
+    HAS_ELAPSED_REAL_TIME_BIT = (1 << 9),
     /** Location has valid elapsed real time uncertainty.*/
-    HAS_ELAPSED_REAL_TIME_UNC_BIT = (1<<10),
+    HAS_ELAPSED_REAL_TIME_UNC_BIT = (1 << 10),
     /** Location has valid time uncertainty.*/
-    HAS_TIME_UNC_BIT = (1<<11),
+    HAS_TIME_UNC_BIT = (1 << 11),
     /** Location has valid elapsed gPTP time.*/
-    HAS_GPTP_TIME_BIT         = (1<<12),
+    HAS_GPTP_TIME_BIT = (1 << 12),
     /** Location has valid elapsed gPTP time uncertainty.*/
-    HAS_GPTP_TIME_UNC_BIT     = (1<<13)
+    HAS_GPTP_TIME_UNC_BIT = (1 << 13)
 };
 
 /*Bit mask containing bits from LocationValidityType */
@@ -787,96 +789,96 @@ using LocationInfoValidity = uint32_t;
  *  is valid or not by checking the corresponding bit is set or not.
  */
 enum LocationInfoExValidityType {
-  /** valid altitude mean sea level */
-  HAS_ALTITUDE_MEAN_SEA_LEVEL = (1ULL << 0),
-  /** valid pdop, hdop, and vdop */
-  HAS_DOP = (1ULL << 1),
-  /** valid magnetic deviation */
-  HAS_MAGNETIC_DEVIATION = (1ULL << 2),
-  /** valid horizontal reliability */
-  HAS_HOR_RELIABILITY = (1ULL << 3),
-  /** valid vertical reliability */
-  HAS_VER_RELIABILITY = (1ULL << 4),
-  /** valid elipsode semi major */
-  HAS_HOR_ACCURACY_ELIP_SEMI_MAJOR = (1ULL << 5),
-  /** valid elipsode semi minor */
-  HAS_HOR_ACCURACY_ELIP_SEMI_MINOR = (1ULL << 6),
-  /** valid accuracy elipsode azimuth */
-  HAS_HOR_ACCURACY_ELIP_AZIMUTH = (1ULL << 7),
-  /** valid gnss sv used in pos data */
-  HAS_GNSS_SV_USED_DATA = (1ULL << 8),
-  /** valid navSolutionMask */
-  HAS_NAV_SOLUTION_MASK = (1ULL << 9),
-  /** valid LocPosTechMask */
-  HAS_POS_TECH_MASK = (1ULL << 10),
-  /** valid LocSvInfoSource */
-  HAS_SV_SOURCE_INFO = (1ULL << 11),
-  /** valid position dynamics data */
-  HAS_POS_DYNAMICS_DATA = (1ULL << 12),
-  /** valid gdop, tdop */
-  HAS_EXT_DOP = (1ULL << 13),
-  /**valid North standard deviation */
-  HAS_NORTH_STD_DEV = (1ULL << 14),
-  /** valid East standard deviation*/
-  HAS_EAST_STD_DEV = (1ULL << 15),
-  /** valid North Velocity */
-  HAS_NORTH_VEL = (1ULL << 16),
-  /** valid East Velocity */
-  HAS_EAST_VEL = (1ULL << 17),
-  /** valid Up Velocity */
-  HAS_UP_VEL = (1ULL << 18),
-  /** valid North Velocity Uncertainty */
-  HAS_NORTH_VEL_UNC = (1ULL << 19),
-  /** valid East Velocity Uncertainty */
-  HAS_EAST_VEL_UNC = (1ULL << 20),
-  /** valid Up Velocity Uncertainty */
-  HAS_UP_VEL_UNC = (1ULL << 21),
-  /** valid leap_seconds */
-  HAS_LEAP_SECONDS = (1ULL << 22),
-  /** valid timeUncMs
-   *
-   * @deprecated
-   * Use @ref LocationValidityType::HAS_TIME_UNC_BIT to get the required information about
-   * validity of time uncertainty */
-  HAS_TIME_UNC = (1ULL << 23),
-  /** valid number of sv used */
-  HAS_NUM_SV_USED_IN_POSITION = (1ULL << 24),
-  /** valid sensor calibrationConfidencePercent */
-  HAS_CALIBRATION_CONFIDENCE_PERCENT = (1ULL << 25),
-  /** valid sensor calibrationConfidence */
-  HAS_CALIBRATION_STATUS = (1ULL << 26),
-  /** valid output engine type */
-  HAS_OUTPUT_ENG_TYPE = (1ULL << 27),
-  /** valid output engine mask */
-  HAS_OUTPUT_ENG_MASK = (1ULL << 28),
-  /** valid conformity index */
-  HAS_CONFORMITY_INDEX_FIX = (1ULL << 29),
-  /** valid lla vrp based*/
-  HAS_LLA_VRP_BASED = (1ULL << 30),
-  /** valid enu velocity vrp based*/
-  HAS_ENU_VELOCITY_VRP_BASED = (1ULL << 31),
-  /** valid altitude type*/
-  HAS_ALTITUDE_TYPE = (1ULL << 32),
-  /** valid report status*/
-  HAS_REPORT_STATUS = (1ULL << 33),
-  /** valid integrity risk*/
-  HAS_INTEGRITY_RISK_USED = (1ULL << 34),
-  /** valid protect level along track*/
-  HAS_PROTECT_LEVEL_ALONG_TRACK = (1ULL << 35),
-  /** valid protect level cross track*/
-  HAS_PROTECT_LEVEL_CROSS_TRACK = (1ULL << 36),
-  /** valid protect level vertical*/
-  HAS_PROTECT_LEVEL_VERTICAL = (1ULL << 37),
-  /** valid DR Solution status*/
-  HAS_SOLUTION_STATUS = (1ULL << 38),
-  /** valid dgnssStationId */
-  HAS_DGNSS_STATION_ID = (1ULL<<39),
-  /** valid baseline length */
-  HAS_BASE_LINE_LENGTH = (1ULL<<40),
-  /** valid age of correction */
-  HAS_AGE_OF_CORRECTION = (1ULL<<41),
-  /** valid leap second uncertainty */
-  HAS_LEAP_SECONDS_UNC = (1ULL<<42)
+    /** valid altitude mean sea level */
+    HAS_ALTITUDE_MEAN_SEA_LEVEL = (1ULL << 0),
+    /** valid pdop, hdop, and vdop */
+    HAS_DOP = (1ULL << 1),
+    /** valid magnetic deviation */
+    HAS_MAGNETIC_DEVIATION = (1ULL << 2),
+    /** valid horizontal reliability */
+    HAS_HOR_RELIABILITY = (1ULL << 3),
+    /** valid vertical reliability */
+    HAS_VER_RELIABILITY = (1ULL << 4),
+    /** valid elipsode semi major */
+    HAS_HOR_ACCURACY_ELIP_SEMI_MAJOR = (1ULL << 5),
+    /** valid elipsode semi minor */
+    HAS_HOR_ACCURACY_ELIP_SEMI_MINOR = (1ULL << 6),
+    /** valid accuracy elipsode azimuth */
+    HAS_HOR_ACCURACY_ELIP_AZIMUTH = (1ULL << 7),
+    /** valid gnss sv used in pos data */
+    HAS_GNSS_SV_USED_DATA = (1ULL << 8),
+    /** valid navSolutionMask */
+    HAS_NAV_SOLUTION_MASK = (1ULL << 9),
+    /** valid LocPosTechMask */
+    HAS_POS_TECH_MASK = (1ULL << 10),
+    /** valid LocSvInfoSource */
+    HAS_SV_SOURCE_INFO = (1ULL << 11),
+    /** valid position dynamics data */
+    HAS_POS_DYNAMICS_DATA = (1ULL << 12),
+    /** valid gdop, tdop */
+    HAS_EXT_DOP = (1ULL << 13),
+    /**valid North standard deviation */
+    HAS_NORTH_STD_DEV = (1ULL << 14),
+    /** valid East standard deviation*/
+    HAS_EAST_STD_DEV = (1ULL << 15),
+    /** valid North Velocity */
+    HAS_NORTH_VEL = (1ULL << 16),
+    /** valid East Velocity */
+    HAS_EAST_VEL = (1ULL << 17),
+    /** valid Up Velocity */
+    HAS_UP_VEL = (1ULL << 18),
+    /** valid North Velocity Uncertainty */
+    HAS_NORTH_VEL_UNC = (1ULL << 19),
+    /** valid East Velocity Uncertainty */
+    HAS_EAST_VEL_UNC = (1ULL << 20),
+    /** valid Up Velocity Uncertainty */
+    HAS_UP_VEL_UNC = (1ULL << 21),
+    /** valid leap_seconds */
+    HAS_LEAP_SECONDS = (1ULL << 22),
+    /** valid timeUncMs
+     *
+     * @deprecated
+     * Use @ref LocationValidityType::HAS_TIME_UNC_BIT to get the required information about
+     * validity of time uncertainty */
+    HAS_TIME_UNC = (1ULL << 23),
+    /** valid number of sv used */
+    HAS_NUM_SV_USED_IN_POSITION = (1ULL << 24),
+    /** valid sensor calibrationConfidencePercent */
+    HAS_CALIBRATION_CONFIDENCE_PERCENT = (1ULL << 25),
+    /** valid sensor calibrationConfidence */
+    HAS_CALIBRATION_STATUS = (1ULL << 26),
+    /** valid output engine type */
+    HAS_OUTPUT_ENG_TYPE = (1ULL << 27),
+    /** valid output engine mask */
+    HAS_OUTPUT_ENG_MASK = (1ULL << 28),
+    /** valid conformity index */
+    HAS_CONFORMITY_INDEX_FIX = (1ULL << 29),
+    /** valid lla vrp based*/
+    HAS_LLA_VRP_BASED = (1ULL << 30),
+    /** valid enu velocity vrp based*/
+    HAS_ENU_VELOCITY_VRP_BASED = (1ULL << 31),
+    /** valid altitude type*/
+    HAS_ALTITUDE_TYPE = (1ULL << 32),
+    /** valid report status*/
+    HAS_REPORT_STATUS = (1ULL << 33),
+    /** valid integrity risk*/
+    HAS_INTEGRITY_RISK_USED = (1ULL << 34),
+    /** valid protect level along track*/
+    HAS_PROTECT_LEVEL_ALONG_TRACK = (1ULL << 35),
+    /** valid protect level cross track*/
+    HAS_PROTECT_LEVEL_CROSS_TRACK = (1ULL << 36),
+    /** valid protect level vertical*/
+    HAS_PROTECT_LEVEL_VERTICAL = (1ULL << 37),
+    /** valid DR Solution status*/
+    HAS_SOLUTION_STATUS = (1ULL << 38),
+    /** valid dgnssStationId */
+    HAS_DGNSS_STATION_ID = (1ULL << 39),
+    /** valid baseline length */
+    HAS_BASE_LINE_LENGTH = (1ULL << 40),
+    /** valid age of correction */
+    HAS_AGE_OF_CORRECTION = (1ULL << 41),
+    /** valid leap second uncertainty */
+    HAS_LEAP_SECONDS_UNC = (1ULL << 42)
 };
 
 /*Bit mask containing bits from LocationInfoExValidityType */
@@ -885,64 +887,64 @@ using LocationInfoExValidity = uint64_t;
 /** Specify the GNSS signal type and RF band for jammer info and
  *  automatic gain control metric in GnssData.*/
 enum GnssDataSignalTypes {
-  /** Invalid signal type */
-  GNSS_DATA_SIGNAL_TYPE_INVALID = -1,
-  /** GPS L1CA RF Band.*/
-  GNSS_DATA_SIGNAL_TYPE_GPS_L1CA = 0,
-  /** GPS L1C RF Band.*/
-  GNSS_DATA_SIGNAL_TYPE_GPS_L1C = 1,
-  /** GPS L2C_L RF Band.*/
-  GNSS_DATA_SIGNAL_TYPE_GPS_L2C_L = 2,
-  /** GPS L5_Q RF Band.*/
-  GNSS_DATA_SIGNAL_TYPE_GPS_L5_Q = 3,
-  /** GLONASS G1 (L1OF) RF Band.*/
-  GNSS_DATA_SIGNAL_TYPE_GLONASS_G1 = 4,
-  /** GLONASS G2 (L2OF) RF Band.*/
-  GNSS_DATA_SIGNAL_TYPE_GLONASS_G2 = 5,
-  /** GALILEO E1_C RF Band.*/
-  GNSS_DATA_SIGNAL_TYPE_GALILEO_E1_C = 6,
-  /** GALILEO E5A_Q RF Band.*/
-  GNSS_DATA_SIGNAL_TYPE_GALILEO_E5A_Q = 7,
-  /** GALILEO E5B_Q RF Band.*/
-  GNSS_DATA_SIGNAL_TYPE_GALILEO_E5B_Q = 8,
-  /** BEIDOU B1_I RF Band.*/
-  GNSS_DATA_SIGNAL_TYPE_BEIDOU_B1_I = 9,
-  /** BEIDOU B1C RF Band.*/
-  GNSS_DATA_SIGNAL_TYPE_BEIDOU_B1C = 10,
-  /** BEIDOU B2_I RF Band.*/
-  GNSS_DATA_SIGNAL_TYPE_BEIDOU_B2_I = 11,
-  /** BEIDOU B2A_I RF Band.*/
-  GNSS_DATA_SIGNAL_TYPE_BEIDOU_B2A_I = 12,
-  /** QZSS L1CA RF Band.*/
-  GNSS_DATA_SIGNAL_TYPE_QZSS_L1CA = 13,
-  /** QZSS L1S RF Band.*/
-  GNSS_DATA_SIGNAL_TYPE_QZSS_L1S = 14,
-  /** QZSS L2C_L RF Band.*/
-  GNSS_DATA_SIGNAL_TYPE_QZSS_L2C_L = 15,
-  /** QZSS L5_Q RF Band.*/
-  GNSS_DATA_SIGNAL_TYPE_QZSS_L5_Q = 16,
-  /** SBAS L1_CA RF Band.*/
-  GNSS_DATA_SIGNAL_TYPE_SBAS_L1_CA = 17,
-  /** NAVIC L5 RF Band.*/
-  GNSS_DATA_SIGNAL_TYPE_NAVIC_L5 = 18,
-  /** BEIDOU B2A_Q RF Band.*/
-  GNSS_DATA_SIGNAL_TYPE_BEIDOU_B2A_Q = 19,
-  /** BEIDOU B2BI RF Band.*/
-  GNSS_DATA_SIGNAL_TYPE_BEIDOU_B2BI = 20,
-  /** BEIDOU B2BQ RF Band. */
-  GNSS_DATA_SIGNAL_TYPE_BEIDOU_B2BQ = 21,
-  /** NAVIC L1 RF Band. */
-  GNSS_DATA_SIGNAL_TYPE_NAVIC_L1 = 22,
-  /**< Maximum number of signal types.*/
-  GNSS_DATA_MAX_NUMBER_OF_SIGNAL_TYPES = 23
+    /** Invalid signal type */
+    GNSS_DATA_SIGNAL_TYPE_INVALID = -1,
+    /** GPS L1CA RF Band.*/
+    GNSS_DATA_SIGNAL_TYPE_GPS_L1CA = 0,
+    /** GPS L1C RF Band.*/
+    GNSS_DATA_SIGNAL_TYPE_GPS_L1C = 1,
+    /** GPS L2C_L RF Band.*/
+    GNSS_DATA_SIGNAL_TYPE_GPS_L2C_L = 2,
+    /** GPS L5_Q RF Band.*/
+    GNSS_DATA_SIGNAL_TYPE_GPS_L5_Q = 3,
+    /** GLONASS G1 (L1OF) RF Band.*/
+    GNSS_DATA_SIGNAL_TYPE_GLONASS_G1 = 4,
+    /** GLONASS G2 (L2OF) RF Band.*/
+    GNSS_DATA_SIGNAL_TYPE_GLONASS_G2 = 5,
+    /** GALILEO E1_C RF Band.*/
+    GNSS_DATA_SIGNAL_TYPE_GALILEO_E1_C = 6,
+    /** GALILEO E5A_Q RF Band.*/
+    GNSS_DATA_SIGNAL_TYPE_GALILEO_E5A_Q = 7,
+    /** GALILEO E5B_Q RF Band.*/
+    GNSS_DATA_SIGNAL_TYPE_GALILEO_E5B_Q = 8,
+    /** BEIDOU B1_I RF Band.*/
+    GNSS_DATA_SIGNAL_TYPE_BEIDOU_B1_I = 9,
+    /** BEIDOU B1C RF Band.*/
+    GNSS_DATA_SIGNAL_TYPE_BEIDOU_B1C = 10,
+    /** BEIDOU B2_I RF Band.*/
+    GNSS_DATA_SIGNAL_TYPE_BEIDOU_B2_I = 11,
+    /** BEIDOU B2A_I RF Band.*/
+    GNSS_DATA_SIGNAL_TYPE_BEIDOU_B2A_I = 12,
+    /** QZSS L1CA RF Band.*/
+    GNSS_DATA_SIGNAL_TYPE_QZSS_L1CA = 13,
+    /** QZSS L1S RF Band.*/
+    GNSS_DATA_SIGNAL_TYPE_QZSS_L1S = 14,
+    /** QZSS L2C_L RF Band.*/
+    GNSS_DATA_SIGNAL_TYPE_QZSS_L2C_L = 15,
+    /** QZSS L5_Q RF Band.*/
+    GNSS_DATA_SIGNAL_TYPE_QZSS_L5_Q = 16,
+    /** SBAS L1_CA RF Band.*/
+    GNSS_DATA_SIGNAL_TYPE_SBAS_L1_CA = 17,
+    /** NAVIC L5 RF Band.*/
+    GNSS_DATA_SIGNAL_TYPE_NAVIC_L5 = 18,
+    /** BEIDOU B2A_Q RF Band.*/
+    GNSS_DATA_SIGNAL_TYPE_BEIDOU_B2A_Q = 19,
+    /** BEIDOU B2BI RF Band.*/
+    GNSS_DATA_SIGNAL_TYPE_BEIDOU_B2BI = 20,
+    /** BEIDOU B2BQ RF Band. */
+    GNSS_DATA_SIGNAL_TYPE_BEIDOU_B2BQ = 21,
+    /** NAVIC L1 RF Band. */
+    GNSS_DATA_SIGNAL_TYPE_NAVIC_L1 = 22,
+    /**< Maximum number of signal types.*/
+    GNSS_DATA_MAX_NUMBER_OF_SIGNAL_TYPES = 23
 };
 
 /** Specify valid mask of data fields in GnssData.*/
 enum GnssDataValidityType {
-  /** Jammer Indicator is available */
-  HAS_JAMMER = (1ULL << 0),
-  /** AGC is available */
-  HAS_AGC = (1ULL << 1)
+    /** Jammer Indicator is available */
+    HAS_JAMMER = (1ULL << 0),
+    /** AGC is available */
+    HAS_AGC = (1ULL << 1)
 };
 
 /** Specifies GnssDataValidityType mask */
@@ -950,78 +952,78 @@ using GnssDataValidity = uint32_t;
 
 /** Indicate RF Automatic Gain Control Status */
 enum AgcStatus {
-  /** AGC status is unknown */
-  UNKNOWN = 0,
-  /** Not saturated */
-  NO_SATURATION = 1,
-  /** Front end gain is at maximum saturation */
-  FRONT_END_GAIN_MAXIMUM_SATURATION = 2,
-  /** Front end gain is at minimum saturation */
-  FRONT_END_GAIN_MINIMUM_SATURATION = 3
+    /** AGC status is unknown */
+    UNKNOWN = 0,
+    /** Not saturated */
+    NO_SATURATION = 1,
+    /** Front end gain is at maximum saturation */
+    FRONT_END_GAIN_MAXIMUM_SATURATION = 2,
+    /** Front end gain is at minimum saturation */
+    FRONT_END_GAIN_MINIMUM_SATURATION = 3
 };
 
 /** Specify the additional GNSS data that can be provided during a tracking
  *  session, currently jammer and automatic gain control data are available.*/
 struct GnssData {
-  /** bitwise OR of GnssDataValidityType */
-  GnssDataValidity gnssDataMask[GnssDataSignalTypes::GNSS_DATA_MAX_NUMBER_OF_SIGNAL_TYPES];
-  /** Jammer Indication for each signal type. Each index represents the signal type in
-   *  GnssDataSignalTypes.
-   */
-  double jammerInd[GnssDataSignalTypes::GNSS_DATA_MAX_NUMBER_OF_SIGNAL_TYPES];
-  /** Overall automatic gain control level as observed at the input to correlator,
-   *  in units of dB.
-   */
-  double agc[GnssDataSignalTypes::GNSS_DATA_MAX_NUMBER_OF_SIGNAL_TYPES];
-  /** RF Automatic gain control status for L1 band. */
-  AgcStatus     agcStatusL1;
-  /** RF Automatic gain control status for L2 band. */
-  AgcStatus     agcStatusL2;
-  /** RF Automatic gain control status for L5 band. */
-  AgcStatus     agcStatusL5;
+    /** bitwise OR of GnssDataValidityType */
+    GnssDataValidity gnssDataMask[GnssDataSignalTypes::GNSS_DATA_MAX_NUMBER_OF_SIGNAL_TYPES];
+    /** Jammer Indication for each signal type. Each index represents the signal type in
+     *  GnssDataSignalTypes.
+     */
+    double jammerInd[GnssDataSignalTypes::GNSS_DATA_MAX_NUMBER_OF_SIGNAL_TYPES];
+    /** Overall automatic gain control level as observed at the input to correlator,
+     *  in units of dB.
+     */
+    double agc[GnssDataSignalTypes::GNSS_DATA_MAX_NUMBER_OF_SIGNAL_TYPES];
+    /** RF Automatic gain control status for L1 band. */
+    AgcStatus agcStatusL1;
+    /** RF Automatic gain control status for L2 band. */
+    AgcStatus agcStatusL2;
+    /** RF Automatic gain control status for L5 band. */
+    AgcStatus agcStatusL5;
 };
 
 /** Specify the sensor calibration status in @ref ILocationInfoEx.*/
 enum DrCalibrationStatusType {
-  /** Indicate that roll calibration is needed. Need to take more
-   *  turns on level ground.*/
-  DR_ROLL_CALIBRATION_NEEDED  = (1<<0),
-  /** Indicate that pitch calibration is needed. Need to take more
-   *  turns on level ground.*/
-  DR_PITCH_CALIBRATION_NEEDED = (1<<1),
-  /** Indicate that yaw calibration is needed. Need to accelerate
-   *  in a straight line.*/
-  DR_YAW_CALIBRATION_NEEDED   = (1<<2),
-  /** Indicate that odo calibration is needed. Need to accelerate
-   *  in a straight line.*/
-  DR_ODO_CALIBRATION_NEEDED   = (1<<3),
-  /** Indicate that gyro calibration is needed. Need to take more
-   *  turns on level ground.*/
-  DR_GYRO_CALIBRATION_NEEDED  = (1<<4),
-  /** Lot more turns on level ground needed */
-  DR_TURN_CALIBRATION_LOW     = (1<<5),
-  /** Some more turns on level ground needed */
-  DR_TURN_CALIBRATION_MEDIUM  = (1<<6),
-  /** Sufficient turns on level ground observed */
-  DR_TURN_CALIBRATION_HIGH    = (1<<7),
-  /** Lot more accelerations in straight line needed */
-  DR_LINEAR_ACCEL_CALIBRATION_LOW      = (1<<8),
-  /** Some more accelerations in straight line needed */
-  DR_LINEAR_ACCEL_CALIBRATION_MEDIUM   = (1<<9),
-  /** Sufficient acceleration events in straight line observed */
-  DR_LINEAR_ACCEL_CALIBRATION_HIGH     = (1<<10),
-  /** Lot more motion in straight line needed */
-  DR_LINEAR_MOTION_CALIBRATION_LOW     = (1<<11),
-  /** Some more motion in straight line needed */
-  DR_LINEAR_MOTION_CALIBRATION_MEDIUM  = (1<<12),
-  /** Sufficient motion events in straight line observed */
-  DR_LINEAR_MOTION_CALIBRATION_HIGH    = (1<<13),
-  /** Lot more stationary events on level ground needed */
-  DR_STATIC_CALIBRATION_LOW            = (1<<14),
-  /** Some more stationary events on level ground needed */
-  DR_STATIC_CALIBRATION_MEDIUM         = (1<<15),
-  /** Sufficient stationary events on level ground observed */
-  DR_STATIC_CALIBRATION_HIGH           = (1<<16)
+    /** Indicate that roll calibration is needed. Need to take more
+     *  turns on level ground.*/
+    DR_ROLL_CALIBRATION_NEEDED = (1 << 0),
+    /** Indicate that pitch calibration is needed. Need to take more
+     *  turns on level ground.*/
+    DR_PITCH_CALIBRATION_NEEDED = (1 << 1),
+    /** Indicate that yaw calibration is needed. Need to accelerate
+     *  in a straight line.*/
+    DR_YAW_CALIBRATION_NEEDED = (1 << 2),
+    /** Indicate that odo calibration is needed. Need to accelerate
+     *  in a straight line.*/
+    DR_ODO_CALIBRATION_NEEDED = (1 << 3),
+    /** Indicate that gyro calibration is needed. Need to take more
+     *  turns on level ground.*/
+    DR_GYRO_CALIBRATION_NEEDED = (1 << 4),
+    /** Lot more turns on level ground needed */
+    DR_TURN_CALIBRATION_LOW = (1 << 5),
+    /** Some more turns on level ground needed */
+    DR_TURN_CALIBRATION_MEDIUM = (1 << 6),
+    /** Sufficient turns on level ground observed */
+    DR_TURN_CALIBRATION_HIGH = (1 << 7),
+    /** Lot more accelerations in straight line needed */
+    DR_LINEAR_ACCEL_CALIBRATION_LOW = (1 << 8),
+    /** Some more accelerations in straight line needed */
+    DR_LINEAR_ACCEL_CALIBRATION_MEDIUM = (1 << 9),
+    /** Sufficient acceleration events in straight line observed */
+    DR_LINEAR_ACCEL_CALIBRATION_HIGH = (1 << 10),
+    /** Lot more motion in straight line needed */
+    DR_LINEAR_MOTION_CALIBRATION_LOW = (1 << 11),
+    /** Some more motion in straight line needed */
+    DR_LINEAR_MOTION_CALIBRATION_MEDIUM = (1 << 12),
+    /** Sufficient motion events in straight line observed */
+    DR_LINEAR_MOTION_CALIBRATION_HIGH = (1 << 13),
+    /** Lot more stationary events on level ground needed */
+    DR_STATIC_CALIBRATION_LOW = (1 << 14),
+    /** Some more stationary events on level ground needed */
+    DR_STATIC_CALIBRATION_MEDIUM = (1 << 15),
+    /** Sufficient stationary events on level ground observed */
+    DR_STATIC_CALIBRATION_HIGH = (1 << 16)
 };
 
 /** Specifies DrCalibrationStatusType mask */
@@ -1031,37 +1033,37 @@ using DrCalibrationStatus = uint32_t;
  *  engine. */
 enum DrSolutionStatusType {
     /** Vehicle sensor speed input was detected by the DR position engine. */
-    VEHICLE_SENSOR_SPEED_INPUT_DETECTED = (1<<0),
+    VEHICLE_SENSOR_SPEED_INPUT_DETECTED = (1 << 0),
     /** Vehicle sensor speed input was used by the DR position engine. */
-    VEHICLE_SENSOR_SPEED_INPUT_USED     = (1<<1),
+    VEHICLE_SENSOR_SPEED_INPUT_USED = (1 << 1),
     /** DRE solution disengaged due to insufficient calibration */
-    WARNING_UNCALIBRATED                = (1<<2),
+    WARNING_UNCALIBRATED = (1 << 2),
     /** DRE solution disengaged due to bad GNSS quality */
-    WARNING_GNSS_QUALITY_INSUFFICIENT   = (1<<3),
+    WARNING_GNSS_QUALITY_INSUFFICIENT = (1 << 3),
     /** DRE solution disengaged as ferry condition detected */
-    WARNING_FERRY_DETECTED              = (1<<4),
+    WARNING_FERRY_DETECTED = (1 << 4),
     /** DRE solution disengaged as 6DOF sensor inputs not available */
-    ERROR_6DOF_SENSOR_UNAVAILABLE       = (1<<5),
+    ERROR_6DOF_SENSOR_UNAVAILABLE = (1 << 5),
     /** DRE solution disengaged as vehicle speed inputs not available */
-    ERROR_VEHICLE_SPEED_UNAVAILABLE     = (1<<6),
+    ERROR_VEHICLE_SPEED_UNAVAILABLE = (1 << 6),
     /** DRE solution disengaged as Ephemeris info not available */
-    ERROR_GNSS_EPH_UNAVAILABLE          = (1<<7),
+    ERROR_GNSS_EPH_UNAVAILABLE = (1 << 7),
     /** DRE solution disengaged as GNSS measurement info not available */
-    ERROR_GNSS_MEAS_UNAVAILABLE         = (1<<8),
+    ERROR_GNSS_MEAS_UNAVAILABLE = (1 << 8),
     /** DRE solution disengaged due non-availability of stored position from previous session */
-    WARNING_INIT_POSITION_INVALID       = (1<<9),
+    WARNING_INIT_POSITION_INVALID = (1 << 9),
     /** DRE solution dis-engaged due to vehicle motion detected at session start */
-    WARNING_INIT_POSITION_UNRELIABLE    = (1<<10),
+    WARNING_INIT_POSITION_UNRELIABLE = (1 << 10),
     /** DRE solution dis-engaged due to unreliable position */
-    WARNING_POSITON_UNRELIABLE          = (1<<11),
+    WARNING_POSITON_UNRELIABLE = (1 << 11),
     /** DRE solution dis-engaged due to a generic error */
-    ERROR_GENERIC                       = (1<<12),
+    ERROR_GENERIC = (1 << 12),
     /** DRE solution dis-engaged due to Sensor Temperature being out of range */
-    WARNING_SENSOR_TEMP_OUT_OF_RANGE    = (1<<13),
+    WARNING_SENSOR_TEMP_OUT_OF_RANGE = (1 << 13),
     /** DRE solution dis-engaged due to insufficient user dynamics */
-    WARNING_USER_DYNAMICS_INSUFFICIENT  = (1<<14),
+    WARNING_USER_DYNAMICS_INSUFFICIENT = (1 << 14),
     /** DRE solution dis-engaged due to inconsistent factory data */
-    WARNING_FACTORY_DATA_INCONSISTENT   = (1<<15)
+    WARNING_FACTORY_DATA_INCONSISTENT = (1 << 15)
 };
 
 /** Specifies DrSolutionStatus mask */
@@ -1069,26 +1071,25 @@ using DrSolutionStatus = uint32_t;
 
 /** Specifies the set of engines whose position reports are requested via
  *  startDetailedEngineReports.*/
-enum LocReqEngineType{
+enum LocReqEngineType {
     /** Indicate that the fused/default position is needed to be reported back
      *  for the tracking sessions. The default position is the propagated/aggregated
      *  reports from all engines running on the system (e.g.: DR/SPE/PPE) according to
      *  QTI algorithm.
      */
-    LOC_REQ_ENGINE_FUSED_BIT = (1<<0),
+    LOC_REQ_ENGINE_FUSED_BIT = (1 << 0),
     /** Indicate that the unmodified SPE position is needed to be reported back for the
      *  tracking sessions.
      */
-    LOC_REQ_ENGINE_SPE_BIT   = (1<<1),
+    LOC_REQ_ENGINE_SPE_BIT = (1 << 1),
     /** Indicate that the unmodified PPE position is needed to be reported back for the
      *  tracking sessions.
      */
-    LOC_REQ_ENGINE_PPE_BIT   = (1<<2),
-     /**Indicate that the unmodified VPE position is needed to be reported back for the
-      * tracking sessions.
-      */
-    LOC_REQ_ENGINE_VPE_BIT  = (1<<3),
-
+    LOC_REQ_ENGINE_PPE_BIT = (1 << 2),
+    /**Indicate that the unmodified VPE position is needed to be reported back for the
+     * tracking sessions.
+     */
+    LOC_REQ_ENGINE_VPE_BIT = (1 << 3),
 };
 
 /** Specifies LocReqEngineType mask*/
@@ -1096,27 +1097,27 @@ using LocReqEngine = uint16_t;
 
 /** Specifies the type of engine for the reported fixes*/
 enum LocationAggregationType {
-  /** This is the propagated/aggregated report from the fixes of all engines
-   *  running on the system (e.g.: DR/SPE/PPE).*/
+    /** This is the propagated/aggregated report from the fixes of all engines
+     *  running on the system (e.g.: DR/SPE/PPE).*/
     LOC_OUTPUT_ENGINE_FUSED = 0,
-  /** This fix is the unmodified fix from modem GNSS engine */
-    LOC_OUTPUT_ENGINE_SPE   = 1,
-  /** This is the unmodified fix from PPP engine */
-    LOC_OUTPUT_ENGINE_PPE   = 2,
-  /** This is the unmodified fix from VPE engine. */
-    LOC_OUTPUT_ENGINE_VPE  = 3,
+    /** This fix is the unmodified fix from modem GNSS engine */
+    LOC_OUTPUT_ENGINE_SPE = 1,
+    /** This is the unmodified fix from PPP engine */
+    LOC_OUTPUT_ENGINE_PPE = 2,
+    /** This is the unmodified fix from VPE engine. */
+    LOC_OUTPUT_ENGINE_VPE = 3,
 };
 
 /** Specifies the type of engine responsible for fixes when the engine type is fused*/
-enum PositioningEngineType{
+enum PositioningEngineType {
     /** For standard GNSS position engines.*/
     STANDARD_POSITIONING_ENGINE = (1 << 0),
     /** For dead reckoning position engines.*/
-    DEAD_RECKONING_ENGINE       = (1 << 1),
+    DEAD_RECKONING_ENGINE = (1 << 1),
     /** For precise position engines.*/
-    PRECISE_POSITIONING_ENGINE  = (1 << 2),
+    PRECISE_POSITIONING_ENGINE = (1 << 2),
     /** For VP position engine.*/
-    VP_POSITIONING_ENGINE       = (1 << 3),
+    VP_POSITIONING_ENGINE = (1 << 3),
 };
 
 /** Specifies PositioningEngineType mask */
@@ -1137,7 +1138,7 @@ struct SvBlackListInfo {
      * SBAS SV id range: 120 to 158 and 183 to 191
      * NAVIC SV id range: 401 to 420
      */
-    uint32_t              svId;
+    uint32_t svId;
 };
 
 typedef std::vector<SvBlackListInfo> SvBlackList;
@@ -1178,51 +1179,51 @@ struct LeverArmParams {
 typedef std::unordered_map<LeverArmType, LeverArmParams> LeverArmConfigInfo;
 
 /** Specify valid fields in GnssMeasurementsData.*/
-enum GnssMeasurementsDataValidityType{
+enum GnssMeasurementsDataValidityType {
     /** Validity of svId.*/
-    SV_ID_BIT                        = (1<<0),
+    SV_ID_BIT = (1 << 0),
     /** Validity of svType.*/
-    SV_TYPE_BIT                      = (1<<1),
+    SV_TYPE_BIT = (1 << 1),
     /** Validity of stateMask.*/
-    STATE_BIT                        = (1<<2),
+    STATE_BIT = (1 << 2),
     /** Validity of receivedSvTimeNs and receivedSvTimeSubNs.*/
-    RECEIVED_SV_TIME_BIT             = (1<<3),
+    RECEIVED_SV_TIME_BIT = (1 << 3),
     /** Validity of receivedSvTimeUncertaintyNs.*/
-    RECEIVED_SV_TIME_UNCERTAINTY_BIT = (1<<4),
+    RECEIVED_SV_TIME_UNCERTAINTY_BIT = (1 << 4),
     /** Validity of carrierToNoiseDbHz.*/
-    CARRIER_TO_NOISE_BIT             = (1<<5),
+    CARRIER_TO_NOISE_BIT = (1 << 5),
     /** Validity of pseudorangeRateMps.*/
-    PSEUDORANGE_RATE_BIT             = (1<<6),
+    PSEUDORANGE_RATE_BIT = (1 << 6),
     /** Validity of pseudorangeRateUncertaintyMps.*/
-    PSEUDORANGE_RATE_UNCERTAINTY_BIT = (1<<7),
+    PSEUDORANGE_RATE_UNCERTAINTY_BIT = (1 << 7),
     /** Validity of adrStateMask.*/
-    ADR_STATE_BIT                    = (1<<8),
+    ADR_STATE_BIT = (1 << 8),
     /** Validity of adrMeters.*/
-    ADR_BIT                          = (1<<9),
+    ADR_BIT = (1 << 9),
     /** Validity of adrUncertaintyMeters.*/
-    ADR_UNCERTAINTY_BIT              = (1<<10),
+    ADR_UNCERTAINTY_BIT = (1 << 10),
     /** Validity of carrierFrequencyHz.*/
-    CARRIER_FREQUENCY_BIT            = (1<<11),
+    CARRIER_FREQUENCY_BIT = (1 << 11),
     /** Validity of carrierCycles.*/
-    CARRIER_CYCLES_BIT               = (1<<12),
+    CARRIER_CYCLES_BIT = (1 << 12),
     /** Validity of carrierPhase.*/
-    CARRIER_PHASE_BIT                = (1<<13),
+    CARRIER_PHASE_BIT = (1 << 13),
     /** Validity of carrierPhaseUncertainty.*/
-    CARRIER_PHASE_UNCERTAINTY_BIT    = (1<<14),
+    CARRIER_PHASE_UNCERTAINTY_BIT = (1 << 14),
     /** Validity of multipathIndicator.*/
-    MULTIPATH_INDICATOR_BIT          = (1<<15),
+    MULTIPATH_INDICATOR_BIT = (1 << 15),
     /** Validity of signalToNoiseRatioDb.*/
-    SIGNAL_TO_NOISE_RATIO_BIT        = (1<<16),
+    SIGNAL_TO_NOISE_RATIO_BIT = (1 << 16),
     /** Validity of agcLevelDb.*/
-    AUTOMATIC_GAIN_CONTROL_BIT       = (1<<17),
+    AUTOMATIC_GAIN_CONTROL_BIT = (1 << 17),
     /** Validity of signal type.*/
-    GNSS_SIGNAL_TYPE                 = (1<<18),
+    GNSS_SIGNAL_TYPE = (1 << 18),
     /** Validity of basebandCarrierToNoise.*/
-    BASEBAND_CARRIER_TO_NOISE        = (1<<19),
+    BASEBAND_CARRIER_TO_NOISE = (1 << 19),
     /** Validity of fullInterSignalBias.*/
-    FULL_ISB                         = (1<<20),
+    FULL_ISB = (1 << 20),
     /** Validity of fullInterSignalBiasUncertainty.*/
-    FULL_ISB_UNCERTAINTY             = (1<<21)
+    FULL_ISB_UNCERTAINTY = (1 << 21)
 };
 
 /** Specifies GnssMeasurementsDataValidityType.*/
@@ -1232,35 +1233,35 @@ using GnssMeasurementsDataValidity = uint32_t;
  *  GnssMeasurementsData::stateMask.*/
 enum GnssMeasurementsStateValidityType {
     /** State is unknown.*/
-    UNKNOWN_BIT                 = 0,
+    UNKNOWN_BIT = 0,
     /** State is "code lock".*/
-    CODE_LOCK_BIT               = (1<<0),
+    CODE_LOCK_BIT = (1 << 0),
     /** State is "bit sync".*/
-    BIT_SYNC_BIT                = (1<<1),
+    BIT_SYNC_BIT = (1 << 1),
     /** State is "subframe sync".*/
-    SUBFRAME_SYNC_BIT           = (1<<2),
+    SUBFRAME_SYNC_BIT = (1 << 2),
     /** State is "tow decoded".*/
-    TOW_DECODED_BIT             = (1<<3),
+    TOW_DECODED_BIT = (1 << 3),
     /** State is "msec ambiguous".*/
-    MSEC_AMBIGUOUS_BIT          = (1<<4),
+    MSEC_AMBIGUOUS_BIT = (1 << 4),
     /** State is "symbol sync".*/
-    SYMBOL_SYNC_BIT             = (1<<5),
+    SYMBOL_SYNC_BIT = (1 << 5),
     /** State is "GLONASS string sync".*/
-    GLO_STRING_SYNC_BIT         = (1<<6),
+    GLO_STRING_SYNC_BIT = (1 << 6),
     /** State is "GLONASS TOD decoded".*/
-    GLO_TOD_DECODED_BIT         = (1<<7),
+    GLO_TOD_DECODED_BIT = (1 << 7),
     /** State is "BDS D2 bit sync".*/
-    BDS_D2_BIT_SYNC_BIT         = (1<<8),
+    BDS_D2_BIT_SYNC_BIT = (1 << 8),
     /** State is "BDS D2 subframe sync".*/
-    BDS_D2_SUBFRAME_SYNC_BIT    = (1<<9),
+    BDS_D2_SUBFRAME_SYNC_BIT = (1 << 9),
     /** State is "Galileo E1BC code lock".*/
-    GAL_E1BC_CODE_LOCK_BIT      = (1<<10),
+    GAL_E1BC_CODE_LOCK_BIT = (1 << 10),
     /** State is "Galileo E1C second code lock".*/
-    GAL_E1C_2ND_CODE_LOCK_BIT   = (1<<11),
+    GAL_E1C_2ND_CODE_LOCK_BIT = (1 << 11),
     /** State is "Galileo E1B page sync".*/
-    GAL_E1B_PAGE_SYNC_BIT       = (1<<12),
+    GAL_E1B_PAGE_SYNC_BIT = (1 << 12),
     /** State is "SBAS sync".*/
-    SBAS_SYNC_BIT               = (1<<13)
+    SBAS_SYNC_BIT = (1 << 13)
 };
 
 /** Specifies GnssMeasurementsStateValidityType.*/
@@ -1270,13 +1271,13 @@ using GnssMeasurementsStateValidity = uint32_t;
  *  GnssMeasurementsData::adrStateMask.*/
 enum GnssMeasurementsAdrStateValidityType {
     /** State is unknown.*/
-    UNKNOWN_STATE   = 0,
+    UNKNOWN_STATE = 0,
     /** State is valid.*/
-    VALID_BIT       = (1<<0),
+    VALID_BIT = (1 << 0),
     /** State is "reset".*/
-    RESET_BIT       = (1<<1),
+    RESET_BIT = (1 << 1),
     /** State is "cycle slip".*/
-    CYCLE_SLIP_BIT  = (1<<2)
+    CYCLE_SLIP_BIT = (1 << 2)
 };
 
 /** Specifies GnssMeasurementsAdrStateValidityType.*/
@@ -1286,41 +1287,41 @@ using GnssMeasurementsAdrStateValidity = uint32_t;
  *  GnssMeasurementsData::multipathIndicator.*/
 enum GnssMeasurementsMultipathIndicator {
     /** Multipath indicator is unknown.*/
-    UNKNOWN_INDICATOR     = 0,
+    UNKNOWN_INDICATOR = 0,
     /** Multipath indicator is present.*/
-    PRESENT               = 1,
+    PRESENT = 1,
     /** Multipath indicator is not present.*/
-    NOT_PRESENT           = 2
+    NOT_PRESENT = 2
 };
 
 /** Specify the valid fields in GnssMeasurementsClock.*/
 enum GnssMeasurementsClockValidityType {
     /** Validity of leapSecond.*/
-    LEAP_SECOND_BIT                   = (1<<0),
+    LEAP_SECOND_BIT = (1 << 0),
     /** Validity of timeNs.*/
-    TIME_BIT                          = (1<<1),
+    TIME_BIT = (1 << 1),
     /** Validity of timeUncertaintyNs.*/
-    TIME_UNCERTAINTY_BIT              = (1<<2),
+    TIME_UNCERTAINTY_BIT = (1 << 2),
     /** Validity of fullBiasNs.*/
-    FULL_BIAS_BIT                     = (1<<3),
+    FULL_BIAS_BIT = (1 << 3),
     /** Validity of biasNs.*/
-    BIAS_BIT                          = (1<<4),
+    BIAS_BIT = (1 << 4),
     /** Validity of biasUncertaintyNs.*/
-    BIAS_UNCERTAINTY_BIT              = (1<<5),
+    BIAS_UNCERTAINTY_BIT = (1 << 5),
     /** Validity of driftNsps.*/
-    DRIFT_BIT                         = (1<<6),
+    DRIFT_BIT = (1 << 6),
     /** Validity of driftUncertaintyNsps.*/
-    DRIFT_UNCERTAINTY_BIT             = (1<<7),
+    DRIFT_UNCERTAINTY_BIT = (1 << 7),
     /** Validity of hwClockDiscontinuityCount.*/
-    HW_CLOCK_DISCONTINUITY_COUNT_BIT  = (1<<8),
+    HW_CLOCK_DISCONTINUITY_COUNT_BIT = (1 << 8),
     /** Validity of realTime.*/
-    ELAPSED_REAL_TIME_BIT             = (1<<9),
+    ELAPSED_REAL_TIME_BIT = (1 << 9),
     /** Validity of realTimeUncertainity.*/
-    ELAPSED_REAL_TIME_UNC_BIT         = (1<<10),
+    ELAPSED_REAL_TIME_UNC_BIT = (1 << 10),
     /** Validity of gPTPTime.*/
-    ELAPSED_GPTP_TIME_BIT             = (1<<11),
+    ELAPSED_GPTP_TIME_BIT = (1 << 11),
     /** Validity of gPTPTimeUncertainity.*/
-    ELAPSED_GPTP_TIME_UNC_BIT         = (1<<12)
+    ELAPSED_GPTP_TIME_UNC_BIT = (1 << 12)
 };
 
 /** Specifies GnssMeasurementsClockValidityType.*/
@@ -1463,11 +1464,11 @@ struct GnssMeasurements {
     /** Indicates the frequency for GNSS measurements generated at NHz or not.*/
     bool isNHz;
     /** RF Automatic gain control status for L1 band. */
-    AgcStatus     agcStatusL1;
+    AgcStatus agcStatusL1;
     /** RF Automatic gain control status for L2 band. */
-    AgcStatus     agcStatusL2;
+    AgcStatus agcStatusL2;
     /** RF Automatic gain control status for L5 band. */
-    AgcStatus     agcStatusL5;
+    AgcStatus agcStatusL5;
 };
 
 /**
@@ -1551,7 +1552,7 @@ struct GnssEphCommon {
     /** Specify satellite vehicle ID number.
      * For SV id range of each supported constellations, refer to
      * documentation of @ref telux::loc::GnssMeasurementInfo::gnssSvId.
-    */
+     */
     uint16_t gnssSvId;
 
     /** Specifies the source of ephemeris.*/
@@ -1652,33 +1653,33 @@ struct GnssEphCommon {
 /** Validity of GpsQzss Extended Ephemeris fields.*/
 enum GpsQzssExtEphValidityType {
     /** Valid iscL1ca*/
-    GPS_QZSS_EXT_EPH_ISC_L1CA_VALID = (1<<0),
-     /** Valid iscL2c*/
-    GPS_QZSS_EXT_EPH_ISC_L2C_VALID = (1<<1),
+    GPS_QZSS_EXT_EPH_ISC_L1CA_VALID = (1 << 0),
+    /** Valid iscL2c*/
+    GPS_QZSS_EXT_EPH_ISC_L2C_VALID = (1 << 1),
     /** Valid iscL5I5*/
-    GPS_QZSS_EXT_EPH_ISC_L5I5_VALID = (1<<2),
+    GPS_QZSS_EXT_EPH_ISC_L5I5_VALID = (1 << 2),
     /** Valid iscL5Q5*/
-    GPS_QZSS_EXT_EPH_ISC_L5Q5_VALID = (1<<3),
+    GPS_QZSS_EXT_EPH_ISC_L5Q5_VALID = (1 << 3),
     /** Valid alert*/
-    GPS_QZSS_EXT_EPH_ALERT_VALID = (1<<4),
+    GPS_QZSS_EXT_EPH_ALERT_VALID = (1 << 4),
     /** Valid uraned0*/
-    GPS_QZSS_EXT_EPH_URANED0_VALID = (1<<5),
+    GPS_QZSS_EXT_EPH_URANED0_VALID = (1 << 5),
     /** Valid uraned1*/
-    GPS_QZSS_EXT_EPH_URANED1_VALID = (1<<6),
+    GPS_QZSS_EXT_EPH_URANED1_VALID = (1 << 6),
     /** Valid uraned2*/
-    GPS_QZSS_EXT_EPH_URANED2_VALID = (1<<7),
+    GPS_QZSS_EXT_EPH_URANED2_VALID = (1 << 7),
     /** Valid top*/
-    GPS_QZSS_EXT_EPH_TOP_VALID = (1<<8),
+    GPS_QZSS_EXT_EPH_TOP_VALID = (1 << 8),
     /** Valid topClock*/
-    GPS_QZSS_EXT_EPH_TOP_CLOCK_VALID = (1<<9),
+    GPS_QZSS_EXT_EPH_TOP_CLOCK_VALID = (1 << 9),
     /** Valid validtyPeriod*/
-    GPS_QZSS_EXT_EPH_VALIDITY_PERIOD_VALID = (1<<10),
+    GPS_QZSS_EXT_EPH_VALIDITY_PERIOD_VALID = (1 << 10),
     /** Valid deltaNdot */
-    GPS_QZSS_EXT_EPH_DELTA_NDOT_VALID = (1<11),
+    GPS_QZSS_EXT_EPH_DELTA_NDOT_VALID = (1 < 11),
     /** Valid delaA*/
-    GPS_QZSS_EXT_EPH_DELTAA_VALID = (1<<12),
+    GPS_QZSS_EXT_EPH_DELTAA_VALID = (1 << 12),
     /** Valid adot */
-    GPS_QZSS_EXT_EPH_ADOT_VALID = (1<<13)
+    GPS_QZSS_EXT_EPH_ADOT_VALID = (1 << 13)
 };
 
 /** Specifies GpsQzssExtEphValidityType.*/
@@ -1807,8 +1808,8 @@ struct GlonassEphemeris {
     /** Specifies the source of ephemeris.*/
     GnssEphSource ephSource;
 
-     /** Specifies the action to be performed on receipt of the ephemeris (Update/Delete)
-      *  Action shall be performed on GnssEphSource specified. */
+    /** Specifies the action to be performed on receipt of the ephemeris (Update/Delete)
+     *  Action shall be performed on GnssEphSource specified. */
     GnssEphAction action;
 
     /**  SV health flags.
@@ -1902,25 +1903,25 @@ enum BdsSvType {
 /** Validity of Bds Extended Ephemeris fields.*/
 enum BdsExtEphValidityType {
     /** Valid iscB2a*/
-    BDS_EXT_EPH_ISC_B2A_VALID = (1<<0),
+    BDS_EXT_EPH_ISC_B2A_VALID = (1 << 0),
     /** Valid iscB1c */
-    BDS_EXT_EPH_ISC_B1C_VALID = (1<<1),
+    BDS_EXT_EPH_ISC_B1C_VALID = (1 << 1),
     /** Valid tgdB2a */
-    BDS_EXT_EPH_TGD_B2A_VALID = (1<<2),
+    BDS_EXT_EPH_TGD_B2A_VALID = (1 << 2),
     /** Valid tgdB1c */
-    BDS_EXT_EPH_TGD_B1C_VALID = (1<<3),
+    BDS_EXT_EPH_TGD_B1C_VALID = (1 << 3),
     /** Valid svType */
-    BDS_EXT_EPH_SV_TYPE_VALID = (1<<4),
+    BDS_EXT_EPH_SV_TYPE_VALID = (1 << 4),
     /** Valid validtyPeriod */
-    BDS_EXT_EPH_VALIDITY_PERIOD = (1<<5),
+    BDS_EXT_EPH_VALIDITY_PERIOD = (1 << 5),
     /** Valid integrityFlags */
-    BDS_EXT_EPH_INTEGRITY_FLAGS = (1<<6),
+    BDS_EXT_EPH_INTEGRITY_FLAGS = (1 << 6),
     /** Valid deltaNdot */
-    BDS_EXT_EPH_DELTA_NDOT_VALID = (1<<7),
+    BDS_EXT_EPH_DELTA_NDOT_VALID = (1 << 7),
     /** Valid deltaA */
-    BDS_EXT_EPH_DELTAA_VALID = (1<<8),
+    BDS_EXT_EPH_DELTAA_VALID = (1 << 8),
     /** Valid adot */
-    BDS_EXT_EPH_ADOT_VALID = (1<<9)
+    BDS_EXT_EPH_ADOT_VALID = (1 << 9)
 };
 
 /** Specifies BdsExtEphValidityType.*/
@@ -2019,7 +2020,7 @@ struct BdsEphemeris {
 };
 
 /** Ephemeris information for GALILEO*/
-struct GalileoEphemeris{
+struct GalileoEphemeris {
 
     /**  Common ephemeris data. */
     GnssEphCommon commonData;
@@ -2050,7 +2051,7 @@ struct GalileoEphemeris{
 };
 
 /** Ephemeris information for QZSS*/
-struct QzssEphemeris{
+struct QzssEphemeris {
     /** Common GPS-QZSS Ephemeris structure */
     GpsQzssEphemeris qzssEphData;
 };
@@ -2078,7 +2079,7 @@ struct NavicEphemeris {
     uint8_t urai;
     /** Time of Group delay
      *  Unit: second */
-    double  tgd;
+    double tgd;
 };
 
 /**
@@ -2143,7 +2144,7 @@ struct LeapSecondChangeInfo {
 };
 
 /** Specify the valid fields in LeapSecondInfo.*/
-enum LeapSecondInfoValidityType{
+enum LeapSecondInfoValidityType {
     /** Validity of LeapSecondInfo::current.*/
     LEAP_SECOND_SYS_INFO_CURRENT_LEAP_SECONDS_BIT = (1ULL << 0),
     /** Validity of LeapSecondInfo::info.*/
@@ -2161,7 +2162,7 @@ struct LeapSecondInfo {
     /** Current leap seconds, in unit of seconds.
      *  This info will only be available only if the leap second change info
      *  is not available.*/
-    uint8_t               current;
+    uint8_t current;
     /** Leap second change event info. The info can be available on
      *  two scenario:
      *  1: this leap second change event has been scheduled and yet
@@ -2173,11 +2174,11 @@ struct LeapSecondInfo {
      *  LeapSecondChangeInfo::timeInfo to know whether
      *  to choose leapSecondBefore or leapSecondAfter as current
      *  leap second.*/
-    LeapSecondChangeInfo  info;
+    LeapSecondChangeInfo info;
 };
 
 /** Specify the set of valid fields in LocationSystemInfo*/
-enum LocationSystemInfoValidityType{
+enum LocationSystemInfoValidityType {
     /** contains current leap second or leap second change info */
     LOCATION_SYS_INFO_LEAP_SECOND = (1ULL << 0),
 };
@@ -2190,14 +2191,14 @@ struct LocationSystemInfo {
     /** validity of LocationSystemInfo::info*/
     LocationSystemInfoValidity valid;
     /** Current leap second and leap second info.*/
-    LeapSecondInfo   info;
+    LeapSecondInfo info;
 };
 
 /**
  *  Specify the valid fields in GnssEnergyConsumedInfo. */
 enum GnssEnergyConsumedInfoValidityType {
     /** validity of GnssEnergyConsumedInfo*/
-    ENERGY_CONSUMED_SINCE_FIRST_BOOT_BIT = (1<<0)
+    ENERGY_CONSUMED_SINCE_FIRST_BOOT_BIT = (1 << 0)
 };
 
 /** Specifies GnssEnergyConsumedInfoValidityType */
@@ -2221,7 +2222,7 @@ struct GnssEnergyConsumedInfo {
  *  deleteAidingData for deleting any aiding data. */
 enum AidingDataType {
     /** Mask to delete ephemeris aiding data */
-    AIDING_DATA_EPHEMERIS  = (1 << 0),
+    AIDING_DATA_EPHEMERIS = (1 << 0),
     /** Mask to delete calibration data from dead reckoning position engine */
     AIDING_DATA_DR_SENSOR_CALIBRATION = (1 << 1),
 };
@@ -2293,7 +2294,7 @@ struct NmeaConfig {
      * Specify the Engine type for which Nmea sentences should be generated.
      * Also refer to  @ref ILocationConfigurator::configureNmea and
      * @ref ILocationManager::startDetailedEngineReports to understand the usage further.
-    */
+     */
     LocReqEngine engineType = LocReqEngineType::LOC_REQ_ENGINE_FUSED_BIT;
 };
 
@@ -2301,11 +2302,11 @@ struct NmeaConfig {
  *  used by the GNSS standard position engine (SPE). */
 enum RobustLocationConfigType {
     /** Validity of enabled */
-    VALID_ENABLED          = (1<<0),
+    VALID_ENABLED = (1 << 0),
     /** Validity of enabledForE911. */
-    VALID_ENABLED_FOR_E911 = (1<<1),
+    VALID_ENABLED_FOR_E911 = (1 << 1),
     /** Validity of version. */
-    VALID_VERSION          = (1<<2)
+    VALID_VERSION = (1 << 2)
 };
 
 /** Specifies RobustLocationConfigType mask */
@@ -2340,15 +2341,15 @@ struct RobustLocationConfiguration {
  *  dead reckoning position engine */
 enum DRConfigValidityType {
     /** Validity of body to sensor mount parameters. */
-    BODY_TO_SENSOR_MOUNT_PARAMS_VALID    = (1<<0),
+    BODY_TO_SENSOR_MOUNT_PARAMS_VALID = (1 << 0),
     /** Validity of vehicle speed scale factor. */
-    VEHICLE_SPEED_SCALE_FACTOR_VALID     = (1<<1),
+    VEHICLE_SPEED_SCALE_FACTOR_VALID = (1 << 1),
     /** Validity of vehicle speed scale factor uncertainty. */
-    VEHICLE_SPEED_SCALE_FACTOR_UNC_VALID = (1<<2),
+    VEHICLE_SPEED_SCALE_FACTOR_UNC_VALID = (1 << 2),
     /** Validity of gyro scale factor. */
-    GYRO_SCALE_FACTOR_VALID              = (1<<3),
+    GYRO_SCALE_FACTOR_VALID = (1 << 3),
     /** Validity of gyro scale factor uncertainty. */
-    GYRO_SCALE_FACTOR_UNC_VALID          = (1<<4),
+    GYRO_SCALE_FACTOR_UNC_VALID = (1 << 4),
 };
 
 /** Specifies DRConfigValidityType */
@@ -2390,7 +2391,7 @@ struct BodyToSensorMountParams {
  *  Specifies the set of gnss reports. */
 enum GnssReportType {
     /** Location reports */
-    LOCATION          = (1 << 0),
+    LOCATION = (1 << 0),
     /** Satellite reports */
     SATELLITE_VEHICLE = (1 << 1),
     /**
@@ -2406,17 +2407,17 @@ enum GnssReportType {
      * Also refer to @ref ILocationManager::startDetailedEngineReports
      * to understand the usage further.
      */
-    NMEA              = (1 << 2),
+    NMEA = (1 << 2),
     /** Data reports */
-    DATA              = (1 << 3),
+    DATA = (1 << 3),
     /** Low rate measurement reports. Currently the rate is defined to be 1 Hz. */
-    MEASUREMENT       = (1 << 4),
+    MEASUREMENT = (1 << 4),
     /** High rate measurement reports. Currently the rate is defined to be 10 Hz.
      *  Client cannot specify rates. The data in high rate would be different that from low rate.
      *  Also there might be difference in accuracy of fields for the both the rates. */
-    HIGH_RATE_MEASUREMENT    = (1 << 5),
+    HIGH_RATE_MEASUREMENT = (1 << 5),
     /*Disaster Crisis Reports*/
-    DISASTER_CRISIS   = (1 << 6),
+    DISASTER_CRISIS = (1 << 6),
     /**
      * To receive updates via @ref ILocationListener::onEngineNmeaInfo,
      * clients need to set this bit in the reportMask parameter passed to
@@ -2429,7 +2430,7 @@ enum GnssReportType {
      * Also refer to @ref ILocationManager::startDetailedEngineReports
      * to understand the usage further.
      */
-    ENGINE_NMEA       = (1 << 7),
+    ENGINE_NMEA = (1 << 7),
     /**
      * To receive updates via @ref ILocationListener::onGnssEphemerisInfo,
      * clients need to set this bit in the reportMask parameter passed to
@@ -2439,9 +2440,9 @@ enum GnssReportType {
      * These reports are obtained only from the GNSS(SPE) engine
      * whenever there is an update in the ephemeris information for a constellation.
      */
-    EPHEMERIS         = (1 << 8),
+    EPHEMERIS = (1 << 8),
     /** GNSS extended data */
-    EXTENDED_DATA     = (1 << 9)
+    EXTENDED_DATA = (1 << 9)
 };
 
 /** Specifies the applicable reports using the bits represented in GnssReportType */
@@ -2511,7 +2512,7 @@ enum class LocationEngineRunState {
      * Request the position engine to be put into suspended state.
      * When put in this state the QDR engine will discard calibration data.
      *
-    */
+     */
     SUSPENDED = 1,
     /** Request the position engine to be put into running state. */
     RUNNING = 2,
@@ -2600,7 +2601,7 @@ struct XtraConfig {
      * device default value.
      */
     uint32_t downloadRetryAttempts;
-     /**
+    /**
      * Path to the certificate authority (CA) repository that needs
      * to be used for XTRA assistance data download.
      * If empty string is specified, device default CA repositaory
@@ -2736,25 +2737,25 @@ using LocConfigIndications = std::bitset<32>;
  * SBAS contributes to improve the performance of GNSS system.
  */
 enum SbasCorrectionType {
-  SBAS_CORRECTION_IONO, /**< Bit mask to specify whether
-                             SBAS ionospheric correction is used */
-  SBAS_CORRECTION_FAST, /**< Bit mask to specify whether
-                             SBAS fast correction is used */
-  SBAS_CORRECTION_LONG, /**< Bit mask to specify whether
-                             SBAS long correction is used */
-  SBAS_INTEGRITY, /**< Bit mask to specify whether
-                      SBAS integrity information is used */
-  SBAS_CORRECTION_DGNSS, /**< Bit mask to specify whether
-                              SBAS DGNSS correction is used */
-  SBAS_CORRECTION_RTK, /**< Bit mask to specify whether
-                            SBAS RTK correction is used */
-  SBAS_CORRECTION_PPP, /**< Bit mask to specify whether
-                            SBAS PPP correction is used */
-  SBAS_CORRECTION_RTK_FIXED, /**< Bit mask to specify whether
-                            SBAS RTK fixed correction is used */
-  SBAS_CORRECTION_ONLY_SBAS_CORRECTED_SV_USED_, /**< Bit mask to specify
-                            only SBAS corrected SV is used */
-  SBAS_COUNT  /**< Bitset */
+    SBAS_CORRECTION_IONO, /**< Bit mask to specify whether
+                               SBAS ionospheric correction is used */
+    SBAS_CORRECTION_FAST, /**< Bit mask to specify whether
+                               SBAS fast correction is used */
+    SBAS_CORRECTION_LONG, /**< Bit mask to specify whether
+                               SBAS long correction is used */
+    SBAS_INTEGRITY, /**< Bit mask to specify whether
+                        SBAS integrity information is used */
+    SBAS_CORRECTION_DGNSS, /**< Bit mask to specify whether
+                                SBAS DGNSS correction is used */
+    SBAS_CORRECTION_RTK, /**< Bit mask to specify whether
+                              SBAS RTK correction is used */
+    SBAS_CORRECTION_PPP, /**< Bit mask to specify whether
+                              SBAS PPP correction is used */
+    SBAS_CORRECTION_RTK_FIXED, /**< Bit mask to specify whether
+                              SBAS RTK fixed correction is used */
+    SBAS_CORRECTION_ONLY_SBAS_CORRECTED_SV_USED_, /**< Bit mask to specify
+                              only SBAS corrected SV is used */
+    SBAS_COUNT /**< Bitset */
 };
 /**
  * @deprecated This bitmask is no longer supported.
@@ -2773,172 +2774,171 @@ using SbasCorrection = std::bitset<SBAS_COUNT>;
  *
  */
 class ILocationInfoBase {
-public:
-/**
- * Retrieves the validity of the Location basic Info.
- *
- * @returns Location basic validity mask.
- *
- */
-  virtual LocationInfoValidity getLocationInfoValidity() = 0;
+ public:
+    /**
+     * Retrieves the validity of the Location basic Info.
+     *
+     * @returns Location basic validity mask.
+     *
+     */
+    virtual LocationInfoValidity getLocationInfoValidity() = 0;
 
-/**
- * Retrieves technology used in computing this fix.
- *
- * @returns Location technology mask.
- *
- */
-  virtual LocationTechnology getTechMask() = 0;
+    /**
+     * Retrieves technology used in computing this fix.
+     *
+     * @returns Location technology mask.
+     *
+     */
+    virtual LocationTechnology getTechMask() = 0;
 
-/**
- * Retrieves Speed.
- *
- * @returns speed in meters per second.
- *
- */
-  virtual float getSpeed() = 0;
-/**
- * Retrieves latitude.
- * Positive and negative values indicate northern and southern latitude
- * respectively
- *    - Units: Degrees
- *    - Range: -90.0 to 90.0
- *
- * @returns Latitude if available else returns NaN.
- *
- */
-  virtual double getLatitude() = 0;
+    /**
+     * Retrieves Speed.
+     *
+     * @returns speed in meters per second.
+     *
+     */
+    virtual float getSpeed() = 0;
+    /**
+     * Retrieves latitude.
+     * Positive and negative values indicate northern and southern latitude
+     * respectively
+     *    - Units: Degrees
+     *    - Range: -90.0 to 90.0
+     *
+     * @returns Latitude if available else returns NaN.
+     *
+     */
+    virtual double getLatitude() = 0;
 
-/**
- * Retrieves longitude.
- * Positive and negative values indicate eastern and western longitude
- * respectively
- *    - Units: Degrees
- *    - Range: -180.0 to 180.0
- *
- * @returns Longitude if available else returns NaN.
- *
- */
-  virtual double getLongitude() = 0;
+    /**
+     * Retrieves longitude.
+     * Positive and negative values indicate eastern and western longitude
+     * respectively
+     *    - Units: Degrees
+     *    - Range: -180.0 to 180.0
+     *
+     * @returns Longitude if available else returns NaN.
+     *
+     */
+    virtual double getLongitude() = 0;
 
-/**
- * Retrieves altitude above the WGS 84 reference ellipsoid.
- *    - Units: Meters
- *
- * @returns Altitude if available else returns NaN.
- *
- */
-  virtual double getAltitude() = 0;
+    /**
+     * Retrieves altitude above the WGS 84 reference ellipsoid.
+     *    - Units: Meters
+     *
+     * @returns Altitude if available else returns NaN.
+     *
+     */
+    virtual double getAltitude() = 0;
 
-/**
- * Retrieves heading/bearing.
- *    - Units: Degrees
- *    - Range: 0 to 360
- *
- * @returns Heading if available else returns NaN.
- *
- */
-  virtual float getHeading() = 0;
+    /**
+     * Retrieves heading/bearing.
+     *    - Units: Degrees
+     *    - Range: 0 to 360
+     *
+     * @returns Heading if available else returns NaN.
+     *
+     */
+    virtual float getHeading() = 0;
 
-/**
- * Retrieves the horizontal uncertainty.
- *    - Units: Meters
- * Uncertainty is defined with 68% confidence level.
- *
- * @returns Horizontal uncertainty.
- *
- */
-  virtual float getHorizontalUncertainty() = 0;
-/**
- * Retrieves the vertical uncertainty.
- *    - Units: Meters
- * Uncertainty is defined with 68% confidence level.
- *
- * @returns Vertical uncertainty if available else returns NaN.
- *
- */
-  virtual float getVerticalUncertainty() = 0;
+    /**
+     * Retrieves the horizontal uncertainty.
+     *    - Units: Meters
+     * Uncertainty is defined with 68% confidence level.
+     *
+     * @returns Horizontal uncertainty.
+     *
+     */
+    virtual float getHorizontalUncertainty() = 0;
+    /**
+     * Retrieves the vertical uncertainty.
+     *    - Units: Meters
+     * Uncertainty is defined with 68% confidence level.
+     *
+     * @returns Vertical uncertainty if available else returns NaN.
+     *
+     */
+    virtual float getVerticalUncertainty() = 0;
 
-/**
- * Retrieves UTC timeInfo for the location fix.
- *    - Units: Milliseconds since Jan 1, 1970
- *
- * @returns TimeStamp in milliseconds if available else returns UNKNOWN_TIMESTAMP
- * which is zero(as UTC timeStamp has elapsed since January 1, 1970, it cannot be 0)
- *
- */
-  virtual uint64_t getTimeStamp() = 0;
+    /**
+     * Retrieves UTC timeInfo for the location fix.
+     *    - Units: Milliseconds since Jan 1, 1970
+     *
+     * @returns TimeStamp in milliseconds if available else returns UNKNOWN_TIMESTAMP
+     * which is zero(as UTC timeStamp has elapsed since January 1, 1970, it cannot be 0)
+     *
+     */
+    virtual uint64_t getTimeStamp() = 0;
 
-/**
- * Retrieves 3-D speed uncertainty/accuracy.
- *    - Units: Meters per Second
- * Uncertainty is defined with 68% confidence level.
- *
- * @returns Speed uncertainty if available else returns NaN.
- *
- */
-  virtual float getSpeedUncertainty() = 0;
+    /**
+     * Retrieves 3-D speed uncertainty/accuracy.
+     *    - Units: Meters per Second
+     * Uncertainty is defined with 68% confidence level.
+     *
+     * @returns Speed uncertainty if available else returns NaN.
+     *
+     */
+    virtual float getSpeedUncertainty() = 0;
 
-/**
- * Retrieves heading uncertainty.
- *    - Units: Degrees
- *    - Range: 0 to 360
- * Uncertainty is defined with 68% confidence level.
- *
- * @returns Heading uncertainty if available else returns NaN.
- *
- */
-  virtual float getHeadingUncertainty() = 0;
+    /**
+     * Retrieves heading uncertainty.
+     *    - Units: Degrees
+     *    - Range: 0 to 360
+     * Uncertainty is defined with 68% confidence level.
+     *
+     * @returns Heading uncertainty if available else returns NaN.
+     *
+     */
+    virtual float getHeadingUncertainty() = 0;
 
-/**
- * Boot timestamp corresponding to the UTC timestamp for Location fix.
- *    - Units: Nano-second
- *
- * @returns elapsed real time.
- *
- */
-  virtual uint64_t getElapsedRealTime() = 0;
+    /**
+     * Boot timestamp corresponding to the UTC timestamp for Location fix.
+     *    - Units: Nano-second
+     *
+     * @returns elapsed real time.
+     *
+     */
+    virtual uint64_t getElapsedRealTime() = 0;
 
-/**
- * Retrieves elapsed real time uncertainty.
- *    - Units: Nano-second
- *
- * @returns elapsed real time uncertainty.
- *
- */
-  virtual uint64_t getElapsedRealTimeUncertainty() = 0;
+    /**
+     * Retrieves elapsed real time uncertainty.
+     *    - Units: Nano-second
+     *
+     * @returns elapsed real time uncertainty.
+     *
+     */
+    virtual uint64_t getElapsedRealTimeUncertainty() = 0;
 
-/**
- * Retrieves time uncertainty.
- * For PVT report from SPE engine, confidence level is at 99%.
- * For PVT reports from other engines, confidence level is undefined.
- *
- * @return - Time uncertainty in milliseconds.
- *
- */
-  virtual float getTimeUncMs() = 0;
+    /**
+     * Retrieves time uncertainty.
+     * For PVT report from SPE engine, confidence level is at 99%.
+     * For PVT reports from other engines, confidence level is undefined.
+     *
+     * @return - Time uncertainty in milliseconds.
+     *
+     */
+    virtual float getTimeUncMs() = 0;
 
-/**
- * Retrieves elapsed gPTP time. GPTP time field corresponding to source time ticks.
- * Used for time sync between different systems. Validity of this field is given by value of
- * @ref LocationValidityType::HAS_GPTP_TIME_BIT
- *    - Units: Nanoseconds
- *
- * @returns elapsed gPTP time
- *
- */
-  virtual uint64_t getElapsedGptpTime() = 0;
+    /**
+     * Retrieves elapsed gPTP time. GPTP time field corresponding to source time ticks.
+     * Used for time sync between different systems. Validity of this field is given by value of
+     * @ref LocationValidityType::HAS_GPTP_TIME_BIT
+     *    - Units: Nanoseconds
+     *
+     * @returns elapsed gPTP time
+     *
+     */
+    virtual uint64_t getElapsedGptpTime() = 0;
 
-/**
- * Retrieves elapsed gPTP time uncertainty. Validity of this field is given by value of
- * @ref LocationValidityType::HAS_GPTP_TIME_UNC_BIT
- *    - Units: Nanoseconds
- *
- * @returns elapsed gPTP time uncertainty
- *
- */
-  virtual uint64_t getElapsedGptpTimeUnc() = 0;
-
+    /**
+     * Retrieves elapsed gPTP time uncertainty. Validity of this field is given by value of
+     * @ref LocationValidityType::HAS_GPTP_TIME_UNC_BIT
+     *    - Units: Nanoseconds
+     *
+     * @returns elapsed gPTP time uncertainty
+     *
+     */
+    virtual uint64_t getElapsedGptpTimeUnc() = 0;
 };
 
 /**
@@ -2948,395 +2948,395 @@ public:
  *
  */
 class ILocationInfoEx : public ILocationInfoBase {
-public:
+ public:
+    /**
+     * Retrives the validity of the location info ex. It provides the validity of various
+     * information like dop, reliabilities, uncertainties etc.
+     *
+     * @returns Location ex validity mask
+     */
+    virtual LocationInfoExValidity getLocationInfoExValidity() = 0;
 
-/**
- * Retrives the validity of the location info ex. It provides the validity of various information
- * like dop, reliabilities, uncertainties etc.
- *
- * @returns Location ex validity mask
- */
-  virtual LocationInfoExValidity getLocationInfoExValidity() = 0;
+    /**
+     * Retrieves the altitude with respect to mean sea level.
+     *    - Units: Meters
+     *
+     * @returns Altitude with respect to mean sea level if available else returns
+     * NaN.
+     *
+     */
+    virtual float getAltitudeMeanSeaLevel() = 0;
 
-/**
- * Retrieves the altitude with respect to mean sea level.
- *    - Units: Meters
- *
- * @returns Altitude with respect to mean sea level if available else returns
- * NaN.
- *
- */
-  virtual float getAltitudeMeanSeaLevel() = 0;
+    /**
+     * Retrieves position dilution of precision.
+     *
+     * @returns Position dilution of precision if available else returns NaN.
+     * Range: 0 (highest accuracy) to 50 (lowest accuracy)
+     *
+     */
+    virtual float getPositionDop() = 0;
 
-/**
- * Retrieves position dilution of precision.
- *
- * @returns Position dilution of precision if available else returns NaN.
- * Range: 0 (highest accuracy) to 50 (lowest accuracy)
- *
- */
-  virtual float getPositionDop() = 0;
+    /**
+     * Retrieves horizontal dilution of precision.
+     *
+     * @returns Horizontal dilution of precision if available else returns NaN.
+     * Range: 0 (highest accuracy) to 50 (lowest accuracy)
+     *
+     */
+    virtual float getHorizontalDop() = 0;
 
-/**
- * Retrieves horizontal dilution of precision.
- *
- * @returns Horizontal dilution of precision if available else returns NaN.
- * Range: 0 (highest accuracy) to 50 (lowest accuracy)
- *
- */
-  virtual float getHorizontalDop() = 0;
+    /**
+     * Retrieves vertical dilution of precision.
+     *
+     * @returns Vertical dilution of precision if available else returns NaN
+     * Range: 0 (highest accuracy) to 50 (lowest accuracy)
+     *
+     */
+    virtual float getVerticalDop() = 0;
+    /**
+     * Retrieves geometric dilution of precision.
+     *
+     * @returns geometric dilution of precision.
+     * Range: 0 (highest accuracy) to 50 (lowest accuracy)
+     *
+     */
+    virtual float getGeometricDop() = 0;
+    /**
+     * Retrieves time dilution of precision.
+     *
+     * @returns Time dilution of precision.
+     * Range: 0 (highest accuracy) to 50 (lowest accuracy)
+     *
+     */
+    virtual float getTimeDop() = 0;
 
-/**
- * Retrieves vertical dilution of precision.
- *
- * @returns Vertical dilution of precision if available else returns NaN
- * Range: 0 (highest accuracy) to 50 (lowest accuracy)
- *
- */
-  virtual float getVerticalDop() = 0;
-/**
- * Retrieves geometric dilution of precision.
- *
- * @returns geometric dilution of precision.
- * Range: 0 (highest accuracy) to 50 (lowest accuracy)
- *
- */
-  virtual float getGeometricDop() = 0;
-/**
- * Retrieves time dilution of precision.
- *
- * @returns Time dilution of precision.
- * Range: 0 (highest accuracy) to 50 (lowest accuracy)
- *
- */
-  virtual float getTimeDop() = 0;
+    /**
+     * Retrieves the difference between the bearing to true north and the bearing
+     * shown on magnetic compass. The deviation is positive when the magnetic
+     * north is east of true north.
+     *    - Units: Degrees
+     *
+     * @returns Magnetic Deviation if available else returns NaN
+     *
+     */
+    virtual float getMagneticDeviation() = 0;
 
-/**
- * Retrieves the difference between the bearing to true north and the bearing
- * shown on magnetic compass. The deviation is positive when the magnetic
- * north is east of true north.
- *    - Units: Degrees
- *
- * @returns Magnetic Deviation if available else returns NaN
- *
- */
-  virtual float getMagneticDeviation() = 0;
+    /**
+     * Specifies the reliability of the horizontal position.
+     *
+     * @returns @ref LocationReliability of the horizontal position if available
+     * else returns
+     * UNKNOWN.
+     *
+     */
+    virtual LocationReliability getHorizontalReliability() = 0;
 
-/**
- * Specifies the reliability of the horizontal position.
- *
- * @returns @ref LocationReliability of the horizontal position if available
- * else returns
- * UNKNOWN.
- *
- */
-  virtual LocationReliability getHorizontalReliability() = 0;
+    /**
+     * Specifies the reliability of the vertical position.
+     *
+     * @returns @ref LocationReliability of the vertical position if available
+     * else returns UNKNOWN.
+     *
+     */
+    virtual LocationReliability getVerticalReliability() = 0;
 
-/**
- * Specifies the reliability of the vertical position.
- *
- * @returns @ref LocationReliability of the vertical position if available
- * else returns UNKNOWN.
- *
- */
-  virtual LocationReliability getVerticalReliability() = 0;
+    /**
+     * Retrieves semi-major axis of horizontal elliptical uncertainty.
+     *    - Units: Meters
+     * Uncertainty is defined with 39% confidence level.
+     *
+     * @returns Semi-major horizontal elliptical uncertainty if available else
+     * returns NaN.
+     *
+     */
+    virtual float getHorizontalUncertaintySemiMajor() = 0;
 
-/**
- * Retrieves semi-major axis of horizontal elliptical uncertainty.
- *    - Units: Meters
- * Uncertainty is defined with 39% confidence level.
- *
- * @returns Semi-major horizontal elliptical uncertainty if available else
- * returns NaN.
- *
- */
-  virtual float getHorizontalUncertaintySemiMajor() = 0;
+    /**
+     * Retrieves semi-minor axis of horizontal elliptical uncertainty.
+     *    - Units: Meters
+     * Uncertainty is defined with 39% confidence level.
+     *
+     * @returns Semi-minor horizontal elliptical uncertainty
+     * if available else returns NaN.
+     *
+     */
+    virtual float getHorizontalUncertaintySemiMinor() = 0;
 
-/**
- * Retrieves semi-minor axis of horizontal elliptical uncertainty.
- *    - Units: Meters
- * Uncertainty is defined with 39% confidence level.
- *
- * @returns Semi-minor horizontal elliptical uncertainty
- * if available else returns NaN.
- *
- */
-  virtual float getHorizontalUncertaintySemiMinor() = 0;
+    /**
+     * Retrieves elliptical horizontal uncertainty azimuth of orientation.
+     *    - Units: Decimal degrees
+     *    - Range: 0 to 180
+     * Confidence for uncertainty is not specified.
+     *
+     * @returns Elliptical horizontal uncertainty azimuth of orientation
+     * if available else returns NaN.
+     *
+     */
+    virtual float getHorizontalUncertaintyAzimuth() = 0;
+    /**
+     * Retrieves east standard deviation.
+     *    - Units: Meters
+     * Uncertainty is defined with 68% confidence level.
+     *
+     * @returns East Standard Deviation.
+     *
+     */
+    virtual float getEastStandardDeviation() = 0;
 
-/**
- * Retrieves elliptical horizontal uncertainty azimuth of orientation.
- *    - Units: Decimal degrees
- *    - Range: 0 to 180
- * Confidence for uncertainty is not specified.
- *
- * @returns Elliptical horizontal uncertainty azimuth of orientation
- * if available else returns NaN.
- *
- */
-  virtual float getHorizontalUncertaintyAzimuth() = 0;
-/**
- * Retrieves east standard deviation.
- *    - Units: Meters
- * Uncertainty is defined with 68% confidence level.
- *
- * @returns East Standard Deviation.
- *
- */
-  virtual float getEastStandardDeviation() = 0;
+    /**
+     * Retrieves north standard deviation.
+     *    - Units: Meters
+     * Uncertainty is defined with 68% confidence level.
+     *
+     * @returns North Standard Deviation.
+     *
+     */
+    virtual float getNorthStandardDeviation() = 0;
 
-/**
- * Retrieves north standard deviation.
- *    - Units: Meters
- * Uncertainty is defined with 68% confidence level.
- *
- * @returns North Standard Deviation.
- *
- */
-  virtual float getNorthStandardDeviation() = 0;
+    /**
+     * Retrieves number of satellite vehicles used in position report.
+     *
+     * @returns number of Sv used.
+     *
+     */
+    virtual uint16_t getNumSvUsed() = 0;
 
-/**
- * Retrieves number of satellite vehicles used in position report.
- *
- * @returns number of Sv used.
- *
- */
-  virtual uint16_t getNumSvUsed() = 0;
+    /**
+     * Retrives the set of satellite vehicles that are used to calculate position.
+     *
+     * @returns set of satellite vehicles for different constellations.
+     */
+    virtual SvUsedInPosition getSvUsedInPosition() = 0;
 
-/**
- * Retrives the set of satellite vehicles that are used to calculate position.
- *
- * @returns set of satellite vehicles for different constellations.
- */
-  virtual SvUsedInPosition getSvUsedInPosition() = 0;
+    /**
+     * Retrieves GNSS Satellite Vehicles used in position data.
+     *
+     * @param [out] idsOfUsedSVs Vector of Satellite Vehicle identifiers.
+     *
+     */
+    virtual void getSVIds(std::vector<uint16_t> &idsOfUsedSVs) = 0;
 
-/**
- * Retrieves GNSS Satellite Vehicles used in position data.
- *
- * @param [out] idsOfUsedSVs Vector of Satellite Vehicle identifiers.
- *
- */
-  virtual void getSVIds(std::vector<uint16_t> &idsOfUsedSVs) = 0;
+    /**
+     * Retrieves navigation solution mask used to indicate solutions used in the fix.
+     *
+     * @return - Navigation solution mask used.
+     *
+     */
+    virtual NavigationSolution getNavigationSolution() = 0;
 
-/**
- * Retrieves navigation solution mask used to indicate solutions used in the fix.
- *
- * @return - Navigation solution mask used.
- *
- */
-  virtual NavigationSolution getNavigationSolution() = 0;
+    /**
+     * Retrieves position technology mask used to indicate which technology is used.
+     *
+     * @return - Position technology used in computing this fix.
+     *
+     */
+    virtual GnssPositionTech getPositionTechnology() = 0;
 
-/**
- * Retrieves position technology mask used to indicate which technology is used.
- *
- * @return - Position technology used in computing this fix.
- *
- */
-  virtual GnssPositionTech getPositionTechnology() = 0;
+    /**
+     * Retrieves position related information.
+     *
+     */
+    virtual GnssKinematicsData getBodyFrameData() = 0;
 
-/**
- * Retrieves position related information.
- *
- */
-  virtual GnssKinematicsData getBodyFrameData() = 0;
+    /**
+     * Retrieves gnss measurement usage info.
+     *
+     */
+    virtual std::vector<GnssMeasurementInfo> getmeasUsageInfo() = 0;
 
-/**
- * Retrieves gnss measurement usage info.
- *
- */
-  virtual std::vector<GnssMeasurementInfo> getmeasUsageInfo() = 0;
+    /**
+     * Retrieves type of gnss system.
+     *
+     * @return - Type of Gnss System.
+     *
+     */
+    virtual SystemTime getGnssSystemTime() = 0;
 
-/**
- * Retrieves type of gnss system.
- *
- * @return - Type of Gnss System.
- *
- */
-  virtual SystemTime getGnssSystemTime() = 0;
+    /**
+     * Retrieves leap seconds if available.
+     *
+     * @param [out] leapSeconds - leap seconds
+     *       - Units: Seconds
+     *
+     * @returns Status of leap seconds.
+     *
+     */
+    virtual telux::common::Status getLeapSeconds(uint8_t &leapSeconds) = 0;
 
-/**
- * Retrieves leap seconds if available.
- *
- * @param [out] leapSeconds - leap seconds
- *       - Units: Seconds
- *
- * @returns Status of leap seconds.
- *
- */
-  virtual telux::common::Status getLeapSeconds(uint8_t &leapSeconds) = 0;
+    /**
+     * Retrieves east, North, Up velocity if available.
+     *
+     * @param [out] velocityEastNorthUp - east, North, Up velocity
+     *       - Units: Meters/second
+     *
+     * @returns Status of availability of east, North, Up velocity.
+     *
+     */
+    virtual telux::common::Status getVelocityEastNorthUp(std::vector<float> &velocityEastNorthUp)
+        = 0;
 
-/**
- * Retrieves east, North, Up velocity if available.
- *
- * @param [out] velocityEastNorthUp - east, North, Up velocity
- *       - Units: Meters/second
- *
- * @returns Status of availability of east, North, Up velocity.
- *
- */
-  virtual telux::common::Status
-      getVelocityEastNorthUp(std::vector<float> &velocityEastNorthUp) = 0;
+    /**
+     * Retrieves east, North, Up velocity uncertainty if available.
+     * Uncertainty is defined with 68% confidence level.
+     *
+     * @param [out] velocityUncertaintyEastNorthUp - east, North, Up velocity
+     * uncertainty
+     *       - Units: Meters/second
+     *
+     * @returns Status of availability of east, North, Up velocity uncertainty.
+     *
+     */
+    virtual telux::common::Status getVelocityUncertaintyEastNorthUp(
+        std::vector<float> &velocityUncertaintyEastNorthUp)
+        = 0;
 
-/**
- * Retrieves east, North, Up velocity uncertainty if available.
- * Uncertainty is defined with 68% confidence level.
- *
- * @param [out] velocityUncertaintyEastNorthUp - east, North, Up velocity
- * uncertainty
- *       - Units: Meters/second
- *
- * @returns Status of availability of east, North, Up velocity uncertainty.
- *
- */
-  virtual telux::common::Status getVelocityUncertaintyEastNorthUp(
-      std::vector<float> &velocityUncertaintyEastNorthUp) = 0;
+    /**
+     * Sensor calibration confidence percent, range [0, 100].
+     *
+     * @returns the percentage of calibration taking all the parameters into account.
+     *
+     */
+    virtual uint8_t getCalibrationConfidencePercent() = 0;
 
-/**
- * Sensor calibration confidence percent, range [0, 100].
- *
- * @returns the percentage of calibration taking all the parameters into account.
- *
- */
-  virtual uint8_t getCalibrationConfidencePercent() = 0;
+    /**
+     * Sensor calibration status.
+     *
+     * @returns mask indicating the calibration status with respect to different parameters.
+     *
+     */
+    virtual DrCalibrationStatus getCalibrationStatus() = 0;
 
-/**
- * Sensor calibration status.
- *
- * @returns mask indicating the calibration status with respect to different parameters.
- *
- */
-  virtual DrCalibrationStatus getCalibrationStatus() = 0;
+    /**
+     * DR solution status.
+     *
+     * @returns mask indicating the solution status with respect to the DR position engine.
+     *
+     */
+    virtual DrSolutionStatus getSolutionStatus() = 0;
 
-/**
- * DR solution status.
- *
- * @returns mask indicating the solution status with respect to the DR position engine.
- *
- */
-  virtual DrSolutionStatus getSolutionStatus() = 0;
+    /**
+     * Location engine type. When the type is set to LOC_ENGINE_SRC_FUSED, the fix is
+     * the propagated/aggregated reports from all engines running on the system (e.g.:
+     * DR/SPE/PPE) based QTI algorithm. To check which location engine contributes
+     * to the fused output, check for locOutputEngMask.
+     *
+     * @returns the type of engine that was used for calculating the position fix.
+     *
+     */
+    virtual LocationAggregationType getLocOutputEngType() = 0;
 
-/**
- * Location engine type. When the type is set to LOC_ENGINE_SRC_FUSED, the fix is
- * the propagated/aggregated reports from all engines running on the system (e.g.:
- * DR/SPE/PPE) based QTI algorithm. To check which location engine contributes
- * to the fused output, check for locOutputEngMask.
- *
- * @returns the type of engine that was used for calculating the position fix.
- *
- */
-  virtual LocationAggregationType getLocOutputEngType() = 0;
+    /**
+     * When loc output eng type is set to fused, this field indicates the set of engines
+     * contribute to the fix.
+     *
+     * @returns the combination of position engines used in calculating the position report
+     * when the loc output end type is set to fused.
+     *
+     */
+    virtual PositioningEngine getLocOutputEngMask() = 0;
 
-/**
- * When loc output eng type is set to fused, this field indicates the set of engines
- * contribute to the fix.
- *
- * @returns the combination of position engines used in calculating the position report
- * when the loc output end type is set to fused.
- *
- */
-  virtual PositioningEngine getLocOutputEngMask() = 0;
+    /**
+     * When robust location is enabled, this field will indicate how well the various input
+     * data considered for navigation solution conforms to expectations.
+     *
+     * @returns values in the range [0.0, 1.0], with 0.0 for least conforming and 1.0 for
+     * most conforming.
+     *
+     */
+    virtual float getConformityIndex() = 0;
 
-/**
- * When robust location is enabled, this field will indicate how well the various input
- * data considered for navigation solution conforms to expectations.
- *
- * @returns values in the range [0.0, 1.0], with 0.0 for least conforming and 1.0 for
- * most conforming.
- *
- */
-  virtual float getConformityIndex() = 0;
+    /**
+     * Vehicle Reference Point(VRP) based latitude, longitude and altitude information.
+     *
+     */
+    virtual LLAInfo getVRPBasedLLA() = 0;
 
-/**
- * Vehicle Reference Point(VRP) based latitude, longitude and altitude information.
- *
- */
-  virtual LLAInfo getVRPBasedLLA() = 0;
+    /**
+     * VRP-based east, north and up velocity information.
+     * @returns - vector of directional velocities in this order {east velocity, north velocity,
+     *            up velocity}
+     */
+    virtual std::vector<float> getVRPBasedENUVelocity() = 0;
 
-/**
- * VRP-based east, north and up velocity information.
- * @returns - vector of directional velocities in this order {east velocity, north velocity,
- *            up velocity}
- */
-  virtual std::vector<float> getVRPBasedENUVelocity() = 0;
+    /**
+     * Determination of altitude is assumed or calculated. ASSUMED means there may not be
+     * enough satellites to determine the precise altitude.
+     * @returns altitude type ASSUMED/CALCULATED or if not avalilable then UNKNOWN.
+     */
+    virtual AltitudeType getAltitudeType() = 0;
 
-/**
- * Determination of altitude is assumed or calculated. ASSUMED means there may not be
- * enough satellites to determine the precise altitude.
- * @returns altitude type ASSUMED/CALCULATED or if not avalilable then UNKNOWN.
- */
-  virtual AltitudeType getAltitudeType() = 0;
+    /**
+     * Indicates the status of this report in terms of how optimally the report was calculated
+     * by the engine.
+     *
+     * @returns Status of the report. Returns ReportStatus::UNKNOWN if status is unavailable.
+     */
+    virtual ReportStatus getReportStatus() = 0;
 
-/**
- * Indicates the status of this report in terms of how optimally the report was calculated
- * by the engine.
- *
- * @returns Status of the report. Returns ReportStatus::UNKNOWN if status is unavailable.
- */
-  virtual ReportStatus getReportStatus() = 0;
+    /**
+     * Integrity risk used for protection level parameters. Unit of 2.5e-10.
+     * Valid range is [1 to (4e9-1)]. Values other than valid range means integrity risk is disabled
+     * and @ref ILocationInfoEx::getProtectionLevelAlongTrack,
+     * @ref ILocationInfoEx::getProtectionLevelCrossTrack and
+     * @ref ILocationInfoEx::getProtectionLevelVertical will not be available.
+     *
+     */
+    virtual uint32_t getIntegrityRiskUsed() = 0;
 
-/**
- * Integrity risk used for protection level parameters. Unit of 2.5e-10.
- * Valid range is [1 to (4e9-1)]. Values other than valid range means integrity risk is disabled
- * and @ref ILocationInfoEx::getProtectionLevelAlongTrack,
- * @ref ILocationInfoEx::getProtectionLevelCrossTrack and
- * @ref ILocationInfoEx::getProtectionLevelVertical will not be available.
- *
- */
-  virtual uint32_t getIntegrityRiskUsed() = 0;
+    /**
+     * Along-track protection level at specified integrity risk, in unit of meter.
+     *
+     */
+    virtual float getProtectionLevelAlongTrack() = 0;
 
-/**
- * Along-track protection level at specified integrity risk, in unit of meter.
- *
- */
-  virtual float getProtectionLevelAlongTrack() = 0;
+    /**
+     * Cross-track protection level at specified integrity risk, in unit of meter.
+     *
+     */
+    virtual float getProtectionLevelCrossTrack() = 0;
 
-/**
- * Cross-track protection level at specified integrity risk, in unit of meter.
- *
- */
-  virtual float getProtectionLevelCrossTrack() = 0;
+    /**
+     * Vertical component protection level at specified integrity risk, in unit of meter.
+     *
+     */
+    virtual float getProtectionLevelVertical() = 0;
 
-/**
- * Vertical component protection level at specified integrity risk, in unit of meter.
- *
- */
-  virtual float getProtectionLevelVertical() = 0;
+    /**
+     * Retrieves navigation solution mask used to indicate SBAS corrections.
+     *
+     * @return - SBAS (Satellite Based Augmentation System) Correction mask used.
+     *
+     * @deprecated This API is no longer supported.
+     * Use @ref ILocationInfoEx::getNavigationSolution to get the required information about
+     * solutions (corrections) used in the fix.
+     *
+     */
+    virtual SbasCorrection getSbasCorrection() = 0;
 
-/**
- * Retrieves navigation solution mask used to indicate SBAS corrections.
- *
- * @return - SBAS (Satellite Based Augmentation System) Correction mask used.
- *
- * @deprecated This API is no longer supported.
- * Use @ref ILocationInfoEx::getNavigationSolution to get the required information about
- * solutions (corrections) used in the fix.
- *
- */
-  virtual SbasCorrection getSbasCorrection() = 0;
+    /** List of DGNSS station IDs providing corrections.
+     *  Range:
+     *  - SBAS --  120 to 158 and 183 to 191
+     *  - Monitoring station -- 1000-2023 (Station ID biased by 1000)
+     *  - Other values reserved.
+     */
+    virtual std::vector<uint16_t> getDgnssStationIds() = 0;
 
-/** List of DGNSS station IDs providing corrections.
- *  Range:
- *  - SBAS --  120 to 158 and 183 to 191
- *  - Monitoring station -- 1000-2023 (Station ID biased by 1000)
- *  - Other values reserved.
- */
-  virtual std::vector<uint16_t> getDgnssStationIds() = 0;
+    /** Distance between the basestation and the receiver.
+     *  Units: meter.
+     */
+    virtual double getBaselineLength() = 0;
 
- /** Distance between the basestation and the receiver.
-  *  Units: meter.
- */
-  virtual double getBaselineLength() = 0;
+    /** Difference in time between the fix timestamp using the correction
+     * and the time of the correction data.
+     * Units: milliseconds.
+     */
+    virtual uint64_t getAgeOfCorrections() = 0;
 
- /** Difference in time between the fix timestamp using the correction
-  * and the time of the correction data.
-  * Units: milliseconds.
- */
-  virtual uint64_t getAgeOfCorrections() = 0;
-
-/**
- * Returns the leap seconds uncertainty associated with the PVT report.
- * Units- seconds
- */
-  virtual uint8_t getLeapSecondsUncertainty() = 0;
+    /**
+     * Returns the leap seconds uncertainty associated with the PVT report.
+     * Units- seconds
+     */
+    virtual uint8_t getLeapSecondsUncertainty() = 0;
 };
 
 /**
@@ -3344,136 +3344,136 @@ public:
  *        about Satellite Vehicles, their position and health status
  */
 class ISVInfo {
-public:
-/**
- * Indicates to which constellation this satellite vehicle belongs.
- *
- * @returns  @ref GnssConstellationType if available else returns UNKNOWN.
- *
- */
-  virtual GnssConstellationType getConstellation() = 0;
+ public:
+    /**
+     * Indicates to which constellation this satellite vehicle belongs.
+     *
+     * @returns  @ref GnssConstellationType if available else returns UNKNOWN.
+     *
+     */
+    virtual GnssConstellationType getConstellation() = 0;
 
-/**
- * GNSS satellite vehicle ID.
- * SV id range of each supported constellations mentioned in @ref GnssMeasurementInfo.
- *
- * @returns Identifier of the satellite vehicle otherwise 0(as 0 is not an ID
- * for any of the SVs)
- *
- */
-  virtual uint16_t getId() = 0;
+    /**
+     * GNSS satellite vehicle ID.
+     * SV id range of each supported constellations mentioned in @ref GnssMeasurementInfo.
+     *
+     * @returns Identifier of the satellite vehicle otherwise 0(as 0 is not an ID
+     * for any of the SVs)
+     *
+     */
+    virtual uint16_t getId() = 0;
 
-/**
- * Health status of satellite vehicle.
- *
- * @returns  HealthStatus of Satellite Vehicle if available else returns
- * UNKNOWN.
- *          - @ref SVHealthStatus
- * @deprecated This API is not supported.
- *
- */
-  virtual SVHealthStatus getSVHealthStatus() = 0;
+    /**
+     * Health status of satellite vehicle.
+     *
+     * @returns  HealthStatus of Satellite Vehicle if available else returns
+     * UNKNOWN.
+     *          - @ref SVHealthStatus
+     * @deprecated This API is not supported.
+     *
+     */
+    virtual SVHealthStatus getSVHealthStatus() = 0;
 
-/**
- * Status of satellite vehicle.
- *
- * @note    This API is work-in-progress and is subject to change.
- * @returns Satellite Vehicle Status if available else returns UNKNOWN.
- *          - @ref SVStatus
- * @deprecated This API is not supported.
- *
- */
-  virtual SVStatus getStatus() = 0;
+    /**
+     * Status of satellite vehicle.
+     *
+     * @note    This API is work-in-progress and is subject to change.
+     * @returns Satellite Vehicle Status if available else returns UNKNOWN.
+     *          - @ref SVStatus
+     * @deprecated This API is not supported.
+     *
+     */
+    virtual SVStatus getStatus() = 0;
 
-/**
- * Indicates whether ephemeris information(which allows the receiver
- * to calculate the satellite's position) is available.
- *
- * @returns @ref SVInfoAvailability if Ephemeris exists or not else returns
- * UNKNOWN.
- *
- */
-  virtual SVInfoAvailability getHasEphemeris() = 0;
+    /**
+     * Indicates whether ephemeris information(which allows the receiver
+     * to calculate the satellite's position) is available.
+     *
+     * @returns @ref SVInfoAvailability if Ephemeris exists or not else returns
+     * UNKNOWN.
+     *
+     */
+    virtual SVInfoAvailability getHasEphemeris() = 0;
 
-/**
- * Indicates whether almanac information(which allows receivers to know
- * which satellites are available for tracking) is available.
- *
- * @returns @ref SVInfoAvailability if almanac exists or not else returns
- * UNKNOWN.
- *
- */
-  virtual SVInfoAvailability getHasAlmanac() = 0;
+    /**
+     * Indicates whether almanac information(which allows receivers to know
+     * which satellites are available for tracking) is available.
+     *
+     * @returns @ref SVInfoAvailability if almanac exists or not else returns
+     * UNKNOWN.
+     *
+     */
+    virtual SVInfoAvailability getHasAlmanac() = 0;
 
-/**
- * Indicates whether the satellite is used in computing the fix.
- *
- * @returns @ref SVInfoAvailability, if satellite used or not else returns
- * UNKNOWN.
- *
- */
-  virtual SVInfoAvailability getHasFix() = 0;
+    /**
+     * Indicates whether the satellite is used in computing the fix.
+     *
+     * @returns @ref SVInfoAvailability, if satellite used or not else returns
+     * UNKNOWN.
+     *
+     */
+    virtual SVInfoAvailability getHasFix() = 0;
 
-/**
- * Retrieves satellite vehicle elevation angle.
- *    - Units: Degrees
- *    - Range: 0 to 90
- *
- * @returns Elevation if available else returns NaN.
- *
- */
-  virtual float getElevation() = 0;
+    /**
+     * Retrieves satellite vehicle elevation angle.
+     *    - Units: Degrees
+     *    - Range: 0 to 90
+     *
+     * @returns Elevation if available else returns NaN.
+     *
+     */
+    virtual float getElevation() = 0;
 
-/**
- * Retrieves satellite vehicle azimuth angle.
- *    - Units: Degrees
- *    - Range: 0 to 360
- *
- * @returns Azimuth if available else returns NaN.
- */
-  virtual float getAzimuth() = 0;
+    /**
+     * Retrieves satellite vehicle azimuth angle.
+     *    - Units: Degrees
+     *    - Range: 0 to 360
+     *
+     * @returns Azimuth if available else returns NaN.
+     */
+    virtual float getAzimuth() = 0;
 
-/**
- * Retrieves signal-to-noise ratio of the signal measured at antenna of the satellite vehicle.
- *    - Units: dB-Hz
- *
- * @returns SNR if available else returns 0.0 value.
- *
- */
-  virtual float getSnr() = 0;
+    /**
+     * Retrieves signal-to-noise ratio of the signal measured at antenna of the satellite vehicle.
+     *    - Units: dB-Hz
+     *
+     * @returns SNR if available else returns 0.0 value.
+     *
+     */
+    virtual float getSnr() = 0;
 
-/**
- * Indicates the carrier frequency of the signal tracked.
- *
- * @returns carrier frequency in Hz else returns UNKNOWN_CARRIER_FREQ frequency
- * when not supported.
- */
-  virtual float getCarrierFrequency() = 0;
+    /**
+     * Indicates the carrier frequency of the signal tracked.
+     *
+     * @returns carrier frequency in Hz else returns UNKNOWN_CARRIER_FREQ frequency
+     * when not supported.
+     */
+    virtual float getCarrierFrequency() = 0;
 
-/**
- * Indicates the validity for different types of signal
- * for gps, galileo, beidou etc.
- *
- * @returns signalType mask else return UNKNOWN_SIGNAL_MASK when not supported.
- */
-  virtual GnssSignal getSignalType() = 0;
+    /**
+     * Indicates the validity for different types of signal
+     * for gps, galileo, beidou etc.
+     *
+     * @returns signalType mask else return UNKNOWN_SIGNAL_MASK when not supported.
+     */
+    virtual GnssSignal getSignalType() = 0;
 
- /**
-  * Retrieves GLONASS frequency channel number in the range [1, 14] which is calculated as
-  * FCN [-7, 6] + 8.
-  *
-  * @returns GLONASS frequency channel number.
-  */
-   virtual uint16_t getGlonassFcn() = 0;
+    /**
+     * Retrieves GLONASS frequency channel number in the range [1, 14] which is calculated as
+     * FCN [-7, 6] + 8.
+     *
+     * @returns GLONASS frequency channel number.
+     */
+    virtual uint16_t getGlonassFcn() = 0;
 
-/**
- * Carrier-to-noise ratio of the signal measured at baseband.
- *    - Units: dB-Hz
- *
- * @returns carrier-to-noise ratio at baseband else returns UNKNOWN_BASEBAND_CARRIER_NOISE ratio
- * when not supported.
- */
-  virtual double getBasebandCnr() = 0;
+    /**
+     * Carrier-to-noise ratio of the signal measured at baseband.
+     *    - Units: dB-Hz
+     *
+     * @returns carrier-to-noise ratio at baseband else returns UNKNOWN_BASEBAND_CARRIER_NOISE ratio
+     * when not supported.
+     */
+    virtual double getBasebandCnr() = 0;
 };
 
 /**
@@ -3481,25 +3481,25 @@ public:
  * available and whether altitude is assumed or calculated.
  */
 class IGnssSVInfo {
-public:
-/**
- * Indicates whether altitude is assumed or calculated.
- *
- * @returns @ref AltitudeType if available else returns UNKNOWN.
- * @deprecated This API is not supported.
- *
- */
-  virtual AltitudeType getAltitudeType() = 0;
+ public:
+    /**
+     * Indicates whether altitude is assumed or calculated.
+     *
+     * @returns @ref AltitudeType if available else returns UNKNOWN.
+     * @deprecated This API is not supported.
+     *
+     */
+    virtual AltitudeType getAltitudeType() = 0;
 
-/**
- * Pointer to satellite vehicles information for all GNSS
- * constellations.
- *
- * @returns Vector of pointer of ISVInfo object if available else returns
- * empty vector.
- *
- */
-  virtual std::vector<std::shared_ptr<ISVInfo> > getSVInfoList() = 0;
+    /**
+     * Pointer to satellite vehicles information for all GNSS
+     * constellations.
+     *
+     * @returns Vector of pointer of ISVInfo object if available else returns
+     * empty vector.
+     *
+     */
+    virtual std::vector<std::shared_ptr<ISVInfo>> getSVInfoList() = 0;
 };
 
 /**
@@ -3507,22 +3507,22 @@ public:
  * like jammer metrics and automatic gain control for satellite signal type.
  */
 class IGnssSignalInfo {
-public:
-/**
- * Retrieves jammer metric and Automatic Gain Control(AGC) corresponding to signal types.Jammer metric is
- * linearly proportional to the sum of jammer and noise power at the GNSS
- * antenna port.
- *
- * @returns List of jammer metric and a list of automatic gain control for signal type.
- *
- */
+ public:
+    /**
+     * Retrieves jammer metric and Automatic Gain Control(AGC) corresponding to signal types.Jammer
+     * metric is linearly proportional to the sum of jammer and noise power at the GNSS antenna
+     * port.
+     *
+     * @returns List of jammer metric and a list of automatic gain control for signal type.
+     *
+     */
 
-  virtual GnssData getGnssData() = 0;
+    virtual GnssData getGnssData() = 0;
 };
 
 /** @} */ /* end_addtogroup telematics_location */
 
-} // end of namespace loc
-} // end of namespace telux
+}  // end of namespace loc
+}  // end of namespace telux
 
-#endif // TELUX_LOC_LOCATIONDEFINES_HPP
+#endif  // TELUX_LOC_LOCATIONDEFINES_HPP

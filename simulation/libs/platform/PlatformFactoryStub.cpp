@@ -1,8 +1,7 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 
 #include <telux/common/Log.hpp>
 #include "common/CommonUtils.hpp"
@@ -63,8 +62,8 @@ std::shared_ptr<IDeviceInfoManager> PlatformFactoryStub::getDeviceInfoManager(
     LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str(),
         " , callback = ", &deviceInfoInitCallbacks_);
 
-    auto manager = getManager<telux::platform::IDeviceInfoManager>(type, deviceInfoManager_,
-        deviceInfoInitCallbacks_, callback, createAndInit);
+    auto manager = getManager<telux::platform::IDeviceInfoManager>(
+        type, deviceInfoManager_, deviceInfoInitCallbacks_, callback, createAndInit);
 
     return manager;
 }
@@ -73,11 +72,10 @@ std::shared_ptr<hardware::IAntennaManager> PlatformFactoryStub::getAntennaManage
     InitResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
 
-    std::function<std::shared_ptr<hardware::IAntennaManager>(InitResponseCb)> createAndInit
-        = [this](telux::common::InitResponseCb initCb) ->
-        std::shared_ptr<hardware::IAntennaManager> {
-        std::shared_ptr<hardware::AntennaManagerStub> manager =
-        std::make_shared<hardware::AntennaManagerStub>();
+    std::function<std::shared_ptr<hardware::IAntennaManager>(InitResponseCb)> createAndInit =
+        [this](telux::common::InitResponseCb initCb) -> std::shared_ptr<hardware::IAntennaManager> {
+        std::shared_ptr<hardware::AntennaManagerStub> manager
+            = std::make_shared<hardware::AntennaManagerStub>();
         if (telux::common::Status::SUCCESS != manager->init(initCb)) {
             return nullptr;
         }
@@ -86,8 +84,8 @@ std::shared_ptr<hardware::IAntennaManager> PlatformFactoryStub::getAntennaManage
     auto type = std::string("Antenna manager");
     LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str(),
         " , callback = ", &antennaInitCallbacks_);
-    auto manager = getManager<telux::platform::hardware::IAntennaManager>(type, antennaManager_,
-        antennaInitCallbacks_, callback, createAndInit);
+    auto manager = getManager<telux::platform::hardware::IAntennaManager>(
+        type, antennaManager_, antennaInitCallbacks_, callback, createAndInit);
     return manager;
 }
 
@@ -103,10 +101,9 @@ std::shared_ptr<IFsManager> PlatformFactoryStub::getFsManager(InitResponseCb cal
         return manager;
     };
     auto type = std::string("Fs manager");
-    LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str(),
-        " , callback = ", &fsInitCallbacks_);
-    auto manager = getManager<telux::platform::IFsManager>(type, fsManager_,
-        fsInitCallbacks_, callback, createAndInit);
+    LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str(), " , callback = ", &fsInitCallbacks_);
+    auto manager = getManager<telux::platform::IFsManager>(
+        type, fsManager_, fsInitCallbacks_, callback, createAndInit);
     return manager;
 }
 
@@ -122,14 +119,11 @@ std::shared_ptr<ITimeManager> PlatformFactoryStub::getTimeManager(InitResponseCb
         return manager;
     };
     auto type = std::string("Time manager");
-    LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str(),
-        " , callback = ", &timeInitCallbacks_);
-    auto manager = getManager<telux::platform::ITimeManager>(type, timeManager_,
-        timeInitCallbacks_, callback, createAndInit);
+    LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str(), " , callback = ", &timeInitCallbacks_);
+    auto manager = getManager<telux::platform::ITimeManager>(
+        type, timeManager_, timeInitCallbacks_, callback, createAndInit);
     return manager;
 }
-
-
 
 }  // end namespace platform
 }  // end namespace telux

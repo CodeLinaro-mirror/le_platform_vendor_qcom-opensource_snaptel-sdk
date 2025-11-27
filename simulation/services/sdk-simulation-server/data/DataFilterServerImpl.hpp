@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef DATA_FILTER_SERVER_HPP
@@ -18,38 +18,36 @@ using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
 
-class DataFilterServerImpl final:
-    public dataStub::DataFilterManager::Service,
-    public IServerEventListener,
-    public std::enable_shared_from_this<DataFilterServerImpl> {
+class DataFilterServerImpl final : public dataStub::DataFilterManager::Service,
+                                   public IServerEventListener,
+                                   public std::enable_shared_from_this<DataFilterServerImpl> {
 
-public:
+ public:
     DataFilterServerImpl(std::shared_ptr<DataConnectionServerImpl> dcmServerImpl);
     ~DataFilterServerImpl();
 
-    grpc::Status InitService(ServerContext* context,
-        const dataStub::SlotInfo* request,
-        dataStub::GetServiceStatusReply* response) override;
+    grpc::Status InitService(ServerContext *context, const dataStub::SlotInfo *request,
+        dataStub::GetServiceStatusReply *response) override;
 
-    grpc::Status SetDataRestrictMode(ServerContext* context,
-        const dataStub::SetDataRestrictModeRequest* request,
-        dataStub::DefaultReply* response) override;
+    grpc::Status SetDataRestrictMode(ServerContext *context,
+        const dataStub::SetDataRestrictModeRequest *request,
+        dataStub::DefaultReply *response) override;
 
-    grpc::Status GetDataRestrictMode(ServerContext* context,
-        const dataStub::GetDataRestrictModeRequest* request,
-        dataStub::GetDataRestrictModeReply* response) override;
+    grpc::Status GetDataRestrictMode(ServerContext *context,
+        const dataStub::GetDataRestrictModeRequest *request,
+        dataStub::GetDataRestrictModeReply *response) override;
 
-    grpc::Status AddDataRestrictFilter(ServerContext* context,
-        const dataStub::AddDataRestrictFilterRequest* request,
-        dataStub::DefaultReply* response) override;
+    grpc::Status AddDataRestrictFilter(ServerContext *context,
+        const dataStub::AddDataRestrictFilterRequest *request,
+        dataStub::DefaultReply *response) override;
 
-    grpc::Status RemoveAllDataRestrictFilter(ServerContext* context,
-        const dataStub::RemoveDataRestrictFilterRequest* request,
-        dataStub::DefaultReply* response) override;
+    grpc::Status RemoveAllDataRestrictFilter(ServerContext *context,
+        const dataStub::RemoveDataRestrictFilterRequest *request,
+        dataStub::DefaultReply *response) override;
 
     void onServerEvent(google::protobuf::Any event) override;
 
-private:
+ private:
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     std::shared_ptr<DataConnectionServerImpl> dcmServerImpl_;
 
@@ -60,4 +58,4 @@ private:
     void sendDataRestrictModeEvent(int slot_id, std::string filterMode, std::string autoExitMode);
 };
 
-#endif //DATA_FILTER_SERVER_HPP
+#endif  // DATA_FILTER_SERVER_HPP

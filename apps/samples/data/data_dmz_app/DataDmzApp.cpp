@@ -26,10 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -76,10 +76,8 @@ class DMZEnabler : public std::enable_shared_from_this<DMZEnabler> {
         auto &dataFactory = telux::data::DataFactory::getInstance();
 
         /* Step - 2 */
-        dataFwMgr_ = dataFactory.getFirewallManager(operationType,
-                [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+        dataFwMgr_ = dataFactory.getFirewallManager(
+            operationType, [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!dataFwMgr_) {
             std::cout << "Can't get IFirewallManager" << std::endl;
@@ -89,8 +87,8 @@ class DMZEnabler : public std::enable_shared_from_this<DMZEnabler> {
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Firewall service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Firewall service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
@@ -101,14 +99,12 @@ class DMZEnabler : public std::enable_shared_from_this<DMZEnabler> {
     int enableDMZ(telux::data::net::DmzConfig config) {
         telux::common::Status status;
 
-        auto responseCb = std::bind(
-            &DMZEnabler::enableDMZResponseCb, this, std::placeholders::_1);
+        auto responseCb = std::bind(&DMZEnabler::enableDMZResponseCb, this, std::placeholders::_1);
 
         /* Step - 5 */
         status = dataFwMgr_->enableDmz(config, responseCb);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't enable DMZ, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't enable DMZ, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -119,14 +115,12 @@ class DMZEnabler : public std::enable_shared_from_this<DMZEnabler> {
     int disableDMZ(telux::data::BackhaulInfo bhInfo, telux::data::IpFamilyType ipType) {
         telux::common::Status status;
 
-        auto responseCb = std::bind(
-            &DMZEnabler::disableDMZResponseCb, this, std::placeholders::_1);
+        auto responseCb = std::bind(&DMZEnabler::disableDMZResponseCb, this, std::placeholders::_1);
 
         /* Step - 7 */
         status = dataFwMgr_->disableDmz(bhInfo, ipType, responseCb);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't disable DMZ, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't disable DMZ, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -139,8 +133,7 @@ class DMZEnabler : public std::enable_shared_from_this<DMZEnabler> {
     void enableDMZResponseCb(telux::common::ErrorCode error) {
         std::cout << "\nenableDMZResponseCb()" << std::endl;
         if (error != telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Failed to enable DMZ, err " <<
-                static_cast<int>(error) << std::endl;
+            std::cout << "Failed to enable DMZ, err " << static_cast<int>(error) << std::endl;
         }
         std::cout << "DMZ enabled" << std::endl;
     }
@@ -150,8 +143,7 @@ class DMZEnabler : public std::enable_shared_from_this<DMZEnabler> {
     void disableDMZResponseCb(telux::common::ErrorCode error) {
         std::cout << "\ndisableDMZResponseCb()" << std::endl;
         if (error != telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Failed to disable DMZ, err " <<
-                static_cast<int>(error) << std::endl;
+            std::cout << "Failed to disable DMZ, err " << static_cast<int>(error) << std::endl;
         }
         std::cout << "DMZ disabled" << std::endl;
     }
@@ -170,22 +162,21 @@ int main(int argc, char *argv[]) {
     telux::data::BackhaulInfo bhInfo = {};
 
     if (argc != 5) {
-        std::cout <<
-            "Usage: ./dmz_sample_app <operation-type> <slot-id> <profile-id> <ip-address>"
-            << std::endl;
+        std::cout << "Usage: ./dmz_sample_app <operation-type> <slot-id> <profile-id> <ip-address>"
+                  << std::endl;
         return -EINVAL;
     }
 
     /* Step - 4 */
-    operationType = static_cast<telux::data::OperationType>(std::atoi(argv[1]));
-    bhInfo.slotId = static_cast<SlotId>(std::atoi(argv[2]));
-    bhInfo.backhaul = telux::data::BackhaulType::WWAN;
+    operationType    = static_cast<telux::data::OperationType>(std::atoi(argv[1]));
+    bhInfo.slotId    = static_cast<SlotId>(std::atoi(argv[2]));
+    bhInfo.backhaul  = telux::data::BackhaulType::WWAN;
     bhInfo.profileId = std::atoi(argv[3]);
-    ipAddress = static_cast<std::string>(argv[4]);
+    ipAddress        = static_cast<std::string>(argv[4]);
 
     try {
         app = std::make_shared<DMZEnabler>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate DMZEnabler" << std::endl;
         return -ENOMEM;
     }
@@ -198,7 +189,7 @@ int main(int argc, char *argv[]) {
     telux::data::net::DmzConfig config;
     config.bhInfo = bhInfo;
     config.ipAddr = ipAddress;
-    ret = app->enableDMZ(config);
+    ret           = app->enableDMZ(config);
     if (ret < 0) {
         return ret;
     }

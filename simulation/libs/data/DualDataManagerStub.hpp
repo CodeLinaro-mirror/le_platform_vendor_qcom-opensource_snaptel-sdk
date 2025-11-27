@@ -1,10 +1,10 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
- #ifndef DUAL_DATA_MANAGER_STUB_HPP
- #define DUAL_DATA_MANAGER_STUB_HPP
+#ifndef DUAL_DATA_MANAGER_STUB_HPP
+#define DUAL_DATA_MANAGER_STUB_HPP
 
 #include <telux/data/DualDataManager.hpp>
 #include <telux/common/CommonDefines.hpp>
@@ -20,7 +20,7 @@ namespace data {
 class DualDataManagerStub : public IDualDataManager,
                             public telux::common::IEventListener,
                             public std::enable_shared_from_this<DualDataManagerStub> {
-public:
+ public:
     DualDataManagerStub();
     ~DualDataManagerStub();
 
@@ -39,8 +39,8 @@ public:
         DualDataUsageRecommendation &recommendation) override;
 
     // API to request DDS switch
-    telux::common::Status requestDdsSwitch(DdsInfo request,
-        telux::common::ResponseCallback callback = nullptr) override;
+    telux::common::Status requestDdsSwitch(
+        DdsInfo request, telux::common::ResponseCallback callback = nullptr) override;
 
     // API to request current DDS
     telux::common::Status requestCurrentDds(RequestCurrentDdsRespCb callback) override;
@@ -60,7 +60,7 @@ public:
     void handleRecommendationChangeEvent(
         ::dataStub::DualDataUsageRecommendationEvent recommendationEvent);
 
-private:
+ private:
     std::mutex mtx_;
     std::mutex initMtx_;
     telux::data::OperationType oprType_;
@@ -75,11 +75,11 @@ private:
     void setSubSystemStatus(telux::common::ServiceStatus status);
     void invokeInitCallback(telux::common::ServiceStatus status);
     void onServiceStatusChange(telux::common::ServiceStatus status);
-    void invokeCallback(telux::common::ResponseCallback callback,
-        telux::common::ErrorCode error, int cbDelay );
+    void invokeCallback(
+        telux::common::ResponseCallback callback, telux::common::ErrorCode error, int cbDelay);
 };
 
-} // end of namespace data
-} // end of namespace telux
+}  // end of namespace data
+}  // end of namespace telux
 
- #endif //DUAL_DATA_MANAGER_STUB_HPP
+#endif  // DUAL_DATA_MANAGER_STUB_HPP

@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef THERMCLIENT_HPP
 #define THERMCLIENT_HPP
 
@@ -37,8 +43,8 @@ using namespace telux::common;
 using namespace telux::therm;
 
 class ThermClient : public telux::therm::IThermalShutdownListener,
-                         public std::enable_shared_from_this<ThermClient> {
-public:
+                    public std::enable_shared_from_this<ThermClient> {
+ public:
     /**
      * Initialize Thermal subsystem
      */
@@ -71,7 +77,7 @@ public:
     ThermClient();
     ~ThermClient();
 
-private:
+ private:
     bool isShutdownAllowed();
     void setShutdownAllowedState(bool state);
     telux::common::Status sendAutoShutdownModeCommand(AutoShutdownMode state);
@@ -83,7 +89,6 @@ private:
     /** Member variable to hold Thermal manager object */
     std::shared_ptr<telux::therm::IThermalShutdownManager> thermShutdownMgr_;
     std::mutex mutex_;
-
 };
 
 #endif  // THERMCLIENT_HPP

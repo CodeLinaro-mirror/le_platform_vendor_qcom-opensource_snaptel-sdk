@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <iostream>
 #include <memory>
 #include <bitset>
@@ -47,18 +53,18 @@ void MyDataFilterListener::onDataRestrictModeChange(DataRestrictMode mode) {
 }
 
 void MyDataFilterListener::onServiceStatusChange(telux::common::ServiceStatus status) {
-   std::string stat;
+    std::string stat;
 
-   switch(status) {
-      case telux::common::ServiceStatus::SERVICE_AVAILABLE:
-         stat = " SERVICE_AVAILABLE";
-         break;
-      case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
-         stat =  " SERVICE_UNAVAILABLE";
-         break;
-      default:
-         stat = " Unknown service status";
-         break;
-   }
-   print_notification << " ** Data Filter onServiceStatusChange **\n" << stat << std::endl;
+    switch (status) {
+        case telux::common::ServiceStatus::SERVICE_AVAILABLE:
+            stat = " SERVICE_AVAILABLE";
+            break;
+        case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
+            stat = " SERVICE_UNAVAILABLE";
+            break;
+        default:
+            stat = " Unknown service status";
+            break;
+    }
+    print_notification << " ** Data Filter onServiceStatusChange **\n" << stat << std::endl;
 }

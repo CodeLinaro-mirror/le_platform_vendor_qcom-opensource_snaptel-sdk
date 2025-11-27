@@ -1,7 +1,8 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 #include <grpcpp/grpcpp.h>
 
 #include "Cv2xConfigStub.hpp"
@@ -27,7 +28,7 @@ void ConfigChangedListener::onEventUpdate(google::protobuf::Any event) {
 
         telux::cv2x::ConfigEventInfo config;
         config.source = static_cast<telux::cv2x::ConfigSourceType>(configEvt.source());
-        config.event = static_cast<telux::cv2x::ConfigEvent>(configEvt.event());
+        config.event  = static_cast<telux::cv2x::ConfigEvent>(configEvt.event());
         onConfigChanged(config);
     }
 }
@@ -56,9 +57,9 @@ void ConfigChangedListener::onConfigChanged(const ConfigEventInfo &info) {
 
 Cv2xConfigStub::Cv2xConfigStub() {
     LOG(DEBUG, __FUNCTION__);
-    exiting_ = false;
-    taskQ_   = std::make_shared<AsyncTaskQueue<void>>();
-    stub_    = CommonUtils::getGrpcStub<::cv2xStub::Cv2xConfigService>();
+    exiting_           = false;
+    taskQ_             = std::make_shared<AsyncTaskQueue<void>>();
+    stub_              = CommonUtils::getGrpcStub<::cv2xStub::Cv2xConfigService>();
     configEvtListener_ = std::make_shared<ConfigChangedListener>();
 }
 
@@ -68,10 +69,10 @@ Cv2xConfigStub::~Cv2xConfigStub() {
     cv_.notify_all();
 
     if (configEvtListener_) {
-       std::vector<std::string> filters = {CV2X_CONFIG_FILTER};
+        std::vector<std::string> filters = {CV2X_CONFIG_FILTER};
         auto &clientEventManager         = telux::common::ClientEventManager::getInstance();
         clientEventManager.deregisterListener(configEvtListener_, filters);
-     }
+    }
 }
 
 telux::common::Status Cv2xConfigStub::init(telux::common::InitResponseCb callback) {
@@ -91,10 +92,10 @@ void Cv2xConfigStub::initSync(telux::common::InitResponseCb callback) {
     int delay = DEFAULT_DELAY;
 
     if (configEvtListener_) {
-       std::vector<std::string> filters = {CV2X_CONFIG_FILTER};
+        std::vector<std::string> filters = {CV2X_CONFIG_FILTER};
         auto &clientEventManager         = telux::common::ClientEventManager::getInstance();
         clientEventManager.registerListener(configEvtListener_, filters);
-     }
+    }
 
     CALL_RPC(stub_->initService, request, status, response, delay);
     {

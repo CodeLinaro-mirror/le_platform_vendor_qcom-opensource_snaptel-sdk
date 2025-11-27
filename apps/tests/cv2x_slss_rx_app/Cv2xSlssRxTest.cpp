@@ -1,7 +1,5 @@
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -24,8 +22,8 @@
 
 #include "../../common/utils/Utils.hpp"
 
-using std::cout;
 using std::cerr;
+using std::cout;
 using std::endl;
 using std::map;
 using std::promise;
@@ -33,10 +31,10 @@ using std::string;
 using telux::common::ErrorCode;
 using telux::common::Status;
 using telux::cv2x::Cv2xFactory;
-using telux::cv2x::SlssRxInfo;
-using telux::cv2x::SlssSyncPattern;
 using telux::cv2x::ICv2xListener;
 using telux::cv2x::ICv2xRadioManager;
+using telux::cv2x::SlssRxInfo;
+using telux::cv2x::SlssSyncPattern;
 
 static int gTerminate = 0;
 static int gTerminatePipe[2];
@@ -44,15 +42,15 @@ static bool gListenMode = false;
 static promise<ErrorCode> gCallbackPromise;
 
 static map<SlssSyncPattern, string> gCv2xSlssPatternToString = {
-    { SlssSyncPattern::OFFSET_IND_1, "OFFSET_IND_1" },
-    { SlssSyncPattern::OFFSET_IND_2, "OFFSET_IND_2" },
-    { SlssSyncPattern::OFFSET_IND_3, "OFFSET_IND_3" },
-    { SlssSyncPattern::ODD_RESERVED, "ODD_RESERVED" },
-    { SlssSyncPattern::EVEN_RESERVED, "EVEN_RESERVED" },
-    { SlssSyncPattern::UNKNOWN, "UNKNOWN" },
+    {SlssSyncPattern::OFFSET_IND_1, "OFFSET_IND_1"},
+    {SlssSyncPattern::OFFSET_IND_2, "OFFSET_IND_2"},
+    {SlssSyncPattern::OFFSET_IND_3, "OFFSET_IND_3"},
+    {SlssSyncPattern::ODD_RESERVED, "ODD_RESERVED"},
+    {SlssSyncPattern::EVEN_RESERVED, "EVEN_RESERVED"},
+    {SlssSyncPattern::UNKNOWN, "UNKNOWN"},
 };
 
-static void printSlssRxInfo(const SlssRxInfo& info) {
+static void printSlssRxInfo(const SlssRxInfo &info) {
     cout << "Number of syncRefUE:" << info.ueInfo.size() << endl;
     for (auto i = 0u; i < info.ueInfo.size(); ++i) {
         cout << " UE[" << i << "]:" << endl;
@@ -65,14 +63,14 @@ static void printSlssRxInfo(const SlssRxInfo& info) {
 }
 
 class SlssListener : public ICv2xListener {
-public:
-    void onSlssRxInfoChanged(const SlssRxInfo& slssInfo) override {
+ public:
+    void onSlssRxInfoChanged(const SlssRxInfo &slssInfo) override {
         printSlssRxInfo(slssInfo);
     }
 };
 
 // Callback function for Cv2xRadioManager->getSlssRxInfo(Cv2xStatusEx)
-static void getSlssRxInfoCallback(const SlssRxInfo& info, ErrorCode error) {
+static void getSlssRxInfoCallback(const SlssRxInfo &info, ErrorCode error) {
     if (ErrorCode::SUCCESS == error) {
         printSlssRxInfo(info);
     }
@@ -91,30 +89,27 @@ static int parseOpts(int argc, char *argv[]) {
     int c;
     while ((c = getopt(argc, argv, "?hl")) != -1) {
         switch (c) {
-        case 'l':
-            gListenMode = true;
-            break;
-        case 'h':
-        case '?':
-        default:
-            rc = -1;
-            printUsage(argv[0]);
-            return rc;
+            case 'l':
+                gListenMode = true;
+                break;
+            case 'h':
+            case '?':
+            default:
+                rc = -1;
+                printUsage(argv[0]);
+                return rc;
         }
     }
 
     return rc;
 }
 
-
-static void terminationHandler(int signum)
-{
+static void terminationHandler(int signum) {
     gTerminate = 1;
     write(gTerminatePipe[1], &gTerminate, sizeof(int));
 }
 
-static void installSignalHandler()
-{
+static void installSignalHandler() {
     struct sigaction sig_action;
 
     sig_action.sa_handler = terminationHandler;
@@ -130,12 +125,12 @@ int main(int argc, char *argv[]) {
     cout << "Running CV2X SLSS Rx Info APP" << endl;
 
     std::vector<std::string> groups{"system", "diag", "radio", "logd", "dlt"};
-    if (-1 == Utils::setSupplementaryGroups(groups)){
+    if (-1 == Utils::setSupplementaryGroups(groups)) {
         cout << "Adding supplementary group failed!" << std::endl;
     }
 
     // Parse parameters, set V2X status type
-    if (parseOpts(argc, argv)){
+    if (parseOpts(argc, argv)) {
         return EXIT_FAILURE;
     }
 
@@ -152,19 +147,19 @@ int main(int argc, char *argv[]) {
     std::shared_ptr<ICv2xRadioManager> cv2xRadioManager;
     do {
         bool cv2xRadioManagerStatusUpdated = false;
-        telux::common::ServiceStatus cv2xRadioManagerStatus =
-            telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+        telux::common::ServiceStatus cv2xRadioManagerStatus
+            = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
         std::condition_variable cv;
         std::mutex mtx;
         auto statusCb = [&](telux::common::ServiceStatus status) {
             std::lock_guard<std::mutex> lock(mtx);
             cv2xRadioManagerStatusUpdated = true;
-            cv2xRadioManagerStatus = status;
+            cv2xRadioManagerStatus        = status;
             cv.notify_all();
         };
         // Get handle to Cv2xRadioManager
-        auto & cv2xFactory = Cv2xFactory::getInstance();
-        cv2xRadioManager = cv2xFactory.getCv2xRadioManager(statusCb);
+        auto &cv2xFactory = Cv2xFactory::getInstance();
+        cv2xRadioManager  = cv2xFactory.getCv2xRadioManager(statusCb);
         if (!cv2xRadioManager) {
             cout << "Error: failed to get Cv2xRadioManager." << endl;
             ret = EXIT_FAILURE;
@@ -172,8 +167,7 @@ int main(int argc, char *argv[]) {
         }
         std::unique_lock<std::mutex> lck(mtx);
         cv.wait(lck, [&] { return cv2xRadioManagerStatusUpdated; });
-        if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
-            cv2xRadioManagerStatus) {
+        if (telux::common::ServiceStatus::SERVICE_AVAILABLE != cv2xRadioManagerStatus) {
             cout << "Error: failed to initialize Cv2xRadioManager." << endl;
             ret = EXIT_FAILURE;
             break;
@@ -182,9 +176,9 @@ int main(int argc, char *argv[]) {
         if (gListenMode) {
             slssListener = std::make_shared<SlssListener>();
             if (Status::SUCCESS != cv2xRadioManager->registerListener(slssListener)) {
-                cerr << "Register CV2X SLSS Rx listener failed!"<< endl;
+                cerr << "Register CV2X SLSS Rx listener failed!" << endl;
                 slssListener = nullptr;
-                ret = EXIT_FAILURE;
+                ret          = EXIT_FAILURE;
                 break;
             }
         }
@@ -198,7 +192,7 @@ int main(int argc, char *argv[]) {
                 return EXIT_FAILURE;
             }
         }
-    } while(0);
+    } while (0);
 
     if (gListenMode) {
         if (EXIT_SUCCESS == ret) {
@@ -209,10 +203,9 @@ int main(int argc, char *argv[]) {
             cout << "Termination!" << endl;
         }
 
-        if (slssListener and
-            cv2xRadioManager and
-            Status::SUCCESS != cv2xRadioManager->deregisterListener(slssListener)) {
-            cerr << "Deregister CV2X SLSS Rx listener failed!"<< endl;
+        if (slssListener and cv2xRadioManager
+            and Status::SUCCESS != cv2xRadioManager->deregisterListener(slssListener)) {
+            cerr << "Deregister CV2X SLSS Rx listener failed!" << endl;
             ret = EXIT_FAILURE;
         }
 

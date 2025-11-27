@@ -26,6 +26,7 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
  * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
@@ -55,91 +56,92 @@
 using namespace telux::loc;
 
 class LocationMenu : public ConsoleApp {
-public:
-   /**
-    * Initialize commands and SDK
-    */
-   int init();
+ public:
+    /**
+     * Initialize commands and SDK
+     */
+    int init();
 
-   LocationMenu(std::string appName, std::string cursor);
+    LocationMenu(std::string appName, std::string cursor);
 
-   ~LocationMenu();
+    ~LocationMenu();
 
-   void registerListenerEx(std::vector<std::string> userInput);
-   void deRegisterListenerEx(std::vector<std::string> userInput);
-   void startDetailedReports(std::vector<std::string> userInput);
-   void startDetailedEngineReports(std::vector<std::string> userInput);
-   void startBasicReports(std::vector<std::string> userInput);
-   void stopReports(std::vector<std::string> userInput);
-   void registerLocationSystemInfo(std::vector<std::string> userInput);
-   void deRegisterLocationSystemInfo(std::vector<std::string> userInput);
-   void enableDisableTunc(std::vector<std::string> userInput);
-   void enableDisablePace(std::vector<std::string> userInput);
-   void provideConsentForTerrestrialPositioning(std::vector<std::string> userInput);
-   void deleteAllAidingData(std::vector<std::string> userInput);
-   void deleteAidingDataWarm(std::vector<std::string> userInput);
-   void configureLeverArm(std::vector<std::string> userInput);
-   void configureDR(std::vector<std::string> userInput);
-   void configureEngineState(std::vector<std::string> userInput);
-   void configureEngineIntegrityRisk(std::vector<std::string> userInput);
-   void configureConstellation(std::vector<std::string> userInput);
-   void configureConstellationEmpty(std::vector<std::string> userInput);
-   void configureConstellationDeviceDefault(std::vector<std::string> userInput);
-   void configureSecondaryBand(std::vector<std::string> userInput);
-   void enableDefaultSecondaryBand(std::vector<std::string> userInput);
-   void requestSecondaryBand(std::vector<std::string> userInput);
-   void configureRobustLocation(std::vector<std::string> userInput);
-   void requestRobustLocation(std::vector<std::string> userInput);
-   void requestEnergyConsumedInfo(std::vector<std::string> userInput);
-   void getYearOfHw(std::vector<std::string> userInput);
-   void getCapabilities(std::vector<std::string> userInput);
-   void requestTerrestrialPositioning(std::vector<std::string> userInput);
-   void cancelTerrestrialPositioning(std::vector<std::string> userInput);
-   void configureNmeaSentence(std::vector<std::string> userInput);
-   void configureAllNmeaSentence(std::vector<std::string> userInput);
-   void configureMinGpsWeek(std::vector<std::string> userInput);
-   void configureMinSVElevation(std::vector<std::string> userInput);
-   void requestMinGpsWeek(std::vector<std::string> userInput);
-   void requestMinSVElevation(std::vector<std::string> userInput);
-   void configureXtraParameters(std::vector<std::string> userInput);
-   void requestXtraStatus(std::vector<std::string> userInput);
-   void registerConfigListener(std::vector<std::string> userInput);
-   void deRegisterConfigListener(std::vector<std::string> userInput);
-   void injectMerkleTreeInformation(std::vector<std::string> userInput);
-   void configureOsnma(std::vector<std::string> userInput);
-   void provideConsentForXtra(std::vector<std::string> userInput);
-   int enableReportLogsUtility();
-   void enableReportLogs(std::vector<std::string> userInput);
-   void enableBasicLocationReportLogs();
-   void enableDetailedLocationReportLogs();
-   void enableDetailedEngineLocReportLogs();
-   void enableLocationSystemInfoLogs();
-   void enableSvInfoLogs();
-   void enableDataInfoLogs();
-   void enableNmeaInfoLogs();
-   void enableMeasurementsInfoLogs();
-   void enableDisasterCrisisInfoLogs();
-   void enableEphemerisInfoLogs();
-   void enableEngineNmeaInfoLogs();
-   void enableExtendedInfoLogs();
-   void dgnssInject(std::vector<std::string> userInput);
-   void bodyToSensorUtility(telux::loc::DREngineConfiguration& drConfig);
-   void speedScaleUtility(telux::loc::DREngineConfiguration& drConfig);
-   void gyroScaleUtility(telux::loc::DREngineConfiguration& drConfig);
-   telux::common::Status launchAsRecordingUtility(LocReqEngine engineType);
-   telux::common::Status launchAsNtnRecordingUtility();
-private:
-   telux::common::Status initLocationManager(std::shared_ptr<ILocationManager>
-        &locationManager, std::shared_ptr<MyLocationListener> &posListener);
-   telux::common::Status initLocationConfigurator(std::shared_ptr<ILocationConfigurator>
-        &locationConfigurator);
-   void populateXtraConfigParams(telux::loc::XtraConfig &configParams);
-   // Member variable to keep the Listener object alive till application ends.
-   std::shared_ptr<MyLocationListener> posListener_;
-   std::shared_ptr<MyLocationConfigListener> locConfigListener_;
-   std::shared_ptr<ILocationManager> locationManager_ = nullptr;
-   std::shared_ptr<ILocationConfigurator> locationConfigurator_ = nullptr;
-   std::shared_ptr<MyLocationCommandCallback> myLocCmdResponseCb_ = nullptr;
+    void registerListenerEx(std::vector<std::string> userInput);
+    void deRegisterListenerEx(std::vector<std::string> userInput);
+    void startDetailedReports(std::vector<std::string> userInput);
+    void startDetailedEngineReports(std::vector<std::string> userInput);
+    void startBasicReports(std::vector<std::string> userInput);
+    void stopReports(std::vector<std::string> userInput);
+    void registerLocationSystemInfo(std::vector<std::string> userInput);
+    void deRegisterLocationSystemInfo(std::vector<std::string> userInput);
+    void enableDisableTunc(std::vector<std::string> userInput);
+    void enableDisablePace(std::vector<std::string> userInput);
+    void provideConsentForTerrestrialPositioning(std::vector<std::string> userInput);
+    void deleteAllAidingData(std::vector<std::string> userInput);
+    void deleteAidingDataWarm(std::vector<std::string> userInput);
+    void configureLeverArm(std::vector<std::string> userInput);
+    void configureDR(std::vector<std::string> userInput);
+    void configureEngineState(std::vector<std::string> userInput);
+    void configureEngineIntegrityRisk(std::vector<std::string> userInput);
+    void configureConstellation(std::vector<std::string> userInput);
+    void configureConstellationEmpty(std::vector<std::string> userInput);
+    void configureConstellationDeviceDefault(std::vector<std::string> userInput);
+    void configureSecondaryBand(std::vector<std::string> userInput);
+    void enableDefaultSecondaryBand(std::vector<std::string> userInput);
+    void requestSecondaryBand(std::vector<std::string> userInput);
+    void configureRobustLocation(std::vector<std::string> userInput);
+    void requestRobustLocation(std::vector<std::string> userInput);
+    void requestEnergyConsumedInfo(std::vector<std::string> userInput);
+    void getYearOfHw(std::vector<std::string> userInput);
+    void getCapabilities(std::vector<std::string> userInput);
+    void requestTerrestrialPositioning(std::vector<std::string> userInput);
+    void cancelTerrestrialPositioning(std::vector<std::string> userInput);
+    void configureNmeaSentence(std::vector<std::string> userInput);
+    void configureAllNmeaSentence(std::vector<std::string> userInput);
+    void configureMinGpsWeek(std::vector<std::string> userInput);
+    void configureMinSVElevation(std::vector<std::string> userInput);
+    void requestMinGpsWeek(std::vector<std::string> userInput);
+    void requestMinSVElevation(std::vector<std::string> userInput);
+    void configureXtraParameters(std::vector<std::string> userInput);
+    void requestXtraStatus(std::vector<std::string> userInput);
+    void registerConfigListener(std::vector<std::string> userInput);
+    void deRegisterConfigListener(std::vector<std::string> userInput);
+    void injectMerkleTreeInformation(std::vector<std::string> userInput);
+    void configureOsnma(std::vector<std::string> userInput);
+    void provideConsentForXtra(std::vector<std::string> userInput);
+    int enableReportLogsUtility();
+    void enableReportLogs(std::vector<std::string> userInput);
+    void enableBasicLocationReportLogs();
+    void enableDetailedLocationReportLogs();
+    void enableDetailedEngineLocReportLogs();
+    void enableLocationSystemInfoLogs();
+    void enableSvInfoLogs();
+    void enableDataInfoLogs();
+    void enableNmeaInfoLogs();
+    void enableMeasurementsInfoLogs();
+    void enableDisasterCrisisInfoLogs();
+    void enableEphemerisInfoLogs();
+    void enableEngineNmeaInfoLogs();
+    void enableExtendedInfoLogs();
+    void dgnssInject(std::vector<std::string> userInput);
+    void bodyToSensorUtility(telux::loc::DREngineConfiguration &drConfig);
+    void speedScaleUtility(telux::loc::DREngineConfiguration &drConfig);
+    void gyroScaleUtility(telux::loc::DREngineConfiguration &drConfig);
+    telux::common::Status launchAsRecordingUtility(LocReqEngine engineType);
+    telux::common::Status launchAsNtnRecordingUtility();
+
+ private:
+    telux::common::Status initLocationManager(std::shared_ptr<ILocationManager> &locationManager,
+        std::shared_ptr<MyLocationListener> &posListener);
+    telux::common::Status initLocationConfigurator(
+        std::shared_ptr<ILocationConfigurator> &locationConfigurator);
+    void populateXtraConfigParams(telux::loc::XtraConfig &configParams);
+    // Member variable to keep the Listener object alive till application ends.
+    std::shared_ptr<MyLocationListener> posListener_;
+    std::shared_ptr<MyLocationConfigListener> locConfigListener_;
+    std::shared_ptr<ILocationManager> locationManager_             = nullptr;
+    std::shared_ptr<ILocationConfigurator> locationConfigurator_   = nullptr;
+    std::shared_ptr<MyLocationCommandCallback> myLocCmdResponseCb_ = nullptr;
 };
 
 #endif  // LOCATIONTESTAPP_HPP

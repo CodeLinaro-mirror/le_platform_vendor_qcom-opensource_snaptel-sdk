@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef MYPROFILELISTENER_HPP
 #define MYPROFILELISTENER_HPP
 
@@ -34,17 +40,18 @@
 #include <telux/data/DataProfileListener.hpp>
 
 class MyProfileListener : public telux::data::IDataProfileListener {
-public:
-   MyProfileListener(SlotId slotId);
-   void onServiceStatusChange(telux::common::ServiceStatus status) override;
-   void onProfileUpdate(int profileId, telux::data::TechPreference techPreference,
-                        telux::data::ProfileChangeEvent event) override;
-   std::string getProfileEventString(telux::data::ProfileChangeEvent event);
+ public:
+    MyProfileListener(SlotId slotId);
+    void onServiceStatusChange(telux::common::ServiceStatus status) override;
+    void onProfileUpdate(int profileId, telux::data::TechPreference techPreference,
+        telux::data::ProfileChangeEvent event) override;
+    std::string getProfileEventString(telux::data::ProfileChangeEvent event);
 
-   ~MyProfileListener() {
-   }
-private:
-   SlotId slotId_;
+    ~MyProfileListener() {
+    }
+
+ private:
+    SlotId slotId_;
 };
 
 #endif  // MYPROFILELISTENER_HPP

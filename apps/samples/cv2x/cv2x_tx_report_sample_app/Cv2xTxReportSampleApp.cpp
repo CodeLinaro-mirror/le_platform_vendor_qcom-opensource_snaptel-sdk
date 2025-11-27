@@ -28,9 +28,8 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2023,2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -54,26 +53,26 @@
 #include "Cv2xTxReportSampleApp.hpp"
 #include "../../../common/utils/Utils.hpp"
 
-using std::cout;
 using std::cerr;
-using std::endl;
-using std::promise;
-using std::string;
-using std::mutex;
-using std::make_shared;
-using std::shared_ptr;
-using std::lock_guard;
 using std::condition_variable;
+using std::cout;
+using std::endl;
+using std::lock_guard;
+using std::make_shared;
+using std::mutex;
+using std::promise;
+using std::shared_ptr;
+using std::string;
 
 using telux::common::ErrorCode;
-using telux::common::Status;
 using telux::common::ServiceStatus;
+using telux::common::Status;
 using telux::cv2x::Cv2xFactory;
 using telux::cv2x::Cv2xStatus;
 using telux::cv2x::Cv2xStatusType;
+using telux::cv2x::EventFlowInfo;
 using telux::cv2x::TrafficCategory;
 using telux::cv2x::TrafficIpType;
-using telux::cv2x::EventFlowInfo;
 using telux::cv2x::TxStatusReport;
 
 #define DEFAULT_PORT (5000)
@@ -82,8 +81,8 @@ using telux::cv2x::TxStatusReport;
 #define DEFAULT_SERVICE_ID (1)
 
 class Cv2xTxStatusReportListener : public ICv2xTxStatusReportListener {
-public:
-    void onTxStatusReport(const TxStatusReport & info) {
+ public:
+    void onTxStatusReport(const TxStatusReport &info) {
         cout << "Recv Tx report:";
         cout << "Ota:" << info.otaTiming;
         cout << ", rf0 status:" << static_cast<int>(info.rfInfo[0].status);
@@ -97,25 +96,25 @@ public:
 };
 
 Cv2xTxStatusReportApp::Cv2xTxStatusReportApp() {
-    cout << "Running CV2X Tx Report Sample App"<< endl;
+    cout << "Running CV2X Tx Report Sample App" << endl;
 }
 
 int Cv2xTxStatusReportApp::init() {
     bool cv2xRadioManagerStatusUpdated = false;
-    telux::common::ServiceStatus cv2xRadioManagerStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    telux::common::ServiceStatus cv2xRadioManagerStatus
+        = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
     std::condition_variable cv;
     std::mutex mtx;
     auto statusCb = [&](telux::common::ServiceStatus status) {
         std::lock_guard<std::mutex> lock(mtx);
         cv2xRadioManagerStatusUpdated = true;
-        cv2xRadioManagerStatus = status;
+        cv2xRadioManagerStatus        = status;
         cv.notify_all();
     };
 
     // get handle of cv2x radio manager and wait for readiness
-    auto & cv2xFactory = Cv2xFactory::getInstance();
-    auto radioMgr = cv2xFactory.getCv2xRadioManager(statusCb);
+    auto &cv2xFactory = Cv2xFactory::getInstance();
+    auto radioMgr     = cv2xFactory.getCv2xRadioManager(statusCb);
     if (!radioMgr) {
         cerr << "Failed to get Cv2xRadioManager." << endl;
         return EXIT_FAILURE;
@@ -124,8 +123,7 @@ int Cv2xTxStatusReportApp::init() {
     {
         std::unique_lock<std::mutex> lck(mtx);
         cv.wait(lck, [&] { return cv2xRadioManagerStatusUpdated; });
-        if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
-            cv2xRadioManagerStatus) {
+        if (telux::common::ServiceStatus::SERVICE_AVAILABLE != cv2xRadioManagerStatus) {
             cerr << "Cv2x Radio Manager initialization failed!" << endl;
             return EXIT_FAILURE;
         }
@@ -133,13 +131,13 @@ int Cv2xTxStatusReportApp::init() {
 
     // Get handle to Cv2xRadio
     bool cv2x_radio_status_updated = false;
-    telux::common::ServiceStatus cv2xRadioStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    telux::common::ServiceStatus cv2xRadioStatus
+        = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
 
     auto cb = [&](ServiceStatus status) {
         std::lock_guard<std::mutex> lock(mtx);
         cv2x_radio_status_updated = true;
-        cv2xRadioStatus = status;
+        cv2xRadioStatus           = status;
         cv.notify_all();
     };
 
@@ -162,10 +160,8 @@ int Cv2xTxStatusReportApp::init() {
 
     // get initial CV2X status
     promise<Cv2xStatus> prom;
-    auto res = radioMgr->requestCv2xStatus([&prom](Cv2xStatus status, ErrorCode code)
-                                                    {
-                                                        prom.set_value(status);
-                                                    });
+    auto res = radioMgr->requestCv2xStatus(
+        [&prom](Cv2xStatus status, ErrorCode code) { prom.set_value(status); });
     if (Status::SUCCESS != res) {
         cerr << "Request for Cv2x status failed!" << endl;
         return EXIT_FAILURE;
@@ -173,14 +169,13 @@ int Cv2xTxStatusReportApp::init() {
 
     // ensure cv2x active before running the test
     Cv2xStatus status = prom.get_future().get();
-    if (status.txStatus != Cv2xStatusType::ACTIVE and
-        status.rxStatus != Cv2xStatusType::ACTIVE) {
+    if (status.txStatus != Cv2xStatusType::ACTIVE and status.rxStatus != Cv2xStatusType::ACTIVE) {
         cerr << "CV2X Tx/Rx status not active!" << endl;
         return EXIT_FAILURE;
     }
 
     // alloc buffer for Tx pkt
-    buf_ = (char*)malloc(DEFAULT_LENGTH * sizeof(char));
+    buf_ = (char *)malloc(DEFAULT_LENGTH * sizeof(char));
     if (!buf_) {
         cerr << "Alloc Tx buffer failed!" << endl;
         return EXIT_FAILURE;
@@ -227,32 +222,28 @@ int Cv2xTxStatusReportApp::registerTxFlow(std::shared_ptr<ICv2xRadio> &radio) {
     cout << "Registering Tx event Flow" << endl;
 
     promise<ErrorCode> p;
-    shared_ptr<ICv2xTxFlow>txFlow = nullptr;
-    auto createTxEventFlowCallback = [&p, &txFlow](shared_ptr<ICv2xTxFlow> txEventFlow,
-                                        ErrorCode error) {
-        if (ErrorCode::SUCCESS == error) {
-            txFlow = txEventFlow;
-        }
-        p.set_value(error);
-    };
+    shared_ptr<ICv2xTxFlow> txFlow = nullptr;
+    auto createTxEventFlowCallback
+        = [&p, &txFlow](shared_ptr<ICv2xTxFlow> txEventFlow, ErrorCode error) {
+              if (ErrorCode::SUCCESS == error) {
+                  txFlow = txEventFlow;
+              }
+              p.set_value(error);
+          };
 
     EventFlowInfo flowInfo;
-    auto status = radio->createTxEventFlow(TrafficIpType::TRAFFIC_NON_IP,
-                                        DEFAULT_SERVICE_ID,
-                                        flowInfo,
-                                        DEFAULT_PORT,
-                                        createTxEventFlowCallback);
+    auto status = radio->createTxEventFlow(TrafficIpType::TRAFFIC_NON_IP, DEFAULT_SERVICE_ID,
+        flowInfo, DEFAULT_PORT, createTxEventFlowCallback);
 
-    if (Status::SUCCESS != status or
-        ErrorCode::SUCCESS != p.get_future().get()) {
+    if (Status::SUCCESS != status or ErrorCode::SUCCESS != p.get_future().get()) {
         cerr << "Failed to create Tx flow!" << endl;
         return EXIT_FAILURE;
     }
 
-    txFlow_ = txFlow;
+    txFlow_      = txFlow;
     txFlowValid_ = true;
     cout << "Succeeded in creating Tx Flow, create sock:" << txFlow_->getSock();
-    cout << " , port:"<< DEFAULT_PORT << endl;
+    cout << " , port:" << DEFAULT_PORT << endl;
     return EXIT_SUCCESS;
 }
 
@@ -262,13 +253,11 @@ int Cv2xTxStatusReportApp::deregisterTxFlow(std::shared_ptr<ICv2xRadio> &radio) 
         cout << "Deregistering Tx flow, close sock:" << txFlow_->getSock() << endl;
 
         promise<ErrorCode> p;
-        auto closeTxFlowCallback = [&p](shared_ptr<ICv2xTxFlow> txFlow, ErrorCode error) {
-            p.set_value(error);
-        };
+        auto closeTxFlowCallback
+            = [&p](shared_ptr<ICv2xTxFlow> txFlow, ErrorCode error) { p.set_value(error); };
 
         auto status = radio->closeTxFlow(txFlow_, closeTxFlowCallback);
-        if (Status::SUCCESS != status or
-            ErrorCode::SUCCESS != p.get_future().get()) {
+        if (Status::SUCCESS != status or ErrorCode::SUCCESS != p.get_future().get()) {
             cerr << "Failed to deregister Tx flow!" << endl;
             ret = EXIT_FAILURE;
         }
@@ -278,7 +267,7 @@ int Cv2xTxStatusReportApp::deregisterTxFlow(std::shared_ptr<ICv2xRadio> &radio) 
 }
 
 // Fills Tx buffer using same sequence as in acme
-int Cv2xTxStatusReportApp::fillTxBuffer(char* buf, uint16_t length) {
+int Cv2xTxStatusReportApp::fillTxBuffer(char *buf, uint16_t length) {
     if (!buf or length < 6) {
         cerr << "Invalid Tx Buffer!" << endl;
         return EXIT_FAILURE;
@@ -304,15 +293,15 @@ int Cv2xTxStatusReportApp::fillTxBuffer(char* buf, uint16_t length) {
 
     // Add timestamp if buffer size allowed
     uint64_t timestamp = Utils::getCurrentTimestamp();
-    char format[] = "<%llu> ";
-    uint16_t tmp = snprintf(nullptr, 0, format, timestamp);
+    char format[]      = "<%llu> ";
+    uint16_t tmp       = snprintf(nullptr, 0, format, timestamp);
     if (tmp + len <= length) {
-        len += snprintf(buf+len, tmp, format, timestamp);
+        len += snprintf(buf + len, tmp, format, timestamp);
     }
 
     // Fill non-dummy message length
     tmp = htons(len);
-    memcpy(buf+1, &tmp, sizeof(uint16_t));
+    memcpy(buf + 1, &tmp, sizeof(uint16_t));
 
     // Dummy payload
     for (int i = len; i < length; ++i) {
@@ -323,25 +312,25 @@ int Cv2xTxStatusReportApp::fillTxBuffer(char* buf, uint16_t length) {
 }
 
 // Function for transmitting data
- int Cv2xTxStatusReportApp::sampleTx(int sock, char* buf, uint16_t length) {
+int Cv2xTxStatusReportApp::sampleTx(int sock, char *buf, uint16_t length) {
     // Send data using sendmsg to provide IPV6_TCLASS per packet
-    struct msghdr message = { 0 };
-    struct iovec iov[1] = { 0 };
+    struct msghdr message  = {0};
+    struct iovec iov[1]    = {0};
     struct cmsghdr *cmsghp = NULL;
     char control[CMSG_SPACE(sizeof(int))];
-    iov[0].iov_base = buf;
-    iov[0].iov_len = length;
-    message.msg_iov = iov;
-    message.msg_iovlen = 1;
-    message.msg_control = control;
+    iov[0].iov_base        = buf;
+    iov[0].iov_len         = length;
+    message.msg_iov        = iov;
+    message.msg_iovlen     = 1;
+    message.msg_control    = control;
     message.msg_controllen = sizeof(control);
 
     // Fill ancillary data
-    int priority = 3;
-    cmsghp = CMSG_FIRSTHDR(&message);
+    int priority       = 3;
+    cmsghp             = CMSG_FIRSTHDR(&message);
     cmsghp->cmsg_level = IPPROTO_IPV6;
-    cmsghp->cmsg_type = IPV6_TCLASS;
-    cmsghp->cmsg_len = CMSG_LEN(sizeof(int));
+    cmsghp->cmsg_type  = IPV6_TCLASS;
+    cmsghp->cmsg_len   = CMSG_LEN(sizeof(int));
     memcpy(CMSG_DATA(cmsghp), &priority, sizeof(int));
 
     // Send data
@@ -368,26 +357,21 @@ void Cv2xTxStatusReportApp::startTxPkts() {
                 break;
             }
 
-            if (fillTxBuffer(buf_, DEFAULT_LENGTH) or
-                sampleTx(txFlow_->getSock(), buf_, DEFAULT_LENGTH)) {
+            if (fillTxBuffer(buf_, DEFAULT_LENGTH)
+                or sampleTx(txFlow_->getSock(), buf_, DEFAULT_LENGTH)) {
                 break;
             }
         }
 
-        usleep(DEFAULT_INTERVAL*1000);
+        usleep(DEFAULT_INTERVAL * 1000);
     }
 }
 
 int Cv2xTxStatusReportApp::createTxReportListener(std::shared_ptr<ICv2xRadio> &radio) {
     promise<ErrorCode> p;
     txReportListener_ = make_shared<Cv2xTxStatusReportListener>();
-    auto status = radio->registerTxStatusReportListener(
-        DEFAULT_PORT,
-        txReportListener_,
-        [&p](ErrorCode code)
-        {
-            p.set_value(code);
-        });
+    auto status       = radio->registerTxStatusReportListener(
+        DEFAULT_PORT, txReportListener_, [&p](ErrorCode code) { p.set_value(code); });
     if (Status::SUCCESS != status or ErrorCode::SUCCESS != p.get_future().get()) {
         cerr << "Register CV2X Tx status report listener failed!" << endl;
         return EXIT_FAILURE;
@@ -406,11 +390,7 @@ int Cv2xTxStatusReportApp::deleteTxReportListener(std::shared_ptr<ICv2xRadio> &r
     cout << "Stop listening to Tx Status Report" << endl;
     promise<ErrorCode> p;
     auto status = radio->deregisterTxStatusReportListener(
-        DEFAULT_PORT,
-        [&p](ErrorCode code)
-        {
-            p.set_value(code);
-        });
+        DEFAULT_PORT, [&p](ErrorCode code) { p.set_value(code); });
     if (Status::SUCCESS != status or ErrorCode::SUCCESS != p.get_future().get()) {
         cerr << "Deregister CV2X Tx status report listener failed!" << endl;
         return EXIT_FAILURE;
@@ -420,7 +400,7 @@ int Cv2xTxStatusReportApp::deleteTxReportListener(std::shared_ptr<ICv2xRadio> &r
     return EXIT_SUCCESS;
 }
 
-Cv2xTxStatusReportApp & Cv2xTxStatusReportApp::getInstance() {
+Cv2xTxStatusReportApp &Cv2xTxStatusReportApp::getInstance() {
     static Cv2xTxStatusReportApp instance;
     return instance;
 }
@@ -432,12 +412,12 @@ static void signalHandler(int signum) {
 
 int main(int argc, char *argv[]) {
     std::vector<std::string> groups{"system", "diag", "radio", "logd"};
-    if (-1 == Utils::setSupplementaryGroups(groups)){
+    if (-1 == Utils::setSupplementaryGroups(groups)) {
         cout << "Adding supplementary group failed!" << std::endl;
     }
 
-    auto & app = Cv2xTxStatusReportApp::getInstance();
-    if (EXIT_SUCCESS != app.init()){
+    auto &app = Cv2xTxStatusReportApp::getInstance();
+    if (EXIT_SUCCESS != app.init()) {
         cout << "Error: Initialization failed!" << endl;
         return EXIT_FAILURE;
     }

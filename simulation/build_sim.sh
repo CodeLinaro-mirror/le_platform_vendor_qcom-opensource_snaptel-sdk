@@ -1,5 +1,5 @@
-#Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
-#SPDX-License-Identifier: BSD-3-Clause-Clear
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
 
 #!/bin/bash
 # Additional checks to see if we are in the right directory to be done

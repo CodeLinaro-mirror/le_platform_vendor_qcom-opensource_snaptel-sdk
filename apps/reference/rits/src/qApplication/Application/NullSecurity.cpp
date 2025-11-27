@@ -27,16 +27,23 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- /**
-  * @file: NullSecurity.cpp
-  *
-  * @brief: A dummy security implementation, just to get code to compile without
-  * the need of Aerolink library.
-  */
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+/**
+ * @file: NullSecurity.cpp
+ *
+ * @brief: A dummy security implementation, just to get code to compile without
+ * the need of Aerolink library.
+ */
 #include "NullSecurity.hpp"
 
-NullSecurity::NullSecurity(std::string ctxName, uint16_t countryCode):
-    SecurityService(ctxName, countryCode) {}
+NullSecurity::NullSecurity(std::string ctxName, uint16_t countryCode)
+   : SecurityService(ctxName, countryCode) {
+}
 
 NullSecurity *NullSecurity::pInstance = nullptr;
 

@@ -27,8 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -121,7 +122,7 @@ std::shared_ptr<ISensorFeatureManager> SensorFactoryStub::getSensorFeatureManage
             // thread
             LOG(DEBUG,
                 "Sensor feature manager is available, notifying initCb with SERVICE_AVAILABLE");
-              if (clientCallback) {
+            if (clientCallback) {
                 std::thread appCallbackThread([clientCallback] {
                     clientCallback(telux::common::ServiceStatus::SERVICE_AVAILABLE);
                 });
@@ -133,7 +134,7 @@ std::shared_ptr<ISensorFeatureManager> SensorFactoryStub::getSensorFeatureManage
             // callback via initCompleteNotifier()
             sfmInitCallbacks_.push_back(clientCallback);
         }
-      }
+    }
     sensorFeatureManager_ = sensorFeatureManager;
     return sensorFeatureManager;
 }
@@ -150,15 +151,15 @@ std::shared_ptr<ISensorManager> SensorFactoryStub::getSensorManager(
         return manager;
     };
     auto type = std::string("Sensor manager");
-    LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str(),
-        " , callback = ", &smInitCallbacks_);
-    auto manager = getManager<telux::sensor::ISensorManager>(type, sensorManager_,
-        smInitCallbacks_, callback, createAndInit);
+    LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str(), " , callback = ", &smInitCallbacks_);
+    auto manager = getManager<telux::sensor::ISensorManager>(
+        type, sensorManager_, smInitCallbacks_, callback, createAndInit);
     return manager;
 }
 
-void SensorFactoryStub::initCompleteNotifier(std::vector<telux::common::InitResponseCb>
-    &initCallbacks_,telux::common::ServiceStatus status){
+void SensorFactoryStub::initCompleteNotifier(
+    std::vector<telux::common::InitResponseCb> &initCallbacks_,
+    telux::common::ServiceStatus status) {
     LOG(INFO, "Notifying sensor initialization status: ", static_cast<int>(status));
     std::vector<telux::common::InitResponseCb> callbacks;
     {
@@ -167,9 +168,8 @@ void SensorFactoryStub::initCompleteNotifier(std::vector<telux::common::InitResp
         initCallbacks_.clear();
     }
     for (auto &callback : callbacks) {
-          callback(status);
+        callback(status);
     }
 }
-}
-}
-
+}  // namespace sensor
+}  // namespace telux

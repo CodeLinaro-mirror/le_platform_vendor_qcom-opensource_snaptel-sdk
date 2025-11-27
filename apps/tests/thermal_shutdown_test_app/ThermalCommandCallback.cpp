@@ -26,9 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -40,21 +41,21 @@
 #define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
 
 ThermalCommandCallback::ThermalCommandCallback(std::string cmdName) {
-   commandName_ = cmdName;
+    commandName_ = cmdName;
 }
 
 void ThermalCommandCallback::commandResponse(telux::common::ErrorCode error) {
-   std::cout << std::endl << std::endl;
-   if(error == telux::common::ErrorCode::SUCCESS) {
-      PRINT_CB << commandName_ << " command sent successfully" << std::endl;
-      respStatusProm_.set_value(true);
-      std::cout << " Notifying callback response - true " << std::endl;
-   } else {
-      PRINT_CB << commandName_ << " command failed\n errorCode: " << static_cast<int>(error)
-               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
-      respStatusProm_.set_value(false);
-      std::cout << " Notifying callback response - false " << std::endl;
-   }
+    std::cout << std::endl << std::endl;
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        PRINT_CB << commandName_ << " command sent successfully" << std::endl;
+        respStatusProm_.set_value(true);
+        std::cout << " Notifying callback response - true " << std::endl;
+    } else {
+        PRINT_CB << commandName_ << " command failed\n errorCode: " << static_cast<int>(error)
+                 << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        respStatusProm_.set_value(false);
+        std::cout << " Notifying callback response - false " << std::endl;
+    }
 }
 
 std::future<bool> ThermalCommandCallback::commandResponseStatus() {
@@ -63,18 +64,17 @@ std::future<bool> ThermalCommandCallback::commandResponseStatus() {
 
 void ThermalCommandCallback::getCmdResponse(AutoShutdownMode state) {
 
-    if(state == AutoShutdownMode::ENABLE) {
-        PRINT_CB << commandName_<< " Current auto shutdown mode is Enable" << std::endl;
-    } else if(state == AutoShutdownMode::DISABLE) {
-        PRINT_CB << commandName_ <<" Current auto shutdown mode is Disable" << std::endl;
+    if (state == AutoShutdownMode::ENABLE) {
+        PRINT_CB << commandName_ << " Current auto shutdown mode is Enable" << std::endl;
+    } else if (state == AutoShutdownMode::DISABLE) {
+        PRINT_CB << commandName_ << " Current auto shutdown mode is Disable" << std::endl;
     } else {
-        PRINT_CB << commandName_ <<
-           " Current auto shutdown mode is Unknown  " << std::endl;
+        PRINT_CB << commandName_ << " Current auto shutdown mode is Unknown  " << std::endl;
     }
     prom_.set_value(true);
 }
 
-std::future<bool> ThermalCommandCallback::getPromValue(){
+std::future<bool> ThermalCommandCallback::getPromValue() {
 
-  return prom_.get_future();
+    return prom_.get_future();
 }

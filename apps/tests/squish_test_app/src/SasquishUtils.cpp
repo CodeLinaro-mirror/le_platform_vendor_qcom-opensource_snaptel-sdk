@@ -6,77 +6,79 @@
 #include "SasquishUtils.hpp"
 
 bool SasquishUtils::sasquishVerbose = false;
-SasquishInputHandler::SasquishInputHandler(){}
-SasquishInputHandler::SasquishInputHandler(std::string fileName){
+SasquishInputHandler::SasquishInputHandler() {
+}
+SasquishInputHandler::SasquishInputHandler(std::string fileName) {
     openFile(fileName);
 }
-SasquishInputHandler::~SasquishInputHandler(){
+SasquishInputHandler::~SasquishInputHandler() {
     closeFile();
 }
-bool SasquishInputHandler::openFile(std::string fileName){
+bool SasquishInputHandler::openFile(std::string fileName) {
     // make sure path is valid
     // attempt to open but close first
     closeFile();
     logFile.open(fileName);
     return true;
 }
-bool SasquishInputHandler::clearFile(std::string fileName){
-    if(!logFile.is_open()){
+bool SasquishInputHandler::clearFile(std::string fileName) {
+    if (!logFile.is_open()) {
         return false;
     }
     return true;
 }
 
-bool SasquishInputHandler::closeFile(){
-    if(!logFile.is_open()){
+bool SasquishInputHandler::closeFile() {
+    if (!logFile.is_open()) {
         return false;
     }
     logFile.close();
     return true;
 }
 
-bool SasquishInputHandler::readLineFromFile(std::string& line){
-    if(!logFile.is_open()){
+bool SasquishInputHandler::readLineFromFile(std::string &line) {
+    if (!logFile.is_open()) {
         return false;
     }
     // read a line from filename into the provided string
-    if(std::getline(logFile, line)){
+    if (std::getline(logFile, line)) {
         return true;
     }
     return false;
 }
 
-SasquishOutputHandler::SasquishOutputHandler(){}
-SasquishOutputHandler::SasquishOutputHandler(std::string fileName){
+SasquishOutputHandler::SasquishOutputHandler() {
+}
+SasquishOutputHandler::SasquishOutputHandler(std::string fileName) {
     openFile(fileName);
 }
-SasquishOutputHandler::~SasquishOutputHandler(){
+SasquishOutputHandler::~SasquishOutputHandler() {
     closeFile();
 }
-bool SasquishOutputHandler::openFile(std::string fileName){
+bool SasquishOutputHandler::openFile(std::string fileName) {
     // make sure path is valid
     // attempt to open but close first
     closeFile();
     logFile.open(fileName);
     return true;
 }
-bool SasquishOutputHandler::clearFile(std::string fileName){
-    if(!logFile.is_open()){
+bool SasquishOutputHandler::clearFile(std::string fileName) {
+    if (!logFile.is_open()) {
         return false;
     }
     return true;
 }
 
-bool SasquishOutputHandler::closeFile(){
-    if(!logFile.is_open()){
+bool SasquishOutputHandler::closeFile() {
+    if (!logFile.is_open()) {
         return true;
     }
     logFile.close();
     return true;
 }
 
-bool SasquishOutputHandler::writeLineToFile(std::string line){
-    if(!logFile.is_open()){
+bool SasquishOutputHandler::writeLineToFile(std::string line) {
+    if (!logFile.is_open()) {
         return false;
     }
     // may need some boundary check for the line
@@ -90,18 +92,17 @@ bool SasquishOutputHandler::writeLineToFile(std::string line){
  * Logging functionality (debug purposes) as well.
  */
 
-void SasquishUtils::setSasquishVerbose(bool verbose){
+void SasquishUtils::setSasquishVerbose(bool verbose) {
     sasquishVerbose = verbose;
 }
 
-bool SasquishUtils::getSasquishVerbose(){
+bool SasquishUtils::getSasquishVerbose() {
     return sasquishVerbose;
 }
 
 uint16_t SasquishUtils::delimiterPos(string line, vector<string> delimiters) {
-    uint16_t pos = MAX_DELIMIT_VALUE; //Largest possible value of 16 bits.
-    for (long unsigned int i = 0; i < delimiters.size(); i++)
-    {
+    uint16_t pos = MAX_DELIMIT_VALUE;  // Largest possible value of 16 bits.
+    for (long unsigned int i = 0; i < delimiters.size(); i++) {
         uint16_t delimiterPos = line.find(delimiters[i]);
         if (pos > delimiterPos) {
             pos = delimiterPos;
@@ -148,14 +149,14 @@ uint64_t SasquishUtils::getTimeStampMs() {
 }
 
 int SasquishUtils::setTimerFd(int timerfd, long long interval_ns) {
-    struct itimerspec its = { 0 };
+    struct itimerspec its = {0};
     if (timerfd < 0) {
         std::cerr << "Bad timer file descriptor\n";
         return -1;
     }
-    its.it_value.tv_sec = interval_ns / 1000000000LL;
+    its.it_value.tv_sec  = interval_ns / 1000000000LL;
     its.it_value.tv_nsec = interval_ns % 1000000000LL;
-    its.it_interval = its.it_value;
+    its.it_interval      = its.it_value;
     if (timerfd_settime(timerfd, 0, &its, NULL) < 0) {
         std::cerr << "Error setting time\n";
         close(timerfd);
@@ -167,24 +168,23 @@ int SasquishUtils::setTimerFd(int timerfd, long long interval_ns) {
 /*
  * Creates and returns a timer
  */
-int SasquishUtils::createTimer(long long interval_ns){
+int SasquishUtils::createTimer(long long interval_ns) {
     int timerfd;
     timerfd = timerfd_create(CLOCK_MONOTONIC, 0);
     setTimerFd(timerfd, interval_ns);
     return timerfd;
 }
 
-std::string SasquishUtils::getCurrentTimestampStr()
-{
+std::string SasquishUtils::getCurrentTimestampStr() {
     using std::chrono::system_clock;
-    auto currentTime = std::chrono::system_clock::now();
+    auto currentTime                       = std::chrono::system_clock::now();
     char buffer[MAX_TIMESTAMP_BUFFER_SIZE] = {0};
-    auto sinceEpoch = currentTime.time_since_epoch().count() / 1000000;
-    auto millis = sinceEpoch % 1000;
-    std::time_t tt = system_clock::to_time_t ( currentTime );
-    auto timeinfo = localtime (&tt);
+    auto sinceEpoch                        = currentTime.time_since_epoch().count() / 1000000;
+    auto millis                            = sinceEpoch % 1000;
+    std::time_t tt                         = system_clock::to_time_t(currentTime);
+    auto timeinfo                          = localtime(&tt);
     if (timeinfo) {
-        int ret = strftime(buffer, MAX_TIMESTAMP_BUFFER_SIZE, "%F-%H:%M:%S.",timeinfo);
+        int ret = strftime(buffer, MAX_TIMESTAMP_BUFFER_SIZE, "%F-%H:%M:%S.", timeinfo);
         if (0 == ret) {
             return "";
         }

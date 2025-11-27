@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef MYCELLINFOHANDLER_HPP
 #define MYCELLINFOHANDLER_HPP
 
@@ -37,11 +43,12 @@
 #include <telux/tel/Phone.hpp>
 
 class MyCellInfoCallback {
-public:
-   static void cellInfoListResponse(std::vector<std::shared_ptr<telux::tel::CellInfo>> cellInfoList,
-                                    telux::common::ErrorCode error);
-   static void cellInfoListRateResponse(telux::common::ErrorCode error);
-   static std::string signalLevelToString(telux::tel::SignalStrengthLevel level);
+ public:
+    static void cellInfoListResponse(
+        std::vector<std::shared_ptr<telux::tel::CellInfo>> cellInfoList,
+        telux::common::ErrorCode error);
+    static void cellInfoListRateResponse(telux::common::ErrorCode error);
+    static std::string signalLevelToString(telux::tel::SignalStrengthLevel level);
 };
 
 #endif  // MYCELLINFOHANDLER_HPP

@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef CV2XRXAPP_HPP
 #define CV2XRXAPP_HPP
 
@@ -35,12 +41,11 @@
 #include <telux/cv2x/Cv2xUtil.hpp>
 
 using telux::cv2x::ICv2xRadio;
-using telux::cv2x::ICv2xTxFlow;
 using telux::cv2x::ICv2xRxSubscription;
+using telux::cv2x::ICv2xTxFlow;
 
 class Cv2xRxApp {
-public:
-
+ public:
     int init();
 
     void deinit();
@@ -51,12 +56,11 @@ public:
 
     void deregisterFlow();
 
-    int sampleRx(int& len);
+    int sampleRx(int &len);
 
     int sampleTx(int len);
 
-private:
-
+ private:
     // RX mode types supported for CV2X non-IP traiffc
     // WILDCARD: Receive all packets on a single port, no SID filtering.
     //           Register Rx flow with none specific SIDs.
@@ -81,19 +85,19 @@ private:
     static constexpr uint16_t RX_PORT_NUM = 9000u;
 
     void printUsage();
-    int parseSidList(char* param);
+    int parseSidList(char *param);
     int registerTxFlow();
     int registerRxFlow();
     int deregisterTxFlow();
     int deregisterRxFlow();
 
-    std::shared_ptr<ICv2xRadio> cv2xRadio_ = nullptr;
-    std::shared_ptr<ICv2xTxFlow> txFlow_ = nullptr;
+    std::shared_ptr<ICv2xRadio> cv2xRadio_       = nullptr;
+    std::shared_ptr<ICv2xTxFlow> txFlow_         = nullptr;
     std::shared_ptr<ICv2xRxSubscription> rxFlow_ = nullptr;
-    RxModeType rxMode_ = RxModeType::WILDCARD;
-    uint16_t port_ = RX_PORT_NUM;
+    RxModeType rxMode_                           = RxModeType::WILDCARD;
+    uint16_t port_                               = RX_PORT_NUM;
     std::vector<uint32_t> idVector_;
-    char* buf_ = nullptr;
+    char *buf_        = nullptr;
     uint32_t rxCount_ = 0;
     uint32_t txCount_ = 0;
 };

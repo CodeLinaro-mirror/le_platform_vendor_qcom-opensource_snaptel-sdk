@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_AdverseWeatherCondition_PrecipitationSubCauseCode_H_
-#define	_AdverseWeatherCondition_PrecipitationSubCauseCode_H_
-
+#ifndef _AdverseWeatherCondition_PrecipitationSubCauseCode_H_
+#define _AdverseWeatherCondition_PrecipitationSubCauseCode_H_
 
 #include <asn_application.h>
 
@@ -20,14 +19,14 @@ extern "C" {
 
 /* Dependencies */
 typedef enum AdverseWeatherCondition_PrecipitationSubCauseCode {
-	AdverseWeatherCondition_PrecipitationSubCauseCode_unavailable	= 0,
-	AdverseWeatherCondition_PrecipitationSubCauseCode_heavyRain	= 1,
-	AdverseWeatherCondition_PrecipitationSubCauseCode_heavySnowfall	= 2,
-	AdverseWeatherCondition_PrecipitationSubCauseCode_softHail	= 3
+    AdverseWeatherCondition_PrecipitationSubCauseCode_unavailable   = 0,
+    AdverseWeatherCondition_PrecipitationSubCauseCode_heavyRain     = 1,
+    AdverseWeatherCondition_PrecipitationSubCauseCode_heavySnowfall = 2,
+    AdverseWeatherCondition_PrecipitationSubCauseCode_softHail      = 3
 } e_AdverseWeatherCondition_PrecipitationSubCauseCode;
 
 /* AdverseWeatherCondition-PrecipitationSubCauseCode */
-typedef long	 AdverseWeatherCondition_PrecipitationSubCauseCode_t;
+typedef long AdverseWeatherCondition_PrecipitationSubCauseCode_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_AdverseWeatherCondition_PrecipitationSubCauseCode;
@@ -45,5 +44,5 @@ per_type_encoder_f AdverseWeatherCondition_PrecipitationSubCauseCode_encode_uper
 }
 #endif
 
-#endif	/* _AdverseWeatherCondition_PrecipitationSubCauseCode_H_ */
+#endif /* _AdverseWeatherCondition_PrecipitationSubCauseCode_H_ */
 #include <asn_internal.h>

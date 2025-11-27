@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_CoopAwareness_H_
-#define	_CoopAwareness_H_
-
+#ifndef _CoopAwareness_H_
+#define _CoopAwareness_H_
 
 #include <asn_application.h>
 
@@ -22,11 +21,11 @@ extern "C" {
 
 /* CoopAwareness */
 typedef struct CoopAwareness {
-	GenerationDeltaTime_t	 generationDeltaTime;
-	CamParameters_t	 camParameters;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    GenerationDeltaTime_t generationDeltaTime;
+    CamParameters_t camParameters;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } CoopAwareness_t;
 
 /* Implementation */
@@ -36,5 +35,5 @@ extern asn_TYPE_descriptor_t asn_DEF_CoopAwareness;
 }
 #endif
 
-#endif	/* _CoopAwareness_H_ */
+#endif /* _CoopAwareness_H_ */
 #include <asn_internal.h>

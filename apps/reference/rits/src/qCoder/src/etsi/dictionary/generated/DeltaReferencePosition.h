@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_DeltaReferencePosition_H_
-#define	_DeltaReferencePosition_H_
-
+#ifndef _DeltaReferencePosition_H_
+#define _DeltaReferencePosition_H_
 
 #include <asn_application.h>
 
@@ -23,12 +22,12 @@ extern "C" {
 
 /* DeltaReferencePosition */
 typedef struct DeltaReferencePosition {
-	DeltaLatitude_t	 deltaLatitude;
-	DeltaLongitude_t	 deltaLongitude;
-	DeltaAltitude_t	 deltaAltitude;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    DeltaLatitude_t deltaLatitude;
+    DeltaLongitude_t deltaLongitude;
+    DeltaAltitude_t deltaAltitude;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } DeltaReferencePosition_t;
 
 /* Implementation */
@@ -38,5 +37,5 @@ extern asn_TYPE_descriptor_t asn_DEF_DeltaReferencePosition;
 }
 #endif
 
-#endif	/* _DeltaReferencePosition_H_ */
+#endif /* _DeltaReferencePosition_H_ */
 #include <asn_internal.h>

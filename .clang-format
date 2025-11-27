@@ -1,0 +1,196 @@
+##############################################################################
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+##############################################################################
+
+##############################################################################
+#  File:          .clang-format
+#  Description:   This is the configuration file to format the C++ code
+#  Version:       clang-format version 3.8.0
+#  Reference:     https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+##############################################################################
+
+---
+## Language, this format style is targeted at.
+#  Cpp => Should be used for C, C++, ObjectiveC, ObjectiveC++.
+Language: Cpp
+
+# If true, format braced lists as best suited for C++11 braced lists.
+Cpp11BracedListStyle: true
+
+## Indentation related configs
+# The extra indent or outdent of access modifiers, e.g. public:.
+AccessModifierOffset: -3
+
+# Don’t align, instead use ContinuationIndentWidth
+AlignAfterOpenBracket: DontAlign
+
+# Short case labels will not be contracted to a single line
+AllowShortCaseLabelsOnASingleLine: false
+
+# It will attempt to re-flow comments
+ReflowComments: true
+
+# The number of characters to use for indentation of constructor initializer lists.
+ConstructorInitializerIndentWidth: 3
+
+# Indent case labels one level from the switch statement.
+IndentCaseLabels: true
+
+# The indentation used for namespaces.
+NamespaceIndentation: None
+
+# The number of columns to use for indentation.
+IndentWidth: 4
+
+# Indent width for line continuations.
+ContinuationIndentWidth: 4
+
+# If true, indent when breaking function declarations which are not also definitions after the
+# type.
+IndentFunctionDeclarationAfterType: true
+
+## Align & Break configs
+# If true, aligns escaped newlines as far left as possible. Otherwise puts them into the right-most column.
+AlignEscapedNewlinesLeft: true
+
+# If true, aligns trailing comments.
+AlignTrailingComments: false
+
+# if true, Allow short enums on a single line.
+AllowShortEnumsOnASingleLine: false
+
+# Style of aligning consecutive assignments
+AlignConsecutiveAssignments: true
+
+# If true, always break after the template<...> of a template declaration.
+AlwaysBreakTemplateDeclarations: true
+
+# If true, ternary operators will be placed after line breaks.
+BreakBeforeTernaryOperators: true
+
+# Always break constructor initializers before commas and align the commas with the colon.
+# NOTE: we would like to use AfterColon but it is not working with our version clang-format-3.8
+BreakConstructorInitializersBeforeComma: true
+
+# The penalty for breaking a function call after "call(".
+PenaltyBreakBeforeFirstCallParameter: 1
+
+# The penalty for each line break introduced inside a comment.
+PenaltyBreakComment: 100
+
+# The penalty for each line break introduced inside a string literal.
+PenaltyBreakString: 100
+
+# The penalty for breaking before the first <<.
+PenaltyBreakFirstLessLess: 0
+
+# The penalty for each character outside of the column limit.
+PenaltyExcessCharacter: 100
+
+# Penalty for putting the return type of a function onto its own line.
+PenaltyReturnTypeOnItsOwnLine: 100
+
+# The way to wrap binary operators.
+#  None => Break after operators
+#  NonAssignment => Break before operators that are not assignments.
+#  All => Break before operators.
+BreakBeforeBinaryOperators: All
+
+# The brace breaking style to use.
+#  Attach => Always attach braces to surrounding context.
+#  other options are Linux, Mozilla, Stroustrup, Allman, GNU, WebKit, Custom
+BreakBeforeBraces: Attach
+
+## Space related configs
+# Add a space in front of an Objective-C protocol list, i.e. use Foo <Protocol> instead of Foo<Protocol>.
+ObjCSpaceBeforeProtocolList: false
+
+# The number of spaces before trailing line comments (// - comments).
+SpacesBeforeTrailingComments: 2
+
+# If true, spaces will be inserted after every '(' and before every ')'.
+SpacesInParentheses: false
+
+# If true, spaces will be inserted after '<' and before '>' in template argument lists
+SpacesInAngles:  false
+
+# If true, spaces may be inserted into '()'.
+SpaceInEmptyParentheses: false
+
+# If true, spaces may be inserted into C style casts.
+SpacesInCStyleCastParentheses: false
+
+# spaces will be inserted before '('., possible values Never, ControlStatements, Always
+SpaceBeforeParens: ControlStatements
+
+# If false, spaces will be removed before assignment operators.
+SpaceBeforeAssignmentOperators: true
+
+## Shorting Line configs
+# Allows contracting simple braced statements to a single line.
+AllowShortBlocksOnASingleLine: false
+
+# If true, if (a) return; can be put on a single line.
+AllowShortIfStatementsOnASingleLine: false
+
+# If true, if (a) return; can be put on a single line.
+AllowShortLoopsOnASingleLine: false
+
+# Avoid single line for shorter functions
+AllowShortFunctionsOnASingleLine: false
+
+# If true, always break before multiline string literals.
+AlwaysBreakBeforeMultilineStrings: false
+
+# Allow putting all parameters of a function declaration onto the next line even if
+# BinPackParameters is false.
+AllowAllParametersOfDeclarationOnNextLine: false
+
+# The column limit.
+ColumnLimit:     100
+
+# If the constructor initializers don't fit on a line, put each initializer on its own line.
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+
+# The maximum number of consecutive empty lines to keep.
+MaxEmptyLinesToKeep: 1
+
+# If true, format braced lists as best suited for C++11 braced lists.
+Cpp11BracedListStyle: true
+
+# Format compatible with this standard, e.g. use A<A<int> > instead of A<A<int>> for LS_Cpp03.
+# Auto => Automatic detection based on the input.
+Standard: Cpp11
+
+# The number of columns used for tab stops.
+TabWidth: 3
+
+# The way to use tab characters in the resulting file.
+UseTab: Never
+
+## Pointer related rules
+# If true, analyze the formatted file for the most common binding.
+# DerivePointerBinding: false
+
+# Set whether & and * bind to the type as opposed to the variable.
+# PointerBindsToType: false
+
+# Force pointers to the type for C++.
+# DerivePointerAlignment: true
+
+# Pointer and reference alignment style.
+#  Left => Align pointer to the left.
+PointerAlignment: Right
+
+
+# Sorting of include header, eg #include "a.h", #include "b.h"
+SortIncludes: false
+# NOTE: We don't want to change the order of headers, in the same block
+# For example. <binder/parcel> takes precedence over <memory> which is causing some compiler issues
+
+## To disable clang-format for block of code, add the following comment in you code
+# // clang-format off
+# // clang-format on
+...
+

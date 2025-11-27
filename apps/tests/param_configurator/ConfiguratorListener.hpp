@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef PARAMCONFIGLISTENER_HPP
@@ -15,10 +15,11 @@ using namespace telux::config;
 using namespace telux::common;
 
 class ConfigListener : public IConfigListener {
-  public:
+ public:
     void onConfigUpdate(std::string key, std::string value) override;
     void onServiceStatusChange(ServiceStatus status) override;
-    ~ConfigListener() {}
+    ~ConfigListener() {
+    }
 };
 
-#endif  //PARAMCONFIGLISTENER_HPP
+#endif  // PARAMCONFIGLISTENER_HPP

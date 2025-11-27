@@ -1,27 +1,27 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "AudioJsonHelper.hpp"
 #include "libs/common/JsonParser.hpp"
 
-AudioJsonHelper::AudioJsonHelper(){
+AudioJsonHelper::AudioJsonHelper() {
     LOG(DEBUG, __FUNCTION__);
 }
 
-AudioJsonHelper::~AudioJsonHelper(){
+AudioJsonHelper::~AudioJsonHelper() {
     LOG(DEBUG, __FUNCTION__);
 }
 
 telux::common::Status AudioJsonHelper::loadJson() {
-    LOG(DEBUG, __FUNCTION__," Api Json Path: ", AUDIO_MANAGER_API_JSON);
+    LOG(DEBUG, __FUNCTION__, " Api Json Path: ", AUDIO_MANAGER_API_JSON);
 
     telux::common::ErrorCode error;
 
     error = JsonParser::readFromJsonFile(rootObj_, AUDIO_MANAGER_API_JSON);
     if (error != telux::common::ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, ":: Reading JSON File failed! " );
+        LOG(ERROR, __FUNCTION__, ":: Reading JSON File failed! ");
         return telux::common::Status::NOSUCH;
     }
 
@@ -44,8 +44,8 @@ int AudioJsonHelper::getSubsystemReadyDelay() {
     return subSysDelay;
 }
 
-void AudioJsonHelper::getApiResponse(ApiResponse *apiResponse, std::string className,
-    std::string apiname){
+void AudioJsonHelper::getApiResponse(
+    ApiResponse *apiResponse, std::string className, std::string apiname) {
 
     CommonUtils::getValues(rootObj_, className, apiname, apiResponse->status, apiResponse->error,
         apiResponse->cbDelay);

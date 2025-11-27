@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_RelevanceDistance_H_
-#define	_RelevanceDistance_H_
-
+#ifndef _RelevanceDistance_H_
+#define _RelevanceDistance_H_
 
 #include <asn_application.h>
 
@@ -20,18 +19,18 @@ extern "C" {
 
 /* Dependencies */
 typedef enum RelevanceDistance {
-	RelevanceDistance_lessThan50m	= 0,
-	RelevanceDistance_lessThan100m	= 1,
-	RelevanceDistance_lessThan200m	= 2,
-	RelevanceDistance_lessThan500m	= 3,
-	RelevanceDistance_lessThan1000m	= 4,
-	RelevanceDistance_lessThan5km	= 5,
-	RelevanceDistance_lessThan10km	= 6,
-	RelevanceDistance_over10km	= 7
+    RelevanceDistance_lessThan50m   = 0,
+    RelevanceDistance_lessThan100m  = 1,
+    RelevanceDistance_lessThan200m  = 2,
+    RelevanceDistance_lessThan500m  = 3,
+    RelevanceDistance_lessThan1000m = 4,
+    RelevanceDistance_lessThan5km   = 5,
+    RelevanceDistance_lessThan10km  = 6,
+    RelevanceDistance_over10km      = 7
 } e_RelevanceDistance;
 
 /* RelevanceDistance */
-typedef long	 RelevanceDistance_t;
+typedef long RelevanceDistance_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_RelevanceDistance;
@@ -49,5 +48,5 @@ per_type_encoder_f RelevanceDistance_encode_uper;
 }
 #endif
 
-#endif	/* _RelevanceDistance_H_ */
+#endif /* _RelevanceDistance_H_ */
 #include <asn_internal.h>

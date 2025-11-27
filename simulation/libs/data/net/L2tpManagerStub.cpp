@@ -23,10 +23,10 @@ namespace telux {
 namespace data {
 namespace net {
 
-L2tpManagerStub::L2tpManagerStub () {
+L2tpManagerStub::L2tpManagerStub() {
     LOG(DEBUG, __FUNCTION__);
-    taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
-    listenerMgr_ = std::make_shared<telux::common::ListenerManager<IL2tpListener>>();
+    taskQ_           = std::make_shared<AsyncTaskQueue<void>>();
+    listenerMgr_     = std::make_shared<telux::common::ListenerManager<IL2tpListener>>();
     subSystemStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
 }
 
@@ -41,9 +41,8 @@ telux::common::Status L2tpManagerStub::init(telux::common::InitResponseCb callba
     LOG(DEBUG, __FUNCTION__);
 
     initCb_ = callback;
-    auto f =
-        std::async(std::launch::async, [this, callback]() {
-        this->initSync(callback);}).share();
+    auto f
+        = std::async(std::launch::async, [this, callback]() { this->initSync(callback); }).share();
     taskQ_->add(f);
 
     return telux::common::Status::SUCCESS;
@@ -59,10 +58,9 @@ void L2tpManagerStub::initSync(telux::common::InitResponseCb callback) {
     ::dataStub::GetServiceStatusReply response;
     ClientContext context;
 
-    grpc::Status reqStatus = stub_->InitService(&context, request, &response);
-    telux::common::ServiceStatus cbStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
-    int cbDelay = DEFAULT_DELAY;
+    grpc::Status reqStatus                = stub_->InitService(&context, request, &response);
+    telux::common::ServiceStatus cbStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    int cbDelay                           = DEFAULT_DELAY;
 
     do {
         if (!reqStatus.ok()) {
@@ -70,23 +68,21 @@ void L2tpManagerStub::initSync(telux::common::InitResponseCb callback) {
             break;
         }
 
-        cbStatus =
-            static_cast<telux::common::ServiceStatus>(response.service_status());
-        cbDelay = static_cast<int>(response.delay());
+        cbStatus = static_cast<telux::common::ServiceStatus>(response.service_status());
+        cbDelay  = static_cast<int>(response.delay());
 
         this->onServiceStatusChange(cbStatus);
         LOG(DEBUG, __FUNCTION__, " ServiceStatus: ", static_cast<int>(cbStatus));
     } while (0);
 
-    bool isSubsystemReady = (cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE)?
-        true : false;
+    bool isSubsystemReady
+        = (cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) ? true : false;
     setSubSystemStatus(cbStatus);
     setSubsystemReady(isSubsystemReady);
 
     if (callback && (cbDelay != SKIP_CALLBACK)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay,
-            " cbStatus::", static_cast<int>(cbStatus));
+        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", static_cast<int>(cbStatus));
         invokeInitCallback(cbStatus);
     }
 }
@@ -99,15 +95,12 @@ void L2tpManagerStub::invokeInitCallback(telux::common::ServiceStatus status) {
     }
 }
 
-void L2tpManagerStub::invokeCallback(telux::common::ResponseCallback callback,
-    telux::common::ErrorCode error, int cbDelay ) {
+void L2tpManagerStub::invokeCallback(
+    telux::common::ResponseCallback callback, telux::common::ErrorCode error, int cbDelay) {
     LOG(DEBUG, __FUNCTION__);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-    auto f = std::async(std::launch::async,
-        [this, error , callback]() {
-            callback(error);
-        }).share();
+    auto f = std::async(std::launch::async, [this, error, callback]() { callback(error); }).share();
     taskQ_->add(f);
 }
 
@@ -120,8 +113,8 @@ void L2tpManagerStub::setSubsystemReady(bool status) {
 
 std::future<bool> L2tpManagerStub::onSubsystemReady() {
     LOG(DEBUG, __FUNCTION__);
-    auto future = std::async(
-        std::launch::async, [&] { return L2tpManagerStub::waitForInitialization(); });
+    auto future
+        = std::async(std::launch::async, [&] { return L2tpManagerStub::waitForInitialization(); });
     return future;
 }
 
@@ -150,9 +143,8 @@ bool L2tpManagerStub::isSubsystemReady() {
     return ready_;
 }
 
-telux::common::Status L2tpManagerStub::setConfig(bool enable, bool enableMss,
-    bool enableMtu, telux::common::ResponseCallback callback,
-    uint32_t mtuSize) {
+telux::common::Status L2tpManagerStub::setConfig(bool enable, bool enableMss, bool enableMtu,
+    telux::common::ResponseCallback callback, uint32_t mtuSize) {
     LOG(DEBUG, __FUNCTION__);
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, " L2tp manager not ready");
@@ -173,12 +165,12 @@ telux::common::Status L2tpManagerStub::setConfig(bool enable, bool enableMss,
     grpc::Status reqStatus = stub_->SetConfig(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
-    error = static_cast<telux::common::ErrorCode>(response.error());
+    error  = static_cast<telux::common::ErrorCode>(response.error());
     status = static_cast<telux::common::Status>(response.status());
-    delay = static_cast<int>(response.delay());
+    delay  = static_cast<int>(response.delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -187,10 +179,9 @@ telux::common::Status L2tpManagerStub::setConfig(bool enable, bool enableMss,
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCallback(callback, error, delay);
-                }).share();
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     }
@@ -212,12 +203,12 @@ telux::common::Status L2tpManagerStub::requestConfig(L2tpConfigCb l2tpConfigCb) 
     grpc::Status reqStatus = stub_->RequestConfig(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
-    error = static_cast<telux::common::ErrorCode>(response.reply().error());
+    error  = static_cast<telux::common::ErrorCode>(response.reply().error());
     status = static_cast<telux::common::Status>(response.reply().status());
-    delay = static_cast<int>(response.reply().delay());
+    delay  = static_cast<int>(response.reply().delay());
 
     if (status == telux::common::Status::SUCCESS) {
         L2tpSysConfig l2tpSysConfig;
@@ -225,37 +216,36 @@ telux::common::Status L2tpManagerStub::requestConfig(L2tpConfigCb l2tpConfigCb) 
             LOG(ERROR, __FUNCTION__, " requestConfig failed");
             error = telux::common::ErrorCode::INTERNAL_ERROR;
         }
-        l2tpSysConfig.enableMtu = response.enable_mtu();
+        l2tpSysConfig.enableMtu    = response.enable_mtu();
         l2tpSysConfig.enableTcpMss = response.enable_tcp_mss();
-        l2tpSysConfig.mtuSize = response.mtu_size();
+        l2tpSysConfig.mtuSize      = response.mtu_size();
         for (auto config : response.l2tp_tunnel_config()) {
             L2tpTunnelConfig l2tpTunnelConfig;
-            l2tpTunnelConfig.prot = (L2tpProtocol)config.l2tp_prot();
-            l2tpTunnelConfig.locId = config.loc_id();
-            l2tpTunnelConfig.peerId = config.peer_id();
-            l2tpTunnelConfig.localUdpPort = config.local_udp_port();
-            l2tpTunnelConfig.peerUdpPort = config.peer_udp_port();
-            l2tpTunnelConfig.peerIpv6Addr = config.peer_ipv6_addr();
+            l2tpTunnelConfig.prot           = (L2tpProtocol)config.l2tp_prot();
+            l2tpTunnelConfig.locId          = config.loc_id();
+            l2tpTunnelConfig.peerId         = config.peer_id();
+            l2tpTunnelConfig.localUdpPort   = config.local_udp_port();
+            l2tpTunnelConfig.peerUdpPort    = config.peer_udp_port();
+            l2tpTunnelConfig.peerIpv6Addr   = config.peer_ipv6_addr();
             l2tpTunnelConfig.peerIpv6GwAddr = config.peer_ipv6_gw_addr();
-            l2tpTunnelConfig.peerIpv4Addr = config.peer_ipv4_addr();
+            l2tpTunnelConfig.peerIpv4Addr   = config.peer_ipv4_addr();
             l2tpTunnelConfig.peerIpv4GwAddr = config.peer_ipv4_gw_addr();
-            l2tpTunnelConfig.locIface = config.loc_iface();
-            l2tpTunnelConfig.ipType =
-                static_cast<telux::data::IpFamilyType>(
-                config.ip_family_type().ip_family_type());
-            for (auto session: config.session_config()) {
+            l2tpTunnelConfig.locIface       = config.loc_iface();
+            l2tpTunnelConfig.ipType
+                = static_cast<telux::data::IpFamilyType>(config.ip_family_type().ip_family_type());
+            for (auto session : config.session_config()) {
                 L2tpSessionConfig sessionConfig;
-                sessionConfig.locId = session.loc_id();
+                sessionConfig.locId  = session.loc_id();
                 sessionConfig.peerId = session.peer_id();
                 l2tpTunnelConfig.sessionConfig.push_back(sessionConfig);
             }
             l2tpSysConfig.configList.push_back(l2tpTunnelConfig);
         }
         if (l2tpConfigCb && (delay != SKIP_CALLBACK)) {
-            auto f = std::async(std::launch::async,
-                [this, l2tpSysConfig, error, delay, l2tpConfigCb]() {
-                        std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-                        l2tpConfigCb(l2tpSysConfig, error);
+            auto f = std::async(
+                std::launch::async, [this, l2tpSysConfig, error, delay, l2tpConfigCb]() {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                    l2tpConfigCb(l2tpSysConfig, error);
                 }).share();
             taskQ_->add(f);
         }
@@ -264,8 +254,8 @@ telux::common::Status L2tpManagerStub::requestConfig(L2tpConfigCb l2tpConfigCb) 
     return status;
 }
 
-telux::common::Status L2tpManagerStub::addTunnel(const L2tpTunnelConfig &l2tpTunnelConfig,
-    telux::common::ResponseCallback callback) {
+telux::common::Status L2tpManagerStub::addTunnel(
+    const L2tpTunnelConfig &l2tpTunnelConfig, telux::common::ResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__);
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, " L2tp manager not ready");
@@ -290,20 +280,20 @@ telux::common::Status L2tpManagerStub::addTunnel(const L2tpTunnelConfig &l2tpTun
     request.mutable_l2tp_tunnel_config()->mutable_ip_family_type()->set_ip_family_type(
         (::dataStub::IpFamilyType::Type)l2tpTunnelConfig.ipType);
     for (size_t i = 0; i < l2tpTunnelConfig.sessionConfig.size(); ++i) {
-        ::dataStub::L2tpSessionConfig* session =
-            request.mutable_l2tp_tunnel_config()->add_session_config();
+        ::dataStub::L2tpSessionConfig *session
+            = request.mutable_l2tp_tunnel_config()->add_session_config();
         session->set_loc_id(l2tpTunnelConfig.sessionConfig[i].locId);
         session->set_peer_id(l2tpTunnelConfig.sessionConfig[i].peerId);
     }
     grpc::Status reqStatus = stub_->AddTunnel(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
-    error = static_cast<telux::common::ErrorCode>(response.error());
+    error  = static_cast<telux::common::ErrorCode>(response.error());
     status = static_cast<telux::common::Status>(response.status());
-    delay = static_cast<int>(response.delay());
+    delay  = static_cast<int>(response.delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -312,10 +302,9 @@ telux::common::Status L2tpManagerStub::addTunnel(const L2tpTunnelConfig &l2tpTun
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCallback(callback, error, delay);
-                }).share();
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     }
@@ -339,12 +328,12 @@ telux::common::Status L2tpManagerStub::removeTunnel(
     grpc::Status reqStatus = stub_->RemoveTunnel(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
-    error = static_cast<telux::common::ErrorCode>(response.error());
+    error  = static_cast<telux::common::ErrorCode>(response.error());
     status = static_cast<telux::common::Status>(response.status());
-    delay = static_cast<int>(response.delay());
+    delay  = static_cast<int>(response.delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -353,10 +342,9 @@ telux::common::Status L2tpManagerStub::removeTunnel(
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCallback(callback, error, delay);
-                }).share();
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     }
@@ -364,8 +352,8 @@ telux::common::Status L2tpManagerStub::removeTunnel(
     return status;
 }
 
-telux::common::Status L2tpManagerStub::addSession(uint32_t tunnelId,
-    L2tpSessionConfig sessionConfig, telux::common::ResponseCallback callback) {
+telux::common::Status L2tpManagerStub::addSession(
+    uint32_t tunnelId, L2tpSessionConfig sessionConfig, telux::common::ResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__);
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, " L2tp manager not ready");
@@ -382,12 +370,12 @@ telux::common::Status L2tpManagerStub::addSession(uint32_t tunnelId,
     grpc::Status reqStatus = stub_->AddSession(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
-    error = static_cast<telux::common::ErrorCode>(response.error());
+    error  = static_cast<telux::common::ErrorCode>(response.error());
     status = static_cast<telux::common::Status>(response.status());
-    delay = static_cast<int>(response.delay());
+    delay  = static_cast<int>(response.delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -396,10 +384,9 @@ telux::common::Status L2tpManagerStub::addSession(uint32_t tunnelId,
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCallback(callback, error, delay);
-                }).share();
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     }
@@ -407,8 +394,8 @@ telux::common::Status L2tpManagerStub::addSession(uint32_t tunnelId,
     return status;
 }
 
-telux::common::Status L2tpManagerStub::removeSession(uint32_t tunnelId,
-    uint32_t sessionId, telux::common::ResponseCallback callback) {
+telux::common::Status L2tpManagerStub::removeSession(
+    uint32_t tunnelId, uint32_t sessionId, telux::common::ResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__);
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, " L2tp manager not ready");
@@ -424,12 +411,12 @@ telux::common::Status L2tpManagerStub::removeSession(uint32_t tunnelId,
     grpc::Status reqStatus = stub_->RemoveSession(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
-    error = static_cast<telux::common::ErrorCode>(response.error());
+    error  = static_cast<telux::common::ErrorCode>(response.error());
     status = static_cast<telux::common::Status>(response.status());
-    delay = static_cast<int>(response.delay());
+    delay  = static_cast<int>(response.delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -438,10 +425,9 @@ telux::common::Status L2tpManagerStub::removeSession(uint32_t tunnelId,
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCallback(callback, error, delay);
-                }).share();
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     }
@@ -462,8 +448,8 @@ telux::common::Status L2tpManagerStub::bindSessionToBackhaul(
     ClientContext context;
 
     request.set_loc_id(sessionBindConfig.locId);
-    request.set_backhaul_type(static_cast<::dataStub::BackhaulPreference>(
-        sessionBindConfig.bhInfo.backhaul));
+    request.set_backhaul_type(
+        static_cast<::dataStub::BackhaulPreference>(sessionBindConfig.bhInfo.backhaul));
     request.set_slot_id(sessionBindConfig.bhInfo.slotId);
     request.set_profile_id(sessionBindConfig.bhInfo.profileId);
     request.set_vlan_id(sessionBindConfig.bhInfo.vlanId);
@@ -471,12 +457,12 @@ telux::common::Status L2tpManagerStub::bindSessionToBackhaul(
     grpc::Status reqStatus = stub_->BindSessionToBackhaul(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
-    error = static_cast<telux::common::ErrorCode>(response.error());
+    error  = static_cast<telux::common::ErrorCode>(response.error());
     status = static_cast<telux::common::Status>(response.status());
-    delay = static_cast<int>(response.delay());
+    delay  = static_cast<int>(response.delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -485,10 +471,9 @@ telux::common::Status L2tpManagerStub::bindSessionToBackhaul(
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCallback(callback, error, delay);
-                }).share();
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     }
@@ -497,8 +482,7 @@ telux::common::Status L2tpManagerStub::bindSessionToBackhaul(
 }
 
 telux::common::Status L2tpManagerStub::unbindSessionFromBackhaul(
-    L2tpSessionBindConfig sessionBindConfig,
-    telux::common::ResponseCallback callback) {
+    L2tpSessionBindConfig sessionBindConfig, telux::common::ResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__);
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, " L2tp manager not ready");
@@ -510,8 +494,8 @@ telux::common::Status L2tpManagerStub::unbindSessionFromBackhaul(
     ClientContext context;
 
     request.set_loc_id(sessionBindConfig.locId);
-    request.set_backhaul_type(static_cast<::dataStub::BackhaulPreference>(
-        sessionBindConfig.bhInfo.backhaul));
+    request.set_backhaul_type(
+        static_cast<::dataStub::BackhaulPreference>(sessionBindConfig.bhInfo.backhaul));
     request.set_slot_id(sessionBindConfig.bhInfo.slotId);
     request.set_profile_id(sessionBindConfig.bhInfo.profileId);
     request.set_vlan_id(sessionBindConfig.bhInfo.vlanId);
@@ -519,12 +503,12 @@ telux::common::Status L2tpManagerStub::unbindSessionFromBackhaul(
     grpc::Status reqStatus = stub_->UnBindSessionToBackhaul(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
-    error = static_cast<telux::common::ErrorCode>(response.error());
+    error  = static_cast<telux::common::ErrorCode>(response.error());
     status = static_cast<telux::common::Status>(response.status());
-    delay = static_cast<int>(response.delay());
+    delay  = static_cast<int>(response.delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -533,10 +517,9 @@ telux::common::Status L2tpManagerStub::unbindSessionFromBackhaul(
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCallback(callback, error, delay);
-                }).share();
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     }
@@ -557,16 +540,15 @@ telux::common::Status L2tpManagerStub::querySessionToBackhaulBindings(
     ClientContext context;
 
     request.set_backhaul_type((::dataStub::BackhaulPreference)backhaul);
-    grpc::Status reqStatus = stub_->QueryBindSessionToBackhaul(
-        &context, request, &response);
+    grpc::Status reqStatus = stub_->QueryBindSessionToBackhaul(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
-    error = static_cast<telux::common::ErrorCode>(response.reply().error());
+    error  = static_cast<telux::common::ErrorCode>(response.reply().error());
     status = static_cast<telux::common::Status>(response.reply().status());
-    delay = static_cast<int>(response.reply().delay());
+    delay  = static_cast<int>(response.reply().delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -580,18 +562,16 @@ telux::common::Status L2tpManagerStub::querySessionToBackhaulBindings(
             for (auto binding : response.session_configs()) {
                 L2tpSessionBindConfig config;
                 config.locId = binding.loc_id();
-                config.bhInfo.backhaul =
-                    static_cast<telux::data::BackhaulType>(binding.backhaul_type());
-                config.bhInfo.slotId =
-                    static_cast<SlotId>(binding.slot_id());
+                config.bhInfo.backhaul
+                    = static_cast<telux::data::BackhaulType>(binding.backhaul_type());
+                config.bhInfo.slotId    = static_cast<SlotId>(binding.slot_id());
                 config.bhInfo.profileId = binding.profile_id();
-                config.bhInfo.vlanId = binding.vlan_id();
+                config.bhInfo.vlanId    = binding.vlan_id();
                 bindings.push_back(config);
             }
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, bindings, delay]() {
-                    callback(bindings, error);
-                }).share();
+            auto f1 = std::async(std::launch::async, [this, error, callback, bindings, delay]() {
+                callback(bindings, error);
+            }).share();
             taskQ_->add(f1);
         }
     }
@@ -599,14 +579,12 @@ telux::common::Status L2tpManagerStub::querySessionToBackhaulBindings(
     return status;
 }
 
-telux::common::Status L2tpManagerStub::registerListener(
-    std::weak_ptr<IL2tpListener> listener) {
+telux::common::Status L2tpManagerStub::registerListener(std::weak_ptr<IL2tpListener> listener) {
     LOG(DEBUG, __FUNCTION__);
     return listenerMgr_->registerListener(listener);
 }
 
-telux::common::Status L2tpManagerStub::deregisterListener(
-    std::weak_ptr<IL2tpListener> listener) {
+telux::common::Status L2tpManagerStub::deregisterListener(std::weak_ptr<IL2tpListener> listener) {
     LOG(DEBUG, __FUNCTION__);
     return listenerMgr_->deRegisterListener(listener);
 }
@@ -626,6 +604,6 @@ void L2tpManagerStub::onServiceStatusChange(ServiceStatus status) {
     }
 }
 
-} // end of namespace net
-} // end of namespace data
-} // end of namespace telux
+}  // end of namespace net
+}  // end of namespace data
+}  // end of namespace telux

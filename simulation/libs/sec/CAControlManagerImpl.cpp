@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <climits>
@@ -22,7 +22,7 @@ bool CAControlManagerImpl::listenerExist_;
 std::unique_ptr<::securityStub::SecurityCALCService::Stub> CAControlManagerImpl::stub_;
 
 CAControlManagerImpl::CAControlManagerImpl()
-    : clientEventMgr_(ClientEventManager::getInstance()) {
+   : clientEventMgr_(ClientEventManager::getInstance()) {
     exitNow_ = false;
 }
 
@@ -46,7 +46,7 @@ CAControlManagerImpl::~CAControlManagerImpl() {
         timer_delete(timerId_);
     }
 
-    if(privateCookie_) {
+    if (privateCookie_) {
         delete privateCookie_;
         privateCookie_ = nullptr;
     }
@@ -67,16 +67,15 @@ telux::common::ErrorCode CAControlManagerImpl::init() {
     commonStub::ErrorCodeMsg response{};
 
     try {
-        caCtrlListenerMgr_ = std::make_shared<
-            telux::common::ListenerManager<ICAControlManagerListener>>();
+        caCtrlListenerMgr_
+            = std::make_shared<telux::common::ListenerManager<ICAControlManagerListener>>();
     } catch (const std::exception &e) {
         LOG(ERROR, __FUNCTION__, " can't create ICAControlManagerListener");
         return telux::common::ErrorCode::NO_MEMORY;
     }
 
     status = clientEventMgr_.registerListener(shared_from_this(), CALC_FILTER);
-    if ((status != telux::common::Status::SUCCESS) &&
-        (status != telux::common::Status::ALREADY)) {
+    if ((status != telux::common::Status::SUCCESS) && (status != telux::common::Status::ALREADY)) {
         LOG(ERROR, __FUNCTION__, " can't register with ClientEventManager");
         return telux::common::CommonUtils::toErrorCode(status);
     }
@@ -383,10 +382,10 @@ void CAControlManagerImpl::sendLoadUpdate(union sigval sigVal) {
     }
 
     counts.nistp256 = response.nist256();
-    counts.bp256r1 = response.bp256();
-    counts.sm2 = response.sm2();
+    counts.bp256r1  = response.bp256();
+    counts.sm2      = response.sm2();
     counts.nistp384 = response.nist384();
-    counts.bp384r1 = response.bp384();
+    counts.bp384r1  = response.bp384();
 
     CAControlManagerImpl::deliverUpdatedData(true, CACapacity(), counts, sigVal.sival_ptr);
 }
@@ -524,10 +523,10 @@ void CAControlManagerImpl::onEventUpdate(google::protobuf::Any event) {
     if (event.Is<::securityStub::Capacity>()) {
         event.UnpackTo(&capacity);
         mvmCapacity.nistp256 = capacity.nist256();
-        mvmCapacity.bp256r1 = capacity.bp256();
-        mvmCapacity.sm2 = capacity.sm2();
+        mvmCapacity.bp256r1  = capacity.bp256();
+        mvmCapacity.sm2      = capacity.sm2();
         mvmCapacity.nistp384 = capacity.nist384();
-        mvmCapacity.bp384r1 = capacity.bp384();
+        mvmCapacity.bp384r1  = capacity.bp384();
         sendCapacityUpdate(mvmCapacity, privateCookie_);
     }
 }

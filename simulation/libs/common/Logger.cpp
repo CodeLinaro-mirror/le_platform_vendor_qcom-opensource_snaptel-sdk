@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 extern "C" {
@@ -31,31 +31,31 @@ namespace common {
 Logger Logger::instance;
 
 Logger &Logger::getInstance() {
-   return instance;
+    return instance;
 }
 
 Logger::Logger() {
 }
 
 Logger::~Logger() {
-   std::lock_guard<std::mutex> lock(logFileMutex_);
-   logStatus_.store(LoggerStatus::NOT_AVAILABLE);
-   // Close log file stream if it is open
-   if(logFileStream_.is_open()) {
-      logFileStream_.close();
-   }
+    std::lock_guard<std::mutex> lock(logFileMutex_);
+    logStatus_.store(LoggerStatus::NOT_AVAILABLE);
+    // Close log file stream if it is open
+    if (logFileStream_.is_open()) {
+        logFileStream_.close();
+    }
 }
 
 void Logger::initProcessId() {
-   processID_ = getpid();
+    processID_ = getpid();
 }
 
 void Logger::initProcessName() {
     char path[PATH_MAX];
-    ssize_t count = readlink("/proc/self/exe", path, PATH_MAX);
+    ssize_t count        = readlink("/proc/self/exe", path, PATH_MAX);
     std::string fullPath = std::string(path, (count > 0) ? count : 0);
-    auto const pos = fullPath.find_last_of('/');
-    processName_ = fullPath.substr(pos + 1);
+    auto const pos       = fullPath.find_last_of('/');
+    processName_         = fullPath.substr(pos + 1);
 }
 
 void Logger::init() {
@@ -78,142 +78,142 @@ void Logger::init() {
 }
 
 void Logger::initComponentLogging() {
-   //Getting the value from tel.conf
-   std::string tempStr = config_->getValue(std::string("TELUX_LOG_COMPONENT_FILTER"));
+    // Getting the value from tel.conf
+    std::string tempStr = config_->getValue(std::string("TELUX_LOG_COMPONENT_FILTER"));
 
-   if (!tempStr.empty()) {
-      std::vector<std::string> logFilter = CommonUtils::splitString(tempStr, ',');
-      for(auto s:logFilter) {
-         int vertical = stoi(s);
-         componentLogFilter_.set(vertical);
-      }
-   }
+    if (!tempStr.empty()) {
+        std::vector<std::string> logFilter = CommonUtils::splitString(tempStr, ',');
+        for (auto s : logFilter) {
+            int vertical = stoi(s);
+            componentLogFilter_.set(vertical);
+        }
+    }
 }
 
 void Logger::initFileLogging() {
-   if(fileLogLevel_ == LogLevel::LEVEL_NONE) {
-      isLoggingToFileEnabled_ = false;
-   }
+    if (fileLogLevel_ == LogLevel::LEVEL_NONE) {
+        isLoggingToFileEnabled_ = false;
+    }
 
-   isLoggingToFileEnabled_ = true;
-   // Initialize the log file
-   if(!logFileStream_.is_open()) {
-      // Open the log file for writing
-      mode_t mask = umask(UMASK_BITS);
-      std::string logFile = logFileFullName_;
-      logFileStream_.open(logFile, std::ios::app);
-      if(logFileStream_.rdstate() != std::ios_base::goodbit) {
-          syslog(LOG_NOTICE, "%s open %s fail", __FUNCTION__, logFile.c_str());
-          umask(mask);
-          return;
-      }
-      struct stat st;
-      if (stat(logFile.c_str(), &st) != STAT_FAILURE) {
-         inodeNumber_ = st.st_ino;
-      }
-      umask(mask);
-   }
+    isLoggingToFileEnabled_ = true;
+    // Initialize the log file
+    if (!logFileStream_.is_open()) {
+        // Open the log file for writing
+        mode_t mask         = umask(UMASK_BITS);
+        std::string logFile = logFileFullName_;
+        logFileStream_.open(logFile, std::ios::app);
+        if (logFileStream_.rdstate() != std::ios_base::goodbit) {
+            syslog(LOG_NOTICE, "%s open %s fail", __FUNCTION__, logFile.c_str());
+            umask(mask);
+            return;
+        }
+        struct stat st;
+        if (stat(logFile.c_str(), &st) != STAT_FAILURE) {
+            inodeNumber_ = st.st_ino;
+        }
+        umask(mask);
+    }
 }
 
 void Logger::initConsoleLogging() {
-   if(consoleLogLevel_ == LogLevel::LEVEL_NONE) {
-      isLoggingToConsoleEnabled_ = false;
-   }
-   isLoggingToConsoleEnabled_ = true;
+    if (consoleLogLevel_ == LogLevel::LEVEL_NONE) {
+        isLoggingToConsoleEnabled_ = false;
+    }
+    isLoggingToConsoleEnabled_ = true;
 }
 
 void Logger::initLogFileName() {
-   logFileFullName_ = config_->getValue(std::string("LOG_FILE_PATH"));
+    logFileFullName_ = config_->getValue(std::string("LOG_FILE_PATH"));
 
-   if (logFileFullName_.length() > 0)
-      logFileFullName_ += "/";
+    if (logFileFullName_.length() > 0)
+        logFileFullName_ += "/";
 
-   std::string logFileName = config_->getValue(std::string("LOG_FILE_NAME"));
-   if(logFileName != "") {
-      logFileFullName_ += logFileName;
-   } else {
-      logFileFullName_ += DEFAULT_LOG_FILE_NAME;  // Default log file name if not configured
-   }
+    std::string logFileName = config_->getValue(std::string("LOG_FILE_NAME"));
+    if (logFileName != "") {
+        logFileFullName_ += logFileName;
+    } else {
+        logFileFullName_ += DEFAULT_LOG_FILE_NAME;  // Default log file name if not configured
+    }
 }
 
 void Logger::initLogFileMaxSize() {
-   std::string val = config_->getValue(std::string("MAX_LOG_FILE_SIZE"));
-   logFileMaxSize_ = DEFAULT_LOG_FILE_MAX_SIZE;
+    std::string val = config_->getValue(std::string("MAX_LOG_FILE_SIZE"));
+    logFileMaxSize_ = DEFAULT_LOG_FILE_MAX_SIZE;
 
-   if(!val.empty()) {
-      logFileMaxSize_ = stoi(val);
-   }
+    if (!val.empty()) {
+        logFileMaxSize_ = stoi(val);
+    }
 }
 
 // Routine Provides time stamp in Nano Seconds
 void Logger::getTimeStampNs(struct timespec *tp) {
-   tp->tv_sec = tp->tv_nsec = 0;
-   clock_gettime(CLOCK_BOOTTIME, tp);
+    tp->tv_sec = tp->tv_nsec = 0;
+    clock_gettime(CLOCK_BOOTTIME, tp);
 }
 
 const std::string Logger::getCurrentTime() {
-   std::tm tmSnapshot;
-   std::stringstream ss;
-   // Get the current calendar time (Epoch time)
-   std::time_t nowTime = std::time(nullptr);
+    std::tm tmSnapshot;
+    std::stringstream ss;
+    // Get the current calendar time (Epoch time)
+    std::time_t nowTime = std::time(nullptr);
 
-   // std::put_time to get the date and time information from a given calendar time.
-   // ::localtime_r() converts the calendar time to broken-down time representation
-   // but stores the data in a user-supplied struct, and it is thread safe
-   ss << std::put_time(::localtime_r(&nowTime, &tmSnapshot), "%b-%d-%Y %H:%M:%S");
-   return ss.str();
+    // std::put_time to get the date and time information from a given calendar time.
+    // ::localtime_r() converts the calendar time to broken-down time representation
+    // but stores the data in a user-supplied struct, and it is thread safe
+    ss << std::put_time(::localtime_r(&nowTime, &tmSnapshot), "%b-%d-%Y %H:%M:%S");
+    return ss.str();
 }
 
 void Logger::initDateTime() {
-   std::string val = config_->getValue(std::string("LOG_PREFIX_DATE_TIME"));
-   if(!val.empty()) {
-      if(val == "TRUE") {
-         isDateTimeEnabled_ = true;
-      } else if(val == "FALSE") {
-         isDateTimeEnabled_ = false;
-      }
-   }
+    std::string val = config_->getValue(std::string("LOG_PREFIX_DATE_TIME"));
+    if (!val.empty()) {
+        if (val == "TRUE") {
+            isDateTimeEnabled_ = true;
+        } else if (val == "FALSE") {
+            isDateTimeEnabled_ = false;
+        }
+    }
 }
 
 void Logger::initConsoleLogLevel() {
-   consoleLogLevel_ = LogLevel::LEVEL_INFO;
-   std::string logLevelString = config_->getValue(std::string("CONSOLE_LOG_LEVEL"));
-   if(!logLevelString.empty()) {
-      consoleLogLevel_ = getLogLevel(logLevelString);
-   }
+    consoleLogLevel_           = LogLevel::LEVEL_INFO;
+    std::string logLevelString = config_->getValue(std::string("CONSOLE_LOG_LEVEL"));
+    if (!logLevelString.empty()) {
+        consoleLogLevel_ = getLogLevel(logLevelString);
+    }
 }
 
 LogLevel Logger::getConsoleLogLevel() {
-   return consoleLogLevel_;
+    return consoleLogLevel_;
 }
 
 void Logger::initFileLogLevel() {
-   fileLogLevel_ = LogLevel::LEVEL_INFO;
-   std::string logLevelString = config_->getValue(std::string("FILE_LOG_LEVEL"));
-   if(!logLevelString.empty()) {
-      fileLogLevel_ = getLogLevel(logLevelString);
-   }
+    fileLogLevel_              = LogLevel::LEVEL_INFO;
+    std::string logLevelString = config_->getValue(std::string("FILE_LOG_LEVEL"));
+    if (!logLevelString.empty()) {
+        fileLogLevel_ = getLogLevel(logLevelString);
+    }
 }
 
 LogLevel Logger::getFileLogLevel() {
-   return fileLogLevel_;
+    return fileLogLevel_;
 }
 
 void Logger::initSyslogLogLevel() {
-   syslogLogLevel_ = LogLevel::LEVEL_DEBUG;
-   std::string logLevelString = config_->getValue(std::string("SYSLOG_LOG_LEVEL"));
-   if(!logLevelString.empty()) {
-      syslogLogLevel_ = getLogLevel(logLevelString);
-   }
+    syslogLogLevel_            = LogLevel::LEVEL_DEBUG;
+    std::string logLevelString = config_->getValue(std::string("SYSLOG_LOG_LEVEL"));
+    if (!logLevelString.empty()) {
+        syslogLogLevel_ = getLogLevel(logLevelString);
+    }
 }
 
 LogLevel Logger::getSyslogLogLevel() {
-   return syslogLogLevel_;
+    return syslogLogLevel_;
 }
 
 void Logger::writeToConsole(std::ostringstream &outputStream) {
-   // newline applied will flush the buffer to stdout
-   std::cout << outputStream.str() << std::endl;
+    // newline applied will flush the buffer to stdout
+    std::cout << outputStream.str() << std::endl;
 }
 
 /**
@@ -238,7 +238,7 @@ void Logger::writeToFile(std::ostringstream &outputStream) {
         return;
     }
 
-    if(!logFileChanged) {
+    if (!logFileChanged) {
         if (st.st_size > logFileMaxSize_) {
             logFileChanged = backupLogFile();
         }
@@ -246,12 +246,12 @@ void Logger::writeToFile(std::ostringstream &outputStream) {
             logFileChanged = true;
         }
     }
-    //Updating the iNode number after a successful backup.
-    if(logFileChanged) {
+    // Updating the iNode number after a successful backup.
+    if (logFileChanged) {
         inodeNumber_ = reopenLogFile();
     }
 
-    if(logFileStream_.rdstate() == std::ios_base::goodbit) {
+    if (logFileStream_.rdstate() == std::ios_base::goodbit) {
         // Write the log message into the file
         logFileStream_ << outputStream.str() << std::endl;
     } else {
@@ -260,148 +260,147 @@ void Logger::writeToFile(std::ostringstream &outputStream) {
 }
 
 void Logger::writeToSyslog(std::ostringstream &outputStream, LogLevel logLevel) {
-   std::string logMessage = outputStream.str();
-   switch(logLevel) {
-      /*
-       * Mapping of log levels in syslog
-       * Perf logs are mapped to LOG_CRIT.
-       * Error logs are mapped to LOG_ERR.
-       * Warning logs are mapped to LOG_WARNING.
-       * Info logs are mapped to LOG_INFO.
-       * Debug logs are mapped to LOG_DEBUG.
-       */
+    std::string logMessage = outputStream.str();
+    switch (logLevel) {
+            /*
+             * Mapping of log levels in syslog
+             * Perf logs are mapped to LOG_CRIT.
+             * Error logs are mapped to LOG_ERR.
+             * Warning logs are mapped to LOG_WARNING.
+             * Info logs are mapped to LOG_INFO.
+             * Debug logs are mapped to LOG_DEBUG.
+             */
 
-      case LogLevel::LEVEL_PERF:
-         syslog(LOG_CRIT, "%s", logMessage.c_str());
-         break;
-      case LogLevel::LEVEL_ERROR:
-         syslog(LOG_ERR, "%s", logMessage.c_str());
-         break;
-      case LogLevel::LEVEL_WARNING:
-         syslog(LOG_WARNING, "%s", logMessage.c_str());
-         break;
-      case LogLevel::LEVEL_INFO:
-         syslog(LOG_INFO, "%s", logMessage.c_str());
-         break;
-      case LogLevel::LEVEL_DEBUG:
-         syslog(LOG_DEBUG, "%s", logMessage.c_str());
-         break;
-      default:
-         break;
-   }
+        case LogLevel::LEVEL_PERF:
+            syslog(LOG_CRIT, "%s", logMessage.c_str());
+            break;
+        case LogLevel::LEVEL_ERROR:
+            syslog(LOG_ERR, "%s", logMessage.c_str());
+            break;
+        case LogLevel::LEVEL_WARNING:
+            syslog(LOG_WARNING, "%s", logMessage.c_str());
+            break;
+        case LogLevel::LEVEL_INFO:
+            syslog(LOG_INFO, "%s", logMessage.c_str());
+            break;
+        case LogLevel::LEVEL_DEBUG:
+            syslog(LOG_DEBUG, "%s", logMessage.c_str());
+            break;
+        default:
+            break;
+    }
 }
 
 void Logger::writeLogMessage(std::ostringstream &os, LogLevel logLevel, const std::string &fileName,
-                             const int &component, const std::string &lineNo) {
-   std::string timeStamp = "";
-   std::string fileNameAndLineNo = "";
-   std::string processIdAndName = "";
-   std::ostringstream outputStream;
-   struct timespec tp;
-   tp.tv_sec = tp.tv_nsec = 0;
+    const int &component, const std::string &lineNo) {
+    std::string timeStamp         = "";
+    std::string fileNameAndLineNo = "";
+    std::string processIdAndName  = "";
+    std::ostringstream outputStream;
+    struct timespec tp;
+    tp.tv_sec = tp.tv_nsec = 0;
 
-   // Get current date and time from system if LOG_PREFIX_DATE_TIME flag enabled
-   if(isDateTimeEnabled_) {
-      timeStamp = " " + this->getCurrentTime();
-   }
+    // Get current date and time from system if LOG_PREFIX_DATE_TIME flag enabled
+    if (isDateTimeEnabled_) {
+        timeStamp = " " + this->getCurrentTime();
+    }
 
-   // get process id and name
-   processIdAndName = std::to_string(processID_) + "/" + processName_;
+    // get process id and name
+    processIdAndName = std::to_string(processID_) + "/" + processName_;
 
-   // get the filename from full path
-   const char *lastSlash = std::strrchr(fileName.c_str(), '/');
-   if(lastSlash != nullptr) {
-      fileNameAndLineNo = " " + std::string(lastSlash + 1) + "(" + lineNo + ") ";
-   } else {
-      fileNameAndLineNo = " " + std::string(fileName) + "(" + lineNo + ") ";
-   }
+    // get the filename from full path
+    const char *lastSlash = std::strrchr(fileName.c_str(), '/');
+    if (lastSlash != nullptr) {
+        fileNameAndLineNo = " " + std::string(lastSlash + 1) + "(" + lineNo + ") ";
+    } else {
+        fileNameAndLineNo = " " + std::string(fileName) + "(" + lineNo + ") ";
+    }
 
-   switch(logLevel) {
-      case LogLevel::LEVEL_ERROR:
-         outputStream << "[E]" << timeStamp << " " << processIdAndName << fileNameAndLineNo;
-         break;
-      case LogLevel::LEVEL_WARNING:
-         outputStream << "[W]" << timeStamp << " " << processIdAndName << fileNameAndLineNo;
-         break;
-      case LogLevel::LEVEL_INFO:
-         outputStream << "[I]" << timeStamp << " " << processIdAndName << fileNameAndLineNo;
-         break;
-      case LogLevel::LEVEL_DEBUG:
-         outputStream << "[D]" << timeStamp << " " << processIdAndName << fileNameAndLineNo;
-         break;
-      case LogLevel::LEVEL_PERF:
-         // Get current time in nano second from BOOT
-         this->getTimeStampNs(&tp);
-         outputStream << "[TS]" << timeStamp << " " << tp.tv_sec << "." << tp.tv_nsec << " " <<
-         processIdAndName << fileNameAndLineNo;
-         break;
-      default:
-         break;
-   }
+    switch (logLevel) {
+        case LogLevel::LEVEL_ERROR:
+            outputStream << "[E]" << timeStamp << " " << processIdAndName << fileNameAndLineNo;
+            break;
+        case LogLevel::LEVEL_WARNING:
+            outputStream << "[W]" << timeStamp << " " << processIdAndName << fileNameAndLineNo;
+            break;
+        case LogLevel::LEVEL_INFO:
+            outputStream << "[I]" << timeStamp << " " << processIdAndName << fileNameAndLineNo;
+            break;
+        case LogLevel::LEVEL_DEBUG:
+            outputStream << "[D]" << timeStamp << " " << processIdAndName << fileNameAndLineNo;
+            break;
+        case LogLevel::LEVEL_PERF:
+            // Get current time in nano second from BOOT
+            this->getTimeStampNs(&tp);
+            outputStream << "[TS]" << timeStamp << " " << tp.tv_sec << "." << tp.tv_nsec << " "
+                         << processIdAndName << fileNameAndLineNo;
+            break;
+        default:
+            break;
+    }
 
-   // Print thread id for debugging
-   outputStream << std::this_thread::get_id() << ": ";
+    // Print thread id for debugging
+    outputStream << std::this_thread::get_id() << ": ";
 
-   //Check if the ostringstream containing the input argument is empty
-   if(!os.str().empty()) {
-      outputStream << os.str();
+    // Check if the ostringstream containing the input argument is empty
+    if (!os.str().empty()) {
+        outputStream << os.str();
 
-      if(consoleLogLevel_ >= logLevel) {
-         writeToConsole(outputStream);
-      }
+        if (consoleLogLevel_ >= logLevel) {
+            writeToConsole(outputStream);
+        }
 
-      // Don't log into file unless logging to file is enabled
-      if(fileLogLevel_ >= logLevel) {
-         writeToFile(outputStream);
-      }
+        // Don't log into file unless logging to file is enabled
+        if (fileLogLevel_ >= logLevel) {
+            writeToFile(outputStream);
+        }
 
-      if(syslogLogLevel_ >= logLevel) {
-         writeToSyslog(outputStream, logLevel);
-      }
-   }
+        if (syslogLogLevel_ >= logLevel) {
+            writeToSyslog(outputStream, logLevel);
+        }
+    }
 }
 
 LogLevel Logger::getLogLevel(std::string logLevelString) {
-   LogLevel logLevel = LogLevel::LEVEL_DEBUG;  // default log level
-   if(logLevelString == "PERF"){
-      logLevel = LogLevel::LEVEL_PERF;
-   }else if(logLevelString == "ERROR") {
-      logLevel = LogLevel::LEVEL_ERROR;
-   } else if(logLevelString == "WARNING") {
-      logLevel = LogLevel::LEVEL_WARNING;
-   } else if(logLevelString == "INFO") {
-      logLevel = LogLevel::LEVEL_INFO;
-   } else if(logLevelString == "NONE") {
-      logLevel = LogLevel::LEVEL_NONE;
-   }
-   return logLevel;
+    LogLevel logLevel = LogLevel::LEVEL_DEBUG;  // default log level
+    if (logLevelString == "PERF") {
+        logLevel = LogLevel::LEVEL_PERF;
+    } else if (logLevelString == "ERROR") {
+        logLevel = LogLevel::LEVEL_ERROR;
+    } else if (logLevelString == "WARNING") {
+        logLevel = LogLevel::LEVEL_WARNING;
+    } else if (logLevelString == "INFO") {
+        logLevel = LogLevel::LEVEL_INFO;
+    } else if (logLevelString == "NONE") {
+        logLevel = LogLevel::LEVEL_NONE;
+    }
+    return logLevel;
 }
 
 bool Logger::isComponentLogged(const int component) {
 
-   bool shouldLog = false;
+    bool shouldLog = false;
 
-   // componentLogFilter_ 0th bit set handle case when all logs are printed.
-   // componentLogFilter_.test(component) handle case when component specified in configuration
-   // component = 0 handle case when app uses using logger api.
-   if (componentLogFilter_.test(0) || componentLogFilter_.test(component) || component == 0) {
-      shouldLog = true;
-   }
-   return shouldLog;
+    // componentLogFilter_ 0th bit set handle case when all logs are printed.
+    // componentLogFilter_.test(component) handle case when component specified in configuration
+    // component = 0 handle case when app uses using logger api.
+    if (componentLogFilter_.test(0) || componentLogFilter_.test(component) || component == 0) {
+        shouldLog = true;
+    }
+    return shouldLog;
 }
 
 void Logger::updateMaxLogLevel() {
-   maxLogLevel_ =
-      std::max({consoleLogLevel_, fileLogLevel_, syslogLogLevel_});
+    maxLogLevel_ = std::max({consoleLogLevel_, fileLogLevel_, syslogLogLevel_});
 }
 
-bool Logger::isLoggingEnabled(LogLevel logLevel, const int& component) {
+bool Logger::isLoggingEnabled(LogLevel logLevel, const int &component) {
 
-   //When component-filtering is enabled then the logs from that technology domain, the logs from
-   //common & qmi domain and the apps logs are also printed.
-   bool allowComponent = isComponentLogged(component);
-   bool allowedLogging = maxLogLevel_ >= logLevel;
-   return (allowedLogging && allowComponent);
+    // When component-filtering is enabled then the logs from that technology domain, the logs from
+    // common & qmi domain and the apps logs are also printed.
+    bool allowComponent = isComponentLogged(component);
+    bool allowedLogging = maxLogLevel_ >= logLevel;
+    return (allowedLogging && allowComponent);
 }
 
 /**
@@ -411,26 +410,26 @@ bool Logger::isLoggingEnabled(LogLevel logLevel, const int& component) {
  * Return the inode number of the file we opened
  */
 ino_t Logger::reopenLogFile() {
-   struct stat st;
-   if (logFileStream_.is_open()) {
-      logFileStream_.close();
-   }
-   logFileStream_.clear();
+    struct stat st;
+    if (logFileStream_.is_open()) {
+        logFileStream_.close();
+    }
+    logFileStream_.clear();
 
-   logFileStream_.open(logFileFullName_, std::ios::app);
-   if (logFileStream_.rdstate() == std::ios_base::goodbit) {
-       stat(logFileFullName_.c_str(), &st);
-       return st.st_ino;
-   }
-   return 0;
+    logFileStream_.open(logFileFullName_, std::ios::app);
+    if (logFileStream_.rdstate() == std::ios_base::goodbit) {
+        stat(logFileFullName_.c_str(), &st);
+        return st.st_ino;
+    }
+    return 0;
 }
 
 int Logger::acquireLock(int &fileDescriptor) {
     struct flock lock;
-    lock.l_type = F_WRLCK;
-    lock.l_start = 0;
+    lock.l_type   = F_WRLCK;
+    lock.l_start  = 0;
     lock.l_whence = SEEK_SET;
-    lock.l_len = 0;
+    lock.l_len    = 0;
 
     fileDescriptor = open(logFileFullName_.c_str(), O_RDWR, 0664);
     if (fileDescriptor < 0) {
@@ -440,7 +439,7 @@ int Logger::acquireLock(int &fileDescriptor) {
     int ret = fcntl(fileDescriptor, F_SETLK, &lock);
     if (ret < 0) {
         close(fileDescriptor);
-        if(errno == EACCES || errno == EAGAIN) {
+        if (errno == EACCES || errno == EAGAIN) {
             return -EAGAIN;
         }
         syslog(LOG_ERR, "%s Can't acquire lock: %s %d", __FUNCTION__, strerror(errno), errno);
@@ -482,15 +481,15 @@ int Logger::acquireLock(int &fileDescriptor) {
 bool Logger::backupLogFile() {
     int ret, fileDescriptor;
     ret = acquireLock(fileDescriptor);
-    if(ret < 0) {
-        if(ret == -EAGAIN) {
+    if (ret < 0) {
+        if (ret == -EAGAIN) {
             syslog(LOG_ERR, "%s File locked by another process", __FUNCTION__);
         } else {
             syslog(LOG_ERR, "%s File Lock Acquire failed", __FUNCTION__);
         }
         return false;
     } else {
-        std::string backupFileName = logFileFullName_ + ".backup" ;
+        std::string backupFileName = logFileFullName_ + ".backup";
         rename(logFileFullName_.c_str(), backupFileName.c_str());
         std::ofstream logStream;
         mode_t mask = umask(UMASK_BITS);
@@ -502,16 +501,16 @@ bool Logger::backupLogFile() {
     }
 }
 
-}
+}  // namespace common
+}  // namespace telux
+
+bool Log::isLoggingEnabled(LogLevel logLevel, const int &component) {
+    Logger &logger = Logger::getInstance();
+    return logger.startLogger() && logger.isLoggingEnabled(logLevel, component);
 }
 
-bool Log::isLoggingEnabled(LogLevel logLevel, const int& component) {
-   Logger &logger = Logger::getInstance();
-   return logger.startLogger() && logger.isLoggingEnabled(logLevel, component);
-}
-
-void Log::logStream(std::ostringstream&  outputStream, LogLevel logLevel,
-   const std::string &fileName, const std::string &lineNo, const int &component) {
-   Logger &logger = Logger::getInstance();
-   logger.writeLogMessage(outputStream, logLevel, fileName, component, lineNo);
+void Log::logStream(std::ostringstream &outputStream, LogLevel logLevel,
+    const std::string &fileName, const std::string &lineNo, const int &component) {
+    Logger &logger = Logger::getInstance();
+    logger.writeLogMessage(outputStream, logLevel, fileName, component, lineNo);
 }

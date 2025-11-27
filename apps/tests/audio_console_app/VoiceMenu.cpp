@@ -28,39 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <chrono>
@@ -127,7 +97,7 @@ void VoiceMenu::init() {
         deleteStreamCommand, getDeviceCommand, setDeviceCommand, getVolumeCommand, setVolumeCommand,
         getMuteCommand, setMuteCommand, startAudioCommand, stopAudioCommand, startDtmfCommand,
         stopDtmfCommand, regListenerCmd, deregListenerCmd, changeSlotIdCmd};
-    ready_ = true;
+    ready_                                                                = true;
     ConsoleApp::addCommands(voiceMenuCommandsList);
 }
 
@@ -147,16 +117,16 @@ void VoiceMenu::createStream(std::vector<std::string> userInput) {
         if (createActiveSession(slotId_) == Status::SUCCESS) {
             StreamConfig config;
             config.slotId = slotId_;
-            config.type = StreamType::VOICE_CALL;
+            config.type   = StreamType::VOICE_CALL;
             AudioHelper::getUserCreateStreamInput(config);
             AudioHelper::getUserEcnrModeInput(config.ecnrMode);
             mutex_.lock();
-            if(activeSession_) {
+            if (activeSession_) {
                 auto status = activeSession_->createStream(config);
                 mutex_.unlock();
                 if (status == Status::SUCCESS) {
                     std::cout << "Stream created on slotId : " << slotId_ << std::endl;
-                } else if(status == Status::ALREADY) {
+                } else if (status == Status::ALREADY) {
                     std::cout << "Stream exist please delete first" << std::endl;
                 } else {
                     deleteActiveSession(slotId_);
@@ -164,7 +134,7 @@ void VoiceMenu::createStream(std::vector<std::string> userInput) {
                 }
             } else {
                 std::cout << "No running voice session for slotId : " << slotId_
-                      << ", please create one" << std::endl;
+                          << ", please create one" << std::endl;
                 mutex_.unlock();
             }
         }
@@ -177,18 +147,19 @@ void VoiceMenu::deleteStream(std::vector<std::string> userInput) {
     if (ready_) {
         if (setActiveSession(slotId_) == Status::SUCCESS) {
             mutex_.lock();
-            if(activeSession_) {
+            if (activeSession_) {
                 auto status = activeSession_->deleteStream();
                 mutex_.unlock();
                 if (status == Status::SUCCESS) {
                     deleteActiveSession(slotId_);
                     std::cout << "Voice stream deleted on slotId : " << slotId_ << std::endl;
                 } else {
-                    std::cout << "Voice stream deletion failed on slotId : " << slotId_ << std::endl;
+                    std::cout << "Voice stream deletion failed on slotId : " << slotId_
+                              << std::endl;
                 }
             } else {
                 std::cout << "No running voice session for slotId : " << slotId_
-                      << ", please create one" << std::endl;
+                          << ", please create one" << std::endl;
                 mutex_.unlock();
             }
         } else {
@@ -205,20 +176,21 @@ void VoiceMenu::getDevice(std::vector<std::string> userInput) {
         if (setActiveSession(slotId_) == Status::SUCCESS) {
             std::vector<DeviceType> devices;
             mutex_.lock();
-            if(activeSession_) {
+            if (activeSession_) {
                 auto status = activeSession_->getStreamDevice(devices);
                 mutex_.unlock();
                 if (status == Status::SUCCESS) {
                     for (auto deviceType : devices) {
                         std::string deviceName;
-                        std::cout << "Device Type" << (static_cast<uint32_t>(deviceType)) << std::endl;
+                        std::cout << "Device Type" << (static_cast<uint32_t>(deviceType))
+                                  << std::endl;
                     }
                 } else {
                     std::cout << "Get Device Request Failed." << std::endl;
                 }
             } else {
                 std::cout << "No running voice session for slotId : " << slotId_
-                      << ", please create one" << std::endl;
+                          << ", please create one" << std::endl;
                 mutex_.unlock();
             }
         } else {
@@ -236,7 +208,7 @@ void VoiceMenu::setDevice(std::vector<std::string> userInput) {
             std::vector<DeviceType> devices;
             AudioHelper::getUserDeviceInput(devices);
             mutex_.lock();
-            if(activeSession_) {
+            if (activeSession_) {
                 auto status = activeSession_->setStreamDevice(devices);
                 mutex_.unlock();
                 if (status == Status::SUCCESS) {
@@ -246,7 +218,7 @@ void VoiceMenu::setDevice(std::vector<std::string> userInput) {
                 }
             } else {
                 std::cout << "No running voice session for slotId : " << slotId_
-                      << ", please create one" << std::endl;
+                          << ", please create one" << std::endl;
                 mutex_.unlock();
             }
         } else {
@@ -264,7 +236,7 @@ void VoiceMenu::getVolume(std::vector<std::string> userInput) {
             StreamVolume volume;
             AudioHelper::getUserDirectionInput(volume.dir);
             mutex_.lock();
-            if(activeSession_) {
+            if (activeSession_) {
                 auto status = activeSession_->getVolume(volume);
                 mutex_.unlock();
                 if (status == Status::SUCCESS) {
@@ -276,7 +248,7 @@ void VoiceMenu::getVolume(std::vector<std::string> userInput) {
                 }
             } else {
                 std::cout << "No running voice session for slotId : " << slotId_
-                        << ", please create one" << std::endl;
+                          << ", please create one" << std::endl;
                 mutex_.unlock();
             }
         } else {
@@ -294,7 +266,7 @@ void VoiceMenu::setVolume(std::vector<std::string> userInput) {
             StreamVolume volume;
             AudioHelper::getUserVolumeInput(volume);
             mutex_.lock();
-            if(activeSession_) {
+            if (activeSession_) {
                 auto status = activeSession_->setVolume(volume);
                 mutex_.unlock();
                 if (status == Status::SUCCESS) {
@@ -304,7 +276,7 @@ void VoiceMenu::setVolume(std::vector<std::string> userInput) {
                 }
             } else {
                 std::cout << "No running voice session for slotId : " << slotId_
-                      << ", please create one" << std::endl;
+                          << ", please create one" << std::endl;
                 mutex_.unlock();
             }
         } else {
@@ -322,7 +294,7 @@ void VoiceMenu::getMute(std::vector<std::string> userInput) {
             StreamMute muteStatus;
             AudioHelper::getUserDirectionInput(muteStatus.dir);
             mutex_.lock();
-            if(activeSession_) {
+            if (activeSession_) {
                 auto status = activeSession_->getMute(muteStatus);
                 mutex_.unlock();
                 if (status == Status::SUCCESS) {
@@ -332,7 +304,7 @@ void VoiceMenu::getMute(std::vector<std::string> userInput) {
                 }
             } else {
                 std::cout << "No running voice session for slotId : " << slotId_
-                      << ", please create one" << std::endl;
+                          << ", please create one" << std::endl;
                 mutex_.unlock();
             }
         } else {
@@ -350,7 +322,7 @@ void VoiceMenu::setMute(std::vector<std::string> userInput) {
             StreamMute muteStatus;
             AudioHelper::getUserMuteStatusInput(muteStatus);
             mutex_.lock();
-            if(activeSession_) {
+            if (activeSession_) {
                 auto status = activeSession_->setMute(muteStatus);
                 mutex_.unlock();
                 if (status == Status::SUCCESS) {
@@ -364,7 +336,7 @@ void VoiceMenu::setMute(std::vector<std::string> userInput) {
                 }
             } else {
                 std::cout << "No running voice session for slotId : " << slotId_
-                      << ", please create one" << std::endl;
+                          << ", please create one" << std::endl;
                 mutex_.unlock();
             }
         } else {
@@ -380,19 +352,19 @@ void VoiceMenu::startAudio(std::vector<std::string> userInput) {
     if (ready_) {
         if (setActiveSession(slotId_) == Status::SUCCESS) {
             mutex_.lock();
-            if(activeSession_) {
+            if (activeSession_) {
                 Status status = activeSession_->startAudio();
                 mutex_.unlock();
                 if (status == Status::SUCCESS) {
                     std::cout << "Audio started on slotId : " << slotId_ << std::endl;
-                } else if(status == Status::ALREADY) {
+                } else if (status == Status::ALREADY) {
                     std::cout << "Audio already started on slotId : " << slotId_ << std::endl;
                 } else {
                     std::cout << "Failed to start audio on slotId : " << slotId_ << std::endl;
                 }
             } else {
                 std::cout << "No running voice session for slotId : " << slotId_
-                      << ", please create one" << std::endl;
+                          << ", please create one" << std::endl;
                 mutex_.unlock();
             }
         } else {
@@ -408,7 +380,7 @@ void VoiceMenu::stopAudio(std::vector<std::string> userInput) {
     if (ready_) {
         if (setActiveSession(slotId_) == Status::SUCCESS) {
             mutex_.lock();
-            if(activeSession_) {
+            if (activeSession_) {
                 Status status = activeSession_->stopAudio();
                 mutex_.unlock();
                 if (status == Status::SUCCESS) {
@@ -418,7 +390,7 @@ void VoiceMenu::stopAudio(std::vector<std::string> userInput) {
                 }
             } else {
                 std::cout << "No running voice session for slotId : " << slotId_
-                      << ", please create one" << std::endl;
+                          << ", please create one" << std::endl;
                 mutex_.unlock();
             }
         } else {
@@ -434,15 +406,15 @@ void VoiceMenu::startDtmf(std::vector<std::string> userInput) {
     if (ready_) {
         if (setActiveSession(slotId_) == Status::SUCCESS) {
             DtmfTone tone;
-            tone.direction = StreamDirection::RX;
+            tone.direction    = StreamDirection::RX;
             uint32_t duration = 0;
-            uint16_t gain = 0;
-            auto status = AudioHelper::getUserDtmfInput(tone, duration, gain);
+            uint16_t gain     = 0;
+            auto status       = AudioHelper::getUserDtmfInput(tone, duration, gain);
             if (status != Status::SUCCESS) {
                 return;
             }
             mutex_.lock();
-            if(activeSession_) {
+            if (activeSession_) {
                 status = activeSession_->startDtmf(tone, duration, gain);
                 mutex_.unlock();
                 if (status == Status::SUCCESS) {
@@ -452,7 +424,7 @@ void VoiceMenu::startDtmf(std::vector<std::string> userInput) {
                 }
             } else {
                 std::cout << "No running voice session for slotId : " << slotId_
-                      << ", please create one" << std::endl;
+                          << ", please create one" << std::endl;
                 mutex_.unlock();
             }
         } else {
@@ -468,7 +440,7 @@ void VoiceMenu::stopDtmf(std::vector<std::string> userInput) {
     if (ready_) {
         if (setActiveSession(slotId_) == Status::SUCCESS) {
             mutex_.lock();
-            if(activeSession_) {
+            if (activeSession_) {
                 auto status = activeSession_->stopDtmf();
                 mutex_.unlock();
                 if (status == Status::SUCCESS) {
@@ -478,7 +450,7 @@ void VoiceMenu::stopDtmf(std::vector<std::string> userInput) {
                 }
             } else {
                 std::cout << "No running voice session for slotId : " << slotId_
-                      << ", please create one" << std::endl;
+                          << ", please create one" << std::endl;
                 mutex_.unlock();
             }
         } else {
@@ -494,7 +466,7 @@ void VoiceMenu::registerListener(std::vector<std::string> userInput) {
     if (ready_) {
         if (setActiveSession(slotId_) == Status::SUCCESS) {
             mutex_.lock();
-            if(activeSession_) {
+            if (activeSession_) {
                 auto status = activeSession_->registerListener(shared_from_this());
                 mutex_.unlock();
                 if (status == Status::SUCCESS) {
@@ -504,7 +476,7 @@ void VoiceMenu::registerListener(std::vector<std::string> userInput) {
                 }
             } else {
                 std::cout << "No running voice session for slotId : " << slotId_
-                      << ", please create one" << std::endl;
+                          << ", please create one" << std::endl;
                 mutex_.unlock();
             }
         } else {
@@ -520,7 +492,7 @@ void VoiceMenu::deRegisterListener(std::vector<std::string> userInput) {
     if (ready_) {
         if (setActiveSession(slotId_) == Status::SUCCESS) {
             mutex_.lock();
-            if(activeSession_) {
+            if (activeSession_) {
                 auto status = activeSession_->deRegisterListener(shared_from_this());
                 mutex_.unlock();
                 if (status == Status::SUCCESS) {
@@ -530,7 +502,7 @@ void VoiceMenu::deRegisterListener(std::vector<std::string> userInput) {
                 }
             } else {
                 std::cout << "No running voice session for slotId : " << slotId_
-                      << ", please create one" << std::endl;
+                          << ", please create one" << std::endl;
                 mutex_.unlock();
             }
         } else {
@@ -559,7 +531,7 @@ Status VoiceMenu::createActiveSession(SlotId slotId) {
         std::lock_guard<std::mutex> lk(mutex_);
         try {
             voiceSessions_[slotId] = std::make_shared<VoiceSession>();
-            activeSession_ = voiceSessions_[slotId];
+            activeSession_         = voiceSessions_[slotId];
         } catch (std::bad_alloc &e) {
             std::cout << "Error: Create active session failed! NOMEMORY!" << std::endl;
             return Status::NOMEMORY;

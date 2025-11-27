@@ -26,10 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -75,10 +75,8 @@ class FirewallConfigurator : public std::enable_shared_from_this<FirewallConfigu
         auto &dataFactory = telux::data::DataFactory::getInstance();
 
         /* Step - 2 */
-        dataFwMgr_ = dataFactory.getFirewallManager(opType,
-                [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+        dataFwMgr_ = dataFactory.getFirewallManager(
+            opType, [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!dataFwMgr_) {
             std::cout << "Can't get IFirewallManager" << std::endl;
@@ -88,8 +86,8 @@ class FirewallConfigurator : public std::enable_shared_from_this<FirewallConfigu
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Firewall service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Firewall service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
@@ -97,17 +95,17 @@ class FirewallConfigurator : public std::enable_shared_from_this<FirewallConfigu
         return 0;
     }
 
-    int updateFirewallConfiguration(telux::data::net::FirewallConfig& fwConfig) {
+    int updateFirewallConfiguration(telux::data::net::FirewallConfig &fwConfig) {
         telux::common::Status status;
 
-        auto respCb = std::bind(
-            &FirewallConfigurator::fwConfigUpdateResponse, this, std::placeholders::_1);
+        auto respCb
+            = std::bind(&FirewallConfigurator::fwConfigUpdateResponse, this, std::placeholders::_1);
 
         /* Step - 5 */
         status = dataFwMgr_->setFirewallConfig(fwConfig, respCb);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't update configuration, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't update configuration, err " << static_cast<int>(status)
+                      << std::endl;
             return -EIO;
         }
 
@@ -117,8 +115,7 @@ class FirewallConfigurator : public std::enable_shared_from_this<FirewallConfigu
 
     /* Receives response of the setFirewallConfig() request */
     void fwConfigUpdateResponse(telux::common::ErrorCode error) {
-        std::cout << "\nfwConfigUpdateResponse(), err " <<
-            static_cast<int>(error) << std::endl;
+        std::cout << "\nfwConfigUpdateResponse(), err " << static_cast<int>(error) << std::endl;
     }
 
  private:
@@ -136,22 +133,23 @@ int main(int argc, char *argv[]) {
     telux::data::BackhaulInfo bhInfo = {};
 
     if (argc != 6) {
-        std::cout << "Usage: ./fwl_enable_sample_app <op-type> <slot-id> " <<
-        "<profile-id> <enable-firewall> <allow-packets>" << std::endl;
+        std::cout << "Usage: ./fwl_enable_sample_app <op-type> <slot-id> "
+                  << "<profile-id> <enable-firewall> <allow-packets>" << std::endl;
         return -EINVAL;
     }
 
     /* Step - 4 */
-    opType = static_cast<telux::data::OperationType>(std::atoi(argv[1]));
-    bhInfo.slotId = static_cast<SlotId>(std::atoi(argv[2]));
-    bhInfo.backhaul = telux::data::BackhaulType::WWAN;
-    bhInfo.profileId = std::atoi(argv[3]);;
-    enable = std::atoi(argv[4]);
+    opType           = static_cast<telux::data::OperationType>(std::atoi(argv[1]));
+    bhInfo.slotId    = static_cast<SlotId>(std::atoi(argv[2]));
+    bhInfo.backhaul  = telux::data::BackhaulType::WWAN;
+    bhInfo.profileId = std::atoi(argv[3]);
+    ;
+    enable       = std::atoi(argv[4]);
     allowPackets = std::atoi(argv[5]);
 
     try {
         app = std::make_shared<FirewallConfigurator>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate FirewallConfigurator" << std::endl;
         return -ENOMEM;
     }
@@ -162,10 +160,10 @@ int main(int argc, char *argv[]) {
     }
 
     telux::data::net::FirewallConfig fwConfig = {};
-    fwConfig.bhInfo = bhInfo;
-    fwConfig.enable = enable;
-    fwConfig.allowPackets = allowPackets;
-    ret = app->updateFirewallConfiguration(fwConfig);
+    fwConfig.bhInfo                           = bhInfo;
+    fwConfig.enable                           = enable;
+    fwConfig.allowPackets                     = allowPackets;
+    ret                                       = app->updateFirewallConfiguration(fwConfig);
     if (ret < 0) {
         return ret;
     }

@@ -26,10 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -46,7 +46,7 @@
  * It provides utility methods to get value of a config setting by passing the key
  */
 class MsdProvider {
-public:
+ public:
     // Function to read the MSD data file containing key value pairs
     static void init(std::string filename, std::string filePath);
 
@@ -57,9 +57,9 @@ public:
 
     void setOptionalAdditionalDataContent(std::vector<uint8_t> optionalAdditionalDataContent);
 
-private:
+ private:
     static telux::tel::ECallMsdData msdData_;
-    static std::vector<uint8_t>  optionalAdditionalDataContent_;
+    static std::vector<uint8_t> optionalAdditionalDataContent_;
 };  // end of class MsdProvider
 
 #endif  // MSDPROVIDER_HPP

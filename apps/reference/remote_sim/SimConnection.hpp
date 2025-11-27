@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file    SimConnection.hpp
  * @brief   This file contains declarations for the SimConnection class, which
@@ -42,9 +48,9 @@
 #include <vector>
 
 extern "C" {
-    #include <netinet/in.h>
-    #include <poll.h>
-    #include <sys/socket.h>
+#include <netinet/in.h>
+#include <poll.h>
+#include <sys/socket.h>
 }
 
 #include <telux/tel/PhoneFactory.hpp>
@@ -62,7 +68,7 @@ extern "C" {
 #define CONN_KEEPALIVE_MSG 8
 
 class SimConnection {
-public:
+ public:
     static SimConnection &getInstance();
 
     telux::common::Status setupDaemonSocket();
@@ -105,7 +111,7 @@ public:
 
     void sendConnKeepaliveResponse();
 
-private:
+ private:
     void sendConnKeepaliveRequest();
 
     void sendRequest(const uint8_t *buf, const int msgLen);
@@ -122,12 +128,12 @@ private:
     struct sockaddr_in clientAddr_;
     struct pollfd daemonFds_;
     struct pollfd clientFds_;
-    int serverSocketFd_ = -1;
+    int serverSocketFd_     = -1;
     int clientConnectionFd_ = -1;
     int daemonConnectionFd_ = -1;
-    bool clientConnected_ = false;
-    bool daemonConnected_ = false;
-    bool pendingKeepalive_ = false;
+    bool clientConnected_   = false;
+    bool daemonConnected_   = false;
+    bool pendingKeepalive_  = false;
 };
 
-#endif // SIMCONNECTION_HPP
+#endif  // SIMCONNECTION_HPP

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -32,23 +32,23 @@ class IDataControlListener;
  * Specifies an application type
  */
 enum class ApplicationType {
-    UNSPECIFIED = 0,     /** Unspecified application*/
-    CONV_AUDIO = 1,      /** Conversation audio application */
-    CONV_VIDEO = 2,      /** Conversation video application */
+    UNSPECIFIED     = 0, /** Unspecified application*/
+    CONV_AUDIO      = 1, /** Conversation audio application */
+    CONV_VIDEO      = 2, /** Conversation video application */
     STREAMING_AUDIO = 3, /** Streaming audio application */
     STREAMING_VIDEO = 4, /** Streaming video application */
-    TYPE_GAMING = 5,     /** Gaming application */
-    WEB_BROWSING = 6,    /** Web browsing application */
-    FILE_TRANSFER = 7    /** File transfer application */
+    TYPE_GAMING     = 5, /** Gaming application */
+    WEB_BROWSING    = 6, /** Web browsing application */
+    FILE_TRANSFER   = 7 /** File transfer application */
 };
 
 /**
  * Specifies the data stall parameters
  */
 struct DataStallParams {
-    Direction trafficDir;    /** Traffic direction */
+    Direction trafficDir; /** Traffic direction */
     ApplicationType appType; /** Application type */
-    bool dataStall = false;  /** Data stall status */
+    bool dataStall = false; /** Data stall status */
 };
 
 /**
@@ -57,7 +57,7 @@ struct DataStallParams {
  */
 
 class IDataControlManager {
-public:
+ public:
     /**
      * Checks the status of Data Control manager object and returns the result.
      *
@@ -90,8 +90,9 @@ public:
      * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
      *         break backwards compatibility.
      */
-    virtual telux::common::ErrorCode setDataStallParams(const SlotId &slotId,
-            const DataStallParams &params) = 0;
+    virtual telux::common::ErrorCode setDataStallParams(
+        const SlotId &slotId, const DataStallParams &params)
+        = 0;
 
     /**
      * Register with the DataControlManager as a listener for service status and other events.
@@ -104,8 +105,8 @@ public:
      * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
      *         break backwards compatibility.
      */
-    virtual telux::common::Status registerListener(
-        std::weak_ptr<IDataControlListener> listener) = 0;
+    virtual telux::common::Status registerListener(std::weak_ptr<IDataControlListener> listener)
+        = 0;
 
     /**
      * Removes a previously added listener.
@@ -117,8 +118,8 @@ public:
      * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
      *         break backwards compatibility.
      */
-    virtual telux::common::Status deregisterListener(
-        std::weak_ptr<IDataControlListener> listener) = 0;
+    virtual telux::common::Status deregisterListener(std::weak_ptr<IDataControlListener> listener)
+        = 0;
 };
 
 /**
@@ -136,7 +137,8 @@ class IDataControlListener : public telux::common::ISDKListener {
      *
      * @param [in] status    @ref ServiceStatus
      */
-    virtual void onServiceStatusChange(telux::common::ServiceStatus status) {}
+    virtual void onServiceStatusChange(telux::common::ServiceStatus status) {
+    }
 
     /**
      * Destructor for IDataControlListener
@@ -145,7 +147,7 @@ class IDataControlListener : public telux::common::ISDKListener {
 };
 
 /** @} */ /* end_addtogroup telematics_data */
-}
-}
+}  // namespace data
+}  // namespace telux
 
-#endif // TELUX_DATA_DATACONTROLMANAGER_HPP
+#endif  // TELUX_DATA_DATACONTROLMANAGER_HPP

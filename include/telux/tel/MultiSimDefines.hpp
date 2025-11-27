@@ -26,9 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -54,22 +55,23 @@ namespace tel {
  * Represents state of the physical SIM slot
  */
 enum class SlotState {
-   UNKNOWN = -1,
-   INACTIVE,   /**< Slot is inactive */
-   ACTIVE,     /**< Slot is active */
+    UNKNOWN = -1,
+    INACTIVE, /**< Slot is inactive */
+    ACTIVE, /**< Slot is active */
 };
 
 /**
  * Represents status of a physical SIM slot
  */
 struct SlotStatus {
-   SlotState slotState;         /**< State of the physical SIM slot */
-   CardState cardState;         /**< Status of the card in the physical slot */
-   CardError cardError;         /**< Indicates the reason for the card error, and is valid only when the card state is CARDSTATE_ERROR. */
+    SlotState slotState; /**< State of the physical SIM slot */
+    CardState cardState; /**< Status of the card in the physical slot */
+    CardError cardError; /**< Indicates the reason for the card error, and is valid only when the
+                            card state is CARDSTATE_ERROR. */
 };
 
 /** @} */ /* end_addtogroup telematics_multi_sim */
-}
-}
+}  // namespace tel
+}  // namespace telux
 
-#endif // TELUX_TEL_MULTISIMDEFINES_HPP
+#endif  // TELUX_TEL_MULTISIMDEFINES_HPP

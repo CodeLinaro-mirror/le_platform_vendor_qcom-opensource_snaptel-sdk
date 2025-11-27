@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_VehicleWidth_H_
-#define	_VehicleWidth_H_
-
+#ifndef _VehicleWidth_H_
+#define _VehicleWidth_H_
 
 #include <asn_application.h>
 
@@ -20,13 +19,13 @@ extern "C" {
 
 /* Dependencies */
 typedef enum VehicleWidth {
-	VehicleWidth_tenCentimeters	= 1,
-	VehicleWidth_outOfRange	= 61,
-	VehicleWidth_unavailable	= 62
+    VehicleWidth_tenCentimeters = 1,
+    VehicleWidth_outOfRange     = 61,
+    VehicleWidth_unavailable    = 62
 } e_VehicleWidth;
 
 /* VehicleWidth */
-typedef long	 VehicleWidth_t;
+typedef long VehicleWidth_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_VehicleWidth;
@@ -44,5 +43,5 @@ per_type_encoder_f VehicleWidth_encode_uper;
 }
 #endif
 
-#endif	/* _VehicleWidth_H_ */
+#endif /* _VehicleWidth_H_ */
 #include <asn_internal.h>

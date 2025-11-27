@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_GatewayMacAddress_H_
-#define	_GatewayMacAddress_H_
-
+#ifndef _GatewayMacAddress_H_
+#define _GatewayMacAddress_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* GatewayMacAddress */
-typedef MACaddress_t	 GatewayMacAddress_t;
+typedef MACaddress_t GatewayMacAddress_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_GatewayMacAddress;
@@ -37,5 +36,5 @@ per_type_encoder_f GatewayMacAddress_encode_uper;
 }
 #endif
 
-#endif	/* _GatewayMacAddress_H_ */
+#endif /* _GatewayMacAddress_H_ */
 #include <asn_internal.h>

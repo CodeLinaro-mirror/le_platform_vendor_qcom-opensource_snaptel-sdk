@@ -26,10 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -48,10 +48,10 @@
 #include <telux/cv2x/Cv2xFactory.hpp>
 #include <telux/cv2x/Cv2xRadioManager.hpp>
 
-using std::cout;
 using std::cerr;
-using std::endl;
 using std::cin;
+using std::cout;
+using std::endl;
 using std::promise;
 
 using telux::common::ErrorCode;
@@ -59,7 +59,7 @@ using telux::common::Status;
 using telux::cv2x::Cv2xFactory;
 using telux::cv2x::ICv2xRadioManager;
 
-//per 3GPP TS 36.311
+// per 3GPP TS 36.311
 #define CV2X_TX_POWER_MAX (31)
 #define CV2X_TX_POWER_MIN (-40)
 
@@ -89,18 +89,18 @@ int main(int argc, char *argv[]) {
 
     // Get handle to Cv2xRadioManager
     bool cv2xRadioManagerStatusUpdated = false;
-    telux::common::ServiceStatus cv2xRadioManagerStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    telux::common::ServiceStatus cv2xRadioManagerStatus
+        = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
     std::condition_variable cv;
     std::mutex mtx;
     auto statusCb = [&](telux::common::ServiceStatus status) {
         std::lock_guard<std::mutex> lock(mtx);
         cv2xRadioManagerStatusUpdated = true;
-        cv2xRadioManagerStatus = status;
+        cv2xRadioManagerStatus        = status;
         cv.notify_all();
     };
 
-    auto & cv2xFactory = Cv2xFactory::getInstance();
+    auto &cv2xFactory = Cv2xFactory::getInstance();
     auto cv2xRadioMgr = cv2xFactory.getCv2xRadioManager(statusCb);
     if (!cv2xRadioMgr) {
         cout << "Error: failed to get Cv2xRadioManager." << endl;
@@ -108,8 +108,7 @@ int main(int argc, char *argv[]) {
     }
     std::unique_lock<std::mutex> lck(mtx);
     cv.wait(lck, [&] { return cv2xRadioManagerStatusUpdated; });
-    if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
-        cv2xRadioManagerStatus) {
+    if (telux::common::ServiceStatus::SERVICE_AVAILABLE != cv2xRadioManagerStatus) {
         cerr << "C-V2X Radio Manager initialization failed, exiting" << endl;
         return EXIT_FAILURE;
     }

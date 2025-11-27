@@ -28,9 +28,8 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -51,36 +50,36 @@
 using std::cerr;
 using std::cout;
 using std::endl;
+using std::make_shared;
 using std::promise;
 using std::shared_ptr;
-using std::make_shared;
-using telux::common::Status;
-using telux::common::ServiceStatus;
 using telux::common::ErrorCode;
+using telux::common::ServiceStatus;
+using telux::common::Status;
 using telux::cv2x::Cv2xFactory;
 using telux::cv2x::Cv2xStatus;
 using telux::cv2x::Cv2xStatusType;
-using telux::cv2x::TrafficCategory;
-using telux::cv2x::TrafficIpType;
 using telux::cv2x::Cv2xUtil;
 using telux::cv2x::Priority;
+using telux::cv2x::TrafficCategory;
+using telux::cv2x::TrafficIpType;
 
-static constexpr uint32_t G_BUF_LEN = 3000u;
+static constexpr uint32_t G_BUF_LEN  = 3000u;
 static constexpr uint8_t MAX_SID_NUM = 10u;
-static bool gExiting = false;
+static bool gExiting                 = false;
 
 void Cv2xRxApp::printUsage() {
     cout << "Usage: " << endl;
     cout << "-m <Rx mode>        Rx mode 0:wildcard, 1:catchall, 2:specific SID" << endl;
-    cout << "-p <Rx port>        Rx port number, default is "<< RX_PORT_NUM << endl;
+    cout << "-p <Rx port>        Rx port number, default is " << RX_PORT_NUM << endl;
     cout << "-s <SID1>,<SID2>... SID/SIDs used for specific SID/catchall Rx mode" << endl;
 }
 
-int Cv2xRxApp::parseSidList(char* param) {
-    char* saveptr = NULL;
-    char* tok = param;
-    char* endptr = NULL;
-    int i = 0;
+int Cv2xRxApp::parseSidList(char *param) {
+    char *saveptr    = NULL;
+    char *tok        = param;
+    char *endptr     = NULL;
+    int i            = 0;
     unsigned int sid = 0;
 
     tok = strtok_r(tok, ",", &saveptr);
@@ -115,37 +114,36 @@ int Cv2xRxApp::parseOptions(int argc, char *argv[]) {
     int c;
     while ((c = getopt(argc, argv, "hm:p:s:")) != -1) {
         switch (c) {
-        case 'm':
-            if (optarg) {
-                auto mode = atoi(optarg);
-                cout << "Set Rx mode " << mode << endl;
-                rxMode_ = static_cast<RxModeType>(mode);
-            }
-            break;
-        case 'p':
-            if (optarg) {
-                port_ = atoi(optarg);
-                cout << "Set Rx port " << port_ << endl;
-            }
-            break;
-        case 's':
-            if (optarg) {
-                if (EXIT_FAILURE == parseSidList(optarg)) {
-                    return EXIT_FAILURE;
+            case 'm':
+                if (optarg) {
+                    auto mode = atoi(optarg);
+                    cout << "Set Rx mode " << mode << endl;
+                    rxMode_ = static_cast<RxModeType>(mode);
                 }
-            }
-            break;
-        case 'h':
-        default:
-            printUsage();
-            return EXIT_FAILURE;
+                break;
+            case 'p':
+                if (optarg) {
+                    port_ = atoi(optarg);
+                    cout << "Set Rx port " << port_ << endl;
+                }
+                break;
+            case 's':
+                if (optarg) {
+                    if (EXIT_FAILURE == parseSidList(optarg)) {
+                        return EXIT_FAILURE;
+                    }
+                }
+                break;
+            case 'h':
+            default:
+                printUsage();
+                return EXIT_FAILURE;
         }
     }
 
     // user must set SID/SIDs for SPECIFIC_SID/CATCHALL Rx mode
-    if ((RxModeType::SPECIFIC_SID == rxMode_ or
-        RxModeType::CATCHALL == rxMode_) and
-        0 == idVector_.size()) {
+    if ((RxModeType::SPECIFIC_SID == rxMode_ or RxModeType::CATCHALL == rxMode_)
+        and 0 == idVector_.size()) {
         cerr << "No sid specified for Rx mode " << static_cast<int>(rxMode_) << endl;
         return EXIT_FAILURE;
     }
@@ -155,19 +153,19 @@ int Cv2xRxApp::parseOptions(int argc, char *argv[]) {
 
 int Cv2xRxApp::init() {
     bool cv2xRadioManagerStatusUpdated = false;
-    telux::common::ServiceStatus cv2xRadioManagerStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    telux::common::ServiceStatus cv2xRadioManagerStatus
+        = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
     std::condition_variable cv;
     std::mutex mtx;
     auto statusCb = [&](telux::common::ServiceStatus status) {
         std::lock_guard<std::mutex> lock(mtx);
         cv2xRadioManagerStatusUpdated = true;
-        cv2xRadioManagerStatus = status;
+        cv2xRadioManagerStatus        = status;
         cv.notify_all();
     };
 
     // Get handle to Cv2xRadioManager
-    auto & cv2xFactory = Cv2xFactory::getInstance();
+    auto &cv2xFactory     = Cv2xFactory::getInstance();
     auto cv2xRadioManager = cv2xFactory.getCv2xRadioManager(statusCb);
     if (not cv2xRadioManager) {
         cerr << "failed to get Cv2xRadioManager!" << endl;
@@ -177,8 +175,7 @@ int Cv2xRxApp::init() {
     {
         std::unique_lock<std::mutex> lck(mtx);
         cv.wait(lck, [&] { return cv2xRadioManagerStatusUpdated; });
-        if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
-            cv2xRadioManagerStatus) {
+        if (telux::common::ServiceStatus::SERVICE_AVAILABLE != cv2xRadioManagerStatus) {
             cerr << "C-V2X Radio Manager initialization failed!" << endl;
             return EXIT_FAILURE;
         }
@@ -193,7 +190,7 @@ int Cv2xRxApp::init() {
                 cv2xStatus = status;
             }
             p.set_value(error);
-    });
+        });
     if (Status::SUCCESS != ret or ErrorCode::SUCCESS != p.get_future().get()) {
         cerr << "Get C-V2X status failed!" << endl;
         return EXIT_FAILURE;
@@ -208,13 +205,13 @@ int Cv2xRxApp::init() {
 
     // Get handle to Cv2xRadio
     bool cv2x_radio_status_updated = false;
-    telux::common::ServiceStatus cv2xRadioStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    telux::common::ServiceStatus cv2xRadioStatus
+        = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
 
     auto cb = [&](ServiceStatus status) {
         std::lock_guard<std::mutex> lock(mtx);
         cv2x_radio_status_updated = true;
-        cv2xRadioStatus = status;
+        cv2xRadioStatus           = status;
         cv.notify_all();
     };
 
@@ -253,10 +250,7 @@ int Cv2xRxApp::init() {
 int Cv2xRxApp::registerTxFlow() {
     promise<ErrorCode> p;
     shared_ptr<ICv2xTxFlow> txFlow = nullptr;
-    auto ret = cv2xRadio_->createTxEventFlow(
-        TrafficIpType::TRAFFIC_NON_IP,
-        idVector_[0],
-        port_,
+    auto ret = cv2xRadio_->createTxEventFlow(TrafficIpType::TRAFFIC_NON_IP, idVector_[0], port_,
         [&p, &txFlow](shared_ptr<ICv2xTxFlow> flow, ErrorCode error) {
             if (ErrorCode::SUCCESS == error) {
                 txFlow = flow;
@@ -283,9 +277,8 @@ int Cv2xRxApp::registerRxFlow() {
 
     promise<ErrorCode> p;
     shared_ptr<ICv2xRxSubscription> rxFlow = nullptr;
-    auto ret = cv2xRadio_->createRxSubscription(
-        TrafficIpType::TRAFFIC_NON_IP,
-        port_,
+    auto ret                               = cv2xRadio_->createRxSubscription(
+        TrafficIpType::TRAFFIC_NON_IP, port_,
         [&p, &rxFlow](shared_ptr<ICv2xRxSubscription> flow, ErrorCode error) {
             if (ErrorCode::SUCCESS == error) {
                 rxFlow = flow;
@@ -302,7 +295,7 @@ int Cv2xRxApp::registerRxFlow() {
 
     // set 100ms timeout for Rx socket
     struct timeval tv;
-    tv.tv_sec = 0;
+    tv.tv_sec  = 0;
     tv.tv_usec = 100000;
     if (setsockopt(rxFlow_->getSock(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
         cerr << "set Rx socket timeout failed!" << endl;
@@ -322,10 +315,7 @@ int Cv2xRxApp::registerRxFlow() {
 int Cv2xRxApp::deregisterTxFlow() {
     promise<ErrorCode> p;
     auto ret = cv2xRadio_->closeTxFlow(
-        txFlow_,
-        [&p](shared_ptr<ICv2xTxFlow> unused, ErrorCode error) {
-            p.set_value(error);
-        });
+        txFlow_, [&p](shared_ptr<ICv2xTxFlow> unused, ErrorCode error) { p.set_value(error); });
     if (Status::SUCCESS != ret or ErrorCode::SUCCESS != p.get_future().get()) {
         cerr << "Deregister Tx flow failed!" << endl;
         return EXIT_FAILURE;
@@ -337,11 +327,8 @@ int Cv2xRxApp::deregisterTxFlow() {
 
 int Cv2xRxApp::deregisterRxFlow() {
     promise<ErrorCode> p;
-    auto ret = cv2xRadio_->closeRxSubscription(
-        rxFlow_,
-        [&p](shared_ptr<ICv2xRxSubscription> unused, ErrorCode error) {
-            p.set_value(error);
-        });
+    auto ret = cv2xRadio_->closeRxSubscription(rxFlow_,
+        [&p](shared_ptr<ICv2xRxSubscription> unused, ErrorCode error) { p.set_value(error); });
     if (Status::SUCCESS != ret or ErrorCode::SUCCESS != p.get_future().get()) {
         cerr << "Deregister Rx flow failed!" << endl;
         return EXIT_FAILURE;
@@ -406,28 +393,28 @@ int Cv2xRxApp::sampleTx(int length) {
     return EXIT_SUCCESS;
 }
 
-int Cv2xRxApp::sampleRx(int& length) {
+int Cv2xRxApp::sampleRx(int &length) {
     if (not rxFlow_) {
         cerr << "Rx flow not created!" << endl;
         return EXIT_FAILURE;
     }
 
     cout << "sampleRx( sock is " << rxFlow_->getSock() << ", port number is"
-        << rxFlow_->getPortNum() << ")" << endl;
+         << rxFlow_->getPortNum() << ")" << endl;
 
     // Attempt to read from socket
     struct sockaddr_in6 from;
-    socklen_t fromLen = sizeof(from);
+    socklen_t fromLen     = sizeof(from);
     struct msghdr message = {0};
     char control[CMSG_SPACE(sizeof(int))];
-    struct iovec iov[1] = {0};
-    iov[0].iov_base = buf_;
-    iov[0].iov_len = G_BUF_LEN;
-    message.msg_name = &from;
-    message.msg_namelen = fromLen;
-    message.msg_iov = iov;
-    message.msg_iovlen = 1;
-    message.msg_control = control;
+    struct iovec iov[1]    = {0};
+    iov[0].iov_base        = buf_;
+    iov[0].iov_len         = G_BUF_LEN;
+    message.msg_name       = &from;
+    message.msg_namelen    = fromLen;
+    message.msg_iov        = iov;
+    message.msg_iovlen     = 1;
+    message.msg_control    = control;
     message.msg_controllen = sizeof(control);
 
     length = recvmsg(rxFlow_->getSock(), &message, 0);
@@ -439,19 +426,18 @@ int Cv2xRxApp::sampleRx(int& length) {
         }
     } else {
         struct cmsghdr *cmsghp = CMSG_FIRSTHDR(&message);
-        Priority priority = Priority::PRIORITY_UNKNOWN;
+        Priority priority      = Priority::PRIORITY_UNKNOWN;
         if (cmsghp) {
             int tclass = 0;
             // get traffic class
-            if (cmsghp->cmsg_level == IPPROTO_IPV6 &&
-                cmsghp->cmsg_type == IPV6_TCLASS) {
+            if (cmsghp->cmsg_level == IPPROTO_IPV6 && cmsghp->cmsg_type == IPV6_TCLASS) {
                 memcpy(&tclass, CMSG_DATA(cmsghp), sizeof(tclass));
                 priority = Cv2xUtil::TrafficClassToPriority(tclass);
             }
         }
         ++rxCount_;
-        cout << "Received " << length << " bytes, count:" << rxCount_
-            << ",  priority " << static_cast<int>(priority) << endl;
+        cout << "Received " << length << " bytes, count:" << rxCount_ << ",  priority "
+             << static_cast<int>(priority) << endl;
     }
 
     return EXIT_SUCCESS;
@@ -465,7 +451,7 @@ static void signalHandler(int signum) {
 int main(int argc, char *argv[]) {
     cout << "Running Sample C-V2X RX app" << endl;
     std::vector<std::string> groups{"system", "diag", "radio", "logd"};
-    if (-1 == Utils::setSupplementaryGroups(groups)){
+    if (-1 == Utils::setSupplementaryGroups(groups)) {
         cout << "Adding supplementary group failed!" << std::endl;
     }
 
@@ -497,7 +483,7 @@ int main(int argc, char *argv[]) {
             // send back received packets if Rx mode is specific SID
             app.sampleTx(len);
         }
-    } while(0);
+    } while (0);
 
     app.deinit();
 

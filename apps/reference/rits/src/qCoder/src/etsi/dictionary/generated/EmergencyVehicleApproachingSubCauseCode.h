@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_EmergencyVehicleApproachingSubCauseCode_H_
-#define	_EmergencyVehicleApproachingSubCauseCode_H_
-
+#ifndef _EmergencyVehicleApproachingSubCauseCode_H_
+#define _EmergencyVehicleApproachingSubCauseCode_H_
 
 #include <asn_application.h>
 
@@ -20,13 +19,13 @@ extern "C" {
 
 /* Dependencies */
 typedef enum EmergencyVehicleApproachingSubCauseCode {
-	EmergencyVehicleApproachingSubCauseCode_unavailable	= 0,
-	EmergencyVehicleApproachingSubCauseCode_emergencyVehicleApproaching	= 1,
-	EmergencyVehicleApproachingSubCauseCode_prioritizedVehicleApproaching	= 2
+    EmergencyVehicleApproachingSubCauseCode_unavailable                   = 0,
+    EmergencyVehicleApproachingSubCauseCode_emergencyVehicleApproaching   = 1,
+    EmergencyVehicleApproachingSubCauseCode_prioritizedVehicleApproaching = 2
 } e_EmergencyVehicleApproachingSubCauseCode;
 
 /* EmergencyVehicleApproachingSubCauseCode */
-typedef long	 EmergencyVehicleApproachingSubCauseCode_t;
+typedef long EmergencyVehicleApproachingSubCauseCode_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_EmergencyVehicleApproachingSubCauseCode;
@@ -44,5 +43,5 @@ per_type_encoder_f EmergencyVehicleApproachingSubCauseCode_encode_uper;
 }
 #endif
 
-#endif	/* _EmergencyVehicleApproachingSubCauseCode_H_ */
+#endif /* _EmergencyVehicleApproachingSubCauseCode_H_ */
 #include <asn_internal.h>

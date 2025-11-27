@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <telux/common/DeviceConfig.hpp>
@@ -22,23 +22,20 @@ BridgeServerImpl::~BridgeServerImpl() {
     LOG(DEBUG, __FUNCTION__);
 }
 
-grpc::Status BridgeServerImpl::InitService(ServerContext* context,
-    const google::protobuf::Empty* request,
-    dataStub::GetServiceStatusReply* response) {
+grpc::Status BridgeServerImpl::InitService(ServerContext *context,
+    const google::protobuf::Empty *request, dataStub::GetServiceStatusReply *response) {
 
     LOG(DEBUG, __FUNCTION__);
     Json::Value rootObj;
-    std::string filePath = BRIDGE_MANAGER_API_LOCAL_JSON;
-    telux::common::ErrorCode error =
-        JsonParser::readFromJsonFile(rootObj, filePath);
+    std::string filePath           = BRIDGE_MANAGER_API_LOCAL_JSON;
+    telux::common::ErrorCode error = JsonParser::readFromJsonFile(rootObj, filePath);
     if (error != ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! ");
         return grpc::Status(grpc::StatusCode::NOT_FOUND, "Json not found");
     }
 
-    int cbDelay = rootObj["IBridgeManager"]["IsSubsystemReadyDelay"].asInt();
-    std::string cbStatus =
-        rootObj["IBridgeManager"]["IsSubsystemReady"].asString();
+    int cbDelay          = rootObj["IBridgeManager"]["IsSubsystemReadyDelay"].asInt();
+    std::string cbStatus = rootObj["IBridgeManager"]["IsSubsystemReady"].asString();
     telux::common::ServiceStatus status = CommonUtils::mapServiceStatus(cbStatus);
     LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", cbStatus);
 
@@ -48,17 +45,17 @@ grpc::Status BridgeServerImpl::InitService(ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status BridgeServerImpl::SetInterfaceBridge(ServerContext* context,
-    const dataStub::SetInterfaceBridgeRequest* request, dataStub::DefaultReply* response) {
+grpc::Status BridgeServerImpl::SetInterfaceBridge(ServerContext *context,
+    const dataStub::SetInterfaceBridgeRequest *request, dataStub::DefaultReply *response) {
 
     LOG(DEBUG, __FUNCTION__);
-    std::string apiJsonPath = BRIDGE_MANAGER_API_LOCAL_JSON;
+    std::string apiJsonPath   = BRIDGE_MANAGER_API_LOCAL_JSON;
     std::string stateJsonPath = BRIDGE_MANAGER_STATE_JSON;
-    std::string subsystem = "IBridgeManager";
-    std::string method = "setInterfaceBridge";
+    std::string subsystem     = "IBridgeManager";
+    std::string method        = "setInterfaceBridge";
     JsonData data;
-    telux::common::ErrorCode error =
-        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
 
     if (error != ErrorCode::SUCCESS) {
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
@@ -69,19 +66,17 @@ grpc::Status BridgeServerImpl::SetInterfaceBridge(ServerContext* context,
         LOG(DEBUG, __FUNCTION__, " adding ifaceType::", request->interface_type(),
             " bridgeId::", request->bridge_id());
         Json::Value newBridgeConfigEntry;
-        int currentEntryCount =
-            data.stateRootObj[subsystem]["bridgeConfig"].size();
-        bool entryExists = isBridgeConfigAvailable(subsystem, data, request, entryIdx);
+        int currentEntryCount = data.stateRootObj[subsystem]["bridgeConfig"].size();
+        bool entryExists      = isBridgeConfigAvailable(subsystem, data, request, entryIdx);
         if (!entryExists) {
             newBridgeConfigEntry["ifaceType"] = request->interface_type();
-            newBridgeConfigEntry["bridgeId"] = request->bridge_id();
-            data.stateRootObj[subsystem]["bridgeConfig"][currentEntryCount] =
-                newBridgeConfigEntry;
+            newBridgeConfigEntry["bridgeId"]  = request->bridge_id();
+            data.stateRootObj[subsystem]["bridgeConfig"][currentEntryCount] = newBridgeConfigEntry;
         } else {
             LOG(DEBUG, __FUNCTION__, " updating ifaceType::", request->interface_type(),
                 " bridgeId::", request->bridge_id());
-            data.stateRootObj[subsystem]["bridgeConfig"][entryIdx]["bridgeId"] =
-                request->bridge_id();
+            data.stateRootObj[subsystem]["bridgeConfig"][entryIdx]["bridgeId"]
+                = request->bridge_id();
         }
         JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
     }
@@ -91,25 +86,25 @@ grpc::Status BridgeServerImpl::SetInterfaceBridge(ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status BridgeServerImpl::GetInterfaceBridge(ServerContext* context,
-    const dataStub::GetInterfaceBridgeRequest* request,
-    dataStub::GetInterfaceBridgeReply* response) {
+grpc::Status BridgeServerImpl::GetInterfaceBridge(ServerContext *context,
+    const dataStub::GetInterfaceBridgeRequest *request,
+    dataStub::GetInterfaceBridgeReply *response) {
 
     LOG(DEBUG, __FUNCTION__);
-    std::string apiJsonPath = BRIDGE_MANAGER_API_LOCAL_JSON;
+    std::string apiJsonPath   = BRIDGE_MANAGER_API_LOCAL_JSON;
     std::string stateJsonPath = BRIDGE_MANAGER_STATE_JSON;
-    std::string subsystem = "IBridgeManager";
-    std::string method = "getInterfaceBridge";
+    std::string subsystem     = "IBridgeManager";
+    std::string method        = "getInterfaceBridge";
     JsonData data;
-    telux::common::ErrorCode error =
-        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
 
     if (error != ErrorCode::SUCCESS) {
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
     }
 
     if (data.error == telux::common::ErrorCode::SUCCESS) {
-        int entryIdx = 0;
+        int entryIdx     = 0;
         bool entryExists = isBridgeConfigAvailable(subsystem, data, request, entryIdx);
         if (!entryExists) {
             response->set_bridge_id(0);

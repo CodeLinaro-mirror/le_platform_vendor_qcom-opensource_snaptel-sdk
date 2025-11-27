@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <errno.h>
@@ -22,9 +22,8 @@ SecurityCryptoServerImpl::~SecurityCryptoServerImpl() {
     LOG(DEBUG, __FUNCTION__);
 }
 
-grpc::Status SecurityCryptoServerImpl::Init(::grpc::ServerContext* context,
-    const ::google::protobuf::Empty* request,
-    ::commonStub::ErrorCodeMsg* response) {
+grpc::Status SecurityCryptoServerImpl::Init(::grpc::ServerContext *context,
+    const ::google::protobuf::Empty *request, ::commonStub::ErrorCodeMsg *response) {
 
     telux::common::ErrorCode ec;
 
@@ -37,7 +36,7 @@ grpc::Status SecurityCryptoServerImpl::Init(::grpc::ServerContext* context,
         }
     }
 
-    if(!databaseJsonRoot_) {
+    if (!databaseJsonRoot_) {
         ec = JsonParser::readFromJsonFile(databaseJsonRoot_, cryptoMgr_DATABASE_FILE);
         if (ec != telux::common::ErrorCode::SUCCESS) {
             LOG(ERROR, __FUNCTION__, " can't read ", cryptoMgr_DATABASE_FILE);
@@ -57,17 +56,16 @@ grpc::Status SecurityCryptoServerImpl::Init(::grpc::ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status SecurityCryptoServerImpl::DeInit(::grpc::ServerContext* context,
-    const ::google::protobuf::Empty* request,
-    ::commonStub::ErrorCodeMsg* response) {
+grpc::Status SecurityCryptoServerImpl::DeInit(::grpc::ServerContext *context,
+    const ::google::protobuf::Empty *request, ::commonStub::ErrorCodeMsg *response) {
 
     response->set_ec(commonStub::ErrorCode::ERROR_CODE_SUCCESS);
     return grpc::Status::OK;
 }
 
-grpc::Status SecurityCryptoServerImpl::GenerateKey(::grpc::ServerContext* context,
-const ::securityStub::GenerateKeyRequest* request,
-::securityStub::GenerateKeyResponse* response) {
+grpc::Status SecurityCryptoServerImpl::GenerateKey(::grpc::ServerContext *context,
+    const ::securityStub::GenerateKeyRequest *request,
+    ::securityStub::GenerateKeyResponse *response) {
 
     telux::common::ErrorCode ec;
 
@@ -86,7 +84,7 @@ const ::securityStub::GenerateKeyRequest* request,
     }
 
     std::string keyBlobStr = databaseJsonRoot_["generateKey"]["keyBlob"].asString();
-    std::string byteBlob = hex_to_bytes(keyBlobStr);
+    std::string byteBlob   = hex_to_bytes(keyBlobStr);
 
     response->set_key_blob(byteBlob);
     response->set_error_code(commonStub::ErrorCode::ERROR_CODE_SUCCESS);
@@ -94,10 +92,9 @@ const ::securityStub::GenerateKeyRequest* request,
     return grpc::Status::OK;
 }
 
-grpc::Status SecurityCryptoServerImpl::ImportKey(::grpc::ServerContext* context,
-    const ::securityStub::ImportKeyRequest* request,
-    ::securityStub::ImportKeyResponse* response) {
-   telux::common::ErrorCode ec;
+grpc::Status SecurityCryptoServerImpl::ImportKey(::grpc::ServerContext *context,
+    const ::securityStub::ImportKeyRequest *request, ::securityStub::ImportKeyResponse *response) {
+    telux::common::ErrorCode ec;
 
     if (!apiConfigJsonRoot_) {
         ec = JsonParser::readFromJsonFile(apiConfigJsonRoot_, cryptoMgr_API_JSON_FILE);
@@ -117,16 +114,15 @@ grpc::Status SecurityCryptoServerImpl::ImportKey(::grpc::ServerContext* context,
     }
 
     std::string keyBlobStr = databaseJsonRoot_["importKey"]["result"].asString();
-    std::string byteBlob = hex_to_bytes(keyBlobStr);
+    std::string byteBlob   = hex_to_bytes(keyBlobStr);
     response->set_key_blob(byteBlob);
     response->set_error_code(commonStub::ErrorCode::ERROR_CODE_SUCCESS);
 
     return grpc::Status::OK;
 }
 
-grpc::Status SecurityCryptoServerImpl::ExportKey(::grpc::ServerContext* context,
-    const ::securityStub::ExportKeyRequest* request,
-    ::securityStub::ExportKeyResponse* response) {
+grpc::Status SecurityCryptoServerImpl::ExportKey(::grpc::ServerContext *context,
+    const ::securityStub::ExportKeyRequest *request, ::securityStub::ExportKeyResponse *response) {
     telux::common::ErrorCode ec;
 
     if (!apiConfigJsonRoot_) {
@@ -147,16 +143,16 @@ grpc::Status SecurityCryptoServerImpl::ExportKey(::grpc::ServerContext* context,
     }
 
     std::string keyDataStr = databaseJsonRoot_["exportKey"]["result"].asString();
-    std::string byteData = hex_to_bytes(keyDataStr);
+    std::string byteData   = hex_to_bytes(keyDataStr);
     response->set_key_data(byteData);
     response->set_error_code(commonStub::ErrorCode::ERROR_CODE_SUCCESS);
 
     return grpc::Status::OK;
 }
 
-grpc::Status SecurityCryptoServerImpl::UpgradeKey(::grpc::ServerContext* context,
-    const ::securityStub::UpgradeKeyRequest* request,
-    ::securityStub::UpgradeKeyResponse* response) {
+grpc::Status SecurityCryptoServerImpl::UpgradeKey(::grpc::ServerContext *context,
+    const ::securityStub::UpgradeKeyRequest *request,
+    ::securityStub::UpgradeKeyResponse *response) {
     telux::common::ErrorCode ec;
 
     if (!apiConfigJsonRoot_) {
@@ -202,9 +198,8 @@ grpc::Status SecurityCryptoServerImpl::UpgradeKey(::grpc::ServerContext* context
     return grpc::Status::OK;
 }
 
-grpc::Status SecurityCryptoServerImpl::SignData(::grpc::ServerContext* context,
-    const ::securityStub::SignDataRequest* request,
-    ::securityStub::SignDataResponse* response) {
+grpc::Status SecurityCryptoServerImpl::SignData(::grpc::ServerContext *context,
+    const ::securityStub::SignDataRequest *request, ::securityStub::SignDataResponse *response) {
     telux::common::ErrorCode ec;
 
     if (!apiConfigJsonRoot_) {
@@ -222,16 +217,16 @@ grpc::Status SecurityCryptoServerImpl::SignData(::grpc::ServerContext* context,
     }
 
     std::string signatureStr = databaseJsonRoot_["signData"]["signature"].asString();
-    std::string signature = hex_to_bytes(signatureStr);
+    std::string signature    = hex_to_bytes(signatureStr);
     response->set_signature(signature);
     response->set_error_code(commonStub::ErrorCode::ERROR_CODE_SUCCESS);
 
     return grpc::Status::OK;
 }
 
-grpc::Status SecurityCryptoServerImpl::VerifyData(::grpc::ServerContext* context,
-    const ::securityStub::VerifyDataRequest* request,
-    ::securityStub::VerifyDataResponse* response) {
+grpc::Status SecurityCryptoServerImpl::VerifyData(::grpc::ServerContext *context,
+    const ::securityStub::VerifyDataRequest *request,
+    ::securityStub::VerifyDataResponse *response) {
     telux::common::ErrorCode ec;
 
     if (!apiConfigJsonRoot_) {
@@ -267,9 +262,9 @@ grpc::Status SecurityCryptoServerImpl::VerifyData(::grpc::ServerContext* context
     return grpc::Status::OK;
 }
 
-grpc::Status SecurityCryptoServerImpl::EncryptData(::grpc::ServerContext* context,
-    const ::securityStub::EncryptDataRequest* request,
-    ::securityStub::EncryptDataResponse* response) {
+grpc::Status SecurityCryptoServerImpl::EncryptData(::grpc::ServerContext *context,
+    const ::securityStub::EncryptDataRequest *request,
+    ::securityStub::EncryptDataResponse *response) {
     telux::common::ErrorCode ec;
 
     if (!apiConfigJsonRoot_) {
@@ -312,9 +307,9 @@ grpc::Status SecurityCryptoServerImpl::EncryptData(::grpc::ServerContext* contex
     return grpc::Status::OK;
 }
 
-grpc::Status SecurityCryptoServerImpl::DecryptData(::grpc::ServerContext* context,
-    const ::securityStub::DecryptDataRequest* request,
-    ::securityStub::DecryptDataResponse* response) {
+grpc::Status SecurityCryptoServerImpl::DecryptData(::grpc::ServerContext *context,
+    const ::securityStub::DecryptDataRequest *request,
+    ::securityStub::DecryptDataResponse *response) {
     telux::common::ErrorCode ec;
 
     if (!apiConfigJsonRoot_) {
@@ -357,19 +352,19 @@ grpc::Status SecurityCryptoServerImpl::DecryptData(::grpc::ServerContext* contex
     return grpc::Status::OK;
 }
 
-//Helper function
-std::string SecurityCryptoServerImpl::hex_to_bytes(const std::string& hex) {
+// Helper function
+std::string SecurityCryptoServerImpl::hex_to_bytes(const std::string &hex) {
     std::string bytes;
     // Check for even length (valid hex string must have even length)
     if (hex.length() % 2 != 0) {
         LOG(ERROR, __FUNCTION__, " invalid hex string length");
-            return std::string();
+        return std::string();
     }
 
     bytes.reserve(hex.length() / 2);
     for (size_t i = 0; i < hex.length(); i += 2) {
         std::string byteString = hex.substr(i, 2);
-        char* end;
+        char *end;
         long value = strtol(byteString.c_str(), &end, 16);
         // Check for conversion errors
         if (*end != '\0' || value < 0 || value > 255) {

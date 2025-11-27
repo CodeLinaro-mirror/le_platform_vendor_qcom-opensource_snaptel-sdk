@@ -16,10 +16,10 @@
 #include "WlanUtils.hpp"
 #include "../../common/utils/Utils.hpp"
 
-class WlanStaInterfaceManagerMenu : public ConsoleApp ,
-                                    public telux::wlan::IStaListener,
-                                    public std::enable_shared_from_this<
-                                       WlanStaInterfaceManagerMenu> {
+class WlanStaInterfaceManagerMenu
+   : public ConsoleApp,
+     public telux::wlan::IStaListener,
+     public std::enable_shared_from_this<WlanStaInterfaceManagerMenu> {
  public:
     WlanStaInterfaceManagerMenu(std::string appName, std::string cursor);
     ~WlanStaInterfaceManagerMenu();
@@ -45,9 +45,9 @@ class WlanStaInterfaceManagerMenu : public ConsoleApp ,
     void onStationStatusChanged(std::vector<telux::wlan::StaStatus> status) override;
     void onScanResultUpdated(const telux::wlan::StaScanResult &staScanResult) override;
     void onStationBandChanged(telux::wlan::BandType radio) override;
+
  private:
     bool menuOptionsAdded_;
     std::shared_ptr<telux::wlan::IStaInterfaceManager> wlanStaInterfaceManager_ = nullptr;
-
 };
 #endif

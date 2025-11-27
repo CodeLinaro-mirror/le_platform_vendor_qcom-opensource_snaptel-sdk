@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef MYSMSLISTENER_HPP
 #define MYSMSLISTENER_HPP
 
@@ -43,20 +49,20 @@
 #include "MyLocationListener.hpp"
 
 class MySmsListener : public telux::tel::ISmsListener {
-public:
-   void onIncomingSms(int phoneId, std::shared_ptr<telux::tel::SmsMessage> message) override;
-   void setLocationListener(std::shared_ptr<MyLocationListener> myLocationListener);
-   void setSecureToken();
-   MySmsListener();
+ public:
+    void onIncomingSms(int phoneId, std::shared_ptr<telux::tel::SmsMessage> message) override;
+    void setLocationListener(std::shared_ptr<MyLocationListener> myLocationListener);
+    void setSecureToken();
+    MySmsListener();
 
-private:
-   std::shared_ptr<MyLocationListener> myLocationListener_;
-   int token_;
+ private:
+    std::shared_ptr<MyLocationListener> myLocationListener_;
+    int token_;
 };
 
 class SmsCallback : public telux::common::ICommandResponseCallback {
-public:
-   void commandResponse(telux::common::ErrorCode error) override;
+ public:
+    void commandResponse(telux::common::ErrorCode error) override;
 };
 
 #endif  // MYSMSLISTENER_HPP

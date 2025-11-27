@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_TrafficConditionSubCauseCode_H_
-#define	_TrafficConditionSubCauseCode_H_
-
+#ifndef _TrafficConditionSubCauseCode_H_
+#define _TrafficConditionSubCauseCode_H_
 
 #include <asn_application.h>
 
@@ -20,19 +19,19 @@ extern "C" {
 
 /* Dependencies */
 typedef enum TrafficConditionSubCauseCode {
-	TrafficConditionSubCauseCode_unavailable	= 0,
-	TrafficConditionSubCauseCode_increasedVolumeOfTraffic	= 1,
-	TrafficConditionSubCauseCode_trafficJamSlowlyIncreasing	= 2,
-	TrafficConditionSubCauseCode_trafficJamIncreasing	= 3,
-	TrafficConditionSubCauseCode_trafficJamStronglyIncreasing	= 4,
-	TrafficConditionSubCauseCode_trafficStationary	= 5,
-	TrafficConditionSubCauseCode_trafficJamSlightlyDecreasing	= 6,
-	TrafficConditionSubCauseCode_trafficJamDecreasing	= 7,
-	TrafficConditionSubCauseCode_trafficJamStronglyDecreasing	= 8
+    TrafficConditionSubCauseCode_unavailable                  = 0,
+    TrafficConditionSubCauseCode_increasedVolumeOfTraffic     = 1,
+    TrafficConditionSubCauseCode_trafficJamSlowlyIncreasing   = 2,
+    TrafficConditionSubCauseCode_trafficJamIncreasing         = 3,
+    TrafficConditionSubCauseCode_trafficJamStronglyIncreasing = 4,
+    TrafficConditionSubCauseCode_trafficStationary            = 5,
+    TrafficConditionSubCauseCode_trafficJamSlightlyDecreasing = 6,
+    TrafficConditionSubCauseCode_trafficJamDecreasing         = 7,
+    TrafficConditionSubCauseCode_trafficJamStronglyDecreasing = 8
 } e_TrafficConditionSubCauseCode;
 
 /* TrafficConditionSubCauseCode */
-typedef long	 TrafficConditionSubCauseCode_t;
+typedef long TrafficConditionSubCauseCode_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_TrafficConditionSubCauseCode;
@@ -50,5 +49,5 @@ per_type_encoder_f TrafficConditionSubCauseCode_encode_uper;
 }
 #endif
 
-#endif	/* _TrafficConditionSubCauseCode_H_ */
+#endif /* _TrafficConditionSubCauseCode_H_ */
 #include <asn_internal.h>

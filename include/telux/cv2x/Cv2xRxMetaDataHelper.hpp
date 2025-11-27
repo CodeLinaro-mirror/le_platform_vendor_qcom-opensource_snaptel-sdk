@@ -28,9 +28,8 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -102,14 +101,14 @@ using RxMetaDataValidity = uint32_t;
  **/
 struct RxPacketMetaDataReport {
     RxMetaDataValidity metaDataMask; /**< Contains meta data validity */
-    uint16_t sfn;                    /**< System Frame Number * 10 + subframe number */
-    uint8_t subChannelIndex;         /**< The subchannel used for transmission */
-    uint8_t subChannelNum;           /**< Number of subchannels in the Rx pool */
-    int8_t prxRssi;                  /**< RSSI of PRx in dBm */
-    int8_t drxRssi;                  /**< RSSI of DRx in dBm */
-    uint32_t l2DestinationId;        /**< L2 destination ID */
-    uint32_t sciFormat1Info;         /**< SCI format1, 3GPP TS 36.213 section 14.1 */
-    int32_t delayEstimation;         /**< Packet delay estimation, in Ts (1/(15000 * 2048) seconds) */
+    uint16_t sfn; /**< System Frame Number * 10 + subframe number */
+    uint8_t subChannelIndex; /**< The subchannel used for transmission */
+    uint8_t subChannelNum; /**< Number of subchannels in the Rx pool */
+    int8_t prxRssi; /**< RSSI of PRx in dBm */
+    int8_t drxRssi; /**< RSSI of DRx in dBm */
+    uint32_t l2DestinationId; /**< L2 destination ID */
+    uint32_t sciFormat1Info; /**< SCI format1, 3GPP TS 36.213 section 14.1 */
+    int32_t delayEstimation; /**< Packet delay estimation, in Ts (1/(15000 * 2048) seconds) */
 };
 
 /*
@@ -122,7 +121,7 @@ struct RxPacketMetaDataReport {
  */
 
 class Cv2xRxMetaDataHelper {
-public:
+ public:
     /*
      * Parse the rx meta data information from the payload. If the received packets'
      * meta data report is enabled (using @ref telux::cv2x::enableRxMetaDataReport),
@@ -137,8 +136,8 @@ public:
      * @Returns SUCCESS if no error occurred.
      *
      */
-    static telux::common::Status getRxMetaDataInfo(const uint8_t* payload, uint32_t payloadLength,
-        size_t& metaDataLen, std::shared_ptr<std::vector<RxPacketMetaDataReport>> metaDatas);
+    static telux::common::Status getRxMetaDataInfo(const uint8_t *payload, uint32_t payloadLength,
+        size_t &metaDataLen, std::shared_ptr<std::vector<RxPacketMetaDataReport>> metaDatas);
 };
 
 /** @} */ /* end_addtogroup telematics_cv2x_cpp */
@@ -146,4 +145,4 @@ public:
 }  // end namespace cv2x
 }  // end namespace telux
 
-#endif // TELUX_CV2X_CV2XRXMETADATAHELPER_HPP
+#endif  // TELUX_CV2X_CV2XRXMETADATAHELPER_HPP

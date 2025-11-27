@@ -26,9 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -65,17 +66,17 @@ typedef int v2x_motion_data_handle_t;
     Valid types for main transmission drive states.
  */
 typedef enum {
-    V2X_TRANSMISSION_NEUTRAL = 0,
-    V2X_TRANSMISSION_PARK = 1,
-    V2X_TRANSMISSION_FORWARD_GEARS = 2,  /**< One of the gears:
-                                              D, 1, 2, 3, ... . */
+    V2X_TRANSMISSION_NEUTRAL       = 0,
+    V2X_TRANSMISSION_PARK          = 1,
+    V2X_TRANSMISSION_FORWARD_GEARS = 2, /**< One of the gears:
+                                             D, 1, 2, 3, ... . */
     V2X_TRANSMISSION_REVERSE_GEARS = 3,
-    V2X_TRANSMISSION_RESERVED1 = 4,
-    V2X_TRANSMISSION_RESERVED2 = 5,
-    V2X_TRANSMISSION_RESERVED3 = 6,
-    V2X_TRANSMISSION_UNAVAILABLE = 7,    /**< Status is unknown. */
-    V2X_TRANSMISSION_MAX                 /**< Sentry variable that must not be
-                                              exceeded.*/
+    V2X_TRANSMISSION_RESERVED1     = 4,
+    V2X_TRANSMISSION_RESERVED2     = 5,
+    V2X_TRANSMISSION_RESERVED3     = 6,
+    V2X_TRANSMISSION_UNAVAILABLE   = 7, /**< Status is unknown. */
+    V2X_TRANSMISSION_MAX /**< Sentry variable that must not be
+                              exceeded.*/
 } v2x_transmission_state_enum_type;
 
 /** Guard check value on #v2x_transmission_state_enum_type for
@@ -87,11 +88,11 @@ typedef enum {
     Valid types for brake boosting states.
  */
 typedef enum {
-    V2X_BRAKEBOOST_UNAVAIL = 0,  /**< Status is unknown. */
-    V2X_BRAKEBOOST_OFF = 1,
-    V2X_BRAKEBOOST_ON = 2,
-    V2X_BRAKEBOOST_MAX           /**< Sentry variable that must not be
-                                      exceeded.*/
+    V2X_BRAKEBOOST_UNAVAIL = 0, /**< Status is unknown. */
+    V2X_BRAKEBOOST_OFF     = 1,
+    V2X_BRAKEBOOST_ON      = 2,
+    V2X_BRAKEBOOST_MAX /**< Sentry variable that must not be
+                            exceeded.*/
 } v2x_BrakeBoostApplied_enum_type;
 
 /**
@@ -101,10 +102,10 @@ typedef enum {
     Control System (TCS).
  */
 typedef enum {
-    V2X_TRACTION_CTRL_UNAVAIL = 0,  /**< Status is unknown. */
-    V2X_TRACTION_CTRL_OFF = 1,
-    V2X_TRACTION_CTRL_ON = 2,       /**< On but currently not engaged. */
-    V2X_TRACTION_CTRL_ENGAGED = 3   /**< Actively being engaged. @newpage */
+    V2X_TRACTION_CTRL_UNAVAIL = 0, /**< Status is unknown. */
+    V2X_TRACTION_CTRL_OFF     = 1,
+    V2X_TRACTION_CTRL_ON      = 2, /**< On but currently not engaged. */
+    V2X_TRACTION_CTRL_ENGAGED = 3 /**< Actively being engaged. @newpage */
 } v2x_TractionControlStatus_enum_type;
 
 /** Guard check value on #v2x_TractionControlStatus_enum_type for
@@ -119,12 +120,12 @@ typedef enum {
     System (ABS) to help BSM packing and unpacking.
  */
 typedef enum {
-    V2X_ABS_Unavailable = 0,  /**< ABS is not equipped, or the status is
-                                   unknown. */
-    V2X_ABS_Off = 1,
-    V2X_ABS_On = 2,           /**< On but currently not active. */
-    V2X_ABS_Engaged = 3       /**< Actively being engaged on one or more
-                                   wheels. */
+    V2X_ABS_Unavailable = 0, /**< ABS is not equipped, or the status is
+                                  unknown. */
+    V2X_ABS_Off     = 1,
+    V2X_ABS_On      = 2, /**< On but currently not active. */
+    V2X_ABS_Engaged = 3 /**< Actively being engaged on one or more
+                             wheels. */
 } v2x_AntiLockBrakeStatus_enum_type;
 
 /** Guard check value on #v2x_AntiLockBrakeStatus_enum_type.
@@ -141,12 +142,12 @@ typedef enum {
 typedef enum {
     V2X_STABILITY_CONTROL_UNAVAILBLE = 0, /**< Stability Control status is
                                                unknown. */
-    V2X_STABILITY_CONTROL_OFF = 1,        /**< Stability Control is not
-                                               applied. */
-    V2X_STABILITY_CONTROL_ON = 2,         /**< Stability Control is on, but
-                                               currently it is not engaged. */
-    V2X_STABILITY_CONTROL_ENGAGED = 3     /**< Stability Control is actively
-                                               being engaged. */
+    V2X_STABILITY_CONTROL_OFF = 1, /**< Stability Control is not
+                                        applied. */
+    V2X_STABILITY_CONTROL_ON = 2, /**< Stability Control is on, but
+                                       currently it is not engaged. */
+    V2X_STABILITY_CONTROL_ENGAGED = 3 /**< Stability Control is actively
+                                           being engaged. */
 } v2x_StabilityControlStatus_enum_type;
 
 /** Guard check value on #v2x_StabilityControlStatus_enum_type.
@@ -163,11 +164,11 @@ typedef enum {
     you are working with.
  */
 typedef enum {
-    V2X_AUX_BRAKE_UNAVAILBLE = 0,  /**< Vehicle has no auxiliary brake
-                                        equipment or the status is unknown. */
-    V2X_AUX_BRAKE_OFF = 1,
-    V2X_AUX_BRAKE_ON = 2,
-    V2X_AUX_BRAKE_RESERVED = 3     /**< @newpage */
+    V2X_AUX_BRAKE_UNAVAILBLE = 0, /**< Vehicle has no auxiliary brake
+                                       equipment or the status is unknown. */
+    V2X_AUX_BRAKE_OFF      = 1,
+    V2X_AUX_BRAKE_ON       = 2,
+    V2X_AUX_BRAKE_RESERVED = 3 /**< @newpage */
 } v2x_AuxBrakeStatus_enum_type;
 
 /** Guard check value on #v2x_AuxBrakeStatus_enum_type. This value must
@@ -182,42 +183,42 @@ typedef enum {
  */
 typedef union {
     /** Bit values for control status information.
-    */
+     */
     struct {
-        unsigned unused_padding                                 : 1;
+        unsigned unused_padding : 1;
         /**< Reserved for 16-bit alignment.
 
              This field is critical because of 16-bit word access to the packed
              v2x_control_status_ut union structure. */
 
-        v2x_AuxBrakeStatus_enum_type aux_brake_status                   : 2;
+        v2x_AuxBrakeStatus_enum_type aux_brake_status : 2;
         /**< Indicates whether the auxiliary braking system is on.
 
              @values
              - 0 - Off
              - 1 - On @tablebulletend */
 
-        v2x_BrakeBoostApplied_enum_type brake_boost_applied             : 2;
+        v2x_BrakeBoostApplied_enum_type brake_boost_applied : 2;
         /**< Indicates whether the brakes are actively being boosted.
 
              @values
              - 0 - Not boosted
              - 1 - Boosted @tablebulletend */
 
-        v2x_StabilityControlStatus_enum_type stability_control_status   : 2;
+        v2x_StabilityControlStatus_enum_type stability_control_status : 2;
         /**< Indicates whether stability control is on and engaged.
 
              @values
              - 0 - Off
              - 1 - On @tablebulletend */
 
-        v2x_AntiLockBrakeStatus_enum_type antilock_brake_status         : 2;
+        v2x_AntiLockBrakeStatus_enum_type antilock_brake_status : 2;
         /**< Indicates the status of the ABS. */
 
-        v2x_TractionControlStatus_enum_type traction_control_status     : 2;
+        v2x_TractionControlStatus_enum_type traction_control_status : 2;
         /**< Indicates whether status of the TCS. */
 
-        unsigned rightRear                                      : 1;
+        unsigned rightRear : 1;
         /**< Indicates whether the right rear brakes are actively being
              applied.
 
@@ -225,7 +226,7 @@ typedef union {
              - 0 - Not applied
              - 1 - Applied @tablebulletend */
 
-        unsigned rightFront                                     : 1;
+        unsigned rightFront : 1;
         /**< Indicates whether the right front brakes are actively being
              applied.
 
@@ -233,7 +234,7 @@ typedef union {
              - 0 - Not applied
              - 1 - Applied @tablebulletend */
 
-        unsigned leftRear                                       : 1;
+        unsigned leftRear : 1;
         /**< Indicates whether the left rear brakes are actively being
              applied
 
@@ -241,7 +242,7 @@ typedef union {
              - 0 - Not applied
              - 1 - Applied @tablebulletend */
 
-        unsigned leftFront                                      : 1;
+        unsigned leftFront : 1;
         /**< Indicates whether the front left brakes are actively being
              applied.
 
@@ -249,7 +250,7 @@ typedef union {
              - 0 - Not applied
              - 1 - Applied @tablebulletend */
 
-        unsigned unavailable                                    : 1;
+        unsigned unavailable : 1;
         /**< No information is available. */
 
     } bits; /**< Bit values for control status information. */
@@ -272,50 +273,50 @@ typedef union {
         of the event.
     */
     struct {
-        unsigned unused                         : 3;
+        unsigned unused : 3;
         /**< Reserved for 16-bit alignment in the union access. */
 
-        unsigned eventAirBagDeployment          : 1;
+        unsigned eventAirBagDeployment : 1;
         /**< Indicates whether the airbag is deployed.
 
              @values
              - 0 - Not deployed
              - 1 - Deployed @tablebulletend */
 
-        unsigned eventDisabledVehicle           : 1;
+        unsigned eventDisabledVehicle : 1;
         /**< Indicates whether the vehicle is disabled.
 
              @values
              - 0 - Not disabled
              - 1 - Disabled @tablebulletend */
 
-        unsigned eventFlatTire                  : 1;
+        unsigned eventFlatTire : 1;
         /**< Indicates whether the tire is flat.
 
              @values
              - 0 - Not flat
              - 1 - Flat @tablebulletend */
 
-        unsigned eventWipersChanged             : 1;
+        unsigned eventWipersChanged : 1;
         /**< Indicates the status of the windshield wipers. For more
              information, See the wiper state variables in
              current_dynamic_vehicle_state_t. */
 
-        unsigned eventLightsChanged             : 1;
+        unsigned eventLightsChanged : 1;
         /**< Indicates the status of one or more lights (such as blinkers and
              fog). */
 
-        unsigned eventHardBraking              : 1;
+        unsigned eventHardBraking : 1;
         /**< Indicates whether hard braking is activated.
 
              @values
              - 0 - Not activated
              - 1 - Activated @tablebulletend */
 
-        unsigned eventReserved1                 : 1;
+        unsigned eventReserved1 : 1;
         /**< Event bit reserved for future use. Do not use. */
 
-        unsigned eventHazardousMaterials        : 1;
+        unsigned eventHazardousMaterials : 1;
         /**< Indicates whether a hazmat load is present.
 
              @values
@@ -329,21 +330,21 @@ typedef union {
              - 0 - Off
              - 1 - On @tablebulletend */
 
-        unsigned eventTractionControlLoss       : 1;
+        unsigned eventTractionControlLoss : 1;
         /**< Indicates whether traction control is activated (1) or not (0).
 
              @values
              - 0 - Not applied
              - 1 - Applied @tablebulletend */
 
-        unsigned eventABSactivated              : 1;
+        unsigned eventABSactivated : 1;
         /**< Indicates whether ABS is activated.
 
              @values
              - 0 - Not activated
              - 1 - Activated @tablebulletend */
 
-        unsigned eventStopLineViolation         : 1;
+        unsigned eventStopLineViolation : 1;
         /**< Indicates whether the vehicle has detected that a violation of the
              Stop Line is imminent.
 
@@ -351,16 +352,16 @@ typedef union {
              - 0 - Not imminent
              - 1 - Imminent @tablebulletend */
 
-        unsigned eventHazardLights              : 1;
+        unsigned eventHazardLights : 1;
         /**< Indicates whether the hazard lights are on.
 
              @values
              - 0 - Off
              - 1 - On @tablebulletend */
 
-    }  bits; /**< Bit values for vehicle event flags. */
+    } bits; /**< Bit values for vehicle event flags. */
 
-    unsigned short  data;
+    unsigned short data;
     /**< Sixteen-bit word access to the packed vehicleEventFlags union
          structure. @newpagetable */
 
@@ -372,79 +373,79 @@ typedef union {
 typedef union {
 
     /** Bit values for exterior light flags.
-    */
+     */
     struct {
         //-- All lights off is indicated by no bits set
 
-        unsigned parkingLightsOn           : 1;
+        unsigned parkingLightsOn : 1;
         /**< Indicates whether the parking lights are on.
 
              @values
              - 0 - Off
              - 1 - On @tablebulletend */
 
-        unsigned fogLightOn                : 1;
+        unsigned fogLightOn : 1;
         /**< Indicates whether the fog lights are on.
 
              @values
              - 0 - Off
              - 1 - On @tablebulletend */
 
-        unsigned daytimeRunningLightsOn    : 1;
+        unsigned daytimeRunningLightsOn : 1;
         /**< Indicates whether the running lights are on.
 
              @values
              - 0 - Off
              - 1 - On @tablebulletend */
 
-        unsigned automaticLightControlOn   : 1;
+        unsigned automaticLightControlOn : 1;
         /**< Indicates whether the automatic light control is on.
 
              @values
              - 0 - Off
              - 1 - On @tablebulletend */
 
-        unsigned hazardSignalOn            : 1;
+        unsigned hazardSignalOn : 1;
         /**< Indicates whether the hazard lights are on.
 
              @values
              - 0 - Off
              - 1 - On @tablebulletend */
 
-        unsigned rightTurnSignalOn         : 1;
+        unsigned rightTurnSignalOn : 1;
         /**< Indicates whether the right turn light is on.
 
              @values
              - 0 - Off
              - 1 - On @tablebulletend */
 
-        unsigned leftTurnSignalOn          : 1;
+        unsigned leftTurnSignalOn : 1;
         /**< Indicates whether the left turn light is on.
 
              @values
              - 0 - Off
              - 1 - On @tablebulletend */
 
-        unsigned highBeamHeadlightsOn      : 1;
+        unsigned highBeamHeadlightsOn : 1;
         /**< Indicates whether the high beam headlights are on.
 
              @values
              - 0 - Off
              - 1 - On @tablebulletend */
 
-        unsigned lowBeamHeadlightsOn       : 1;
+        unsigned lowBeamHeadlightsOn : 1;
         /**< Indicates whether the low beam headlights are on.
 
              @values
              - 0 - Off
              - 1 - On @tablebulletend */
 
-        unsigned unused                    : 7;
+        unsigned unused : 7;
         /**< Unused padding bits. */
 
-    }  bits; /**< Bit values for exterior light flags. */
+    } bits; /**< Bit values for exterior light flags. */
 
-    unsigned  short data;
+    unsigned short data;
     /**< 16-bit short word access to the packed ExteriorLights union structure. */
 
     /*Useful as a union, since structure matches J2735 encoding */
@@ -617,7 +618,7 @@ v2x_status_enum_type v2x_vehicle_get_static_params(static_vehicle_parameters_t *
 
     @param[in] motion_data  Pointer to the dynamic state of the vehicle.
  */
-typedef void (* v2x_high_res_motion_listener_t)(high_resolution_motion_t *motion_data);
+typedef void (*v2x_high_res_motion_listener_t)(high_resolution_motion_t *motion_data);
 
 /**
     Registers for high-resolution motion callbacks from the vehicle data
@@ -666,7 +667,8 @@ v2x_status_enum_type v2x_high_res_motion_deregister_listener(v2x_motion_data_han
 
     @newpage
  */
-typedef void (* v2x_vehicle_event_listener_t)(current_dynamic_vehicle_state_t *current_state, void *context);
+typedef void (*v2x_vehicle_event_listener_t)(
+    current_dynamic_vehicle_state_t *current_state, void *context);
 
 /**
     Registers for a callback for state updates from the vehicle data network
@@ -704,10 +706,10 @@ v2x_vehicle_handle_t v2x_vehicle_register_listener(v2x_vehicle_event_listener_t 
  */
 v2x_status_enum_type v2x_vehicle_deregister_for_callback(v2x_vehicle_handle_t handle);
 
-/** @} *//* end_addtogroup telematics_cv2x_c_vehicle */
+/** @} */ /* end_addtogroup telematics_cv2x_c_vehicle */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // TELUX_CV2X_LEGACY_V2X_VEHICLE_API_H
+#endif  // TELUX_CV2X_LEGACY_V2X_VEHICLE_API_H

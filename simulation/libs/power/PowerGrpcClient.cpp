@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "PowerGrpcClient.hpp"
@@ -20,34 +20,34 @@ PowerGrpcClient::PowerGrpcClient(int clientType, std::string clientName, std::st
     LOG(DEBUG, __FUNCTION__);
     clientConfig_ = std::make_tuple(clientType, clientName, machineName);
     serviceReady_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
-    stub_ = CommonUtils::getGrpcStub<PowerManagerService>();
+    stub_         = CommonUtils::getGrpcStub<PowerManagerService>();
     listenerMgr_ = std::make_shared<telux::common::ListenerManager<PowerGrpcTcuActivityListener>>();
 }
 
 PowerGrpcClient::~PowerGrpcClient() {
     LOG(DEBUG, __FUNCTION__);
-    //Deregister streams.
-    if(static_cast<telux::power::ClientType>(std::get<0>(clientConfig_)) ==
-        telux::power::ClientType::SLAVE) {
+    // Deregister streams.
+    if (static_cast<telux::power::ClientType>(std::get<0>(clientConfig_))
+        == telux::power::ClientType::SLAVE) {
         std::string machName = std::get<2>(clientConfig_);
-        if(machName == telux::power::ALL_MACHINES) {
+        if (machName == telux::power::ALL_MACHINES) {
             std::vector<std::string> filters = {"PWR_ALL_SLAVE_UPDATE", "power_mgr"};
-            auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+            auto &clientEventManager         = telux::common::ClientEventManager::getInstance();
             clientEventManager.deregisterListener(myself_, filters);
         } else {
             std::vector<std::string> filters = {"PWR_LOC_SLAVE_UPDATE", "power_mgr"};
-            auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+            auto &clientEventManager         = telux::common::ClientEventManager::getInstance();
             clientEventManager.deregisterListener(myself_, filters);
         }
     } else {
         std::vector<std::string> filters = {"PWR_MASTER_UPDATE", "power_mgr"};
-        auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+        auto &clientEventManager         = telux::common::ClientEventManager::getInstance();
         clientEventManager.deregisterListener(myself_, filters);
     }
 
-    //Deregister from server.
-    ::powerStub::PowerClientConnect request {};
-    ::google::protobuf::Empty response {};
+    // Deregister from server.
+    ::powerStub::PowerClientConnect request{};
+    ::google::protobuf::Empty response{};
     ClientContext context{};
     request.set_clienttype(std::get<0>(clientConfig_));
     request.set_clientname(std::get<1>(clientConfig_));
@@ -65,9 +65,9 @@ bool PowerGrpcClient::isReady() {
 bool PowerGrpcClient::waitForInitialization() {
     LOG(DEBUG, __FUNCTION__);
     std::unique_lock<std::mutex> cvLock(grpcClientMutex_);
-    //Send init to GRPC server with clientConfig_
-    ::powerStub::PowerClientConnect request {};
-    ::powerStub::GetServiceStatusReply response {};
+    // Send init to GRPC server with clientConfig_
+    ::powerStub::PowerClientConnect request{};
+    ::powerStub::GetServiceStatusReply response{};
     ClientContext context{};
     int cbDelay;
     grpc::Status reqStatus;
@@ -83,38 +83,38 @@ bool PowerGrpcClient::waitForInitialization() {
     }
 
     serviceReady_ = static_cast<telux::common::ServiceStatus>(response.service_status());
-    cbDelay = static_cast<int>(response.delay());
+    cbDelay       = static_cast<int>(response.delay());
     LOG(DEBUG, __FUNCTION__, " ServiceStatus: ", static_cast<int>(serviceReady_));
-    if(serviceReady_ == ServiceStatus::SERVICE_AVAILABLE ){
+    if (serviceReady_ == ServiceStatus::SERVICE_AVAILABLE) {
         auto myself = shared_from_this();
-        myself_ = myself;
-        if(static_cast<telux::power::ClientType>(std::get<0>(clientConfig_)) ==
-            telux::power::ClientType::SLAVE) {
+        myself_     = myself;
+        if (static_cast<telux::power::ClientType>(std::get<0>(clientConfig_))
+            == telux::power::ClientType::SLAVE) {
             /**
              * A slave client depending upon the machine it is interested in
              * registers with the Power manager service with the specific stream.
              * power_mgr stream is a filter for general notifications like onMachineUpdate event.
              */
-            if(machName == telux::power::ALL_MACHINES) {
+            if (machName == telux::power::ALL_MACHINES) {
                 std::vector<std::string> filters = {"PWR_ALL_SLAVE_UPDATE", "power_mgr"};
-                auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+                auto &clientEventManager         = telux::common::ClientEventManager::getInstance();
                 clientEventManager.registerListener(myself_, filters);
             } else {
                 std::vector<std::string> filters = {"PWR_LOC_SLAVE_UPDATE", "power_mgr"};
-                auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+                auto &clientEventManager         = telux::common::ClientEventManager::getInstance();
                 clientEventManager.registerListener(myself_, filters);
             }
         } else {
-            //A master client registers with the power manager service with a Master stream.
+            // A master client registers with the power manager service with a Master stream.
             std::vector<std::string> filters = {"PWR_MASTER_UPDATE", "power_mgr"};
-            auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+            auto &clientEventManager         = telux::common::ClientEventManager::getInstance();
             clientEventManager.registerListener(myself_, filters);
         }
     }
     if (cbDelay != SKIP_CALLBACK) {
         std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::",
-            static_cast<int>(serviceReady_));
+        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay,
+            " cbStatus::", static_cast<int>(serviceReady_));
     }
 
     return (serviceReady_ == common::ServiceStatus::SERVICE_AVAILABLE);
@@ -166,12 +166,12 @@ void PowerGrpcClient::getAvailableListeners(
 
 telux::common::Status PowerGrpcClient::registerTcuStateEvents(TcuActivityState &initialState) {
     LOG(DEBUG, __FUNCTION__);
-    ::powerStub::MachineTcuState request {};
-    ::powerStub::TcuStateEventReply response {};
+    ::powerStub::MachineTcuState request{};
+    ::powerStub::TcuStateEventReply response{};
     ClientContext context{};
 
     std::string machName = std::get<2>(clientConfig_);
-    if(machName == telux::power::ALL_MACHINES) {
+    if (machName == telux::power::ALL_MACHINES) {
         request.set_mach_name(::powerStub::MachineName::MACH_ALL);
     } else {
         request.set_mach_name(::powerStub::MachineName::MACH_LOCAL);
@@ -185,42 +185,42 @@ telux::common::Status PowerGrpcClient::registerTcuStateEvents(TcuActivityState &
     }
 
     ::powerStub::TcuState state = response.initialstate();
-    if(state == ::powerStub::TcuState::STATE_RESUME) {
+    if (state == ::powerStub::TcuState::STATE_RESUME) {
         initialState = telux::power::TcuActivityState::RESUME;
-    } else if(state == ::powerStub::TcuState::STATE_SUSPEND) {
+    } else if (state == ::powerStub::TcuState::STATE_SUSPEND) {
         initialState = telux::power::TcuActivityState::SUSPEND;
-    } else if(state == ::powerStub::TcuState::STATE_SHUTDOWN) {
+    } else if (state == ::powerStub::TcuState::STATE_SHUTDOWN) {
         initialState = telux::power::TcuActivityState::SHUTDOWN;
-    } else if(state == ::powerStub::TcuState::STATE_UNKNOWN) {
+    } else if (state == ::powerStub::TcuState::STATE_UNKNOWN) {
         initialState = telux::power::TcuActivityState::UNKNOWN;
     }
-    //state_ determines the current state of the client.
+    // state_ determines the current state of the client.
     state_ = initialState;
     return telux::common::Status::SUCCESS;
 }
 
-telux::common::Status PowerGrpcClient::sendActivityStateCommand(TcuActivityState state,
-    std::string machineName, telux::common::ResponseCallback &callback) {
+telux::common::Status PowerGrpcClient::sendActivityStateCommand(
+    TcuActivityState state, std::string machineName, telux::common::ResponseCallback &callback) {
     LOG(DEBUG, __FUNCTION__);
-    ::powerStub::SetActivityState request {};
-    ::powerStub::PowerManagerCommandReply response {};
+    ::powerStub::SetActivityState request{};
+    ::powerStub::PowerManagerCommandReply response{};
     ClientContext context{};
-    telux::common::Status status = telux::common::Status::FAILED;
+    telux::common::Status status       = telux::common::Status::FAILED;
     telux::common::ErrorCode errorCode = telux::common::ErrorCode::GENERIC_FAILURE;
-    int cbDelay = DEFAULT_CALLBACK_DELAY;
+    int cbDelay                        = DEFAULT_CALLBACK_DELAY;
     ::powerStub::TcuState powerState;
-    if(state == telux::power::TcuActivityState::RESUME) {
+    if (state == telux::power::TcuActivityState::RESUME) {
         powerState = ::powerStub::TcuState::STATE_RESUME;
-    } else if(state == telux::power::TcuActivityState::SUSPEND) {
+    } else if (state == telux::power::TcuActivityState::SUSPEND) {
         powerState = ::powerStub::TcuState::STATE_SUSPEND;
-    } else if(state == telux::power::TcuActivityState::SHUTDOWN) {
+    } else if (state == telux::power::TcuActivityState::SHUTDOWN) {
         powerState = ::powerStub::TcuState::STATE_SHUTDOWN;
-    } else if(state == telux::power::TcuActivityState::UNKNOWN) {
+    } else if (state == telux::power::TcuActivityState::UNKNOWN) {
         powerState = ::powerStub::TcuState::STATE_UNKNOWN;
     }
     request.set_powerstate(powerState);
     ::powerStub::MachineName machine_Name;
-    if(machineName == telux::power::ALL_MACHINES) {
+    if (machineName == telux::power::ALL_MACHINES) {
         machine_Name = ::powerStub::MachineName::MACH_ALL;
     } else {
         machine_Name = ::powerStub::MachineName::MACH_LOCAL;
@@ -228,10 +228,10 @@ telux::common::Status PowerGrpcClient::sendActivityStateCommand(TcuActivityState
     request.set_mach_name(machine_Name);
     grpc::Status reqStatus;
     reqStatus = stub_->SendActivityState(&context, request, &response);
-    if(reqStatus.ok()) {
-        status = static_cast<telux::common::Status>(response.status());
+    if (reqStatus.ok()) {
+        status    = static_cast<telux::common::Status>(response.status());
         errorCode = static_cast<telux::common::ErrorCode>(response.error());
-        cbDelay = static_cast<int>(response.delay());
+        cbDelay   = static_cast<int>(response.delay());
     } else {
         LOG(ERROR, RPC_FAIL_SUFFIX, reqStatus.error_code());
     }
@@ -250,8 +250,8 @@ telux::common::Status PowerGrpcClient::sendActivityStateCommand(TcuActivityState
 telux::common::Status PowerGrpcClient::sendActivityStateAck(
     StateChangeResponse ack, TcuActivityState state) {
     LOG(DEBUG, __FUNCTION__);
-    ::powerStub::SlaveAck request {};
-    ::google::protobuf::Empty response {};
+    ::powerStub::SlaveAck request{};
+    ::google::protobuf::Empty response{};
     ClientContext context{};
     switch (ack) {
         case StateChangeResponse::ACK:
@@ -278,7 +278,7 @@ telux::common::Status PowerGrpcClient::sendActivityStateAck(
     request.set_clientname(std::get<1>(clientConfig_));
     grpc::Status reqStatus;
     reqStatus = stub_->SendActivityStateAck(&context, request, &response);
-    if(!reqStatus.ok()) {
+    if (!reqStatus.ok()) {
         LOG(ERROR, RPC_FAIL_SUFFIX, reqStatus.error_code());
         return telux::common::Status::FAILED;
     }
@@ -288,18 +288,18 @@ telux::common::Status PowerGrpcClient::sendActivityStateAck(
 telux::common::Status PowerGrpcClient::setModemActivityState(TcuActivityState state) {
     LOG(DEBUG, __FUNCTION__);
 
-    ::powerStub::SetActivityState request {};
-    ::powerStub::PowerManagerCommandReply response {};
+    ::powerStub::SetActivityState request{};
+    ::powerStub::PowerManagerCommandReply response{};
     ClientContext context{};
     telux::common::Status status = telux::common::Status::FAILED;
     ::powerStub::TcuState powerState;
-    if(state == telux::power::TcuActivityState::RESUME) {
+    if (state == telux::power::TcuActivityState::RESUME) {
         powerState = ::powerStub::TcuState::STATE_RESUME;
-    } else if(state == telux::power::TcuActivityState::SUSPEND) {
+    } else if (state == telux::power::TcuActivityState::SUSPEND) {
         powerState = ::powerStub::TcuState::STATE_SUSPEND;
-    } else if(state == telux::power::TcuActivityState::SHUTDOWN) {
+    } else if (state == telux::power::TcuActivityState::SHUTDOWN) {
         powerState = ::powerStub::TcuState::STATE_SHUTDOWN;
-    } else if(state == telux::power::TcuActivityState::UNKNOWN) {
+    } else if (state == telux::power::TcuActivityState::UNKNOWN) {
         powerState = ::powerStub::TcuState::STATE_UNKNOWN;
     }
     request.set_powerstate(powerState);
@@ -308,7 +308,7 @@ telux::common::Status PowerGrpcClient::setModemActivityState(TcuActivityState st
 
     grpc::Status reqStatus;
     reqStatus = stub_->SendModemActivityState(&context, request, &response);
-    if(reqStatus.ok()) {
+    if (reqStatus.ok()) {
         status = static_cast<telux::common::Status>(response.status());
     } else {
         LOG(ERROR, RPC_FAIL_SUFFIX, reqStatus.error_code());
@@ -318,8 +318,8 @@ telux::common::Status PowerGrpcClient::setModemActivityState(TcuActivityState st
 
 telux::common::Status PowerGrpcClient::getActivityState(TcuActivityState &state) {
     LOG(DEBUG, __FUNCTION__);
-    const ::google::protobuf::Empty request {};
-    ::powerStub::GetLocalTcuStateReply response {};
+    const ::google::protobuf::Empty request{};
+    ::powerStub::GetLocalTcuStateReply response{};
     ClientContext context{};
 
     grpc::Status reqStatus;
@@ -330,13 +330,13 @@ telux::common::Status PowerGrpcClient::getActivityState(TcuActivityState &state)
     }
 
     ::powerStub::TcuState grpcState = response.local_mach_state();
-    if(grpcState == ::powerStub::TcuState::STATE_RESUME) {
+    if (grpcState == ::powerStub::TcuState::STATE_RESUME) {
         state = telux::power::TcuActivityState::RESUME;
-    } else if(grpcState == ::powerStub::TcuState::STATE_SUSPEND) {
+    } else if (grpcState == ::powerStub::TcuState::STATE_SUSPEND) {
         state = telux::power::TcuActivityState::SUSPEND;
-    } else if(grpcState == ::powerStub::TcuState::STATE_SHUTDOWN) {
+    } else if (grpcState == ::powerStub::TcuState::STATE_SHUTDOWN) {
         state = telux::power::TcuActivityState::SHUTDOWN;
-    } else if(grpcState == ::powerStub::TcuState::STATE_UNKNOWN) {
+    } else if (grpcState == ::powerStub::TcuState::STATE_UNKNOWN) {
         state = telux::power::TcuActivityState::UNKNOWN;
     }
     return telux::common::Status::SUCCESS;
@@ -367,18 +367,18 @@ void PowerGrpcClient::handleTcuStateUpdateEvent(
     LOG(DEBUG, __FUNCTION__);
     ::powerStub::TcuState tcuState = tcuStateUpdateEvent.power_state();
     telux::power::TcuActivityState state;
-    if(tcuState == ::powerStub::TcuState::STATE_RESUME) {
+    if (tcuState == ::powerStub::TcuState::STATE_RESUME) {
         state = telux::power::TcuActivityState::RESUME;
-    } else if(tcuState == ::powerStub::TcuState::STATE_SUSPEND) {
+    } else if (tcuState == ::powerStub::TcuState::STATE_SUSPEND) {
         state = telux::power::TcuActivityState::SUSPEND;
-    } else if(tcuState == ::powerStub::TcuState::STATE_SHUTDOWN) {
+    } else if (tcuState == ::powerStub::TcuState::STATE_SHUTDOWN) {
         state = telux::power::TcuActivityState::SHUTDOWN;
-    } else if(tcuState == ::powerStub::TcuState::STATE_UNKNOWN) {
+    } else if (tcuState == ::powerStub::TcuState::STATE_UNKNOWN) {
         state = telux::power::TcuActivityState::UNKNOWN;
     }
     ::powerStub::MachineName machineName = tcuStateUpdateEvent.mach_name();
-    std::string machName = "";
-    if(machineName == ::powerStub::MachineName::MACH_LOCAL) {
+    std::string machName                 = "";
+    if (machineName == ::powerStub::MachineName::MACH_LOCAL) {
         machName = telux::power::LOCAL_MACHINE;
     } else {
         machName = telux::power::ALL_MACHINES;
@@ -386,16 +386,16 @@ void PowerGrpcClient::handleTcuStateUpdateEvent(
     /**
      * If the incoming state is the same as the state of the client, the notification to the
      * SDK library is dropped.
-    */
-    if(state_ == state) {
+     */
+    if (state_ == state) {
         LOG(DEBUG, __FUNCTION__, " Dropping since state is same for ", machName);
         return;
     }
-    //Client state gets updated.
+    // Client state gets updated.
     state_ = state;
     std::vector<std::shared_ptr<PowerGrpcTcuActivityListener>> applisteners;
     getAvailableListeners(applisteners);
-    for(auto &listener : applisteners) {
+    for (auto &listener : applisteners) {
         listener->onTcuStateUpdate(state, machName);
     }
 }
@@ -404,25 +404,25 @@ void PowerGrpcClient::handleConsolidatedAcksEvent(
     ::powerStub::ConsolidatedAcksEvent consolidatedAcksEvent) {
     LOG(DEBUG, __FUNCTION__);
     ::powerStub::MachineName machineName = consolidatedAcksEvent.mach_name();
-    std::string machName = "";
-    if(machineName == ::powerStub::MachineName::MACH_LOCAL) {
+    std::string machName                 = "";
+    if (machineName == ::powerStub::MachineName::MACH_LOCAL) {
         machName = telux::power::LOCAL_MACHINE;
     } else {
         machName = telux::power::ALL_MACHINES;
     }
     std::vector<std::string> nackList;
-    for (const std::string& str : consolidatedAcksEvent.nack_client_list()) {
+    for (const std::string &str : consolidatedAcksEvent.nack_client_list()) {
         nackList.push_back(str);
     }
     std::vector<std::string> noackList;
-    for (const std::string& str : consolidatedAcksEvent.noack_client_list()) {
+    for (const std::string &str : consolidatedAcksEvent.noack_client_list()) {
         noackList.push_back(str);
     }
-    LOG(DEBUG, __FUNCTION__, " Nacklist size- ", nackList.size(),
-        " Noacklist size- ", noackList.size());
+    LOG(DEBUG, __FUNCTION__, " Nacklist size- ", nackList.size(), " Noacklist size- ",
+        noackList.size());
     std::vector<std::shared_ptr<PowerGrpcTcuActivityListener>> applisteners;
     getAvailableListeners(applisteners);
-    for(auto &listener : applisteners) {
+    for (auto &listener : applisteners) {
         listener->onSlaveAckStatusUpdate(nackList, noackList, machName);
     }
 }
@@ -431,14 +431,14 @@ void PowerGrpcClient::handleMachineUpdateEvent(::powerStub::MachineUpdateEvent m
     LOG(DEBUG, __FUNCTION__);
     ::powerStub::MachineState machineState = machineUpdateEvent.mach_state();
     telux::power::MachineEvent state;
-    if(machineState == ::powerStub::MachineState::MACH_UNAVAILABLE) {
+    if (machineState == ::powerStub::MachineState::MACH_UNAVAILABLE) {
         state = telux::power::MachineEvent::UNAVAILABLE;
     } else if (machineState == ::powerStub::MachineState::MACH_AVAILABLE) {
         state = telux::power::MachineEvent::AVAILABLE;
     }
     std::vector<std::shared_ptr<PowerGrpcTcuActivityListener>> applisteners;
     getAvailableListeners(applisteners);
-    for(auto &listener : applisteners) {
+    for (auto &listener : applisteners) {
         listener->onMachineUpdate(state);
     }
 }

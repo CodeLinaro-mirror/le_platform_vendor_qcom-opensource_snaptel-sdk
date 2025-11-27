@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef MYLOCATIONLISTENER_HPP
 #define MYLOCATIONLISTENER_HPP
 
@@ -39,30 +45,31 @@
 #include <telux/loc/LocationManager.hpp>
 
 class MyLocationListener : public telux::loc::ILocationListener {
-public:
-   void onDetailedLocationUpdate(const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo) override;
+ public:
+    void onDetailedLocationUpdate(
+        const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo) override;
 
-   void onGnssSVInfo(const std::shared_ptr<telux::loc::IGnssSVInfo> &gnssSVInfo) override {
-   }
+    void onGnssSVInfo(const std::shared_ptr<telux::loc::IGnssSVInfo> &gnssSVInfo) override {
+    }
 
-   void setRequestReceived(bool requestReceived, std::string senderNumber_);
+    void setRequestReceived(bool requestReceived, std::string senderNumber_);
 
-   MyLocationListener();
+    MyLocationListener();
 
-   ~MyLocationListener() {
-   }
+    ~MyLocationListener() {
+    }
 
-private:
-   std::shared_ptr<telux::tel::ISmsManager> smsManager_;
-   std::mutex locationLock_;
-   bool requestReceived_ = false;
-   std::string senderNumber_;
+ private:
+    std::shared_ptr<telux::tel::ISmsManager> smsManager_;
+    std::mutex locationLock_;
+    bool requestReceived_ = false;
+    std::string senderNumber_;
 };
 
 class MyLocationCommandCallback : public telux::common::ICommandResponseCallback {
-public:
-   MyLocationCommandCallback();
-   void commandResponse(telux::common::ErrorCode error);
+ public:
+    MyLocationCommandCallback();
+    void commandResponse(telux::common::ErrorCode error);
 };
 
 #endif  // MYLOCATIONLISTENER_HPP

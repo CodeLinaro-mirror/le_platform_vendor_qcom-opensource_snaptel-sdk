@@ -26,6 +26,13 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file btp.h
  * @BTP(basic transport protocol) header file, Refer: ETSI EN 302 636-5-1 V2.2.1
@@ -34,8 +41,7 @@
 #ifndef __BTP_H__
 #define __BTP_H__
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 #include <stdint.h>
 #include "utils.h"
@@ -49,27 +55,27 @@ typedef enum btp_packet_type {
 } btp_packet_type_e;
 
 struct _btp_hdr_A {
-	uint16_t d_port;
-	uint16_t s_port;
+    uint16_t d_port;
+    uint16_t s_port;
 } PACKED;
 
 struct _btp_hdr_B {
-	uint16_t d_port;
-	uint16_t dp_info;
+    uint16_t d_port;
+    uint16_t dp_info;
 } PACKED;
 
 /*! \struct
  *  \brief BTP data service parameters.
  */
 typedef struct btp_data {
-    btp_packet_type_e pkt_type;     /*!< BTP packet type */
-    uint16_t s_port;                /*!< Source port */
-    uint16_t d_port;                /*!< Destinaiton port */
-    uint16_t dp_info;               /*!< Destination port info */
+    btp_packet_type_e pkt_type; /*!< BTP packet type */
+    uint16_t s_port; /*!< Source port */
+    uint16_t d_port; /*!< Destinaiton port */
+    uint16_t dp_info; /*!< Destination port info */
 } btp_data_t;
 
 int btp_encode(msg_contents *mc);
-int btp_decode(msg_contents *mc );
+int btp_decode(msg_contents *mc);
 #ifdef __cplusplus
 }
 #endif

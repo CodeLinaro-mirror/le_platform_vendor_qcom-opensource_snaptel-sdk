@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef DATA_CALL_STUB_HPP
@@ -20,8 +20,8 @@ namespace telux {
 
 namespace data {
 
-class DataCallStub: public IDataCall {
-public:
+class DataCallStub : public IDataCall {
+ public:
     DataCallStub(std::string ifaceName);
     ~DataCallStub();
     const std::string &getInterfaceName() override;
@@ -37,12 +37,12 @@ public:
     int getProfileId() override;
     SlotId getSlotId() override;
     OperationType getOperationType() override;
-    telux::common::Status requestDataCallStatistics(StatisticsResponseCb callback = nullptr)
-        override;
+    telux::common::Status requestDataCallStatistics(
+        StatisticsResponseCb callback = nullptr) override;
     telux::common::Status resetDataCallStatistics(
         telux::common::ResponseCallback callback = nullptr) override;
-    telux::common::Status requestTrafficFlowTemplate(IpFamilyType family,
-        TrafficFlowTemplateCb callback) override;
+    telux::common::Status requestTrafficFlowTemplate(
+        IpFamilyType family, TrafficFlowTemplateCb callback) override;
     telux::common::Status requestDataCallBitRate(
         requestDataCallBitRateResponseCb callback) override;
 
@@ -58,25 +58,25 @@ public:
     void setOperationType(OperationType type);
     void setIpAddrList(std::list<IpAddrInfo> ipAddrList);
 
-private:
+ private:
     std::string ifaceName_;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     int profileId_;
-    SlotId slotId_ = DEFAULT_SLOT_ID;
+    SlotId slotId_       = DEFAULT_SLOT_ID;
     IpFamilyType family_ = IpFamilyType::UNKNOWN;
     std::list<IpAddrInfo> ipAddrList_;
-    TechPreference techPref_ = TechPreference::TP_ANY;
+    TechPreference techPref_   = TechPreference::TP_ANY;
     DataCallStatus ipv4Status_ = DataCallStatus::INVALID;
     DataCallStatus ipv6Status_ = DataCallStatus::INVALID;
-    DataCallStatus status_ = DataCallStatus::INVALID;
+    DataCallStatus status_     = DataCallStatus::INVALID;
     DataCallEndReason endReason_;
     DataBearerTechnology bearerTech_ = DataBearerTechnology::UNKNOWN;
-    OperationType operationType_ = OperationType::DATA_LOCAL;
+    OperationType operationType_     = OperationType::DATA_LOCAL;
     mutable std::mutex statusMutex_;
 };
 
-} // end of namespace data
+}  // end of namespace data
 
-} // end of namespace telux
+}  // end of namespace telux
 
-#endif // DATA_CALL_STUB_HPP
+#endif  // DATA_CALL_STUB_HPP

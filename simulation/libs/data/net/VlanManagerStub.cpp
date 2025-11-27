@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <thread>
@@ -22,11 +22,11 @@ namespace telux {
 namespace data {
 namespace net {
 
-VlanManagerStub::VlanManagerStub (telux::data::OperationType oprType)
-: oprType_(oprType) {
+VlanManagerStub::VlanManagerStub(telux::data::OperationType oprType)
+   : oprType_(oprType) {
     LOG(DEBUG, __FUNCTION__);
-    taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
-    listenerMgr_ = std::make_shared<telux::common::ListenerManager<IVlanListener>>();
+    taskQ_           = std::make_shared<AsyncTaskQueue<void>>();
+    listenerMgr_     = std::make_shared<telux::common::ListenerManager<IVlanListener>>();
     subSystemStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
 }
 
@@ -41,9 +41,8 @@ telux::common::Status VlanManagerStub::init(telux::common::InitResponseCb callba
     LOG(DEBUG, __FUNCTION__);
 
     initCb_ = callback;
-    auto f =
-        std::async(std::launch::async, [this, callback]() {
-        this->initSync(callback);}).share();
+    auto f
+        = std::async(std::launch::async, [this, callback]() { this->initSync(callback); }).share();
     taskQ_->add(f);
 
     return telux::common::Status::SUCCESS;
@@ -60,10 +59,9 @@ void VlanManagerStub::initSync(telux::common::InitResponseCb callback) {
     ClientContext context;
 
     request.set_operation_type(::dataStub::OperationType(oprType_));
-    grpc::Status reqStatus = stub_->InitService(&context, request, &response);
-    telux::common::ServiceStatus cbStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
-    int cbDelay = DEFAULT_DELAY;
+    grpc::Status reqStatus                = stub_->InitService(&context, request, &response);
+    telux::common::ServiceStatus cbStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    int cbDelay                           = DEFAULT_DELAY;
 
     do {
         if (!reqStatus.ok()) {
@@ -71,23 +69,21 @@ void VlanManagerStub::initSync(telux::common::InitResponseCb callback) {
             break;
         }
 
-        cbStatus =
-            static_cast<telux::common::ServiceStatus>(response.service_status());
-        cbDelay = static_cast<int>(response.delay());
+        cbStatus = static_cast<telux::common::ServiceStatus>(response.service_status());
+        cbDelay  = static_cast<int>(response.delay());
 
         this->onServiceStatusChange(cbStatus);
         LOG(DEBUG, __FUNCTION__, " ServiceStatus: ", static_cast<int>(cbStatus));
     } while (0);
 
-    bool isSubsystemReady = (cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE)?
-        true : false;
+    bool isSubsystemReady
+        = (cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) ? true : false;
     setSubSystemStatus(cbStatus);
     setSubsystemReady(isSubsystemReady);
 
     if (callback && (cbDelay != SKIP_CALLBACK)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay,
-            " cbStatus::", static_cast<int>(cbStatus));
+        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", static_cast<int>(cbStatus));
         invokeInitCallback(cbStatus);
     }
 }
@@ -99,15 +95,12 @@ void VlanManagerStub::invokeInitCallback(telux::common::ServiceStatus status) {
     }
 }
 
-void VlanManagerStub::invokeCallback(telux::common::ResponseCallback callback,
-    telux::common::ErrorCode error, int cbDelay ) {
+void VlanManagerStub::invokeCallback(
+    telux::common::ResponseCallback callback, telux::common::ErrorCode error, int cbDelay) {
     LOG(DEBUG, __FUNCTION__);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-    auto f = std::async(std::launch::async,
-        [this, error , callback]() {
-            callback(error);
-        }).share();
+    auto f = std::async(std::launch::async, [this, error, callback]() { callback(error); }).share();
     taskQ_->add(f);
 }
 
@@ -120,8 +113,8 @@ void VlanManagerStub::setSubsystemReady(bool status) {
 
 std::future<bool> VlanManagerStub::onSubsystemReady() {
     LOG(DEBUG, __FUNCTION__);
-    auto future = std::async(
-        std::launch::async, [&] { return VlanManagerStub::waitForInitialization(); });
+    auto future
+        = std::async(std::launch::async, [&] { return VlanManagerStub::waitForInitialization(); });
     return future;
 }
 
@@ -155,14 +148,12 @@ telux::data::OperationType VlanManagerStub::getOperationType() {
     return oprType_;
 }
 
-telux::common::Status VlanManagerStub::registerListener(
-    std::weak_ptr<IVlanListener> listener) {
+telux::common::Status VlanManagerStub::registerListener(std::weak_ptr<IVlanListener> listener) {
     LOG(DEBUG, __FUNCTION__);
     return listenerMgr_->registerListener(listener);
 }
 
-telux::common::Status VlanManagerStub::deregisterListener(
-    std::weak_ptr<IVlanListener> listener) {
+telux::common::Status VlanManagerStub::deregisterListener(std::weak_ptr<IVlanListener> listener) {
     LOG(DEBUG, __FUNCTION__);
     return listenerMgr_->deRegisterListener(listener);
 }
@@ -201,18 +192,18 @@ telux::common::Status VlanManagerStub::createVlan(
     request.set_priority(vlanConfig.priority);
     request.set_interface_type(::dataStub::InterfaceType(vlanConfig.iface));
     request.set_create_bridge(vlanConfig.createBridge);
-    request.mutable_nw_type()->set_nw_type(DataUtilsStub::convertNetworkTypeToGrpc(
-                vlanConfig.nwType));
+    request.mutable_nw_type()->set_nw_type(
+        DataUtilsStub::convertNetworkTypeToGrpc(vlanConfig.nwType));
     grpc::Status reqStatus = stub_->CreateVlan(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
     bool isAccelerated = false;
 
-    error = static_cast<telux::common::ErrorCode>(response.reply().error());
-    status = static_cast<telux::common::Status>(response.reply().status());
-    delay = static_cast<int>(response.reply().delay());
+    error         = static_cast<telux::common::ErrorCode>(response.reply().error());
+    status        = static_cast<telux::common::Status>(response.reply().status());
+    delay         = static_cast<int>(response.reply().delay());
     isAccelerated = response.is_accelerated();
 
     if (status == telux::common::Status::SUCCESS) {
@@ -222,11 +213,11 @@ telux::common::Status VlanManagerStub::createVlan(
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay, isAccelerated]() {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-                    callback(isAccelerated, error);
-                }).share();
+            auto f1
+                = std::async(std::launch::async, [this, error, callback, delay, isAccelerated]() {
+                      std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                      callback(isAccelerated, error);
+                  }).share();
             taskQ_->add(f1);
         }
     }
@@ -234,8 +225,8 @@ telux::common::Status VlanManagerStub::createVlan(
     return status;
 }
 
-telux::common::Status VlanManagerStub::removeVlan(int16_t vlanId,
-    InterfaceType ifaceType, telux::common::ResponseCallback callback) {
+telux::common::Status VlanManagerStub::removeVlan(
+    int16_t vlanId, InterfaceType ifaceType, telux::common::ResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__);
 
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
@@ -253,12 +244,12 @@ telux::common::Status VlanManagerStub::removeVlan(int16_t vlanId,
     grpc::Status reqStatus = stub_->RemoveVlan(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
-    error = static_cast<telux::common::ErrorCode>(response.error());
+    error  = static_cast<telux::common::ErrorCode>(response.error());
     status = static_cast<telux::common::Status>(response.status());
-    delay = static_cast<int>(response.delay());
+    delay  = static_cast<int>(response.delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -267,10 +258,9 @@ telux::common::Status VlanManagerStub::removeVlan(int16_t vlanId,
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCallback(callback, error, delay);
-                }).share();
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     }
@@ -278,8 +268,7 @@ telux::common::Status VlanManagerStub::removeVlan(int16_t vlanId,
     return status;
 }
 
-telux::common::Status VlanManagerStub::queryVlanInfo(
-    QueryVlanResponseCb callback) {
+telux::common::Status VlanManagerStub::queryVlanInfo(QueryVlanResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
 
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
@@ -295,12 +284,12 @@ telux::common::Status VlanManagerStub::queryVlanInfo(
     grpc::Status reqStatus = stub_->QueryVlanInfo(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
-    error = static_cast<telux::common::ErrorCode>(response.reply().error());
+    error  = static_cast<telux::common::ErrorCode>(response.reply().error());
     status = static_cast<telux::common::Status>(response.reply().status());
-    delay = static_cast<int>(response.reply().delay());
+    delay  = static_cast<int>(response.reply().delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -313,19 +302,17 @@ telux::common::Status VlanManagerStub::queryVlanInfo(
 
             for (auto config : response.vlan_config()) {
                 VlanConfig vlanConfig;
-                vlanConfig.iface =
-                    (telux::data::InterfaceType)config.interface_type();
-                vlanConfig.vlanId = config.vlan_id();
+                vlanConfig.iface         = (telux::data::InterfaceType)config.interface_type();
+                vlanConfig.vlanId        = config.vlan_id();
                 vlanConfig.isAccelerated = config.is_accelerated();
-                vlanConfig.priority = config.priority();
-                vlanConfig.createBridge = config.create_bridge();
+                vlanConfig.priority      = config.priority();
+                vlanConfig.createBridge  = config.create_bridge();
                 vlanConfig.nwType = DataUtilsStub::convertNetworkTypeToEnum(config.nw_type());
                 configs.push_back(vlanConfig);
             }
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, configs, delay]() {
-                    callback(configs, error);
-                }).share();
+            auto f1 = std::async(std::launch::async, [this, error, callback, configs, delay]() {
+                callback(configs, error);
+            }).share();
             taskQ_->add(f1);
         }
     }
@@ -349,19 +336,19 @@ telux::common::Status VlanManagerStub::bindToBackhaul(
     request.set_vlan_id(vlanBindConfig.vlanId);
     request.set_slot_id(vlanBindConfig.bhInfo.slotId);
     request.set_profile_id(vlanBindConfig.bhInfo.profileId);
-    request.set_backhaul_type(static_cast<::dataStub::BackhaulPreference>(
-        vlanBindConfig.bhInfo.backhaul));
+    request.set_backhaul_type(
+        static_cast<::dataStub::BackhaulPreference>(vlanBindConfig.bhInfo.backhaul));
     request.set_operation_type(::dataStub::OperationType(oprType_));
     request.set_backhaul_vlan_id(vlanBindConfig.bhInfo.vlanId);
     grpc::Status reqStatus = stub_->BindToBackhaul(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
-    error = static_cast<telux::common::ErrorCode>(response.error());
+    error  = static_cast<telux::common::ErrorCode>(response.error());
     status = static_cast<telux::common::Status>(response.status());
-    delay = static_cast<int>(response.delay());
+    delay  = static_cast<int>(response.delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -370,10 +357,9 @@ telux::common::Status VlanManagerStub::bindToBackhaul(
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCallback(callback, error, delay);
-                }).share();
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     }
@@ -397,18 +383,18 @@ telux::common::Status VlanManagerStub::unbindFromBackhaul(
     request.set_vlan_id(vlanBindConfig.vlanId);
     request.set_slot_id(vlanBindConfig.bhInfo.slotId);
     request.set_profile_id(vlanBindConfig.bhInfo.profileId);
-    request.set_backhaul_type(static_cast<::dataStub::BackhaulPreference>(
-        vlanBindConfig.bhInfo.backhaul));
+    request.set_backhaul_type(
+        static_cast<::dataStub::BackhaulPreference>(vlanBindConfig.bhInfo.backhaul));
     request.set_operation_type(::dataStub::OperationType(oprType_));
     grpc::Status reqStatus = stub_->UnbindFromBackhaul(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
-    error = static_cast<telux::common::ErrorCode>(response.error());
+    error  = static_cast<telux::common::ErrorCode>(response.error());
     status = static_cast<telux::common::Status>(response.status());
-    delay = static_cast<int>(response.delay());
+    delay  = static_cast<int>(response.delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -417,10 +403,9 @@ telux::common::Status VlanManagerStub::unbindFromBackhaul(
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCallback(callback, error, delay);
-                }).share();
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     }
@@ -429,8 +414,7 @@ telux::common::Status VlanManagerStub::unbindFromBackhaul(
 }
 
 telux::common::Status VlanManagerStub::queryVlanToBackhaulBindings(
-    BackhaulType backhaulType,
-    VlanBindingsResponseCb callback, SlotId slotId) {
+    BackhaulType backhaulType, VlanBindingsResponseCb callback, SlotId slotId) {
     LOG(DEBUG, __FUNCTION__);
 
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
@@ -448,12 +432,12 @@ telux::common::Status VlanManagerStub::queryVlanToBackhaulBindings(
     grpc::Status reqStatus = stub_->QueryVlanMappingList(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
-    error = static_cast<telux::common::ErrorCode>(response.reply().error());
+    error  = static_cast<telux::common::ErrorCode>(response.reply().error());
     status = static_cast<telux::common::Status>(response.reply().status());
-    delay = static_cast<int>(response.reply().delay());
+    delay  = static_cast<int>(response.reply().delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -466,17 +450,16 @@ telux::common::Status VlanManagerStub::queryVlanToBackhaulBindings(
 
             for (auto config : response.vlan_mapping()) {
                 VlanBindConfig vlanConfig;
-                vlanConfig.bhInfo.backhaul = backhaulType;
-                vlanConfig.vlanId = config.vlan_id();
-                vlanConfig.bhInfo.slotId = slotId;
+                vlanConfig.bhInfo.backhaul  = backhaulType;
+                vlanConfig.vlanId           = config.vlan_id();
+                vlanConfig.bhInfo.slotId    = slotId;
                 vlanConfig.bhInfo.profileId = config.profile_id();
-                vlanConfig.bhInfo.vlanId = config.backhaul_vlan_id();
+                vlanConfig.bhInfo.vlanId    = config.backhaul_vlan_id();
                 configs.push_back(vlanConfig);
             }
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, configs, delay]() {
-                    callback(configs, error);
-                }).share();
+            auto f1 = std::async(std::launch::async, [this, error, callback, configs, delay]() {
+                callback(configs, error);
+            }).share();
             taskQ_->add(f1);
         }
     }
@@ -484,13 +467,13 @@ telux::common::Status VlanManagerStub::queryVlanToBackhaulBindings(
     return status;
 }
 
-telux::common::Status VlanManagerStub::bindWithProfile(int profileId, int vlanId,
-    telux::common::ResponseCallback callback , SlotId slotId) {
+telux::common::Status VlanManagerStub::bindWithProfile(
+    int profileId, int vlanId, telux::common::ResponseCallback callback, SlotId slotId) {
     return telux::common::Status::NOTSUPPORTED;
 }
 
-telux::common::Status VlanManagerStub::unbindFromProfile(int profileId, int vlanId,
-    telux::common::ResponseCallback callback, SlotId slotId) {
+telux::common::Status VlanManagerStub::unbindFromProfile(
+    int profileId, int vlanId, telux::common::ResponseCallback callback, SlotId slotId) {
     return telux::common::Status::NOTSUPPORTED;
 }
 
@@ -499,6 +482,6 @@ telux::common::Status VlanManagerStub::queryVlanMappingList(
     return telux::common::Status::NOTSUPPORTED;
 }
 
-} // end of namespace net
-} // end of namespace data
-} // end of namespace telux
+}  // end of namespace net
+}  // end of namespace data
+}  // end of namespace telux

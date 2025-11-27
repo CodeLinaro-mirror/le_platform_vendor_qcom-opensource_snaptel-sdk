@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -72,9 +72,7 @@ class Application {
 
         /* Step - 2 */
         wakeupMgr_ = powerFactory.getWakeupManager(
-            [&p](telux::common::ServiceStatus srvStatus) {
-            p.set_value(srvStatus);
-        });
+            [&p](telux::common::ServiceStatus srvStatus) { p.set_value(srvStatus); });
 
         if (!wakeupMgr_) {
             std::cout << "Can't get IWakeupManager" << std::endl;
@@ -84,23 +82,22 @@ class Application {
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Power service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Power service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
         /* Step - 4 */
         try {
             wakeupReasonListener_ = std::make_shared<WakeupReasonListener>();
-        } catch (const std::exception& e) {
+        } catch (const std::exception &e) {
             std::cout << "Can't allocate WakeupReasonListener" << std::endl;
             return -ENOMEM;
         }
 
         ec = wakeupMgr_->registerListener(wakeupReasonListener_);
         if (ec != telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Can't register listener, err " <<
-                static_cast<int>(ec) << std::endl;
+            std::cout << "Can't register listener, err " << static_cast<int>(ec) << std::endl;
             return -EIO;
         }
 
@@ -114,8 +111,7 @@ class Application {
         /* Step - 6 */
         ec = wakeupMgr_->deRegisterListener(wakeupReasonListener_);
         if (ec != telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Can't deregister listener, err " <<
-                static_cast<int>(ec) << std::endl;
+            std::cout << "Can't deregister listener, err " << static_cast<int>(ec) << std::endl;
             return -EIO;
         }
 
@@ -140,7 +136,7 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<Application>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate Application" << std::endl;
         return -ENOMEM;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -70,8 +70,9 @@ void FsManagerStub::notifyServiceStatus(ServiceStatus srvcStatus) {
 
     std::vector<std::weak_ptr<IFsListener>> applisteners;
     listenerMgr_->getAvailableListeners(applisteners);
-    LOG(DEBUG, __FUNCTION__, ":: Notifying fs manager service status: ",
-            static_cast<int>(srvcStatus), " to listeners: ", applisteners.size());
+    LOG(DEBUG, __FUNCTION__,
+        ":: Notifying fs manager service status: ", static_cast<int>(srvcStatus),
+        " to listeners: ", applisteners.size());
     for (auto &wp : applisteners) {
         if (auto sp = wp.lock()) {
             sp->onServiceStatusChange(srvcStatus);
@@ -88,22 +89,19 @@ Status FsManagerStub::registerDefaultIndications() {
     LOG(INFO, __FUNCTION__, ":: Registering default SSR indications");
 
     status = clientEventMgr_.registerListener(shared_from_this(), FS_MANAGER_FILTER);
-    if ((status != Status::SUCCESS) &&
-        (status != Status::ALREADY)) {
+    if ((status != Status::SUCCESS) && (status != Status::ALREADY)) {
         LOG(ERROR, __FUNCTION__, ":: Registering default SSR indications failed");
         return status;
     }
     return status;
 }
 
-Status FsManagerStub::initSyncComplete(
-        ServiceStatus srvcStatus) {
+Status FsManagerStub::initSyncComplete(ServiceStatus srvcStatus) {
     LOG(DEBUG, __FUNCTION__);
 
     registerDefaultIndications();
 
-    if (srvcStatus != ServiceStatus::SERVICE_AVAILABLE)
-    {
+    if (srvcStatus != ServiceStatus::SERVICE_AVAILABLE) {
         return Status::FAILED;
     }
 
@@ -119,17 +117,18 @@ void FsManagerStub::onEventUpdate(google::protobuf::Any event) {
     LOG(DEBUG, __FUNCTION__);
     // Execute all events in separate thread
     auto f = std::async(std::launch::deferred, [this, event]() {
-            if (event.Is<commonStub::GetServiceStatusReply>()) {
-                ::commonStub::GetServiceStatusReply ssrResp;
-                event.UnpackTo(&ssrResp);
-                handleSSREvent(ssrResp);
-            } else if (event.Is<::platformStub::FsEventReply>()) {
-                ::platformStub::FsEventReply fsEvent;
-                event.UnpackTo(&fsEvent);
-                handleFsEventReply(fsEvent);
-            }else {
-                LOG(ERROR, __FUNCTION__, ":: Invalid event");
-    }}).share();
+        if (event.Is<commonStub::GetServiceStatusReply>()) {
+            ::commonStub::GetServiceStatusReply ssrResp;
+            event.UnpackTo(&ssrResp);
+            handleSSREvent(ssrResp);
+        } else if (event.Is<::platformStub::FsEventReply>()) {
+            ::platformStub::FsEventReply fsEvent;
+            event.UnpackTo(&fsEvent);
+            handleFsEventReply(fsEvent);
+        } else {
+            LOG(ERROR, __FUNCTION__, ":: Invalid event");
+        }
+    }).share();
 
     taskQ_.add(f);
 }
@@ -149,7 +148,7 @@ Status FsManagerStub::startEfsBackup() {
 
     ::grpc::Status reqstatus = stub_->StartEfsBackup(&context, request, &response);
 
-    if(!reqstatus.ok()) {
+    if (!reqstatus.ok()) {
         LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
     }
 
@@ -180,7 +179,7 @@ Status FsManagerStub::prepareForEcall() {
 
     ::grpc::Status reqstatus = stub_->PrepareForEcall(&context, request, &response);
 
-    if(!reqstatus.ok()) {
+    if (!reqstatus.ok()) {
         LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
     }
 
@@ -211,7 +210,7 @@ Status FsManagerStub::eCallCompleted() {
 
     ::grpc::Status reqstatus = stub_->ECallCompleted(&context, request, &response);
 
-    if(!reqstatus.ok()) {
+    if (!reqstatus.ok()) {
         LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
     }
 
@@ -265,7 +264,7 @@ Status FsManagerStub::prepareForOta(
 
     ::grpc::Status reqstatus = stub_->PrepareForOta(&context, request, &response);
 
-    if(!reqstatus.ok()) {
+    if (!reqstatus.ok()) {
         LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
     }
 
@@ -321,7 +320,7 @@ Status FsManagerStub::otaCompleted(
 
     ::grpc::Status reqstatus = stub_->OtaCompleted(&context, request, &response);
 
-    if(!reqstatus.ok()) {
+    if (!reqstatus.ok()) {
         LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
     }
 
@@ -371,7 +370,7 @@ Status FsManagerStub::startAbSync(telux::common::ResponseCallback responseCb) {
 
     ::grpc::Status reqstatus = stub_->StartAbSync(&context, request, &response);
 
-    if(!reqstatus.ok()) {
+    if (!reqstatus.ok()) {
         LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
     }
 
@@ -394,13 +393,13 @@ void FsManagerStub::handleFsEventReply(::platformStub::FsEventReply event) {
     LOG(DEBUG, __FUNCTION__);
 
     std::string fsEventName = "";
-    fsEventName = event.fs_event_name().fs_event_name();
+    fsEventName             = event.fs_event_name().fs_event_name();
     if (fsEventName == "EFS_BACKUP_START" || fsEventName == "EFS_BACKUP_END") {
         handleEfsBackupEvent(event);
     } else if (fsEventName == "EFS_RESTORE_START" || fsEventName == "EFS_RESTORE_END") {
         handleEfsRestoreEvent(event);
     } else if (fsEventName == "MRC_OTA_START" || fsEventName == "MRC_OTA_RESUME"
-                || fsEventName == "MRC_OTA_END" || fsEventName == "MRC_ABSYNC") {
+               || fsEventName == "MRC_OTA_END" || fsEventName == "MRC_ABSYNC") {
         handleOtaEvent(event);
     } else if (fsEventName == "FS_OPERATION_IMMINENT") {
         handleFsOpImminentEvent(event);
@@ -429,8 +428,7 @@ void FsManagerStub::handleSSREvent(::commonStub::GetServiceStatusReply ssrResp) 
     onFsServiceStatusChange(srvcStatus);
 }
 
-void FsManagerStub::onFsServiceStatusChange(
-        ServiceStatus srvcStatus) {
+void FsManagerStub::onFsServiceStatusChange(ServiceStatus srvcStatus) {
     LOG(DEBUG, __FUNCTION__, ":: Service Status: ", static_cast<int>(srvcStatus));
 
     if (srvcStatus == getServiceStatus()) {
@@ -446,7 +444,7 @@ void FsManagerStub::onFsServiceStatusChange(
     }
 }
 
-void FsManagerStub::handleFsOpImminentEvent(::platformStub::FsEventReply event){
+void FsManagerStub::handleFsOpImminentEvent(::platformStub::FsEventReply event) {
     LOG(DEBUG, __FUNCTION__);
 
     uint32_t timeToExpiry;
@@ -472,38 +470,38 @@ void FsManagerStub::onFsOpImminentEvent(uint32_t timeToExpiry) {
     }
 }
 
-void FsManagerStub::handleOtaEvent(::platformStub::FsEventReply event){
+void FsManagerStub::handleOtaEvent(::platformStub::FsEventReply event) {
     LOG(DEBUG, __FUNCTION__);
 
     std::string fsEventName = " ";
     telux::common::ErrorCode error;
 
     fsEventName = event.fs_event_name().fs_event_name();
-    error = static_cast<telux::common::ErrorCode>(event.reply().error());
+    error       = static_cast<telux::common::ErrorCode>(event.reply().error());
 
     onOtaABSyncEvent(fsEventName, error);
 }
 
-void FsManagerStub::handleEfsBackupEvent(::platformStub::FsEventReply event){
+void FsManagerStub::handleEfsBackupEvent(::platformStub::FsEventReply event) {
     LOG(DEBUG, __FUNCTION__);
 
     std::string fsEventName = " ";
     telux::common::ErrorCode error;
 
     fsEventName = event.fs_event_name().fs_event_name();
-    error = static_cast<telux::common::ErrorCode>(event.reply().error());
+    error       = static_cast<telux::common::ErrorCode>(event.reply().error());
 
     onEfsBackupEvent(fsEventName, error);
 }
 
-void FsManagerStub::handleEfsRestoreEvent(::platformStub::FsEventReply event){
+void FsManagerStub::handleEfsRestoreEvent(::platformStub::FsEventReply event) {
     LOG(DEBUG, __FUNCTION__);
 
     std::string fsEventName = " ";
     telux::common::ErrorCode error;
 
     fsEventName = event.fs_event_name().fs_event_name();
-    error = static_cast<telux::common::ErrorCode>(event.reply().error());
+    error       = static_cast<telux::common::ErrorCode>(event.reply().error());
 
     onEfsRestoreEvent(fsEventName, error);
 }
@@ -563,8 +561,7 @@ void FsManagerStub::onEfsBackupEvent(std::string fsEventName, ErrorCode error) {
     } else if (fsEventName == "EFS_BACKUP_END") {
         eventInfo.event = telux::platform::EfsEvent::END;
     } else {
-        LOG(ERROR, __FUNCTION__,
-            "Unhandled EFS backup event: ", fsEventName);
+        LOG(ERROR, __FUNCTION__, "Unhandled EFS backup event: ", fsEventName);
         return;
     }
 
@@ -594,8 +591,7 @@ void FsManagerStub::onEfsRestoreEvent(std::string fsEventName, ErrorCode error) 
     } else if (fsEventName == "EFS_RESTORE_END") {
         eventInfo.event = telux::platform::EfsEvent::END;
     } else {
-        LOG(ERROR, __FUNCTION__,
-            "Unhandled EFS restore event: ", fsEventName);
+        LOG(ERROR, __FUNCTION__, "Unhandled EFS restore event: ", fsEventName);
         return;
     }
 

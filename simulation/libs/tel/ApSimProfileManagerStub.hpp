@@ -26,7 +26,7 @@ namespace tel {
 class ApSimProfileManagerStub : public IApSimProfileManager,
                                 public IEventListener,
                                 public std::enable_shared_from_this<ApSimProfileManagerStub> {
-public:
+ public:
     ApSimProfileManagerStub();
     telux::common::Status init(telux::common::InitResponseCb callback);
     ~ApSimProfileManagerStub();
@@ -34,21 +34,21 @@ public:
     telux::common::ServiceStatus getServiceStatus() override;
 
     telux::common::Status registerListener(std::weak_ptr<IApSimProfileListener> listener) override;
-    telux::common::Status
-        deregisterListener(std::weak_ptr<telux::tel::IApSimProfileListener> listener) override;
+    telux::common::Status deregisterListener(
+        std::weak_ptr<telux::tel::IApSimProfileListener> listener) override;
 
-    telux::common::Status sendRetrieveProfileListResponse(SlotId slotId,
-        ApduExchangeStatus result, uint32_t referenceId, std::vector<std::string> profileIccIds,
+    telux::common::Status sendRetrieveProfileListResponse(SlotId slotId, ApduExchangeStatus result,
+        uint32_t referenceId, std::vector<std::string> profileIccIds,
         common::ResponseCallback callback) override;
-    telux::common::Status sendProfileOperationResponse(SlotId slotId,  ApduExchangeStatus result,
+    telux::common::Status sendProfileOperationResponse(SlotId slotId, ApduExchangeStatus result,
         uint32_t referenceId, common::ResponseCallback callback) override;
 
     void onServiceStatusChange(telux::common::ServiceStatus status);
 
     void cleanup();
-    void onEventUpdate(google::protobuf::Any event)  override;
+    void onEventUpdate(google::protobuf::Any event) override;
 
-private:
+ private:
     int noOfSlots_ = 0;
     std::mutex mtx_;
     telux::common::InitResponseCb initCb_;
@@ -63,7 +63,7 @@ private:
     void handleProfileOperationRequest(::telStub::ProfileOperationRequestEvent event);
 };
 
-} // end of namespace tel
-} // end of namespace telux
+}  // end of namespace tel
+}  // end of namespace telux
 
-#endif // APSIMPROFILE_MANAGER_STUB_HPP
+#endif  // APSIMPROFILE_MANAGER_STUB_HPP

@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <iostream>
@@ -17,7 +17,7 @@ extern "C" {
 
 DataControlMenu::DataControlMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
-    menuOptionsAdded_ = false;
+    menuOptionsAdded_       = false;
     subSystemStatusUpdated_ = false;
 }
 
@@ -34,11 +34,9 @@ bool DataControlMenu::init() {
         menuOptionsAdded_ = true;
         std::shared_ptr<ConsoleAppCommand> setDataStallParamsCommand
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "set_data_stall_params",
-                        {}, std::bind(&DataControlMenu::setDataStallParams, this,
-                            std::placeholders::_1)));
+                {}, std::bind(&DataControlMenu::setDataStallParams, this, std::placeholders::_1)));
 
-        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList
-            = {setDataStallParamsCommand};
+        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {setDataStallParamsCommand};
         addCommands(commandsList);
     }
     ConsoleApp::displayMenu();
@@ -47,12 +45,12 @@ bool DataControlMenu::init() {
 
 bool DataControlMenu::initDataControlManager() {
     telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
-    subSystemStatusUpdated_ = false;
+    subSystemStatusUpdated_                      = false;
 
-    bool retVal = false;
-    auto initCb = std::bind(&DataControlMenu::onInitComplete, this, std::placeholders::_1);
+    bool retVal       = false;
+    auto initCb       = std::bind(&DataControlMenu::onInitComplete, this, std::placeholders::_1);
     auto &dataFactory = telux::data::DataFactory::getInstance();
-    auto dataControl = dataFactory.getDataControlManager(initCb);
+    auto dataControl  = dataFactory.getDataControlManager(initCb);
 
     if (dataControl) {
         dataControl->registerListener(shared_from_this());
@@ -70,7 +68,7 @@ bool DataControlMenu::initDataControlManager() {
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << "\n"
                       << " DataControl Manager is ready" << std::endl;
-            retVal = true;
+            retVal              = true;
             dataControlManager_ = dataControl;
         } else {
             std::cout << "\n"
@@ -86,12 +84,11 @@ void DataControlMenu::onInitComplete(telux::common::ServiceStatus status) {
     cv_.notify_all();
 }
 
-void DataControlMenu::setDataStallParams(
-    std::vector<std::string> &inputCommand) {
+void DataControlMenu::setDataStallParams(std::vector<std::string> &inputCommand) {
     std::cout << "setting data stall parameters" << std::endl;
 
-    int slotId = DEFAULT_SLOT_ID, trafficDir=0, appType =
-        static_cast<int>(telux::data::ApplicationType::UNSPECIFIED);
+    int slotId = DEFAULT_SLOT_ID, trafficDir = 0,
+        appType          = static_cast<int>(telux::data::ApplicationType::UNSPECIFIED);
     bool dataStallStatus = false;
 
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
@@ -103,15 +100,16 @@ void DataControlMenu::setDataStallParams(
     std::cout << "Enter data stall direction: (1-UPLINK, 2-DOWNLINK)" << std::endl;
     std::cin >> trafficDir;
     std::cout << std::endl;
-    Utils::validateInput(trafficDir, {1,2});
+    Utils::validateInput(trafficDir, {1, 2});
     params.trafficDir = static_cast<telux::data::Direction>(trafficDir);
 
-    std::cout << "Enter application type: (0-UNSPECIFIED, 1-CONV_AUDIO, 2-CONV_VIDEO,"
+    std::cout
+        << "Enter application type: (0-UNSPECIFIED, 1-CONV_AUDIO, 2-CONV_VIDEO,"
         << "3-STREAMING_AUDIO, 4-STREAMING_VIDEO, 5-TYPE_GAMING, 6-WEB_BROWSING, 7-FILE_TRANSFER)"
         << std::endl;
     std::cin >> appType;
     std::cout << std::endl;
-    Utils::validateInput(appType, {0,1,2,3,4,5,6,7});
+    Utils::validateInput(appType, {0, 1, 2, 3, 4, 5, 6, 7});
     params.appType = static_cast<telux::data::ApplicationType>(appType);
 
     std::cout << "Enter data stall status: (0-FALSE, 1-TRUE)" << std::endl;
@@ -120,12 +118,12 @@ void DataControlMenu::setDataStallParams(
     Utils::validateInput(dataStallStatus);
     params.dataStall = dataStallStatus;
 
-    telux::common::ErrorCode errorCode =
-        dataControlManager_->setDataStallParams(slotID, params);
+    telux::common::ErrorCode errorCode = dataControlManager_->setDataStallParams(slotID, params);
     if (errorCode == telux::common::ErrorCode::SUCCESS) {
         std::cout << "\nSet data stall params succeed" << std::endl;
     } else {
-        std::cout << "\nSet data stall params failed, err: "
-                  << Utils::getErrorCodeAsString(errorCode) << std::endl;
+        std::cout
+            << "\nSet data stall params failed, err: " << Utils::getErrorCodeAsString(errorCode)
+            << std::endl;
     }
 }

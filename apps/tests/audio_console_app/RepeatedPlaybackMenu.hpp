@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -12,8 +12,8 @@
 #include <telux/audio/AudioPlayer.hpp>
 
 class RepeatedPlaybackMenu : public ConsoleApp,
-                 public std::enable_shared_from_this<RepeatedPlaybackMenu>,
-                 public telux::audio::IPlayListListener {
+                             public std::enable_shared_from_this<RepeatedPlaybackMenu>,
+                             public telux::audio::IPlayListListener {
  public:
     RepeatedPlaybackMenu(std::string appName, std::string cursor);
     ~RepeatedPlaybackMenu();
@@ -46,10 +46,10 @@ class RepeatedPlaybackMenu : public ConsoleApp,
     std::mutex readyMutex_;
     std::condition_variable playCV_;
     telux::common::ErrorCode playError_;
-    bool playFinished_ = false;
-    bool errorOccurred_ = false;
-    bool playStopped_ = false;
-    bool playStarted_ = false;
+    bool playFinished_     = false;
+    bool errorOccurred_    = false;
+    bool playStopped_      = false;
+    bool playStarted_      = false;
     bool audioPlayerReady_ = false;
     std::shared_ptr<telux::audio::IAudioPlayer> audioPlayerMgr_;
 

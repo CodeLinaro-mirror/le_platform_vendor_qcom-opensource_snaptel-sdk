@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -47,7 +47,7 @@ class V2xPropFactory {
 #endif
 
  private:
-    V2xPropFactory(const V2xPropFactory &) = delete;
+    V2xPropFactory(const V2xPropFactory &)            = delete;
     V2xPropFactory &operator=(const V2xPropFactory &) = delete;
 };
 
@@ -56,4 +56,4 @@ class V2xPropFactory {
 }  // End of namespace prop
 }  // End of namespace cv2x
 }  // End of namespace telux
-#endif // TELUX_CV2X_PROP_V2XPROPFACTORY_HPP
+#endif  // TELUX_CV2X_PROP_V2XPROPFACTORY_HPP

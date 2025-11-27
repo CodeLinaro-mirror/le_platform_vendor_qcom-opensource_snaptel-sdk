@@ -28,10 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef TRANSCODEMENU_HPP
@@ -46,7 +45,7 @@
 class TransCodeMenu : public ConsoleApp,
                       public telux::audio::ITranscodeListener,
                       public std::enable_shared_from_this<TransCodeMenu> {
-public:
+ public:
     TransCodeMenu(std::string appName, std::string cursor);
     ~TransCodeMenu();
     void init();
@@ -55,7 +54,7 @@ public:
     void onReadyForWrite() override;
     void tearDown(std::vector<std::string> userInput);
 
-private:
+ private:
     void startTranscoding(std::vector<std::string> userInput);
     void createTranscoder();
     void read();
@@ -65,16 +64,16 @@ private:
     void takeFormatData(FormatInfo &info);
 
     void readCallback(std::shared_ptr<telux::audio::IAudioBuffer> buffer, uint32_t isLastBuffer,
-                      telux::common::ErrorCode error);
+        telux::common::ErrorCode error);
     void writeCallback(std::shared_ptr<telux::audio::IAudioBuffer> buffer, uint32_t bytes,
-                      telux::common::ErrorCode error);
+        telux::common::ErrorCode error);
 
     FormatInfo inputConfig_;
     FormatInfo outputConfig_;
     std::shared_ptr<ITranscoder> transcoder_;
     std::shared_ptr<IAudioManager> audioManager_;
-    FILE * readFile_;
-    FILE * writeFile_;
+    FILE *readFile_;
+    FILE *writeFile_;
     std::mutex readFileM_;
     std::mutex writeFileM_;
     std::mutex writeM_;
@@ -94,4 +93,4 @@ private:
     std::atomic<bool> stopTranscoder_;
 };
 
-#endif // TRANSCODEMENU_HPP
+#endif  // TRANSCODEMENU_HPP

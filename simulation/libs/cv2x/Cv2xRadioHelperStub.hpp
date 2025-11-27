@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -18,9 +18,8 @@
 #define DEFAULT_NOTIFICATION_DELAY 2000
 #define RPC_FAIL_SUFFIX " RPC Request failed - "
 
-const std::string CV2X_EVENT_RADIO_MGR_FILTER  = "cv2x_radio_manager";
-const std::string CV2X_EVENT_RADIO_FILTER      = "cv2x_radio";
-
+const std::string CV2X_EVENT_RADIO_MGR_FILTER = "cv2x_radio_manager";
+const std::string CV2X_EVENT_RADIO_FILTER     = "cv2x_radio";
 
 #define RPC_TO_CV2X_STATUS(rpc, res)                                             \
     {                                                                            \
@@ -60,17 +59,16 @@ const std::string CV2X_EVENT_RADIO_FILTER      = "cv2x_radio";
         }                                                                          \
     }
 
-#define NOTIFY_LISTENER(listenerMgr,type,cb,payload)  \
-    {                                                 \
-        std::vector<std::weak_ptr<type>> listeners;   \
-        listenerMgr.getAvailableListeners(listeners); \
-        for (auto &wp : listeners) {                  \
-            if (auto sp = wp.lock()) {                \
-                sp->cb(payload);                      \
-            }                                         \
-        }                                             \
+#define NOTIFY_LISTENER(listenerMgr, type, cb, payload) \
+    {                                                   \
+        std::vector<std::weak_ptr<type>> listeners;     \
+        listenerMgr.getAvailableListeners(listeners);   \
+        for (auto &wp : listeners) {                    \
+            if (auto sp = wp.lock()) {                  \
+                sp->cb(payload);                        \
+            }                                           \
+        }                                               \
     }
-
 
 namespace telux {
 namespace cv2x {
@@ -85,12 +83,12 @@ class Cv2xEvtListener : public telux::common::IEventListener {
  private:
     telux::common::ListenerManager<telux::cv2x::ICv2xListener> listenerMgr_;
     void onCv2xStatusChange(telux::cv2x::Cv2xStatus &status);
-    void onSlssRxInfoChange(const ::cv2xStub::SyncRefUeInfo& rcpSlssUe);
+    void onSlssRxInfoChange(const ::cv2xStub::SyncRefUeInfo &rcpSlssUe);
 };
 
 class Cv2xRadioHelper {
  public:
-     static void resetV2xStatusEx(Cv2xStatusEx &statusEx) {
+    static void resetV2xStatusEx(Cv2xStatusEx &statusEx) {
         statusEx.status.rxStatus      = Cv2xStatusType::INACTIVE;
         statusEx.status.txStatus      = Cv2xStatusType::INACTIVE;
         statusEx.status.rxCause       = Cv2xCauseType::UNKNOWN;
@@ -108,8 +106,8 @@ class Cv2xRadioHelper {
         status.cbrValue      = 255;
         status.cbrValueValid = false;
     }
-    static void rpcSlssInfoToSlssInfo (const ::cv2xStub::SyncRefUeInfo& rcpSlss,
-        cv2x::SyncRefUeInfo& refInfo) {
+    static void rpcSlssInfoToSlssInfo(
+        const ::cv2xStub::SyncRefUeInfo &rcpSlss, cv2x::SyncRefUeInfo &refInfo) {
         refInfo.slssId     = rcpSlss.slssid();
         refInfo.inCoverage = rcpSlss.incoverage();
         refInfo.pattern    = static_cast<telux::cv2x::SlssSyncPattern>(rcpSlss.pattern());

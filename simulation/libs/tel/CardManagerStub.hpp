@@ -1,8 +1,7 @@
 /*
- * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 
 /**
  * @file       CardManagerStub.hpp
@@ -39,10 +38,9 @@ using telStub::CardService;
 namespace telux {
 namespace tel {
 
-
 struct UserRefreshParam {
     bool isRegister = false;
-    bool doVoting = false;
+    bool doVoting   = false;
     std::vector<IccFile> efFiles;
     RefreshParams refreshParams;
 };
@@ -50,27 +48,27 @@ struct UserRefreshParam {
 class CardManagerStub : public ICardManager,
                         public IEventListener,
                         public std::enable_shared_from_this<CardManagerStub> {
-public:
+ public:
     bool isSubsystemReady() override;
     std::future<bool> onSubsystemReady() override;
     telux::common::ServiceStatus getServiceStatus() override;
     telux::common::Status getSlotCount(int &count) override;
     telux::common::Status getSlotIds(std::vector<int> &slotIds) override;
-    std::shared_ptr<ICard> getCard(int slotId = DEFAULT_SLOT_ID,
-        telux::common::Status *status = nullptr) override;
-    telux::common::Status cardPowerUp(SlotId slotId,
-        telux::common::ResponseCallback callback = nullptr) override;
-    telux::common::Status cardPowerDown(SlotId slotId,
-        telux::common::ResponseCallback callback = nullptr) override;
-    telux::common::Status setupRefreshConfig(
-        SlotId slotId, bool isRegister, bool doVoting, std::vector<IccFile> efFiles,
-        RefreshParams refreshParams, common::ResponseCallback callback) override;
+    std::shared_ptr<ICard> getCard(
+        int slotId = DEFAULT_SLOT_ID, telux::common::Status *status = nullptr) override;
+    telux::common::Status cardPowerUp(
+        SlotId slotId, telux::common::ResponseCallback callback = nullptr) override;
+    telux::common::Status cardPowerDown(
+        SlotId slotId, telux::common::ResponseCallback callback = nullptr) override;
+    telux::common::Status setupRefreshConfig(SlotId slotId, bool isRegister, bool doVoting,
+        std::vector<IccFile> efFiles, RefreshParams refreshParams,
+        common::ResponseCallback callback) override;
     telux::common::Status allowCardRefresh(SlotId slotId, bool allowRefresh,
         RefreshParams refreshParams, telux::common::ResponseCallback callback) override;
     telux::common::Status confirmRefreshHandlingCompleted(SlotId slotId, bool isCompleted,
-        RefreshParams refreshParams, telux::common::ResponseCallback callback)  override;
-    telux::common::Status requestLastRefreshEvent(SlotId slotId,
-        RefreshParams refreshParams, refreshLastEventResponseCallback callback) override;
+        RefreshParams refreshParams, telux::common::ResponseCallback callback) override;
+    telux::common::Status requestLastRefreshEvent(SlotId slotId, RefreshParams refreshParams,
+        refreshLastEventResponseCallback callback) override;
     telux::common::Status registerListener(std::shared_ptr<ICardListener> listener) override;
     telux::common::Status removeListener(std::shared_ptr<ICardListener> listener) override;
     void onEventUpdate(google::protobuf::Any event) override;
@@ -79,9 +77,9 @@ public:
     void cleanup();
     ~CardManagerStub();
 
-private:
+ private:
     int cbDelay_;
-    int slotCount_ = INVALID_SLOT_COUNT;
+    int slotCount_                                              = INVALID_SLOT_COUNT;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_ = nullptr;
     telux::common::InitResponseCb initCb_;
     std::shared_ptr<telux::common::ListenerManager<ICardListener>> listenerMgr_ = nullptr;
@@ -99,25 +97,21 @@ private:
     void setServiceStatus(telux::common::ServiceStatus status);
     void initSync();
     std::map<int, std::shared_ptr<CardStub>> cardMap_;
-    void invokeCallback(telux::common::ResponseCallback callback,
-        telux::common::ErrorCode error, int cbDelay );
+    void invokeCallback(
+        telux::common::ResponseCallback callback, telux::common::ErrorCode error, int cbDelay);
     void handleEvent(std::string token, std::string event);
-    void invokelisteners (int slotId);
+    void invokelisteners(int slotId);
     void handleCardInfoChanged(::telStub::cardInfoChange event);
     void handleRefreshEvent(::telStub::RefreshEvent event);
-    void setRpcRefreshParams(::telStub::RefreshParams* refreshs,
-        const RefreshParams refreshParams);
-    void convertRefreshParams(const RefreshParams userParams, RefreshParams& refreshParams);
+    void setRpcRefreshParams(::telStub::RefreshParams *refreshs, const RefreshParams refreshParams);
+    void convertRefreshParams(const RefreshParams userParams, RefreshParams &refreshParams);
     SlotId getSlotBySessionType(telux::tel::SessionType st);
-    void findRefreshParams(const RefreshParams& refreshParams,
-        const std::vector<IccFile>& efFiles, bool& isRegister, bool* doVoting,
-        bool isEvent = false);
+    void findRefreshParams(const RefreshParams &refreshParams, const std::vector<IccFile> &efFiles,
+        bool &isRegister, bool *doVoting, bool isEvent = false);
 };
 
-} // end of namespace tel
+}  // end of namespace tel
 
-} // end of namespace telux
+}  // end of namespace telux
 
-
-
-#endif // CARD_MANAGER_STUB_HPP
+#endif  // CARD_MANAGER_STUB_HPP

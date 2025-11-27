@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef AUDIOGRPCCLIENTSTUB_HPP
@@ -18,8 +18,8 @@
 
 using grpc::Channel;
 using grpc::ClientContext;
-using grpc::Status;
 using grpc::ClientReader;
+using grpc::Status;
 
 using audioStub::AudioService;
 
@@ -28,7 +28,7 @@ using audioStub::AudioService;
  */
 struct keyPairHash {
     template <class T1, class T2>
-    std::size_t operator () (const std::pair<T1,T2> &p) const {
+    std::size_t operator()(const std::pair<T1, T2> &p) const {
         auto hash1 = std::hash<T1>{}(p.first);
         auto hash2 = std::hash<T2>{}(p.second);
 
@@ -87,12 +87,11 @@ class AudioGrpcClientStub : public ICommunicator,
         std::shared_ptr<telux::audio::IStopStreamCb> resultListener, int cmdId) override;
 
     telux::common::Status playDtmfTone(telux::audio::DtmfTone dtmfTone, uint16_t duration,
-        uint16_t gain, uint32_t streamId,
-        std::shared_ptr<telux::audio::IDTMFCb> resultListener, int cmdId) override;
-
-    telux::common::Status stopDtmfTone(telux::audio::StreamDirection direction,
-        uint32_t streamId, std::shared_ptr<telux::audio::IDTMFCb> resultListener,
+        uint16_t gain, uint32_t streamId, std::shared_ptr<telux::audio::IDTMFCb> resultListener,
         int cmdId) override;
+
+    telux::common::Status stopDtmfTone(telux::audio::StreamDirection direction, uint32_t streamId,
+        std::shared_ptr<telux::audio::IDTMFCb> resultListener, int cmdId) override;
 
     telux::common::Status setDevice(uint32_t streamId,
         std::vector<telux::audio::DeviceType> devices,
@@ -113,23 +112,23 @@ class AudioGrpcClientStub : public ICommunicator,
     telux::common::Status getMute(uint32_t streamId, telux::audio::StreamDirection direction,
         std::shared_ptr<telux::audio::ISetGetMuteCb> resultListener, int cmdId) override;
 
-    telux::common::Status write(uint32_t streamId, uint8_t *transportBuffer,
-        uint32_t isLastBuffer, std::shared_ptr<telux::audio::IWriteCb> resultListener,
+    telux::common::Status write(uint32_t streamId, uint8_t *transportBuffer, uint32_t isLastBuffer,
+        std::shared_ptr<telux::audio::IWriteCb> resultListener,
         telux::audio::AudioUserData *userData, uint32_t dataLength) override;
 
-    telux::common::Status read(uint32_t streamId, uint32_t numBytesToRead,
-        uint8_t *transportBuffer, std::shared_ptr<telux::audio::IReadCb> resultListener,
+    telux::common::Status read(uint32_t streamId, uint32_t numBytesToRead, uint8_t *transportBuffer,
+        std::shared_ptr<telux::audio::IReadCb> resultListener,
         telux::audio::AudioUserData *audioUserData) override;
 
     telux::common::Status playTone(uint32_t streamId, std::vector<uint16_t> frequency,
-        uint16_t duration, uint16_t gain,
-        std::shared_ptr<telux::audio::IToneCb> resultListener, int cmdId) override;
+        uint16_t duration, uint16_t gain, std::shared_ptr<telux::audio::IToneCb> resultListener,
+        int cmdId) override;
 
     telux::common::Status stopTone(uint32_t streamId,
         std::shared_ptr<telux::audio::IToneCb> resultListener, int cmdId) override;
 
-    telux::common::Status registerForVoiceStreamEvents(uint32_t streamId,
-        std::weak_ptr<telux::audio::IVoiceStreamEventsCb> listener) override;
+    telux::common::Status registerForVoiceStreamEvents(
+        uint32_t streamId, std::weak_ptr<telux::audio::IVoiceStreamEventsCb> listener) override;
 
     telux::common::Status registerForServiceStatusEvents(
         std::weak_ptr<telux::audio::IServiceStatusEventsCb> listener) override;
@@ -145,24 +144,24 @@ class AudioGrpcClientStub : public ICommunicator,
 
     bool waitForInitialization();
     /**
-    * Checks the status of grpc Service and returns the result.
-    *
-    * @returns True if grpc Service is ready for service otherwise false.
-    *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to
-    *         change and could break backwards compatibility.
-    */
+     * Checks the status of grpc Service and returns the result.
+     *
+     * @returns True if grpc Service is ready for service otherwise false.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
     bool isReady() override;
 
-   /**
-    * Wait for grpc Service to be ready.
-    *
-    * @returns  A future that caller can wait on to be notified when
-    *           subsystem is ready.
-    *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to
-    *         change and could break backwards compatibility.
-    */
+    /**
+     * Wait for grpc Service to be ready.
+     *
+     * @returns  A future that caller can wait on to be notified when
+     *           subsystem is ready.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
     std::future<bool> onReady() override;
 
     /* Receiving GRPC responses */
@@ -230,22 +229,23 @@ class AudioGrpcClientStub : public ICommunicator,
     uint32_t inTranscodeStreamId_;
     uint32_t outTranscodeStreamId_;
 
-    std::shared_ptr<telux::common::ListenerManager<
-        telux::audio::IVoiceStreamEventsCb>> voiceListenerMgr_;
+    std::shared_ptr<telux::common::ListenerManager<telux::audio::IVoiceStreamEventsCb>>
+        voiceListenerMgr_;
 
-    std::shared_ptr<telux::common::ListenerManager<
-        telux::audio::IPlayStreamEventsCb>> playListenerMgr_;
+    std::shared_ptr<telux::common::ListenerManager<telux::audio::IPlayStreamEventsCb>>
+        playListenerMgr_;
 
-    std::shared_ptr<telux::common::ListenerManager<
-         telux::audio::IServiceStatusEventsCb>> serviceStatusListenerMgr_;
+    std::shared_ptr<telux::common::ListenerManager<telux::audio::IServiceStatusEventsCb>>
+        serviceStatusListenerMgr_;
 
     std::unique_ptr<telux::common::TaskDispatcher> serverMsgProcessor_;
     std::unique_ptr<::audioStub::AudioService::Stub> stub_;
-    //Stores a resultListener for a request on a particular stream.
-    std::unordered_map<std::pair<int ,int>, std::weak_ptr<telux::common::ICommandCallback>,
-        keyPairHash> callbackMap_;
-    //Stores audio user data for read/write requests.
-    std::unordered_map<std::pair<int ,int>, telux::audio::AudioUserData*, keyPairHash> userDataMap_;
+    // Stores a resultListener for a request on a particular stream.
+    std::unordered_map<std::pair<int, int>, std::weak_ptr<telux::common::ICommandCallback>,
+        keyPairHash>
+        callbackMap_;
+    // Stores audio user data for read/write requests.
+    std::unordered_map<std::pair<int, int>, telux::audio::AudioUserData *, keyPairHash> userDataMap_;
     std::mutex update_;
     // Check the readiness of the service
     std::mutex grpcClientMutex_;
@@ -255,11 +255,11 @@ class AudioGrpcClientStub : public ICommunicator,
     std::vector<std::thread> runningThreads_;
     std::atomic<bool> exiting_;
 
-    AudioGrpcClientStub(const AudioGrpcClientStub &) = delete;
+    AudioGrpcClientStub(const AudioGrpcClientStub &)            = delete;
     AudioGrpcClientStub &operator=(const AudioGrpcClientStub &) = delete;
 };
 
 }  // end of namespace audio
 }  // end of namespace telux
 
-#endif //AUDIOGRPCCLIENTSTUB_HPP
+#endif  // AUDIOGRPCCLIENTSTUB_HPP

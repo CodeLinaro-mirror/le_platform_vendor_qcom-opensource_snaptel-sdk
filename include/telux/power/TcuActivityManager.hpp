@@ -28,9 +28,8 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -117,13 +116,12 @@ namespace power {
  */
 class ITcuActivityManager {
  public:
-
-   /**
-    * Gets the power management service's functional status.
-    *
-    * @returns @ref telux::common::ServiceStatus
-    */
-   virtual telux::common::ServiceStatus getServiceStatus() = 0;
+    /**
+     * Gets the power management service's functional status.
+     *
+     * @returns @ref telux::common::ServiceStatus
+     */
+    virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
      * Registers the listener to receive power state change, machine availability update
@@ -134,8 +132,8 @@ class ITcuActivityManager {
      * @returns @ref telux::common::Status::SUCCESS if the listener is registered,
      *          otherwise, an appropriate error code
      */
-    virtual telux::common::Status registerListener(
-        std::weak_ptr<ITcuActivityListener> listener) = 0;
+    virtual telux::common::Status registerListener(std::weak_ptr<ITcuActivityListener> listener)
+        = 0;
 
     /**
      * Deregisters the given listener registered previously with
@@ -146,8 +144,8 @@ class ITcuActivityManager {
      * @returns @ref telux::common::Status::SUCCESS if the listener is deregistered,
      *          otherwise, an appropriate error code
      */
-    virtual telux::common::Status deregisterListener(
-        std::weak_ptr<ITcuActivityListener> listener) = 0;
+    virtual telux::common::Status deregisterListener(std::weak_ptr<ITcuActivityListener> listener)
+        = 0;
 
     /**
      * Register the given listener to listen power management service's functional
@@ -159,7 +157,8 @@ class ITcuActivityManager {
      *          otherwise, an appropriate error code
      */
     virtual telux::common::Status registerServiceStateListener(
-        std::weak_ptr<telux::common::IServiceStatusListener> listener) = 0;
+        std::weak_ptr<telux::common::IServiceStatusListener> listener)
+        = 0;
 
     /**
      * Deregisters the given listener registered previously with
@@ -171,7 +170,8 @@ class ITcuActivityManager {
      *          otherwise, an appropriate error code
      */
     virtual telux::common::Status deregisterServiceStateListener(
-        std::weak_ptr<telux::common::IServiceStatusListener> listener) = 0;
+        std::weak_ptr<telux::common::IServiceStatusListener> listener)
+        = 0;
 
     /**
      * Gets machine's platform name on which the caller process is running. It can be used
@@ -224,8 +224,9 @@ class ITcuActivityManager {
      * @returns @ref telux::common::Status::SUCCESS if the state transition is initiated,
      *          otherwise, an appropriate error code
      */
-    virtual telux::common::Status setActivityState(TcuActivityState state,
-        std::string machineName, telux::common::ResponseCallback callback = nullptr) = 0;
+    virtual telux::common::Status setActivityState(TcuActivityState state, std::string machineName,
+        telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * For the master client, gives the @ref TcuActivityState of the machine
@@ -247,10 +248,10 @@ class ITcuActivityManager {
      *
      * @note Eval: This is a new API and is being evaluated. It is subject
      *              to change and could break backwards compatibility.
-    */
-    virtual telux::common::ErrorCode getActivityState(std::string machineName,
-        TcuActivityState &state) = 0;
-
+     */
+    virtual telux::common::ErrorCode getActivityState(
+        std::string machineName, TcuActivityState &state)
+        = 0;
 
     /**
      * When a slave client receives notification in ITcuActivityListener::onTcuActivityStateUpdate,
@@ -272,7 +273,8 @@ class ITcuActivityManager {
      *          an appropriate error code
      */
     virtual telux::common::Status sendActivityStateAck(
-        StateChangeResponse ack, TcuActivityState state) = 0;
+        StateChangeResponse ack, TcuActivityState state)
+        = 0;
 
     /**
      * Explicitly enables/disables certain behavior in the modem peripheral subsystem (MPSS)
@@ -342,8 +344,9 @@ class ITcuActivityManager {
      * @deprecated  Use @ref setActivityState(TcuActivityState state, std::string machineName,
      *              telux::common::ResponseCallback) instead.
      */
-    virtual telux::common::Status setActivityState( TcuActivityState state,
-        telux::common::ResponseCallback callback = nullptr) = 0;
+    virtual telux::common::Status setActivityState(
+        TcuActivityState state, telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * When a slave client receives notification in ITcuActivityListener::onTcuActivityStateUpdate,
@@ -385,4 +388,4 @@ class ITcuActivityManager {
 }  // end of namespace power
 }  // end of namespace telux
 
-#endif // TELUX_POWER_TCUACTIVITYMANAGER_HPP
+#endif  // TELUX_POWER_TCUACTIVITYMANAGER_HPP

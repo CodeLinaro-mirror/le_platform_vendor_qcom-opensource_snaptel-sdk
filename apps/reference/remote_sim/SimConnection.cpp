@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file    SimConnection.cpp
  * @brief   This file contains the implementation for SIM Connection functions.
@@ -35,8 +41,8 @@
 #include <cstring>
 
 extern "C" {
-    #include <arpa/inet.h>
-    #include <unistd.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 }
 
 #include "RemoteSimDaemon.hpp"
@@ -55,14 +61,12 @@ extern "C" {
 using namespace telux::common;
 using namespace telux::tel;
 
-SimConnection & SimConnection::getInstance()
-{
+SimConnection &SimConnection::getInstance() {
     static SimConnection instance;
     return instance;
 }
 
-Status SimConnection::setupDaemonSocket()
-{
+Status SimConnection::setupDaemonSocket() {
     if ((serverSocketFd_ = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         LOGE("Failed to create socket! %s\n", strerror(errno));
         return Status::FAILED;
@@ -74,8 +78,8 @@ Status SimConnection::setupDaemonSocket()
         return Status::FAILED;
     }
 
-    daemonAddr_.sin_family = AF_INET;
-    daemonAddr_.sin_port = htons(PORT);
+    daemonAddr_.sin_family      = AF_INET;
+    daemonAddr_.sin_port        = htons(PORT);
     daemonAddr_.sin_addr.s_addr = INADDR_ANY;
 
     if (bind(serverSocketFd_, (struct sockaddr *)&daemonAddr_, sizeof(daemonAddr_)) < 0) {
@@ -92,10 +96,9 @@ Status SimConnection::setupDaemonSocket()
     return Status::SUCCESS;
 }
 
-Status SimConnection::setupClientConnection(const std::string &daemonIp)
-{
+Status SimConnection::setupClientConnection(const std::string &daemonIp) {
     clientAddr_.sin_family = AF_INET;
-    clientAddr_.sin_port = htons(PORT);
+    clientAddr_.sin_port   = htons(PORT);
 
     if (inet_aton(daemonIp.c_str(), (struct in_addr *)&(clientAddr_.sin_addr.s_addr)) == 0) {
         LOGE("Failed to read daemon IP address! Tried %s\n", daemonIp.c_str());
@@ -110,12 +113,12 @@ Status SimConnection::setupClientConnection(const std::string &daemonIp)
     return Status::SUCCESS;
 }
 
-void SimConnection::acceptClientConnection()
-{
+void SimConnection::acceptClientConnection() {
     int addrLen = sizeof(daemonAddr_);
 
-    while ((clientConnectionFd_ = accept(serverSocketFd_, (struct sockaddr *)&daemonAddr_,
-                                         (socklen_t *)&addrLen)) < 0) {
+    while ((clientConnectionFd_
+               = accept(serverSocketFd_, (struct sockaddr *)&daemonAddr_, (socklen_t *)&addrLen))
+           < 0) {
         LOGE("Failed to accept a client connection! %s\n", strerror(errno));
     }
 
@@ -124,9 +127,8 @@ void SimConnection::acceptClientConnection()
     LOGD("Accepted client connection.\n");
 }
 
-bool SimConnection::handleClientConnection(std::time_t &lastReceivedMsgTime, uint8_t *buf,
-                                           int &bytes)
-{
+bool SimConnection::handleClientConnection(
+    std::time_t &lastReceivedMsgTime, uint8_t *buf, int &bytes) {
     bool msgReceived = false;
 
     // If client is connected, poll connection file descriptor for activity.
@@ -154,22 +156,22 @@ bool SimConnection::handleClientConnection(std::time_t &lastReceivedMsgTime, uin
         // Check for connection errors.
         if (clientConnected_ && daemonFds_.revents & (POLLERR | POLLHUP | POLLNVAL)) {
             LOGE("Error reading from connection file descriptor, revents = %d.\n",
-                 daemonFds_.revents);
+                daemonFds_.revents);
             clientConnected_ = false;
         }
 
         // Send connection keepalive message if no message has been received from client for
         // KEEPALIVE_MSG_INTERVAL_SEC seconds.
         std::time_t currentTime = std::time(nullptr);
-        if (clientConnected_ &&
-            std::difftime(currentTime, lastReceivedMsgTime) > KEEPALIVE_MSG_INTERVAL_SEC) {
+        if (clientConnected_
+            && std::difftime(currentTime, lastReceivedMsgTime) > KEEPALIVE_MSG_INTERVAL_SEC) {
             if (!pendingKeepalive_) {
                 pendingKeepalive_ = true;
                 sendConnKeepaliveRequest();
-            } else if (std::difftime(currentTime, lastReceivedMsgTime) >
-                       KEEPALIVE_MSG_TIMEOUT_SEC) {
+            } else if (std::difftime(currentTime, lastReceivedMsgTime)
+                       > KEEPALIVE_MSG_TIMEOUT_SEC) {
                 LOGE("Client did not respond to keepalive message; disconnected.\n");
-                clientConnected_ = false;
+                clientConnected_  = false;
                 pendingKeepalive_ = false;
             }
         }
@@ -188,9 +190,8 @@ bool SimConnection::handleClientConnection(std::time_t &lastReceivedMsgTime, uin
     return msgReceived;
 }
 
-bool SimConnection::handleDaemonConnection(std::time_t &lastReceivedMsgTime, uint8_t *buf,
-                                           int &bytes)
-{
+bool SimConnection::handleDaemonConnection(
+    std::time_t &lastReceivedMsgTime, uint8_t *buf, int &bytes) {
     bool msgReceived = false;
 
     // If daemon is connected, poll connection file descriptor for activity.
@@ -207,7 +208,7 @@ bool SimConnection::handleDaemonConnection(std::time_t &lastReceivedMsgTime, uin
                 LOGE("Connection closed or failed to read from daemon! %s\n", strerror(errno));
                 daemonConnected_ = false;
             } else {
-                msgReceived = true;
+                msgReceived         = true;
                 lastReceivedMsgTime = std::time(nullptr);
             }
         }
@@ -215,14 +216,14 @@ bool SimConnection::handleDaemonConnection(std::time_t &lastReceivedMsgTime, uin
         // Check for connection errors.
         if (daemonConnected_ && clientFds_.revents & (POLLERR | POLLHUP | POLLNVAL)) {
             LOGE("Error reading from connection file descriptor, revents = %d.\n",
-                 clientFds_.revents);
+                clientFds_.revents);
             daemonConnected_ = false;
         }
 
         // Check if connection has timed out.
         std::time_t currentTime = std::time(nullptr);
-        if (daemonConnected_ &&
-            std::difftime(currentTime, lastReceivedMsgTime) > KEEPALIVE_MSG_TIMEOUT_SEC) {
+        if (daemonConnected_
+            && std::difftime(currentTime, lastReceivedMsgTime) > KEEPALIVE_MSG_TIMEOUT_SEC) {
             daemonConnected_ = false;
         }
 
@@ -243,22 +244,19 @@ bool SimConnection::handleDaemonConnection(std::time_t &lastReceivedMsgTime, uin
     return msgReceived;
 }
 
-bool SimConnection::isClientConnected()
-{
+bool SimConnection::isClientConnected() {
     return clientConnected_;
 }
 
-bool SimConnection::isDaemonConnected()
-{
+bool SimConnection::isDaemonConnected() {
     return daemonConnected_;
 }
 
-void SimConnection::tearDownClientConnection()
-{
+void SimConnection::tearDownClientConnection() {
     if (clientConnected_) {
         close(clientConnectionFd_);
         clientConnectionFd_ = -1;
-        clientConnected_ = false;
+        clientConnected_    = false;
     }
 
     if (serverSocketFd_ != -1) {
@@ -267,17 +265,15 @@ void SimConnection::tearDownClientConnection()
     }
 }
 
-void SimConnection::tearDownDaemonConnection()
-{
+void SimConnection::tearDownDaemonConnection() {
     if (daemonConnected_) {
         close(daemonConnectionFd_);
         daemonConnectionFd_ = -1;
-        daemonConnected_ = false;
+        daemonConnected_    = false;
     }
 }
 
-void SimConnection::sendApduRequest(const unsigned int id, const std::vector<uint8_t> &apdu)
-{
+void SimConnection::sendApduRequest(const unsigned int id, const std::vector<uint8_t> &apdu) {
     int msgLen = APDU_REQUEST_MSG_HEADER_LENGTH + apdu.size();
     uint8_t buf[msgLen];
 
@@ -291,48 +287,42 @@ void SimConnection::sendApduRequest(const unsigned int id, const std::vector<uin
     sendRequest(buf, msgLen);
 }
 
-void SimConnection::sendCardConnectRequest()
-{
-    int msgLen = 1;
+void SimConnection::sendCardConnectRequest() {
+    int msgLen    = 1;
     uint8_t buf[] = {CARD_CONNECT_MSG};
 
     sendRequest(buf, msgLen);
 }
 
-void SimConnection::sendCardDisconnectRequest()
-{
-    int msgLen = 1;
+void SimConnection::sendCardDisconnectRequest() {
+    int msgLen    = 1;
     uint8_t buf[] = {CARD_DISCONNECT_MSG};
 
     sendRequest(buf, msgLen);
 }
 
-void SimConnection::sendCardPowerUpRequest()
-{
-    int msgLen = 1;
+void SimConnection::sendCardPowerUpRequest() {
+    int msgLen    = 1;
     uint8_t buf[] = {CARD_POWER_UP_MSG};
 
     sendRequest(buf, msgLen);
 }
 
-void SimConnection::sendCardPowerDownRequest()
-{
-    int msgLen = 1;
+void SimConnection::sendCardPowerDownRequest() {
+    int msgLen    = 1;
     uint8_t buf[] = {CARD_POWER_DOWN_MSG};
 
     sendRequest(buf, msgLen);
 }
 
-void SimConnection::sendCardResetRequest()
-{
-    int msgLen = 1;
+void SimConnection::sendCardResetRequest() {
+    int msgLen    = 1;
     uint8_t buf[] = {CARD_RESET_MSG};
 
     sendRequest(buf, msgLen);
 }
 
-void SimConnection::sendApduResponse(const std::vector<int> &data, uint8_t apduId)
-{
+void SimConnection::sendApduResponse(const std::vector<int> &data, uint8_t apduId) {
     int msgLen = APDU_RESPONSE_MSG_HEADER_LENGTH + data.size();
     uint8_t buf[msgLen];
 
@@ -347,8 +337,7 @@ void SimConnection::sendApduResponse(const std::vector<int> &data, uint8_t apduI
     sendResponse(buf, msgLen);
 }
 
-void SimConnection::sendCardResetResponse(const std::vector<int> &responseAtr)
-{
+void SimConnection::sendCardResetResponse(const std::vector<int> &responseAtr) {
     int msgLen = 2 + responseAtr.size();
     uint8_t buf[msgLen];
 
@@ -362,8 +351,7 @@ void SimConnection::sendCardResetResponse(const std::vector<int> &responseAtr)
     sendResponse(buf, msgLen);
 }
 
-void SimConnection::sendCardInsertedMessage(const std::vector<int> &responseAtr)
-{
+void SimConnection::sendCardInsertedMessage(const std::vector<int> &responseAtr) {
     int msgLen = 2 + responseAtr.size();
     uint8_t buf[msgLen];
 
@@ -377,32 +365,28 @@ void SimConnection::sendCardInsertedMessage(const std::vector<int> &responseAtr)
     sendResponse(buf, msgLen);
 }
 
-void SimConnection::sendCardRemovedMessage()
-{
-    int msgLen = 1;
+void SimConnection::sendCardRemovedMessage() {
+    int msgLen    = 1;
     uint8_t buf[] = {CARD_REMOVED_MSG};
 
     sendResponse(buf, msgLen);
 }
 
-void SimConnection::sendConnKeepaliveResponse()
-{
-    int msgLen = 1;
+void SimConnection::sendConnKeepaliveResponse() {
+    int msgLen    = 1;
     uint8_t buf[] = {CONN_KEEPALIVE_MSG};
 
     sendResponse(buf, msgLen);
 }
 
-void SimConnection::sendConnKeepaliveRequest()
-{
-    int msgLen = 1;
+void SimConnection::sendConnKeepaliveRequest() {
+    int msgLen    = 1;
     uint8_t buf[] = {CONN_KEEPALIVE_MSG};
 
     sendRequest(buf, msgLen);
 }
 
-void SimConnection::sendRequest(const uint8_t *buf, const int msgLen)
-{
+void SimConnection::sendRequest(const uint8_t *buf, const int msgLen) {
     if (!clientConnected_) {
         LOGE("Client not connected, cannot send message!\n");
         return;
@@ -416,8 +400,7 @@ void SimConnection::sendRequest(const uint8_t *buf, const int msgLen)
     }
 }
 
-void SimConnection::sendResponse(const uint8_t *buf, const int msgLen)
-{
+void SimConnection::sendResponse(const uint8_t *buf, const int msgLen) {
     if (!daemonConnected_) {
         LOGE("Daemon not connected, cannot send message!\n");
         return;
@@ -431,15 +414,14 @@ void SimConnection::sendResponse(const uint8_t *buf, const int msgLen)
     }
 }
 
-Status SimConnection::connectToDaemon()
-{
+Status SimConnection::connectToDaemon() {
     if ((daemonConnectionFd_ = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         LOGE("Failed to create socket! %s\n", strerror(errno));
         return Status::FAILED;
     }
 
-    if (connect(daemonConnectionFd_, (struct sockaddr *)&clientAddr_,
-                sizeof(struct sockaddr_in)) < 0) {
+    if (connect(daemonConnectionFd_, (struct sockaddr *)&clientAddr_, sizeof(struct sockaddr_in))
+        < 0) {
         LOGE("Failed to connect to daemon! %s\n", strerror(errno));
         daemonConnectionFd_ = -1;
         return Status::FAILED;
@@ -452,14 +434,12 @@ Status SimConnection::connectToDaemon()
     return Status::SUCCESS;
 }
 
-void SimConnection::updateDaemonFds()
-{
-    daemonFds_.fd = clientConnectionFd_;
+void SimConnection::updateDaemonFds() {
+    daemonFds_.fd     = clientConnectionFd_;
     daemonFds_.events = POLLIN;
 }
 
-void SimConnection::updateClientFds()
-{
-    clientFds_.fd = daemonConnectionFd_;
+void SimConnection::updateClientFds() {
+    clientFds_.fd     = daemonConnectionFd_;
     clientFds_.events = POLLIN;
 }

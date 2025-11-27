@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_CenDsrcTollingZoneID_H_
-#define	_CenDsrcTollingZoneID_H_
-
+#ifndef _CenDsrcTollingZoneID_H_
+#define _CenDsrcTollingZoneID_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* CenDsrcTollingZoneID */
-typedef ProtectedZoneID_t	 CenDsrcTollingZoneID_t;
+typedef ProtectedZoneID_t CenDsrcTollingZoneID_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_CenDsrcTollingZoneID;
@@ -37,5 +36,5 @@ per_type_encoder_f CenDsrcTollingZoneID_encode_uper;
 }
 #endif
 
-#endif	/* _CenDsrcTollingZoneID_H_ */
+#endif /* _CenDsrcTollingZoneID_H_ */
 #include <asn_internal.h>

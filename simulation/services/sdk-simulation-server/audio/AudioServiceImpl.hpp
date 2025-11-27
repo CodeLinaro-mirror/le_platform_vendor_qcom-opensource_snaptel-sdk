@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef AUDIOSERVICEIMPL_HPP
@@ -12,7 +12,6 @@
 #include "ClientCache.hpp"
 #include "IAudioMsgListener.hpp"
 #include "Alsa.hpp"
-
 
 namespace telux {
 namespace audio {
@@ -34,12 +33,10 @@ class AudioServiceImpl : public IAudioMsgListener,
 
     /*** Overrides - IAudioMsgListener ***/
 
-    telux::common::Status onClientConnected(
-        std::shared_ptr<AudioClient> audioClient,
+    telux::common::Status onClientConnected(std::shared_ptr<AudioClient> audioClient,
         std::weak_ptr<IAudioMsgDispatcher> audioMsgDispatcher) override;
 
-    telux::common::Status onClientDisconnected(
-        std::shared_ptr<AudioClient> audioClient) override;
+    telux::common::Status onClientDisconnected(std::shared_ptr<AudioClient> audioClient) override;
 
     void getSupportedDevices(std::shared_ptr<AudioRequest> audioReq) override;
 
@@ -47,8 +44,7 @@ class AudioServiceImpl : public IAudioMsgListener,
 
     void getCalibrationStatus(std::shared_ptr<AudioRequest> audioReq) override;
 
-    void createStream(std::shared_ptr<AudioRequest> audioReq,
-        StreamConfiguration config) override;
+    void createStream(std::shared_ptr<AudioRequest> audioReq, StreamConfiguration config) override;
 
     void deleteStream(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) override;
 
@@ -56,38 +52,38 @@ class AudioServiceImpl : public IAudioMsgListener,
 
     void stop(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) override;
 
-    void setDevice(std::shared_ptr<AudioRequest> audioReq,
-            uint32_t streamId, std::vector<DeviceType> const &devices) override;
+    void setDevice(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
+        std::vector<DeviceType> const &devices) override;
 
     void getDevice(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) override;
 
     void setVolume(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-            StreamDirection direction, std::vector<ChannelVolume> channelsVolume) override;
+        StreamDirection direction, std::vector<ChannelVolume> channelsVolume) override;
 
     void getVolume(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-            StreamDirection direction) override;
+        StreamDirection direction) override;
 
-    void setMuteState(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-            StreamMute muteInfo) override;
+    void setMuteState(
+        std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, StreamMute muteInfo) override;
 
     void getMuteState(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-            StreamDirection direction) override;
+        StreamDirection direction) override;
 
-    void write(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-            uint8_t *data, uint32_t writeLengthRequested, uint32_t offset,
-            int64_t timeStamp, bool isLastBuffer) override;
+    void write(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, uint8_t *data,
+        uint32_t writeLengthRequested, uint32_t offset, int64_t timeStamp,
+        bool isLastBuffer) override;
 
     void read(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-            uint32_t readLengthRequested) override;
+        uint32_t readLengthRequested) override;
 
-    void startDtmf(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-            uint16_t gain, uint16_t duration, DtmfTone dtmfTone) override;
+    void startDtmf(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, uint16_t gain,
+        uint16_t duration, DtmfTone dtmfTone) override;
 
     void stopDtmf(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-            StreamDirection direction) override;
+        StreamDirection direction) override;
 
-    void startTone(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-            uint16_t gain, uint16_t duration, std::vector<uint16_t> toneFrequencies) override;
+    void startTone(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, uint16_t gain,
+        uint16_t duration, std::vector<uint16_t> toneFrequencies) override;
 
     void stopTone(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) override;
 
@@ -96,16 +92,16 @@ class AudioServiceImpl : public IAudioMsgListener,
     void flush(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) override;
 
     void registerForIndication(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-            uint32_t indicationType) override;
+        uint32_t indicationType) override;
 
     void deRegisterForIndication(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-            uint32_t indicationType) override;
+        uint32_t indicationType) override;
 
-    void createTranscoder(std::shared_ptr<AudioRequest> audioReq,
-        TranscodingFormatInfo inInfo, TranscodingFormatInfo outInfo) override;
+    void createTranscoder(std::shared_ptr<AudioRequest> audioReq, TranscodingFormatInfo inInfo,
+        TranscodingFormatInfo outInfo) override;
 
-    void deleteTranscoder(std::shared_ptr<AudioRequest> audioReq,
-        uint32_t inStreamId, uint32_t outStreamId) override;
+    void deleteTranscoder(
+        std::shared_ptr<AudioRequest> audioReq, uint32_t inStreamId, uint32_t outStreamId) override;
 
     bool isSSRInProgress(void) override;
 
@@ -126,20 +122,18 @@ class AudioServiceImpl : public IAudioMsgListener,
 
     void doGetCalibrationStatus(std::shared_ptr<AudioRequest> audioReq);
 
-    telux::common::ErrorCode doCreateStream(
-        std::shared_ptr<AudioRequest> audioReq, StreamConfiguration config,
-        TranscodingFormatInfo inInfo, TranscodingFormatInfo outInfo,
+    telux::common::ErrorCode doCreateStream(std::shared_ptr<AudioRequest> audioReq,
+        StreamConfiguration config, TranscodingFormatInfo inInfo, TranscodingFormatInfo outInfo,
         StreamPurpose streamPurpose, CreatedTranscoderInfo *createdTranscoderInfo);
 
     telux::common::ErrorCode doDeleteStream(
-        std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-        bool sendResponse);
+        std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, bool sendResponse);
 
-    void doCreateTranscoder(std::shared_ptr<AudioRequest> audioReq,
-        TranscodingFormatInfo inInfo, TranscodingFormatInfo outInfo);
+    void doCreateTranscoder(std::shared_ptr<AudioRequest> audioReq, TranscodingFormatInfo inInfo,
+        TranscodingFormatInfo outInfo);
 
-    void doDeleteTranscoder(std::shared_ptr<AudioRequest> audioReq,
-        uint32_t inStreamId, uint32_t outStreamId);
+    void doDeleteTranscoder(
+        std::shared_ptr<AudioRequest> audioReq, uint32_t inStreamId, uint32_t outStreamId);
 
     /*
      * Audio service-wide flag to indicate we are currently undergoing SSR therefore
@@ -178,7 +172,7 @@ class AudioServiceImpl : public IAudioMsgListener,
     std::unique_ptr<telux::common::TaskDispatcher> serviceCommonTaskExecutor_;
 };
 
-} // end namespace audio
-} // end namespace telux
+}  // end namespace audio
+}  // end namespace telux
 
 #endif  // AUDIOSERVICEIMPL_HPP

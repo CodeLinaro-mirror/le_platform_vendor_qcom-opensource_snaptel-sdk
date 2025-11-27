@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_NumberOfOccupants_H_
-#define	_NumberOfOccupants_H_
-
+#ifndef _NumberOfOccupants_H_
+#define _NumberOfOccupants_H_
 
 #include <asn_application.h>
 
@@ -20,12 +19,12 @@ extern "C" {
 
 /* Dependencies */
 typedef enum NumberOfOccupants {
-	NumberOfOccupants_oneOccupant	= 1,
-	NumberOfOccupants_unavailable	= 127
+    NumberOfOccupants_oneOccupant = 1,
+    NumberOfOccupants_unavailable = 127
 } e_NumberOfOccupants;
 
 /* NumberOfOccupants */
-typedef long	 NumberOfOccupants_t;
+typedef long NumberOfOccupants_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_NumberOfOccupants;
@@ -43,5 +42,5 @@ per_type_encoder_f NumberOfOccupants_encode_uper;
 }
 #endif
 
-#endif	/* _NumberOfOccupants_H_ */
+#endif /* _NumberOfOccupants_H_ */
 #include <asn_internal.h>

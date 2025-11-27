@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_YawRateValue_H_
-#define	_YawRateValue_H_
-
+#ifndef _YawRateValue_H_
+#define _YawRateValue_H_
 
 #include <asn_application.h>
 
@@ -20,14 +19,14 @@ extern "C" {
 
 /* Dependencies */
 typedef enum YawRateValue {
-	YawRateValue_straight	= 0,
-	YawRateValue_degSec_000_01ToRight	= -1,
-	YawRateValue_degSec_000_01ToLeft	= 1,
-	YawRateValue_unavailable	= 32767
+    YawRateValue_straight             = 0,
+    YawRateValue_degSec_000_01ToRight = -1,
+    YawRateValue_degSec_000_01ToLeft  = 1,
+    YawRateValue_unavailable          = 32767
 } e_YawRateValue;
 
 /* YawRateValue */
-typedef long	 YawRateValue_t;
+typedef long YawRateValue_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_YawRateValue;
@@ -45,5 +44,5 @@ per_type_encoder_f YawRateValue_encode_uper;
 }
 #endif
 
-#endif	/* _YawRateValue_H_ */
+#endif /* _YawRateValue_H_ */
 #include <asn_internal.h>

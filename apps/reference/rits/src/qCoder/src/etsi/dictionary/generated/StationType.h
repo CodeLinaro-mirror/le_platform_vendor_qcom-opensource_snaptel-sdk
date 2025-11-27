@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_StationType_H_
-#define	_StationType_H_
-
+#ifndef _StationType_H_
+#define _StationType_H_
 
 #include <asn_application.h>
 
@@ -20,23 +19,23 @@ extern "C" {
 
 /* Dependencies */
 typedef enum StationType {
-	StationType_unknown	= 0,
-	StationType_pedestrian	= 1,
-	StationType_cyclist	= 2,
-	StationType_moped	= 3,
-	StationType_motorcycle	= 4,
-	StationType_passengerCar	= 5,
-	StationType_bus	= 6,
-	StationType_lightTruck	= 7,
-	StationType_heavyTruck	= 8,
-	StationType_trailer	= 9,
-	StationType_specialVehicles	= 10,
-	StationType_tram	= 11,
-	StationType_roadSideUnit	= 15
+    StationType_unknown         = 0,
+    StationType_pedestrian      = 1,
+    StationType_cyclist         = 2,
+    StationType_moped           = 3,
+    StationType_motorcycle      = 4,
+    StationType_passengerCar    = 5,
+    StationType_bus             = 6,
+    StationType_lightTruck      = 7,
+    StationType_heavyTruck      = 8,
+    StationType_trailer         = 9,
+    StationType_specialVehicles = 10,
+    StationType_tram            = 11,
+    StationType_roadSideUnit    = 15
 } e_StationType;
 
 /* StationType */
-typedef long	 StationType_t;
+typedef long StationType_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_StationType;
@@ -54,5 +53,5 @@ per_type_encoder_f StationType_encode_uper;
 }
 #endif
 
-#endif	/* _StationType_H_ */
+#endif /* _StationType_H_ */
 #include <asn_internal.h>

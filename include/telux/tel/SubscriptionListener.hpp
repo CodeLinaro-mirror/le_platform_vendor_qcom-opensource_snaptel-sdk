@@ -26,9 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -63,27 +64,27 @@ namespace tel {
  */
 class ISubscriptionListener : public telux::common::IServiceStatusListener {
 
-public:
-   /**
-    * This function is called whenever there is a change in Subscription details.
-    *
-    * @param [in] subscription    Pointer to ISubscription Object.
-    */
-   virtual void onSubscriptionInfoChanged(std::shared_ptr<ISubscription> subscription) {
-   }
+ public:
+    /**
+     * This function is called whenever there is a change in Subscription details.
+     *
+     * @param [in] subscription    Pointer to ISubscription Object.
+     */
+    virtual void onSubscriptionInfoChanged(std::shared_ptr<ISubscription> subscription) {
+    }
 
-   /**
-    * This function called whenever there is a change in the subscription count.
-    * for example when a new subscription is discovered or an existing subscription
-    * goes away when SIM is inserted or removed respectively.
-    *
-    * @param [in] count    count of subscription
-    */
-   virtual void onNumberOfSubscriptionsChanged(int count) {
-   }
+    /**
+     * This function called whenever there is a change in the subscription count.
+     * for example when a new subscription is discovered or an existing subscription
+     * goes away when SIM is inserted or removed respectively.
+     *
+     * @param [in] count    count of subscription
+     */
+    virtual void onNumberOfSubscriptionsChanged(int count) {
+    }
 
-   virtual ~ISubscriptionListener() {
-   }
+    virtual ~ISubscriptionListener() {
+    }
 };
 
 /** @} */ /* end_addtogroup telematics_subscription */
@@ -91,4 +92,4 @@ public:
 }  // end of namespace tel
 }  // end of namespace telux
 
-#endif // TELUX_TEL_SUBSCRIPTIONLISTENER_HPP
+#endif  // TELUX_TEL_SUBSCRIPTIONLISTENER_HPP

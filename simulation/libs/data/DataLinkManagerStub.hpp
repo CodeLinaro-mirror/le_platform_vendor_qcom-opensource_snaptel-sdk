@@ -1,10 +1,10 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
- #ifndef DATA_LINK_MANAGER_STUB_HPP
- #define DATA_LINK_MANAGER_STUB_HPP
+#ifndef DATA_LINK_MANAGER_STUB_HPP
+#define DATA_LINK_MANAGER_STUB_HPP
 
 #include <telux/data/DataLinkManager.hpp>
 #include <telux/common/CommonDefines.hpp>
@@ -24,8 +24,7 @@ class DataLinkManagerStub : public IDataLinkManager,
                             public telux::common::IEventListener,
                             public SimulationManagerStub<DataLinkManager>,
                             public std::enable_shared_from_this<DataLinkManagerStub> {
-public:
-
+ public:
     using SimulationManagerStub::init;
 
     DataLinkManagerStub();
@@ -44,12 +43,12 @@ public:
     telux::common::ErrorCode getEthDataLinkState(telux::data::LinkState &ethLinkState) override;
     telux::common::Status getEthCapability(telux::data::EthCapability &ethCapability) override;
     telux::common::Status setPeerEthCapability(telux::data::EthCapability ethCapability) override;
-    telux::common::Status setLocalEthOperatingMode(telux::data::EthModeType ethModeType,
-            telux::common::ResponseCallback callback = nullptr);
-    telux::common::Status setPeerModeChangeRequestStatus(telux::data::LinkModeChangeStatus status)
-        override;
+    telux::common::Status setLocalEthOperatingMode(
+        telux::data::EthModeType ethModeType, telux::common::ResponseCallback callback = nullptr);
+    telux::common::Status setPeerModeChangeRequestStatus(
+        telux::data::LinkModeChangeStatus status) override;
 
-protected:
+ protected:
     telux::common::Status init();
     void createListener();
     void cleanup();
@@ -58,7 +57,7 @@ protected:
     void notifyServiceStatus(telux::common::ServiceStatus srvcStatus);
     telux::common::Status registerDefaultIndications();
 
-private:
+ private:
     std::mutex mtx_;
     std::mutex initMtx_;
 
@@ -70,12 +69,13 @@ private:
 
     void handleSSREvent(google::protobuf::Any event);
     void handleOnEthModeChangeRequest(::dataStub::EthModeChangeRequestEvent indication);
-    void handleOnEthModeChangeTransactionStatus(::dataStub::EthModeChangeTransactionStatusEvent indication);
+    void handleOnEthModeChangeTransactionStatus(
+        ::dataStub::EthModeChangeTransactionStatusEvent indication);
     void handleEthDatalinkChangeEvent(google::protobuf::Any event);
     void onServiceStatusChange(telux::common::ServiceStatus status);
 };
 
-} // end of namespace data
-} // end of namespace telux
+}  // end of namespace data
+}  // end of namespace telux
 
- #endif //DATA_LINK_MANAGER_STUB_HPP
+#endif  // DATA_LINK_MANAGER_STUB_HPP

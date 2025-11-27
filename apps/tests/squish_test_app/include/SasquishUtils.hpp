@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef SASQUISHUTILS_HPP
@@ -25,9 +25,9 @@
 #include <fstream>
 #include <unistd.h>
 #include <thread>
-#include <stdio.h>      /* printf, NULL */
-#include <stdlib.h>     /* srand, rand */
-#include <time.h>       /* time */
+#include <stdio.h> /* printf, NULL */
+#include <stdlib.h> /* srand, rand */
+#include <time.h> /* time */
 
 using namespace std;
 using namespace telux;
@@ -39,7 +39,7 @@ using namespace telux::common;
 /**
  * Default channel busy percentage parameter values.
  */
-#define DEFAULT_CBP_MEAS_INTERVAL 100 // ms
+#define DEFAULT_CBP_MEAS_INTERVAL 100  // ms
 #define DEFAULT_CBP_WEIGHT_FACTOR 0.5
 
 /**
@@ -103,33 +103,33 @@ using namespace telux::common;
 #define NANOSECONDS_IN_SEC 1000000000
 #define MAX_TIMESTAMP_BUFFER_SIZE 80
 
-const unsigned int NUM_CSV_FIELDS = 30;
-const int ROW_LIMIT = 50000;
-const int MAX_THREADS = 8;
-const uint16_t MAX_DELIMIT_VALUE = 65535;
-const std::string appName_ = "CongestionControlTestApp";
-const std::string MENU_DIVIDER = "------------------------------------------------";
-const std::string CURSOR = "-> ";
-const string setDensity = "Set_Density_Value";
-const string setDensityConfig = "Set_Density_Config";
-const string setDistanceThresh = "Set_Distance_Threshold";
+const unsigned int NUM_CSV_FIELDS           = 30;
+const int ROW_LIMIT                         = 50000;
+const int MAX_THREADS                       = 8;
+const uint16_t MAX_DELIMIT_VALUE            = 65535;
+const std::string appName_                  = "CongestionControlTestApp";
+const std::string MENU_DIVIDER              = "------------------------------------------------";
+const std::string CURSOR                    = "-> ";
+const string setDensity                     = "Set_Density_Value";
+const string setDensityConfig               = "Set_Density_Config";
+const string setDistanceThresh              = "Set_Distance_Threshold";
 const string setCongestionControlConfigFile = "Set_CongestionControl_Config_File";
-const string setLoggingCsvFile = "Set_Logging_Csv_File";
-const string setCbr = "Set_Cbr_Value";
-const string setVehDataCsvFileName = "Set_Veh_Data_Csv_File_Name";
-const string startCongestionControlCmd = "Start_Congestion_Control";
+const string setLoggingCsvFile              = "Set_Logging_Csv_File";
+const string setCbr                         = "Set_Cbr_Value";
+const string setVehDataCsvFileName          = "Set_Veh_Data_Csv_File_Name";
+const string startCongestionControlCmd      = "Start_Congestion_Control";
 // testing options
 const string setMsgCountBasedTest = "Set_Msg_Count_Based_Test";
-const string startBasicUnitTests = "Start_Basic_Unit_Tests";
+const string startBasicUnitTests  = "Start_Basic_Unit_Tests";
 const string testSpecificFunction = "Test_Specific_Function";
 
 /*
  * To help differentiate what logging to do
  */
 
-enum SasquishLogType{
-  InputSasquishLog,
-  OutputSasquishLog
+enum SasquishLogType {
+    InputSasquishLog,
+    OutputSasquishLog
 };
 
 /*
@@ -162,7 +162,6 @@ struct SasquishTestResultData {
     uint64_t expectHVCritEventMsgs;
 };
 
-
 /*
  * Struct for testing functionalities of SQUISH
  */
@@ -173,42 +172,44 @@ struct SasquishTestData {
     CongestionControlData vehData;
 };
 
-struct bsm_data{
-    uint64_t timestamp_ms;      // UTC Timestamp in milliseconds when bsm was creatd. computed from secmark_ms
-    unsigned int MsgCount;      // Ranges from 1 - 127 in cyclic fashion.
-    unsigned int id;            // 32 bit identifier
-    unsigned int secMark_ms;    // No of milliseconds in a minute
-    signed int   Latitude;      // Degrees * 10^7
-    signed int   Longitude;     // Degrees * 10^7
-    signed int   Elevation;     // Meters * 10
+struct bsm_data {
+    uint64_t timestamp_ms;  // UTC Timestamp in milliseconds when bsm was creatd. computed from
+                            // secmark_ms
+    unsigned int MsgCount;  // Ranges from 1 - 127 in cyclic fashion.
+    unsigned int id;  // 32 bit identifier
+    unsigned int secMark_ms;  // No of milliseconds in a minute
+    signed int Latitude;  // Degrees * 10^7
+    signed int Longitude;  // Degrees * 10^7
+    signed int Elevation;  // Meters * 10
     double distFromRV;
-    unsigned int SemiMajorAxisAccuracy;         // val * 20
-    unsigned int SemiMinorAxisAccuracy;         // val * 20
-    unsigned int SemiMajorAxisOrientation;      // val/0.0054932479
-    unsigned int Speed;                     // value (in kmph) * 250/18
-    unsigned int Heading_degrees;           // value (in degrees) / 0.0125
-    signed int   SteeringWheelAngle;        // value (in degree) / 1.5
-    signed int   AccelLon_cm_per_sec_squared;       // value (in m/sec2) / 0.01
-    signed int   AccelLat_cm_per_sec_squared;       // value (in m/sec2) / 0.01
-    signed int   AccelVert_two_centi_gs;            // value in .02 G steps
-    signed int   AccelYaw_centi_degrees_per_sec;        // value in degrees per second /0.01
-    unsigned int VehicleWidth_cm;                   // units are 1 centimeter, at widest point, 0=unavailable
-    unsigned int VehicleLength_cm;                  // units are 1 centimeter, 0=unavailable
-} ;
+    unsigned int SemiMajorAxisAccuracy;  // val * 20
+    unsigned int SemiMinorAxisAccuracy;  // val * 20
+    unsigned int SemiMajorAxisOrientation;  // val/0.0054932479
+    unsigned int Speed;  // value (in kmph) * 250/18
+    unsigned int Heading_degrees;  // value (in degrees) / 0.0125
+    signed int SteeringWheelAngle;  // value (in degree) / 1.5
+    signed int AccelLon_cm_per_sec_squared;  // value (in m/sec2) / 0.01
+    signed int AccelLat_cm_per_sec_squared;  // value (in m/sec2) / 0.01
+    signed int AccelVert_two_centi_gs;  // value in .02 G steps
+    signed int AccelYaw_centi_degrees_per_sec;  // value in degrees per second /0.01
+    unsigned int VehicleWidth_cm;  // units are 1 centimeter, at widest point, 0=unavailable
+    unsigned int VehicleLength_cm;  // units are 1 centimeter, 0=unavailable
+};
 
 /*
  * Class to manage any input file logging
  */
 class SasquishInputHandler {
-public:
+ public:
     SasquishInputHandler();
     SasquishInputHandler(std::string fileName);
     ~SasquishInputHandler();
     bool openFile(std::string fileName);
     bool clearFile(std::string fileName);
     bool closeFile();
-    bool readLineFromFile(std::string& line);
-private:
+    bool readLineFromFile(std::string &line);
+
+ private:
     std::ifstream logFile;
     std::mutex logMutex;
 };
@@ -217,7 +218,7 @@ private:
  * Class to handle output file logging
  */
 class SasquishOutputHandler {
-public:
+ public:
     SasquishOutputHandler();
     SasquishOutputHandler(std::string fileName);
     ~SasquishOutputHandler();
@@ -225,7 +226,8 @@ public:
     bool clearFile(std::string fileName);
     bool closeFile();
     bool writeLineToFile(std::string line);
-private:
+
+ private:
     std::ofstream logFile;
     std::mutex logMutex;
 };
@@ -235,7 +237,7 @@ private:
  * Logging functionality (debug purposes) as well.
  */
 class SasquishUtils {
-public:
+ public:
     static sem_t programSem;
     static sem_t testSem;
     static sem_t logSem;

@@ -1,4 +1,4 @@
-/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+/*
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -27,10 +27,10 @@ using namespace std;
 DataLinkMenu::DataLinkMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
     std::cout << "DataLinkMenu constructed" << std::endl;
-    dataLinkManager_ = nullptr;
-    addMenuCmds_ = false;
+    dataLinkManager_        = nullptr;
+    addMenuCmds_            = false;
     subSystemStatusUpdated_ = false;
-    dataLinkListener_ = std::make_shared<DataLinkListener>();
+    dataLinkListener_       = std::make_shared<DataLinkListener>();
 }
 
 DataLinkMenu::~DataLinkMenu() {
@@ -43,34 +43,33 @@ bool DataLinkMenu::init() {
 
     if (addMenuCmds_ == false) {
         addMenuCmds_ = true;
-        std::shared_ptr<ConsoleAppCommand> getEthCapability =
-            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "get_eth_capability", {},
-            std::bind(&DataLinkMenu::getEthCapability, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> setPeerEthCapability =
-            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "set_peer_eth_capability",
-            {}, std::bind(&DataLinkMenu::setPeerEthCapability, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> setPeerModeChangeRequestStatus =
-            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3",
-            "set_peer_mode_change_request_status", {},
-            std::bind(&DataLinkMenu::setPeerModeChangeRequestStatus, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> registerListener =
-            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "register_listener", {},
-            std::bind(&DataLinkMenu::registerListener, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> deregisterListener =
-            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "deregister_listener", {},
-            std::bind(&DataLinkMenu::deregisterListener, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> setLocalEthOperatingMode =
-            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6",
-            "set_local_eth_operating_mode", {},
-            std::bind(&DataLinkMenu::setLocalEthOperatingMode, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> setEthDataLink =
-            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7",
-            "set_eth_datalink", {},
-            std::bind(&DataLinkMenu::setEthDataLink, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> getEthDataLink =
-            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8",
-            "get_eth_datalink", {},
-            std::bind(&DataLinkMenu::getEthDataLink, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> getEthCapability
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "get_eth_capability", {},
+                std::bind(&DataLinkMenu::getEthCapability, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setPeerEthCapability
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "set_peer_eth_capability",
+                {}, std::bind(&DataLinkMenu::setPeerEthCapability, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setPeerModeChangeRequestStatus
+            = std::make_shared<ConsoleAppCommand>(
+                ConsoleAppCommand("3", "set_peer_mode_change_request_status", {},
+                    std::bind(&DataLinkMenu::setPeerModeChangeRequestStatus, this,
+                        std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> registerListener
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "register_listener", {},
+                std::bind(&DataLinkMenu::registerListener, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> deregisterListener
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "deregister_listener", {},
+                std::bind(&DataLinkMenu::deregisterListener, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setLocalEthOperatingMode
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6",
+                "set_local_eth_operating_mode", {},
+                std::bind(&DataLinkMenu::setLocalEthOperatingMode, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setEthDataLink
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "set_eth_datalink", {},
+                std::bind(&DataLinkMenu::setEthDataLink, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> getEthDataLink
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8", "get_eth_datalink", {},
+                std::bind(&DataLinkMenu::getEthDataLink, this, std::placeholders::_1)));
 
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {getEthCapability,
             setPeerEthCapability, setPeerModeChangeRequestStatus, registerListener,
@@ -84,27 +83,24 @@ bool DataLinkMenu::init() {
 
 bool DataLinkMenu::initDataLinkManagerAndListener() {
     telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
-    bool retValue = false;
-    subSystemStatusUpdated_ = false;
-    auto initCb = std::bind(&DataLinkMenu::onInitCompleted, this,
-        std::placeholders::_1);
+    bool retValue                                = false;
+    subSystemStatusUpdated_                      = false;
+    auto initCb = std::bind(&DataLinkMenu::onInitCompleted, this, std::placeholders::_1);
 
-    auto &dataFactory = telux::data::DataFactory::getInstance();
-    auto dataLinkManager =
-        dataFactory.getDataLinkManager(initCb);
-    if(dataLinkManager) {
+    auto &dataFactory    = telux::data::DataFactory::getInstance();
+    auto dataLinkManager = dataFactory.getDataLinkManager(initCb);
+    if (dataLinkManager) {
         std::cout << "\nInitializing Data Link Manager, Please wait..." << std::endl;
         std::unique_lock<std::mutex> lck(mtx_);
-        cv_.wait(lck, [this]{return this->subSystemStatusUpdated_;});
+        cv_.wait(lck, [this] { return this->subSystemStatusUpdated_; });
         subSystemStatus = dataLinkManager->getServiceStatus();
 
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << "\nData Link Manager is ready" << std::endl;
             retValue = true;
-        }
-        else {
+        } else {
             std::cout << "\nData Link Manager is not ready" << std::endl;
-            //If manager exist - deregister and remove it
+            // If manager exist - deregister and remove it
             if (dataLinkManager_) {
                 dataLinkManager_->deregisterListener(dataLinkListener_);
                 dataLinkManager_ = nullptr;
@@ -112,7 +108,7 @@ bool DataLinkMenu::initDataLinkManagerAndListener() {
             retValue = false;
         }
 
-        //If it is new manager and initialization passed
+        // If it is new manager and initialization passed
         if ((retValue == true) && (!dataLinkManager_)) {
             dataLinkManager_ = dataLinkManager;
             dataLinkManager_->registerListener(dataLinkListener_);
@@ -132,21 +128,21 @@ void DataLinkMenu::getEthCapability(std::vector<std::string> inputCommand) {
     std::cout << __FUNCTION__ << std::endl;
     EthCapability ethCapability;
     telux::common::Status status = telux::common::Status::FAILED;
-    status = dataLinkManager_->getEthCapability(ethCapability);
+    status                       = dataLinkManager_->getEthCapability(ethCapability);
     if (status != telux::common::Status::SUCCESS) {
         std::cout << " *** ERROR - Failed to get eth capability" << std::endl;
         return;
     } else {
-        if(ethCapability.ethModes == 0) {
+        if (ethCapability.ethModes == 0) {
             std::cout << " empty ethernet capability" << std::endl;
         } else {
-            std::cout << " ethernet capability: " ;
-            for (int i = 0; ethCapability.ethModes >= (1 << i); ++i ) {
+            std::cout << " ethernet capability: ";
+            for (int i = 0; ethCapability.ethModes >= (1 << i); ++i) {
                 if (ethCapability.ethModes & (1 << i)) {
-                    telux::data::EthModeType ethModeType =
-                       static_cast<telux::data::EthModeType>(1 << i);
+                    telux::data::EthModeType ethModeType
+                        = static_cast<telux::data::EthModeType>(1 << i);
                     std::cout << DataLinkListener::ethModeTypeToString(ethModeType) << ", ";
-               }
+                }
             }
             std::cout << std::endl;
         }
@@ -155,8 +151,8 @@ void DataLinkMenu::getEthCapability(std::vector<std::string> inputCommand) {
 
 void DataLinkMenu::setPeerEthCapability(std::vector<std::string> inputCommand) {
 
-    char delimiter = '\n';
-    std::string capabilities = "";
+    char delimiter                 = '\n';
+    std::string capabilities       = "";
     telux::data::EthModes ethModes = 0;
     std::cout << "Available eth capability: " << std::endl;
     for (int i = 0; i <= 8; ++i) {
@@ -170,10 +166,10 @@ void DataLinkMenu::setPeerEthCapability(std::vector<std::string> inputCommand) {
 
     std::stringstream ss(capabilities);
     int i = -1;
-    while(ss >> i) {
-        if(i >= 0 && i <= 8) {
+    while (ss >> i) {
+        if (i >= 0 && i <= 8) {
             ethModes = ethModes | (1 << i);
-            if(ss.peek() == ',' || ss.peek() == ' ')
+            if (ss.peek() == ',' || ss.peek() == ' ')
                 ss.ignore();
         } else {
             std::cout << "ERROR: invalid input please retry with valid input";
@@ -184,14 +180,13 @@ void DataLinkMenu::setPeerEthCapability(std::vector<std::string> inputCommand) {
     telux::common::Status status = telux::common::Status::FAILED;
     EthCapability ethCapability;
     ethCapability.ethModes = ethModes;
-    std::cout << " set peer Eth Capability as "<< ethModes << std::endl;
+    std::cout << " set peer Eth Capability as " << ethModes << std::endl;
     status = dataLinkManager_->setPeerEthCapability(ethCapability);
 
     if (status != telux::common::Status::SUCCESS) {
         std::cout << " *** ERROR - Failed to set peer Eth capability" << std::endl;
         return;
     }
-
 }
 
 void DataLinkMenu::getEthDataLink(std::vector<std::string> inputCommand) {
@@ -230,7 +225,7 @@ void DataLinkMenu::setEthDataLink(std::vector<std::string> inputCommand) {
     }
 
     telux::common::ErrorCode errCode = telux::common::ErrorCode::GENERIC_FAILURE;
-    errCode = dataLinkManager_->setEthDataLinkState(linkState);
+    errCode                          = dataLinkManager_->setEthDataLinkState(linkState);
 
     if (errCode != telux::common::ErrorCode::SUCCESS) {
         std::cout << " *** ERROR - Failed to set Eth datalink" << std::endl;
@@ -252,12 +247,10 @@ void DataLinkMenu::setLocalEthOperatingMode(std::vector<std::string> inputComman
     telux::data::EthModeType ethModeType = static_cast<telux::data::EthModeType>(1 << ethMode);
 
     telux::common::Status status = telux::common::Status::FAILED;
-    status = dataLinkManager_->setLocalEthOperatingMode(
+    status                       = dataLinkManager_->setLocalEthOperatingMode(
         ethModeType, [](telux::common::ErrorCode error) {
-           std::cout << " *** Set local Eth operating mode request completed"
-                     << std::endl;
-        }
-    );
+            std::cout << " *** Set local Eth operating mode request completed" << std::endl;
+        });
     if (status != telux::common::Status::SUCCESS) {
         std::cout << " *** ERROR - Failed to set peer Eth capability" << std::endl;
         return;
@@ -267,8 +260,8 @@ void DataLinkMenu::setLocalEthOperatingMode(std::vector<std::string> inputComman
 
 void DataLinkMenu::setPeerModeChangeRequestStatus(std::vector<std::string> inputCommand) {
     std::cout << " set mode change request status " << std::endl;
-    std::cout << " 1. Request accepted\n 2. Request completed\n 3. Request failed\n" <<
-        " 4. Request rejected" << std::endl;
+    std::cout << " 1. Request accepted\n 2. Request completed\n 3. Request failed\n"
+              << " 4. Request rejected" << std::endl;
 
     int reqStatus;
     std::cin >> reqStatus;
@@ -277,25 +270,25 @@ void DataLinkMenu::setPeerModeChangeRequestStatus(std::vector<std::string> input
     telux::data::LinkModeChangeStatus sdkEthStatus;
 
     switch (reqStatus) {
-    case 1:
-        sdkEthStatus = telux::data::LinkModeChangeStatus::ACCEPTED;
-        break;
-    case 2:
-        sdkEthStatus = telux::data::LinkModeChangeStatus::COMPLETED;
-        break;
-    case 3:
-        sdkEthStatus = telux::data::LinkModeChangeStatus::FAILED;
-        break;
-    case 4:
-        sdkEthStatus = telux::data::LinkModeChangeStatus::REJECTED;
-        break;
-    default:
-        sdkEthStatus = telux::data::LinkModeChangeStatus::UNKNOWN;
-        break;
+        case 1:
+            sdkEthStatus = telux::data::LinkModeChangeStatus::ACCEPTED;
+            break;
+        case 2:
+            sdkEthStatus = telux::data::LinkModeChangeStatus::COMPLETED;
+            break;
+        case 3:
+            sdkEthStatus = telux::data::LinkModeChangeStatus::FAILED;
+            break;
+        case 4:
+            sdkEthStatus = telux::data::LinkModeChangeStatus::REJECTED;
+            break;
+        default:
+            sdkEthStatus = telux::data::LinkModeChangeStatus::UNKNOWN;
+            break;
     }
 
     telux::common::Status status = telux::common::Status::FAILED;
-    status = dataLinkManager_->setPeerModeChangeRequestStatus(sdkEthStatus);
+    status                       = dataLinkManager_->setPeerModeChangeRequestStatus(sdkEthStatus);
 }
 
 void DataLinkMenu::registerListener(std::vector<std::string> inputCommand) {

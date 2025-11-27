@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_ReferenceDenms_H_
-#define	_ReferenceDenms_H_
-
+#ifndef _ReferenceDenms_H_
+#define _ReferenceDenms_H_
 
 #include <asn_application.h>
 
@@ -24,10 +23,10 @@ struct ActionID;
 
 /* ReferenceDenms */
 typedef struct ReferenceDenms {
-	A_SEQUENCE_OF(struct ActionID) list;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    A_SEQUENCE_OF(struct ActionID) list;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } ReferenceDenms_t;
 
 /* Implementation */
@@ -40,5 +39,5 @@ extern asn_TYPE_descriptor_t asn_DEF_ReferenceDenms;
 /* Referred external types */
 #include "ActionID.h"
 
-#endif	/* _ReferenceDenms_H_ */
+#endif /* _ReferenceDenms_H_ */
 #include <asn_internal.h>

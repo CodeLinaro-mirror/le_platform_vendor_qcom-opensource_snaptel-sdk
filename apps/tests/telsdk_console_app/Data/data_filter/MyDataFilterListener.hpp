@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef MYDATAFILTERLISTENER_HPP
 #define MYDATAFILTERLISTENER_HPP
 
@@ -37,11 +43,11 @@ using namespace telux::data;
 using namespace telux::common;
 
 class MyDataFilterListener : public telux::data::IDataFilterListener {
-public:
-   void onDataRestrictModeChange(DataRestrictMode mode) override;
-   void onServiceStatusChange(telux::common::ServiceStatus status) override;
-   ~MyDataFilterListener() {
-   }
+ public:
+    void onDataRestrictModeChange(DataRestrictMode mode) override;
+    void onServiceStatusChange(telux::common::ServiceStatus status) override;
+    ~MyDataFilterListener() {
+    }
 };
 
 #endif  // MYDATAFILTERLISTENER_HPP

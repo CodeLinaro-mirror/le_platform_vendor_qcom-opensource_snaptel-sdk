@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_VehicleIdentification_H_
-#define	_VehicleIdentification_H_
-
+#ifndef _VehicleIdentification_H_
+#define _VehicleIdentification_H_
 
 #include <asn_application.h>
 
@@ -22,15 +21,15 @@ extern "C" {
 
 /* VehicleIdentification */
 typedef struct VehicleIdentification {
-	WMInumber_t	*wMInumber	/* OPTIONAL */;
-	VDS_t	*vDS	/* OPTIONAL */;
-	/*
-	 * This type is extensible,
-	 * possible extensions are below.
-	 */
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    WMInumber_t *wMInumber /* OPTIONAL */;
+    VDS_t *vDS /* OPTIONAL */;
+    /*
+     * This type is extensible,
+     * possible extensions are below.
+     */
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } VehicleIdentification_t;
 
 /* Implementation */
@@ -40,5 +39,5 @@ extern asn_TYPE_descriptor_t asn_DEF_VehicleIdentification;
 }
 #endif
 
-#endif	/* _VehicleIdentification_H_ */
+#endif /* _VehicleIdentification_H_ */
 #include <asn_internal.h>

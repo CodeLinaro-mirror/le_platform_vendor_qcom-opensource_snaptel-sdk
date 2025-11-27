@@ -26,9 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -55,108 +56,109 @@ namespace tel {
  * If user want to receive only 0x1112, then both startMessageId and endMessageId is 0x1112.
  */
 struct CellBroadcastFilter {
-   int startMessageId; /**< Intended to receive start from which MessageType */
-   int endMessageId;   /**< Intended to receive upto which MessageType */
+    int startMessageId; /**< Intended to receive start from which MessageType */
+    int endMessageId; /**< Intended to receive upto which MessageType */
 };
 
 /**
  * Defines geographical scope of cell broadcast.
  */
 enum class GeographicalScope {
-   CELL_WIDE_IMMEDIATE = 0, /**< Cell wide geographical scope with immediate display */
-   PLMN_WIDE = 1,           /**< PLMN wide geographical scope */
-   LA_WIDE = 2,             /** Location / Service/ Tracking area wide geographical
-                                scope (GSM/UMTS/E-UTRAN/NG-RAN). */
-   CELL_WIDE = 3            /**< Cell wide geographical scope */
+    CELL_WIDE_IMMEDIATE = 0, /**< Cell wide geographical scope with immediate display */
+    PLMN_WIDE           = 1, /**< PLMN wide geographical scope */
+    LA_WIDE             = 2, /** Location / Service/ Tracking area wide geographical
+                                 scope (GSM/UMTS/E-UTRAN/NG-RAN). */
+    CELL_WIDE = 3 /**< Cell wide geographical scope */
 };
 
 /**
  * Defines priority for cell broadcast message.
  */
 enum class MessagePriority {
-   UNKNOWN = -1,        /**< Unknown message priority */
-   NORMAL = 0,          /**< Normal message priority */
-   EMERGENCY = 1        /**< Emergency message priority */
+    UNKNOWN   = -1, /**< Unknown message priority */
+    NORMAL    = 0, /**< Normal message priority */
+    EMERGENCY = 1 /**< Emergency message priority */
 };
 
 /**
  * Defines message type for cell broadcast message.
  */
 enum class MessageType {
-   UNKNOWN = -1,    /**< Unknown message type */
-   ETWS = 0,        /**< Earthquake and Tsunami Warning System */
-   CMAS = 1         /**< Commercial Mobile Alert System */
+    UNKNOWN = -1, /**< Unknown message type */
+    ETWS    = 0, /**< Earthquake and Tsunami Warning System */
+    CMAS    = 1 /**< Commercial Mobile Alert System */
 };
 
 /**
  * Defines warning type for ETWS cell broadcast message.
  */
 enum class EtwsWarningType {
-   UNKNOWN = -1,                 /**< Unknown ETWS warning type */
-   EARTHQUAKE = 0,               /**< ETWS warning type for earthquake */
-   TSUNAMI = 1,                  /**< ETWS warning type for tsunami */
-   EARTHQUAKE_AND_TSUNAMI = 2,   /**< ETWS warning type for earthquake and tsunami */
-   TEST_MESSAGE = 3,             /**< ETWS warning type for test messages */
-   OTHER_EMERGENCY = 4,          /**< ETWS warning type for other emergency types */
+    UNKNOWN                = -1, /**< Unknown ETWS warning type */
+    EARTHQUAKE             = 0, /**< ETWS warning type for earthquake */
+    TSUNAMI                = 1, /**< ETWS warning type for tsunami */
+    EARTHQUAKE_AND_TSUNAMI = 2, /**< ETWS warning type for earthquake and tsunami */
+    TEST_MESSAGE           = 3, /**< ETWS warning type for test messages */
+    OTHER_EMERGENCY        = 4, /**< ETWS warning type for other emergency types */
 };
 
 /**
  * Defines message class for CMAS cell broadcast message.
  */
 enum class CmasMessageClass {
-   UNKNOWN = -1,                       /**< CMAS category for warning types that are reserved for future extension */
-   PRESIDENTIAL_LEVEL_ALERT = 0,       /**< Presidential-level alert (Korean Public Alert System Class 0 message) */
-   EXTREME_THREAT = 1,                 /**< Extreme threat to life and property (Korean Public Alert System Class 1 message)*/
-   SEVERE_THREAT = 2,                  /**< Severe threat to life and property (Korean Public Alert System Class 1 message). */
-   CHILD_ABDUCTION_EMERGENCY = 3,      /**< Child abduction emergency (AMBER Alert) */
-   REQUIRED_MONTHLY_TEST = 4,          /**< CMAS test message */
-   CMAS_EXERCISE = 5,                  /**< CMAS exercise */
-   OPERATOR_DEFINED_USE = 6,           /**< CMAS category for operator defined use */
+    UNKNOWN = -1, /**< CMAS category for warning types that are reserved for future extension */
+    PRESIDENTIAL_LEVEL_ALERT
+        = 0, /**< Presidential-level alert (Korean Public Alert System Class 0 message) */
+    EXTREME_THREAT
+        = 1, /**< Extreme threat to life and property (Korean Public Alert System Class 1 message)*/
+    SEVERE_THREAT = 2, /**< Severe threat to life and property (Korean Public Alert System Class 1
+                          message). */
+    CHILD_ABDUCTION_EMERGENCY = 3, /**< Child abduction emergency (AMBER Alert) */
+    REQUIRED_MONTHLY_TEST     = 4, /**< CMAS test message */
+    CMAS_EXERCISE             = 5, /**< CMAS exercise */
+    OPERATOR_DEFINED_USE      = 6, /**< CMAS category for operator defined use */
 };
 
 /**
  * Defines severity type for CMAS cell broadcast message.
  */
 enum class CmasSeverity {
-   UNKNOWN = -1,        /**< CMAS alert severity is unknown. The severity is available for all
-                            GSM/UMTS alerts except for the Presidential-level alert class
-                            (Korean Public Alert System Class 0). */
-   EXTREME = 0,         /**< Extraordinary threat to life or property */
-   SEVERE = 1,          /**< Significant threat to life or property */
+    UNKNOWN = -1, /**< CMAS alert severity is unknown. The severity is available for all
+                      GSM/UMTS alerts except for the Presidential-level alert class
+                      (Korean Public Alert System Class 0). */
+    EXTREME = 0, /**< Extraordinary threat to life or property */
+    SEVERE  = 1, /**< Significant threat to life or property */
 };
 
 /**
  * Defines urgency type for CMAS cell broadcast message.
  */
 enum class CmasUrgency {
-   UNKNOWN = -1,         /**< CMAS alert urgency is unknown. The urgency is available for all
-                            GSM/UMTS alerts except for the Presidential-level alert class
-                            (Korean Public Alert System Class 0). */
-   IMMEDIATE = 0,         /**< Responsive action should be taken immediately */
-   EXPECTED = 1,          /**< Responsive action should be taken within the next hour */
+    UNKNOWN = -1, /**< CMAS alert urgency is unknown. The urgency is available for all
+                     GSM/UMTS alerts except for the Presidential-level alert class
+                     (Korean Public Alert System Class 0). */
+    IMMEDIATE = 0, /**< Responsive action should be taken immediately */
+    EXPECTED  = 1, /**< Responsive action should be taken within the next hour */
 };
 
 /**
  * Defines certainty type for CMAS cell broadcast message.
  */
 enum class CmasCertainty {
-   UNKNOWN = -1,        /**< CMAS alert certainty is unknown. The certainty is available for all
-                            GSM/UMTS alerts except for the Presidential-level alert class
-                            (Korean Public Alert System Class 0). */
-   OBSERVED = 0,         /**< Determined to have occurred or to be ongoing. */
-   LIKELY = 1,           /**< Likely (probability > ~50%) */
+    UNKNOWN = -1, /**< CMAS alert certainty is unknown. The certainty is available for all
+                      GSM/UMTS alerts except for the Presidential-level alert class
+                      (Korean Public Alert System Class 0). */
+    OBSERVED = 0, /**< Determined to have occurred or to be ongoing. */
+    LIKELY   = 1, /**< Likely (probability > ~50%) */
 };
 
 /**
  * Defines geometry type specified in wireless emergency alert.
  */
 enum class GeometryType {
-   UNKNOWN = -1,    /**< Unknown geometry type */
-   POLYGON = 0,     /**< Polygon geometry type */
-   CIRCLE = 1       /**< Circle geometry type */
+    UNKNOWN = -1, /**< Unknown geometry type */
+    POLYGON = 0, /**< Polygon geometry type */
+    CIRCLE  = 1 /**< Circle geometry type */
 };
-
-
 
 /** @} */ /* end_addtogroup telematics_cellbroadcast */
 
@@ -164,4 +166,4 @@ enum class GeometryType {
 
 }  // End of namespace telux
 
-#endif // TELUX_TEL_CELLBROADCASTDEFINES_HPP
+#endif  // TELUX_TEL_CELLBROADCASTDEFINES_HPP

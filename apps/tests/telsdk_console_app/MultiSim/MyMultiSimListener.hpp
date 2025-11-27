@@ -26,23 +26,25 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 #ifndef MYMULTISIMLISTENER_HPP
 #define MYMULTISIMLISTENER_HPP
 
 #include <telux/tel/MultiSimManager.hpp>
 
 class MyMultiSimListener : public telux::tel::IMultiSimListener {
-public:
+ public:
     void onServiceStatusChange(telux::common::ServiceStatus status) override;
     void onHighCapabilityChanged(int slotId);
     void onSlotStatusChanged(std::map<SlotId, telux::tel::SlotStatus> slotStatus);
-    ~MyMultiSimListener() {}
+    ~MyMultiSimListener() {
+    }
 };
 
 #endif  // MYMULTISIMLISTENER_HPP

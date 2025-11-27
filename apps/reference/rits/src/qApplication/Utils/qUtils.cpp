@@ -1,126 +1,89 @@
 /*
- * Changes from Qualcomm Technologies, Inc. are provided under the following license:
- *
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
- /**
-  * @file: qUtils.cpp
-  *
-  * @brief: Implementation of Utilities for qApplication.
-  *
-  */
+/**
+ * @file: qUtils.cpp
+ *
+ * @brief: Implementation of Utilities for qApplication.
+ *
+ */
 
 #include "qUtils.hpp"
 #include <cstring>
 
-QUtils::QUtils(){
+QUtils::QUtils() {
     telux::common::ErrorCode ec;
     /* Get CryptoManager instance with TRNG as source */
-    rngMgr_ = telux::sec::SecurityFactory::getInstance().
-        getRandomNumberManager(telux::sec::RNGSource::QTI_HW_TRNG, ec);
+    rngMgr_ = telux::sec::SecurityFactory::getInstance().getRandomNumberManager(
+        telux::sec::RNGSource::QTI_HW_TRNG, ec);
     if (!rngMgr_) {
-        std::cerr << "Can't allocate IRandomNumberManager, err: " <<
-            static_cast<int>(ec) << std::endl;
+        std::cerr << "Can't allocate IRandomNumberManager, err: " << static_cast<int>(ec)
+                  << std::endl;
     }
 }
 
-void QUtils::initDiagLog()
-{
+void QUtils::initDiagLog() {
     v2x_diag_log_init();
 }
 
-void QUtils::deInitDiagLog()
-{
+void QUtils::deInitDiagLog() {
     v2x_diag_log_deinit();
 }
 
-int QUtils::hwTRNGInt(uint32_t& randomNumber)
-{
+int QUtils::hwTRNGInt(uint32_t &randomNumber) {
     telux::common::ErrorCode ec;
     if (rngMgr_ == nullptr) {
         /* Get CryptoManager instance with TRNG as source */
-        rngMgr_ = telux::sec::SecurityFactory::getInstance().
-            getRandomNumberManager(telux::sec::RNGSource::QTI_HW_TRNG, ec);
+        rngMgr_ = telux::sec::SecurityFactory::getInstance().getRandomNumberManager(
+            telux::sec::RNGSource::QTI_HW_TRNG, ec);
         if (!rngMgr_) {
-            std::cerr << "Can't allocate IRandomNumberManager, err: " <<
-                static_cast<int>(ec) << std::endl;
+            std::cerr << "Can't allocate IRandomNumberManager, err: " << static_cast<int>(ec)
+                      << std::endl;
             return -1;
         }
     }
-     /* Generate 32 bit random number */
+    /* Generate 32 bit random number */
     ec = rngMgr_->getRandomNumber(randomNumber);
     if (ec != telux::common::ErrorCode::SUCCESS) {
-        std::cerr << "failed 32 bit number generation, err: " <<
-            static_cast<int>(ec) << std::endl;
-            return -1;
+        std::cerr << "failed 32 bit number generation, err: " << static_cast<int>(ec) << std::endl;
+        return -1;
     }
     return 0;
 }
 
-int QUtils::hwTRNGChar(uint8_t& randomNumber)
-{
+int QUtils::hwTRNGChar(uint8_t &randomNumber) {
     telux::common::ErrorCode ec;
     std::vector<uint8_t> generatedData(1, 0);
     size_t numBytes = 0;
     if (rngMgr_ == nullptr) {
         /* Get CryptoManager instance with TRNG as source */
-        rngMgr_ = telux::sec::SecurityFactory::getInstance().
-            getRandomNumberManager(telux::sec::RNGSource::QTI_HW_TRNG, ec);
+        rngMgr_ = telux::sec::SecurityFactory::getInstance().getRandomNumberManager(
+            telux::sec::RNGSource::QTI_HW_TRNG, ec);
         if (!rngMgr_) {
-            std::cerr << "Can't allocate IRandomNumberManager, err: " <<
-                static_cast<int>(ec) << std::endl;
+            std::cerr << "Can't allocate IRandomNumberManager, err: " << static_cast<int>(ec)
+                      << std::endl;
             return -1;
         }
     }
     ec = rngMgr_->getRandomData(generatedData, numBytes);
     if (ec != telux::common::ErrorCode::SUCCESS) {
-        std::cerr << "failed random uint8_t data generation, err: " <<
-            static_cast<int>(ec) << std::endl;
+        std::cerr << "failed random uint8_t data generation, err: " << static_cast<int>(ec)
+                  << std::endl;
         return -1;
     }
-    if(numBytes == 1){
+    if (numBytes == 1) {
         randomNumber = generatedData[0];
-    }else{
-        std::cerr << "failed random uint8_t data generation, err: " <<
-            static_cast<int>(ec) << std::endl;
+    } else {
+        std::cerr << "failed random uint8_t data generation, err: " << static_cast<int>(ec)
+                  << std::endl;
         return -1;
     }
     return 0;
 }
 
-void QUtils::fillVersion(uint32_t *version)
-{
+void QUtils::fillVersion(uint32_t *version) {
     if (version != NULL) {
         *version = V2X_QITS_LOG_VERSION;
     }

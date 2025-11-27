@@ -1,35 +1,6 @@
 /*
- * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -73,7 +44,6 @@ class TelEvent : public telux::common::Event {
        : Event(id, name, phoneId) {
     }
 };
-
 
 /**
  * Concrete state (from BaseState) representing the ecall state when the
@@ -302,9 +272,8 @@ class PSAPCallback : public telux::common::BaseState {
  * and passes on the event to the current state
  */
 class EcallStateMachine : public telux::common::BaseStateMachine,
-                                  public std::enable_shared_from_this<EcallStateMachine> {
+                          public std::enable_shared_from_this<EcallStateMachine> {
  private:
-
     const std::weak_ptr<CallManagerServerImpl> callservice_;
     std::vector<std::string> result_;
     bool isMsdTransmitted_;
@@ -315,15 +284,16 @@ class EcallStateMachine : public telux::common::BaseStateMachine,
     bool isCustomNumbereCall_;
     std::string eCallRedialConfig_;
     bool isEraGlonassSelfTestECall_;
+
  public:
     /**
      * Constructor for EcallStateMachine
      * @param [in] name - The service, should be type CallManagerServerImpl
      */
-    EcallStateMachine(std::shared_ptr<CallManagerServerImpl> callservice,
-        std::vector<std::string>, bool isMsdTransmitted, bool isNGeCall,
-        bool isALACKConfigEnabled, int phoneId, int callIndex, bool isCustomNumberEcall,
-        std::string eCallRedialConfig, bool isEraGlonassSelfTestECall, bool updateInProgress);
+    EcallStateMachine(std::shared_ptr<CallManagerServerImpl> callservice, std::vector<std::string>,
+        bool isMsdTransmitted, bool isNGeCall, bool isALACKConfigEnabled, int phoneId,
+        int callIndex, bool isCustomNumberEcall, std::string eCallRedialConfig,
+        bool isEraGlonassSelfTestECall, bool updateInProgress);
 
     /**
      * Overridden start method, would move the state machine to CallIdle
@@ -369,8 +339,8 @@ class EcallStateMachine : public telux::common::BaseStateMachine,
      * @param [in] phoneId - PhoneId of the event
      * @returns the TelEvent created from id and state
      */
-    std::shared_ptr<telux::common::Event> createTelEvent(EventID id, std::string timer,
-        int phoneId);
+    std::shared_ptr<telux::common::Event> createTelEvent(
+        EventID id, std::string timer, int phoneId);
 
     /**
      * Utility method to fetch user input for statemachine

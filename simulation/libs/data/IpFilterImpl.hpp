@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef IPFILTERIMPL_HPP
@@ -90,7 +90,7 @@ class IpFilterImpl : virtual public IIpFilter {
     IPv4Info ipv4Info_;
     IPv6Info ipv6Info_;
     uint32_t filterHandle_ = -1;
-    IpProtocol proto_ = -1;
+    IpProtocol proto_      = -1;
 };
 
 /**
@@ -232,7 +232,7 @@ class EspFilterImpl : public IEspFilter, public IpFilterImpl {
  private:
     EspInfo espInfo_;
 };
-}
-}
+}  // namespace data
+}  // namespace telux
 
 #endif

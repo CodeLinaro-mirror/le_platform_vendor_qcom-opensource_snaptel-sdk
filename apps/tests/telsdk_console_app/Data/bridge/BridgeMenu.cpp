@@ -26,40 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
 
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 extern "C" {
@@ -78,8 +49,8 @@ using namespace std;
 
 BridgeMenu::BridgeMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
-    bridgeMgr_ = nullptr;
-    menuOptionsAdded_ = false;
+    bridgeMgr_              = nullptr;
+    menuOptionsAdded_       = false;
     subSystemStatusUpdated_ = false;
 }
 
@@ -88,11 +59,11 @@ BridgeMenu::~BridgeMenu() {
 
 bool BridgeMenu::init() {
     telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
-    subSystemStatusUpdated_ = false;
+    subSystemStatusUpdated_                      = false;
     if (bridgeMgr_ == nullptr) {
-        auto initCb = std::bind(&BridgeMenu::onInitComplete, this, std::placeholders::_1);
+        auto initCb       = std::bind(&BridgeMenu::onInitComplete, this, std::placeholders::_1);
         auto &dataFactory = telux::data::DataFactory::getInstance();
-        bridgeMgr_ = dataFactory.getBridgeManager(initCb);
+        bridgeMgr_        = dataFactory.getBridgeManager(initCb);
         if (bridgeMgr_ == nullptr) {
             std::cout << "\nError encountered in initializing Bridge Manager" << std::endl;
             return false;
@@ -101,20 +72,19 @@ bool BridgeMenu::init() {
     }
     {
         std::unique_lock<std::mutex> lck(mtx_);
-        //Bridge Manager is guaranteed to be valid pointer at this point. If manager initialization
-        //fails and factory invalidated it's own pointer to Bridge manager before reaching this
-        //point, reference count of L2TP manager should still be 1
+        // Bridge Manager is guaranteed to be valid pointer at this point. If manager initialization
+        // fails and factory invalidated it's own pointer to Bridge manager before reaching this
+        // point, reference count of L2TP manager should still be 1
         telux::common::ServiceStatus subSystemStatus = bridgeMgr_->getServiceStatus();
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
             std::cout << "\nInitializing Bridge Manager, Please wait ..." << std::endl;
-            cv_.wait(lck, [this]{return this->subSystemStatusUpdated_;});
+            cv_.wait(lck, [this] { return this->subSystemStatusUpdated_; });
             subSystemStatus = bridgeMgr_->getServiceStatus();
         }
-        //At this point, initialization should be either AVAILABLE or FAIL
+        // At this point, initialization should be either AVAILABLE or FAIL
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << "\nBridge Manager is ready" << std::endl;
-        }
-        else {
+        } else {
             std::cout << "\nBridge Manager initialization failed" << std::endl;
             bridgeMgr_ = nullptr;
             return false;
@@ -136,13 +106,11 @@ bool BridgeMenu::init() {
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "Remove_Bridge", {},
                 std::bind(&BridgeMenu::removeBridge, this, std::placeholders::_1)));
         std::shared_ptr<ConsoleAppCommand> setInterfaceBridge
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5",
-                "Set_Interface_Bridge", {}, std::bind(&BridgeMenu::setInterfaceBridge,
-                this, std::placeholders::_1)));
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "Set_Interface_Bridge", {},
+                std::bind(&BridgeMenu::setInterfaceBridge, this, std::placeholders::_1)));
         std::shared_ptr<ConsoleAppCommand> getInterfaceBridge
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6", "Get_Interface_Bridge",
-                {}, std::bind(&BridgeMenu::getInterfaceBridge,
-                this, std::placeholders::_1)));
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6", "Get_Interface_Bridge", {},
+                std::bind(&BridgeMenu::getInterfaceBridge, this, std::placeholders::_1)));
 
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {enableBridge, addBridge,
             getBridgeInfo, removeBridge, setInterfaceBridge, getInterfaceBridge};
@@ -166,9 +134,9 @@ void BridgeMenu::enableBridge(std::vector<std::string> inputCommand) {
     std::cout << "Enter the desired state \n (1-enable, 0-disable): ";
     std::cin >> temp;
     Utils::validateInput(temp);
-    if(temp == 1) {
+    if (temp == 1) {
         enableBridge = true;
-    } else if(temp == 0) {
+    } else if (temp == 0) {
         enableBridge = false;
     } else {
         std::cout << "Invalid bridge state input, try again" << std::endl;
@@ -200,8 +168,8 @@ void BridgeMenu::addBridge(std::vector<std::string> inputCommand) {
     std::cout << "Enter Interface Type\n (1-WLAN_AP, 2-WLAN_STA, 3-ETH): ";
     std::cin >> temp;
     Utils::validateInput(temp, {static_cast<int>(telux::data::net::BridgeIFaceType::WLAN_AP),
-        static_cast<int>(telux::data::net::BridgeIFaceType::WLAN_STA),
-        static_cast<int>(telux::data::net::BridgeIFaceType::ETH)});
+                                   static_cast<int>(telux::data::net::BridgeIFaceType::WLAN_STA),
+                                   static_cast<int>(telux::data::net::BridgeIFaceType::ETH)});
     config.ifaceType = static_cast<telux::data::net::BridgeIFaceType>(temp);
 
     std::cout << "Enter required bandwidth(max 900Mbps) : ";
@@ -217,7 +185,7 @@ void BridgeMenu::addBridge(std::vector<std::string> inputCommand) {
                   << ". ErrorCode: " << static_cast<int>(error)
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
-    retStat= bridgeMgr_->addBridge(config, respCb);
+    retStat = bridgeMgr_->addBridge(config, respCb);
     Utils::printStatus(retStat);
 }
 
@@ -236,7 +204,7 @@ void BridgeMenu::getBridgeInfo(std::vector<std::string> inputCommand) {
                       << ", bandwidth: " << c.bandwidth << std::endl;
         }
     };
-    retStat= bridgeMgr_->requestBridgeInfo(respCb);
+    retStat = bridgeMgr_->requestBridgeInfo(respCb);
     Utils::printStatus(retStat);
 }
 
@@ -269,18 +237,19 @@ void BridgeMenu::setInterfaceBridge(std::vector<std::string> userInput) {
               << "6-VMTAP0, 7-VMTAP1, 8-ETH2, 9-AP_PRIMARY,\n"
               << "10-AP_SECONDARY, 11-AP_TERTIARY, 12-AP_QUATERNARY) :\n";
     std::cin >> ifaceType;
-    Utils::validateInput(ifaceType, {static_cast<int>(telux::data::InterfaceType::WLAN),
-        static_cast<int>(telux::data::InterfaceType::ETH),
-        static_cast<int>(telux::data::InterfaceType::ECM),
-        static_cast<int>(telux::data::InterfaceType::RNDIS),
-        static_cast<int>(telux::data::InterfaceType::MHI),
-        static_cast<int>(telux::data::InterfaceType::ETH2),
-        static_cast<int>(telux::data::InterfaceType::VMTAP0),
-        static_cast<int>(telux::data::InterfaceType::VMTAP1),
-        static_cast<int>(telux::data::InterfaceType::AP_PRIMARY),
-        static_cast<int>(telux::data::InterfaceType::AP_SECONDARY),
-        static_cast<int>(telux::data::InterfaceType::AP_TERTIARY),
-        static_cast<int>(telux::data::InterfaceType::AP_QUATERNARY)});
+    Utils::validateInput(
+        ifaceType, {static_cast<int>(telux::data::InterfaceType::WLAN),
+                       static_cast<int>(telux::data::InterfaceType::ETH),
+                       static_cast<int>(telux::data::InterfaceType::ECM),
+                       static_cast<int>(telux::data::InterfaceType::RNDIS),
+                       static_cast<int>(telux::data::InterfaceType::MHI),
+                       static_cast<int>(telux::data::InterfaceType::ETH2),
+                       static_cast<int>(telux::data::InterfaceType::VMTAP0),
+                       static_cast<int>(telux::data::InterfaceType::VMTAP1),
+                       static_cast<int>(telux::data::InterfaceType::AP_PRIMARY),
+                       static_cast<int>(telux::data::InterfaceType::AP_SECONDARY),
+                       static_cast<int>(telux::data::InterfaceType::AP_TERTIARY),
+                       static_cast<int>(telux::data::InterfaceType::AP_QUATERNARY)});
     telux::data::InterfaceType infType = static_cast<telux::data::InterfaceType>(ifaceType);
     std::cout << std::endl;
 
@@ -306,18 +275,19 @@ void BridgeMenu::getInterfaceBridge(std::vector<std::string> userInput) {
               << "6-VMTAP0, 7-VMTAP1, 8-ETH2, 9-AP_PRIMARY,\n"
               << "10-AP_SECONDARY, 11-AP_TERTIARY, 12-AP_QUATERNARY) :\n";
     std::cin >> ifaceType;
-    Utils::validateInput(ifaceType, {static_cast<int>(telux::data::InterfaceType::WLAN),
-        static_cast<int>(telux::data::InterfaceType::ETH),
-        static_cast<int>(telux::data::InterfaceType::ECM),
-        static_cast<int>(telux::data::InterfaceType::RNDIS),
-        static_cast<int>(telux::data::InterfaceType::MHI),
-        static_cast<int>(telux::data::InterfaceType::VMTAP0),
-        static_cast<int>(telux::data::InterfaceType::VMTAP1),
-        static_cast<int>(telux::data::InterfaceType::ETH2),
-        static_cast<int>(telux::data::InterfaceType::AP_PRIMARY),
-        static_cast<int>(telux::data::InterfaceType::AP_SECONDARY),
-        static_cast<int>(telux::data::InterfaceType::AP_TERTIARY),
-        static_cast<int>(telux::data::InterfaceType::AP_QUATERNARY)});
+    Utils::validateInput(
+        ifaceType, {static_cast<int>(telux::data::InterfaceType::WLAN),
+                       static_cast<int>(telux::data::InterfaceType::ETH),
+                       static_cast<int>(telux::data::InterfaceType::ECM),
+                       static_cast<int>(telux::data::InterfaceType::RNDIS),
+                       static_cast<int>(telux::data::InterfaceType::MHI),
+                       static_cast<int>(telux::data::InterfaceType::VMTAP0),
+                       static_cast<int>(telux::data::InterfaceType::VMTAP1),
+                       static_cast<int>(telux::data::InterfaceType::ETH2),
+                       static_cast<int>(telux::data::InterfaceType::AP_PRIMARY),
+                       static_cast<int>(telux::data::InterfaceType::AP_SECONDARY),
+                       static_cast<int>(telux::data::InterfaceType::AP_TERTIARY),
+                       static_cast<int>(telux::data::InterfaceType::AP_QUATERNARY)});
     telux::data::InterfaceType infType = static_cast<telux::data::InterfaceType>(ifaceType);
     std::cout << std::endl;
 
@@ -328,6 +298,6 @@ void BridgeMenu::getInterfaceBridge(std::vector<std::string> userInput) {
               << ". ErrorCode: " << static_cast<int>(retCode)
               << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
     if (retCode == telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Bridge Id: " << bridgeId << std::endl;
+        std::cout << "Bridge Id: " << bridgeId << std::endl;
     }
 }

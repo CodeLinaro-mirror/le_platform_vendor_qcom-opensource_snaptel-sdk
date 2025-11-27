@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "DataControlManagerStub.hpp"
@@ -21,8 +21,8 @@ namespace data {
 using telux::common::Status;
 
 DataControlManagerStub::DataControlManagerStub()
-    : SimulationManagerStub<DataControlManager>(std::string("IDataControlManagerStub"))
-    , clientEventMgr_(ClientEventManager::getInstance()) {
+   : SimulationManagerStub<DataControlManager>(std::string("IDataControlManagerStub"))
+   , clientEventMgr_(ClientEventManager::getInstance()) {
     LOG(DEBUG, __FUNCTION__);
 }
 
@@ -70,8 +70,7 @@ Status DataControlManagerStub::registerDefaultIndications() {
     LOG(INFO, __FUNCTION__, ":: Registering default SSR indications");
 
     status = clientEventMgr_.registerListener(shared_from_this(), DATA_CONTROL_SSR_FILTER);
-    if ((status != Status::SUCCESS) &&
-        (status != Status::ALREADY)) {
+    if ((status != Status::SUCCESS) && (status != Status::ALREADY)) {
         LOG(ERROR, __FUNCTION__, ":: Registering default SSR indications failed");
         return status;
     }
@@ -101,12 +100,11 @@ ServiceStatus DataControlManagerStub::getServiceStatus() {
     return SimulationManagerStub::getServiceStatus();
 }
 
-Status DataControlManagerStub::initSyncComplete(
-        ServiceStatus srvcStatus) {
+Status DataControlManagerStub::initSyncComplete(ServiceStatus srvcStatus) {
     LOG(DEBUG, __FUNCTION__);
 
     Status status = Status::FAILED;
-    status = registerDefaultIndications();
+    status        = registerDefaultIndications();
 
     return status;
 }
@@ -116,11 +114,12 @@ void DataControlManagerStub::onEventUpdate(google::protobuf::Any event) {
 
     // Execute all events in separate thread
     auto f = std::async(std::launch::deferred, [this, event]() {
-            if (event.Is<commonStub::GetServiceStatusReply>()) {
-                handleSSREvent(event);
-            } else {
-                LOG(ERROR, __FUNCTION__, ":: Invalid event");
-    }}).share();
+        if (event.Is<commonStub::GetServiceStatusReply>()) {
+            handleSSREvent(event);
+        } else {
+            LOG(ERROR, __FUNCTION__, ":: Invalid event");
+        }
+    }).share();
 
     taskQ_.add(f);
 }
@@ -148,8 +147,7 @@ void DataControlManagerStub::handleSSREvent(google::protobuf::Any event) {
     onServiceStatusChange(srvcStatus);
 }
 
-void DataControlManagerStub::onServiceStatusChange(
-        ServiceStatus srvcStatus) {
+void DataControlManagerStub::onServiceStatusChange(ServiceStatus srvcStatus) {
     LOG(DEBUG, __FUNCTION__, ":: Service Status: ", static_cast<int>(srvcStatus));
 
     if (srvcStatus == getServiceStatus()) {
@@ -194,8 +192,7 @@ telux::common::ErrorCode DataControlManagerStub::setDataStallParams(
 
     grpc::Status reqStatus = stub_->SetDataStallParams(&context, request, &response);
 
-    telux::common::ErrorCode error  =
-        static_cast<telux::common::ErrorCode>(response.error());
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
 
     if (error == telux::common::ErrorCode::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -208,5 +205,5 @@ telux::common::ErrorCode DataControlManagerStub::setDataStallParams(
     return error;
 }
 
-} // end of namespace data
-} // end of namespace telux
+}  // end of namespace data
+}  // end of namespace telux

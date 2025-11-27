@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_ItineraryPath_H_
-#define	_ItineraryPath_H_
-
+#ifndef _ItineraryPath_H_
+#define _ItineraryPath_H_
 
 #include <asn_application.h>
 
@@ -24,10 +23,10 @@ struct ReferencePosition;
 
 /* ItineraryPath */
 typedef struct ItineraryPath {
-	A_SEQUENCE_OF(struct ReferencePosition) list;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    A_SEQUENCE_OF(struct ReferencePosition) list;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } ItineraryPath_t;
 
 /* Implementation */
@@ -40,5 +39,5 @@ extern asn_TYPE_descriptor_t asn_DEF_ItineraryPath;
 /* Referred external types */
 #include "ReferencePosition.h"
 
-#endif	/* _ItineraryPath_H_ */
+#endif /* _ItineraryPath_H_ */
 #include <asn_internal.h>

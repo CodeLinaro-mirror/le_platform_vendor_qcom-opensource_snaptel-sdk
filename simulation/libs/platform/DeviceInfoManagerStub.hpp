@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -32,7 +32,6 @@ class DeviceInfoManagerStub : public IDeviceInfoManager,
                               public SimulationManagerStub<DeviceInfoManagerService>,
                               public std::enable_shared_from_this<DeviceInfoManagerStub> {
  public:
-
     using SimulationManagerStub::init;
 
     DeviceInfoManagerStub();
@@ -47,8 +46,7 @@ class DeviceInfoManagerStub : public IDeviceInfoManager,
     telux::common::Status getPlatformVersion(PlatformVersion &pv) override;
     telux::common::Status getIMEI(std::string &imei) override;
 
-    telux::common::Status initSyncComplete(
-            telux::common::ServiceStatus srvcStatus) override;
+    telux::common::Status initSyncComplete(telux::common::ServiceStatus srvcStatus) override;
 
  protected:
     telux::common::Status init() override;

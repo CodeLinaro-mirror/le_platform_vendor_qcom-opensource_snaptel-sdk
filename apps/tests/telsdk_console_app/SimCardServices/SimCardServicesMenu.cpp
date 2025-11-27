@@ -26,11 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "Card/CardServicesMenu.hpp"
@@ -46,33 +46,33 @@ SimCardServicesMenu::~SimCardServicesMenu() {
 }
 
 bool SimCardServicesMenu::init() {
-   std::shared_ptr<ConsoleAppCommand> cardServicesMenuCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("1", "Card_Services", {}, std::bind(&SimCardServicesMenu::cardServicesMenu,
-                                                            this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> sapCardMenuCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("2", "Sap_Card_Services", {},
-                        std::bind(&SimCardServicesMenu::sapCardMenu, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> cardServicesMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "Card_Services", {},
+            std::bind(&SimCardServicesMenu::cardServicesMenu, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> sapCardMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "Sap_Card_Services", {},
+            std::bind(&SimCardServicesMenu::sapCardMenu, this, std::placeholders::_1)));
 
-   std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
-      = {cardServicesMenuCommand, sapCardMenuCommand};
+    std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
+        = {cardServicesMenuCommand, sapCardMenuCommand};
 
-   addCommands(mainMenuCommands);
-   ConsoleApp::displayMenu();
-   return true;
+    addCommands(mainMenuCommands);
+    ConsoleApp::displayMenu();
+    return true;
 }
 
 void SimCardServicesMenu::cardServicesMenu(std::vector<std::string> userInput) {
-   CardServicesMenu cardServicesMenu("Card Services Menu", "card> ");
-   if (cardServicesMenu.init()) {
-      cardServicesMenu.mainLoop();  // Main loop to continuously read and execute commands
-   }
-   ConsoleApp::displayMenu();
+    CardServicesMenu cardServicesMenu("Card Services Menu", "card> ");
+    if (cardServicesMenu.init()) {
+        cardServicesMenu.mainLoop();  // Main loop to continuously read and execute commands
+    }
+    ConsoleApp::displayMenu();
 }
 
 void SimCardServicesMenu::sapCardMenu(std::vector<std::string> userInput) {
-   SapCardServicesMenu sapCardServicesMenu("SapCard Services Menu", "sap> ");
-   if (sapCardServicesMenu.init()) {
-      sapCardServicesMenu.mainLoop();  // Main loop to continuously read and execute commands
-   }
-   ConsoleApp::displayMenu();
+    SapCardServicesMenu sapCardServicesMenu("SapCard Services Menu", "sap> ");
+    if (sapCardServicesMenu.init()) {
+        sapCardServicesMenu.mainLoop();  // Main loop to continuously read and execute commands
+    }
+    ConsoleApp::displayMenu();
 }

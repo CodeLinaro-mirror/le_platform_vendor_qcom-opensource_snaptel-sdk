@@ -1,6 +1,5 @@
-#/* Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
-# * SPDX-License-Identifier: BSD-3-Clause-Clear
-# */
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
 TimeStamp,TimeStamp_ms,Time_monotonic,LogRecType,L2 ID,CBR Percent,CPU_Util,TXInterval,msgCnt,TempId,GPGSAMode,secMark,lat,long,semi_major_dev,speed,heading,longAccel,latAccel,Tracking_Error,vehicleDensityInRange,ChannelQualityIndication,BSMValid,max_ITT,GPS-Time,Events,DCC random time,Hysterisis,TotalRVs,DistanceFromRV
 2024-05-24-18:44:37.720,1716576277720,71590470,Tx,,0,1.530000,411,127,2017080116,0,37720,32.902746,-117.200770,0.000000,0.000000,0.000000,0.000000,0.000000,0.0,0.000000,0.0,1,100,0.000000,0,0,5
 2024-05-24-18:44:37.721,1716576277721,71590470,Rx,d81f7c8e,0,0,0,7,1,0,27342,32.902746,-117.200770,0.750000,0.000000,0.000000,0.000000,0.000000,0.0,0.0,0.0,1,100,0.0,0,0,5,0,0.000000

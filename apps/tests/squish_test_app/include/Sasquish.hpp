@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef SASQUISH_HPP
@@ -24,9 +24,9 @@
 #include <fstream>
 #include <unistd.h>
 #include <thread>
-#include <stdio.h>      /* printf, NULL */
-#include <stdlib.h>     /* srand, rand */
-#include <time.h>       /* time */
+#include <stdio.h> /* printf, NULL */
+#include <stdlib.h> /* srand, rand */
+#include <time.h> /* time */
 #include <unistd.h>
 
 using namespace telux;
@@ -34,15 +34,15 @@ using namespace telux::cv2x::prop;
 using namespace telux::common;
 
 /**
-* @file       Sasquish.hpp
-* @brief      Sasquish is a primary test tool for CongestionControl related
-*             functionality in the SQUISH library.
-*
-*/
+ * @file       Sasquish.hpp
+ * @brief      Sasquish is a primary test tool for CongestionControl related
+ *             functionality in the SQUISH library.
+ *
+ */
 class Sasquish {
-public:
-    int currRow_ = 0;
-    int rowsToRead_ = ROW_LIMIT;
+ public:
+    int currRow_        = 0;
+    int rowsToRead_     = ROW_LIMIT;
     bool multithreaded_ = false;
     int numTestThreads_ = 1;
     bool setRowsToRead(int rows);
@@ -55,12 +55,13 @@ public:
     void nonInteractiveLaunch();
     void cleanup();
     void loadCongestionControlData(
-        std::vector<string>::const_iterator &iter, SasquishTestData* sasquishTestData);
-    bool readCsvLine(string& line, SasquishTestData* sasquishTestData);
+        std::vector<string>::const_iterator &iter, SasquishTestData *sasquishTestData);
+    bool readCsvLine(string &line, SasquishTestData *sasquishTestData);
     void loadSquishInputData(std::shared_ptr<SasquishInputHandler> sasquishInputHandler);
     bool initSquishConfigs();
     void testCongCtrl();
-private:
+
+ private:
     void initConsole();
     void initOutputCsv();
     void readConfigFile();
@@ -72,16 +73,16 @@ private:
     std::shared_ptr<SasquishOutputHandler> sasquishOutputHandler_;
     std::shared_ptr<SasquishInputHandler> sasquishInputHandler_;
     std::vector<std::vector<SasquishTestData>> sasquishTestDataAll_;
-    int congCtrlLoggingLvl_ = 0;
-    bool fakeRVTempIds_ = false;
-    int totalFakeRVTempIds = 500;
-    int msgCntGap = 1;
-    int currFakeRVTempId = 0;
+    int congCtrlLoggingLvl_      = 0;
+    bool fakeRVTempIds_          = false;
+    int totalFakeRVTempIds       = 500;
+    int msgCntGap                = 1;
+    int currFakeRVTempId         = 0;
     int rvTransmitLossSimulation = 0;
-    int totalSimLossPkts = 0;
-    int rxFail = 0;
-    int rxSuccess = 0;
-    std::map <int, int> fakeMsgCntMap; // id and msg cnt
+    int totalSimLossPkts         = 0;
+    int rxFail                   = 0;
+    int rxSuccess                = 0;
+    std::map<int, int> fakeMsgCntMap;  // id and msg cnt
     // Structure instance to store the command line args passed
     SasquishArguments commandlineArgs_;
     CongestionControlConfig congCtrlConfig_;

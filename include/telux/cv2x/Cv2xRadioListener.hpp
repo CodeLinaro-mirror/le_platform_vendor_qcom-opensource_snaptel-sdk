@@ -28,17 +28,16 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
-* @file       Cv2xRadioListener.hpp
-*
-* @brief      Cv2xRadioListener is the listener interface for Cv2xRadio
-*/
+ * @file       Cv2xRadioListener.hpp
+ *
+ * @brief      Cv2xRadioListener is the listener interface for Cv2xRadio
+ */
 
 #ifndef TELUX_CV2X_CV2XRADIOLISTENER_HPP
 #define TELUX_CV2X_CV2XRADIOLISTENER_HPP
@@ -58,7 +57,16 @@ namespace cv2x {
  *@brief Listeners for Cv2xRadio must implement this interface.
  */
 class ICv2xRadioListener : virtual public telux::common::ISDKListener {
-public:
+ public:
+    /**
+     * Called when the status of the CV2X radio has changed.
+     *
+     * @param [in] status - CV2X radio status.
+     *
+     * @deprecated use onStatusChanged in Cv2xListener
+     */
+    virtual void onStatusChanged(Cv2xStatus status) {
+    }
 
     /**
      * Called when the status of the CV2X radio has changed.
@@ -67,23 +75,16 @@ public:
      *
      * @deprecated use onStatusChanged in Cv2xListener
      */
-    virtual void onStatusChanged(Cv2xStatus status) {}
-
-    /**
-     * Called when the status of the CV2X radio has changed.
-     *
-     * @param [in] status - CV2X radio status.
-     *
-     * @deprecated use onStatusChanged in Cv2xListener
-     */
-    virtual void onStatusChanged(Cv2xStatusEx status) {}
+    virtual void onStatusChanged(Cv2xStatusEx status) {
+    }
 
     /**
      * Called when the L2 Address has changed.
      *
      * @param [in] newL2Address - The new L2 address.
      */
-    virtual void onL2AddrChanged(uint32_t newL2Address) {}
+    virtual void onL2AddrChanged(uint32_t newL2Address) {
+    }
 
     /**
      * Called when SPS offset has changed.
@@ -93,23 +94,24 @@ public:
      *
      * @deprecated use onSpsSchedulingChanged
      */
-    virtual void onSpsOffsetChanged(int spsId,
-                                    MacDetails details) {}
+    virtual void onSpsOffsetChanged(int spsId, MacDetails details) {
+    }
 
     /**
      * Called when SPS scheduling has changed.
      *
      * @param [in] schedulingInfo - SPS scheduling information .
      */
-    virtual void onSpsSchedulingChanged(const SpsSchedulingInfo & schedulingInfo) {}
+    virtual void onSpsSchedulingChanged(const SpsSchedulingInfo &schedulingInfo) {
+    }
 
     /**
      * Called when Cv2x radio capabilities have changed.
      *
      * @param [in] capabilities - Capabilities of the CV2X radio .
      */
-    virtual void onCapabilitiesChanged(const Cv2xRadioCapabilities & capabilities) {}
-
+    virtual void onCapabilitiesChanged(const Cv2xRadioCapabilities &capabilities) {
+    }
 
     /**
      * Called when a MAC address cloning attack is detected or cleared.
@@ -124,18 +126,20 @@ public:
      * @param [out] detected - True when a MAC address cloning attack is detected.
      *                         False when a MAC address cloning attack is cleared.
      */
-    virtual void onMacAddressCloneAttack(const bool detected) {}
+    virtual void onMacAddressCloneAttack(const bool detected) {
+    }
 
     /**
      * Destructor for ICv2xRadioListener
      */
-    virtual ~ICv2xRadioListener(){}
+    virtual ~ICv2xRadioListener() {
+    }
 };
 
 /** @} */ /* end_addtogroup telematics_cv2x_cpp */
 
-} // namespace cv2x
+}  // namespace cv2x
 
-} // namespace telux
+}  // namespace telux
 
-#endif // TELUX_CV2X_CV2XRADIOLISTENER_HPP
+#endif  // TELUX_CV2X_CV2XRADIOLISTENER_HPP

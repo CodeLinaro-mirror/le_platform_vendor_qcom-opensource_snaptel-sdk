@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_WsaChInfoDataRate_H_
-#define	_WsaChInfoDataRate_H_
-
+#ifndef _WsaChInfoDataRate_H_
+#define _WsaChInfoDataRate_H_
 
 #include <asn_application.h>
 
@@ -22,11 +21,11 @@ extern "C" {
 
 /* WsaChInfoDataRate */
 typedef struct WsaChInfoDataRate {
-	BIT_STRING_t	 adaptable;
-	long	 dataRate;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    BIT_STRING_t adaptable;
+    long dataRate;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } WsaChInfoDataRate_t;
 
 /* Implementation */
@@ -36,5 +35,5 @@ extern asn_TYPE_descriptor_t asn_DEF_WsaChInfoDataRate;
 }
 #endif
 
-#endif	/* _WsaChInfoDataRate_H_ */
+#endif /* _WsaChInfoDataRate_H_ */
 #include <asn_internal.h>

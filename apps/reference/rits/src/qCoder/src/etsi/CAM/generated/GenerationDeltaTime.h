@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_GenerationDeltaTime_H_
-#define	_GenerationDeltaTime_H_
-
+#ifndef _GenerationDeltaTime_H_
+#define _GenerationDeltaTime_H_
 
 #include <asn_application.h>
 
@@ -20,11 +19,11 @@ extern "C" {
 
 /* Dependencies */
 typedef enum GenerationDeltaTime {
-	GenerationDeltaTime_oneMilliSec	= 1
+    GenerationDeltaTime_oneMilliSec = 1
 } e_GenerationDeltaTime;
 
 /* GenerationDeltaTime */
-typedef long	 GenerationDeltaTime_t;
+typedef long GenerationDeltaTime_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_GenerationDeltaTime;
@@ -42,5 +41,5 @@ per_type_encoder_f GenerationDeltaTime_encode_uper;
 }
 #endif
 
-#endif	/* _GenerationDeltaTime_H_ */
+#endif /* _GenerationDeltaTime_H_ */
 #include <asn_internal.h>

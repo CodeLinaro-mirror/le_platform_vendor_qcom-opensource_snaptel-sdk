@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_RoadWorksContainerExtended_H_
-#define	_RoadWorksContainerExtended_H_
-
+#ifndef _RoadWorksContainerExtended_H_
+#define _RoadWorksContainerExtended_H_
 
 #include <asn_application.h>
 
@@ -31,18 +30,18 @@ struct ReferenceDenms;
 
 /* RoadWorksContainerExtended */
 typedef struct RoadWorksContainerExtended {
-	LightBarSirenInUse_t	*lightBarSirenInUse	/* OPTIONAL */;
-	struct ClosedLanes	*closedLanes	/* OPTIONAL */;
-	struct RestrictedTypes	*restriction	/* OPTIONAL */;
-	SpeedLimit_t	*speedLimit	/* OPTIONAL */;
-	struct CauseCode	*incidentIndication	/* OPTIONAL */;
-	struct ItineraryPath	*recommendedPath	/* OPTIONAL */;
-	struct DeltaReferencePosition	*startingPointSpeedLimit	/* OPTIONAL */;
-	TrafficRule_t	*trafficFlowRule	/* OPTIONAL */;
-	struct ReferenceDenms	*referenceDenms	/* OPTIONAL */;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    LightBarSirenInUse_t *lightBarSirenInUse /* OPTIONAL */;
+    struct ClosedLanes *closedLanes /* OPTIONAL */;
+    struct RestrictedTypes *restriction /* OPTIONAL */;
+    SpeedLimit_t *speedLimit /* OPTIONAL */;
+    struct CauseCode *incidentIndication /* OPTIONAL */;
+    struct ItineraryPath *recommendedPath /* OPTIONAL */;
+    struct DeltaReferencePosition *startingPointSpeedLimit /* OPTIONAL */;
+    TrafficRule_t *trafficFlowRule /* OPTIONAL */;
+    struct ReferenceDenms *referenceDenms /* OPTIONAL */;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } RoadWorksContainerExtended_t;
 
 /* Implementation */
@@ -60,5 +59,5 @@ extern asn_TYPE_descriptor_t asn_DEF_RoadWorksContainerExtended;
 #include "DeltaReferencePosition.h"
 #include "ReferenceDenms.h"
 
-#endif	/* _RoadWorksContainerExtended_H_ */
+#endif /* _RoadWorksContainerExtended_H_ */
 #include <asn_internal.h>

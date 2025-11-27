@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_PublicTransportContainer_H_
-#define	_PublicTransportContainer_H_
-
+#ifndef _PublicTransportContainer_H_
+#define _PublicTransportContainer_H_
 
 #include <asn_application.h>
 
@@ -24,11 +23,11 @@ struct PtActivation;
 
 /* PublicTransportContainer */
 typedef struct PublicTransportContainer {
-	EmbarkationStatus_t	 embarkationStatus;
-	struct PtActivation	*ptActivation	/* OPTIONAL */;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    EmbarkationStatus_t embarkationStatus;
+    struct PtActivation *ptActivation /* OPTIONAL */;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } PublicTransportContainer_t;
 
 /* Implementation */
@@ -41,5 +40,5 @@ extern asn_TYPE_descriptor_t asn_DEF_PublicTransportContainer;
 /* Referred external types */
 #include "PtActivation.h"
 
-#endif	/* _PublicTransportContainer_H_ */
+#endif /* _PublicTransportContainer_H_ */
 #include <asn_internal.h>

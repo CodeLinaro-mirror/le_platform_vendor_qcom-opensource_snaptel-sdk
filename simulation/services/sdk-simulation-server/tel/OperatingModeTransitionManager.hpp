@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -51,7 +51,7 @@ class FactoryTestMode : public telux::common::BaseState {
     /**
      * Method invoked by state-machine framework on exiting FactoryTestMode
      */
-     void onExit() override;
+    void onExit() override;
 };
 
 /**
@@ -80,7 +80,7 @@ class OnlineMode : public telux::common::BaseState {
     /**
      * Method invoked by state-machine framework on exiting OnlineMode
      */
-     void onExit() override;
+    void onExit() override;
 };
 
 /**
@@ -110,7 +110,7 @@ class OfflineMode : public telux::common::BaseState {
     /**
      * Method invoked by state-machine framework on exiting OfflineMode
      */
-     void onExit() override;
+    void onExit() override;
 };
 
 /**
@@ -140,7 +140,7 @@ class PersistentLowPowerMode : public telux::common::BaseState {
     /**
      * Method invoked by state-machine framework on exiting PersistentLowPowerMode
      */
-     void onExit() override;
+    void onExit() override;
 };
 
 /**
@@ -170,7 +170,7 @@ class AirplaneMode : public telux::common::BaseState {
     /**
      * Method invoked by state-machine framework on exiting AirplaneMode
      */
-     void onExit() override;
+    void onExit() override;
 };
 
 /**
@@ -200,38 +200,37 @@ class ResettingMode : public telux::common::BaseState {
     /**
      * Method invoked by state-machine framework on exiting ResettingMode
      */
-     void onExit() override;
+    void onExit() override;
 };
 
 /**
  * Concrete state (derived from BaseState) representing the Shutdown operating mode. Device can
  * transition into this mode from all other modes.
  */
-class ShutdownMode : public telux::common::BaseState
-{
-public:
-   /**
-    * Constructor for ShutdownMode
-    * @param [in] name - The parent state-machine of type OperatingModeStateMachine
-    */
-   ShutdownMode(std::weak_ptr<BaseStateMachine> parent);
+class ShutdownMode : public telux::common::BaseState {
+ public:
+    /**
+     * Constructor for ShutdownMode
+     * @param [in] name - The parent state-machine of type OperatingModeStateMachine
+     */
+    ShutdownMode(std::weak_ptr<BaseStateMachine> parent);
 
-   /**
-    * Event handler for ShutdownMode
-    * @param [in] event - The Event that needs to be handled
-    * @returns true if the event was handled and false for INVALID TRANSITION
-    */
-   bool onEvent(std::shared_ptr<telux::common::Event> event);
+    /**
+     * Event handler for ShutdownMode
+     * @param [in] event - The Event that needs to be handled
+     * @returns true if the event was handled and false for INVALID TRANSITION
+     */
+    bool onEvent(std::shared_ptr<telux::common::Event> event);
 
-   /**
-    * Method invoked by state-machine framework on entering ShutdownMode
-    */
-   void onEnter() override;
+    /**
+     * Method invoked by state-machine framework on entering ShutdownMode
+     */
+    void onEnter() override;
 
-   /**
-    * Method invoked by state-machine framework on exiting ShutdownMode
-    */
-   void onExit() override;
+    /**
+     * Method invoked by state-machine framework on exiting ShutdownMode
+     */
+    void onExit() override;
 };
 
 /**
@@ -261,7 +260,7 @@ class Notification {
      */
     void addEvent(eventService::EventResponse eventResponse);
 
-private:
+ private:
     std::vector<eventService::EventResponse> events_;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     std::mutex notificationMutex_;
@@ -290,9 +289,10 @@ class NotificationBuilder {
 
     virtual std::shared_ptr<Notification> build() = 0;
 
-    virtual ~NotificationBuilder(){}
+    virtual ~NotificationBuilder() {
+    }
 
-protected:
+ protected:
     std::shared_ptr<Notification> notification_;
 };
 
@@ -300,8 +300,9 @@ protected:
  * Telephony notification builder class to build notifications such as operating mode, voice service
  * state change etc. And add notification to task queue of Notification class.
  */
-class TelephonyNotificationBuilder: public NotificationBuilder,
-                              public std::enable_shared_from_this<TelephonyNotificationBuilder> {
+class TelephonyNotificationBuilder
+   : public NotificationBuilder,
+     public std::enable_shared_from_this<TelephonyNotificationBuilder> {
 
  public:
     TelephonyNotificationBuilder();
@@ -310,9 +311,10 @@ class TelephonyNotificationBuilder: public NotificationBuilder,
     void addOperatingModeChangeEvent(telStub::OperatingModeEvent &event);
     void addSignalStrengthChangeEvent(int phoneId, telStub::SignalStrengthChangeEvent &event);
     void addServiceStateChangeEvent(int phoneId, telStub::ServiceStateChangeEvent &event);
-    void addVoiceRadioTechnologyChangeEvent(int phoneId,
-        telStub::VoiceRadioTechnologyChangeEvent &event);
+    void addVoiceRadioTechnologyChangeEvent(
+        int phoneId, telStub::VoiceRadioTechnologyChangeEvent &event);
     std::shared_ptr<Notification> build();
+
  private:
     std::vector<eventService::EventResponse> events_;
     std::mutex notificationBuilderMutex_;
@@ -340,8 +342,9 @@ class PhoneEvent : public telux::common::Event {
  * Concrete state-machine (from BaseStateMachine) representing the operating mode state machine
  *
  */
-class OperatingModeTransitionManager : public telux::common::BaseStateMachine,
-                              public std::enable_shared_from_this<OperatingModeTransitionManager> {
+class OperatingModeTransitionManager
+   : public telux::common::BaseStateMachine,
+     public std::enable_shared_from_this<OperatingModeTransitionManager> {
 
  public:
     /**
@@ -384,8 +387,8 @@ class OperatingModeTransitionManager : public telux::common::BaseStateMachine,
         UPDATE_OPERATING_MODE
     };
 
-    std::shared_ptr<telux::common::Event> createEvent(EventID eventId, std::string name,
-        int phoneId) {
+    std::shared_ptr<telux::common::Event> createEvent(
+        EventID eventId, std::string name, int phoneId) {
         return std::make_shared<PhoneEvent>(eventId, name, phoneId);
     }
 
@@ -398,8 +401,8 @@ class OperatingModeTransitionManager : public telux::common::BaseStateMachine,
     telux::common::ErrorCode getOperatingMode(telStub::OperatingMode &operatingMode);
     std::shared_ptr<BaseState> getPrevState();
     std::shared_ptr<TelephonyNotificationBuilder> getBuilder();
-    telStub::SignalStrength& getCachedSS(int slotId);
-    telStub::RadioTechnology& getCachedServingRat(int slotId);
+    telStub::SignalStrength &getCachedSS(int slotId);
+    telStub::RadioTechnology &getCachedServingRat(int slotId);
     telux::common::ErrorCode updateOperatingMode(::telStub::OperatingMode opMode);
     telux::common::ErrorCode updateCachedSignalStrength(int slotId);
     telux::common::ErrorCode updateCachedServingRat(int slotId);
@@ -412,18 +415,17 @@ class OperatingModeTransitionManager : public telux::common::BaseStateMachine,
     std::map<int, telStub::SignalStrength> cachedSS_;
     std::map<int, telStub::RadioTechnology> cachedServingRat_;
 
-    //Read only API JSON Data
+    // Read only API JSON Data
     telux::common::ServiceStatus readSubsystemStatus(int slotId);
     telux::common::ServiceStatus readSubsystemStatus(int slotId, int &cbDelay);
-    //Read both API and System State JSON Data
+    // Read both API and System State JSON Data
     telux::common::ErrorCode readJsonData(int slotId, std::string method, JsonData &data);
-    telux::common::ErrorCode readJsonData(int slotId, std::string method,
-        JsonData &data, std::string &stateJsonPath);
+    telux::common::ErrorCode readJsonData(
+        int slotId, std::string method, JsonData &data, std::string &stateJsonPath);
     telux::common::ErrorCode initOperatingMode();
     telux::common::ErrorCode initSignalStrength();
     telux::common::ErrorCode initServingRat();
     telux::common::ErrorCode initServiceState();
-
 };
 
 }  // namespace tel

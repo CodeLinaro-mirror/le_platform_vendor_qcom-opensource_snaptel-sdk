@@ -28,9 +28,8 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -69,9 +68,8 @@ class ECallManager : public LocationListener,
      *
      * @returns Status of triggerECall i.e success or suitable status code.
      */
-    telux::common::Status triggerECall(
-        int phoneId, ECallCategory category, ECallVariant variant, bool transmitMsd,
-        std::vector<uint8_t> msdPdu);
+    telux::common::Status triggerECall(int phoneId, ECallCategory category, ECallVariant variant,
+        bool transmitMsd, std::vector<uint8_t> msdPdu);
 
     /**
      * This function triggers a voice eCall procedure to the specified phone number
@@ -86,9 +84,8 @@ class ECallManager : public LocationListener,
      *
      * @returns Status of triggerECall i.e success or suitable status code.
      */
-    telux::common::Status triggerECall(
-        int phoneId, ECallCategory category, const std::string dialNumber, bool transmitMsd,
-        std::vector<uint8_t> msdPdu);
+    telux::common::Status triggerECall(int phoneId, ECallCategory category,
+        const std::string dialNumber, bool transmitMsd, std::vector<uint8_t> msdPdu);
 
     /**
      * This function triggers a voice eCall procedure to the specified phone number over IMS
@@ -337,20 +334,20 @@ class ECallManager : public LocationListener,
     /** Local copy of MSD optional additional data content. */
     ECallOptionalEuroNcapData optionalAdditionalDataContent_;
     /** Local copy of MSD raw PDU that will be used in transmission */
-    std::vector<uint8_t> msdPdu_ {};
+    std::vector<uint8_t> msdPdu_{};
     /** Interval for which the location-fix updates needs to be received */
     uint32_t locUpdateIntervalMs_;
     std::mutex mutex_;
     bool locFixReceived_;
     std::condition_variable locUpdateCV_;
     /** Variables to store audio settings for eCall voice conversation */
-    std::vector<DeviceType> audioDevices_ {DeviceType::DEVICE_TYPE_SPEAKER,
-                     DeviceType::DEVICE_TYPE_MIC};
+    std::vector<DeviceType> audioDevices_{
+        DeviceType::DEVICE_TYPE_SPEAKER, DeviceType::DEVICE_TYPE_MIC};
     uint32_t voiceSampleRate_;
     AudioFormat voiceFormat_;
     ChannelTypeMask voiceChannels_;
     EcnrMode ecnrMode_;
-    bool isTpsEcallOverImsTriggered;    //To check if Tps eCall over IMS is triggered
+    bool isTpsEcallOverImsTriggered;  // To check if Tps eCall over IMS is triggered
 };
 
 #endif  // ECALLMANAGER_HPP

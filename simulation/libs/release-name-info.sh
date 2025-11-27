@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
-#  SPDX-License-Identifier: BSD-3-Clause-Clear
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
 
 headTag=$(git -C $1 name-rev --name-only --tags HEAD)
 

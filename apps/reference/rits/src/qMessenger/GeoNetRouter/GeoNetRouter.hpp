@@ -26,6 +26,13 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file GeoRouter.hpp
  * @brief constants and data structure definition for external include
@@ -34,8 +41,8 @@
 #define __GEOROUTER_HPP__
 #include <cstdint>
 
-#define GN_MID_LEN  6
-namespace gn{
+#define GN_MID_LEN 6
+namespace gn {
 /**
  * GeoNetwork upper protocol type.
  */
@@ -50,19 +57,18 @@ enum class UpperProtocol {
  * GeoNetwork packet type
  */
 enum class PacketType {
-    GN_PACKET_TYPE_ANY = 0,
-    GN_PACKET_TYPE_BEACON = 1,
-    GN_PACKET_TYPE_GEOUNICAST = 2,
-    GN_PACKET_TYPE_GEOANYCAST = 3,
+    GN_PACKET_TYPE_ANY          = 0,
+    GN_PACKET_TYPE_BEACON       = 1,
+    GN_PACKET_TYPE_GEOUNICAST   = 2,
+    GN_PACKET_TYPE_GEOANYCAST   = 3,
     GN_PACKET_TYPE_GEOBROADCAST = 4,
-    GN_PCCKET_TYPE_TSB = 5,
-    GN_PACKET_TYPE_SHB = 5,             /*!< Header type is TSB, header subtype is SHB */
+    GN_PCCKET_TYPE_TSB          = 5,
+    GN_PACKET_TYPE_SHB          = 5, /*!< Header type is TSB, header subtype is SHB */
     /* bellow types are used internally only */
     GN_PACKET_TYPE_LS = 6,
 };
 /* ETSI EN 302 931 Geographical Area Definition */
-enum class GeoAreaType
-{
+enum class GeoAreaType {
     GEO_AREA_TYPE_CIRCLE = 0,
     GEO_AREA_TYPE_RECT,
     GEO_AREA_TYPE_ELIP
@@ -70,13 +76,11 @@ enum class GeoAreaType
 /*
  * Geo Position Lat/long unit
  */
-enum class GeoPosUnit
-{
-    GEO_POS_UNIT_DEGREE = 1,
-    GEO_POS_UNIT_MICRO_DEGREE = 1000000,
+enum class GeoPosUnit {
+    GEO_POS_UNIT_DEGREE             = 1,
+    GEO_POS_UNIT_MICRO_DEGREE       = 1000000,
     GEO_POS_UNIT_TENTH_MICRO_DEGREE = 10000000,
 };
-
 
 /*! \struct
  *  \brief Geographical area data structure.
@@ -94,21 +98,21 @@ typedef struct GeoArea {
  *  \brief ego position vector.
  */
 typedef struct gn_epv {
-    uint32_t tst_epv;       /*!< time in milliseconds at which
-                              the latitude and longitude of the ITS-S were
-                              acquired by the GeoAdhoc router. */
+    uint32_t tst_epv; /*!< time in milliseconds at which
+                        the latitude and longitude of the ITS-S were
+                        acquired by the GeoAdhoc router. */
 
-    int32_t latitude_epv;   /*!< Latitude of the GeoAdhoc router reference
-                              position expressed in 1/10 degree */
+    int32_t latitude_epv; /*!< Latitude of the GeoAdhoc router reference
+                            position expressed in 1/10 degree */
 
-    int32_t longitude_epv;  /*!< Longitude of the GeoAdhoc router reference
-                              position expressed in 1/10 degree */
+    int32_t longitude_epv; /*!< Longitude of the GeoAdhoc router reference
+                             position expressed in 1/10 degree */
 
-    int16_t s_epv;          /*!< Speed of the GeoAdhoc router expressed in
-                              signed uinits of 0.01 meter/second */
-    uint16_t h_epv;         /*!< Heading of the GeoAdhoc router, expressed in
-                              unsigned units of 0.1 degree from North */
-    int pai_epv;            /*!< position accuracy indicator */
+    int16_t s_epv; /*!< Speed of the GeoAdhoc router expressed in
+                     signed uinits of 0.01 meter/second */
+    uint16_t h_epv; /*!< Heading of the GeoAdhoc router, expressed in
+                      unsigned units of 0.1 degree from North */
+    int pai_epv; /*!< position accuracy indicator */
 } gn_epv_t;
 
 /**
@@ -131,38 +135,35 @@ typedef union gn_de_param gn_de_param_u;
 /*! \enum
  *  \brief Local GN address configuration method enum
  */
-enum class LocalAddrConfigMethod
-{
+enum class LocalAddrConfigMethod {
     GN_LOCAL_ADDR_CONF_AUTO = 0,
     GN_LOCAL_ADDR_CONF_MANAGED,
     GN_LOCAL_ADDR_CONF_ANONYMOUS
 };
 
-
 /**
  * GN ITS station type enum
  */
-enum class ITSStationType
-{
-    StationType_unknown = 0,
-    StationType_pedestrian  = 1,
-    StationType_cyclist = 2,
-    StationType_moped   = 3,
-    StationType_motorcycle  = 4,
+enum class ITSStationType {
+    StationType_unknown         = 0,
+    StationType_pedestrian      = 1,
+    StationType_cyclist         = 2,
+    StationType_moped           = 3,
+    StationType_motorcycle      = 4,
     StationType_passengerCar    = 5,
-    StationType_bus = 6,
-    StationType_lightTruck  = 7,
-    StationType_heavyTruck  = 8,
-    StationType_trailer = 9,
+    StationType_bus             = 6,
+    StationType_lightTruck      = 7,
+    StationType_heavyTruck      = 8,
+    StationType_trailer         = 9,
     StationType_specialVehicles = 10,
-    StationType_tram    = 11,
+    StationType_tram            = 11,
     StationType_roadSideUnit    = 15
 };
 
 /**
  * GN interface type enum
  */
-enum class InterfaceType{
+enum class InterfaceType {
     GN_IF_TYPE_UNSPECIFIED = 0,
     GN_IF_TYPE_ITS_G5
 };
@@ -184,9 +185,9 @@ enum class SecurityProfile {
  */
 enum class AF_Algorithm {
     GN_AF_UNSPECIFIED = 0,
-    GN_AF_SIMPLE = 1,
-    GN_AF_CBF = 2,
-    GN_AF_AF = 3
+    GN_AF_SIMPLE      = 1,
+    GN_AF_CBF         = 2,
+    GN_AF_AF          = 3
 };
 
 /*
@@ -194,15 +195,15 @@ enum class AF_Algorithm {
  */
 enum class NAF_Algorithm {
     GN_NAF_UNSPECIFIED = 0,
-    GN_NAF_GREEDY = 1,
-    GN_NAF_CBF = 2
+    GN_NAF_GREEDY      = 1,
+    GN_NAF_CBF         = 2
 };
 
 /**
  *  GeoNetworking global config data.
  */
 typedef struct GnConfig {
-    //gn_addr_t itsGnLocalGnAddr;
+    // gn_addr_t itsGnLocalGnAddr;
     uint8_t mid[GN_MID_LEN];
     LocalAddrConfigMethod itsGnLocalAddrConfMethod;
     int itsGnProtocolVersion;
@@ -215,7 +216,7 @@ typedef struct GnConfig {
     int itsGnMaxGeoNetworkingHeaderSize;
     int itsGnLifetimeLocTE;
     SecurityConfig itsGnSecurity;
-    //gn_decap_result_e itsGnSnDecapResultHandling;
+    // gn_decap_result_e itsGnSnDecapResultHandling;
     int itsGnLocationServiceMaxRetrans;
     int itsGnLocationServiceRetransmitTimer;
     int itsGnLocationServicePacketBufferSize;
@@ -230,7 +231,7 @@ typedef struct GnConfig {
     int itsGnMaxGeoAreaSize;
     int itsGnMinPacketRepetitionInterval;
     NAF_Algorithm itsGnNonAreaForwardingAlgorithm;
-    AF_Algorithm  itsGnAreaForwardingAlgorithm;
+    AF_Algorithm itsGnAreaForwardingAlgorithm;
     int itsGnCbfMinTime;
     int itsGnCbfMaxTime;
     int itsGnDefaultMaxCommunicationRange;
@@ -239,39 +240,38 @@ typedef struct GnConfig {
     int itsGnBcForwardingPacketBufferSize;
     int itsGnCbfPacketBufferSize;
     int itsGnDefaultTrafficClass;
-}GnConfig_t;
-
+} GnConfig_t;
 
 /**
  *  Parameters passed in when invoking GN data service, or returned when receiving data
  *  from GN data service.
  */
 typedef struct GnData {
-    UpperProtocol upper_prot;   /*!< upper protocol entity */
-    PacketType pkt_type;        /*!< packet type, e.g. GUC, SHB, TSB, GBC, GAC */
+    UpperProtocol upper_prot; /*!< upper protocol entity */
+    PacketType pkt_type; /*!< packet type, e.g. GUC, SHB, TSB, GBC, GAC */
     bool is_shb;
     int payload_len;
     DestinationType d_type;
     uint8_t d_addr[GN_MID_LEN];
     GeoArea_t d_area;
-    int max_lt;                 /*!< maximum tolerable time in [s] a GeoNetworking packet
-                                    can be buffered until it reaches its destination */
+    int max_lt; /*!< maximum tolerable time in [s] a GeoNetworking packet
+                    can be buffered until it reaches its destination */
 
-    int repetition_interval;    /*!< the duration between two consecutive
-                                  transmissions of the same GeoNetworking
-                                  packet during maximum repetition time of
-                                  a packet in [ms]. */
+    int repetition_interval; /*!< the duration between two consecutive
+                               transmissions of the same GeoNetworking
+                               packet during maximum repetition time of
+                               a packet in [ms]. */
 
-    int max_repetition_time;    /*!< specifies the duration in [ms] for which
-                                  the packet will be repeated if the Repetition
-                                  interval is set */
+    int max_repetition_time; /*!< specifies the duration in [ms] for which
+                               the packet will be repeated if the Repetition
+                               interval is set */
 
-    int max_hl;                 /*!< specifies the number of hops a packet is
-                                  allowed to have in the network */
+    int max_hl; /*!< specifies the number of hops a packet is
+                  allowed to have in the network */
 
-    int tc;                     /*!< Traffic class */
-    int hst;                    /*!< Only for internal use */
+    int tc; /*!< Traffic class */
+    int hst; /*!< Only for internal use */
 } GnData_t;
 
-} //namespace gn
+}  // namespace gn
 #endif  //__GEOROUTER_HPP__

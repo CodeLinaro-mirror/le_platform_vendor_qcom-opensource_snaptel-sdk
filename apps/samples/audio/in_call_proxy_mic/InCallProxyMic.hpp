@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -22,13 +22,13 @@ class InCallProxyMic {
     int createIncallPlayStream();
     int deleteIncallPlayStream();
     void play();
-    void writeComplete(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
-        uint32_t bytesWritten, telux::common::ErrorCode error);
+    void writeComplete(std::shared_ptr<telux::audio::IStreamBuffer> buffer, uint32_t bytesWritten,
+        telux::common::ErrorCode error);
 
     char *fileToPlayPath_;
 
-  private:
-    const int32_t TIME_10_SECONDS = 10;
+ private:
+    const int32_t TIME_10_SECONDS  = 10;
     const int32_t BUFFER_POOL_SIZE = 2;
     bool errorOccurred_;
     std::shared_ptr<telux::audio::IAudioManager> audioManager_;

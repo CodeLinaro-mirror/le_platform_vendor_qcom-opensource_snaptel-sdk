@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_StationaryVehicleContainer_H_
-#define	_StationaryVehicleContainer_H_
-
+#ifndef _StationaryVehicleContainer_H_
+#define _StationaryVehicleContainer_H_
 
 #include <asn_application.h>
 
@@ -28,15 +27,15 @@ struct VehicleIdentification;
 
 /* StationaryVehicleContainer */
 typedef struct StationaryVehicleContainer {
-	StationarySince_t	*stationarySince	/* OPTIONAL */;
-	struct CauseCode	*stationaryCause	/* OPTIONAL */;
-	struct DangerousGoodsExtended	*carryingDangerousGoods	/* OPTIONAL */;
-	NumberOfOccupants_t	*numberOfOccupants	/* OPTIONAL */;
-	struct VehicleIdentification	*vehicleIdentification	/* OPTIONAL */;
-	EnergyStorageType_t	*energyStorageType	/* OPTIONAL */;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    StationarySince_t *stationarySince /* OPTIONAL */;
+    struct CauseCode *stationaryCause /* OPTIONAL */;
+    struct DangerousGoodsExtended *carryingDangerousGoods /* OPTIONAL */;
+    NumberOfOccupants_t *numberOfOccupants /* OPTIONAL */;
+    struct VehicleIdentification *vehicleIdentification /* OPTIONAL */;
+    EnergyStorageType_t *energyStorageType /* OPTIONAL */;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } StationaryVehicleContainer_t;
 
 /* Implementation */
@@ -51,5 +50,5 @@ extern asn_TYPE_descriptor_t asn_DEF_StationaryVehicleContainer;
 #include "DangerousGoodsExtended.h"
 #include "VehicleIdentification.h"
 
-#endif	/* _StationaryVehicleContainer_H_ */
+#endif /* _StationaryVehicleContainer_H_ */
 #include <asn_internal.h>

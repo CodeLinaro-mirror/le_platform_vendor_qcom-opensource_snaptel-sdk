@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_InformationQuality_H_
-#define	_InformationQuality_H_
-
+#ifndef _InformationQuality_H_
+#define _InformationQuality_H_
 
 #include <asn_application.h>
 
@@ -20,13 +19,13 @@ extern "C" {
 
 /* Dependencies */
 typedef enum InformationQuality {
-	InformationQuality_unavailable	= 0,
-	InformationQuality_lowest	= 1,
-	InformationQuality_highest	= 7
+    InformationQuality_unavailable = 0,
+    InformationQuality_lowest      = 1,
+    InformationQuality_highest     = 7
 } e_InformationQuality;
 
 /* InformationQuality */
-typedef long	 InformationQuality_t;
+typedef long InformationQuality_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_InformationQuality;
@@ -44,5 +43,5 @@ per_type_encoder_f InformationQuality_encode_uper;
 }
 #endif
 
-#endif	/* _InformationQuality_H_ */
+#endif /* _InformationQuality_H_ */
 #include <asn_internal.h>

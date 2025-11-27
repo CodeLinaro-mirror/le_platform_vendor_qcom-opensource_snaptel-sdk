@@ -26,10 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -59,8 +59,8 @@ using namespace telux::common;
 #define REG_TYPE_MSG " Enter registration type (0 - ALL, 1 - TRIP UPDATE, 2 - CDEV LEVEL CHANGE): "
 
 std::shared_ptr<ThermalTestApp> thermalTestApp_ = nullptr;
-auto sdkVersion = telux::common::Version::getSdkVersion();
-std::string sdkReleaseName = telux::common::Version::getReleaseName();
+auto sdkVersion                                 = telux::common::Version::getSdkVersion();
+std::string sdkReleaseName                      = telux::common::Version::getReleaseName();
 std::string APP_NAME = "Thermal Test App v" + std::to_string(sdkVersion.major) + "."
                        + std::to_string(sdkVersion.minor) + "." + std::to_string(sdkVersion.patch)
                        + "\n" + "Release name: " + sdkReleaseName;
@@ -86,7 +86,7 @@ void ThermalTestApp::signalHandler(int signum) {
 void ThermalTestApp::cleanup() {
     for (auto thermalManager : thermalManagerMap_) {
         auto procType = thermalManager.first;
-        auto manager = thermalManager.second;
+        auto manager  = thermalManager.second;
         if (manager) {
             Status status = manager->deregisterListener(thermalListenerMap_[procType]);
             if (status == Status::SUCCESS) {
@@ -101,17 +101,17 @@ void ThermalTestApp::cleanup() {
 
 bool ThermalTestApp::init() {
     bool initStatus = false;
-    int cid = -1;
+    int cid         = -1;
 
     do {
         ThermalTestApp::getInput(
             "Select the application processor for operations(1-LOCAL/2-REMOTE/3-BOTH): ", cid);
         if (cid == 1) {
             initWithProc_ = LOCAL;
-            initStatus = initThermalManager(telux::common::ProcType::LOCAL_PROC);
+            initStatus    = initThermalManager(telux::common::ProcType::LOCAL_PROC);
         } else if (cid == 2) {
             initWithProc_ = REMOTE;
-            initStatus = initThermalManager(telux::common::ProcType::REMOTE_PROC);
+            initStatus    = initThermalManager(telux::common::ProcType::REMOTE_PROC);
         } else if (cid == 3) {
             initWithProc_ = BOTH;
             initThermalManager(telux::common::ProcType::LOCAL_PROC);
@@ -153,8 +153,8 @@ bool ThermalTestApp::init() {
     return true;
 }
 
-Status ThermalTestApp::manageIndication(telux::common::ProcType procType,
-    bool registerInd, telux::therm::ThermalNotificationMask mask) {
+Status ThermalTestApp::manageIndication(telux::common::ProcType procType, bool registerInd,
+    telux::therm::ThermalNotificationMask mask) {
 
     Status status = Status::FAILED;
     if (thermalListenerMap_.find(procType) == thermalListenerMap_.end()) {
@@ -187,7 +187,7 @@ bool ThermalTestApp::initThermalManager(telux::common::ProcType procType) {
     auto &thermalFactory = telux::therm::ThermalFactory::getInstance();
     // Get thermal manager instance
     std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
-    auto thermalManager = thermalFactory.getThermalManager(
+    auto thermalManager              = thermalFactory.getThermalManager(
         [&](ServiceStatus status) { prom.set_value(status); }, procType);
 
     if (thermalManager == nullptr) {
@@ -224,13 +224,13 @@ int ThermalTestApp::readAndValidate(std::string msg, int minRange, int maxRange)
 }
 
 telux::common::ProcType ThermalTestApp::getProcType() {
-    int operationType = -1;
+    int operationType                = -1;
     telux::common::ProcType procType = telux::common::ProcType::LOCAL_PROC;
     if (initWithProc_ == REMOTE) {
         procType = telux::common::ProcType::REMOTE_PROC;
     } else if (initWithProc_ == BOTH) {
         operationType = readAndValidate(PROC_TYPE_MSG, 0, 1);
-        procType = static_cast<telux::common::ProcType>(operationType);
+        procType      = static_cast<telux::common::ProcType>(operationType);
     }
     return procType;
 }
@@ -329,8 +329,8 @@ void ThermalTestApp::getCoolingDeviceById(std::vector<std::string> userInput) {
 void ThermalTestApp::controlRegistration(std::vector<std::string> userInput) {
     int operation = -1, type = -1;
     auto procType = static_cast<telux::common::ProcType>(readAndValidate(PROC_TYPE_MSG, 0, 1));
-    operation = readAndValidate(REG_DEREG_MSG, 0, 1);
-    type = readAndValidate(REG_TYPE_MSG, 0, 2);
+    operation     = readAndValidate(REG_DEREG_MSG, 0, 1);
+    type          = readAndValidate(REG_TYPE_MSG, 0, 2);
     (this->*memberFunArr[type])(procType, operation);
 }
 

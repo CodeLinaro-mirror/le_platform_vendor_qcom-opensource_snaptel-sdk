@@ -1,15 +1,15 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
- #include "ClientEventManager.hpp"
+#include "ClientEventManager.hpp"
 
 namespace telux {
 namespace common {
 
 ClientEventManager::ClientEventManager()
-: EventManager<::eventService::EventDispatcherService>() {
+   : EventManager<::eventService::EventDispatcherService>() {
     LOG(DEBUG, __FUNCTION__);
 }
 
@@ -23,5 +23,5 @@ ClientEventManager &ClientEventManager::getInstance() {
     return instance;
 }
 
-} // end of namespace common
-} // end of namespace telux
+}  // end of namespace common
+}  // end of namespace telux

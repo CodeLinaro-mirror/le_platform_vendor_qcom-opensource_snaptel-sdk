@@ -26,6 +26,7 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
  * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
@@ -53,69 +54,69 @@ ConsoleApp::ConsoleApp(std::string appName, std::string cursor)
  * Displaying Menu of Applications Requested
  */
 void ConsoleApp::displayMenu() {
-   displayBanner();
-   // Iterate through the supportedCommands_ list and display all the commands
-   for(auto command : supportedCommands_) {
-      command->displayCommand();
-   }
-   std::cout << std::endl;
-   std::cout << "   ? / h - help" << std::endl;
-   std::cout << "   q / 0 - exit" << std::endl << std::endl;
-   std::cout << MENU_DIVIDER << std::endl << std::endl;
+    displayBanner();
+    // Iterate through the supportedCommands_ list and display all the commands
+    for (auto command : supportedCommands_) {
+        command->displayCommand();
+    }
+    std::cout << std::endl;
+    std::cout << "   ? / h - help" << std::endl;
+    std::cout << "   q / 0 - exit" << std::endl << std::endl;
+    std::cout << MENU_DIVIDER << std::endl << std::endl;
 }
 
 /**
  * Display Cursor to Read User Input
  */
 void ConsoleApp::displayCursor() {
-   std::cout << cursor_;
+    std::cout << cursor_;
 }
 
 /**
  * Display the title banner
  */
 void ConsoleApp::displayBanner() {
-   std::cout << MENU_DIVIDER << std::endl;
-   int paddingLength = MENU_DIVIDER.length() / 2 + appName_.length() / 2;
-   std::cout << std::setw(paddingLength) << appName_ << std::endl;
-   std::cout << MENU_DIVIDER << std::endl << std::endl;
+    std::cout << MENU_DIVIDER << std::endl;
+    int paddingLength = MENU_DIVIDER.length() / 2 + appName_.length() / 2;
+    std::cout << std::setw(paddingLength) << appName_ << std::endl;
+    std::cout << MENU_DIVIDER << std::endl << std::endl;
 }
 
 /**
  * Read user request from command line
  */
 std::vector<std::string> ConsoleApp::readCommand() {
-   ConsoleApp::displayCursor();
-   // input string
-   std::string command;
+    ConsoleApp::displayCursor();
+    // input string
+    std::string command;
 
-   std::getline(std::cin, command);
-   if (std::cin.fail() || std::cin.bad() || std::cin.eof()) {
-      std::cin.clear();
-      std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-      std::cerr << "\ncin has entered bad state" << std::endl;
-      command = "quit";
-   }
+    std::getline(std::cin, command);
+    if (std::cin.fail() || std::cin.bad() || std::cin.eof()) {
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cerr << "\ncin has entered bad state" << std::endl;
+        command = "quit";
+    }
 
-   // separate input string based on whitespace
-   std::istringstream iss(command);
+    // separate input string based on whitespace
+    std::istringstream iss(command);
 
-   // iterate on a stream and store collection of substring into vector of strings
-   std::vector<std::string> userInput(std::istream_iterator<std::string>{iss},
-                                      std::istream_iterator<std::string>());
-   return userInput;
+    // iterate on a stream and store collection of substring into vector of strings
+    std::vector<std::string> userInput(
+        std::istream_iterator<std::string>{iss}, std::istream_iterator<std::string>());
+    return userInput;
 }
 
 inline bool operator==(const std::shared_ptr<ConsoleAppCommand> &command,
-                       const std::vector<std::string> &inputCommand) {
+    const std::vector<std::string> &inputCommand) {
     std::string cmdStr = command->getName();
     std::string inpStr = inputCommand[0];
     // Function to convert to lowercase
     std::transform(cmdStr.begin(), cmdStr.end(), cmdStr.begin(), ::tolower);
     std::transform(inpStr.begin(), inpStr.end(), inpStr.begin(), ::tolower);
 
-    if(command->getId() == inpStr || cmdStr == inpStr) {
-        if(command->getArguments().size() == (inputCommand.size() - 1)) {
+    if (command->getId() == inpStr || cmdStr == inpStr) {
+        if (command->getArguments().size() == (inputCommand.size() - 1)) {
             return true;
         }
     }
@@ -124,8 +125,8 @@ inline bool operator==(const std::shared_ptr<ConsoleAppCommand> &command,
     std::istringstream iss(command->getName());
 
     // iterate on a stream and store collection of substring into vector of strings
-    std::vector<std::string> commandTokens(std::istream_iterator<std::string>{iss},
-                                        std::istream_iterator<std::string>());
+    std::vector<std::string> commandTokens(
+        std::istream_iterator<std::string>{iss}, std::istream_iterator<std::string>());
 
     /**
      * There can be 3 cases of passing a command.
@@ -154,71 +155,72 @@ inline bool operator==(const std::shared_ptr<ConsoleAppCommand> &command,
      * Hangup           (inputCommand didn't provide argument)
      * This should return false.
      */
-    if(inputCommand.size() >= commandTokens.size()) {
-        for(size_t i = 0; i < commandTokens.size(); i++) {
-            if(inputCommand[i] != commandTokens[i]) {
+    if (inputCommand.size() >= commandTokens.size()) {
+        for (size_t i = 0; i < commandTokens.size(); i++) {
+            if (inputCommand[i] != commandTokens[i]) {
                 return false;
             }
         }
-        if(inputCommand.size() > commandTokens.size()) {
+        if (inputCommand.size() > commandTokens.size()) {
             size_t argumentSize = inputCommand.size() - commandTokens.size();
-            if(argumentSize != command->getArguments().size()) {
+            if (argumentSize != command->getArguments().size()) {
                 return false;
             }
         }
-        if((inputCommand.size() == commandTokens.size()) &&
-            (command->getArguments().size() >= 1)) {
+        if ((inputCommand.size() == commandTokens.size())
+            && (command->getArguments().size() >= 1)) {
             return false;
         }
         return true;
     }
 
-   return false;
+    return false;
 }
 /**
  * Get console app command from user input
  */
-std::shared_ptr<ConsoleAppCommand>
-   ConsoleApp::getAppCommandFromUserInput(std::vector<std::string> inputCommand) {
-   if(inputCommand.size() > 0) {
-      for(auto command : supportedCommands_) {
-         if(command == inputCommand) {
-            return command;
-         }
-      }
-   }
-   return nullptr;
+std::shared_ptr<ConsoleAppCommand> ConsoleApp::getAppCommandFromUserInput(
+    std::vector<std::string> inputCommand) {
+    if (inputCommand.size() > 0) {
+        for (auto command : supportedCommands_) {
+            if (command == inputCommand) {
+                return command;
+            }
+        }
+    }
+    return nullptr;
 }
 
 /**
  * Add  commands into supportCommands_ list
  */
-void ConsoleApp::addCommands(std::vector<std::shared_ptr<ConsoleAppCommand>> supportedCommandsList) {
-   for(auto command : supportedCommandsList) {
-      supportedCommands_.emplace_back(command);
-   }
+void ConsoleApp::addCommands(
+    std::vector<std::shared_ptr<ConsoleAppCommand>> supportedCommandsList) {
+    for (auto command : supportedCommandsList) {
+        supportedCommands_.emplace_back(command);
+    }
 }
 
 int ConsoleApp::mainLoop() {
-   while(true) {
-      std::vector<std::string> userInput = readCommand();
-      if(userInput.size() == 0)
-         continue;
-      if(userInput[0] == "0" || userInput[0] == "exit" || userInput[0] == "q"
-         || userInput[0] == "quit" || userInput[0] == "back") {
-         break;
-      } else if(userInput[0] == "?" || userInput[0] == "help" || userInput[0] == "h") {
-         displayMenu();
-         continue;
-      }
+    while (true) {
+        std::vector<std::string> userInput = readCommand();
+        if (userInput.size() == 0)
+            continue;
+        if (userInput[0] == "0" || userInput[0] == "exit" || userInput[0] == "q"
+            || userInput[0] == "quit" || userInput[0] == "back") {
+            break;
+        } else if (userInput[0] == "?" || userInput[0] == "help" || userInput[0] == "h") {
+            displayMenu();
+            continue;
+        }
 
-      std::shared_ptr<ConsoleAppCommand> conAppCmd = getAppCommandFromUserInput(userInput);
-      if(conAppCmd) {
-         conAppCmd->executeCommand(userInput);
-      } else {
-         std::cout << "Invalid command: " << userInput[0] << " entered." << std::endl;
-         std::cout << "Please enter valid command and arguments." << std::endl;
-      }
-   }
-   return 0;
+        std::shared_ptr<ConsoleAppCommand> conAppCmd = getAppCommandFromUserInput(userInput);
+        if (conAppCmd) {
+            conAppCmd->executeCommand(userInput);
+        } else {
+            std::cout << "Invalid command: " << userInput[0] << " entered." << std::endl;
+            std::cout << "Please enter valid command and arguments." << std::endl;
+        }
+    }
+    return 0;
 }

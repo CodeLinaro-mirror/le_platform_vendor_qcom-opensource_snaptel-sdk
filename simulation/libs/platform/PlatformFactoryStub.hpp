@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -25,14 +25,12 @@
 #include "libs/common/Logger.hpp"
 #include "libs/common/FactoryHelper.hpp"
 
-
 using namespace telux::common;
 
 namespace telux {
 namespace platform {
 
-class PlatformFactoryStub : public PlatformFactory,
-                            public telux::common::FactoryHelper {
+class PlatformFactoryStub : public PlatformFactory, public telux::common::FactoryHelper {
  public:
     static PlatformFactory &getInstance();
 

@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "common/Logger.hpp"
@@ -49,14 +49,14 @@ telux::common::Status AudioManagerImpl::init(telux::common::InitResponseCb initR
     }
 
     try {
-        serviceStatusListenerMgr_ = std::make_shared<
-            telux::common::ListenerManager<telux::audio::IAudioListener>>();
-    } catch (const std::exception& e) {
+        serviceStatusListenerMgr_
+            = std::make_shared<telux::common::ListenerManager<telux::audio::IAudioListener>>();
+    } catch (const std::exception &e) {
         LOG(ERROR, __FUNCTION__, " can't setup ListenerManager");
         return telux::common::Status::FAILED;
     }
 
-	initCb_ = initResultListener;
+    initCb_ = initResultListener;
 
     /* Schedule blocking initializations */
     future = std::async(std::launch::async, [this]() { this->initSync(); }).share();
@@ -129,7 +129,7 @@ void AudioManagerImpl::initSync() {
     /* Block until connected to the audio server */
     isSvcReady = transportClient_->isReady();
     if (!isSvcReady) {
-        future = transportClient_->onReady();
+        future     = transportClient_->onReady();
         isSvcReady = future.get();
     }
 
@@ -309,7 +309,7 @@ void AudioManagerImpl::sendNewStatusToClients(telux::common::ServiceStatus newSt
 
     if (newStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
         /* Send new service status to all *StreamImpl object for internal state cleanup */
-        for(auto &wp : createdStreams_){
+        for (auto &wp : createdStreams_) {
             if (auto sp = wp.lock()) {
                 sp->onServiceStatusChange();
             }
@@ -411,12 +411,10 @@ telux::common::Status AudioManagerImpl::getDevices(GetDevicesResponseCb callback
         cmdCallbackMgr_.findAndRemoveCallback(cmdId);
     }
     return status;
-
 }
 
 void AudioManagerImpl::onGetDevicesResult(telux::common::ErrorCode ec,
-        std::vector<DeviceType> deviceTypes,
-        std::vector<DeviceDirection> deviceDirections, int cmdId) {
+    std::vector<DeviceType> deviceTypes, std::vector<DeviceDirection> deviceDirections, int cmdId) {
 
     uint32_t size = 0;
     std::shared_ptr<telux::audio::AudioDeviceImpl> device;
@@ -435,8 +433,8 @@ void AudioManagerImpl::onGetDevicesResult(telux::common::ErrorCode ec,
     for (uint32_t x = 0; x < size; ++x) {
         try {
             device = std::make_shared<telux::audio::AudioDeviceImpl>(
-                        deviceTypes.at(x), deviceDirections.at(x));
-        } catch (const std::exception& e) {
+                deviceTypes.at(x), deviceDirections.at(x));
+        } catch (const std::exception &e) {
             LOG(ERROR, __FUNCTION__, " can't create AudioDeviceImpl");
             /* can't do anything, continue to help debugging */
             continue;
@@ -472,8 +470,8 @@ telux::common::Status AudioManagerImpl::getStreamTypes(GetStreamTypesResponseCb 
     return status;
 }
 
-void AudioManagerImpl::onGetStreamsResult(telux::common::ErrorCode ec,
-        std::vector<StreamType> streams, int cmdId) {
+void AudioManagerImpl::onGetStreamsResult(
+    telux::common::ErrorCode ec, std::vector<StreamType> streams, int cmdId) {
 
     std::shared_ptr<telux::common::ICommandCallback> resultListener;
 
@@ -490,7 +488,7 @@ void AudioManagerImpl::onGetStreamsResult(telux::common::ErrorCode ec,
  * Applicable only for HAL, gives ACDB loaing and init status as obtained from HAL.
  */
 telux::common::Status AudioManagerImpl::getCalibrationInitStatus(
-        GetCalInitStatusResponseCb callback) {
+    GetCalInitStatusResponseCb callback) {
 
     intptr_t cmdId;
     telux::common::Status status;
@@ -510,8 +508,8 @@ telux::common::Status AudioManagerImpl::getCalibrationInitStatus(
     return status;
 }
 
-void AudioManagerImpl::onGetCalInitStatusResult(telux::common::ErrorCode ec,
-        CalibrationInitStatus calibrationStatus, int cmdId) {
+void AudioManagerImpl::onGetCalInitStatusResult(
+    telux::common::ErrorCode ec, CalibrationInitStatus calibrationStatus, int cmdId) {
 
     std::shared_ptr<telux::common::ICommandCallback> resultListener;
 
@@ -574,8 +572,8 @@ telux::common::Status AudioManagerImpl::createStream(
  * If the stream creation is successfull on server-side but failure happens on client-side
  * delete the stream on server-side and return error to the application.
  */
-void AudioManagerImpl::onCreateStreamResult(telux::common::ErrorCode ec,
-        CreatedStreamInfo createdStreamInfo, int cmdId) {
+void AudioManagerImpl::onCreateStreamResult(
+    telux::common::ErrorCode ec, CreatedStreamInfo createdStreamInfo, int cmdId) {
 
     telux::common::Status status;
     std::shared_ptr<IAudioStream> audioStream;
@@ -608,10 +606,10 @@ void AudioManagerImpl::onCreateStreamResult(telux::common::ErrorCode ec,
      * proxy on the client side. Associate streamId with it to uniquely identify it.
      */
     try {
-        switch(createdStreamInfo.streamType) {
+        switch (createdStreamInfo.streamType) {
             case StreamType::VOICE_CALL:
-                voiceStream = std::make_shared<VoiceStreamImpl>(createdStreamInfo.streamId,
-                            transportClient_);
+                voiceStream = std::make_shared<VoiceStreamImpl>(
+                    createdStreamInfo.streamId, transportClient_);
                 status = voiceStream->init();
                 if (status != telux::common::Status::SUCCESS) {
                     ec = telux::common::ErrorCode::GENERIC_FAILURE;
@@ -622,9 +620,9 @@ void AudioManagerImpl::onCreateStreamResult(telux::common::ErrorCode ec,
                 break;
             case StreamType::PLAY:
                 playStream = std::make_shared<PlayStreamImpl>(createdStreamInfo.streamId,
-                            createdStreamInfo.writeMinSize,
-                            createdStreamInfo.writeMaxSize, transportClient_);
-                status = playStream->init();
+                    createdStreamInfo.writeMinSize, createdStreamInfo.writeMaxSize,
+                    transportClient_);
+                status     = playStream->init();
                 if (status != telux::common::Status::SUCCESS) {
                     ec = telux::common::ErrorCode::GENERIC_FAILURE;
                     goto error2;
@@ -634,20 +632,19 @@ void AudioManagerImpl::onCreateStreamResult(telux::common::ErrorCode ec,
                 break;
             case StreamType::CAPTURE:
                 captureStream = std::make_shared<CaptureStreamImpl>(createdStreamInfo.streamId,
-                            createdStreamInfo.readMinSize,
-                            createdStreamInfo.readMaxSize, transportClient_);
-                audioStream = captureStream;
+                    createdStreamInfo.readMinSize, createdStreamInfo.readMaxSize, transportClient_);
+                audioStream   = captureStream;
                 createdStreams_.push_back(captureStream);
                 break;
             case StreamType::LOOPBACK:
-                loopbackStream = std::make_shared<LoopbackStreamImpl>(createdStreamInfo.streamId,
-                    transportClient_);
+                loopbackStream = std::make_shared<LoopbackStreamImpl>(
+                    createdStreamInfo.streamId, transportClient_);
                 audioStream = loopbackStream;
                 createdStreams_.push_back(loopbackStream);
                 break;
             case StreamType::TONE_GENERATOR:
-                toneStream = std::make_shared<ToneGeneratorStreamImpl>(createdStreamInfo.streamId,
-                    transportClient_);
+                toneStream = std::make_shared<ToneGeneratorStreamImpl>(
+                    createdStreamInfo.streamId, transportClient_);
                 audioStream = toneStream;
                 createdStreams_.push_back(toneStream);
                 break;
@@ -657,7 +654,7 @@ void AudioManagerImpl::onCreateStreamResult(telux::common::ErrorCode ec,
                 ec = telux::common::ErrorCode::INVALID_ARGUMENTS;
                 goto error2;
         }
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         LOG(ERROR, __FUNCTION__, " can't create *StreamImpl");
         ec = telux::common::ErrorCode::NO_MEMORY;
         goto error2;
@@ -709,8 +706,8 @@ telux::common::Status AudioManagerImpl::deleteStream(
     return status;
 }
 
-void AudioManagerImpl::onDeleteStreamResult(telux::common::ErrorCode ec,
-        uint32_t streamId, int cmdId) {
+void AudioManagerImpl::onDeleteStreamResult(
+    telux::common::ErrorCode ec, uint32_t streamId, int cmdId) {
 
     std::shared_ptr<telux::common::ICommandCallback> resultListener;
 
@@ -733,7 +730,7 @@ void AudioManagerImpl::onDeleteStreamResult(telux::common::ErrorCode ec,
  * Creates two audio streams, playback and capture and configures them for transcoding.
  */
 telux::common::Status AudioManagerImpl::createTranscoder(
-        FormatInfo input, FormatInfo output, CreateTranscoderResponseCb callback) {
+    FormatInfo input, FormatInfo output, CreateTranscoderResponseCb callback) {
 
     intptr_t cmdId;
     telux::common::Status status;
@@ -764,8 +761,8 @@ telux::common::Status AudioManagerImpl::createTranscoder(
     return status;
 }
 
-void AudioManagerImpl::onCreateTranscoderResult(telux::common::ErrorCode ec,
-        CreatedTranscoderInfo transcoderInfo, int cmdId) {
+void AudioManagerImpl::onCreateTranscoderResult(
+    telux::common::ErrorCode ec, CreatedTranscoderInfo transcoderInfo, int cmdId) {
 
     telux::common::Status status;
     std::shared_ptr<TranscoderImpl> transcoder;
@@ -785,17 +782,17 @@ void AudioManagerImpl::onCreateTranscoderResult(telux::common::ErrorCode ec,
 
     try {
         transcoder = std::make_shared<TranscoderImpl>(transcoderInfo, transportClient_);
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         LOG(ERROR, __FUNCTION__, " can't create TranscoderImpl");
-        cmdCallbackMgr_.executeCallback(resultListener, nullptr,
-            telux::common::ErrorCode::NO_MEMORY);
+        cmdCallbackMgr_.executeCallback(
+            resultListener, nullptr, telux::common::ErrorCode::NO_MEMORY);
         return;
     }
 
     status = transcoder->init();
     if (status != telux::common::Status::SUCCESS) {
-        cmdCallbackMgr_.executeCallback(resultListener, nullptr,
-            telux::common::ErrorCode::GENERIC_FAILURE);
+        cmdCallbackMgr_.executeCallback(
+            resultListener, nullptr, telux::common::ErrorCode::GENERIC_FAILURE);
         return;
     }
 

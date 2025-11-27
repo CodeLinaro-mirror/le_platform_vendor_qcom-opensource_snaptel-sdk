@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -29,7 +29,6 @@ DeviceInfoManagerStub::DeviceInfoManagerStub()
 DeviceInfoManagerStub::~DeviceInfoManagerStub() {
     LOG(INFO, __FUNCTION__);
 }
-
 
 void DeviceInfoManagerStub::createListener() {
     LOG(DEBUG, __FUNCTION__);
@@ -72,11 +71,12 @@ void DeviceInfoManagerStub::onEventUpdate(google::protobuf::Any event) {
 
     // Execute all events in separate thread
     auto f = std::async(std::launch::deferred, [this, event]() {
-            if (event.Is<commonStub::GetServiceStatusReply>()) {
-                handleSSREvent(event);
-            } else {
-                LOG(ERROR, __FUNCTION__, ":: Invalid event");
-    }}).share();
+        if (event.Is<commonStub::GetServiceStatusReply>()) {
+            handleSSREvent(event);
+        } else {
+            LOG(ERROR, __FUNCTION__, ":: Invalid event");
+        }
+    }).share();
 
     taskQ_.add(f);
 }
@@ -105,8 +105,7 @@ void DeviceInfoManagerStub::handleSSREvent(google::protobuf::Any event) {
     onDmsServiceStatusChange(srvcStatus);
 }
 
-void DeviceInfoManagerStub::onDmsServiceStatusChange(
-    telux::common::ServiceStatus srvcStatus) {
+void DeviceInfoManagerStub::onDmsServiceStatusChange(telux::common::ServiceStatus srvcStatus) {
     LOG(DEBUG, __FUNCTION__);
 
     if (srvcStatus == getServiceStatus()) {
@@ -129,8 +128,9 @@ void DeviceInfoManagerStub::notifyServiceStatus(ServiceStatus srvcStatus) {
 
     std::vector<std::weak_ptr<IDeviceInfoListener>> applisteners;
     listenerMgr_->getAvailableListeners(applisteners);
-    LOG(DEBUG, __FUNCTION__, ":: Notifying DeviceInfo manager service status: ",
-            static_cast<int>(srvcStatus), " to listeners: ", applisteners.size());
+    LOG(DEBUG, __FUNCTION__,
+        ":: Notifying DeviceInfo manager service status: ", static_cast<int>(srvcStatus),
+        " to listeners: ", applisteners.size());
     for (auto &wp : applisteners) {
         if (auto sp = wp.lock()) {
             sp->onServiceStatusChange(srvcStatus);
@@ -146,23 +146,20 @@ Status DeviceInfoManagerStub::registerDefaultIndications() {
     LOG(INFO, __FUNCTION__, ":: Registering default SSR indications");
 
     Status status = Status::FAILED;
-    status = clientEventMgr_.registerListener(shared_from_this(), DEVICEINFO_MANAGER_FILTER);
-    if ((status != Status::SUCCESS) &&
-        (status != Status::ALREADY)) {
+    status        = clientEventMgr_.registerListener(shared_from_this(), DEVICEINFO_MANAGER_FILTER);
+    if ((status != Status::SUCCESS) && (status != Status::ALREADY)) {
         LOG(ERROR, __FUNCTION__, ":: Registering default SSR indications failed");
         return status;
     }
     return status;
 }
 
-Status DeviceInfoManagerStub::initSyncComplete(
-        ServiceStatus srvcStatus) {
+Status DeviceInfoManagerStub::initSyncComplete(ServiceStatus srvcStatus) {
     LOG(DEBUG, __FUNCTION__);
 
     registerDefaultIndications();
 
-    if (srvcStatus != ServiceStatus::SERVICE_AVAILABLE)
-    {
+    if (srvcStatus != ServiceStatus::SERVICE_AVAILABLE) {
         return Status::FAILED;
     }
 
@@ -209,15 +206,14 @@ Status DeviceInfoManagerStub::getPlatformVersion(PlatformVersion &pv) {
     status = static_cast<telux::common::Status>(response.reply().status());
     if (status == telux::common::Status::SUCCESS) {
         LOG(DEBUG, __FUNCTION__, "Get platform version successful");
-        pv.modem = response.modem_details();
+        pv.modem         = response.modem_details();
         pv.integratedApp = response.integrated_app();
-        pv.externalApp = response.external_app();
-        pv.meta = response.meta_details();
+        pv.externalApp   = response.external_app();
+        pv.meta          = response.meta_details();
     }
 
     return status;
 }
-
 
 Status DeviceInfoManagerStub::getIMEI(std::string &imei) {
     LOG(DEBUG, __FUNCTION__);

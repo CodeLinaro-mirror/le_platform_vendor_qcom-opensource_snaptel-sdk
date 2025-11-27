@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_RepeatRate_H_
-#define	_RepeatRate_H_
-
+#ifndef _RepeatRate_H_
+#define _RepeatRate_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* RepeatRate */
-typedef long	 RepeatRate_t;
+typedef long RepeatRate_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_RepeatRate;
@@ -37,5 +36,5 @@ per_type_encoder_f RepeatRate_encode_uper;
 }
 #endif
 
-#endif	/* _RepeatRate_H_ */
+#endif /* _RepeatRate_H_ */
 #include <asn_internal.h>

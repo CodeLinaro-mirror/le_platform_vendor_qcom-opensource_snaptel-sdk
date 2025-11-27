@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_ServiceInfoExts_H_
-#define	_ServiceInfoExts_H_
-
+#ifndef _ServiceInfoExts_H_
+#define _ServiceInfoExts_H_
 
 #include <asn_application.h>
 
@@ -24,10 +23,10 @@ struct Extension;
 
 /* ServiceInfoExts */
 typedef struct ServiceInfoExts {
-	A_SEQUENCE_OF(struct Extension) list;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    A_SEQUENCE_OF(struct Extension) list;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } ServiceInfoExts_t;
 
 /* Implementation */
@@ -40,5 +39,5 @@ extern asn_TYPE_descriptor_t asn_DEF_ServiceInfoExts;
 /* Referred external types */
 #include "Extension.h"
 
-#endif	/* _ServiceInfoExts_H_ */
+#endif /* _ServiceInfoExts_H_ */
 #include <asn_internal.h>

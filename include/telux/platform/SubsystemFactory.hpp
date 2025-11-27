@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -42,7 +42,8 @@ class SubsystemFactory {
      *          otherwise nullptr.
      */
     virtual std::shared_ptr<ISubsystemManager> getSubsystemManager(
-       telux::common::InitResponseCb initCallback = nullptr) = 0;
+        telux::common::InitResponseCb initCallback = nullptr)
+        = 0;
 
 #ifndef TELUX_DOXY_SKIP
  protected:
@@ -51,7 +52,7 @@ class SubsystemFactory {
 #endif
 
  private:
-    SubsystemFactory(const SubsystemFactory &) = delete;
+    SubsystemFactory(const SubsystemFactory &)            = delete;
     SubsystemFactory &operator=(const SubsystemFactory &) = delete;
 };
 
@@ -60,4 +61,4 @@ class SubsystemFactory {
 }  // End of namespace platform
 }  // End of namespace telux
 
-#endif // TELUX_PLATFORM_SUBSYSTEMFACTORY_HPP
+#endif  // TELUX_PLATFORM_SUBSYSTEMFACTORY_HPP

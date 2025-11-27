@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_ServiceInfo_H_
-#define	_ServiceInfo_H_
-
+#ifndef _ServiceInfo_H_
+#define _ServiceInfo_H_
 
 #include <asn_application.h>
 
@@ -23,12 +22,12 @@ extern "C" {
 
 /* ServiceInfo */
 typedef struct ServiceInfo {
-	VarLengthNumber_t	 serviceID;
-	ChannelIndex_t	 channelIndex;
-	ChannelOptions_t	 chOptions;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    VarLengthNumber_t serviceID;
+    ChannelIndex_t channelIndex;
+    ChannelOptions_t chOptions;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } ServiceInfo_t;
 
 /* Implementation */
@@ -38,5 +37,5 @@ extern asn_TYPE_descriptor_t asn_DEF_ServiceInfo;
 }
 #endif
 
-#endif	/* _ServiceInfo_H_ */
+#endif /* _ServiceInfo_H_ */
 #include <asn_internal.h>

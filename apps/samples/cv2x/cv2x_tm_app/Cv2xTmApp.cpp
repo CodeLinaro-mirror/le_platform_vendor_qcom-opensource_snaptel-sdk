@@ -26,42 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * @file: Cv2xTmApp.cpp
@@ -77,7 +47,7 @@
 #include <telux/cv2x/Cv2xFactory.hpp>
 #include <telux/cv2x/Cv2xThrottleManager.hpp>
 
-#define LOOP_COUNT  10
+#define LOOP_COUNT 10
 
 using namespace telux::cv2x;
 static std::promise<telux::common::ErrorCode> gCallbackPromise;
@@ -113,10 +83,9 @@ static void cv2xsetVerificationLoadCallback(telux::common::ErrorCode error) {
 
 int main(int argc, char *argv[]) {
     int loop = 0, load = 2000;
-    auto listener = std::make_shared<Cv2xTmListener>();
-    bool cv2xTmStatusUpdated = false;
-    telux::common::ServiceStatus cv2xTmStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    auto listener                             = std::make_shared<Cv2xTmListener>();
+    bool cv2xTmStatusUpdated                  = false;
+    telux::common::ServiceStatus cv2xTmStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
     std::condition_variable cv;
     std::mutex mtx;
 
@@ -125,11 +94,11 @@ int main(int argc, char *argv[]) {
     auto statusCb = [&](telux::common::ServiceStatus status) {
         std::lock_guard<std::mutex> lock(mtx);
         cv2xTmStatusUpdated = true;
-        cv2xTmStatus = status;
+        cv2xTmStatus        = status;
         cv.notify_all();
     };
     // Get handle to Cv2xThrottleManager
-    auto & cv2xFactory = Cv2xFactory::getInstance();
+    auto &cv2xFactory        = Cv2xFactory::getInstance();
     auto cv2xThrottleManager = cv2xFactory.getCv2xThrottleManager(statusCb);
     if (!cv2xThrottleManager) {
         std::cout << "Error: failed to get Cv2xThrottleManager." << std::endl;
@@ -137,21 +106,19 @@ int main(int argc, char *argv[]) {
     }
     std::unique_lock<std::mutex> lck(mtx);
     cv.wait(lck, [&] { return cv2xTmStatusUpdated; });
-    if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
-        cv2xTmStatus) {
+    if (telux::common::ServiceStatus::SERVICE_AVAILABLE != cv2xTmStatus) {
         std::cout << "Error: failed to initialize Cv2xThrottleManager." << std::endl;
         return EXIT_FAILURE;
     }
 
     // register listener
-    if (cv2xThrottleManager->registerListener(listener) !=
-            telux::common::Status::SUCCESS) {
+    if (cv2xThrottleManager->registerListener(listener) != telux::common::Status::SUCCESS) {
         std::cout << "Failed to register listener" << std::endl;
         return EXIT_FAILURE;
     }
 
-    //periodically set the verification load
-    while(loop < LOOP_COUNT) {
+    // periodically set the verification load
+    while (loop < LOOP_COUNT) {
         std::cout << "Setting verification load to: " << load << std::endl;
         cv2xThrottleManager->setVerificationLoad(load, cv2xsetVerificationLoadCallback);
         if (telux::common::ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {

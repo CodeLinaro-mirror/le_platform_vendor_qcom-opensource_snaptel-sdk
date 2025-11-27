@@ -26,11 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -50,8 +50,7 @@
 using namespace telux::common;
 using namespace telux::tel;
 
-void CardListener::onCardInfoChanged(int slotId)
-{
+void CardListener::onCardInfoChanged(int slotId) {
     LOGD("Received card info changed notification for slot %d.\n", slotId);
 
     Status status;
@@ -92,23 +91,20 @@ void CardListener::onServiceStatusChange(telux::common::ServiceStatus status) {
     }
 }
 
-ApduResponseCallback::ApduResponseCallback(uint8_t apduId)
-{
+ApduResponseCallback::ApduResponseCallback(uint8_t apduId) {
     apduId_ = apduId;
 }
 
-void ApduResponseCallback::onResponse(IccResult result, ErrorCode error)
-{
+void ApduResponseCallback::onResponse(IccResult result, ErrorCode error) {
     LOGD("Received APDU response from modem with errorcode %d.\n", static_cast<int>(error));
 
     SimConnection::getInstance().sendApduResponse(result.data, apduId_);
     CardControl::getInstance().eraseFromApduRespCbMap(apduId_);
 }
 
-void OpenConnectionCallback::commandResponse(ErrorCode errorCode)
-{
+void OpenConnectionCallback::commandResponse(ErrorCode errorCode) {
     LOGD("Received open connection response from modem with errorcode %d.\n",
-         static_cast<int>(errorCode));
+        static_cast<int>(errorCode));
 
     if (errorCode == ErrorCode::SUCCESS) {
         CardControl::getInstance().setOpenConnPromiseValue(true);
@@ -117,14 +113,12 @@ void OpenConnectionCallback::commandResponse(ErrorCode errorCode)
     }
 }
 
-void CloseConnectionCallback::commandResponse(ErrorCode errorCode)
-{
+void CloseConnectionCallback::commandResponse(ErrorCode errorCode) {
     LOGD("Received close connection response from modem with errorcode %d.\n",
-         static_cast<int>(errorCode));
+        static_cast<int>(errorCode));
 }
 
-void PowerOnCallback::commandResponse(ErrorCode errorCode)
-{
+void PowerOnCallback::commandResponse(ErrorCode errorCode) {
     LOGD("Received power on response from modem with errorcode %d.\n", static_cast<int>(errorCode));
 
     if (errorCode == ErrorCode::SUCCESS) {
@@ -134,14 +128,12 @@ void PowerOnCallback::commandResponse(ErrorCode errorCode)
     }
 }
 
-void PowerOffCallback::commandResponse(ErrorCode errorCode)
-{
-    LOGD("Received power off response from modem with errorcode %d.\n",
-         static_cast<int>(errorCode));
+void PowerOffCallback::commandResponse(ErrorCode errorCode) {
+    LOGD(
+        "Received power off response from modem with errorcode %d.\n", static_cast<int>(errorCode));
 }
 
-void ResetCallback::commandResponse(ErrorCode errorCode)
-{
+void ResetCallback::commandResponse(ErrorCode errorCode) {
     LOGD("Received reset response from modem with errorcode %d.\n", static_cast<int>(errorCode));
 
     if (errorCode == ErrorCode::SUCCESS) {
@@ -149,13 +141,11 @@ void ResetCallback::commandResponse(ErrorCode errorCode)
     }
 }
 
-AtrResponseCallback::AtrResponseCallback(uint8_t msgType)
-{
+AtrResponseCallback::AtrResponseCallback(uint8_t msgType) {
     msgType_ = msgType;
 }
 
-void AtrResponseCallback::atrResponse(std::vector<int> responseAtr, ErrorCode error)
-{
+void AtrResponseCallback::atrResponse(std::vector<int> responseAtr, ErrorCode error) {
     LOGD("Received AtR response from modem with errorcode %d.\n", static_cast<int>(error));
 
     if (msgType_ == CARD_RESET_MSG) {
@@ -167,20 +157,16 @@ void AtrResponseCallback::atrResponse(std::vector<int> responseAtr, ErrorCode er
     }
 }
 
-CardControl & CardControl::getInstance()
-{
+CardControl &CardControl::getInstance() {
     static CardControl instance;
     return instance;
 }
 
-Status CardControl::init()
-{
+Status CardControl::init() {
     std::promise<ServiceStatus> prom;
     auto &phoneFactory = PhoneFactory::getInstance();
-    sapCardMgr_ = phoneFactory.getSapCardManager(
-        DEFAULT_SLOT_ID,[&](telux::common::ServiceStatus status) {
-        prom.set_value(status);
-    });
+    sapCardMgr_        = phoneFactory.getSapCardManager(
+        DEFAULT_SLOT_ID, [&](telux::common::ServiceStatus status) { prom.set_value(status); });
     if (!sapCardMgr_) {
         LOGE("ERROR - Failed to get SapCardManager instance \n");
         return Status::FAILED;
@@ -198,10 +184,8 @@ Status CardControl::init()
     }
 
     std::promise<telux::common::ServiceStatus> cardMgrprom;
-    cardMgr_ = PhoneFactory::getInstance().
-        getCardManager([&](telux::common::ServiceStatus status) {
-        cardMgrprom.set_value(status);
-    });
+    cardMgr_ = PhoneFactory::getInstance().getCardManager(
+        [&](telux::common::ServiceStatus status) { cardMgrprom.set_value(status); });
     if (!cardMgr_) {
         LOGE("Failed to create CardManager!\n");
         return Status::FAILED;
@@ -219,15 +203,15 @@ Status CardControl::init()
         return Status::FAILED;
     }
 
-    openConnCb_ = std::make_shared<OpenConnectionCallback>();
-    closeConnCb_ = std::make_shared<CloseConnectionCallback>();
-    powerOnCb_ = std::make_shared<PowerOnCallback>();
-    powerOffCb_ = std::make_shared<PowerOffCallback>();
-    resetCb_ = std::make_shared<ResetCallback>();
-    atrResetRespCb_ = std::make_shared<AtrResponseCallback>(CARD_RESET_MSG);
+    openConnCb_        = std::make_shared<OpenConnectionCallback>();
+    closeConnCb_       = std::make_shared<CloseConnectionCallback>();
+    powerOnCb_         = std::make_shared<PowerOnCallback>();
+    powerOffCb_        = std::make_shared<PowerOffCallback>();
+    resetCb_           = std::make_shared<ResetCallback>();
+    atrResetRespCb_    = std::make_shared<AtrResponseCallback>(CARD_RESET_MSG);
     atrInsertedRespCb_ = std::make_shared<AtrResponseCallback>(CARD_INSERTED_MSG);
 
-    Status status = Status::FAILED;
+    Status status               = Status::FAILED;
     std::shared_ptr<ICard> card = CardControl::getInstance().getSimCard(DEFAULT_SLOT_ID, &status);
     if (status != Status::SUCCESS) {
         LOGE("Getting card from CardManager failed after subsystem ready!\n");
@@ -235,7 +219,7 @@ Status CardControl::init()
     }
 
     CardState cardState = CardState::CARDSTATE_UNKNOWN;
-    status = card->getState(cardState);
+    status              = card->getState(cardState);
     if (status != Status::SUCCESS) {
         LOGE("Getting card state failed!\n");
         return status;
@@ -265,8 +249,7 @@ Status CardControl::init()
     return Status::SUCCESS;
 }
 
-void CardControl::sendApduToSim(uint8_t *buf, int bytes)
-{
+void CardControl::sendApduToSim(uint8_t *buf, int bytes) {
     /* APDU message format - ETSI TS 102 221 specification, section 10.1
      *
      * Case     Structure
@@ -292,10 +275,10 @@ void CardControl::sendApduToSim(uint8_t *buf, int bytes)
 
     uint8_t apduId = buf[1];
 
-    uint8_t cla = buf[2];
+    uint8_t cla         = buf[2];
     uint8_t instruction = buf[3];
-    uint8_t p1 = buf[4];
-    uint8_t p2 = buf[5];
+    uint8_t p1          = buf[4];
+    uint8_t p2          = buf[5];
 
     // If the message is less than 8 bytes, Lc is not included.
     uint8_t lc;
@@ -334,8 +317,7 @@ void CardControl::sendApduToSim(uint8_t *buf, int bytes)
     }
 }
 
-void CardControl::connectToCard()
-{
+void CardControl::connectToCard() {
     if (!cardConnected_) {
         if (openSapConn() != Status::SUCCESS) {
             return;
@@ -347,8 +329,7 @@ void CardControl::connectToCard()
     }
 }
 
-void CardControl::disconnectFromCard()
-{
+void CardControl::disconnectFromCard() {
     if (!cardConnected_) {
         LOGE("Cannot close connection - card is already not connected!\n");
         return;
@@ -359,8 +340,7 @@ void CardControl::disconnectFromCard()
     }
 }
 
-void CardControl::powerUpCard()
-{
+void CardControl::powerUpCard() {
     if (requestPowerOn() == Status::SUCCESS) {
         if (sapCardMgr_->requestAtr(atrResetRespCb_) != Status::SUCCESS) {
             LOGE("Failed to send AtR request to the modem!\n");
@@ -368,8 +348,7 @@ void CardControl::powerUpCard()
     }
 }
 
-void CardControl::powerDownCard()
-{
+void CardControl::powerDownCard() {
     if (!cardConnected_) {
         LOGE("Cannot power down card - no open connection to card!\n");
         return;
@@ -380,8 +359,7 @@ void CardControl::powerDownCard()
     }
 }
 
-void CardControl::resetCard()
-{
+void CardControl::resetCard() {
     if (!cardConnected_) {
         LOGE("Cannot reset card - no open connection to card!\n");
         return;
@@ -392,18 +370,15 @@ void CardControl::resetCard()
     }
 }
 
-void CardControl::setCardPresent(bool isPresent)
-{
+void CardControl::setCardPresent(bool isPresent) {
     cardPresent_ = isPresent;
 }
 
-void CardControl::setCardConnected(bool isConnected)
-{
+void CardControl::setCardConnected(bool isConnected) {
     cardConnected_ = isConnected;
 }
 
-void CardControl::connectAfterCardInsertion()
-{
+void CardControl::connectAfterCardInsertion() {
     if (!cardConnected_ && SimConnection::getInstance().isDaemonConnected()) {
         if (openSapConn() != Status::SUCCESS) {
             return;
@@ -415,35 +390,29 @@ void CardControl::connectAfterCardInsertion()
     }
 }
 
-void CardControl::requestAtrAfterReset()
-{
+void CardControl::requestAtrAfterReset() {
     if (sapCardMgr_->requestAtr(atrResetRespCb_) != Status::SUCCESS) {
         LOGE("Failed to send AtR request to the modem!\n");
     }
 }
 
-void CardControl::eraseFromApduRespCbMap(uint8_t apduId)
-{
+void CardControl::eraseFromApduRespCbMap(uint8_t apduId) {
     apduRespCbMap_.erase(apduId);
 }
 
-void CardControl::setOpenConnPromiseValue(bool isSuccess)
-{
+void CardControl::setOpenConnPromiseValue(bool isSuccess) {
     openConnPromise_.set_value(isSuccess);
 }
 
-void CardControl::setPowerOnPromiseValue(bool isSuccess)
-{
+void CardControl::setPowerOnPromiseValue(bool isSuccess) {
     powerOnPromise_.set_value(isSuccess);
 }
 
-std::shared_ptr<ICard> CardControl::getSimCard(int slotId, Status *status)
-{
+std::shared_ptr<ICard> CardControl::getSimCard(int slotId, Status *status) {
     return cardMgr_->getCard(slotId, status);
 }
 
-Status CardControl::openSapConn()
-{
+Status CardControl::openSapConn() {
     if (!cardPresent_) {
         LOGE("Cannot open connection, card is not present!\n");
         return Status::FAILED;
@@ -455,8 +424,8 @@ Status CardControl::openSapConn()
         return Status::FAILED;
     }
 
-    int timeoutSec = ASYNC_RESPONSE_TIMEOUT_SEC;
-    openConnPromise_ = std::promise<bool>();
+    int timeoutSec      = ASYNC_RESPONSE_TIMEOUT_SEC;
+    openConnPromise_    = std::promise<bool>();
     auto openConnFuture = openConnPromise_.get_future();
 
     if (openConnFuture.wait_for(std::chrono::seconds(timeoutSec)) != std::future_status::ready) {
@@ -473,8 +442,7 @@ Status CardControl::openSapConn()
     }
 }
 
-Status CardControl::requestPowerOn()
-{
+Status CardControl::requestPowerOn() {
     if (!cardConnected_) {
         if (openSapConn() != Status::SUCCESS) {
             LOGE("Cannot power on card, card is not connected!\n");
@@ -487,8 +455,8 @@ Status CardControl::requestPowerOn()
         return Status::FAILED;
     }
 
-    int timeoutSec = ASYNC_RESPONSE_TIMEOUT_SEC;
-    powerOnPromise_ = std::promise<bool>();
+    int timeoutSec     = ASYNC_RESPONSE_TIMEOUT_SEC;
+    powerOnPromise_    = std::promise<bool>();
     auto powerOnFuture = powerOnPromise_.get_future();
 
     if (powerOnFuture.wait_for(std::chrono::seconds(timeoutSec)) != std::future_status::ready) {

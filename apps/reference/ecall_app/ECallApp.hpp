@@ -28,9 +28,8 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -169,8 +168,8 @@ class ECallApp : public ConsoleApp {
      */
     telux::common::Status getMsdTransmissionConfig(bool &transmitMsd, std::vector<uint8_t> &msdPdu);
 
-    telux::common::Status getIntegerInput(uint32_t &value, std::string prompt,
-        std::vector<uint32_t> validValues);
+    telux::common::Status getIntegerInput(
+        uint32_t &value, std::string prompt, std::vector<uint32_t> validValues);
 
     /**
      * Utility function to get user input for MSD PDU

@@ -26,41 +26,13 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 /**
  * @file       Log.hpp
  * @brief      Log class provides APIs for logging messages at different
@@ -81,7 +53,6 @@
 
 #define LINE_NO_STR(x) #x
 #define LINE_NO(x) LINE_NO_STR(x)
-
 
 /**
  * @ref telux::common::LogLevel::LEVEL_INFO.
@@ -114,7 +85,7 @@
  * Example for using Macro: LOG(DEBUG, "Message").
  */
 #define LOG(logLevel, args...) \
-   telux::common::Log::logMessage(logLevel, __FILE__, LINE_NO(__LINE__), TELUX_TECH_AREA, args)
+    telux::common::Log::logMessage(logLevel, __FILE__, LINE_NO(__LINE__), TELUX_TECH_AREA, args)
 
 namespace telux {
 namespace common {
@@ -126,73 +97,70 @@ namespace common {
  * Indicates supported logging levels.
  */
 enum class LogLevel {
-   LEVEL_NONE = 1,
-   LEVEL_PERF, /**< Prints messages with nanoseconds precision timestamp */
-   LEVEL_ERROR, /**< Prints perf and error messages only */
-   LEVEL_WARNING, /**< Prints perf, error and warning messages */
-   LEVEL_INFO, /**< Prints perf, errors, warning and information messages */
-   LEVEL_DEBUG, /**< Full logging including debug messages */
+    LEVEL_NONE = 1,
+    LEVEL_PERF, /**< Prints messages with nanoseconds precision timestamp */
+    LEVEL_ERROR, /**< Prints perf and error messages only */
+    LEVEL_WARNING, /**< Prints perf, error and warning messages */
+    LEVEL_INFO, /**< Prints perf, errors, warning and information messages */
+    LEVEL_DEBUG, /**< Full logging including debug messages */
 };
 
 class Log {
-public:
+ public:
+    /**
+     * Public API to log a message
+     *
+     * @param [in] logLevel             Log level @ref LogLevel
+     * @param [in] fileName             File name from where log is getting printed
+     * @param [in] lineNo               Line number from where log is getting printed
+     * @param [in] component            Identifier, as listed in SDK configuration
+     * @param [in] params               Additional parameters to be logged
+     */
+    template <typename... MessageArgs>
+    static void logMessage(LogLevel logLevel, const std::string &fileName,
+        const std::string &lineNo, const int &component, MessageArgs... params) {
+        if (isLoggingEnabled(logLevel, component)) {
+            std::ostringstream outputStream;
+            telux::common::Log::constructMessage(outputStream, params...);
+            telux::common::Log::logStream(outputStream, logLevel, fileName, lineNo, component);
+        }
+    }
 
-   /**
-    * Public API to log a message
-    *
-    * @param [in] logLevel             Log level @ref LogLevel
-    * @param [in] fileName             File name from where log is getting printed
-    * @param [in] lineNo               Line number from where log is getting printed
-    * @param [in] component            Identifier, as listed in SDK configuration
-    * @param [in] params               Additional parameters to be logged
-    */
-   template <typename... MessageArgs>
-   static void logMessage(LogLevel logLevel, const std::string &fileName, const std::string &lineNo,
-                          const int &component, MessageArgs... params) {
-      if (isLoggingEnabled(logLevel, component)) {
-         std::ostringstream outputStream;
-         telux::common::Log::constructMessage(outputStream, params...);
-         telux::common::Log::logStream(outputStream, logLevel, fileName, lineNo, component);
-      }
-   }
+    /**
+     * Public API to log a string stream
+     *
+     * @param [in] outputStream         String stream which will be logged
+     * @param [in] logLevel             Log level @ref LogLevel
+     * @param [in] fileName             File name from where log is getting printed
+     * @param [in] lineNo               Line number from where log is getting printed
+     * @param [in] component            Identifier, as listed in SDK configuration
+     */
+    static void logStream(std::ostringstream &outputStream, LogLevel logLevel,
+        const std::string &fileName, const std::string &lineNo, const int &component);
 
-   /**
-    * Public API to log a string stream
-    *
-    * @param [in] outputStream         String stream which will be logged
-    * @param [in] logLevel             Log level @ref LogLevel
-    * @param [in] fileName             File name from where log is getting printed
-    * @param [in] lineNo               Line number from where log is getting printed
-    * @param [in] component            Identifier, as listed in SDK configuration
-    */
-   static void logStream(std::ostringstream &outputStream, LogLevel logLevel,
-                         const std::string &fileName, const std::string &lineNo,
-                         const int &component);
+ private:
+    /*
+     * Recursive helper methods to construct the complete log message
+     * from input arguments
+     */
+    template <typename K, typename T>
+    static void constructMessage(K &os, T param) {
+        os << param;
+    }
 
-private:
-   /*
-    * Recursive helper methods to construct the complete log message
-    * from input arguments
-    */
-   template <typename K, typename T>
-   static void constructMessage(K &os, T param) {
-      os << param;
-   }
+    template <typename K, typename T, typename... MessageArgs>
+    static void constructMessage(K &os, T param, MessageArgs... params) {
+        os << param;
+        return constructMessage(os, params...);
+    }
 
-   template <typename K, typename T, typename... MessageArgs>
-   static void constructMessage(K &os, T param, MessageArgs... params) {
-      os << param;
-      return constructMessage(os, params...);
-   }
-
-   static bool isLoggingEnabled(LogLevel logLevel, const int& component);
-
+    static bool isLoggingEnabled(LogLevel logLevel, const int &component);
 };
 
 /** @} */ /* end_addtogroup telematics_common */
 
-} // End of namespace common
+}  // End of namespace common
 
-} // End of namespace telux
+}  // End of namespace telux
 
-#endif // TELUX_COMMON_LOG_HPP
+#endif  // TELUX_COMMON_LOG_HPP

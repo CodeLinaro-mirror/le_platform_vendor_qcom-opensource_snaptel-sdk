@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef SECURITY_CCS_SERVER_IMPL_HPP
@@ -31,33 +31,29 @@ class SecurityCCSServerImpl : public ::securityStub::SecurityCCSService::Service
 
     void onEventUpdate(::eventService::UnsolicitedEvent event) override;
 
-    grpc::Status Init(::grpc::ServerContext* context,
-        const ::securityStub::CCSConnectInfo* request,
-        ::commonStub::ErrorCodeMsg* response) override;
+    grpc::Status Init(::grpc::ServerContext *context, const ::securityStub::CCSConnectInfo *request,
+        ::commonStub::ErrorCodeMsg *response) override;
 
-    grpc::Status DeInit(::grpc::ServerContext* context,
-        const ::securityStub::CCSDisconnectInfo* request,
-        ::commonStub::ErrorCodeMsg* response) override;
+    grpc::Status DeInit(::grpc::ServerContext *context,
+        const ::securityStub::CCSDisconnectInfo *request,
+        ::commonStub::ErrorCodeMsg *response) override;
 
-    grpc::Status GetCurrentSessionStats(::grpc::ServerContext* context,
-        const ::google::protobuf::Empty* request,
-        ::securityStub::SessionStats* response) override;
+    grpc::Status GetCurrentSessionStats(::grpc::ServerContext *context,
+        const ::google::protobuf::Empty *request, ::securityStub::SessionStats *response) override;
 
-    grpc::Status registerCCSListener(::grpc::ServerContext* context,
-        const ::google::protobuf::Empty* request,
-        ::commonStub::ErrorCodeMsg* response);
+    grpc::Status registerCCSListener(::grpc::ServerContext *context,
+        const ::google::protobuf::Empty *request, ::commonStub::ErrorCodeMsg *response);
 
-    grpc::Status deRegisterCCSListener(::grpc::ServerContext* context,
-        const ::google::protobuf::Empty* request,
-        ::commonStub::ErrorCodeMsg* response);
+    grpc::Status deRegisterCCSListener(::grpc::ServerContext *context,
+        const ::google::protobuf::Empty *request, ::commonStub::ErrorCodeMsg *response);
 
     void onEventUpdate(std::string event);
 
  private:
-    const uint32_t SSGCCS_HOSTILE_SCORE = 385;
-    const char * const CCS_FILTER = "ccs";
-    const char * const CCS_DEFAULT_DELIMITER = " ";
-    const char * const CCS_API_JSON_FILE = "api/sec/ICellularSecurityManager.json";
+    const uint32_t SSGCCS_HOSTILE_SCORE     = 385;
+    const char *const CCS_FILTER            = "ccs";
+    const char *const CCS_DEFAULT_DELIMITER = " ";
+    const char *const CCS_API_JSON_FILE     = "api/sec/ICellularSecurityManager.json";
 
     uint32_t clientsCount_ = 0;
     bool isServiceInitialized_{false};
@@ -75,4 +71,4 @@ class SecurityCCSServerImpl : public ::securityStub::SecurityCCSService::Service
     std::string toPolicyStr(ssgccs_client_policy_action_t ssgPolicy);
 };
 
-#endif // SECURITY_CCS_SERVER_IMPL_HPP
+#endif  // SECURITY_CCS_SERVER_IMPL_HPP

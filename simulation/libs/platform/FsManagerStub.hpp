@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -63,8 +63,7 @@ class FsManagerStub : public IFsManager,
 
     void handleSSREvent(::commonStub::GetServiceStatusReply ssrResp);
 
-    telux::common::Status initSyncComplete(
-            telux::common::ServiceStatus srvcStatus) override;
+    telux::common::Status initSyncComplete(telux::common::ServiceStatus srvcStatus) override;
 
  protected:
     telux::common::Status init() override;
@@ -102,7 +101,6 @@ class FsManagerStub : public IFsManager,
     void onEventUpdate(google::protobuf::Any event);
     void handleSSREvent(google::protobuf::Any event);
     void onFsManagerServiceStatusChange(telux::common::ServiceStatus srvcStatus);
-
 };
 
 }  // end of namespace platform

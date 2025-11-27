@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_Speed_H_
-#define	_Speed_H_
-
+#ifndef _Speed_H_
+#define _Speed_H_
 
 #include <asn_application.h>
 
@@ -22,11 +21,11 @@ extern "C" {
 
 /* Speed */
 typedef struct Speed {
-	SpeedValue_t	 speedValue;
-	SpeedConfidence_t	 speedConfidence;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    SpeedValue_t speedValue;
+    SpeedConfidence_t speedConfidence;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } Speed_t;
 
 /* Implementation */
@@ -36,5 +35,5 @@ extern asn_TYPE_descriptor_t asn_DEF_Speed;
 }
 #endif
 
-#endif	/* _Speed_H_ */
+#endif /* _Speed_H_ */
 #include <asn_internal.h>

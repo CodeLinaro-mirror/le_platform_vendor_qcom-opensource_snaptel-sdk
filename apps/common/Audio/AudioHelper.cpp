@@ -28,9 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -49,12 +49,12 @@
 
 void AudioHelper::getUserSlotIdInput(SlotId &slotId) {
     std::string userInput = "";
-    int input = INVALID_SLOT_ID;
-    while(1) {
+    int input             = INVALID_SLOT_ID;
+    while (1) {
         std::cout << "Enter Slot Id: ";
         if (std::getline(std::cin, userInput)) {
             std::stringstream inputStream(userInput);
-            if(inputStream >> input) {
+            if (inputStream >> input) {
                 slotId = static_cast<SlotId>(input);
                 break;
             } else {
@@ -68,8 +68,8 @@ void AudioHelper::getUserSlotIdInput(SlotId &slotId) {
 
 void AudioHelper::getUserSampleRateInput(uint32_t &sampleRate) {
     std::string userInput = "";
-    while(1) {
-        std::cout << "Enter Sample Rate (16000 32000 48000) :" ;
+    while (1) {
+        std::cout << "Enter Sample Rate (16000 32000 48000) :";
         if (std::getline(std::cin, userInput)) {
             std::stringstream inputStream(userInput);
             if (inputStream >> sampleRate) {
@@ -85,13 +85,13 @@ void AudioHelper::getUserSampleRateInput(uint32_t &sampleRate) {
 
 void AudioHelper::getUserChannelInput(ChannelTypeMask &channels) {
     std::string userInput = "";
-    int command = -1;
-    while(1) {
+    int command           = -1;
+    while (1) {
         std::cout << "Enter channel mask (1 for left, 2 for right, 3 for both): ";
         if (std::getline(std::cin, userInput)) {
             std::stringstream inputStream(userInput);
             if (inputStream >> command) {
-                if (command == 1 || command == 2 || command == 3){
+                if (command == 1 || command == 2 || command == 3) {
                     if (command == 1) {
                         channels = ChannelType::LEFT;
                     } else if (command == 2) {
@@ -115,13 +115,13 @@ void AudioHelper::getUserChannelInput(ChannelTypeMask &channels) {
 void AudioHelper::getUserDeviceInput(std::vector<DeviceType> &devices) {
 
     std::string userInput = "";
-    int command = -1;
-    int numDevices=0;
-    while(1) {
-        std::cout << "Enter no. of devices : " ;
+    int command           = -1;
+    int numDevices        = 0;
+    while (1) {
+        std::cout << "Enter no. of devices : ";
         if (std::getline(std::cin, userInput)) {
             std::stringstream inputStream(userInput);
-            if (inputStream >> numDevices){
+            if (inputStream >> numDevices) {
                 break;
             } else {
                 std::cout << "Invalid Input" << std::endl;
@@ -129,7 +129,7 @@ void AudioHelper::getUserDeviceInput(std::vector<DeviceType> &devices) {
         }
     }
 
-    while(numDevices) {
+    while (numDevices) {
         std::cout << "Enter device type (1 for speaker, 257 for microphone): ";
         if (std::getline(std::cin, userInput)) {
             std::stringstream inputStream(userInput);
@@ -147,8 +147,8 @@ void AudioHelper::getUserDeviceInput(std::vector<DeviceType> &devices) {
 
 void AudioHelper::getAudioFormatInput(AudioFormat &audioFormat) {
     std::string userInput = "";
-    int command = -1;
-    while(1) {
+    int command           = -1;
+    while (1) {
         std::cout << "Please Select Audio Format : 1->PCM, 2->AMRWB+, 3->AMRNB, 4->AMRWB :";
         if (std::getline(std::cin, userInput)) {
             std::stringstream inputStream(userInput);
@@ -176,8 +176,7 @@ void AudioHelper::getAudioFormatInput(AudioFormat &audioFormat) {
     }
 }
 
-void AudioHelper::getUserCreateStreamInput(StreamConfig &config)
-{
+void AudioHelper::getUserCreateStreamInput(StreamConfig &config) {
     config.format = AudioFormat::PCM_16BIT_SIGNED;
     // For Voice Call the slot Id is provided from Voice Menu. Voice Menu by default uses the
     // DEFAULT_SLOT_ID, if user switches sub then corresponding slotId is used.
@@ -191,14 +190,14 @@ void AudioHelper::getUserCreateStreamInput(StreamConfig &config)
 
 void AudioHelper::getUserVoicePathInput(std::vector<Direction> &direction) {
     std::string userInput = "";
-    int command = -1;
-    int numDir=0;
-    while(1) {
+    int command           = -1;
+    int numDir            = 0;
+    while (1) {
         std::cout << "Enter voice path type (0 for None, 1 for RX, 2 for TX, 3 for BOTH): ";
         if (std::getline(std::cin, userInput)) {
             std::stringstream inputStream(userInput);
             if (inputStream >> command) {
-                if (command >=0 && command <=3) {
+                if (command >= 0 && command <= 3) {
                     if (command == 1 || command == 3) {
                         direction.emplace_back(Direction::RX);
                         numDir++;
@@ -222,11 +221,11 @@ void AudioHelper::getUserVoicePathInput(std::vector<Direction> &direction) {
 
 void AudioHelper::getVolumeValueInput(float &vol) {
     std::string userInput = "";
-    while(1) {
+    while (1) {
         std::cout << "Enter Volume :";
         if (std::getline(std::cin, userInput)) {
             std::stringstream inputStream(userInput);
-            if(inputStream >> vol) {
+            if (inputStream >> vol) {
                 break;
             } else {
                 std::cout << "Invalid Input" << std::endl;
@@ -246,32 +245,32 @@ void AudioHelper::getUserVolumeInput(StreamVolume &streamVolume) {
     getUserDirectionInput(streamVolume.dir);
     getUserChannelInput(channelType);
 
-    if(channelType != ChannelType::LEFT){
+    if (channelType != ChannelType::LEFT) {
         std::cout << "For Right Channel " << std::endl;
         getVolumeValueInput(vol);
         channelVolume.channelType = ChannelType::RIGHT;
-        channelVolume.vol = vol;
+        channelVolume.vol         = vol;
         streamVolume.volume.emplace_back(channelVolume);
     }
 
-    if(channelType != ChannelType::RIGHT){
+    if (channelType != ChannelType::RIGHT) {
         std::cout << "For Left Channel " << std::endl;
         getVolumeValueInput(vol);
         channelVolume.channelType = ChannelType::LEFT;
-        channelVolume.vol = vol;
+        channelVolume.vol         = vol;
         streamVolume.volume.emplace_back(channelVolume);
     }
 }
 
 void AudioHelper::getUserDirectionInput(StreamDirection &direction) {
     std::string userInput = "";
-    int command = -1;
-    while(1) {
+    int command           = -1;
+    while (1) {
         std::cout << "Enter direction of stream: (0 for TX, 1 for RX) ";
-        if(std::getline(std::cin, userInput)) {
+        if (std::getline(std::cin, userInput)) {
             std::stringstream inputStream(userInput);
-            if(inputStream >> command){
-                if(command == 0 || command == 1) {
+            if (inputStream >> command) {
+                if (command == 0 || command == 1) {
                     break;
                 } else {
                     std::cout << "Invalid Input" << std::endl;
@@ -282,7 +281,7 @@ void AudioHelper::getUserDirectionInput(StreamDirection &direction) {
         }
     }
 
-    if(command == 0) {
+    if (command == 0) {
         direction = StreamDirection::TX;
     } else if (command == 1) {
         direction = StreamDirection::RX;
@@ -293,12 +292,12 @@ void AudioHelper::getUserMuteStatusInput(StreamMute &mute) {
     getUserDirectionInput(mute.dir);
     std::string userInput = "";
     int muteStatus;
-    while(1) {
-        std::cout << "Enter 0 to Unmute and 1 to Mute: " ;
-        if(std::getline(std::cin, userInput)) {
+    while (1) {
+        std::cout << "Enter 0 to Unmute and 1 to Mute: ";
+        if (std::getline(std::cin, userInput)) {
             std::stringstream inputStream(userInput);
-            if(inputStream >> muteStatus) {
-                if(muteStatus == 0 || muteStatus == 1) {
+            if (inputStream >> muteStatus) {
+                if (muteStatus == 0 || muteStatus == 1) {
                     mute.enable = muteStatus;
                     break;
                 } else {
@@ -331,7 +330,7 @@ Status AudioHelper::getUserDtmfInput(DtmfTone &tone, uint32_t &duration, uint16_
     std::cout << "Enter the Low Frequency (697, 770, 852, 941) : ";
     if (std::getline(std::cin, userInput)) {
         std::stringstream inputStream(userInput);
-        if(!(inputStream >> lowFreq)) {
+        if (!(inputStream >> lowFreq)) {
             std::cout << "Invalid Input" << std::endl;
             return Status::FAILED;
         }
@@ -365,9 +364,9 @@ Status AudioHelper::getUserDtmfInput(DtmfTone &tone, uint32_t &duration, uint16_
         return Status::FAILED;
     }
 
-    Status lowFreqValid = lowFrequencyHelper(lowFreq, tone.lowFreq);
+    Status lowFreqValid  = lowFrequencyHelper(lowFreq, tone.lowFreq);
     Status highFreqValid = highFrequencyHelper(highFreq, tone.highFreq);
-    if (lowFreqValid == Status::SUCCESS &&highFreqValid == Status::SUCCESS ) {
+    if (lowFreqValid == Status::SUCCESS && highFreqValid == Status::SUCCESS) {
         return Status::SUCCESS;
     } else {
         return Status::FAILED;
@@ -376,9 +375,9 @@ Status AudioHelper::getUserDtmfInput(DtmfTone &tone, uint32_t &duration, uint16_
 
 void AudioHelper::getUserEcnrModeInput(EcnrMode &ecnrMode) {
     std::string userInput = "";
-    int command = -1;
-    while(1) {
-        std::cout << "Enter 0 to disable and 1 to enable ECNR mode: " ;
+    int command           = -1;
+    while (1) {
+        std::cout << "Enter 0 to disable and 1 to enable ECNR mode: ";
         if (std::getline(std::cin, userInput)) {
             std::stringstream inputStream(userInput);
             if (inputStream >> command) {
@@ -401,45 +400,42 @@ void AudioHelper::getUserEcnrModeInput(EcnrMode &ecnrMode) {
     }
 }
 
-
-Status AudioHelper::lowFrequencyHelper(uint32_t lowFreq,
-                             DtmfLowFreq &lowFrequency) {
-    switch(lowFreq) {
+Status AudioHelper::lowFrequencyHelper(uint32_t lowFreq, DtmfLowFreq &lowFrequency) {
+    switch (lowFreq) {
         case Freq::Freq_697:
-        lowFrequency = DtmfLowFreq::FREQ_697;
-        return Status::SUCCESS;
+            lowFrequency = DtmfLowFreq::FREQ_697;
+            return Status::SUCCESS;
         case Freq::Freq_770:
-        lowFrequency = DtmfLowFreq::FREQ_770;
-        return Status::SUCCESS;
+            lowFrequency = DtmfLowFreq::FREQ_770;
+            return Status::SUCCESS;
         case Freq::Freq_852:
-        lowFrequency = DtmfLowFreq::FREQ_852;
-        return Status::SUCCESS;
+            lowFrequency = DtmfLowFreq::FREQ_852;
+            return Status::SUCCESS;
         case Freq::Freq_941:
-        lowFrequency = DtmfLowFreq::FREQ_941;
-        return Status::SUCCESS;
+            lowFrequency = DtmfLowFreq::FREQ_941;
+            return Status::SUCCESS;
         default:
-        std::cout << "unsupported Dtmf Frequency " << std::endl;
-        return Status::FAILED;
+            std::cout << "unsupported Dtmf Frequency " << std::endl;
+            return Status::FAILED;
     }
 }
 
-Status AudioHelper::highFrequencyHelper(uint32_t highFreq,
-                             DtmfHighFreq &highFrequency) {
-    switch(highFreq) {
+Status AudioHelper::highFrequencyHelper(uint32_t highFreq, DtmfHighFreq &highFrequency) {
+    switch (highFreq) {
         case Freq::Freq_1209:
-        highFrequency = DtmfHighFreq::FREQ_1209;
-        return Status::SUCCESS;
+            highFrequency = DtmfHighFreq::FREQ_1209;
+            return Status::SUCCESS;
         case Freq::Freq_1336:
-        highFrequency = DtmfHighFreq::FREQ_1336;
-        return Status::SUCCESS;
+            highFrequency = DtmfHighFreq::FREQ_1336;
+            return Status::SUCCESS;
         case Freq::Freq_1477:
-        highFrequency = DtmfHighFreq::FREQ_1477;
-        return Status::SUCCESS;
+            highFrequency = DtmfHighFreq::FREQ_1477;
+            return Status::SUCCESS;
         case Freq::Freq_1633:
-        highFrequency = DtmfHighFreq::FREQ_1633;
-        return Status::SUCCESS;
+            highFrequency = DtmfHighFreq::FREQ_1633;
+            return Status::SUCCESS;
         default:
-        std::cout << "unsupported Frequency " << std::endl;
-        return Status::FAILED;
+            std::cout << "unsupported Frequency " << std::endl;
+            return Status::FAILED;
     }
 }

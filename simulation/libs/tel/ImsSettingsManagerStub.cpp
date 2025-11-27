@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <telux/common/DeviceConfig.hpp>
@@ -12,7 +12,7 @@ using namespace telux::tel;
 ImsSettingsManagerStub::ImsSettingsManagerStub() {
     LOG(DEBUG, __FUNCTION__);
     subSystemStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
-    cbDelay_ = DEFAULT_DELAY;
+    cbDelay_         = DEFAULT_DELAY;
 }
 
 void ImsSettingsManagerStub::setServiceStatus(telux::common::ServiceStatus status) {
@@ -21,11 +21,10 @@ void ImsSettingsManagerStub::setServiceStatus(telux::common::ServiceStatus statu
         std::lock_guard<std::mutex> lock(mtx_);
         subSystemStatus_ = status;
     }
-    if(initCb_) {
-        auto f1 = std::async(std::launch::async,
-        [this, status]() {
+    if (initCb_) {
+        auto f1 = std::async(std::launch::async, [this, status]() {
             std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay_));
-                initCb_(status);
+            initCb_(status);
         }).share();
         taskQ_->add(f1);
     } else {
@@ -36,25 +35,22 @@ void ImsSettingsManagerStub::setServiceStatus(telux::common::ServiceStatus statu
 telux::common::Status ImsSettingsManagerStub::init(telux::common::InitResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
     listenerMgr_ = std::make_shared<telux::common::ListenerManager<IImsSettingsListener>>();
-    if(!listenerMgr_) {
+    if (!listenerMgr_) {
         LOG(ERROR, __FUNCTION__, " unable to instantiate ListenerManager");
         return telux::common::Status::FAILED;
     }
     stub_ = CommonUtils::getGrpcStub<::telStub::ImsService>();
-    if(!stub_) {
+    if (!stub_) {
         LOG(ERROR, __FUNCTION__, " unable to instantiate ims settings service");
         return telux::common::Status::FAILED;
     }
     taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
-    if(!taskQ_) {
+    if (!taskQ_) {
         LOG(ERROR, __FUNCTION__, " unable to instantiate AsyncTaskQueue");
         return telux::common::Status::FAILED;
     }
-    initCb_ = callback;
-    auto f = std::async(std::launch::async,
-        [this]() {
-            this->initSync();
-        }).share();
+    initCb_     = callback;
+    auto f      = std::async(std::launch::async, [this]() { this->initSync(); }).share();
     auto status = taskQ_->add(f);
     return status;
 }
@@ -68,7 +64,7 @@ void ImsSettingsManagerStub::initSync() {
         noOfSlots_ = MAX_SLOT_ID;
     }
     LOG(DEBUG, __FUNCTION__, " SlotCount: ", noOfSlots_);
-    grpc::Status reqStatus = stub_->InitService(&context, request, &response);
+    grpc::Status reqStatus                = stub_->InitService(&context, request, &response);
     telux::common::ServiceStatus cbStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
     if (!reqStatus.ok()) {
         LOG(ERROR, __FUNCTION__, " InitService request failed");
@@ -76,8 +72,8 @@ void ImsSettingsManagerStub::initSync() {
         cbStatus = static_cast<telux::common::ServiceStatus>(response.service_status());
         cbDelay_ = static_cast<int>(response.delay());
     }
-    LOG(DEBUG, __FUNCTION__, " callback delay ", cbDelay_,
-        " callback status ", static_cast<int>(cbStatus));
+    LOG(DEBUG, __FUNCTION__, " callback delay ", cbDelay_, " callback status ",
+        static_cast<int>(cbStatus));
     this->onServiceStatusChange(cbStatus);
     setServiceStatus(cbStatus);
 }
@@ -113,7 +109,7 @@ telux::common::Status ImsSettingsManagerStub::registerListener(
     LOG(DEBUG, __FUNCTION__);
     telux::common::Status status = telux::common::Status::FAILED;
     if (listenerMgr_) {
-        status = listenerMgr_->registerListener(listener);
+        status                           = listenerMgr_->registerListener(listener);
         std::vector<std::string> filters = {TEL_IMS_SETTINGS_FILTER};
         std::vector<std::weak_ptr<IImsSettingsListener>> applisteners;
         listenerMgr_->getAvailableListeners(applisteners);
@@ -121,8 +117,7 @@ telux::common::Status ImsSettingsManagerStub::registerListener(
             auto &clientEventManager = telux::common::ClientEventManager::getInstance();
             clientEventManager.registerListener(shared_from_this(), filters);
         } else {
-            LOG(DEBUG, __FUNCTION__,
-                " Not registering to client event manager already registered");
+            LOG(DEBUG, __FUNCTION__, " Not registering to client event manager already registered");
         }
     }
     return status;
@@ -138,7 +133,7 @@ telux::common::Status ImsSettingsManagerStub::deregisterListener(
         listenerMgr_->getAvailableListeners(applisteners);
         if (applisteners.size() == 0) {
             std::vector<std::string> filters = {TEL_IMS_SETTINGS_FILTER};
-            auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+            auto &clientEventManager         = telux::common::ClientEventManager::getInstance();
             clientEventManager.deregisterListener(shared_from_this(), filters);
         }
     }
@@ -160,8 +155,8 @@ void ImsSettingsManagerStub::onServiceStatusChange(telux::common::ServiceStatus 
     }
 }
 
-telux::common::Status
-    ImsSettingsManagerStub::requestServiceConfig(SlotId slotId, ImsServiceConfigCb callback) {
+telux::common::Status ImsSettingsManagerStub::requestServiceConfig(
+    SlotId slotId, ImsServiceConfigCb callback) {
     LOG(DEBUG, __FUNCTION__);
     int phoneId = static_cast<int>(slotId);
     if (phoneId <= 0 || phoneId > noOfSlots_) {
@@ -202,13 +197,12 @@ telux::common::Status
         config.rttEnabled = response.mutable_config()->rtt_enabled();
     }
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    bool isCallbackNeeded = static_cast<bool>(response.is_callback());
-    int delay = static_cast<int>(response.delay());
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
+    bool isCallbackNeeded          = static_cast<bool>(response.is_callback());
+    int delay                      = static_cast<int>(response.delay());
 
-    if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
-        auto f1 = std::async(std::launch::async,
-            [this, slotId, config, error, callback, delay]() {
+    if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+        auto f1 = std::async(std::launch::async, [this, slotId, config, error, callback, delay]() {
             if (callback) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(delay));
                 callback(slotId, config, error);
@@ -221,8 +215,8 @@ telux::common::Status
     return status;
 }
 
-telux::common::Status ImsSettingsManagerStub::setServiceConfig(SlotId slotId,
-    ImsServiceConfig config, telux::common::ResponseCallback callback) {
+telux::common::Status ImsSettingsManagerStub::setServiceConfig(
+    SlotId slotId, ImsServiceConfig config, telux::common::ResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__);
     int phoneId = static_cast<int>(slotId);
     if (phoneId <= 0 || phoneId > noOfSlots_) {
@@ -264,13 +258,12 @@ telux::common::Status ImsSettingsManagerStub::setServiceConfig(SlotId slotId,
     }
 
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    bool isCallbackNeeded = static_cast<bool>(response.is_callback());
-    int delay = static_cast<int>(response.delay());
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
+    bool isCallbackNeeded          = static_cast<bool>(response.is_callback());
+    int delay                      = static_cast<int>(response.delay());
 
-    if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
-        auto f1 = std::async(std::launch::async,
-            [this, error, callback, delay]() {
+    if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+        auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
             if (callback) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(delay));
                 callback(error);
@@ -281,8 +274,8 @@ telux::common::Status ImsSettingsManagerStub::setServiceConfig(SlotId slotId,
     return status;
 }
 
-telux::common::Status ImsSettingsManagerStub::requestSipUserAgent(SlotId slotId,
-    ImsSipUserAgentConfigCb callback) {
+telux::common::Status ImsSettingsManagerStub::requestSipUserAgent(
+    SlotId slotId, ImsSipUserAgentConfigCb callback) {
     LOG(DEBUG, __FUNCTION__);
     int phoneId = static_cast<int>(slotId);
     if (phoneId <= 0 || phoneId > noOfSlots_) {
@@ -305,27 +298,27 @@ telux::common::Status ImsSettingsManagerStub::requestSipUserAgent(SlotId slotId,
         return telux::common::Status::FAILED;
     }
 
-    std::string sipUserAgent = response.sip_user_agent();
+    std::string sipUserAgent       = response.sip_user_agent();
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    bool isCallbackNeeded = static_cast<bool>(response.is_callback());
-    int delay = static_cast<int>(response.delay());
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
+    bool isCallbackNeeded          = static_cast<bool>(response.is_callback());
+    int delay                      = static_cast<int>(response.delay());
 
-    if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
-        auto f1 = std::async(std::launch::async,
-            [this, slotId, sipUserAgent, error, callback, delay]() {
+    if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+        auto f1 = std::async(
+            std::launch::async, [this, slotId, sipUserAgent, error, callback, delay]() {
                 if (callback) {
                     std::this_thread::sleep_for(std::chrono::milliseconds(delay));
                     callback(slotId, sipUserAgent, error);
                 }
-        }).share();
+            }).share();
         taskQ_->add(f1);
     }
     return status;
 }
 
-telux::common::Status ImsSettingsManagerStub::setSipUserAgent(SlotId slotId,
-    std::string userAgent, telux::common::ResponseCallback callback) {
+telux::common::Status ImsSettingsManagerStub::setSipUserAgent(
+    SlotId slotId, std::string userAgent, telux::common::ResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__);
     int phoneId = static_cast<int>(slotId);
     if (phoneId <= 0 || phoneId > noOfSlots_) {
@@ -350,27 +343,26 @@ telux::common::Status ImsSettingsManagerStub::setSipUserAgent(SlotId slotId,
     }
 
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    bool isCallbackNeeded = static_cast<bool>(response.is_callback());
-    int delay = static_cast<int>(response.delay());
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
+    bool isCallbackNeeded          = static_cast<bool>(response.is_callback());
+    int delay                      = static_cast<int>(response.delay());
 
-    if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
-        auto f1 = std::async(std::launch::async,
-            [this, error, callback, delay]() {
-                if (callback) {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-                    callback(error);
-                } else {
-                    LOG(ERROR, __FUNCTION__, " Callback is null");
-                }
+    if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+        auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+            if (callback) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                callback(error);
+            } else {
+                LOG(ERROR, __FUNCTION__, " Callback is null");
+            }
         }).share();
         taskQ_->add(f1);
     }
     return status;
 }
 
-telux::common::Status
-    ImsSettingsManagerStub::requestVonrStatus(SlotId slotId, ImsVonrStatusCb callback) {
+telux::common::Status ImsSettingsManagerStub::requestVonrStatus(
+    SlotId slotId, ImsVonrStatusCb callback) {
     LOG(DEBUG, __FUNCTION__);
     int phoneId = static_cast<int>(slotId);
     if (phoneId <= 0 || phoneId > noOfSlots_) {
@@ -392,29 +384,29 @@ telux::common::Status
         LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
         return telux::common::Status::FAILED;
     }
-    bool vonrEnabled = static_cast<bool>(response.enable());
+    bool vonrEnabled               = static_cast<bool>(response.enable());
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    bool isCallbackNeeded = static_cast<bool>(response.is_callback());
-    int delay = static_cast<int>(response.delay());
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
+    bool isCallbackNeeded          = static_cast<bool>(response.is_callback());
+    int delay                      = static_cast<int>(response.delay());
 
-    if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
-        auto f1 = std::async(std::launch::async,
-            [this, slotId, vonrEnabled, error, callback, delay]() {
-            if (callback) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-                callback(slotId, vonrEnabled, error);
-            } else {
-                LOG(ERROR, __FUNCTION__, " Callback is null");
-            }
-        }).share();
+    if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+        auto f1
+            = std::async(std::launch::async, [this, slotId, vonrEnabled, error, callback, delay]() {
+                  if (callback) {
+                      std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                      callback(slotId, vonrEnabled, error);
+                  } else {
+                      LOG(ERROR, __FUNCTION__, " Callback is null");
+                  }
+              }).share();
         taskQ_->add(f1);
     }
     return status;
 }
 
-telux::common::Status ImsSettingsManagerStub::toggleVonr(SlotId slotId,
-    bool isEnable, common::ResponseCallback callback) {
+telux::common::Status ImsSettingsManagerStub::toggleVonr(
+    SlotId slotId, bool isEnable, common::ResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__);
     int phoneId = static_cast<int>(slotId);
     if (phoneId <= 0 || phoneId > noOfSlots_) {
@@ -440,13 +432,12 @@ telux::common::Status ImsSettingsManagerStub::toggleVonr(SlotId slotId,
     }
 
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    bool isCallbackNeeded = static_cast<bool>(response.is_callback());
-    int delay = static_cast<int>(response.delay());
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
+    bool isCallbackNeeded          = static_cast<bool>(response.is_callback());
+    int delay                      = static_cast<int>(response.delay());
 
-    if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
-        auto f1 = std::async(std::launch::async,
-            [this, error, callback, delay]() {
+    if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+        auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
             if (callback) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(delay));
                 callback(error);
@@ -498,7 +489,7 @@ void ImsSettingsManagerStub::handleImsServiceConfigsChange(
 void ImsSettingsManagerStub::handleImsSipUserAgentChange(
     ::telStub::ImsSipUserAgentChangeEvent event) {
     LOG(INFO, __FUNCTION__);
-    int phoneId = event.phone_id();
+    int phoneId              = event.phone_id();
     std::string sipUserAgent = event.sip_user_agent();
 
     std::vector<std::weak_ptr<IImsSettingsListener>> applisteners;

@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -45,7 +45,7 @@ class TaskDispatcher {
      * @returns std::future to know the status, this is optional for clients to use it
      */
     template <typename F, typename... Args>
-    auto submitTask(F task, Args &&... args) -> std::future<decltype(task(args...))>;
+    auto submitTask(F task, Args &&...args) -> std::future<decltype(task(args...))>;
 
     /**
      * Clears the outstanding tasks and refuses additional task submissions
@@ -69,7 +69,7 @@ class TaskDispatcher {
 };
 
 template <typename F, typename... Args>
-auto TaskDispatcher::submitTask(F task, Args &&... args) -> std::future<decltype(task(args...))> {
+auto TaskDispatcher::submitTask(F task, Args &&...args) -> std::future<decltype(task(args...))> {
     LOG(DEBUG, __FUNCTION__);
     return taskQueue_->push(task, std::forward<Args>(args)...);
 }

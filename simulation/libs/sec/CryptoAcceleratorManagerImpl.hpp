@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef CRYPTOACCELERATORMANAGERIMPL_HPP
@@ -22,12 +22,11 @@ namespace telux {
 namespace sec {
 
 class CryptoAcceleratorManagerImpl
-    : public ICryptoAcceleratorManager,
-      public telux::common::IEventListener,
-      public std::enable_shared_from_this<CryptoAcceleratorManagerImpl> {
+   : public ICryptoAcceleratorManager,
+     public telux::common::IEventListener,
+     public std::enable_shared_from_this<CryptoAcceleratorManagerImpl> {
 
  public:
-
     CryptoAcceleratorManagerImpl();
     ~CryptoAcceleratorManagerImpl();
 
@@ -70,7 +69,7 @@ class CryptoAcceleratorManagerImpl
     void onEventUpdate(google::protobuf::Any event) override;
 
  private:
-    const char * const CRYPTOACC_FILTER = "cryptoAcc";
+    const char *const CRYPTOACC_FILTER = "cryptoAcc";
     ClientEventManager &clientEventMgr_;
     static std::unique_ptr<securityStub::CryptoAcceleratorManagerService::Stub> stub_;
 
@@ -87,7 +86,8 @@ class CryptoAcceleratorManagerImpl
 
     /* Used during SSR */
     telux::common::ServiceStatus currentServiceStatus_;
-    securityStub::RequestPriority convertPriorityTeluxToGrpc(telux::sec::RequestPriority teluxPriority);
+    securityStub::RequestPriority convertPriorityTeluxToGrpc(
+        telux::sec::RequestPriority teluxPriority);
     securityStub::EccCurve convertCurveTeluxToGrpc(telux::sec::ECCCurve teluxCurve);
     /* Passes ECC/ECQV result to listener asynchronously */
     void deliverResultAsync(securityStub::OperationResult result, int delay);

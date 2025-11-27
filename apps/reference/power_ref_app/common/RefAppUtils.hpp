@@ -1,7 +1,8 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 /**
  * Utility helper class
  * @brief RefAppUtils class performs common error code conversions
@@ -28,7 +29,6 @@
 
 class RefAppUtils {
  public:
-
     /**
      * Get error description for given ErrorCode
      */
@@ -62,6 +62,7 @@ class RefAppUtils {
     static bool isKeepAliveEnabled();
     static bool isAutoExitEnabled();
     static bool isDataFilterInstallationEnabled();
+
  private:
     static bool stringToBool(std::string enable);
 };

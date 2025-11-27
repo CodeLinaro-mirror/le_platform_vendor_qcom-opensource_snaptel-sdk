@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef TONEGENERATORSTREAMIMPL_HPP
@@ -19,8 +19,7 @@ class ToneGeneratorStreamImpl : public IAudioToneGeneratorStream,
                                 public IToneCb {
 
  public:
-    ToneGeneratorStreamImpl(uint32_t streamId,
-        std::shared_ptr<ICommunicator> transportClient);
+    ToneGeneratorStreamImpl(uint32_t streamId, std::shared_ptr<ICommunicator> transportClient);
     ~ToneGeneratorStreamImpl();
 
     telux::common::Status playTone(std::vector<uint16_t> frequency, uint16_t duration,
@@ -28,14 +27,12 @@ class ToneGeneratorStreamImpl : public IAudioToneGeneratorStream,
 
     telux::common::Status stopTone(telux::common::ResponseCallback callback = nullptr);
 
-    void onToneStartResult(telux::common::ErrorCode ec, uint32_t streamId,
-            int cmdId) override;
+    void onToneStartResult(telux::common::ErrorCode ec, uint32_t streamId, int cmdId) override;
 
-    void onToneStopResult(telux::common::ErrorCode ec, uint32_t streamId,
-            int cmdId) override;
+    void onToneStopResult(telux::common::ErrorCode ec, uint32_t streamId, int cmdId) override;
 };
 
 }  // end of namespace audio
 }  // end of namespace telux
 
-#endif // TONEGENERATORSTREAMIMPL_HPP
+#endif  // TONEGENERATORSTREAMIMPL_HPP

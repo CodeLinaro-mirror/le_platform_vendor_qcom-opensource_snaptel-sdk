@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_LongitudinalAccelerationValue_H_
-#define	_LongitudinalAccelerationValue_H_
-
+#ifndef _LongitudinalAccelerationValue_H_
+#define _LongitudinalAccelerationValue_H_
 
 #include <asn_application.h>
 
@@ -20,13 +19,13 @@ extern "C" {
 
 /* Dependencies */
 typedef enum LongitudinalAccelerationValue {
-	LongitudinalAccelerationValue_pointOneMeterPerSecSquaredForward	= 1,
-	LongitudinalAccelerationValue_pointOneMeterPerSecSquaredBackward	= -1,
-	LongitudinalAccelerationValue_unavailable	= 161
+    LongitudinalAccelerationValue_pointOneMeterPerSecSquaredForward  = 1,
+    LongitudinalAccelerationValue_pointOneMeterPerSecSquaredBackward = -1,
+    LongitudinalAccelerationValue_unavailable                        = 161
 } e_LongitudinalAccelerationValue;
 
 /* LongitudinalAccelerationValue */
-typedef long	 LongitudinalAccelerationValue_t;
+typedef long LongitudinalAccelerationValue_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_LongitudinalAccelerationValue;
@@ -44,5 +43,5 @@ per_type_encoder_f LongitudinalAccelerationValue_encode_uper;
 }
 #endif
 
-#endif	/* _LongitudinalAccelerationValue_H_ */
+#endif /* _LongitudinalAccelerationValue_H_ */
 #include <asn_internal.h>

@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_OperatingClass80211_H_
-#define	_OperatingClass80211_H_
-
+#ifndef _OperatingClass80211_H_
+#define _OperatingClass80211_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* OperatingClass80211 */
-typedef long	 OperatingClass80211_t;
+typedef long OperatingClass80211_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_OperatingClass80211;
@@ -37,5 +36,5 @@ per_type_encoder_f OperatingClass80211_encode_uper;
 }
 #endif
 
-#endif	/* _OperatingClass80211_H_ */
+#endif /* _OperatingClass80211_H_ */
 #include <asn_internal.h>

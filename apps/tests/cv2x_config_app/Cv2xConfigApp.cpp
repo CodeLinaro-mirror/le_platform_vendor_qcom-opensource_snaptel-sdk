@@ -28,9 +28,8 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -56,27 +55,27 @@
 #include "../../common/utils/Utils.hpp"
 #include "Cv2xConfigApp.hpp"
 
-using std::cout;
 using std::cerr;
-using std::endl;
 using std::cin;
+using std::cout;
+using std::endl;
 using std::getline;
-using std::promise;
-using std::string;
-using std::mutex;
-using std::make_shared;
-using std::shared_ptr;
 using std::ifstream;
-using std::ofstream;
-using std::time;
-using std::setw;
 using std::lock_guard;
+using std::make_shared;
+using std::mutex;
+using std::ofstream;
+using std::promise;
+using std::setw;
+using std::shared_ptr;
+using std::string;
+using std::time;
 
 using telux::common::ErrorCode;
 using telux::common::Status;
-using telux::cv2x::Cv2xFactory;
-using telux::cv2x::ConfigEventInfo;
 using telux::cv2x::ConfigEvent;
+using telux::cv2x::ConfigEventInfo;
+using telux::cv2x::Cv2xFactory;
 using telux::cv2x::Cv2xStatus;
 using telux::cv2x::Cv2xStatusType;
 
@@ -85,39 +84,39 @@ static const string CONFIG_FILE("/var/tmp/v2x.xml");
 static const string EXPIRY_FILE("/var/tmp/expiry.xml");
 
 class ConfigListener : public ICv2xConfigListener {
-public:
+ public:
     void waitForConfigChangeEvent(ConfigEvent event) {
-        //initialize the promise to ignore indications received before calling this API
-        promiseSet_ = false;
+        // initialize the promise to ignore indications received before calling this API
+        promiseSet_    = false;
         configPromise_ = promise<ConfigEvent>();
 
         while (event != configPromise_.get_future().get()) {
             // the recevied indication is not as expected, wait for the next indication
             configPromise_ = promise<ConfigEvent>();
-            promiseSet_ = false;
+            promiseSet_    = false;
         }
     }
 
-    void onConfigChanged(const ConfigEventInfo & info) override {
+    void onConfigChanged(const ConfigEventInfo &info) override {
         if (not promiseSet_) {
             promiseSet_ = true;
             configPromise_.set_value(info.event);
         }
     }
 
-private:
+ private:
     promise<ConfigEvent> configPromise_;
     std::atomic<bool> promiseSet_{false};
 };
 
 Cv2xConfigApp::Cv2xConfigApp()
-    : ConsoleApp("Cv2x Config Menu", "config> ") {
+   : ConsoleApp("Cv2x Config Menu", "config> ") {
 }
 
 Cv2xConfigApp::~Cv2xConfigApp() {
-   if(cv2xConfig_ and configListener_) {
-      cv2xConfig_->deregisterListener(configListener_);
-   }
+    if (cv2xConfig_ and configListener_) {
+        cv2xConfig_->deregisterListener(configListener_);
+    }
 }
 
 int Cv2xConfigApp::initialize() {
@@ -132,32 +131,31 @@ int Cv2xConfigApp::initialize() {
 
 int Cv2xConfigApp::cv2xInit() {
     // get handle of cv2x config
-    auto & cv2xFactory = Cv2xFactory::getInstance();
+    auto &cv2xFactory            = Cv2xFactory::getInstance();
     bool cv2xConfigStatusUpdated = false;
-    telux::common::ServiceStatus cv2xConfigStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    telux::common::ServiceStatus cv2xConfigStatus
+        = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
     std::condition_variable cv;
     std::mutex mtx;
     auto statusCb = [&](telux::common::ServiceStatus status) {
         std::lock_guard<std::mutex> lock(mtx);
         cv2xConfigStatusUpdated = true;
-        cv2xConfigStatus = status;
+        cv2xConfigStatus        = status;
         cv.notify_all();
     };
 
     cv2xConfig_ = cv2xFactory.getCv2xConfig(statusCb);
     if (!cv2xConfig_) {
-        cout << "Failed to get Cv2xConfig" << endl;;
+        cout << "Failed to get Cv2xConfig" << endl;
+        ;
         return EXIT_FAILURE;
     }
     {
         std::unique_lock<std::mutex> lck(mtx);
         cv.wait(lck, [&] { return cv2xConfigStatusUpdated; });
     }
-    if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
-        cv2xConfigStatus ||
-        telux::common::ServiceStatus::SERVICE_AVAILABLE !=
-        cv2xConfig_->getServiceStatus()) {
+    if (telux::common::ServiceStatus::SERVICE_AVAILABLE != cv2xConfigStatus
+        || telux::common::ServiceStatus::SERVICE_AVAILABLE != cv2xConfig_->getServiceStatus()) {
         cout << "Failed to initialize Cv2xConfig" << endl;
         return EXIT_FAILURE;
     }
@@ -173,20 +171,15 @@ int Cv2xConfigApp::cv2xInit() {
 }
 
 void Cv2xConfigApp::consoleInit() {
-    shared_ptr<ConsoleAppCommand> retrieveCmd
-        = make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-        "1", "Retrieve_Config", {},
-        std::bind(&Cv2xConfigApp::retrieveConfigCommand, this)));
+    shared_ptr<ConsoleAppCommand> retrieveCmd = make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+        "1", "Retrieve_Config", {}, std::bind(&Cv2xConfigApp::retrieveConfigCommand, this)));
 
-    shared_ptr<ConsoleAppCommand> updateCmd
-        = make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-        "2", "Update_Config", {},
-        std::bind(&Cv2xConfigApp::updateConfigCommand, this)));
+    shared_ptr<ConsoleAppCommand> updateCmd = make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+        "2", "Update_Config", {}, std::bind(&Cv2xConfigApp::updateConfigCommand, this)));
 
     shared_ptr<ConsoleAppCommand> enforceExpirationCmd
-        = make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-        "3", "Enforce_Config_Expiration", {},
-        std::bind(&Cv2xConfigApp::enforceConfigExpirationCommand, this)));
+        = make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "Enforce_Config_Expiration", {},
+            std::bind(&Cv2xConfigApp::enforceConfigExpirationCommand, this)));
 
     std::vector<shared_ptr<ConsoleAppCommand>> commandsList
         = {retrieveCmd, updateCmd, enforceExpirationCmd};
@@ -198,19 +191,17 @@ int Cv2xConfigApp::retrieveConfigFile(string path) {
     cout << "Retrieving config file..." << endl;
 
     promise<ErrorCode> prom;
-    if (Status::SUCCESS != cv2xConfig_->retrieveConfiguration(path,
-                                                              [&prom](ErrorCode code)
-                                                              {
-                                                                  prom.set_value(code);
-                                                              })) {
+    if (Status::SUCCESS != cv2xConfig_->retrieveConfiguration(path, [&prom](ErrorCode code) {
+            prom.set_value(code);
+        })) {
         cout << "Error : Retrieve config file failed!" << endl;
         return EXIT_FAILURE;
     }
 
     auto res = prom.get_future().get();
     if (ErrorCode::SUCCESS != res) {
-        cout << "Error : Retrieve config file failed with code: "
-            << static_cast<int>(res) << "!" << endl;
+        cout << "Error : Retrieve config file failed with code: " << static_cast<int>(res) << "!"
+             << endl;
         return EXIT_FAILURE;
     }
 
@@ -238,19 +229,17 @@ int Cv2xConfigApp::updateConfigFile(string path) {
     cout << "Updating config file..." << endl;
 
     promise<ErrorCode> prom;
-    if (Status::SUCCESS != cv2xConfig_->updateConfiguration(path,
-                                                            [&prom](ErrorCode code)
-                                                            {
-                                                                prom.set_value(code);
-                                                            })) {
+    if (Status::SUCCESS != cv2xConfig_->updateConfiguration(path, [&prom](ErrorCode code) {
+            prom.set_value(code);
+        })) {
         cout << "Error : Update config file failed!" << endl;
         return EXIT_FAILURE;
     }
 
     auto res = prom.get_future().get();
     if (ErrorCode::SUCCESS != res) {
-        cout << "Error : Update config file failed with code: "
-            << static_cast<int>(res) << "!" << endl;
+        cout << "Error : Update config file failed with code: " << static_cast<int>(res) << "!"
+             << endl;
         return EXIT_FAILURE;
     }
 
@@ -266,7 +255,7 @@ void Cv2xConfigApp::updateConfigCommand() {
     configFilePath = CONFIG_FILE_PATH + configFileName;
 
     if (EXIT_SUCCESS == updateConfigFile(configFilePath)) {
-        cout << "Update config file successfully." <<  endl;
+        cout << "Update config file successfully." << endl;
     }
 
     displayMenu();
@@ -298,7 +287,7 @@ int Cv2xConfigApp::generateExpiryConfigFile(string configFilePath, string expiry
     string line;
     input.unsetf(ifstream::skipws);
 
-    while(!input.eof()) {
+    while (!input.eof()) {
         getline(input, line);
 
         // not copy the line including Expiration tag
@@ -309,7 +298,7 @@ int Cv2xConfigApp::generateExpiryConfigFile(string configFilePath, string expiry
 
         if (string::npos != line.find("<V2XoverPC5>")) {
             // insert expiry item to the next line
-            int len = sizeof("<Expiration>") + 3; // add whitespaces
+            int len = sizeof("<Expiration>") + 3;  // add whitespaces
             output << setw(len) << "<Expiration>" << timestamp << "</Expiration>" << '\n';
         }
     }
@@ -324,9 +313,9 @@ int Cv2xConfigApp::enforceConfigExpiration() {
 
     // generate expiry config file based on the retrieved config file
     // and then update the exipry config file
-    if (EXIT_SUCCESS == retrieveConfigFile(CONFIG_FILE) and
-        EXIT_SUCCESS == generateExpiryConfigFile(CONFIG_FILE, EXPIRY_FILE) and
-        EXIT_SUCCESS == updateConfigFile(EXPIRY_FILE)) {
+    if (EXIT_SUCCESS == retrieveConfigFile(CONFIG_FILE)
+        and EXIT_SUCCESS == generateExpiryConfigFile(CONFIG_FILE, EXPIRY_FILE)
+        and EXIT_SUCCESS == updateConfigFile(EXPIRY_FILE)) {
         auto sp = std::dynamic_pointer_cast<ConfigListener>(configListener_);
         if (sp) {
             // wait until receiving config expiry indication
@@ -362,12 +351,12 @@ int main(int argc, char *argv[]) {
     shared_ptr<Cv2xConfigApp> cv2xConfig = nullptr;
     try {
         cv2xConfig = make_shared<Cv2xConfigApp>();
-    } catch (std::bad_alloc & e) {
+    } catch (std::bad_alloc &e) {
         cout << "Error: Create cv2xConfig failed!" << endl;
         return EXIT_FAILURE;
     }
 
-    if (EXIT_SUCCESS != cv2xConfig->initialize()){
+    if (EXIT_SUCCESS != cv2xConfig->initialize()) {
         cout << "Error: Initialization failed!" << endl;
         return EXIT_FAILURE;
     }

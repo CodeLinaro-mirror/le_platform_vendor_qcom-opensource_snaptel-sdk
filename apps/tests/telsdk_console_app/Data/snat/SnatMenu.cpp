@@ -26,9 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -50,8 +51,8 @@ using namespace std;
 
 SnatMenu::SnatMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
-    snatManager_ = nullptr;
-    menuOptionsAdded_ = false;
+    snatManager_            = nullptr;
+    menuOptionsAdded_       = false;
     subSystemStatusUpdated_ = false;
 }
 
@@ -60,24 +61,24 @@ SnatMenu::~SnatMenu() {
 
 bool SnatMenu::init() {
     telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
-    subSystemStatusUpdated_ = false;
+    subSystemStatusUpdated_                      = false;
     if (snatManager_ == nullptr) {
-        auto initCb = std::bind(&SnatMenu::onInitComplete, this, std::placeholders::_1);
+        auto initCb       = std::bind(&SnatMenu::onInitComplete, this, std::placeholders::_1);
         auto &dataFactory = telux::data::DataFactory::getInstance();
-        //Try both local and remote operation type. If operation type is not supported,
-        // nullptr is returned. snatManager_ pointer will be associated with valid return pointer
-        auto localSnatMgr = dataFactory.getNatManager(
-            telux::data::OperationType::DATA_LOCAL, initCb);
+        // Try both local and remote operation type. If operation type is not supported,
+        //  nullptr is returned. snatManager_ pointer will be associated with valid return pointer
+        auto localSnatMgr
+            = dataFactory.getNatManager(telux::data::OperationType::DATA_LOCAL, initCb);
         if (localSnatMgr) {
             snatManager_ = localSnatMgr;
         }
-        auto remoteSnatMgr = dataFactory.getNatManager(
-            telux::data::OperationType::DATA_REMOTE, initCb);
+        auto remoteSnatMgr
+            = dataFactory.getNatManager(telux::data::OperationType::DATA_REMOTE, initCb);
         if (remoteSnatMgr) {
             snatManager_ = remoteSnatMgr;
         }
-        if(snatManager_ == nullptr ) {
-            //Return immediately
+        if (snatManager_ == nullptr) {
+            // Return immediately
             std::cout << "\nError encountered in initializing SNAT Manager" << std::endl;
             return false;
         }
@@ -85,20 +86,19 @@ bool SnatMenu::init() {
     }
     {
         std::unique_lock<std::mutex> lck(mtx_);
-        //Snat Manager is guaranteed to be valid pointer at this point. If manager initialization
-        //fails and factory invalidated it's own pointer to snat manager before reaching this point,
-        //reference count of Snat manager should still be 1
+        // Snat Manager is guaranteed to be valid pointer at this point. If manager initialization
+        // fails and factory invalidated it's own pointer to snat manager before reaching this
+        // point, reference count of Snat manager should still be 1
         telux::common::ServiceStatus subSystemStatus = snatManager_->getServiceStatus();
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
             std::cout << "\nInitializing SNAT Manager, Please wait ..." << std::endl;
-            cv_.wait(lck, [this]{return this->subSystemStatusUpdated_;});
+            cv_.wait(lck, [this] { return this->subSystemStatusUpdated_; });
             subSystemStatus = snatManager_->getServiceStatus();
         }
-        //At this point, initialization should be either AVAILABLE or FAIL
+        // At this point, initialization should be either AVAILABLE or FAIL
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << "\nSNAT Manager is ready" << std::endl;
-        }
-        else {
+        } else {
             std::cout << "\nSNAT Manager initialization failed" << std::endl;
             snatManager_ = nullptr;
             return false;
@@ -114,8 +114,9 @@ bool SnatMenu::init() {
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "remove_static_nat", {},
                 std::bind(&SnatMenu::removeStaticNatEntry, this, std::placeholders::_1)));
         std::shared_ptr<ConsoleAppCommand> reqStaticNatEntries
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "request_static_nat_entries",
-                {}, std::bind(&SnatMenu::requestStaticNatEntries, this, std::placeholders::_1)));
+            = std::make_shared<ConsoleAppCommand>(
+                ConsoleAppCommand("3", "request_static_nat_entries", {},
+                    std::bind(&SnatMenu::requestStaticNatEntries, this, std::placeholders::_1)));
 
         std::shared_ptr<ConsoleAppCommand> addStaticNatEntry_V1
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "add_static_nat_v1", {},
@@ -124,13 +125,13 @@ bool SnatMenu::init() {
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "remove_static_nat_v1", {},
                 std::bind(&SnatMenu::removeStaticNatEntry_V1, this, std::placeholders::_1)));
         std::shared_ptr<ConsoleAppCommand> reqStaticNatEntries_V1
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6",
-                        "request_static_nat_entries_v1",
-                {}, std::bind(&SnatMenu::requestStaticNatEntries_V1, this, std::placeholders::_1)));
+            = std::make_shared<ConsoleAppCommand>(
+                ConsoleAppCommand("6", "request_static_nat_entries_v1", {},
+                    std::bind(&SnatMenu::requestStaticNatEntries_V1, this, std::placeholders::_1)));
 
-        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {addStaticNatEntry,
-            removeStaticNatEntry, reqStaticNatEntries, addStaticNatEntry_V1,
-            removeStaticNatEntry_V1, reqStaticNatEntries_V1};
+        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList
+            = {addStaticNatEntry, removeStaticNatEntry, reqStaticNatEntries, addStaticNatEntry_V1,
+                removeStaticNatEntry_V1, reqStaticNatEntries_V1};
         addCommands(commandsList);
     }
     ConsoleApp::displayMenu();
@@ -147,7 +148,7 @@ void SnatMenu::addStaticNatEntry(std::vector<std::string> inputCommand) {
     telux::common::Status retStat;
 
     std::cout << "Add Static NAT entry\n";
-    telux::data::BackhaulInfo bhInfo {};
+    telux::data::BackhaulInfo bhInfo{};
     DataUtils::populateBackhaulInfo(bhInfo);
 
     char delimiter = '\n';
@@ -159,7 +160,7 @@ void SnatMenu::addStaticNatEntry(std::vector<std::string> inputCommand) {
     std::cout << "Enter Protocol (TCP, UDP, ICMP, ESP): ";
     std::getline(std::cin, protoStr, delimiter);
 
-    int privPort = 0 , globPort = 0;
+    int privPort = 0, globPort = 0;
     if (protoStr != "ICMP" && protoStr != "ESP") {
         std::cout << "Enter Private port: ";
         std::cin >> privPort;
@@ -172,10 +173,10 @@ void SnatMenu::addStaticNatEntry(std::vector<std::string> inputCommand) {
 
     telux::data::IpProtocol proto = DataUtils::getProtcol(protoStr);
     struct NatConfig natConfig;
-    natConfig.addr = privIpAddr;
-    natConfig.port = (uint16_t)privPort;
+    natConfig.addr       = privIpAddr;
+    natConfig.port       = (uint16_t)privPort;
     natConfig.globalPort = (uint16_t)globPort;
-    natConfig.proto = (uint8_t)proto;
+    natConfig.proto      = (uint8_t)proto;
 
     // Callback
     auto respCb = [](telux::common::ErrorCode error) {
@@ -195,7 +196,7 @@ void SnatMenu::removeStaticNatEntry(std::vector<std::string> inputCommand) {
     std::cout << "Remove Static NAT entry\n";
     telux::common::Status retStat;
 
-    telux::data::BackhaulInfo bhInfo {};
+    telux::data::BackhaulInfo bhInfo{};
     DataUtils::populateBackhaulInfo(bhInfo);
 
     char delimiter = '\n';
@@ -207,7 +208,7 @@ void SnatMenu::removeStaticNatEntry(std::vector<std::string> inputCommand) {
     std::cout << "Enter Protocol (TCP, UDP, ICMP, ESP): ";
     std::getline(std::cin, protoStr, delimiter);
 
-    int privPort = 0 , globPort = 0;
+    int privPort = 0, globPort = 0;
     if (protoStr != "ICMP" && protoStr != "ESP") {
         std::cout << "Enter Private port: ";
         std::cin >> privPort;
@@ -220,10 +221,10 @@ void SnatMenu::removeStaticNatEntry(std::vector<std::string> inputCommand) {
 
     telux::data::IpProtocol proto = DataUtils::getProtcol(protoStr);
     struct NatConfig natConfig;
-    natConfig.addr = privIpAddr;
-    natConfig.port = (uint16_t)privPort;
+    natConfig.addr       = privIpAddr;
+    natConfig.port       = (uint16_t)privPort;
     natConfig.globalPort = (uint16_t)globPort;
-    natConfig.proto = (uint8_t)proto;
+    natConfig.proto      = (uint8_t)proto;
 
     // Callback
     auto respCb = [](telux::common::ErrorCode error) {
@@ -243,7 +244,7 @@ void SnatMenu::requestStaticNatEntries(std::vector<std::string> inputCommand) {
     telux::common::Status retStat;
 
     std::cout << "List Static NAT entries\n";
-    telux::data::BackhaulInfo bhInfo {};
+    telux::data::BackhaulInfo bhInfo{};
     DataUtils::populateBackhaulInfo(bhInfo);
 
     auto respCb = [](const std::vector<NatConfig> &snatEntries, telux::common::ErrorCode error) {
@@ -292,7 +293,7 @@ void SnatMenu::addStaticNatEntry_V1(std::vector<std::string> inputCommand) {
     std::cout << "Enter Protocol (TCP, UDP, ICMP, ESP): ";
     std::getline(std::cin, protoStr, delimiter);
 
-    int privPort = 0 , globPort = 0;
+    int privPort = 0, globPort = 0;
     if (protoStr != "ICMP" && protoStr != "ESP") {
         std::cout << "Enter Private port: ";
         std::cin >> privPort;
@@ -305,10 +306,10 @@ void SnatMenu::addStaticNatEntry_V1(std::vector<std::string> inputCommand) {
 
     telux::data::IpProtocol proto = DataUtils::getProtcol(protoStr);
     struct NatConfig natConfig;
-    natConfig.addr = privIpAddr;
-    natConfig.port = (uint16_t)privPort;
+    natConfig.addr       = privIpAddr;
+    natConfig.port       = (uint16_t)privPort;
     natConfig.globalPort = (uint16_t)globPort;
-    natConfig.proto = (uint8_t)proto;
+    natConfig.proto      = (uint8_t)proto;
 
     // Callback
     auto respCb = [](telux::common::ErrorCode error) {
@@ -320,8 +321,8 @@ void SnatMenu::addStaticNatEntry_V1(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    retStat = snatManager_->addStaticNatEntry(profileId, natConfig, respCb,
-            static_cast<SlotId>(slotId));
+    retStat = snatManager_->addStaticNatEntry(
+        profileId, natConfig, respCb, static_cast<SlotId>(slotId));
     Utils::printStatus(retStat);
 }
 
@@ -347,7 +348,7 @@ void SnatMenu::removeStaticNatEntry_V1(std::vector<std::string> inputCommand) {
     std::cout << "Enter Protocol (TCP, UDP, ICMP, ESP): ";
     std::getline(std::cin, protoStr, delimiter);
 
-    int privPort = 0 , globPort = 0;
+    int privPort = 0, globPort = 0;
     if (protoStr != "ICMP" && protoStr != "ESP") {
         std::cout << "Enter Private port: ";
         std::cin >> privPort;
@@ -360,10 +361,10 @@ void SnatMenu::removeStaticNatEntry_V1(std::vector<std::string> inputCommand) {
 
     telux::data::IpProtocol proto = DataUtils::getProtcol(protoStr);
     struct NatConfig natConfig;
-    natConfig.addr = privIpAddr;
-    natConfig.port = (uint16_t)privPort;
+    natConfig.addr       = privIpAddr;
+    natConfig.port       = (uint16_t)privPort;
     natConfig.globalPort = (uint16_t)globPort;
-    natConfig.proto = (uint8_t)proto;
+    natConfig.proto      = (uint8_t)proto;
 
     // Callback
     auto respCb = [](telux::common::ErrorCode error) {

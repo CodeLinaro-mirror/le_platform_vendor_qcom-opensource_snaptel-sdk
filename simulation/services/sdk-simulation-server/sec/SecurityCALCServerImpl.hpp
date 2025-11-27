@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef SECURITY_CALC_SERVER_IMPL_HPP
@@ -43,39 +43,33 @@ class SecurityCALCServerImpl : public ::securityStub::SecurityCALCService::Servi
     SecurityCALCServerImpl();
     ~SecurityCALCServerImpl();
 
-    grpc::Status Init(::grpc::ServerContext* context,
-        const ::google::protobuf::Empty* request,
-        ::commonStub::ErrorCodeMsg* response) override;
+    grpc::Status Init(::grpc::ServerContext *context, const ::google::protobuf::Empty *request,
+        ::commonStub::ErrorCodeMsg *response) override;
 
-    grpc::Status DeInit(::grpc::ServerContext* context,
-        const ::google::protobuf::Empty* request,
-        ::commonStub::ErrorCodeMsg* response) override;
+    grpc::Status DeInit(::grpc::ServerContext *context, const ::google::protobuf::Empty *request,
+        ::commonStub::ErrorCodeMsg *response) override;
 
-    grpc::Status RegisterClient(::grpc::ServerContext* context,
-        const ::google::protobuf::Empty* request,
-        ::commonStub::ErrorCodeMsg* response) override;
+    grpc::Status RegisterClient(::grpc::ServerContext *context,
+        const ::google::protobuf::Empty *request, ::commonStub::ErrorCodeMsg *response) override;
 
-    grpc::Status DeregisterClient(::grpc::ServerContext* context,
-        const ::google::protobuf::Empty* request,
-        ::commonStub::ErrorCodeMsg* response) override;
+    grpc::Status DeregisterClient(::grpc::ServerContext *context,
+        const ::google::protobuf::Empty *request, ::commonStub::ErrorCodeMsg *response) override;
 
-    grpc::Status GetCapacity(::grpc::ServerContext* context,
-        const ::google::protobuf::Empty* request,
-        ::securityStub::Capacity* response) override;
+    grpc::Status GetCapacity(::grpc::ServerContext *context,
+        const ::google::protobuf::Empty *request, ::securityStub::Capacity *response) override;
 
-    grpc::Status GetOperationsCount(::grpc::ServerContext* context,
-        const ::google::protobuf::Empty* request,
-        ::securityStub::LoadCount* response) override;
+    grpc::Status GetOperationsCount(::grpc::ServerContext *context,
+        const ::google::protobuf::Empty *request, ::securityStub::LoadCount *response) override;
 
     void onEventUpdate(::eventService::UnsolicitedEvent event) override;
 
  private:
-    const uint32_t NISTP384_MAX_CAPACITY = 1992;
-    const uint32_t BP384_MAX_CAPACITY = 1004;
-    const uint32_t COMMON_MAX_CAPACITY = 3000;
-    const char * const CALC_FILTER = "calc";
-    const char * const CALC_DEFAULT_DELIMITER = " ";
-    const char * const CALC_API_JSON_FILE = "api/sec/ICAControlManager.json";
+    const uint32_t NISTP384_MAX_CAPACITY     = 1992;
+    const uint32_t BP384_MAX_CAPACITY        = 1004;
+    const uint32_t COMMON_MAX_CAPACITY       = 3000;
+    const char *const CALC_FILTER            = "calc";
+    const char *const CALC_DEFAULT_DELIMITER = " ";
+    const char *const CALC_API_JSON_FILE     = "api/sec/ICAControlManager.json";
 
     uint32_t clientsCount_ = 0;
     bool isServiceInitialized_{false};
@@ -99,4 +93,4 @@ class SecurityCALCServerImpl : public ::securityStub::SecurityCALCService::Servi
     void handleCapacityEvent(std::string eventParams);
 };
 
-#endif // SECURITY_CALC_SERVER_IMPL_HPP
+#endif  // SECURITY_CALC_SERVER_IMPL_HPP

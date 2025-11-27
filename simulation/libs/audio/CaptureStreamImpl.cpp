@@ -1,8 +1,7 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 
 #include "common/Logger.hpp"
 
@@ -12,9 +11,9 @@
 namespace telux {
 namespace audio {
 
-CaptureStreamImpl::CaptureStreamImpl(uint32_t streamId, uint32_t readMinSize,
-        uint32_t readMaxSize, std::shared_ptr<ICommunicator> transportClient)
-        : AudioStreamImpl(streamId, StreamType::CAPTURE, transportClient) {
+CaptureStreamImpl::CaptureStreamImpl(uint32_t streamId, uint32_t readMinSize, uint32_t readMaxSize,
+    std::shared_ptr<ICommunicator> transportClient)
+   : AudioStreamImpl(streamId, StreamType::CAPTURE, transportClient) {
 
     readMinSize_ = readMinSize;
     readMaxSize_ = readMaxSize;
@@ -31,9 +30,8 @@ CaptureStreamImpl::~CaptureStreamImpl() {
 std::shared_ptr<IStreamBuffer> CaptureStreamImpl::getStreamBuffer() {
 
     try {
-        return std::make_shared<StreamBufferImpl>(readMinSize_, readMaxSize_,
-            0, readMinSize_);
-    } catch (const std::exception& e) {
+        return std::make_shared<StreamBufferImpl>(readMinSize_, readMaxSize_, 0, readMinSize_);
+    } catch (const std::exception &e) {
         LOG(ERROR, __FUNCTION__, " can't create StreamBufferImpl");
     }
 
@@ -43,8 +41,8 @@ std::shared_ptr<IStreamBuffer> CaptureStreamImpl::getStreamBuffer() {
 /*
  * Reads audio data from the audio device associated with this stream.
  */
-telux::common::Status CaptureStreamImpl::read(std::shared_ptr<IStreamBuffer> buffer,
-        uint32_t numBytesToRead, ReadResponseCb callback) {
+telux::common::Status CaptureStreamImpl::read(
+    std::shared_ptr<IStreamBuffer> buffer, uint32_t numBytesToRead, ReadResponseCb callback) {
 
     telux::common::Status status;
     AudioUserData *audioUserData = nullptr;
@@ -86,7 +84,7 @@ telux::common::Status CaptureStreamImpl::read(std::shared_ptr<IStreamBuffer> buf
     transportBuffer = audioUserData->streamBuffer->getTransportBuffer();
 
     status = transportClient_->read(streamId_, numBytesToRead, transportBuffer,
-                downcasted_shared_from_this<CaptureStreamImpl>(), audioUserData);
+        downcasted_shared_from_this<CaptureStreamImpl>(), audioUserData);
     if (status != telux::common::Status::SUCCESS) {
         LOG(ERROR, __FUNCTION__, "can't read stream, err ", static_cast<int>(status));
         if (callback) {
@@ -103,7 +101,7 @@ telux::common::Status CaptureStreamImpl::read(std::shared_ptr<IStreamBuffer> buf
  * invocation, it calls that callback method otherwise simply drops the result.
  */
 void CaptureStreamImpl::onReadResult(telux::common::ErrorCode ec, uint32_t streamId,
-        uint32_t numBytesActuallyRead, AudioUserData *audioUserData) {
+    uint32_t numBytesActuallyRead, AudioUserData *audioUserData) {
 
     std::shared_ptr<telux::common::ICommandCallback> resultListener;
 

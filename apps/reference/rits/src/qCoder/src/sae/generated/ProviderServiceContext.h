@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_ProviderServiceContext_H_
-#define	_ProviderServiceContext_H_
-
+#ifndef _ProviderServiceContext_H_
+#define _ProviderServiceContext_H_
 
 #include <asn_application.h>
 
@@ -22,11 +21,11 @@ extern "C" {
 
 /* ProviderServiceContext */
 typedef struct ProviderServiceContext {
-	BIT_STRING_t	 fillBit;
-	OCTET_STRING_t	 psc;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    BIT_STRING_t fillBit;
+    OCTET_STRING_t psc;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } ProviderServiceContext_t;
 
 /* Implementation */
@@ -36,5 +35,5 @@ extern asn_TYPE_descriptor_t asn_DEF_ProviderServiceContext;
 }
 #endif
 
-#endif	/* _ProviderServiceContext_H_ */
+#endif /* _ProviderServiceContext_H_ */
 #include <asn_internal.h>

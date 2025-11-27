@@ -26,13 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021, 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
- */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 #ifndef SAPCARDSERVICESMENU_HPP
 #define SAPCARDSERVICESMENU_HPP
@@ -47,32 +46,32 @@
 #include "MySapCardListener.hpp"
 
 class SapCardServicesMenu : public ConsoleApp {
-public:
-   SapCardServicesMenu(std::string appName, std::string cursor);
-   ~SapCardServicesMenu();
-   bool init();
+ public:
+    SapCardServicesMenu(std::string appName, std::string cursor);
+    ~SapCardServicesMenu();
+    bool init();
 
-private:
-   void openSapConnection(std::vector<std::string> userInput);
-   void getSapAtr(std::vector<std::string> userInput);
-   void requestSapState(std::vector<std::string> userInput);
-   void getState(std::vector<std::string> userInput);
-   void transmitSapApdu(std::vector<std::string> userInput);
-   void sapSimPowerOff(std::vector<std::string> userInput);
-   void sapSimPowerOn(std::vector<std::string> userInput);
-   void sapSimReset(std::vector<std::string> userInput);
-   void sapCardReaderStatus(std::vector<std::string> userInput);
-   void closeSapConnection(std::vector<std::string> userInput);
-   void selectSimSlot(std::vector<std::string> userInput);
-   void logSapState(telux::tel::SapState sapState);
+ private:
+    void openSapConnection(std::vector<std::string> userInput);
+    void getSapAtr(std::vector<std::string> userInput);
+    void requestSapState(std::vector<std::string> userInput);
+    void getState(std::vector<std::string> userInput);
+    void transmitSapApdu(std::vector<std::string> userInput);
+    void sapSimPowerOff(std::vector<std::string> userInput);
+    void sapSimPowerOn(std::vector<std::string> userInput);
+    void sapSimReset(std::vector<std::string> userInput);
+    void sapCardReaderStatus(std::vector<std::string> userInput);
+    void closeSapConnection(std::vector<std::string> userInput);
+    void selectSimSlot(std::vector<std::string> userInput);
+    void logSapState(telux::tel::SapState sapState);
 
-   std::shared_ptr<telux::tel::ISapCardListener> sapCardListener_ = nullptr;
-   std::shared_ptr<MySapCommandResponseCallback> mySapCmdResponseCb_ = nullptr;
-   std::shared_ptr<MyCardReaderCallback> mySapCardReaderCb_ = nullptr;
-   std::shared_ptr<MySapTransmitApduResponseCallback> myTransmitApduResponseCb_ = nullptr;
-   std::shared_ptr<MyAtrResponseCallback> myAtrCb_ = nullptr;
-   int slot_ = DEFAULT_SLOT_ID;
-   std::vector<std::shared_ptr<telux::tel::ISapCardManager>> sapManagers_;
+    std::shared_ptr<telux::tel::ISapCardListener> sapCardListener_               = nullptr;
+    std::shared_ptr<MySapCommandResponseCallback> mySapCmdResponseCb_            = nullptr;
+    std::shared_ptr<MyCardReaderCallback> mySapCardReaderCb_                     = nullptr;
+    std::shared_ptr<MySapTransmitApduResponseCallback> myTransmitApduResponseCb_ = nullptr;
+    std::shared_ptr<MyAtrResponseCallback> myAtrCb_                              = nullptr;
+    int slot_                                                                    = DEFAULT_SLOT_ID;
+    std::vector<std::shared_ptr<telux::tel::ISapCardManager>> sapManagers_;
 };
 
 #endif  // SAPCARDSERVICESMENU_HPP

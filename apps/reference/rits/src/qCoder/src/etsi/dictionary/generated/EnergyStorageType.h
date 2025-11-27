@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_EnergyStorageType_H_
-#define	_EnergyStorageType_H_
-
+#ifndef _EnergyStorageType_H_
+#define _EnergyStorageType_H_
 
 #include <asn_application.h>
 
@@ -20,17 +19,17 @@ extern "C" {
 
 /* Dependencies */
 typedef enum EnergyStorageType {
-	EnergyStorageType_hydrogenStorage	= 0,
-	EnergyStorageType_electricEnergyStorage	= 1,
-	EnergyStorageType_liquidPropaneGas	= 2,
-	EnergyStorageType_compressedNaturalGas	= 3,
-	EnergyStorageType_diesel	= 4,
-	EnergyStorageType_gasoline	= 5,
-	EnergyStorageType_ammonia	= 6
+    EnergyStorageType_hydrogenStorage       = 0,
+    EnergyStorageType_electricEnergyStorage = 1,
+    EnergyStorageType_liquidPropaneGas      = 2,
+    EnergyStorageType_compressedNaturalGas  = 3,
+    EnergyStorageType_diesel                = 4,
+    EnergyStorageType_gasoline              = 5,
+    EnergyStorageType_ammonia               = 6
 } e_EnergyStorageType;
 
 /* EnergyStorageType */
-typedef BIT_STRING_t	 EnergyStorageType_t;
+typedef BIT_STRING_t EnergyStorageType_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_EnergyStorageType;
@@ -48,5 +47,5 @@ per_type_encoder_f EnergyStorageType_encode_uper;
 }
 #endif
 
-#endif	/* _EnergyStorageType_H_ */
+#endif /* _EnergyStorageType_H_ */
 #include <asn_internal.h>

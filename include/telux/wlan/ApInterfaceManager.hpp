@@ -28,14 +28,14 @@ class IApListener;
 /** @addtogroup telematics_wlan_ap
  * @{ */
 
-#define INVALID_AP_ID    0
+#define INVALID_AP_ID 0
 
 /**
  * AP Interworking Information
  */
 enum class ApInterworking {
-    INTERNET_ACCESS     = 0,   /**<  AP with internet access only - No LAN access   */
-    FULL_ACCESS         = 1    /**<  AP Can Access LAN and Internet                 */
+    INTERNET_ACCESS = 0, /**<  AP with internet access only - No LAN access   */
+    FULL_ACCESS     = 1 /**<  AP Can Access LAN and Internet                 */
 };
 
 /**
@@ -52,128 +52,128 @@ enum class ApDeviceConnectionEvent {
  * Wlan Security Mode
  */
 enum class SecMode {
-    OPEN ,                         /**<  Open System Architecture    */
-    WEP  ,                         /**<  Wired Equivalent Privacy    */
-    WPA  ,                         /**<  Wi-Fi Protected Access      */
-    WPA2 ,                         /**<  Wi-Fi Protected Access II   */
-    WPA3 ,                         /**<  Wi-Fi Protected Access III  */
+    OPEN, /**<  Open System Architecture    */
+    WEP, /**<  Wired Equivalent Privacy    */
+    WPA, /**<  Wi-Fi Protected Access      */
+    WPA2, /**<  Wi-Fi Protected Access II   */
+    WPA3, /**<  Wi-Fi Protected Access III  */
 };
 
 /**
  * Wlan Authentication Method
  */
 enum class SecAuth {
-    NONE    ,                      /**<  No Authentication - Open System                      */
-    PSK     ,                      /**<  Pre-Shared Key                                       */
-    EAP_SIM,                       /**<  EAP - Subscriber Identity Module                     */
-    EAP_AKA,                       /**<  EAP - Authentication and Key Agreement               */
-    EAP_LEAP,                      /**<  EAP - Lightweight Extensible Authentication Protocol */
-    EAP_TLS ,                      /**<  EAP - Transport Layer Security                       */
-    EAP_TTLS,                      /**<  EAP - Tunneled Transport Layer Security              */
-    EAP_PEAP,                      /**<  EAP - Protected EAP                                  */
-    EAP_FAST,                      /**<  EAP - Flexible Authentication via Secure Tunneling   */
-    EAP_PSK ,                      /**<  EAP - Pre-Shared Key                                 */
-    SAE,                           /**< Simultaneous Authentication of Equals                 */
+    NONE, /**<  No Authentication - Open System                      */
+    PSK, /**<  Pre-Shared Key                                       */
+    EAP_SIM, /**<  EAP - Subscriber Identity Module                     */
+    EAP_AKA, /**<  EAP - Authentication and Key Agreement               */
+    EAP_LEAP, /**<  EAP - Lightweight Extensible Authentication Protocol */
+    EAP_TLS, /**<  EAP - Transport Layer Security                       */
+    EAP_TTLS, /**<  EAP - Tunneled Transport Layer Security              */
+    EAP_PEAP, /**<  EAP - Protected EAP                                  */
+    EAP_FAST, /**<  EAP - Flexible Authentication via Secure Tunneling   */
+    EAP_PSK, /**<  EAP - Pre-Shared Key                                 */
+    SAE, /**< Simultaneous Authentication of Equals                 */
 };
 
 /**
  * Wlan Encryption Method
  */
 enum class SecEncrypt {
-    RC4 ,                          /**<  Rivest Cipher 4                   */
-    TKIP,                          /**<  Temporal Key Integrity Protocol   */
-    AES ,                          /**<  Advanced Encryption Standard      */
-    GCMP,                          /**<  Galois/Counter Mode Protocol      */
+    RC4, /**<  Rivest Cipher 4                   */
+    TKIP, /**<  Temporal Key Integrity Protocol   */
+    AES, /**<  Advanced Encryption Standard      */
+    GCMP, /**<  Galois/Counter Mode Protocol      */
 };
 
 /**
  * AP Network Access Type
  */
 enum class NetAccessType {
-    PRIVATE = 0            ,      /**< Private Network                    */
-    PRIVATE_WITH_GUEST     ,      /**< Private network with guest access  */
-    CHARGEABLE_PUBLIC      ,      /**< Chargeable public network          */
-    FREE_PUBLIC            ,      /**< Free public network                */
-    PERSONAL_DEVICE        ,      /**< Personal device network            */
-    EMERGENCY_SERVICES_ONLY,      /**< Emergency services only network    */
-    TEST_OR_EXPERIMENTAL   ,      /**< Test or experimental               */
-    WILDCARD               ,      /**< Wildcard                           */
+    PRIVATE = 0, /**< Private Network                    */
+    PRIVATE_WITH_GUEST, /**< Private network with guest access  */
+    CHARGEABLE_PUBLIC, /**< Chargeable public network          */
+    FREE_PUBLIC, /**< Free public network                */
+    PERSONAL_DEVICE, /**< Personal device network            */
+    EMERGENCY_SERVICES_ONLY, /**< Emergency services only network    */
+    TEST_OR_EXPERIMENTAL, /**< Test or experimental               */
+    WILDCARD, /**< Wildcard                           */
 };
 
 /**
  * Wlan AP Venue Info as defined in IEEE Std 802.11u-2011, 7.3.1.34
  */
 struct ApVenueInfo {
-    int type;                   /**< Venue Type      */
-    int group;                  /**< Venue Group     */
+    int type; /**< Venue Type      */
+    int group; /**< Venue Group     */
 };
 
 /**
  * AP Security
  */
 struct ApSecurity {
-    SecMode     mode;               /**< Security mode          */
-    SecAuth     auth;               /**< Authorization method   */
-    SecEncrypt   encrypt;           /**< Encryption method      */
+    SecMode mode; /**< Security mode          */
+    SecAuth auth; /**< Authorization method   */
+    SecEncrypt encrypt; /**< Encryption method      */
 };
 
 /**
  * AP Element Info
  */
 struct ApElementInfoConfig {
-    bool    isEnabled;
-    bool isInterworkingEnabled;      /**< Interworking Service enablement                      */
-    NetAccessType netAccessType;     /**< Network Access Type                                  */
-    bool internet;                   /**< Whether network provide connectivity to internet     */
-    bool asra;                       /**< Additional step required for access                  */
-    bool esr;                        /**< Emergency services reachable                         */
-    bool uesa;                       /**< Unauthenticated emergency service accessible         */
-    uint8_t venueGroup;              /**< Venue group                                          */
-    uint8_t venueType;               /**< Venue type                                           */
-    std::string hessid;              /**< Homogeneous ESS identifier                           */
-    std::string vendorElements;      /**< Vendor elements for Beacon and Probe Response frames */
-    std::string assocRespElements;   /**< Vendor elements for (Re)Association Response frames  */
+    bool isEnabled;
+    bool isInterworkingEnabled; /**< Interworking Service enablement                      */
+    NetAccessType netAccessType; /**< Network Access Type                                  */
+    bool internet; /**< Whether network provide connectivity to internet     */
+    bool asra; /**< Additional step required for access                  */
+    bool esr; /**< Emergency services reachable                         */
+    bool uesa; /**< Unauthenticated emergency service accessible         */
+    uint8_t venueGroup; /**< Venue group                                          */
+    uint8_t venueType; /**< Venue type                                           */
+    std::string hessid; /**< Homogeneous ESS identifier                           */
+    std::string vendorElements; /**< Vendor elements for Beacon and Probe Response frames */
+    std::string assocRespElements; /**< Vendor elements for (Re)Association Response frames  */
 };
 
 /**
  * Ap Network Configuration
  */
 struct ApNetConfig {
-    ApInfo               info;              /**< AP type                                          */
-    std::string          ssid;              /**< SSID for AP                                      */
-    bool                 isVisible;         /**< AP broadcast SSID                                */
-    ApElementInfoConfig  elementInfoConfig; /**< AP broadcast it's capabilities (Such as CarPlay) */
-    ApInterworking       interworking;      /**< AP network access (internet/local)               */
-    ApSecurity           apSecurity;        /**< AP Security settings                             */
-    std::string          passPhrase;        /**< Passphrase for SSID used                         */
+    ApInfo info; /**< AP type                                          */
+    std::string ssid; /**< SSID for AP                                      */
+    bool isVisible; /**< AP broadcast SSID                                */
+    ApElementInfoConfig elementInfoConfig; /**< AP broadcast it's capabilities (Such as CarPlay) */
+    ApInterworking interworking; /**< AP network access (internet/local)               */
+    ApSecurity apSecurity; /**< AP Security settings                             */
+    std::string passPhrase; /**< Passphrase for SSID used                         */
 };
 
 /**
  * Ap Configuration
  */
 struct ApConfig {
-    Id          id;                        /**< AP id                           */
-    ApVenueInfo venue;                     /**< AP venue info                   */
-    std::vector<ApNetConfig> network;      /**< Configurations supported by AP  */
+    Id id; /**< AP id                           */
+    ApVenueInfo venue; /**< AP venue info                   */
+    std::vector<ApNetConfig> network; /**< Configurations supported by AP  */
 };
 
 /**
  * Wlan Client Device Indication Info
  */
 struct DeviceIndInfo {
-    Id           id;                   /**<  AP id device is connected to                      */
-    std::string  macAddress;           /**<  MAC Address of Wi-Fi device                       */
+    Id id; /**<  AP id device is connected to                      */
+    std::string macAddress; /**<  MAC Address of Wi-Fi device                       */
 };
 
 /**
  * Wlan Client Device Info
  */
 struct DeviceInfo {
-    Id           id;                      /**< AP id device is connected to                      */
-    std::string  name;                    /**< User friendly string that identifies Wi-Fi device */
-    std::string  ipv4Address;             /**< IPv4 Address of Wi-Fi device                      */
+    Id id; /**< AP id device is connected to                      */
+    std::string name; /**< User friendly string that identifies Wi-Fi device */
+    std::string ipv4Address; /**< IPv4 Address of Wi-Fi device                      */
     std::vector<std::string> ipv6Address; /**< List of IPv6 Addresses of Wi-Fi device            */
-    std::string  macAddress;              /**< MAC Address of Wi-Fi device                       */
+    std::string macAddress; /**< MAC Address of Wi-Fi device                       */
 };
 
 /** @addtogroup telematics_wlan_ap
@@ -205,7 +205,7 @@ class IApInterfaceManager {
      *           telux::common::ErrorCode::INVALID_ARG is returned if AP to be configured was not
      *           enabled in @ref telux::wlan::WlanDeviceManager::setMode.
      */
-     virtual telux::common::ErrorCode setConfig(ApConfig config) = 0;
+    virtual telux::common::ErrorCode setConfig(ApConfig config) = 0;
 
     /**
      * Set Wlan Security Configuration: Used to change security settings of selected network.
@@ -233,7 +233,7 @@ class IApInterfaceManager {
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
      */
-     virtual telux::common::ErrorCode setSsid(Id apId, std::string ssid) = 0;
+    virtual telux::common::ErrorCode setSsid(Id apId, std::string ssid) = 0;
 
     /**
      * Set Access Point visibility: Used to change SSID broadcast of selected network.
@@ -247,7 +247,7 @@ class IApInterfaceManager {
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
      */
-     virtual telux::common::ErrorCode setVisibility(Id apId, bool isVisible) = 0;
+    virtual telux::common::ErrorCode setVisibility(Id apId, bool isVisible) = 0;
 
     /**
      * Configure Element Info: Used to change element info configurations of selected network.
@@ -269,7 +269,7 @@ class IApInterfaceManager {
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
      */
-     virtual telux::common::ErrorCode setElementInfoConfig(Id apId, ApElementInfoConfig config) = 0;
+    virtual telux::common::ErrorCode setElementInfoConfig(Id apId, ApElementInfoConfig config) = 0;
 
     /**
      * Set Passphrase for Access Point: Used to change passphrase of selected network.
@@ -283,7 +283,7 @@ class IApInterfaceManager {
      * @returns Immediate status of setPassPhrase() request i.e. success or suitable status.
      *
      */
-     virtual telux::common::ErrorCode setPassPhrase(Id apId, std::string passPhrase) = 0;
+    virtual telux::common::ErrorCode setPassPhrase(Id apId, std::string passPhrase) = 0;
 
     /**
      * Request Access Point Configurations
@@ -305,7 +305,7 @@ class IApInterfaceManager {
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
      */
-     virtual telux::common::ErrorCode getConfig(std::vector<ApConfig>& config) = 0;
+    virtual telux::common::ErrorCode getConfig(std::vector<ApConfig> &config) = 0;
 
     /**
      * Request AP Status
@@ -315,7 +315,7 @@ class IApInterfaceManager {
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
      */
-     virtual telux::common::ErrorCode getStatus(std::vector<ApStatus>& status) = 0;
+    virtual telux::common::ErrorCode getStatus(std::vector<ApStatus> &status) = 0;
 
     /**
      * Requests the list of connected devices across all enabled access points.
@@ -331,7 +331,7 @@ class IApInterfaceManager {
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
      */
-    virtual telux::common::ErrorCode getConnectedDevices(std::vector<DeviceInfo>& clientsInfo) = 0;
+    virtual telux::common::ErrorCode getConnectedDevices(std::vector<DeviceInfo> &clientsInfo) = 0;
 
     /**
      * Execute an operation on hostapd service. Provides ability for client to either stop/start or
@@ -378,38 +378,42 @@ class IApInterfaceManager {
      */
     virtual telux::common::ErrorCode deregisterListener(std::weak_ptr<IApListener> listener) = 0;
 
-     virtual ~IApInterfaceManager(){};
+    virtual ~IApInterfaceManager(){};
 };
 
 class IApListener : public telux::common::ISDKListener {
-public:
+ public:
     /**
      * This function is called when AP device status has changed
      *
      * @param [in] event       Event detected on device @ref telux::wlan::ApDeviceConnectionEvent
      * @param [in] info        Info about devices @ref telux::wlan::DeviceIndInfo
      */
-    virtual void onApDeviceStatusChanged(ApDeviceConnectionEvent event,
-        std::vector<DeviceIndInfo> info) {}
+    virtual void onApDeviceStatusChanged(
+        ApDeviceConnectionEvent event, std::vector<DeviceIndInfo> info) {
+    }
 
     /**
      * This function is called when AP switch to different operation band
      *
      * @param [in] radio        New AP operation band @ref telux::wlan::BandType
      */
-    virtual void onApBandChanged(BandType radio) {}
+    virtual void onApBandChanged(BandType radio) {
+    }
 
     /**
      * This function is called when AP configuration has changed
      *
      * @param [in] apid        @ref telux::wlan::Id of Ap it's configuration has changed
      */
-    virtual void onApConfigChanged(Id apId) {}
+    virtual void onApConfigChanged(Id apId) {
+    }
 
-    virtual ~IApListener() {}
+    virtual ~IApListener() {
+    }
 };
 
 /** @} */ /* end_addtogroup telematics_wlan_ap */
-}
-}
-#endif // TELUX_WLAN_APINTERFACEMANAGER_HPP
+}  // namespace wlan
+}  // namespace telux
+#endif  // TELUX_WLAN_APINTERFACEMANAGER_HPP

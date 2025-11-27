@@ -26,9 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -57,7 +58,7 @@ namespace tel {
 enum class ProfileType {
     UNKNOWN = -1,
     REGULAR = 0, /**< Regular profile */
-    EMERGENCY,   /**< Emergency profile */
+    EMERGENCY, /**< Emergency profile */
 };
 
 /**
@@ -65,8 +66,8 @@ enum class ProfileType {
  */
 enum class IconType {
     NONE = 0, /**< No icon information */
-    JPEG,     /**< JPEG icon */
-    PNG,      /**< PNG icon */
+    JPEG, /**< JPEG icon */
+    PNG, /**< PNG icon */
 };
 
 /**
@@ -74,39 +75,39 @@ enum class IconType {
  */
 enum class ProfileClass {
     UNKNOWN = -1, /**< No info about profile class */
-    TEST = 0,     /**< Test profile */
+    TEST    = 0, /**< Test profile */
     PROVISIONING, /**< Provisioning profile */
-    OPERATIONAL   /**< Operational  profile */
+    OPERATIONAL /**< Operational  profile */
 };
 
 /**
  * Indicates profile download status.
  */
 enum class DownloadStatus {
-    DOWNLOAD_ERROR = 0,                  /**< Profile download error */
-    DOWNLOAD_INSTALLATION_COMPLETE,      /**< Profile download and installation is complete */
+    DOWNLOAD_ERROR = 0, /**< Profile download error */
+    DOWNLOAD_INSTALLATION_COMPLETE, /**< Profile download and installation is complete */
 };
 
 /**
  * Indicates profile download error cause.
  */
 enum class DownloadErrorCause {
-    GENERIC = 1,                      /**< Generic error */
-    SIM,                              /**< Error from the SIM card */
-    NETWORK,                          /**< Error from the network */
-    MEMORY,                           /**< Error due to no memory */
-    UNSUPPORTED_PROFILE_CLASS,        /**< Unsupported profile class */
-    PPR_NOT_ALLOWED,                  /**< Profile policy rules not allowed */
-    END_USER_REJECTION,               /**< End user rejection */
-    END_USER_POSTPONED,               /**< End user postponed */
+    GENERIC = 1, /**< Generic error */
+    SIM, /**< Error from the SIM card */
+    NETWORK, /**< Error from the network */
+    MEMORY, /**< Error due to no memory */
+    UNSUPPORTED_PROFILE_CLASS, /**< Unsupported profile class */
+    PPR_NOT_ALLOWED, /**< Profile policy rules not allowed */
+    END_USER_REJECTION, /**< End user rejection */
+    END_USER_POSTPONED, /**< End user postponed */
 };
 
 /**
  * Indicates the reason for user consent not provided.
  */
 enum class UserConsentReasonType {
-    END_USER_REJECTION = 0,            /**< End user rejection */
-    END_USER_POSTPONED,                /**< End user postponed */
+    END_USER_REJECTION = 0, /**< End user rejection */
+    END_USER_POSTPONED, /**< End user postponed */
 };
 
 /**
@@ -115,9 +116,9 @@ enum class UserConsentReasonType {
  */
 enum PolicyRuleType {
     PROFILE_DISABLE_NOT_ALLOWED, /**< Disabling of the profile is not allowed */
-    PROFILE_DELETE_NOT_ALLOWED,  /**< Deletion of the profile is not allowed */
-    PROFILE_DELETE_ON_DISABLE,   /**< Deletion of the profile is required on successful
-                                    disabling */
+    PROFILE_DELETE_NOT_ALLOWED, /**< Deletion of the profile is not allowed */
+    PROFILE_DELETE_ON_DISABLE, /**< Deletion of the profile is required on successful
+                                  disabling */
 };
 
 /**
@@ -131,9 +132,9 @@ using PolicyRuleMask = std::bitset<16>;
  * corresponding bit for ResetOptionMask bitset.
  */
 enum ResetOption {
-    TEST_PROFILES = (1 << 0),           /**< Delete all the test profiles */
-    OPERATIONAL_PROFILE = (1 << 1),     /**< Delete all operational profiles */
-    DEFAULT_SMDP_ADDRESS = (1 << 2),    /**< Reset the default SM-DP+ address */
+    TEST_PROFILES        = (1 << 0), /**< Delete all the test profiles */
+    OPERATIONAL_PROFILE  = (1 << 1), /**< Delete all operational profiles */
+    DEFAULT_SMDP_ADDRESS = (1 << 2), /**< Reset the default SM-DP+ address */
 };
 
 /**
@@ -143,7 +144,7 @@ enum ResetOption {
 using ResetOptionMask = std::bitset<64>;
 
 /** @} */ /* end_addtogroup telematics_rsp */
-}
-}
+}  // namespace tel
+}  // namespace telux
 
-#endif // TELUX_TEL_SIMPROFILEDEFINES_HPP
+#endif  // TELUX_TEL_SIMPROFILEDEFINES_HPP

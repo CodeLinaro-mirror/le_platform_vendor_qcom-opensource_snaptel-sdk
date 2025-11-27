@@ -28,10 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef DATARESPONSECALLBACK_HPP
@@ -43,60 +42,62 @@
 #include <telux/data/DataProfileManager.hpp>
 
 class MyDataProfilesCallback : public telux::data::IDataProfileListCallback {
-public:
-   void onProfileListResponse(const std::vector<std::shared_ptr<telux::data::DataProfile>> &profiles,
-                              telux::common::ErrorCode error) override;
+ public:
+    void onProfileListResponse(
+        const std::vector<std::shared_ptr<telux::data::DataProfile>> &profiles,
+        telux::common::ErrorCode error) override;
 };
 
 class MyDataProfileCallback : public telux::data::IDataProfileCallback {
-   void onResponse(const std::shared_ptr<telux::data::DataProfile> &profile,
-                   telux::common::ErrorCode error) override;
+    void onResponse(const std::shared_ptr<telux::data::DataProfile> &profile,
+        telux::common::ErrorCode error) override;
 };
 
 class MyDataCreateProfileCallback : public telux::data::IDataCreateProfileCallback {
-   void onResponse(int profileId, telux::common::ErrorCode error) override;
+    void onResponse(int profileId, telux::common::ErrorCode error) override;
 };
 
 class MyDeleteProfileCallback : public telux::common::ICommandResponseCallback {
-   void commandResponse(telux::common::ErrorCode error) override;
+    void commandResponse(telux::common::ErrorCode error) override;
 };
 
 class MyModifyProfileCallback : public telux::common::ICommandResponseCallback {
-   void commandResponse(telux::common::ErrorCode error) override;
+    void commandResponse(telux::common::ErrorCode error) override;
 };
 
 class MyDataCallResponseCallback {
-public:
-   static void startDataCallResponseCallBack(
-      const std::shared_ptr<telux::data::IDataCall> &dataCall, telux::common::ErrorCode error);
-   static void stopDataCallResponseCallBack(const std::shared_ptr<telux::data::IDataCall> &dataCall,
-                                            telux::common::ErrorCode error);
-   static void dataCallListResponseCb(const std::vector<std::shared_ptr<telux::data::IDataCall>> &dataCallList,
-                                      telux::common::ErrorCode error);
-   static void requestThrottledApnInfoCb(
-      const std::vector<telux::data::APNThrottleInfo> &throttleInfoList,
-         telux::common::ErrorCode error);
+ public:
+    static void startDataCallResponseCallBack(
+        const std::shared_ptr<telux::data::IDataCall> &dataCall, telux::common::ErrorCode error);
+    static void stopDataCallResponseCallBack(
+        const std::shared_ptr<telux::data::IDataCall> &dataCall, telux::common::ErrorCode error);
+    static void dataCallListResponseCb(
+        const std::vector<std::shared_ptr<telux::data::IDataCall>> &dataCallList,
+        telux::common::ErrorCode error);
+    static void requestThrottledApnInfoCb(
+        const std::vector<telux::data::APNThrottleInfo> &throttleInfoList,
+        telux::common::ErrorCode error);
 };
 
 class DataCallStatisticsResponseCb {
-public:
-   static void requestStatisticsResponse(const telux::data::DataCallStats dCallStats,
-                                         telux::common::ErrorCode error);
-   static void resetStatisticsResponse(telux::common::ErrorCode error);
+ public:
+    static void requestStatisticsResponse(
+        const telux::data::DataCallStats dCallStats, telux::common::ErrorCode error);
+    static void resetStatisticsResponse(telux::common::ErrorCode error);
 };
 
 class DataFilterModeResponseCb {
-public:
-  static void requestDataRestrictModeResponse(telux::data::DataRestrictMode mode,
-                                              telux::common::ErrorCode error);
+ public:
+    static void requestDataRestrictModeResponse(
+        telux::data::DataRestrictMode mode, telux::common::ErrorCode error);
 };
 
 // Profile List callback class to be used for DCM default profile use-case
 class MyDefaultProfilesCallback : public telux::data::IDataProfileListCallback {
-public:
-   void onProfileListResponse(
-      const std::vector<std::shared_ptr<telux::data::DataProfile>> &profiles,
-         telux::common::ErrorCode error) override;
+ public:
+    void onProfileListResponse(
+        const std::vector<std::shared_ptr<telux::data::DataProfile>> &profiles,
+        telux::common::ErrorCode error) override;
     std::promise<telux::common::ErrorCode> prom_{};
     std::vector<std::shared_ptr<telux::data::DataProfile>> profileList_{};
 };

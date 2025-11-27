@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_DeltaLatitude_H_
-#define	_DeltaLatitude_H_
-
+#ifndef _DeltaLatitude_H_
+#define _DeltaLatitude_H_
 
 #include <asn_application.h>
 
@@ -20,13 +19,13 @@ extern "C" {
 
 /* Dependencies */
 typedef enum DeltaLatitude {
-	DeltaLatitude_oneMicrodegreeNorth	= 10,
-	DeltaLatitude_oneMicrodegreeSouth	= -10,
-	DeltaLatitude_unavailable	= 131072
+    DeltaLatitude_oneMicrodegreeNorth = 10,
+    DeltaLatitude_oneMicrodegreeSouth = -10,
+    DeltaLatitude_unavailable         = 131072
 } e_DeltaLatitude;
 
 /* DeltaLatitude */
-typedef long	 DeltaLatitude_t;
+typedef long DeltaLatitude_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_DeltaLatitude;
@@ -44,5 +43,5 @@ per_type_encoder_f DeltaLatitude_encode_uper;
 }
 #endif
 
-#endif	/* _DeltaLatitude_H_ */
+#endif /* _DeltaLatitude_H_ */
 #include <asn_internal.h>

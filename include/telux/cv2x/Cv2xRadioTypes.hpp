@@ -28,46 +28,16 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
-* @file       Cv2xRadioTypes.hpp
-*
-* @brief      Contains common data types used in Cv2x Radio API
-*/
+ * @file       Cv2xRadioTypes.hpp
+ *
+ * @brief      Contains common data types used in Cv2x Radio API
+ */
 
 #ifndef TELUX_CV2X_CV2XRADIOTYPES_HPP
 #define TELUX_CV2X_CV2XRADIOTYPES_HPP
@@ -80,9 +50,9 @@ namespace telux {
 namespace cv2x {
 
 #define CV2X_IPV6_ADDR_ARRAY_LEN 16
-#define CV2X_MAC_ADDR_LEN        6
-#define IPV6_MIN_PREFIX_LENGTH   64
-#define IPV6_MAX_PREFIX_LEN      128
+#define CV2X_MAC_ADDR_LEN 6
+#define IPV6_MIN_PREFIX_LENGTH 64
+#define IPV6_MAX_PREFIX_LEN 128
 
 /** @addtogroup telematics_cv2x_cpp
  * @{ */
@@ -98,8 +68,8 @@ constexpr uint8_t MAX_ANTENNAS_SUPPORTED = 2u;
  * Defines CV2X Traffic Types.
  */
 enum class TrafficCategory {
-    SAFETY_TYPE,      /**< Safety message traffic category */
-    NON_SAFETY_TYPE,  /**< Non-safety message traffic category */
+    SAFETY_TYPE, /**< Safety message traffic category */
+    NON_SAFETY_TYPE, /**< Non-safety message traffic category */
 };
 
 /**
@@ -111,10 +81,10 @@ enum class TrafficCategory {
  * Used in @ref Cv2xStatus
  */
 enum class Cv2xStatusType {
-    INACTIVE,    /**< RX/TX is inactive */
-    ACTIVE,      /**< RX/TX is active */
-    SUSPENDED,   /**< RX/TX is suspended */
-    UNKNOWN,     /**< RX/TX status unknown */
+    INACTIVE, /**< RX/TX is inactive */
+    ACTIVE, /**< RX/TX is active */
+    SUSPENDED, /**< RX/TX is suspended */
+    UNKNOWN, /**< RX/TX status unknown */
 };
 
 /**
@@ -124,22 +94,27 @@ enum class Cv2xStatusType {
  * Used in @ref Cv2xStatus
  */
 enum class Cv2xCauseType {
-    TIMING,             /**< CV2X is suspended due to the outage of timing reference. */
-    CONFIG,             /**< CV2X is inactive due to v2x.xml is missing, invalid, or expired. */
-    UE_MODE,            /**< CV2X is inactive due to CV2X mode is not started. */
-    GEOPOLYGON,         /**< CV2X is inactive due to UE enters a geo-polygon that does not support cv2x. */
-    THERMAL,            /**< CV2X is suspended when the device's temperature is high. */
-    THERMAL_ECALL,      /**< CV2X is suspended when the device's temperature is high and emergency call is ongoing. */
-    GEOPOLYGON_SWITCH,  /**< CV2X is suspended when UE switches to a new geopolygon that also supports CV2X and UE is already in CV2X active status, CV2X status will change to active after the update is done. */
-    SENSING,            /**< CV2X Tx is suspended when GNSS signal recovers or CV2X mode just starts. UE needs sensing for 1 second before Tx can begin, Tx status will change to active after sensing is done. */
-    LPM,                /**< CV2X is inactive due to unexpected operating mode. */
-    DISABLED,           /**< CV2X is inactive due to CV2X is disabled in the EFS. */
-    NO_GNSS,            /**< CV2X is inactive due to GNSS signal is not available when starting CV2X. */
-    INVALID_LICENSE,    /**< CV2X is inactive due to invalid license. */
-    NOT_READY,          /**< CV2X is inactive due to low layer is not ready to start CV2X. */
-    NTN,                /**< CV2X is suspended due to NTN is in progress. */
-    NO_DATA_CALL,       /**< CV2X is inactive due to no cv2x data call. */
-    UNKNOWN             /**< Invalid cause type only used internally. */
+    TIMING, /**< CV2X is suspended due to the outage of timing reference. */
+    CONFIG, /**< CV2X is inactive due to v2x.xml is missing, invalid, or expired. */
+    UE_MODE, /**< CV2X is inactive due to CV2X mode is not started. */
+    GEOPOLYGON, /**< CV2X is inactive due to UE enters a geo-polygon that does not support cv2x. */
+    THERMAL, /**< CV2X is suspended when the device's temperature is high. */
+    THERMAL_ECALL, /**< CV2X is suspended when the device's temperature is high and emergency call
+                      is ongoing. */
+    GEOPOLYGON_SWITCH, /**< CV2X is suspended when UE switches to a new geopolygon that also
+                          supports CV2X and UE is already in CV2X active status, CV2X status will
+                          change to active after the update is done. */
+    SENSING, /**< CV2X Tx is suspended when GNSS signal recovers or CV2X mode just starts. UE needs
+                sensing for 1 second before Tx can begin, Tx status will change to active after
+                sensing is done. */
+    LPM, /**< CV2X is inactive due to unexpected operating mode. */
+    DISABLED, /**< CV2X is inactive due to CV2X is disabled in the EFS. */
+    NO_GNSS, /**< CV2X is inactive due to GNSS signal is not available when starting CV2X. */
+    INVALID_LICENSE, /**< CV2X is inactive due to invalid license. */
+    NOT_READY, /**< CV2X is inactive due to low layer is not ready to start CV2X. */
+    NTN, /**< CV2X is suspended due to NTN is in progress. */
+    NO_DATA_CALL, /**< CV2X is inactive due to no cv2x data call. */
+    UNKNOWN /**< Invalid cause type only used internally. */
 };
 
 /**
@@ -147,15 +122,15 @@ enum class Cv2xCauseType {
  * Used in @ref SyncRefUeInfo
  */
 enum class SlssSyncPattern {
-    OFFSET_IND_1,      /**< UE transmits SLSS in subframes indicated by the
-                            syncOffsetIndicator1 specified in V2X configuration. */
-    OFFSET_IND_2,      /**< UE transmits SLSS in subframes indicated by the
-                            syncOffsetIndicator2 specified in V2X configuration. */
-    OFFSET_IND_3,      /**< UE transmits SLSS in subframes indicated by the
-                            syncOffsetIndicator3 specified in V2X configuration. */
-    ODD_RESERVED,      /**< UE transmits SLSS in odd-numbered reserved subframes. */
-    EVEN_RESERVED,     /**< UE transmits SLSS in even-numbered reserved subframes. */
-    UNKNOWN,           /**< Invalid cause type only used internally. */
+    OFFSET_IND_1, /**< UE transmits SLSS in subframes indicated by the
+                       syncOffsetIndicator1 specified in V2X configuration. */
+    OFFSET_IND_2, /**< UE transmits SLSS in subframes indicated by the
+                       syncOffsetIndicator2 specified in V2X configuration. */
+    OFFSET_IND_3, /**< UE transmits SLSS in subframes indicated by the
+                       syncOffsetIndicator3 specified in V2X configuration. */
+    ODD_RESERVED, /**< UE transmits SLSS in odd-numbered reserved subframes. */
+    EVEN_RESERVED, /**< UE transmits SLSS in even-numbered reserved subframes. */
+    UNKNOWN, /**< Invalid cause type only used internally. */
 };
 
 /**
@@ -207,12 +182,12 @@ struct SocketInfo {
  * Used in @ref ICv2xRadioManager::requestCv2xStatus and ICv2xRadioListener.
  */
 struct Cv2xStatus {
-    Cv2xStatusType rxStatus = Cv2xStatusType::UNKNOWN;  /**< RX status */
-    Cv2xStatusType txStatus = Cv2xStatusType::UNKNOWN;  /**< TX status */
-    Cv2xCauseType rxCause = Cv2xCauseType::UNKNOWN;     /**< RX cause of failure */
-    Cv2xCauseType txCause = Cv2xCauseType::UNKNOWN;     /**< TX cause of failure */
-    uint8_t cbrValue = 255;                             /**< Channel Busy Ratio */
-    bool cbrValueValid = false;                         /**< CBR value is valid */
+    Cv2xStatusType rxStatus = Cv2xStatusType::UNKNOWN; /**< RX status */
+    Cv2xStatusType txStatus = Cv2xStatusType::UNKNOWN; /**< TX status */
+    Cv2xCauseType rxCause   = Cv2xCauseType::UNKNOWN; /**< RX cause of failure */
+    Cv2xCauseType txCause   = Cv2xCauseType::UNKNOWN; /**< TX cause of failure */
+    uint8_t cbrValue        = 255; /**< Channel Busy Ratio */
+    bool cbrValueValid      = false; /**< CBR value is valid */
 };
 
 /**
@@ -222,7 +197,7 @@ struct Cv2xStatus {
  */
 struct Cv2xPoolStatus {
     uint8_t poolId = 0u; /**< pool ID */
-    Cv2xStatus status;   /**< status */
+    Cv2xStatus status; /**< status */
 };
 
 /**
@@ -232,18 +207,18 @@ struct Cv2xPoolStatus {
  * Cv2xRadioListener.
  */
 struct Cv2xStatusEx {
-    Cv2xStatus status;                      /**< Overall Cv2x status */
+    Cv2xStatus status; /**< Overall Cv2x status */
     std::vector<Cv2xPoolStatus> poolStatus; /**< Multi pool status vector */
-    bool timeUncertaintyValid = false;      /**< Time uncertainty value is valid */
-    float timeUncertainty;                  /**< Time uncertainty value in milleseconds */
+    bool timeUncertaintyValid = false; /**< Time uncertainty value is valid */
+    float timeUncertainty; /**< Time uncertainty value in milleseconds */
 };
 
 /**
  * Defines CV2X traffic type in terms of IP or NON-IP.
  */
 enum class TrafficIpType {
-   TRAFFIC_IP,     /**< IP message traffic */
-   TRAFFIC_NON_IP, /**< NON-IP message traffic */
+    TRAFFIC_IP, /**< IP message traffic */
+    TRAFFIC_NON_IP, /**< NON-IP message traffic */
 };
 
 /**
@@ -253,8 +228,8 @@ enum class TrafficIpType {
  */
 enum class RadioConcurrencyMode {
     WWAN_NONCONCURRENT, /**< No simultaneous WWAN + CV2X on this interface  */
-    WWAN_CONCURRENT,    /**< Interface supports requests for concurrent WWAN +
-                             CV2X connections. */
+    WWAN_CONCURRENT, /**< Interface supports requests for concurrent WWAN +
+                          CV2X connections. */
 };
 
 /**
@@ -264,9 +239,9 @@ enum class RadioConcurrencyMode {
  * Used in @ref ICv2xRadioListener::onStatusChanged
  */
 enum class Cv2xEvent {
-    CV2X_INACTIVE,  /**<  */
-    CV2X_ACTIVE,    /**<  */
-    TX_SUSPENDED,   /**<  */
+    CV2X_INACTIVE, /**<  */
+    CV2X_ACTIVE, /**<  */
+    TX_SUSPENDED, /**<  */
     TXRX_SUSPENDED, /**<  */
 };
 
@@ -541,7 +516,7 @@ struct TrustedUEInfoList {
  * Used in @ref DataSessionSettings
  */
 struct IPv6Address {
-    uint8_t addr[16];  /**< Contains IPv6 address */
+    uint8_t addr[16]; /**< Contains IPv6 address */
 };
 
 /**
@@ -568,10 +543,10 @@ struct DataSessionSettings {
  * Used in @ref ConfigEventInfo
  */
 enum class ConfigSourceType {
-    UNKNOWN = 0u,   /**< V2X config file source is unknown */
+    UNKNOWN   = 0u, /**< V2X config file source is unknown */
     PRECONFIG = 1u, /**< V2X config file source is preconfig */
-    SIM_CARD = 2u,  /**< V2X config file source is SIM card */
-    OMA_DM = 4u,    /**< V2X config file source is OMA-DM */
+    SIM_CARD  = 2u, /**< V2X config file source is SIM card */
+    OMA_DM    = 4u, /**< V2X config file source is OMA-DM */
 };
 
 /**
@@ -580,8 +555,8 @@ enum class ConfigSourceType {
  * Used in @ref ConfigEventInfo
  */
 enum class ConfigEvent {
-    CHANGED = 0u,  /**< V2X config file is changed */
-    EXPIRED = 1u,  /**< V2X config file is expired */
+    CHANGED = 0u, /**< V2X config file is changed */
+    EXPIRED = 1u, /**< V2X config file is expired */
 };
 
 /**
@@ -619,9 +594,9 @@ struct L2FilterInfo {
  * Used in @ref RFTxInfo
  */
 enum class RFTxStatus {
-    INACTIVE,        /**< The Tx chain is not working. */
-    OPERATIONAL,     /**< The Tx chain is operational. */
-    FAULT,           /**< Fault detected on the Tx chain. */
+    INACTIVE, /**< The Tx chain is not working. */
+    OPERATIONAL, /**< The Tx chain is operational. */
+    FAULT, /**< Fault detected on the Tx chain. */
 };
 
 /**
@@ -644,10 +619,10 @@ struct RFTxInfo {
  * Used in @ref TxStatusReport
  */
 enum class SegmentType {
-    FIRST,        /**< V2X packet is segmented, it's the first transport block. */
-    LAST,         /**< V2X packet is segmented, it's the last transport block. */
-    MIDDLE,       /**< V2X packet is segmented, it's a transport block between first and last. */
-    ONLY_ONE,     /**< V2X packet is not segmented, it's the only one transport block. */
+    FIRST, /**< V2X packet is segmented, it's the first transport block. */
+    LAST, /**< V2X packet is segmented, it's the last transport block. */
+    MIDDLE, /**< V2X packet is segmented, it's a transport block between first and last. */
+    ONLY_ONE, /**< V2X packet is not segmented, it's the only one transport block. */
 };
 
 /**
@@ -656,9 +631,9 @@ enum class SegmentType {
  * Used in @ref TxStatusReport
  */
 enum class TxType {
-    NEW_TX,      /**< New Tx of the V2X transport block. */
-    RE_TX,       /**< Re-Tx of the V2X transport block. */
-    SLSS_TX,     /**< Tx of SLSS. */
+    NEW_TX, /**< New Tx of the V2X transport block. */
+    RE_TX, /**< Re-Tx of the V2X transport block. */
+    SLSS_TX, /**< Tx of SLSS. */
 };
 
 /**
@@ -709,8 +684,7 @@ struct TxStatusReport {
  *
  * Used in @ref ICv2xRadio::setGlobalIPInfo.
  */
-struct IPv6AddrType
-{
+struct IPv6AddrType {
     /** ipv6 address prefix length in bits, range [64, 128] */
     uint8_t prefixLen;
     uint8_t ipv6Addr[CV2X_IPV6_ADDR_ARRAY_LEN];
@@ -721,16 +695,15 @@ struct IPv6AddrType
  *
  * Used in @ref ICv2xRadio::setGlobalIPUnicastRoutingInfo.
  */
-struct GlobalIPUnicastRoutingInfo
-{
+struct GlobalIPUnicastRoutingInfo {
     /** Array that stores CV2X L2 MAC address at the last 3 bytes in big endian order. */
     uint8_t destMacAddr[CV2X_MAC_ADDR_LEN];
 };
 
 /** @} */ /* end_addtogroup telematics_cv2x_cpp */
 
-} // namespace cv2x
+}  // namespace cv2x
 
-} // namespace telux
+}  // namespace telux
 
-#endif // TELUX_CV2X_CV2XRADIOTYPES_HPP
+#endif  // TELUX_CV2X_CV2XRADIOTYPES_HPP

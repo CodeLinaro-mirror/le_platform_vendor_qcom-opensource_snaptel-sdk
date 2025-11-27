@@ -28,39 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
-
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -96,8 +66,8 @@ namespace net {
 class IVlanListener;
 
 struct VlanBindConfig {
-    int vlanId;                         /**< VLAN ID to be bound to the specified backhaul     */
-    BackhaulInfo bhInfo;                /**< Configuration of Backhaul to bind VLAN to        */
+    int vlanId; /**< VLAN ID to be bound to the specified backhaul     */
+    BackhaulInfo bhInfo; /**< Configuration of Backhaul to bind VLAN to        */
 };
 
 /**
@@ -145,7 +115,6 @@ using VlanMappingResponseCb = std::function<void(
 using VlanBindingsResponseCb = std::function<void(
     const std::vector<VlanBindConfig> bindings, telux::common::ErrorCode error)>;
 
-
 /**
  *@brief       VlanManager is a primary interface for configuring VLAN (Virtual Local Area Network).
  *             it provide APIs for create, query, remove VLAN interfaces and associate or
@@ -191,7 +160,7 @@ class IVlanManager {
      * VLAN priority level (according to IEEE 802.1p priority code point-PCP), assigns network type,
      * sets whether traffic on this VLAN needs to be accelerated and sets the option to create the
      * VLAN with bridge or not.
-     * 
+     *
      * The creation of VLANs with bridge is not allowed for @ref telux::data::NetworkType::WAN.
      *
      * If platform does not support assigning priorities to VLANs and priority is set to value
@@ -278,8 +247,9 @@ class IVlanManager {
      * suitable status code.
      *
      */
-    virtual telux::common::Status bindToBackhaul(VlanBindConfig vlanBindConfig,
-        telux::common::ResponseCallback callback = nullptr) = 0;
+    virtual telux::common::Status bindToBackhaul(
+        VlanBindConfig vlanBindConfig, telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Unbind VLAN from particular backhaul. This API will stop vlan traffic flow to/from specified
@@ -295,8 +265,9 @@ class IVlanManager {
      * suitable status code
      *
      */
-    virtual telux::common::Status unbindFromBackhaul(VlanBindConfig vlanBindConfig,
-        telux::common::ResponseCallback callback = nullptr) = 0;
+    virtual telux::common::Status unbindFromBackhaul(
+        VlanBindConfig vlanBindConfig, telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Query VLAN to backhaul binding configurations
@@ -311,8 +282,8 @@ class IVlanManager {
      *
      */
     virtual telux::common::Status queryVlanToBackhaulBindings(
-        BackhaulType backhaulType, VlanBindingsResponseCb callback,
-        SlotId slotId = DEFAULT_SLOT_ID) = 0;
+        BackhaulType backhaulType, VlanBindingsResponseCb callback, SlotId slotId = DEFAULT_SLOT_ID)
+        = 0;
 
     /**
      * Register VLAN Manager as a listener for Data Service health events like data service
@@ -374,7 +345,8 @@ class IVlanManager {
      * @deprecated Use bindToBackhaul() API below to bind VLAN to backhaul
      */
     virtual telux::common::Status bindWithProfile(int profileId, int vlanId,
-        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID)
+        = 0;
 
     /**
      * Unbind VLAN id from given slot id and profile id
@@ -391,7 +363,8 @@ class IVlanManager {
      * @deprecated Use unbindFromBackhaul() API below to unbind VLAN to backhaul
      */
     virtual telux::common::Status unbindFromProfile(int profileId, int vlanId,
-        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID)
+        = 0;
 
     /**
      * Query VLAN mapping of profile id and VLAN id on specified sim
@@ -405,8 +378,9 @@ class IVlanManager {
      *
      * @deprecated Use queryVlanToBackhaulBindings() API below to request VLAN to backhaul mapping
      */
-    virtual telux::common::Status queryVlanMappingList(VlanMappingResponseCb callback,
-        SlotId slotId = DEFAULT_SLOT_ID) = 0;
+    virtual telux::common::Status queryVlanMappingList(
+        VlanMappingResponseCb callback, SlotId slotId = DEFAULT_SLOT_ID)
+        = 0;
 
     /**
      * Destructor for IVlanManager
@@ -422,14 +396,15 @@ class IVlanManager {
  * should be thread safe.
  *
  */
-class IVlanListener : public telux::common::ISDKListener{
+class IVlanListener : public telux::common::ISDKListener {
  public:
     /**
      * This function is called when service status changes.
      *
      * @param [in] status - @ref ServiceStatus
      */
-    virtual void onServiceStatusChange(telux::common::ServiceStatus status) {}
+    virtual void onServiceStatusChange(telux::common::ServiceStatus status) {
+    }
 
     /**
      * This function is called when there is a change in IPA Connection Manager daemon state.
@@ -447,7 +422,7 @@ class IVlanListener : public telux::common::ISDKListener{
 };
 
 /** @} */ /* end_addtogroup telematics_data_net */
-}
-}
-}
-#endif // TELUX_DATA_NET_VLANMANAGER_HPP
+}  // namespace net
+}  // namespace data
+}  // namespace telux
+#endif  // TELUX_DATA_NET_VLANMANAGER_HPP

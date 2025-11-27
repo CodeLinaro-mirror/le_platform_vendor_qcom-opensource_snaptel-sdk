@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef THERMAL_FACTORY_IMPL_STUB_HPP
@@ -20,7 +20,7 @@ class ThermalFactoryImplStub : public ThermalFactory, public telux::common::Fact
 
     virtual std::shared_ptr<IThermalManager> getThermalManager(
         telux::common::InitResponseCb callback = nullptr,
-        telux::common::ProcType operType = telux::common::ProcType::LOCAL_PROC) override;
+        telux::common::ProcType operType       = telux::common::ProcType::LOCAL_PROC) override;
 
     virtual std::shared_ptr<IThermalShutdownManager> getThermalShutdownManager(
         telux::common::InitResponseCb callback = nullptr) override;

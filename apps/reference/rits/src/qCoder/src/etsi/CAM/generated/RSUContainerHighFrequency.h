@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_RSUContainerHighFrequency_H_
-#define	_RSUContainerHighFrequency_H_
-
+#ifndef _RSUContainerHighFrequency_H_
+#define _RSUContainerHighFrequency_H_
 
 #include <asn_application.h>
 
@@ -23,14 +22,14 @@ struct ProtectedCommunicationZonesRSU;
 
 /* RSUContainerHighFrequency */
 typedef struct RSUContainerHighFrequency {
-	struct ProtectedCommunicationZonesRSU	*protectedCommunicationZonesRSU	/* OPTIONAL */;
-	/*
-	 * This type is extensible,
-	 * possible extensions are below.
-	 */
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    struct ProtectedCommunicationZonesRSU *protectedCommunicationZonesRSU /* OPTIONAL */;
+    /*
+     * This type is extensible,
+     * possible extensions are below.
+     */
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } RSUContainerHighFrequency_t;
 
 /* Implementation */
@@ -43,5 +42,5 @@ extern asn_TYPE_descriptor_t asn_DEF_RSUContainerHighFrequency;
 /* Referred external types */
 #include "ProtectedCommunicationZonesRSU.h"
 
-#endif	/* _RSUContainerHighFrequency_H_ */
+#endif /* _RSUContainerHighFrequency_H_ */
 #include <asn_internal.h>

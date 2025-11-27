@@ -26,12 +26,13 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 #include <iostream>
 #include <string>
 
@@ -39,21 +40,21 @@
 
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
-void RspListener::onDownloadStatus(SlotId slotId, telux::tel::DownloadStatus status,
-    telux::tel::DownloadErrorCause cause) {
+void RspListener::onDownloadStatus(
+    SlotId slotId, telux::tel::DownloadStatus status, telux::tel::DownloadErrorCause cause) {
 
     PRINT_NOTIFICATION << " Profile Download Status: " << profileDownloadStatusToString(status)
                        << std::endl;
     PRINT_NOTIFICATION << " Slot Id: " << static_cast<int>(slotId) << std::endl;
-    PRINT_NOTIFICATION << " Profile Download Error Cause: "
-        << profileDownloadErrorCauseToString(cause) << std::endl;
+    PRINT_NOTIFICATION
+        << " Profile Download Error Cause: " << profileDownloadErrorCauseToString(cause)
+        << std::endl;
 }
 
-void RspListener::onUserDisplayInfo(SlotId slotId, bool userConsentRequired,
-    telux::tel::PolicyRuleMask mask) {
+void RspListener::onUserDisplayInfo(
+    SlotId slotId, bool userConsentRequired, telux::tel::PolicyRuleMask mask) {
 
-    PRINT_NOTIFICATION << " Is User Consent Required: " << userConsentRequired
-                       << std::endl;
+    PRINT_NOTIFICATION << " Is User Consent Required: " << userConsentRequired << std::endl;
     PRINT_NOTIFICATION << " Slot Id: " << static_cast<int>(slotId) << std::endl;
     std::string policyRule = pprMaskToString(mask);
     PRINT_NOTIFICATION << " Profile Policy Rule: " << policyRule << std::endl;
@@ -63,8 +64,7 @@ void RspListener::onConfirmationCodeRequired(SlotId slotId, std::string profileN
 
     PRINT_NOTIFICATION << " Confirmation Code Required" << std::endl;
     PRINT_NOTIFICATION << " Slot Id: " << static_cast<int>(slotId) << std::endl;
-    PRINT_NOTIFICATION << " Profile Name: " << profileName
-                       << std::endl;
+    PRINT_NOTIFICATION << " Profile Name: " << profileName << std::endl;
 }
 
 std::string RspListener::profileDownloadStatusToString(telux::tel::DownloadStatus status) {
@@ -118,23 +118,20 @@ std::string RspListener::profileDownloadErrorCauseToString(telux::tel::DownloadE
 }
 
 std::string RspListener::pprMaskToString(telux::tel::PolicyRuleMask mask) {
-    std::string ppr = "";
+    std::string ppr   = "";
     bool pprAvailable = false;
-    if (mask[static_cast<int>(
-        telux::tel::PolicyRuleType::PROFILE_DISABLE_NOT_ALLOWED)]) {
-        ppr = "Profile disable not allowed. ";
+    if (mask[static_cast<int>(telux::tel::PolicyRuleType::PROFILE_DISABLE_NOT_ALLOWED)]) {
+        ppr          = "Profile disable not allowed. ";
         pprAvailable = true;
     }
 
-    if (mask[static_cast<int>(
-        telux::tel::PolicyRuleType::PROFILE_DELETE_NOT_ALLOWED)]) {
-        ppr = ppr + "Profile delete not allowed. ";
+    if (mask[static_cast<int>(telux::tel::PolicyRuleType::PROFILE_DELETE_NOT_ALLOWED)]) {
+        ppr          = ppr + "Profile delete not allowed. ";
         pprAvailable = true;
     }
 
-    if (mask[static_cast<int>(
-        telux::tel::PolicyRuleType::PROFILE_DELETE_ON_DISABLE)]) {
-        ppr = ppr + "Profile delete on disable. ";
+    if (mask[static_cast<int>(telux::tel::PolicyRuleType::PROFILE_DELETE_ON_DISABLE)]) {
+        ppr          = ppr + "Profile delete on disable. ";
         pprAvailable = true;
     }
 
@@ -147,12 +144,12 @@ std::string RspListener::pprMaskToString(telux::tel::PolicyRuleMask mask) {
 // Notify SimProfileManager subsystem status
 void RspListener::onServiceStatusChange(telux::common::ServiceStatus status) {
     std::string stat = "";
-    switch(status) {
+    switch (status) {
         case telux::common::ServiceStatus::SERVICE_AVAILABLE:
             stat = " SERVICE_AVAILABLE";
             break;
         case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
-            stat =  " SERVICE_UNAVAILABLE";
+            stat = " SERVICE_UNAVAILABLE";
             break;
         default:
             stat = " Unknown service status";

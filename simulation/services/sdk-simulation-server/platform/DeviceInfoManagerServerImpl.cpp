@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -18,13 +18,13 @@
 #define DEFAULT_DELIMITER " "
 
 DeviceInfoManagerServerImpl::DeviceInfoManagerServerImpl()
-    : serverEvent_(ServerEventManager::getInstance())
-    , clientEvent_(EventService::getInstance()) {
+   : serverEvent_(ServerEventManager::getInstance())
+   , clientEvent_(EventService::getInstance()) {
     LOG(DEBUG, __FUNCTION__);
 }
 
 DeviceInfoManagerServerImpl::~DeviceInfoManagerServerImpl() {
-    LOG(DEBUG, __FUNCTION__ , " Destructing");
+    LOG(DEBUG, __FUNCTION__, " Destructing");
 }
 
 telux::common::Status DeviceInfoManagerServerImpl::registerDefaultIndications() {
@@ -45,8 +45,8 @@ telux::common::Status DeviceInfoManagerServerImpl::registerDefaultIndications() 
     return status;
 }
 
-void DeviceInfoManagerServerImpl::notifyServiceStateChanged(telux::common::ServiceStatus srvStatus,
-        std::string srvStatusStr) {
+void DeviceInfoManagerServerImpl::notifyServiceStateChanged(
+    telux::common::ServiceStatus srvStatus, std::string srvStatusStr) {
     LOG(DEBUG, __FUNCTION__, ":: Service status Changed to ", srvStatusStr);
     onSSREvent(srvStatus);
 }
@@ -59,7 +59,7 @@ telux::common::ServiceStatus DeviceInfoManagerServerImpl::getServiceStatus() {
 void DeviceInfoManagerServerImpl::setServiceStatus(telux::common::ServiceStatus srvStatus) {
     std::lock_guard<std::mutex> lock(mutex_);
     if (serviceStatus_ != srvStatus) {
-        serviceStatus_ = srvStatus;
+        serviceStatus_           = srvStatus;
         std::string srvStrStatus = CommonUtils::mapServiceString(srvStatus);
         notifyServiceStateChanged(serviceStatus_, srvStrStatus);
     }
@@ -111,38 +111,37 @@ void DeviceInfoManagerServerImpl::onSubsystemEventUpdate(std::string event) {
 }
 
 /** INPUT-token:
-  * ssr
-  * operational_status
-  * INPUT-event:
-  * SERVICE_AVAILABLE/SERVICE_UNAVAILABLE/SERVICE_FAILED
-  * SUBSYSTEM PROC_TYPE STATUS
+ * ssr
+ * operational_status
+ * INPUT-event:
+ * SERVICE_AVAILABLE/SERVICE_UNAVAILABLE/SERVICE_FAILED
+ * SUBSYSTEM PROC_TYPE STATUS
  */
-void DeviceInfoManagerServerImpl::handleEvent(std::string token,std::string event) {
+void DeviceInfoManagerServerImpl::handleEvent(std::string token, std::string event) {
     LOG(DEBUG, __FUNCTION__, ":: The deviceinfo event type is: ", token,
-            "The leftover string is: ", event);
+        "The leftover string is: ", event);
 
     if (token == "ssr") {
-        //INPUT-token: ssr
-        //INPUT-event: SERVICE_AVAILABLE/SERVICE_UNAVAILABLE/SERVICE_FAILED
+        // INPUT-token: ssr
+        // INPUT-event: SERVICE_AVAILABLE/SERVICE_UNAVAILABLE/SERVICE_FAILED
         handleSSREvent(event);
     } else if (token == "operational_status") {
-        //INPUT-event: SUBSYSTEM PROC_TYPE STATUS
+        // INPUT-event: SUBSYSTEM PROC_TYPE STATUS
         handleOperationalStatusEvent(event);
     } else {
-        LOG(DEBUG, __FUNCTION__, ":: Invalid event ! Ignoring token: ",
-                token, ", event: ", event);
+        LOG(DEBUG, __FUNCTION__, ":: Invalid event ! Ignoring token: ", token, ", event: ", event);
     }
 }
 
 bool DeviceInfoManagerServerImpl::isValidProcType(int procType) {
-    return (procType == static_cast<int>(ProcType::LOCAL_PROC)) ||
-            (procType == static_cast<int>(ProcType::REMOTE_PROC));
+    return (procType == static_cast<int>(ProcType::LOCAL_PROC))
+           || (procType == static_cast<int>(ProcType::REMOTE_PROC));
 }
 
 bool DeviceInfoManagerServerImpl::isValidSubsystem(int subsystem) {
-    return (subsystem == static_cast<int>(Subsystem::NONE)) ||
-            (subsystem == static_cast<int>(Subsystem::APSS)) ||
-            (subsystem == static_cast<int>(Subsystem::MPSS));
+    return (subsystem == static_cast<int>(Subsystem::NONE))
+           || (subsystem == static_cast<int>(Subsystem::APSS))
+           || (subsystem == static_cast<int>(Subsystem::MPSS));
 }
 
 void DeviceInfoManagerServerImpl::handleOperationalStatusEvent(std::string eventParams) {
@@ -153,7 +152,7 @@ void DeviceInfoManagerServerImpl::handleOperationalStatusEvent(std::string event
     std::string operationalStatus;
 
     if (!(iss >> subsystem >> procType >> operationalStatus)) {
-        LOG(DEBUG, __FUNCTION__, "Invalid input: ",eventParams);
+        LOG(DEBUG, __FUNCTION__, "Invalid input: ", eventParams);
         return;
     }
 
@@ -162,8 +161,7 @@ void DeviceInfoManagerServerImpl::handleOperationalStatusEvent(std::string event
         return;
     }
 
-    commonStub::OperationalStatus opStatus =
-        commonStub::OperationalStatus::NONOPERATIONAL;
+    commonStub::OperationalStatus opStatus = commonStub::OperationalStatus::NONOPERATIONAL;
     if (operationalStatus == "OPERATIONAL") {
         opStatus = commonStub::OperationalStatus::OPERATIONAL;
     } else if (operationalStatus == "NONOPERATIONAL") {
@@ -176,9 +174,9 @@ void DeviceInfoManagerServerImpl::handleOperationalStatusEvent(std::string event
     onSubsystemEvent(subsystem, procType, opStatus);
 }
 
-void DeviceInfoManagerServerImpl::onSubsystemEvent(int subsystem, int procType,
-    commonStub::OperationalStatus opStatus) {
-    LOG(DEBUG,__FUNCTION__);
+void DeviceInfoManagerServerImpl::onSubsystemEvent(
+    int subsystem, int procType, commonStub::OperationalStatus opStatus) {
+    LOG(DEBUG, __FUNCTION__);
 
     ::platformStub::SubsystemStatusreply subsystemResp;
     ::eventService::EventResponse anyResponse;
@@ -195,8 +193,7 @@ void DeviceInfoManagerServerImpl::onSubsystemEvent(int subsystem, int procType,
 void DeviceInfoManagerServerImpl::handleSSREvent(std::string eventParams) {
     LOG(DEBUG, __FUNCTION__, ":: SSR event: ", eventParams);
 
-    telux::common::ServiceStatus srvcStatus =
-        telux::common::ServiceStatus::SERVICE_FAILED;
+    telux::common::ServiceStatus srvcStatus = telux::common::ServiceStatus::SERVICE_FAILED;
     if (eventParams == "SERVICE_AVAILABLE") {
         srvcStatus = telux::common::ServiceStatus::SERVICE_AVAILABLE;
     } else if (eventParams == "SERVICE_UNAVAILABLE") {
@@ -212,11 +209,11 @@ void DeviceInfoManagerServerImpl::handleSSREvent(std::string eventParams) {
     setServiceStatus(srvcStatus);
 }
 
-grpc::Status DeviceInfoManagerServerImpl::setResponse(telux::common::ServiceStatus srvStatus,
-        commonStub::GetServiceStatusReply* response) {
-    LOG(DEBUG,__FUNCTION__);
+grpc::Status DeviceInfoManagerServerImpl::setResponse(
+    telux::common::ServiceStatus srvStatus, commonStub::GetServiceStatusReply *response) {
+    LOG(DEBUG, __FUNCTION__);
 
-    switch(srvStatus) {
+    switch (srvStatus) {
         case telux::common::ServiceStatus::SERVICE_AVAILABLE:
             response->set_service_status(commonStub::ServiceStatus::SERVICE_AVAILABLE);
             break;
@@ -237,7 +234,7 @@ grpc::Status DeviceInfoManagerServerImpl::setResponse(telux::common::ServiceStat
 }
 
 void DeviceInfoManagerServerImpl::onSSREvent(telux::common::ServiceStatus srvStatus) {
-    LOG(DEBUG,__FUNCTION__);
+    LOG(DEBUG, __FUNCTION__);
 
     commonStub::GetServiceStatusReply ssrResp;
     ::eventService::EventResponse anyResponse;
@@ -249,27 +246,27 @@ void DeviceInfoManagerServerImpl::onSSREvent(telux::common::ServiceStatus srvSta
     clientEvent_.updateEventQueue(anyResponse);
 }
 
-grpc::Status DeviceInfoManagerServerImpl::InitService(ServerContext* context,
-    const google::protobuf::Empty* request, commonStub::GetServiceStatusReply* response) {
-    LOG(DEBUG,__FUNCTION__);
+grpc::Status DeviceInfoManagerServerImpl::InitService(ServerContext *context,
+    const google::protobuf::Empty *request, commonStub::GetServiceStatusReply *response) {
+    LOG(DEBUG, __FUNCTION__);
 
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status           = telux::common::Status::SUCCESS;
     telux::common::ServiceStatus srvStatus = telux::common::ServiceStatus::SERVICE_FAILED;
     Json::Value rootNode;
 
     status = registerDefaultIndications();
     if (status != telux::common::Status::SUCCESS) {
-        return grpc::Status(grpc::StatusCode::CANCELLED,
-                ":: Could not register indication with EventMgr");
+        return grpc::Status(
+            grpc::StatusCode::CANCELLED, ":: Could not register indication with EventMgr");
     }
 
     telux::common::ErrorCode errorCode
         = JsonParser::readFromJsonFile(rootNode, DEVICE_INFO_MANAGER_API_JSON);
     if (errorCode == ErrorCode::SUCCESS) {
         std::lock_guard<std::mutex> lock(mutex_);
-        cbDelay_ = rootNode["IDeviceInfoManager"]["IsSubsystemReadyDelay"].asInt();
+        cbDelay_             = rootNode["IDeviceInfoManager"]["IsSubsystemReadyDelay"].asInt();
         std::string cbStatus = rootNode["IDeviceInfoManager"]["IsSubsystemReady"].asString();
-        srvStatus = CommonUtils::mapServiceStatus(cbStatus);
+        srvStatus            = CommonUtils::mapServiceStatus(cbStatus);
     } else {
         LOG(ERROR, "Unable to read DeviceInfoManager JSON");
     }
@@ -281,29 +278,28 @@ grpc::Status DeviceInfoManagerServerImpl::InitService(ServerContext* context,
     return setResponse(srvStatus, response);
 }
 
-grpc::Status DeviceInfoManagerServerImpl::GetServiceStatus(ServerContext* context,
-        const google::protobuf::Empty* request,
-        commonStub::GetServiceStatusReply* response) {
+grpc::Status DeviceInfoManagerServerImpl::GetServiceStatus(ServerContext *context,
+    const google::protobuf::Empty *request, commonStub::GetServiceStatusReply *response) {
     LOG(DEBUG, __FUNCTION__);
 
     telux::common::ServiceStatus srvStatus = getServiceStatus();
     LOG(DEBUG, __FUNCTION__, ":: SubSystemStatus: ", static_cast<int>(srvStatus));
 
-    return setResponse(srvStatus,response);
+    return setResponse(srvStatus, response);
 }
 
-grpc::Status DeviceInfoManagerServerImpl::GetPlatformVersion(ServerContext* context,
-const google::protobuf::Empty* request, platformStub::PlatformVersionInfo* response){
-    LOG(DEBUG,__FUNCTION__);
+grpc::Status DeviceInfoManagerServerImpl::GetPlatformVersion(ServerContext *context,
+    const google::protobuf::Empty *request, platformStub::PlatformVersionInfo *response) {
+    LOG(DEBUG, __FUNCTION__);
 
-    std::string apiJsonPath = DEVICE_INFO_MANAGER_API_JSON;
+    std::string apiJsonPath        = DEVICE_INFO_MANAGER_API_JSON;
     std::string systemInfoJsonPath = META_BUILD_VER_INFO_FILE;
-    std::string subsystem = "IDeviceInfoManager";
-    std::string method = "GetPlatformVersion";
+    std::string subsystem          = "IDeviceInfoManager";
+    std::string method             = "GetPlatformVersion";
     JsonData data;
 
-    telux::common::ErrorCode error =
-        CommonUtils::readJsonData(apiJsonPath, systemInfoJsonPath, subsystem, method, data);
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, systemInfoJsonPath, subsystem, method, data);
 
     if (error != ErrorCode::SUCCESS) {
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
@@ -315,10 +311,10 @@ const google::protobuf::Empty* request, platformStub::PlatformVersionInfo* respo
     std::string apps;
 
     if (data.status == telux::common::Status::SUCCESS) {
-        modem = data.stateRootObj["Image_Build_IDs"]["modem"].asString();
+        modem         = data.stateRootObj["Image_Build_IDs"]["modem"].asString();
         meta_build_id = data.stateRootObj["Metabuild_Info"]["Meta_Build_ID"].asString();
-        apps_fsl = data.stateRootObj["Image_Build_IDs"]["apps_fsl"].asString();
-        apps = data.stateRootObj["Image_Build_IDs"]["apps"].asString();
+        apps_fsl      = data.stateRootObj["Image_Build_IDs"]["apps_fsl"].asString();
+        apps          = data.stateRootObj["Image_Build_IDs"]["apps"].asString();
     }
 
     response->mutable_reply()->set_status(static_cast<commonStub::Status>(data.status));
@@ -332,19 +328,19 @@ const google::protobuf::Empty* request, platformStub::PlatformVersionInfo* respo
     return grpc::Status::OK;
 }
 
-grpc::Status DeviceInfoManagerServerImpl::GetIMEI(ServerContext* context,
-const google::protobuf::Empty* request, platformStub::PlatformImeiInfo* response){
-    LOG(DEBUG,__FUNCTION__);
+grpc::Status DeviceInfoManagerServerImpl::GetIMEI(ServerContext *context,
+    const google::protobuf::Empty *request, platformStub::PlatformImeiInfo *response) {
+    LOG(DEBUG, __FUNCTION__);
 
-    std::string apiJsonPath = DEVICE_INFO_MANAGER_API_JSON;
+    std::string apiJsonPath        = DEVICE_INFO_MANAGER_API_JSON;
     std::string systemInfoJsonPath = DEVICE_INFO_MANAGER_SYSTEM_INFO_JSON;
-    std::string subsystem = "IDeviceInfoManager";
-    std::string method = "GetIMEI";
+    std::string subsystem          = "IDeviceInfoManager";
+    std::string method             = "GetIMEI";
     std::string imei;
     JsonData data;
 
-    telux::common::ErrorCode error =
-        CommonUtils::readJsonData(apiJsonPath, systemInfoJsonPath, subsystem, method, data);
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, systemInfoJsonPath, subsystem, method, data);
 
     if (error != ErrorCode::SUCCESS) {
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");

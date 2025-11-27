@@ -26,10 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2021-2022, 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -43,8 +43,8 @@
 using namespace telux::config;
 
 ModemConfigurator::ModemConfigurator() {
-    //Setting up default parameters
-    slotId_ = 1;
+    // Setting up default parameters
+    slotId_     = 1;
     configType_ = telux::config::ConfigType::SOFTWARE;
 }
 
@@ -57,9 +57,7 @@ telux::common::Status ModemConfigurator::init() {
     auto &configFactory = telux::config::ConfigFactory::getInstance();
     std::promise<telux::common::ServiceStatus> prom;
     modemConfigManager_ = configFactory.getModemConfigManager(
-        [&prom](telux::common::ServiceStatus status) {
-            prom.set_value(status);
-    });
+        [&prom](telux::common::ServiceStatus status) { prom.set_value(status); });
 
     if (!modemConfigManager_) {
         std::cout << "Failed to get modem config Manager" << std::endl;
@@ -90,16 +88,16 @@ void ModemConfigurator::cleanup() {
 void ModemConfigurator::requestConfigList() {
     std::promise<bool> p;
     telux::common::Status status = modemConfigManager_->requestConfigList(
-        [&p, this](std::vector<telux::config::ConfigInfo> configList,
-                                        telux::common::ErrorCode errCode) {
-        if (errCode == telux::common::ErrorCode::SUCCESS) {
-            configList_ = configList;
-            p.set_value(true);
-        } else {
-            std::cout << "Failed to get config list" << std::endl;
-            p.set_value(false);
-        }
-    });
+        [&p, this](
+            std::vector<telux::config::ConfigInfo> configList, telux::common::ErrorCode errCode) {
+            if (errCode == telux::common::ErrorCode::SUCCESS) {
+                configList_ = configList;
+                p.set_value(true);
+            } else {
+                std::cout << "Failed to get config list" << std::endl;
+                p.set_value(false);
+            }
+        });
     if (status == telux::common::Status::SUCCESS) {
         std::cout << "Get Config List Request sent" << std::endl;
     } else {
@@ -114,8 +112,9 @@ void ModemConfigurator::requestConfigList() {
 void ModemConfigurator::getActiveConfig() {
     std::promise<bool> p;
     telux::config::ConfigInfo activeConfig;
-    telux::common::Status status = modemConfigManager_->getActiveConfig(configType_,
-        [&p,&activeConfig](ConfigInfo configInfo, telux::common::ErrorCode errCode) {
+    telux::common::Status status = modemConfigManager_->getActiveConfig(
+        configType_,
+        [&p, &activeConfig](ConfigInfo configInfo, telux::common::ErrorCode errCode) {
             if (errCode == telux::common::ErrorCode::SUCCESS) {
                 activeConfig = configInfo;
                 p.set_value(true);
@@ -124,7 +123,8 @@ void ModemConfigurator::getActiveConfig() {
                 std::cout << "Failed to get active config" << std::endl;
                 p.set_value(false);
             }
-    }, slotId_);
+        },
+        slotId_);
 
     if (status == telux::common::Status::SUCCESS) {
         std::cout << "get active config request sent" << std::endl;
@@ -137,7 +137,7 @@ void ModemConfigurator::getActiveConfig() {
         std::string type;
         if (activeConfig.type == telux::config::ConfigType::HARDWARE) {
             type = "HARDWARE";
-        } else if(activeConfig.type == telux::config::ConfigType::SOFTWARE) {
+        } else if (activeConfig.type == telux::config::ConfigType::SOFTWARE) {
             type = "SOFTWARE";
         }
         std::cout << "Type        :" << type << std::endl;
@@ -149,20 +149,20 @@ void ModemConfigurator::getActiveConfig() {
 
 void ModemConfigurator::loadConfigFile(std::string filePath) {
     std::promise<bool> p;
-    FILE* file;
-    DIR* directory = opendir(filePath.c_str());
+    FILE *file;
+    DIR *directory = opendir(filePath.c_str());
     if (directory != NULL) {
         std::cout << "The path is a directory enter file path" << std::endl;
         return;
     } else {
-        file = fopen(filePath.c_str(),"r");
-        if(file == nullptr) {
+        file = fopen(filePath.c_str(), "r");
+        if (file == nullptr) {
             perror("Error ");
             return;
         }
     }
-    telux::common::Status status = modemConfigManager_->loadConfigFile(filePath, configType_,
-             [&p](telux::common::ErrorCode error) {
+    telux::common::Status status = modemConfigManager_->loadConfigFile(
+        filePath, configType_, [&p](telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
                 p.set_value(true);
             } else {
@@ -170,32 +170,32 @@ void ModemConfigurator::loadConfigFile(std::string filePath) {
                 p.set_value(false);
             }
         });
-    if(status == telux::common::Status::SUCCESS) {
+    if (status == telux::common::Status::SUCCESS) {
         std::cout << "Load config Request sent" << std::endl;
     } else {
         std::cout << "Load config Request failed" << std::endl;
     }
 
     if (p.get_future().get()) {
-             std::cout << "Load config succeeded." << std::endl;
+        std::cout << "Load config succeeded." << std::endl;
     }
 }
 
 void ModemConfigurator::activateConfig(int configNo) {
     std::promise<bool> p;
-        std::cout << "Config index is " << configNo << std::endl;
+    std::cout << "Config index is " << configNo << std::endl;
 
-    if (configNo < 0 || configNo > static_cast<int>(configList_.size() -1)) {
+    if (configNo < 0 || configNo > static_cast<int>(configList_.size() - 1)) {
         std::cout << "Config index is2 " << configNo << std::endl;
-        std::cout << "Config index is3 " << (int)(configList_.size() -1) << std::endl;
+        std::cout << "Config index is3 " << (int)(configList_.size() - 1) << std::endl;
         std::cout << "Invalid config index provided" << std::endl;
         return;
     }
     ConfigId configId;
     configId = configList_[configNo].id;
 
-    telux::common::Status status = modemConfigManager_->activateConfig(configType_, configId,
-            slotId_, [&p](telux::common::ErrorCode error) {
+    telux::common::Status status = modemConfigManager_->activateConfig(
+        configType_, configId, slotId_, [&p](telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
                 p.set_value(true);
             } else {
@@ -210,7 +210,7 @@ void ModemConfigurator::activateConfig(int configNo) {
     }
 
     if (p.get_future().get()) {
-             std::cout << "config Activated !!" << std::endl;
+        std::cout << "config Activated !!" << std::endl;
     }
 }
 
@@ -218,7 +218,7 @@ void ModemConfigurator::getSelectionMode() {
     std::promise<bool> p;
     telux::config::AutoSelectionMode selMode;
     telux::common::Status status = modemConfigManager_->getAutoSelectionMode(
-            [&p, &selMode](AutoSelectionMode selectionMode, telux::common::ErrorCode error) {
+        [&p, &selMode](AutoSelectionMode selectionMode, telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
                 selMode = selectionMode;
                 p.set_value(true);
@@ -226,7 +226,8 @@ void ModemConfigurator::getSelectionMode() {
                 std::cout << "Failed to get selection mode" << std::endl;
                 p.set_value(false);
             }
-        }, slotId_);
+        },
+        slotId_);
     if (status == telux::common::Status::SUCCESS) {
         std::cout << "Get selection mode Request sent" << std::endl;
     } else {
@@ -255,8 +256,8 @@ void ModemConfigurator::setSelectionMode(int selMode) {
         return;
     }
 
-    telux::common::Status status = modemConfigManager_->setAutoSelectionMode(mode,
-           slotId_, [&p](telux::common::ErrorCode error) {
+    telux::common::Status status = modemConfigManager_->setAutoSelectionMode(
+        mode, slotId_, [&p](telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
                 p.set_value(true);
             } else {
@@ -271,15 +272,15 @@ void ModemConfigurator::setSelectionMode(int selMode) {
     }
 
     if (p.get_future().get()) {
-             std::cout << "set selection mode succeeded." << std::endl;
+        std::cout << "set selection mode succeeded." << std::endl;
     }
 }
 
 void ModemConfigurator::deactivateConfig() {
     std::promise<bool> p;
 
-    telux::common::Status status = modemConfigManager_->deactivateConfig(configType_,
-           slotId_,[&p](telux::common::ErrorCode error) {
+    telux::common::Status status = modemConfigManager_->deactivateConfig(
+        configType_, slotId_, [&p](telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
                 p.set_value(true);
             } else {
@@ -294,7 +295,7 @@ void ModemConfigurator::deactivateConfig() {
     }
 
     if (p.get_future().get()) {
-             std::cout << "deactivate config succeeded." << std::endl;
+        std::cout << "deactivate config succeeded." << std::endl;
     }
 }
 
@@ -305,15 +306,15 @@ void ModemConfigurator::deleteConfigFile(int configNo) {
     if (configNo == -1) {
         configId = "";
     } else {
-        if (configNo < -1 || configNo > static_cast<int>(configList_.size() -1)) {
+        if (configNo < -1 || configNo > static_cast<int>(configList_.size() - 1)) {
             std::cout << "Invalid config index provided" << std::endl;
             return;
         }
         configId = configList_[configNo].id;
     }
 
-    telux::common::Status status = modemConfigManager_->deleteConfig(configType_,
-          configId, [&p](telux::common::ErrorCode error) {
+    telux::common::Status status = modemConfigManager_->deleteConfig(
+        configType_, configId, [&p](telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
                 p.set_value(true);
             } else {
@@ -328,40 +329,40 @@ void ModemConfigurator::deleteConfigFile(int configNo) {
     }
 
     if (p.get_future().get()) {
-             std::cout << "Delete config succeeded." << std::endl;
+        std::cout << "Delete config succeeded." << std::endl;
     }
 }
 
-void ModemConfigurator::printHelp()
-{
+void ModemConfigurator::printHelp() {
     std::cout << "             Modem Config App\n"
-    << "---------------------------------------------------------------\n"
-    << "Note : Application uses default type as SOFTWARE and default slot \n"
-    << "as 1. Please change according to your requirement.\n\n"
-    << "-t <type>           set config type, '-t 0' for hardware and '-t 1'\n"
-    << "                    for software, (default type is software) \n\n"
-    << "-s <slot_id>        set slot id -s <slot_id>, (default slot is 1)\n\n"
-    << "-i                  get list of configs present in modem storage\n\n"
-    << "-l <file_path>      load config to modem storage, we need to specify\n"
-    << "                    type and path e,g '-t 1 -l file_path'.\n\n"
-    << "-a <config_index>   activate config file, we need to specify type,\n"
-    << "                    slot and config index, e.g '-s 1 -t 1 -a 2',\n"
-    << "                    for config index, please get config list.\n\n"
-    << "-f                  get active config details, we need to specify type\n"
-    << "                    and slot, e.g '-s 1 -t 1 -f'.\n\n"
-    << "-g                  get selecion mode, we need to specify slot id\n"
-    << "                    e.g '-s 1 -g'.\n\n"
-    << "-m <mode>           set selection mode, for config we need to specify\n"
-    << "-                   slot and mode e.g '-s 1 -m 0', mode values are \n"
-    << "                    0 to disable, and 1 to enable auto selection\n\n"
-    << "-d                  deactivate config, we need to specify type and \n"
-    << "                    slot_id, e.g '-s 1 -t 1 -d.\n\n"
-    << "-r <config_index>   remove config from modem storage, we need to specify\n"
-    << "                    type and config_index, for finding config index,\n"
-    << "                    please get config list e.g '- t 1 -r 2' \n"
-    << "                    To delete all configs of specified type, provide \n"
-    << "                    config_index as -1 e.g '-t 1 -r -1'\n"
-    << "-h                  help\n" << std::endl;
+              << "---------------------------------------------------------------\n"
+              << "Note : Application uses default type as SOFTWARE and default slot \n"
+              << "as 1. Please change according to your requirement.\n\n"
+              << "-t <type>           set config type, '-t 0' for hardware and '-t 1'\n"
+              << "                    for software, (default type is software) \n\n"
+              << "-s <slot_id>        set slot id -s <slot_id>, (default slot is 1)\n\n"
+              << "-i                  get list of configs present in modem storage\n\n"
+              << "-l <file_path>      load config to modem storage, we need to specify\n"
+              << "                    type and path e,g '-t 1 -l file_path'.\n\n"
+              << "-a <config_index>   activate config file, we need to specify type,\n"
+              << "                    slot and config index, e.g '-s 1 -t 1 -a 2',\n"
+              << "                    for config index, please get config list.\n\n"
+              << "-f                  get active config details, we need to specify type\n"
+              << "                    and slot, e.g '-s 1 -t 1 -f'.\n\n"
+              << "-g                  get selecion mode, we need to specify slot id\n"
+              << "                    e.g '-s 1 -g'.\n\n"
+              << "-m <mode>           set selection mode, for config we need to specify\n"
+              << "-                   slot and mode e.g '-s 1 -m 0', mode values are \n"
+              << "                    0 to disable, and 1 to enable auto selection\n\n"
+              << "-d                  deactivate config, we need to specify type and \n"
+              << "                    slot_id, e.g '-s 1 -t 1 -d.\n\n"
+              << "-r <config_index>   remove config from modem storage, we need to specify\n"
+              << "                    type and config_index, for finding config index,\n"
+              << "                    please get config list e.g '- t 1 -r 2' \n"
+              << "                    To delete all configs of specified type, provide \n"
+              << "                    config_index as -1 e.g '-t 1 -r -1'\n"
+              << "-h                  help\n"
+              << std::endl;
 }
 
 void ModemConfigurator::changeConfigType(int type) {
@@ -377,18 +378,18 @@ void ModemConfigurator::changeConfigType(int type) {
 }
 
 void ModemConfigurator::changeSlotId(int slotId) {
-    slotId_= slotId;
-    std::cout << "Slot Id changed to : "<< slotId_ << std::endl;
+    slotId_ = slotId;
+    std::cout << "Slot Id changed to : " << slotId_ << std::endl;
 }
 
 void ModemConfigurator::onConfigUpdateStatus(ConfigUpdateStatus status, int slotId) {
     std::string state;
-    if(status == ConfigUpdateStatus::START) {
+    if (status == ConfigUpdateStatus::START) {
         state = " Started.";
     } else {
         state = " Completed.";
     }
-    std::cout << "Config update on slot id: "<< slotId << state <<std::endl;
+    std::cout << "Config update on slot id: " << slotId << state << std::endl;
 }
 
 void ModemConfigurator::onServiceStatusChange(telux::common::ServiceStatus status) {
@@ -408,7 +409,7 @@ void ModemConfigurator::printConfigList() {
         std::string type;
         if (config.type == telux::config::ConfigType::HARDWARE) {
             type = "HARDWARE";
-        } else if(config.type == telux::config::ConfigType::SOFTWARE) {
+        } else if (config.type == telux::config::ConfigType::SOFTWARE) {
             type = "SOFTWARE";
         }
         std::cout << "Type        : " << type << std::endl;
@@ -421,27 +422,20 @@ void ModemConfigurator::printConfigList() {
 
 telux::common::Status ModemConfigurator::parseArguments(int argc, char **argv) {
     int c;
-        static struct option long_options[] = {
-            {"change config type",        required_argument, 0, 't'},
-            {"change slot id",            required_argument, 0, 's'},
-            {"get config list",           no_argument, 0, 'i'},
-            {"load config",               required_argument, 0, 'l'},
-            {"activate config",           required_argument, 0, 'a'},
-            {"get active config",         no_argument, 0, 'f'},
-            {"get selection mode",        no_argument, 0, 'g'},
-            {"set selection mode",        required_argument, 0, 'm'},
-            {"deactivate config",         no_argument, 0, 'd'},
-            {"delete config",             required_argument, 0, 'r'},
-            {"help",                      no_argument, 0, 'h'},
-            {0, 0, 0, 0}
-        };
+    static struct option long_options[] = {{"change config type", required_argument, 0, 't'},
+        {"change slot id", required_argument, 0, 's'}, {"get config list", no_argument, 0, 'i'},
+        {"load config", required_argument, 0, 'l'}, {"activate config", required_argument, 0, 'a'},
+        {"get active config", no_argument, 0, 'f'}, {"get selection mode", no_argument, 0, 'g'},
+        {"set selection mode", required_argument, 0, 'm'},
+        {"deactivate config", no_argument, 0, 'd'}, {"delete config", required_argument, 0, 'r'},
+        {"help", no_argument, 0, 'h'}, {0, 0, 0, 0}};
 
-        int option_index = 0;
-        c = getopt_long(argc, argv, "t:s:il:a:fgm:dr:h", long_options, &option_index);
-        if (c == -1) {
-            // if no option is entered help is printed.
-            c = 'h';
-        }
+    int option_index = 0;
+    c                = getopt_long(argc, argv, "t:s:il:a:fgm:dr:h", long_options, &option_index);
+    if (c == -1) {
+        // if no option is entered help is printed.
+        c = 'h';
+    }
     do {
         switch (c) {
             case 't':
@@ -491,7 +485,7 @@ int main(int argc, char **argv) {
     // Setting required secondary groups for SDK file/diag logging
     std::vector<std::string> supplementaryGrps{"system", "diag", "logd", "dlt"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
-    if (rc == -1){
+    if (rc == -1) {
         std::cout << "Adding supplementary groups failed!" << std::endl;
     }
     telux::common::Status status = telux::common::Status::FAILED;

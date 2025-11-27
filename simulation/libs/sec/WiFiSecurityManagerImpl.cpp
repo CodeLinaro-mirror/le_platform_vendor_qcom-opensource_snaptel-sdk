@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <thread>
@@ -47,7 +47,7 @@ void WiFiSecurityManagerImpl::setServiceStatus(ServiceStatus status) {
         std::lock_guard<std::mutex> lock(mutex_);
         serviceStatus_ = status;
         if (status != ServiceStatus::SERVICE_AVAILABLE) {
-            isInitsyncTriggered_  = false;
+            isInitsyncTriggered_ = false;
         }
 
         if (initCb_) {
@@ -87,16 +87,15 @@ telux::common::Status WiFiSecurityManagerImpl::init(
     ::securityStub::InitInfo response{};
 
     try {
-        serviceStatusListenerMgr_ = std::make_shared<
-            telux::common::ListenerManager<IServiceStatusListener>>();
+        serviceStatusListenerMgr_
+            = std::make_shared<telux::common::ListenerManager<IServiceStatusListener>>();
     } catch (const std::exception &e) {
         LOG(ERROR, __FUNCTION__, " can't setup ListenerManager");
         return telux::common::Status::FAILED;
     }
 
     status = clientEventMgr_.registerListener(shared_from_this(), WCS_FILTER);
-    if ((status != telux::common::Status::SUCCESS) &&
-        (status != telux::common::Status::ALREADY)) {
+    if ((status != telux::common::Status::SUCCESS) && (status != telux::common::Status::ALREADY)) {
         LOG(ERROR, __FUNCTION__, " can't register with ClientEventManager");
         return status;
     }
@@ -115,9 +114,9 @@ telux::common::Status WiFiSecurityManagerImpl::init(
         return telux::common::Status::FAILED;
     }
 
-    ss_ready_delay_ = response.ss_ready_delay();
+    ss_ready_delay_    = response.ss_ready_delay();
     ss_service_status_ = static_cast<telux::common::ServiceStatus>(response.service_status());
-    initCb_ = initResultListener;
+    initCb_            = initResultListener;
 
     /* Schedule blocking initializations */
     future = std::async(std::launch::async, [this]() { this->initSync(); }).share();
@@ -157,8 +156,8 @@ ErrorCode WiFiSecurityManagerImpl::registerListener(
     std::weak_ptr<IServiceStatusListener> listener) {
     telux::common::Status status;
 
-    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE ||
-        getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
+    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE
+        || getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
         LOG(ERROR, __FUNCTION__, " Service is unavailable or failed");
         return telux::common::ErrorCode::SYSTEM_ERR;
     }
@@ -175,8 +174,8 @@ ErrorCode WiFiSecurityManagerImpl::deregisterListener(
     std::weak_ptr<IServiceStatusListener> listener) {
     telux::common::Status status;
 
-    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE ||
-        getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
+    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE
+        || getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
         LOG(ERROR, __FUNCTION__, " Service is unavailable or failed");
         return telux::common::ErrorCode::SYSTEM_ERR;
     }
@@ -198,8 +197,8 @@ telux::common::ErrorCode WiFiSecurityManagerImpl::registerListener(
     telux::common::ErrorCode ec;
     telux::common::Status status;
 
-    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE ||
-        getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
+    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE
+        || getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
         LOG(ERROR, __FUNCTION__, " Service is unavailable or failed");
         return telux::common::ErrorCode::SYSTEM_ERR;
     }
@@ -219,8 +218,8 @@ telux::common::ErrorCode WiFiSecurityManagerImpl::registerListener(
         }
 
         try {
-            secReportListenerMgr_ = std::make_shared<
-                telux::common::ListenerManager<IWiFiReportListener>>();
+            secReportListenerMgr_
+                = std::make_shared<telux::common::ListenerManager<IWiFiReportListener>>();
         } catch (const std::exception &e) {
             LOG(ERROR, __FUNCTION__, " can't create listeners manager");
             return telux::common::CommonUtils::toErrorCode(telux::common::Status::FAILED);
@@ -256,8 +255,8 @@ telux::common::ErrorCode WiFiSecurityManagerImpl::deregisterListener(
     telux::common::ErrorCode ec;
     std::vector<std::weak_ptr<IWiFiReportListener>> listenerList;
 
-    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE ||
-        getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
+    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE
+        || getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
         LOG(ERROR, __FUNCTION__, " Service is unavailable or failed");
         return telux::common::ErrorCode::SYSTEM_ERR;
     }
@@ -301,8 +300,8 @@ void WiFiSecurityManagerImpl::onReportAvailable(telux::sec::WiFiSecurityReport r
 
     std::vector<std::weak_ptr<IWiFiReportListener>> listenerList;
 
-    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE ||
-        getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
+    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE
+        || getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
         return;
     }
 
@@ -324,8 +323,8 @@ void WiFiSecurityManagerImpl::onDeauthenticationAttack(DeauthenticationInfo deau
 
     std::vector<std::weak_ptr<IWiFiReportListener>> listenerList;
 
-    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE ||
-        getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
+    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE
+        || getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
         return;
     }
 
@@ -347,8 +346,8 @@ void WiFiSecurityManagerImpl::isTrustedAP(ApInfo accessPoint, bool &isTrusted) {
     telux::common::ErrorCode ec{};
     std::vector<std::weak_ptr<IWiFiReportListener>> listenerList;
 
-    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE ||
-        getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
+    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE
+        || getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
         return;
     }
 
@@ -384,8 +383,8 @@ telux::common::ErrorCode WiFiSecurityManagerImpl::getTrustedApList(
     ::google::protobuf::Empty request{};
     ::securityStub::TrustedAPList response{};
 
-    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE ||
-        getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
+    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE
+        || getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
         LOG(ERROR, __FUNCTION__, " Service is unavailable or failed");
         return telux::common::ErrorCode::SYSTEM_ERR;
     }
@@ -407,7 +406,7 @@ telux::common::ErrorCode WiFiSecurityManagerImpl::getTrustedApList(
 
         auto aps = response.ap_list();
         for (const securityStub::ApInfo &ap : aps) {
-            apInfo.ssid = ap.ssid();
+            apInfo.ssid  = ap.ssid();
             apInfo.bssid = ap.bssid();
             trustedAPList.push_back(apInfo);
         }
@@ -427,8 +426,8 @@ telux::common::ErrorCode WiFiSecurityManagerImpl::removeApFromTrustedList(ApInfo
     ::securityStub::ApInfo request{};
     ::commonStub::ErrorCodeMsg response{};
 
-    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE ||
-        getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
+    if (getServiceStatus() == ServiceStatus::SERVICE_UNAVAILABLE
+        || getServiceStatus() == ServiceStatus::SERVICE_FAILED) {
         LOG(ERROR, __FUNCTION__, " Service is unavailable or failed");
         return telux::common::ErrorCode::SYSTEM_ERR;
     }
@@ -580,21 +579,21 @@ void WiFiSecurityManagerImpl::onEventUpdate(google::protobuf::Any event) {
 
     if (event.Is<::securityStub::WCSReport>()) {
         event.UnpackTo(&wcsReport);
-        report.ssid = wcsReport.ssid();
-        report.bssid = wcsReport.bssid();
-        report.isConnectedToAP = wcsReport.is_connected_to_ap();
-        report.isOpenAP = wcsReport.is_open_ap();
+        report.ssid                            = wcsReport.ssid();
+        report.bssid                           = wcsReport.bssid();
+        report.isConnectedToAP                 = wcsReport.is_connected_to_ap();
+        report.isOpenAP                        = wcsReport.is_open_ap();
         report.mlAlgorithmAnalysis.threatScore = wcsReport.mlalgo_threat_score();
-        report.mlAlgorithmAnalysis.result = static_cast<telux::sec::AnalysisResult>(
-            wcsReport.mlalgo_analysis_result());
-        report.summoningAnalysis.result = static_cast<telux::sec::AnalysisResult>(
-            wcsReport.summoning_analysis_result());
+        report.mlAlgorithmAnalysis.result
+            = static_cast<telux::sec::AnalysisResult>(wcsReport.mlalgo_analysis_result());
+        report.summoningAnalysis.result
+            = static_cast<telux::sec::AnalysisResult>(wcsReport.summoning_analysis_result());
         onReportAvailable(report);
     } else if (event.Is<::securityStub::DeauthenticationInfo>()) {
         event.UnpackTo(&deauthenticationInfo);
-        deauthInfo.deauthenticationReason = deauthenticationInfo.deauthentication_reason();
+        deauthInfo.deauthenticationReason  = deauthenticationInfo.deauthentication_reason();
         deauthInfo.didAPInitiateDisconnect = deauthenticationInfo.did_ap_initiate_disconnect();
-        deauthInfo.threatScore = deauthenticationInfo.threat_score();
+        deauthInfo.threatScore             = deauthenticationInfo.threat_score();
         onDeauthenticationAttack(deauthInfo);
     } else if (event.Is<::securityStub::WCSServiceStatus>()) {
         event.UnpackTo(&newSrvState);
@@ -602,7 +601,7 @@ void WiFiSecurityManagerImpl::onEventUpdate(google::protobuf::Any event) {
         onSecurityServiceStatusChange(serviceStatus);
     } else if (event.Is<::securityStub::ApInfo>()) {
         event.UnpackTo(&isTrustedInfo);
-        accessPoint.ssid = isTrustedInfo.ssid();
+        accessPoint.ssid  = isTrustedInfo.ssid();
         accessPoint.bssid = isTrustedInfo.bssid();
         isTrustedAP(accessPoint, isTrusted);
     } else {

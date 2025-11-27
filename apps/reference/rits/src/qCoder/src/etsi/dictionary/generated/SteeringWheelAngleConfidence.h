@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_SteeringWheelAngleConfidence_H_
-#define	_SteeringWheelAngleConfidence_H_
-
+#ifndef _SteeringWheelAngleConfidence_H_
+#define _SteeringWheelAngleConfidence_H_
 
 #include <asn_application.h>
 
@@ -20,13 +19,13 @@ extern "C" {
 
 /* Dependencies */
 typedef enum SteeringWheelAngleConfidence {
-	SteeringWheelAngleConfidence_equalOrWithinOnePointFiveDegree	= 1,
-	SteeringWheelAngleConfidence_outOfRange	= 126,
-	SteeringWheelAngleConfidence_unavailable	= 127
+    SteeringWheelAngleConfidence_equalOrWithinOnePointFiveDegree = 1,
+    SteeringWheelAngleConfidence_outOfRange                      = 126,
+    SteeringWheelAngleConfidence_unavailable                     = 127
 } e_SteeringWheelAngleConfidence;
 
 /* SteeringWheelAngleConfidence */
-typedef long	 SteeringWheelAngleConfidence_t;
+typedef long SteeringWheelAngleConfidence_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_SteeringWheelAngleConfidence;
@@ -44,5 +43,5 @@ per_type_encoder_f SteeringWheelAngleConfidence_encode_uper;
 }
 #endif
 
-#endif	/* _SteeringWheelAngleConfidence_H_ */
+#endif /* _SteeringWheelAngleConfidence_H_ */
 #include <asn_internal.h>

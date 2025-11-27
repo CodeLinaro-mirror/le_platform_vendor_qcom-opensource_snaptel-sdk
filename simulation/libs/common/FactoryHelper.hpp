@@ -28,8 +28,7 @@ namespace common {
 class FactoryHelper {
  protected:
     template <typename T>
-    std::shared_ptr<T> getManager(std::string type,
-        std::weak_ptr<T> &weakManager,
+    std::shared_ptr<T> getManager(std::string type, std::weak_ptr<T> &weakManager,
         std::vector<telux::common::InitResponseCb> &callbacks,
         telux::common::InitResponseCb clientCallback,
         std::function<std::shared_ptr<T>(telux::common::InitResponseCb)> createAndInit) {
@@ -43,19 +42,17 @@ class FactoryHelper {
             if (status == telux::common::ServiceStatus::SERVICE_FAILED) {
                 // manager has failed initialization but callback is not called yet hence we still
                 // have valid shared pointer.
-                LOG(ERROR, __FUNCTION__, type,
-                    " initialization failed for ", manager.get());
+                LOG(ERROR, __FUNCTION__, type, " initialization failed for ", manager.get());
                 return nullptr;
             } else if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-                LOG(DEBUG, __FUNCTION__, type,
-                    " initialization was successful for ", manager.get());
+                LOG(DEBUG, __FUNCTION__, type, " initialization was successful for ",
+                    manager.get());
                 if (clientCallback) {
                     std::thread appCallback([clientCallback, status]() { clientCallback(status); });
                     appCallback.detach();
                 }
             } else {
-                LOG(DEBUG, __FUNCTION__, type,
-                    " initialization in progress for ", manager.get());
+                LOG(DEBUG, __FUNCTION__, type, " initialization in progress for ", manager.get());
                 if (clientCallback) {
                     callbacks.push_back(clientCallback);
                 }
@@ -69,7 +66,7 @@ class FactoryHelper {
                       // Application's initCb is expected to get either SERVICE_AVAILABLE or
                       // SERVICE_FAILED. Any other subsystem status should not be notified through
                       // initCb.
-                      if((status != telux::common::ServiceStatus::SERVICE_FAILED)
+                      if ((status != telux::common::ServiceStatus::SERVICE_FAILED)
                           && (status != telux::common::ServiceStatus::SERVICE_AVAILABLE)) {
                           return;
                       }
@@ -79,9 +76,8 @@ class FactoryHelper {
                               ". Removing instance");
                           weakManager.reset();
                       }
-                      LOG(DEBUG, type, ": invoking client callbacks (", callbacks.size(),
-                          ") for ", weakManager.lock().get(),
-                          " with status: ", static_cast<int>(status));
+                      LOG(DEBUG, type, ": invoking client callbacks (", callbacks.size(), ") for ",
+                          weakManager.lock().get(), " with status: ", static_cast<int>(status));
                       initCompleteNotifier(type, callbacks, status);
                   };
             try {
@@ -92,8 +88,7 @@ class FactoryHelper {
                     return manager;
                 }
             } catch (std::bad_alloc &e) {
-                LOG(ERROR, __FUNCTION__, type,
-                    " failed to create with exception: ", e.what());
+                LOG(ERROR, __FUNCTION__, type, " failed to create with exception: ", e.what());
                 return nullptr;
             }
             weakManager = manager;
@@ -105,10 +100,12 @@ class FactoryHelper {
     }
 
     /**
-     * @brief Generic method to get a manager instance for managers that do NOT take an InitResponseCb
-     * for their initialization. Their init() is usually blocking and returns a Status directly.
+     * @brief Generic method to get a manager instance for managers that do NOT take an
+     * InitResponseCb for their initialization. Their init() is usually blocking and returns a
+     * Status directly.
      *
-     * @tparam T The type of the manager interface (e.g., IApInterfaceManager, IStaInterfaceManager).
+     * @tparam T The type of the manager interface (e.g., IApInterfaceManager,
+     * IStaInterfaceManager).
      * @param type A string describing the manager type for logging.
      * @param weakManager A weak pointer to the manager instance, used to store and retrieve
      *                    the singleton instance.
@@ -117,9 +114,8 @@ class FactoryHelper {
      * @return A shared pointer to the manager instance, or nullptr if creation failed.
      */
     template <typename T>
-    std::shared_ptr<T> getManager(std::string type,
-        std::weak_ptr<T> &weakManager,
-        std::function<std::shared_ptr<T>()> createAndInit) { // No InitResponseCb parameters
+    std::shared_ptr<T> getManager(std::string type, std::weak_ptr<T> &weakManager,
+        std::function<std::shared_ptr<T>()> createAndInit) {  // No InitResponseCb parameters
         std::shared_ptr<T> manager = nullptr;
         std::lock_guard<std::mutex> lock(factoryMutex_);
         manager = weakManager.lock();
@@ -132,15 +128,14 @@ class FactoryHelper {
             return manager;
         } else {
             try {
-                manager = createAndInit(); // Call createAndInit without a callback
+                manager = createAndInit();  // Call createAndInit without a callback
                 LOG(DEBUG, "New ", type, " created ", manager.get());
                 if (manager == nullptr) {
                     LOG(ERROR, type, " failed to initialize for ", manager.get());
                     return nullptr;
                 }
             } catch (std::bad_alloc &e) {
-                LOG(ERROR, __FUNCTION__, type,
-                    " failed to create with exception: ", e.what());
+                LOG(ERROR, __FUNCTION__, type, " failed to create with exception: ", e.what());
                 return nullptr;
             }
             weakManager = manager;
@@ -152,12 +147,12 @@ class FactoryHelper {
      * Adding an overloaded API to synchronize cleanup and initSync via taskQ.
      */
     template <typename T>
-    std::shared_ptr<T> getManager(std::string type,
-        std::weak_ptr<T> &weakManager,
+    std::shared_ptr<T> getManager(std::string type, std::weak_ptr<T> &weakManager,
         std::vector<telux::common::InitResponseCb> &callbacks,
         telux::common::InitResponseCb clientCallback,
         std::function<std::shared_ptr<T>(telux::common::InitResponseCb,
-        std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ)> createAndInit,
+            std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ)>
+            createAndInit,
         std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ) {
         std::shared_ptr<T> manager = nullptr;
         std::lock_guard<std::mutex> lock(factoryMutex_);
@@ -169,19 +164,17 @@ class FactoryHelper {
             if (status == telux::common::ServiceStatus::SERVICE_FAILED) {
                 // manager has failed initialization but callback is not called yet hence we still
                 // have valid shared pointer.
-                LOG(ERROR, __FUNCTION__, type,
-                    " initialization failed for ", manager.get());
+                LOG(ERROR, __FUNCTION__, type, " initialization failed for ", manager.get());
                 return nullptr;
             } else if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-                LOG(DEBUG, __FUNCTION__, type,
-                    " initialization was successful for ", manager.get());
+                LOG(DEBUG, __FUNCTION__, type, " initialization was successful for ",
+                    manager.get());
                 if (clientCallback) {
                     std::thread appCallback([clientCallback, status]() { clientCallback(status); });
                     appCallback.detach();
                 }
             } else {
-                LOG(DEBUG, __FUNCTION__, type,
-                    " initialization in progress for ", manager.get());
+                LOG(DEBUG, __FUNCTION__, type, " initialization in progress for ", manager.get());
                 if (clientCallback) {
                     callbacks.push_back(clientCallback);
                 }
@@ -195,7 +188,7 @@ class FactoryHelper {
                       // Application's initCb is expected to get either SERVICE_AVAILABLE or
                       // SERVICE_FAILED. Any other subsystem status should not be notified through
                       // initCb.
-                      if((status != telux::common::ServiceStatus::SERVICE_FAILED)
+                      if ((status != telux::common::ServiceStatus::SERVICE_FAILED)
                           && (status != telux::common::ServiceStatus::SERVICE_AVAILABLE)) {
                           return;
                       }
@@ -205,9 +198,8 @@ class FactoryHelper {
                               ". Removing instance");
                           weakManager.reset();
                       }
-                      LOG(DEBUG, type, ": invoking client callbacks (", callbacks.size(),
-                          ") for ", weakManager.lock().get(),
-                          " with status: ", static_cast<int>(status));
+                      LOG(DEBUG, type, ": invoking client callbacks (", callbacks.size(), ") for ",
+                          weakManager.lock().get(), " with status: ", static_cast<int>(status));
                       initCompleteNotifier(type, callbacks, status);
                   };
             try {
@@ -218,8 +210,7 @@ class FactoryHelper {
                     return manager;
                 }
             } catch (std::bad_alloc &e) {
-                LOG(ERROR, __FUNCTION__, type,
-                    " failed to create with exception: ", e.what());
+                LOG(ERROR, __FUNCTION__, type, " failed to create with exception: ", e.what());
                 return nullptr;
             }
             weakManager = manager;

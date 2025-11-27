@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <iostream>
@@ -20,7 +20,7 @@ extern "C" {
 
 DualDataManagementMenu::DualDataManagementMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
-    menuOptionsAdded_ = false;
+    menuOptionsAdded_       = false;
     subSystemStatusUpdated_ = false;
 }
 
@@ -36,38 +36,35 @@ bool DualDataManagementMenu::init() {
     if (menuOptionsAdded_ == false) {
         menuOptionsAdded_ = true;
         std::shared_ptr<ConsoleAppCommand> getDualDataCapability
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1",
-                "get_dual_data_capability", {},
-                std::bind(&DualDataManagementMenu::getDualDataCapability, this,
-                std::placeholders::_1)));
+            = std::make_shared<ConsoleAppCommand>(
+                ConsoleAppCommand("1", "get_dual_data_capability", {},
+                    std::bind(&DualDataManagementMenu::getDualDataCapability, this,
+                        std::placeholders::_1)));
         std::shared_ptr<ConsoleAppCommand> getDualDataUsageRecommendation
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2",
-                "get_dual_data_usage_recommendation", {},
-                std::bind(&DualDataManagementMenu::getDualDataUsageRecommendation, this,
-                std::placeholders::_1)));
+            = std::make_shared<ConsoleAppCommand>(
+                ConsoleAppCommand("2", "get_dual_data_usage_recommendation", {},
+                    std::bind(&DualDataManagementMenu::getDualDataUsageRecommendation, this,
+                        std::placeholders::_1)));
         std::shared_ptr<ConsoleAppCommand> requestDdsSwitch
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3",
-                "request_dds_switch", {},
-                std::bind(&DualDataManagementMenu::requestDdsSwitch, this,
-                std::placeholders::_1)));
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "request_dds_switch", {},
+                std::bind(&DualDataManagementMenu::requestDdsSwitch, this, std::placeholders::_1)));
         std::shared_ptr<ConsoleAppCommand> requestCurrentDds
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4",
-                "request_current_dds", {},
-                std::bind(&DualDataManagementMenu::requestCurrentDds, this,
-                std::placeholders::_1)));
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "request_current_dds", {},
+                std::bind(
+                    &DualDataManagementMenu::requestCurrentDds, this, std::placeholders::_1)));
         std::shared_ptr<ConsoleAppCommand> configureDdsSwitchRecommendation
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5",
-                "configure_dds_switch_recommendation", {},
-                std::bind(&DualDataManagementMenu::configureDdsSwitchRecommendation, this,
-                std::placeholders::_1)));
+            = std::make_shared<ConsoleAppCommand>(
+                ConsoleAppCommand("5", "configure_dds_switch_recommendation", {},
+                    std::bind(&DualDataManagementMenu::configureDdsSwitchRecommendation, this,
+                        std::placeholders::_1)));
         std::shared_ptr<ConsoleAppCommand> getDdsSwitchRecommendation
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6",
-                "get_dds_switch_recommendation", {},
-                std::bind(&DualDataManagementMenu::getDdsSwitchRecommendation, this,
-                std::placeholders::_1)));
+            = std::make_shared<ConsoleAppCommand>(
+                ConsoleAppCommand("6", "get_dds_switch_recommendation", {},
+                    std::bind(&DualDataManagementMenu::getDdsSwitchRecommendation, this,
+                        std::placeholders::_1)));
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList
             = {getDualDataCapability, getDualDataUsageRecommendation, requestDdsSwitch,
-            requestCurrentDds, configureDdsSwitchRecommendation, getDdsSwitchRecommendation};
+                requestCurrentDds, configureDdsSwitchRecommendation, getDdsSwitchRecommendation};
         addCommands(commandsList);
     }
     return true;
@@ -75,12 +72,12 @@ bool DualDataManagementMenu::init() {
 
 bool DualDataManagementMenu::initDualDataManager() {
     telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
-    subSystemStatusUpdated_ = false;
+    subSystemStatusUpdated_                      = false;
 
     bool retVal = false;
     auto initCb = std::bind(&DualDataManagementMenu::onInitComplete, this, std::placeholders::_1);
     auto &dataFactory = telux::data::DataFactory::getInstance();
-    auto dualDataMgr = dataFactory.getDualDataManager(initCb);
+    auto dualDataMgr  = dataFactory.getDualDataManager(initCb);
 
     if (dualDataMgr) {
         dualDataMgr->registerListener(shared_from_this());
@@ -98,7 +95,7 @@ bool DualDataManagementMenu::initDualDataManager() {
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << "\n"
                       << " DualData Manager is ready" << std::endl;
-            retVal = true;
+            retVal           = true;
             dualDataManager_ = dualDataMgr;
         } else {
             std::cout << "\n"
@@ -116,13 +113,12 @@ void DualDataManagementMenu::onInitComplete(telux::common::ServiceStatus status)
 
 bool DualDataManagementMenu::displayMenu() {
     bool retVal = true;
-    if (telux::common::ServiceStatus::SERVICE_AVAILABLE ==
-        dualDataManager_->getServiceStatus()) {
+    if (telux::common::ServiceStatus::SERVICE_AVAILABLE == dualDataManager_->getServiceStatus()) {
         std::cout << "\nDual Data Manager is ready " << std::endl;
-    }
-    else {
+    } else {
         std::cout << "\nDual Data Manager is not ready " << std::endl;
-        retVal = false;;
+        retVal = false;
+        ;
     }
     ConsoleApp::displayMenu();
     return retVal;
@@ -140,9 +136,9 @@ void DualDataManagementMenu::getDualDataCapability(std::vector<std::string> &inp
             std::cout << " Device does not support dual data feature." << std::endl;
         }
     } else {
-        std::cout << " failed to get dual data capability. ErrorCode: "
-                  << static_cast<int>(errorCode)
-                  << ", description: " << Utils::getErrorCodeAsString(errorCode) << std::endl;
+        std::cout
+            << " failed to get dual data capability. ErrorCode: " << static_cast<int>(errorCode)
+            << ", description: " << Utils::getErrorCodeAsString(errorCode) << std::endl;
     }
 }
 
@@ -151,11 +147,11 @@ void DualDataManagementMenu::getDualDataUsageRecommendation(
     std::cout << "get dual data usage recommendation" << std::endl;
 
     telux::data::DualDataUsageRecommendation recommendation;
-    telux::common::ErrorCode errorCode =
-        dualDataManager_->getDualDataUsageRecommendation(recommendation);
+    telux::common::ErrorCode errorCode
+        = dualDataManager_->getDualDataUsageRecommendation(recommendation);
     if (errorCode == telux::common::ErrorCode::SUCCESS) {
-            std::cout << " dual data usage is: " << convertRecommendationToString(recommendation)
-                      << "." << std::endl;
+        std::cout << " dual data usage is: " << convertRecommendationToString(recommendation) << "."
+                  << std::endl;
     } else {
         std::cout << " failed to get dual data usage recommendation. ErrorCode: "
                   << static_cast<int>(errorCode)
@@ -167,18 +163,18 @@ std::string DualDataManagementMenu::convertRecommendationToString(
     telux::data::DualDataUsageRecommendation recommendation) {
     std::string recommendationStr;
 
-    switch(recommendation) {
+    switch (recommendation) {
         case telux::data::DualDataUsageRecommendation::ALLOWED:
             recommendationStr = "ALLOWED";
-        break;
+            break;
         case telux::data::DualDataUsageRecommendation::NOT_ALLOWED:
             recommendationStr = "NOT_ALLOWED";
-        break;
+            break;
         case telux::data::DualDataUsageRecommendation::NOT_RECOMMENDED:
             recommendationStr = "NOT_RECOMMENDED";
-        break;
+            break;
         default:
-        break;
+            break;
     };
 
     return recommendationStr;
@@ -187,7 +183,7 @@ std::string DualDataManagementMenu::convertRecommendationToString(
 void DualDataManagementMenu::onDualDataCapabilityChange(bool isDualDataCapable) {
     std::cout << "\n\n";
     PRINT_NOTIFICATION << " ** Dual data capability has changed ** \n";
-    if(isDualDataCapable) {
+    if (isDualDataCapable) {
         std::cout << "Device does supports dual data feature.";
     } else {
         std::cout << "Device does not support dual data feature.";
@@ -196,7 +192,7 @@ void DualDataManagementMenu::onDualDataCapabilityChange(bool isDualDataCapable) 
 }
 
 void DualDataManagementMenu::onDualDataUsageRecommendationChange(
-        telux::data::DualDataUsageRecommendation recommendation) {
+    telux::data::DualDataUsageRecommendation recommendation) {
     std::cout << "\n\n";
     PRINT_NOTIFICATION << " ** Dual data usage recommendation has changed ** \n";
     std::cout << "Dual data usage is: " << convertRecommendationToString(recommendation);
@@ -206,10 +202,11 @@ void DualDataManagementMenu::onDualDataUsageRecommendationChange(
 void DualDataManagementMenu::onDdsChange(telux::data::DdsInfo currentState) {
     std::cout << "\n\n";
     PRINT_NOTIFICATION << " ** DDS sub has changed ** \n";
-    std::cout <<  "DDS Info : " << "Slot_Id: " << currentState.slotId << std::endl;
-        std::string type = (currentState.type == telux::data::DdsType::PERMANENT) ?
-            "Permanent" : "Temporary";
-        std::cout << "Switch Type: " << type << std::endl;
+    std::cout << "DDS Info : "
+              << "Slot_Id: " << currentState.slotId << std::endl;
+    std::string type
+        = (currentState.type == telux::data::DdsType::PERMANENT) ? "Permanent" : "Temporary";
+    std::cout << "Switch Type: " << type << std::endl;
 
     std::cout << std::endl << std::endl;
 }
@@ -243,17 +240,15 @@ void DualDataManagementMenu::requestDdsSwitch(std::vector<std::string> &inputCom
     telux::data::DdsInfo requestInfo;
 
     requestInfo.slotId = static_cast<SlotId>(slotId);
-    requestInfo.type = static_cast<telux::data::DdsType>(switchType);
+    requestInfo.type   = static_cast<telux::data::DdsType>(switchType);
 
-    auto respCb = [](telux::common::ErrorCode error)
-    {
+    auto respCb = [](telux::common::ErrorCode error) {
         std::cout << std::endl;
         std::cout << "CALLBACK: "
                   << "requestDdsSwitch Response"
                   << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
                   << ". ErrorCode: " << static_cast<int>(error)
-                  << ", description: " << Utils::getErrorCodeAsString(error)
-                  << std::endl;
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
     retStat = dualDataManager_->requestDdsSwitch(requestInfo, respCb);
@@ -269,22 +264,19 @@ void DualDataManagementMenu::requestCurrentDds(std::vector<std::string> &inputCo
         return;
     }
 
-    auto respCb = [](telux::data::DdsInfo currentState, telux::common::ErrorCode error)
-    {
-        std::cout << std::endl
-                  << std::endl;
+    auto respCb = [](telux::data::DdsInfo currentState, telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
 
         std::cout << "CALLBACK: "
                   << "requestCurrentDds Response"
                   << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
                   << ". ErrorCode: " << static_cast<int>(error)
-                  << ", description: " << Utils::getErrorCodeAsString(error)
-                  << std::endl;
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
 
         if (error == telux::common::ErrorCode::SUCCESS) {
             std::cout << "Slot_Id: " << currentState.slotId << std::endl;
-            std::string type = (currentState.type == telux::data::DdsType::PERMANENT) ?
-                "Permanent" : "Temporary";
+            std::string type = (currentState.type == telux::data::DdsType::PERMANENT) ? "Permanent"
+                                                                                      : "Temporary";
             std::cout << "Switch Type: " << type << std::endl;
         }
     };
@@ -302,47 +294,46 @@ void DualDataManagementMenu::configureDdsSwitchRecommendation(
     }
     telux::data::DdsSwitchRecommendationConfig ddsSwitchRecommendationConfig{};
 
-    //Temporary switch recommendation
+    // Temporary switch recommendation
     int tempRecommendation = 0;
     std::cout << "Temporary switch recommendation (0-Disable, 1-Enable): ";
     std::cin >> tempRecommendation;
     DataUtils::validateInput(tempRecommendation, {0, 1});
-    if(tempRecommendation) {
+    if (tempRecommendation) {
         ddsSwitchRecommendationConfig.enableTemporaryRecommendations = true;
     } else {
         ddsSwitchRecommendationConfig.enableTemporaryRecommendations = false;
     }
 
-    //Permanent switch recommendation
+    // Permanent switch recommendation
     int permRecommendation = 0;
     std::cout << "Permanent switch recommendation (0-Disable, 1-Enable): ";
     std::cin >> permRecommendation;
     DataUtils::validateInput(permRecommendation, {0, 1});
-    if(permRecommendation) {
+    if (permRecommendation) {
         ddsSwitchRecommendationConfig.enablePermanentRecommendations = true;
     } else {
         ddsSwitchRecommendationConfig.enablePermanentRecommendations = false;
     }
 
-    if(tempRecommendation | permRecommendation) {
+    if (tempRecommendation | permRecommendation) {
         int type = 0;
-        //DDS recommendation basis
+        // DDS recommendation basis
         std::cout << "DDS recommendation based on (1-Throughput, 2-Latency): ";
         std::cin >> type;
         DataUtils::validateInput(type, {1, 2});
-        ddsSwitchRecommendationConfig.recommBasis =
-            static_cast<telux::data::DDSRecommendationBasis>(type);
+        ddsSwitchRecommendationConfig.recommBasis
+            = static_cast<telux::data::DDSRecommendationBasis>(type);
     }
 
-    telux::common::ErrorCode retStat =
-        dualDataManager_->configureDdsSwitchRecommendation(ddsSwitchRecommendationConfig);
+    telux::common::ErrorCode retStat
+        = dualDataManager_->configureDdsSwitchRecommendation(ddsSwitchRecommendationConfig);
     if (retStat == telux::common::ErrorCode::SUCCESS) {
         std::cout << " Successfully Configured DDS switch recommendation " << std::endl;
     } else {
         std::cout << " Configure dds switch recommendation returned with ErrorCode: "
-            << static_cast<int>(retStat)
-            << ", description: " << Utils::getErrorCodeAsString(retStat)
-            << std::endl;
+                  << static_cast<int>(retStat)
+                  << ", description: " << Utils::getErrorCodeAsString(retStat) << std::endl;
     }
 }
 
@@ -353,83 +344,82 @@ void DualDataManagementMenu::getDdsSwitchRecommendation(std::vector<std::string>
         return;
     }
     telux::data::DdsSwitchRecommendation ddsSwitchRec{};
-    telux::common::ErrorCode retStat =
-        dualDataManager_->getDdsSwitchRecommendation(ddsSwitchRec);
+    telux::common::ErrorCode retStat = dualDataManager_->getDdsSwitchRecommendation(ddsSwitchRec);
     if (retStat == telux::common::ErrorCode::SUCCESS) {
         std::cout << " Getting DDS switch recommendation is successful" << std::endl;
         printDdsSwitchRecommendation(ddsSwitchRec);
     } else {
         std::cout << " Get dds switch recommendation returned with ErrorCode: "
-            << static_cast<int>(retStat)
-            << ", description: " << Utils::getErrorCodeAsString(retStat)
-            << std::endl;
+                  << static_cast<int>(retStat)
+                  << ", description: " << Utils::getErrorCodeAsString(retStat) << std::endl;
     }
 }
 
-
 void DualDataManagementMenu::printDdsSwitchRecommendation(
-        const telux::data::DdsSwitchRecommendation ddsSwitchRec) {
+    const telux::data::DdsSwitchRecommendation ddsSwitchRec) {
     std::cout << "Recommended DDS Slot_Id: " << ddsSwitchRec.recommendedDdsInfo.slotId << std::endl;
-    if(ddsSwitchRec.recommendedDdsInfo.type == telux::data::DdsType::TEMPORARY) {
+    if (ddsSwitchRec.recommendedDdsInfo.type == telux::data::DdsType::TEMPORARY) {
         std::cout << "Recommendation type : TEMPORARY" << std::endl;
-        std::cout << "Temporary recommendation type : " ;
+        std::cout << "Temporary recommendation type : ";
         switch (ddsSwitchRec.recommendationDetails.tempType) {
             case telux::data::TemporaryRecommendationType::REVOKE:
                 std::cout << " REVOKE " << std::endl;
                 break;
             case telux::data::TemporaryRecommendationType::LOW:
-                std::cout << " LOW " << std::endl;;
+                std::cout << " LOW " << std::endl;
+                ;
                 break;
             case telux::data::TemporaryRecommendationType::HIGH:
-                std::cout << " HIGH " << std::endl;;
+                std::cout << " HIGH " << std::endl;
+                ;
                 break;
             default:
-                std::cout << " UNKNOWN " << std::endl;;
+                std::cout << " UNKNOWN " << std::endl;
+                ;
                 break;
         }
 
         std::cout << "Cause: " << ddsSwitchRec.recommendationDetails.tempCause;
 
-        if(ddsSwitchRec.recommendationDetails.tempCause &
-            telux::data::TemporaryRecommendationCauseCode::TEMP_CAUSE_CODE_DSDA_IMPOSSIBLE) {
+        if (ddsSwitchRec.recommendationDetails.tempCause
+            & telux::data::TemporaryRecommendationCauseCode::TEMP_CAUSE_CODE_DSDA_IMPOSSIBLE) {
             std::cout << " TEMP_CAUSE_CODE_DSDA_IMPOSSIBLE ";
         }
-        if(ddsSwitchRec.recommendationDetails.tempCause &
-            telux::data::TemporaryRecommendationCauseCode::TEMP_CAUSE_CODE_DDS_INTERNET_UNAVAIL) {
+        if (ddsSwitchRec.recommendationDetails.tempCause
+            & telux::data::TemporaryRecommendationCauseCode::TEMP_CAUSE_CODE_DDS_INTERNET_UNAVAIL) {
             std::cout << " TEMP_CAUSE_CODE_DDS_INTERNET_UNAVAIL ";
         }
-        if(ddsSwitchRec.recommendationDetails.tempCause &
-            telux::data::TemporaryRecommendationCauseCode::TEMP_CAUSE_CODE_TX_SHARING) {
+        if (ddsSwitchRec.recommendationDetails.tempCause
+            & telux::data::TemporaryRecommendationCauseCode::TEMP_CAUSE_CODE_TX_SHARING) {
             std::cout << " TEMP_CAUSE_CODE_TX_SHARING ";
         }
-        if(ddsSwitchRec.recommendationDetails.tempCause &
-            telux::data::TemporaryRecommendationCauseCode::TEMP_CAUSE_CODE_CALL_STATUS_CHANGED) {
+        if (ddsSwitchRec.recommendationDetails.tempCause
+            & telux::data::TemporaryRecommendationCauseCode::TEMP_CAUSE_CODE_CALL_STATUS_CHANGED) {
             std::cout << " TEMP_CAUSE_CODE_CALL_STATUS_CHANGED ";
         }
-        if(ddsSwitchRec.recommendationDetails.tempCause &
-            telux::data::TemporaryRecommendationCauseCode::TEMP_CAUSE_CODE_ACTIVE_CALL_ON_DDS) {
+        if (ddsSwitchRec.recommendationDetails.tempCause
+            & telux::data::TemporaryRecommendationCauseCode::TEMP_CAUSE_CODE_ACTIVE_CALL_ON_DDS) {
             std::cout << " TEMP_CAUSE_CODE_ACTIVE_CALL_ON_DDS ";
         }
-        if(ddsSwitchRec.recommendationDetails.tempCause &
-            telux::data::TemporaryRecommendationCauseCode::TEMP_CAUSE_CODE_TEMP_REC_DISABLED) {
+        if (ddsSwitchRec.recommendationDetails.tempCause
+            & telux::data::TemporaryRecommendationCauseCode::TEMP_CAUSE_CODE_TEMP_REC_DISABLED) {
             std::cout << " TEMP_CAUSE_CODE_TEMP_REC_DISABLED ";
         }
-        if(ddsSwitchRec.recommendationDetails.tempCause &
-            telux::data::TemporaryRecommendationCauseCode::TEMP_CAUSE_CODE_NON_DDS_INTERNET_UNAVAIL)
-        {
+        if (ddsSwitchRec.recommendationDetails.tempCause
+            & telux::data::TemporaryRecommendationCauseCode::
+                TEMP_CAUSE_CODE_NON_DDS_INTERNET_UNAVAIL) {
             std::cout << " TEMP_CAUSE_CODE_NON_DDS_INTERNET_UNAVAIL ";
         }
-        if(ddsSwitchRec.recommendationDetails.tempCause &
-        telux::data::TemporaryRecommendationCauseCode::TEMP_CAUSE_CODE_DATA_OFF) {
+        if (ddsSwitchRec.recommendationDetails.tempCause
+            & telux::data::TemporaryRecommendationCauseCode::TEMP_CAUSE_CODE_DATA_OFF) {
             std::cout << " TEMP_CAUSE_CODE_DATA_OFF ";
         }
-        if(ddsSwitchRec.recommendationDetails.tempCause &
-            telux::data::TemporaryRecommendationCauseCode::TEMP_CAUSE_CODE_EMERGENCY_CALL_ON_GOING)
-        {
+        if (ddsSwitchRec.recommendationDetails.tempCause
+            & telux::data::TemporaryRecommendationCauseCode::TEMP_CAUSE_CODE_EMERGENCY_CALL_ON_GOING) {
             std::cout << " TEMP_CAUSE_CODE_EMERGENCY_CALL_ON_GOING ";
         }
-        if(ddsSwitchRec.recommendationDetails.tempCause &
-            telux::data::TemporaryRecommendationCauseCode::TEMP_CAUSE_CODE_DDS_SIM_REMOVED) {
+        if (ddsSwitchRec.recommendationDetails.tempCause
+            & telux::data::TemporaryRecommendationCauseCode::TEMP_CAUSE_CODE_DDS_SIM_REMOVED) {
             std::cout << " TEMP_CAUSE_CODE_DDS_SIM_REMOVED ";
         }
         std::cout << std::endl;
@@ -437,20 +427,20 @@ void DualDataManagementMenu::printDdsSwitchRecommendation(
         std::cout << " Recommendation type : PERMANENT" << std::endl;
         std::cout << " Cause:" << ddsSwitchRec.recommendationDetails.permCause;
 
-        if(ddsSwitchRec.recommendationDetails.permCause &
-            telux::data::PermanentRecommendationCauseCode::PERM_CAUSE_CODE_TEMP_CLEAN_UP) {
+        if (ddsSwitchRec.recommendationDetails.permCause
+            & telux::data::PermanentRecommendationCauseCode::PERM_CAUSE_CODE_TEMP_CLEAN_UP) {
             std::cout << " PERM_CAUSE_CODE_TEMP_CLEAN_UP ";
         }
-        if(ddsSwitchRec.recommendationDetails.permCause &
-            telux::data::PermanentRecommendationCauseCode::PERM_CAUSE_CODE_DATA_SETTING_OFF) {
+        if (ddsSwitchRec.recommendationDetails.permCause
+            & telux::data::PermanentRecommendationCauseCode::PERM_CAUSE_CODE_DATA_SETTING_OFF) {
             std::cout << " PERM_CAUSE_CODE_DATA_SETTING_OFF ";
         }
-        if(ddsSwitchRec.recommendationDetails.permCause &
-            telux::data::PermanentRecommendationCauseCode::PERM_CAUSE_CODE_PS_INVALID) {
+        if (ddsSwitchRec.recommendationDetails.permCause
+            & telux::data::PermanentRecommendationCauseCode::PERM_CAUSE_CODE_PS_INVALID) {
             std::cout << " PERM_CAUSE_CODE_PS_INVALID ";
         }
-        if(ddsSwitchRec.recommendationDetails.permCause &
-            telux::data::PermanentRecommendationCauseCode::PERM_CAUSE_CODE_INTERNET_NOT_AVAIL) {
+        if (ddsSwitchRec.recommendationDetails.permCause
+            & telux::data::PermanentRecommendationCauseCode::PERM_CAUSE_CODE_INTERNET_NOT_AVAIL) {
             std::cout << " PERM_CAUSE_CODE_INTERNET_NOT_AVAIL ";
         }
         std::cout << std::endl;

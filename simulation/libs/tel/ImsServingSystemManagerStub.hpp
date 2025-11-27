@@ -1,8 +1,7 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 
 /**
  * @file       ImsServingSystemManagerStub.hpp
@@ -24,20 +23,21 @@
 namespace telux {
 namespace tel {
 
-class ImsServingSystemManagerStub : public IImsServingSystemManager,
-                                    public IEventListener,
-                                    public std::enable_shared_from_this<ImsServingSystemManagerStub> {
-public:
+class ImsServingSystemManagerStub
+   : public IImsServingSystemManager,
+     public IEventListener,
+     public std::enable_shared_from_this<ImsServingSystemManagerStub> {
+ public:
     ImsServingSystemManagerStub(SlotId slotId);
     telux::common::Status init(telux::common::InitResponseCb callback);
     ~ImsServingSystemManagerStub();
 
     telux::common::ServiceStatus getServiceStatus() override;
 
-    telux::common::Status registerListener
-        (std::weak_ptr<IImsServingSystemListener> listener) override;
-    telux::common::Status
-       deregisterListener(std::weak_ptr<telux::tel::IImsServingSystemListener> listener) override;
+    telux::common::Status registerListener(
+        std::weak_ptr<IImsServingSystemListener> listener) override;
+    telux::common::Status deregisterListener(
+        std::weak_ptr<telux::tel::IImsServingSystemListener> listener) override;
 
     telux::common::Status requestRegistrationInfo(ImsRegistrationInfoCb callback) override;
 
@@ -45,9 +45,9 @@ public:
     telux::common::Status requestPdpStatus(ImsPdpStatusInfoCb callback) override;
 
     void cleanup();
-    void onEventUpdate(google::protobuf::Any event)  override;
+    void onEventUpdate(google::protobuf::Any event) override;
 
-private:
+ private:
     int phoneId_;
     std::mutex mtx_;
     telux::common::InitResponseCb initCb_;
@@ -63,8 +63,8 @@ private:
     void handleImsPdpStatusInfoChanged(::telStub::ImsPdpStatusInfoChangeEvent event);
 };
 
-} // end of namespace tel
+}  // end of namespace tel
 
-} // end of namespace telux
+}  // end of namespace telux
 
-#endif // IMS_SERVING_SYSTEM_MANAGER_STUB_HPP
+#endif  // IMS_SERVING_SYSTEM_MANAGER_STUB_HPP

@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef THERMALSHUTDOWNMANAGERIMPL_STUB_HPP
@@ -12,10 +12,10 @@
 namespace telux {
 namespace therm {
 
-class ThermalShutdownManagerImplStub : public IThermalShutdownManager,
-                                       public std::enable_shared_from_this<ThermalShutdownManagerImplStub> {
+class ThermalShutdownManagerImplStub
+   : public IThermalShutdownManager,
+     public std::enable_shared_from_this<ThermalShutdownManagerImplStub> {
  public:
-
     bool isReady() override;
     std::future<bool> onReady() override;
     telux::common::ServiceStatus getServiceStatus() override;
@@ -34,7 +34,6 @@ class ThermalShutdownManagerImplStub : public IThermalShutdownManager,
  private:
     ThermalShutdownManagerImplStub(ThermalShutdownManagerImplStub const &)            = delete;
     ThermalShutdownManagerImplStub &operator=(ThermalShutdownManagerImplStub const &) = delete;
-
 };
 
 }  // end of namespace therm

@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <iomanip>
@@ -15,8 +15,8 @@
 #include "SecurityWCSServerImpl.hpp"
 
 SecurityWCSServerImpl::SecurityWCSServerImpl()
-    : serverEvent_(ServerEventManager::getInstance())
-    , clientEvent_(EventService::getInstance()) {
+   : serverEvent_(ServerEventManager::getInstance())
+   , clientEvent_(EventService::getInstance()) {
 }
 
 SecurityWCSServerImpl::~SecurityWCSServerImpl() {
@@ -26,8 +26,8 @@ SecurityWCSServerImpl::~SecurityWCSServerImpl() {
 /*
  * Server side initialization.
  */
-grpc::Status SecurityWCSServerImpl::Init(::grpc::ServerContext* context,
-    const ::google::protobuf::Empty* request, ::securityStub::InitInfo* response) {
+grpc::Status SecurityWCSServerImpl::Init(::grpc::ServerContext *context,
+    const ::google::protobuf::Empty *request, ::securityStub::InitInfo *response) {
 
     uint32_t delay = 0;
     std::string srvStatus;
@@ -76,8 +76,8 @@ grpc::Status SecurityWCSServerImpl::Init(::grpc::ServerContext* context,
 /*
  * Server side deinitialization.
  */
-grpc::Status SecurityWCSServerImpl::DeInit(::grpc::ServerContext* context,
-    const ::google::protobuf::Empty* request, ::commonStub::ErrorCodeMsg* response) {
+grpc::Status SecurityWCSServerImpl::DeInit(::grpc::ServerContext *context,
+    const ::google::protobuf::Empty *request, ::commonStub::ErrorCodeMsg *response) {
 
     clientsCount_--;
     if (!clientsCount_) {
@@ -86,7 +86,7 @@ grpc::Status SecurityWCSServerImpl::DeInit(::grpc::ServerContext* context,
 
         // Empty all entries in WCS_DATABASE_FILE
         Json::Value rootObj;
-        rootObj[ACCESS_POINTS] = Json::arrayValue;
+        rootObj[ACCESS_POINTS]           = Json::arrayValue;
         telux::common::ErrorCode writeEc = JsonParser::writeToJsonFile(rootObj, WCS_DATABASE_FILE);
         if (writeEc != telux::common::ErrorCode::SUCCESS) {
             LOG(ERROR, __FUNCTION__, " Failed to write to database file");
@@ -104,12 +104,12 @@ grpc::Status SecurityWCSServerImpl::DeInit(::grpc::ServerContext* context,
  * This is equivalent to calling ssg_connsec_wcs_connect() that indicates, now reports
  * will start coming to the application.
  */
-grpc::Status SecurityWCSServerImpl::RegisterClientForReport(::grpc::ServerContext* context,
-    const ::google::protobuf::Empty* request, ::commonStub::ErrorCodeMsg* response) {
+grpc::Status SecurityWCSServerImpl::RegisterClientForReport(::grpc::ServerContext *context,
+    const ::google::protobuf::Empty *request, ::commonStub::ErrorCodeMsg *response) {
     std::string ecStr = "";
     telux::common::ErrorCode ec;
     ecStr = apiConfigJsonRoot_["IWiFiSecurityManager"]["registerListener"]["error"].asString();
-    ec = CommonUtils::mapErrorCode(ecStr);
+    ec    = CommonUtils::mapErrorCode(ecStr);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         response->set_ec(static_cast<commonStub::ErrorCode>(ec));
         return grpc::Status::OK;
@@ -122,13 +122,13 @@ grpc::Status SecurityWCSServerImpl::RegisterClientForReport(::grpc::ServerContex
 /*
  * This is equivalent to calling ssg_connsec_wcs_disconnect() that indicates.
  */
-grpc::Status SecurityWCSServerImpl::DeregisterClientForReport(::grpc::ServerContext* context,
-    const ::google::protobuf::Empty* request, ::commonStub::ErrorCodeMsg* response) {
+grpc::Status SecurityWCSServerImpl::DeregisterClientForReport(::grpc::ServerContext *context,
+    const ::google::protobuf::Empty *request, ::commonStub::ErrorCodeMsg *response) {
 
     std::string ecStr = "";
     telux::common::ErrorCode ec;
     ecStr = apiConfigJsonRoot_["IWiFiSecurityManager"]["deregisterListener"]["error"].asString();
-    ec = CommonUtils::mapErrorCode(ecStr);
+    ec    = CommonUtils::mapErrorCode(ecStr);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         response->set_ec(static_cast<commonStub::ErrorCode>(ec));
         return grpc::Status::OK;
@@ -140,8 +140,8 @@ grpc::Status SecurityWCSServerImpl::DeregisterClientForReport(::grpc::ServerCont
 /*
  * Retrive a list of the saved trusted access points from the database.
  */
-grpc::Status SecurityWCSServerImpl::GetTrustedApList(::grpc::ServerContext* context,
-    const ::google::protobuf::Empty* request, ::securityStub::TrustedAPList* response) {
+grpc::Status SecurityWCSServerImpl::GetTrustedApList(::grpc::ServerContext *context,
+    const ::google::protobuf::Empty *request, ::securityStub::TrustedAPList *response) {
 
     int apCount = 0;
     telux::common::ErrorCode ec;
@@ -150,7 +150,7 @@ grpc::Status SecurityWCSServerImpl::GetTrustedApList(::grpc::ServerContext* cont
 
     std::string ecStr = "";
     ecStr = apiConfigJsonRoot_["IWiFiSecurityManager"]["getTrustedApList"]["error"].asString();
-    ec = CommonUtils::mapErrorCode(ecStr);
+    ec    = CommonUtils::mapErrorCode(ecStr);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         response->set_ec(static_cast<commonStub::ErrorCode>(ec));
         return grpc::Status::OK;
@@ -177,8 +177,8 @@ grpc::Status SecurityWCSServerImpl::GetTrustedApList(::grpc::ServerContext* cont
 /*
  * Save the user trusted access point in the database.
  */
-grpc::Status SecurityWCSServerImpl::SetTrustedAp(::grpc::ServerContext* context,
-    const ::securityStub::IsTrustedUserResponse* request, ::commonStub::ErrorCodeMsg* response) {
+grpc::Status SecurityWCSServerImpl::SetTrustedAp(::grpc::ServerContext *context,
+    const ::securityStub::IsTrustedUserResponse *request, ::commonStub::ErrorCodeMsg *response) {
 
     if (!request->is_trusted()) {
         /* If user distrusted, bail out early, don't modify database */
@@ -203,10 +203,10 @@ grpc::Status SecurityWCSServerImpl::SetTrustedAp(::grpc::ServerContext* context,
 
     /* Create new AP entry */
     Json::Value newAp;
-    newAp["ssid"] = request->ssid();
+    newAp["ssid"]  = request->ssid();
     newAp["bssid"] = request->bssid();
 
-    int entryIndex = rootObj[ACCESS_POINTS].size();
+    int entryIndex                     = rootObj[ACCESS_POINTS].size();
     rootObj[ACCESS_POINTS][entryIndex] = newAp;
 
     telux::common::ErrorCode writeEc = JsonParser::writeToJsonFile(rootObj, WCS_DATABASE_FILE);
@@ -223,11 +223,11 @@ grpc::Status SecurityWCSServerImpl::SetTrustedAp(::grpc::ServerContext* context,
 /*
  * Deletes given access point from the database.
  */
-grpc::Status SecurityWCSServerImpl::RemoveApFromTrustedList(::grpc::ServerContext* context,
-    const ::securityStub::ApInfo* request, ::commonStub::ErrorCodeMsg* response) {
+grpc::Status SecurityWCSServerImpl::RemoveApFromTrustedList(::grpc::ServerContext *context,
+    const ::securityStub::ApInfo *request, ::commonStub::ErrorCodeMsg *response) {
 
-    int x = 0;
-    int apCount = 0;
+    int x                = 0;
+    int apCount          = 0;
     bool apToRemoveFound = false;
     telux::common::ErrorCode ec;
     std::string ecStr = "";
@@ -235,7 +235,8 @@ grpc::Status SecurityWCSServerImpl::RemoveApFromTrustedList(::grpc::ServerContex
     Json::Value curObj;
     Json::Value newObj;
 
-    ecStr = apiConfigJsonRoot_["IWiFiSecurityManager"]["removeApFromTrustedList"]["error"].asString();
+    ecStr
+        = apiConfigJsonRoot_["IWiFiSecurityManager"]["removeApFromTrustedList"]["error"].asString();
     ec = CommonUtils::mapErrorCode(ecStr);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         response->set_ec(static_cast<commonStub::ErrorCode>(ec));
@@ -254,11 +255,11 @@ grpc::Status SecurityWCSServerImpl::RemoveApFromTrustedList(::grpc::ServerContex
     for (int y = 0; y < apCount; y++) {
         if ((request->ssid() == curObj[ACCESS_POINTS][y]["ssid"].asString())
             && (request->bssid() == curObj[ACCESS_POINTS][y]["bssid"].asString())) {
-                /* skip adding this AP to the database */
-                apToRemoveFound = true;
-                continue;
+            /* skip adding this AP to the database */
+            apToRemoveFound = true;
+            continue;
         }
-        newObj[ACCESS_POINTS][x]["ssid"] = curObj[ACCESS_POINTS][y]["ssid"].asString();
+        newObj[ACCESS_POINTS][x]["ssid"]  = curObj[ACCESS_POINTS][y]["ssid"].asString();
         newObj[ACCESS_POINTS][x]["bssid"] = curObj[ACCESS_POINTS][y]["bssid"].asString();
         x++;
     }
@@ -285,7 +286,7 @@ grpc::Status SecurityWCSServerImpl::RemoveApFromTrustedList(::grpc::ServerContex
  * Handle events injected externally by the user.
  */
 void SecurityWCSServerImpl::onEventUpdate(::eventService::UnsolicitedEvent usrEvent) {
-    LOG(DEBUG,__FUNCTION__);
+    LOG(DEBUG, __FUNCTION__);
 
     std::string event;
     std::string token;
@@ -299,7 +300,7 @@ void SecurityWCSServerImpl::onEventUpdate(::eventService::UnsolicitedEvent usrEv
 
     if (token == "ssr") {
         /* SSR is handled at the client library side (qmi service error, server crash etc.),
-        * therefore process it further */
+         * therefore process it further */
         return handleSSREvent(event);
     }
 
@@ -361,10 +362,10 @@ void SecurityWCSServerImpl::handleSecurityReportEvent(std::string eventParams) {
 
     std::string ssid;
     std::string bssid;
-    bool isConnected = false;
-    bool isOpen = false;
-    uint32_t mlAlgoThreatScore = 0;
-    int32_t mlAlgoAnalysisResult = 0;
+    bool isConnected                = false;
+    bool isOpen                     = false;
+    uint32_t mlAlgoThreatScore      = 0;
+    int32_t mlAlgoAnalysisResult    = 0;
     int32_t summoningAnalysisResult = 0;
 
     std::string token;
@@ -378,7 +379,7 @@ void SecurityWCSServerImpl::handleSecurityReportEvent(std::string eventParams) {
         }
         if (token == "ssid") {
             token = EventParserUtil::getNextToken(eventParams, WCS_DEFAULT_DELIMITER);
-            ssid = token;
+            ssid  = token;
         } else if (token == "bssid") {
             token = EventParserUtil::getNextToken(eventParams, WCS_DEFAULT_DELIMITER);
             bssid = token;
@@ -398,7 +399,7 @@ void SecurityWCSServerImpl::handleSecurityReportEvent(std::string eventParams) {
                 mlAlgoThreatScore = std::stoul(token, nullptr, 10);
             } catch (const std::exception &e) {
                 LOG(ERROR, __FUNCTION__, " can't interpret score ", token);
-                return ;
+                return;
             }
         } else if (token == "ml_algo_analysis_result") {
             token = EventParserUtil::getNextToken(eventParams, WCS_DEFAULT_DELIMITER);
@@ -406,7 +407,7 @@ void SecurityWCSServerImpl::handleSecurityReportEvent(std::string eventParams) {
                 mlAlgoAnalysisResult = std::stoi(token);
             } catch (const std::exception &e) {
                 LOG(ERROR, __FUNCTION__, " can't interpret ml algo analysis result ", token);
-                return ;
+                return;
             }
         } else if (token == "summoning_analysis_result") {
             token = EventParserUtil::getNextToken(eventParams, WCS_DEFAULT_DELIMITER);
@@ -414,7 +415,7 @@ void SecurityWCSServerImpl::handleSecurityReportEvent(std::string eventParams) {
                 summoningAnalysisResult = std::stoi(token);
             } catch (const std::exception &e) {
                 LOG(ERROR, __FUNCTION__, " can't interpret summoning analysis result ", token);
-                return ;
+                return;
             }
         } else {
         }
@@ -441,9 +442,9 @@ void SecurityWCSServerImpl::handleSecurityReportEvent(std::string eventParams) {
  */
 void SecurityWCSServerImpl::handleDeauthEvent(std::string eventParams) {
 
-    int32_t deauthReason = 0;
+    int32_t deauthReason      = 0;
     bool apInitiateDisconnect = false;
-    uint32_t threatScore = 0;
+    uint32_t threatScore      = 0;
 
     std::string token;
     ::securityStub::DeauthenticationInfo deauthAttack{};
@@ -473,7 +474,7 @@ void SecurityWCSServerImpl::handleDeauthEvent(std::string eventParams) {
                 threatScore = std::stoul(token, nullptr, 10);
             } catch (const std::exception &e) {
                 LOG(ERROR, __FUNCTION__, " can't interpret score ", token);
-                return ;
+                return;
             }
         } else {
         }
@@ -512,7 +513,7 @@ void SecurityWCSServerImpl::handleIsTrustedAP(std::string eventParams) {
         }
         if (token == "ssid") {
             token = EventParserUtil::getNextToken(eventParams, WCS_DEFAULT_DELIMITER);
-            ssid = token;
+            ssid  = token;
         } else if (token == "bssid") {
             token = EventParserUtil::getNextToken(eventParams, WCS_DEFAULT_DELIMITER);
             bssid = token;
@@ -527,7 +528,7 @@ void SecurityWCSServerImpl::handleIsTrustedAP(std::string eventParams) {
     telux::common::ErrorCode ec = JsonParser::readFromJsonFile(rootObj, WCS_DATABASE_FILE);
     if (ec == telux::common::ErrorCode::SUCCESS) {
         for (Json::Value::ArrayIndex i = 0; i < rootObj[ACCESS_POINTS].size(); i++) {
-            const auto& ap = rootObj[ACCESS_POINTS][i];
+            const auto &ap = rootObj[ACCESS_POINTS][i];
             if (ap["ssid"].asString() == ssid && ap["bssid"].asString() == bssid) {
                 LOG(DEBUG, __FUNCTION__, " AP already in trusted list, not forwarding event");
                 return;

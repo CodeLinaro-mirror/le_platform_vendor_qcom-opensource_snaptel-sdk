@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "libs/common/Logger.hpp"
@@ -9,22 +9,22 @@
 #include "SecurityCALCServerImpl.hpp"
 
 SecurityCALCServerImpl::SecurityCALCServerImpl()
-    : serverEvent_(ServerEventManager::getInstance())
-    , clientEvent_(EventService::getInstance()) {
+   : serverEvent_(ServerEventManager::getInstance())
+   , clientEvent_(EventService::getInstance()) {
 
-    curCapacity_.sm2 = COMMON_MAX_CAPACITY;
+    curCapacity_.sm2     = COMMON_MAX_CAPACITY;
     curCapacity_.nist256 = COMMON_MAX_CAPACITY;
     curCapacity_.nist384 = NISTP384_MAX_CAPACITY;
-    curCapacity_.bp256 = COMMON_MAX_CAPACITY;
-    curCapacity_.bp384 = BP384_MAX_CAPACITY;
+    curCapacity_.bp256   = COMMON_MAX_CAPACITY;
+    curCapacity_.bp384   = BP384_MAX_CAPACITY;
 }
 
 SecurityCALCServerImpl::~SecurityCALCServerImpl() {
     LOG(DEBUG, __FUNCTION__);
 }
 
-grpc::Status SecurityCALCServerImpl::Init(::grpc::ServerContext* context,
-    const ::google::protobuf::Empty* request, ::commonStub::ErrorCodeMsg* response) {
+grpc::Status SecurityCALCServerImpl::Init(::grpc::ServerContext *context,
+    const ::google::protobuf::Empty *request, ::commonStub::ErrorCodeMsg *response) {
 
     telux::common::ErrorCode ec;
     telux::common::Status status;
@@ -52,13 +52,13 @@ grpc::Status SecurityCALCServerImpl::Init(::grpc::ServerContext* context,
     }
 
     randRing_.seed(12);
-    randUniDistributionCommon_ = std::uniform_int_distribution<uint32_t>(0, COMMON_MAX_CAPACITY);
+    randUniDistributionCommon_  = std::uniform_int_distribution<uint32_t>(0, COMMON_MAX_CAPACITY);
     randUniDistributionNist384_ = std::uniform_int_distribution<uint32_t>(0, NISTP384_MAX_CAPACITY);
-    randUniDistributionBp384_ = std::uniform_int_distribution<uint32_t>(0, BP384_MAX_CAPACITY);
+    randUniDistributionBp384_   = std::uniform_int_distribution<uint32_t>(0, BP384_MAX_CAPACITY);
 
     response->set_ec(commonStub::ErrorCode::ERROR_CODE_SUCCESS);
 
-    curLoadCount_ = {};
+    curLoadCount_      = {};
     injectedLoadCount_ = {};
 
     clientsCount_++;
@@ -66,8 +66,8 @@ grpc::Status SecurityCALCServerImpl::Init(::grpc::ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status SecurityCALCServerImpl::DeInit(::grpc::ServerContext* context,
-    const ::google::protobuf::Empty* request, ::commonStub::ErrorCodeMsg* response) {
+grpc::Status SecurityCALCServerImpl::DeInit(::grpc::ServerContext *context,
+    const ::google::protobuf::Empty *request, ::commonStub::ErrorCodeMsg *response) {
 
     clientsCount_--;
     if (!clientsCount_) {
@@ -80,14 +80,14 @@ grpc::Status SecurityCALCServerImpl::DeInit(::grpc::ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status SecurityCALCServerImpl::GetCapacity(::grpc::ServerContext* context,
-    const ::google::protobuf::Empty* request, ::securityStub::Capacity* response) {
+grpc::Status SecurityCALCServerImpl::GetCapacity(::grpc::ServerContext *context,
+    const ::google::protobuf::Empty *request, ::securityStub::Capacity *response) {
 
     std::string ecStr = "";
     telux::common::ErrorCode ec{};
 
     ecStr = apiConfigJsonRoot_["ICAControlManager"]["getCapacity"]["error"].asString();
-    ec = CommonUtils::mapErrorCode(ecStr);
+    ec    = CommonUtils::mapErrorCode(ecStr);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         response->set_error_code(static_cast<commonStub::ErrorCode>(ec));
         return grpc::Status::OK;
@@ -106,8 +106,8 @@ grpc::Status SecurityCALCServerImpl::GetCapacity(::grpc::ServerContext* context,
 /*
  * Equivalent to mvm_stats_get_msg_count().
  */
-grpc::Status SecurityCALCServerImpl::GetOperationsCount(::grpc::ServerContext* context,
-    const ::google::protobuf::Empty* request, ::securityStub::LoadCount* response) {
+grpc::Status SecurityCALCServerImpl::GetOperationsCount(::grpc::ServerContext *context,
+    const ::google::protobuf::Empty *request, ::securityStub::LoadCount *response) {
 
     if (haveInjectedLoad_) {
         /* provide user given load */
@@ -122,7 +122,7 @@ grpc::Status SecurityCALCServerImpl::GetOperationsCount(::grpc::ServerContext* c
         curLoadCount_.bp384 = curLoadCount_.bp384 + injectedLoadCount_.bp384;
         response->set_bp384(curLoadCount_.bp384);
         response->set_error_code(commonStub::ErrorCode::ERROR_CODE_SUCCESS);
-        haveInjectedLoad_ = false;
+        haveInjectedLoad_  = false;
         injectedLoadCount_ = {};
         return grpc::Status::OK;
     }
@@ -144,14 +144,13 @@ grpc::Status SecurityCALCServerImpl::GetOperationsCount(::grpc::ServerContext* c
     return grpc::Status::OK;
 }
 
-grpc::Status SecurityCALCServerImpl::RegisterClient(::grpc::ServerContext* context,
-    const ::google::protobuf::Empty* request,
-    ::commonStub::ErrorCodeMsg* response) {
+grpc::Status SecurityCALCServerImpl::RegisterClient(::grpc::ServerContext *context,
+    const ::google::protobuf::Empty *request, ::commonStub::ErrorCodeMsg *response) {
 
     std::string ecStr = "";
     telux::common::ErrorCode ec;
     ecStr = apiConfigJsonRoot_["ICAControlManager"]["registerListener"]["error"].asString();
-    ec = CommonUtils::mapErrorCode(ecStr);
+    ec    = CommonUtils::mapErrorCode(ecStr);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         response->set_ec(static_cast<commonStub::ErrorCode>(ec));
         return grpc::Status::OK;
@@ -161,14 +160,13 @@ grpc::Status SecurityCALCServerImpl::RegisterClient(::grpc::ServerContext* conte
     return grpc::Status::OK;
 }
 
-grpc::Status SecurityCALCServerImpl::DeregisterClient(::grpc::ServerContext* context,
-    const ::google::protobuf::Empty* request,
-    ::commonStub::ErrorCodeMsg* response) {
+grpc::Status SecurityCALCServerImpl::DeregisterClient(::grpc::ServerContext *context,
+    const ::google::protobuf::Empty *request, ::commonStub::ErrorCodeMsg *response) {
     std::string ecStr = "";
     telux::common::ErrorCode ec;
 
     ecStr = apiConfigJsonRoot_["ICAControlManager"]["deregisterListener"]["error"].asString();
-    ec = CommonUtils::mapErrorCode(ecStr);
+    ec    = CommonUtils::mapErrorCode(ecStr);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         response->set_ec(static_cast<commonStub::ErrorCode>(ec));
         return grpc::Status::OK;
@@ -185,7 +183,7 @@ grpc::Status SecurityCALCServerImpl::DeregisterClient(::grpc::ServerContext* con
  * is never called even on target, hence not implemented here.
  */
 void SecurityCALCServerImpl::onEventUpdate(::eventService::UnsolicitedEvent usrEvent) {
-    LOG(DEBUG,__FUNCTION__);
+    LOG(DEBUG, __FUNCTION__);
 
     std::string event;
     std::string token;
@@ -223,7 +221,7 @@ void SecurityCALCServerImpl::handleLoadEvent(std::string eventParams) {
                 injectedLoadCount_.sm2 = std::stoul(token, nullptr, 10);
             } catch (const std::exception &e) {
                 LOG(ERROR, __FUNCTION__, " can't interpret sm2 value ", token);
-                return ;
+                return;
             }
         } else if (token == "nist256") {
             token = EventParserUtil::getNextToken(eventParams, CALC_DEFAULT_DELIMITER);
@@ -231,7 +229,7 @@ void SecurityCALCServerImpl::handleLoadEvent(std::string eventParams) {
                 injectedLoadCount_.nist256 = std::stoul(token, nullptr, 10);
             } catch (const std::exception &e) {
                 LOG(ERROR, __FUNCTION__, " can't interpret nist256 value ", token);
-                return ;
+                return;
             }
         } else if (token == "nist384") {
             token = EventParserUtil::getNextToken(eventParams, CALC_DEFAULT_DELIMITER);
@@ -239,7 +237,7 @@ void SecurityCALCServerImpl::handleLoadEvent(std::string eventParams) {
                 injectedLoadCount_.nist384 = std::stoul(token, nullptr, 10);
             } catch (const std::exception &e) {
                 LOG(ERROR, __FUNCTION__, " can't interpret nist384 value ", token);
-                return ;
+                return;
             }
         } else if (token == "bp256") {
             token = EventParserUtil::getNextToken(eventParams, CALC_DEFAULT_DELIMITER);
@@ -247,7 +245,7 @@ void SecurityCALCServerImpl::handleLoadEvent(std::string eventParams) {
                 injectedLoadCount_.bp256 = std::stoul(token, nullptr, 10);
             } catch (const std::exception &e) {
                 LOG(ERROR, __FUNCTION__, " can't interpret bp256 value ", token);
-                return ;
+                return;
             }
         } else if (token == "bp384") {
             token = EventParserUtil::getNextToken(eventParams, CALC_DEFAULT_DELIMITER);
@@ -255,7 +253,7 @@ void SecurityCALCServerImpl::handleLoadEvent(std::string eventParams) {
                 injectedLoadCount_.bp384 = std::stoul(token, nullptr, 10);
             } catch (const std::exception &e) {
                 LOG(ERROR, __FUNCTION__, " can't interpret bp384 value ", token);
-                return ;
+                return;
             }
         } else {
         }
@@ -285,7 +283,7 @@ void SecurityCALCServerImpl::handleCapacityEvent(std::string eventParams) {
                 curCapacity_.sm2 = std::stoul(token, nullptr, 10);
             } catch (const std::exception &e) {
                 LOG(ERROR, __FUNCTION__, " can't interpret sm2 value ", token);
-                return ;
+                return;
             }
         } else if (token == "nist256") {
             token = EventParserUtil::getNextToken(eventParams, CALC_DEFAULT_DELIMITER);
@@ -293,7 +291,7 @@ void SecurityCALCServerImpl::handleCapacityEvent(std::string eventParams) {
                 curCapacity_.nist256 = std::stoul(token, nullptr, 10);
             } catch (const std::exception &e) {
                 LOG(ERROR, __FUNCTION__, " can't interpret nist256 value ", token);
-                return ;
+                return;
             }
         } else if (token == "nist384") {
             token = EventParserUtil::getNextToken(eventParams, CALC_DEFAULT_DELIMITER);
@@ -301,7 +299,7 @@ void SecurityCALCServerImpl::handleCapacityEvent(std::string eventParams) {
                 curCapacity_.nist384 = std::stoul(token, nullptr, 10);
             } catch (const std::exception &e) {
                 LOG(ERROR, __FUNCTION__, " can't interpret nist384 value ", token);
-                return ;
+                return;
             }
         } else if (token == "bp256") {
             token = EventParserUtil::getNextToken(eventParams, CALC_DEFAULT_DELIMITER);
@@ -309,7 +307,7 @@ void SecurityCALCServerImpl::handleCapacityEvent(std::string eventParams) {
                 curCapacity_.bp256 = std::stoul(token, nullptr, 10);
             } catch (const std::exception &e) {
                 LOG(ERROR, __FUNCTION__, " can't interpret bp256 value ", token);
-                return ;
+                return;
             }
         } else if (token == "bp384") {
             token = EventParserUtil::getNextToken(eventParams, CALC_DEFAULT_DELIMITER);
@@ -317,7 +315,7 @@ void SecurityCALCServerImpl::handleCapacityEvent(std::string eventParams) {
                 curCapacity_.bp384 = std::stoul(token, nullptr, 10);
             } catch (const std::exception &e) {
                 LOG(ERROR, __FUNCTION__, " can't interpret bp384 value ", token);
-                return ;
+                return;
             }
         } else {
         }

@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <telux/data/DataDefines.hpp>
@@ -12,9 +12,8 @@ extern "C" {
 }
 
 class DataUtilsStub {
-public:
-    static ::dataStub::TechPreference::TechPref convertTechPrefStringToEnum(
-        std::string techPref) {
+ public:
+    static ::dataStub::TechPreference::TechPref convertTechPrefStringToEnum(std::string techPref) {
         LOG(DEBUG, __FUNCTION__);
 
         ::dataStub::TechPreference::TechPref enumTechPref;
@@ -30,8 +29,7 @@ public:
         return enumTechPref;
     }
 
-    static ::dataStub::IpFamilyType::Type convertIpFamilyStringToEnum(
-        std::string ipFamily) {
+    static ::dataStub::IpFamilyType::Type convertIpFamilyStringToEnum(std::string ipFamily) {
         LOG(DEBUG, __FUNCTION__);
 
         ::dataStub::IpFamilyType::Type ipFamilyType;
@@ -78,12 +76,11 @@ public:
         } else {
             techPref = "Unknown";
         }
-        LOG(DEBUG, __FUNCTION__, " TechPreference is :",  techPref);
+        LOG(DEBUG, __FUNCTION__, " TechPreference is :", techPref);
         return techPref;
     }
 
-    static std::string convertIpFamilyEnumToString(
-        ::dataStub::IpFamilyType::Type ipFamilyType) {
+    static std::string convertIpFamilyEnumToString(::dataStub::IpFamilyType::Type ipFamilyType) {
         LOG(DEBUG, __FUNCTION__);
 
         std::string ipFamily;
@@ -96,12 +93,12 @@ public:
         } else {
             ipFamily = "Unknown";
         }
-        LOG(DEBUG, __FUNCTION__, " ipFamily is :",  ipFamily);
+        LOG(DEBUG, __FUNCTION__, " ipFamily is :", ipFamily);
         return ipFamily;
     }
 
     static std::string convertAuthProtocolEnumToString(
-            ::dataStub::AuthProtocolType::AuthProto authProtocolType) {
+        ::dataStub::AuthProtocolType::AuthProto authProtocolType) {
         LOG(DEBUG, __FUNCTION__);
 
         std::string authProtocol;
@@ -114,7 +111,7 @@ public:
         } else {
             authProtocol = "AUTH_NONE";
         }
-        LOG(DEBUG, __FUNCTION__, " authProtocol is :",  authProtocol);
+        LOG(DEBUG, __FUNCTION__, " authProtocol is :", authProtocol);
         return authProtocol;
     }
 
@@ -131,7 +128,7 @@ public:
     }
 
     static std::string protocolToString(telux::data::IpProtocol proto) {
-        switch(proto) {
+        switch (proto) {
             case 1:
                 return "ICMP";
             case 2:
@@ -171,8 +168,7 @@ public:
         return 0;
     }
 
-    static std::string convertEnumToBackhaulPrefString(
-        ::dataStub::BackhaulPreference pref) {
+    static std::string convertEnumToBackhaulPrefString(::dataStub::BackhaulPreference pref) {
 
         switch (pref) {
             case ::dataStub::BackhaulPreference::PREF_ETH:
@@ -192,8 +188,7 @@ public:
         return "INVALID";
     }
 
-    static std::string convertEnumToInterfaceTypeString(
-        ::dataStub::InterfaceType ifType) {
+    static std::string convertEnumToInterfaceTypeString(::dataStub::InterfaceType ifType) {
 
         switch (ifType) {
             case ::dataStub::InterfaceType::WLAN:
@@ -262,8 +257,7 @@ public:
         return telux::data::InterfaceType::UNKNOWN;
     }
 
-    static ::dataStub::InterfaceType convertInterfaceTypeToGrpc(
-            telux::data::InterfaceType ifType) {
+    static ::dataStub::InterfaceType convertInterfaceTypeToGrpc(telux::data::InterfaceType ifType) {
 
         if (ifType == telux::data::InterfaceType::WLAN) {
             return ::dataStub::InterfaceType::WLAN;
@@ -294,36 +288,35 @@ public:
         }
     }
 
-    static ::dataStub::InterfaceType convertInterfaceTypeStringToEnum(
-        std::string ifType) {
+    static ::dataStub::InterfaceType convertInterfaceTypeStringToEnum(std::string ifType) {
 
-            if (ifType == "WLAN") {
-                return ::dataStub::InterfaceType::WLAN;
-            } else if (ifType == "ETH") {
-                return ::dataStub::InterfaceType::ETH;
-            } else if (ifType == "ECM") {
-                return ::dataStub::InterfaceType::ECM;
-            } else if (ifType == "RNDIS") {
-                return ::dataStub::InterfaceType::RNDIS;
-            } else if (ifType == "MHI") {
-                return ::dataStub::InterfaceType::MHI;
-            } else if (ifType == "ETH2") {
-                return ::dataStub::InterfaceType::ETH2;
-            } else if (ifType == "AP_PRIMARY") {
-                return ::dataStub::InterfaceType::AP_PRIMARY;
-            } else if (ifType == "AP_SECONDARY") {
-                return ::dataStub::InterfaceType::AP_SECONDARY;
-            } else if (ifType == "AP_TERTIARY") {
-                return ::dataStub::InterfaceType::AP_TERTIARY;
-            } else if (ifType == "AP_QUATERNARY") {
-                return ::dataStub::InterfaceType::AP_QUATERNARY;
-            } else if (ifType == "VMTAP0") {
-                return ::dataStub::InterfaceType::VMTAP0;
-            } else if (ifType == "VMTAP1") {
-                return ::dataStub::InterfaceType::VMTAP1;
-            } else {
-                return ::dataStub::InterfaceType::UNKNOWN;
-            }
+        if (ifType == "WLAN") {
+            return ::dataStub::InterfaceType::WLAN;
+        } else if (ifType == "ETH") {
+            return ::dataStub::InterfaceType::ETH;
+        } else if (ifType == "ECM") {
+            return ::dataStub::InterfaceType::ECM;
+        } else if (ifType == "RNDIS") {
+            return ::dataStub::InterfaceType::RNDIS;
+        } else if (ifType == "MHI") {
+            return ::dataStub::InterfaceType::MHI;
+        } else if (ifType == "ETH2") {
+            return ::dataStub::InterfaceType::ETH2;
+        } else if (ifType == "AP_PRIMARY") {
+            return ::dataStub::InterfaceType::AP_PRIMARY;
+        } else if (ifType == "AP_SECONDARY") {
+            return ::dataStub::InterfaceType::AP_SECONDARY;
+        } else if (ifType == "AP_TERTIARY") {
+            return ::dataStub::InterfaceType::AP_TERTIARY;
+        } else if (ifType == "AP_QUATERNARY") {
+            return ::dataStub::InterfaceType::AP_QUATERNARY;
+        } else if (ifType == "VMTAP0") {
+            return ::dataStub::InterfaceType::VMTAP0;
+        } else if (ifType == "VMTAP1") {
+            return ::dataStub::InterfaceType::VMTAP1;
+        } else {
+            return ::dataStub::InterfaceType::UNKNOWN;
+        }
     }
 
     static telux::data::IpFamilyType convertIpFamilyToStruct(::dataStub::IpFamilyType ipFamily) {
@@ -336,13 +329,13 @@ public:
             case ::dataStub::IpFamilyType_Type_IPV4V6:
                 return telux::data::IpFamilyType::IPV4V6;
             default:
-               return telux::data::IpFamilyType::UNKNOWN;
+                return telux::data::IpFamilyType::UNKNOWN;
         }
         return telux::data::IpFamilyType::UNKNOWN;
     }
 
     static ::dataStub::IpFamilyType_Type convertIpFamilyTypeToGrpc(
-            telux::data::IpFamilyType ipFamilyType) {
+        telux::data::IpFamilyType ipFamilyType) {
         switch (ipFamilyType) {
             case telux::data::IpFamilyType::IPV4:
                 return ::dataStub::IpFamilyType_Type_IPV4;
@@ -364,7 +357,7 @@ public:
             case ::dataStub::IpType_IpAssignType_DYNAMIC_IP:
                 return telux::data::IpAssignType::DYNAMIC_IP;
             default:
-               return telux::data::IpAssignType::UNKNOWN;
+                return telux::data::IpAssignType::UNKNOWN;
         }
         return telux::data::IpAssignType::UNKNOWN;
     }
@@ -391,13 +384,13 @@ public:
             case ::dataStub::IpAssign_IpAssignOperation_RECONFIGURE:
                 return telux::data::IpAssignOperation::RECONFIGURE;
             default:
-               return telux::data::IpAssignOperation::UNKNOWN;
+                return telux::data::IpAssignOperation::UNKNOWN;
         }
         return telux::data::IpAssignOperation::UNKNOWN;
     }
 
     static ::dataStub::IpAssign_IpAssignOperation convertIpAssignToGrpc(
-            telux::data::IpAssignOperation ipAssign) {
+        telux::data::IpAssignOperation ipAssign) {
         switch (ipAssign) {
             case telux::data::IpAssignOperation::DISABLE:
                 return ::dataStub::IpAssign_IpAssignOperation_DISABLE;
@@ -411,22 +404,22 @@ public:
         return ::dataStub::IpAssign_IpAssignOperation_UNKNOWN;
     }
 
-    static void convertIpAddrInfoToStruct(const ::dataStub::IpAddrInfo ipAddrInfoGrpc,
-            telux::data::IpAddrInfo &ipAddrInfoStruct) {
-        ipAddrInfoStruct.ifAddress                 = ipAddrInfoGrpc.if_address();
+    static void convertIpAddrInfoToStruct(
+        const ::dataStub::IpAddrInfo ipAddrInfoGrpc, telux::data::IpAddrInfo &ipAddrInfoStruct) {
+        ipAddrInfoStruct.ifAddress = ipAddrInfoGrpc.if_address();
         try {
-            ipAddrInfoStruct.ifMask                 = std::stol(ipAddrInfoGrpc.if_mask());
+            ipAddrInfoStruct.ifMask = std::stol(ipAddrInfoGrpc.if_mask());
         } catch (std::invalid_argument const &e) {
             LOG(ERROR, __FUNCTION__, " Invalid ifmask");
             ipAddrInfoStruct.ifMask = 0;
         }
-        ipAddrInfoStruct.gwAddress              = ipAddrInfoGrpc.gw_address();
-        ipAddrInfoStruct.primaryDnsAddress      = ipAddrInfoGrpc.primary_dns_address();
-        ipAddrInfoStruct.secondaryDnsAddress    = ipAddrInfoGrpc.secondary_dns_address();
+        ipAddrInfoStruct.gwAddress           = ipAddrInfoGrpc.gw_address();
+        ipAddrInfoStruct.primaryDnsAddress   = ipAddrInfoGrpc.primary_dns_address();
+        ipAddrInfoStruct.secondaryDnsAddress = ipAddrInfoGrpc.secondary_dns_address();
     }
 
-    static void convertIpAddrInfoToGrpc(const telux::data::IpAddrInfo &ipAddrInfoStruct,
-            ::dataStub::IpAddrInfo *&ipAddrInfoGrpc) {
+    static void convertIpAddrInfoToGrpc(
+        const telux::data::IpAddrInfo &ipAddrInfoStruct, ::dataStub::IpAddrInfo *&ipAddrInfoGrpc) {
         ipAddrInfoGrpc->set_if_address(ipAddrInfoStruct.ifAddress);
         ipAddrInfoGrpc->set_if_mask(std::to_string(ipAddrInfoStruct.ifMask));
         ipAddrInfoGrpc->set_gw_address(ipAddrInfoStruct.gwAddress);
@@ -434,8 +427,7 @@ public:
         ipAddrInfoGrpc->set_secondary_dns_address(ipAddrInfoStruct.secondaryDnsAddress);
     }
 
-    static std::string convertEnumToIpptOprString(
-        ::dataStub::IpptOperation ipptOpr) {
+    static std::string convertEnumToIpptOprString(::dataStub::IpptOperation ipptOpr) {
 
         switch (ipptOpr.ippt_opr()) {
             case ::dataStub::IpptOperation_Operation_DISABLE:
@@ -449,8 +441,7 @@ public:
         }
     }
 
-    static ::dataStub::IpptOperation_Operation convertIpptOprStringToEnum(
-        std::string ipptOpr) {
+    static ::dataStub::IpptOperation_Operation convertIpptOprStringToEnum(std::string ipptOpr) {
 
         if (ipptOpr == "ENABLE") {
             return ::dataStub::IpptOperation_Operation_ENABLE;
@@ -473,8 +464,7 @@ public:
         }
     }
 
-    static telux::data::Operation convertIpptOprToStruct(
-            const ::dataStub::IpptOperation ipptOpr) {
+    static telux::data::Operation convertIpptOprToStruct(const ::dataStub::IpptOperation ipptOpr) {
         auto opr = ipptOpr.ippt_opr();
 
         if (opr == ::dataStub::IpptOperation_Operation_ENABLE) {
@@ -486,8 +476,7 @@ public:
         }
     }
 
-    static ::dataStub::BackhaulPreference convertBackhaulPrefStringToEnum(
-        std::string backhaul) {
+    static ::dataStub::BackhaulPreference convertBackhaulPrefStringToEnum(std::string backhaul) {
         if (backhaul == "ETH") {
             return ::dataStub::BackhaulPreference::PREF_ETH;
         } else if (backhaul == "USB") {
@@ -518,15 +507,14 @@ public:
                 return "IP";
             case ::dataStub::L2tpProtocol::UDP:
                 return "UDP";
-            default :
+            default:
                 return "NONE";
         }
     }
 
-    static telux::data::NetworkType convertNetworkTypeToEnum(const ::dataStub::Network
-            &nwType) {
+    static telux::data::NetworkType convertNetworkTypeToEnum(const ::dataStub::Network &nwType) {
 
-        switch(nwType.nw_type()) {
+        switch (nwType.nw_type()) {
             case ::dataStub::Network_NetworkType_LAN:
                 return telux::data::NetworkType::LAN;
             case ::dataStub::Network_NetworkType_WAN:
@@ -538,10 +526,10 @@ public:
         return telux::data::NetworkType::UNKNOWN;
     }
 
-    static ::dataStub::Network_NetworkType convertNetworkTypeToGrpc(const telux::data::NetworkType
-            &nwType) {
+    static ::dataStub::Network_NetworkType convertNetworkTypeToGrpc(
+        const telux::data::NetworkType &nwType) {
 
-        switch(nwType) {
+        switch (nwType) {
             case telux::data::NetworkType::LAN:
                 return ::dataStub::Network_NetworkType_LAN;
             case telux::data::NetworkType::WAN:
@@ -554,7 +542,7 @@ public:
     }
 
     static std::string convertNetworkTypeToString(const ::dataStub::Network &nwType) {
-        switch(nwType.nw_type()) {
+        switch (nwType.nw_type()) {
             case ::dataStub::Network_NetworkType_LAN:
                 return "LAN";
             case ::dataStub::Network_NetworkType_WAN:
@@ -569,11 +557,11 @@ public:
     static ::dataStub::Network_NetworkType convertNetworkTypeToGrpc(const std::string nwType) {
 
         if (nwType == "LAN") {
-                return ::dataStub::Network_NetworkType_LAN;
+            return ::dataStub::Network_NetworkType_LAN;
         } else if (nwType == "WAN") {
-                return ::dataStub::Network_NetworkType_WAN;
+            return ::dataStub::Network_NetworkType_WAN;
         } else {
-                return ::dataStub::Network_NetworkType_UNKNOWN;
+            return ::dataStub::Network_NetworkType_UNKNOWN;
         }
     }
 };

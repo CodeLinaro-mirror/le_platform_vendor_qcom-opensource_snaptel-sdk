@@ -26,12 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
- */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 #include <thread>
 
@@ -49,7 +49,7 @@ LocationFactory::LocationFactory() {
 }
 
 LocationFactory::~LocationFactory() {
-   LOG(DEBUG, __FUNCTION__);
+    LOG(DEBUG, __FUNCTION__);
 }
 
 LocationFactoryStub::LocationFactoryStub()
@@ -57,22 +57,22 @@ LocationFactoryStub::LocationFactoryStub()
    , locConfigurator_(nullptr)
    , configuratorInitStatus_(ServiceStatus::SERVICE_UNAVAILABLE)
    , dgnssInitStatus_(ServiceStatus::SERVICE_UNAVAILABLE) {
-   LOG(DEBUG, __FUNCTION__);
+    LOG(DEBUG, __FUNCTION__);
 }
 
 LocationFactoryStub::~LocationFactoryStub() {
-   if(locConfigurator_) {
-      locConfigurator_->cleanup();
-   }
+    if (locConfigurator_) {
+        locConfigurator_->cleanup();
+    }
 }
 
 LocationFactory &LocationFactory::getInstance() {
-   return LocationFactoryStub::getInstance();
+    return LocationFactoryStub::getInstance();
 }
 
 LocationFactory &LocationFactoryStub::getInstance() {
-   static LocationFactoryStub instance;
-   return instance;
+    static LocationFactoryStub instance;
+    return instance;
 }
 
 void LocationFactoryStub::onGetConfiguratorResponse(telux::common::ServiceStatus status) {
@@ -132,23 +132,23 @@ std::shared_ptr<ILocationManager> LocationFactoryStub::getLocationManager(
             return nullptr;
         }
     }
-   return locationManager;
+    return locationManager;
 }
 
 std::shared_ptr<ILocationConfigurator> LocationFactoryStub::getLocationConfigurator(
     telux::common::InitResponseCb callback) {
     std::shared_ptr<ILocationConfigurator> locConfigurator = nullptr;
     std::lock_guard<std::mutex> lock(locationFactoryMutex_);
-    if(locConfigurator_ == nullptr) {
+    if (locConfigurator_ == nullptr) {
         std::shared_ptr<LocationConfiguratorStub> locationConfigurator = nullptr;
         try {
             locationConfigurator = std::make_shared<LocationConfiguratorStub>();
-        } catch (std::bad_alloc & e) {
-            LOG(ERROR, __FUNCTION__ , e.what());
+        } catch (std::bad_alloc &e) {
+            LOG(ERROR, __FUNCTION__, e.what());
             return nullptr;
         }
-        auto initCb = std::bind(&LocationFactoryStub::onGetConfiguratorResponse, this,
-            std::placeholders::_1);
+        auto initCb = std::bind(
+            &LocationFactoryStub::onGetConfiguratorResponse, this, std::placeholders::_1);
         telux::common::Status status = locationConfigurator->init(initCb);
         if (status != telux::common::Status::SUCCESS) {
             LOG(ERROR, __FUNCTION__, "Failed to initialize the manager");
@@ -165,7 +165,7 @@ std::shared_ptr<ILocationConfigurator> LocationFactoryStub::getLocationConfigura
     } else if (configuratorInitStatus_ == ServiceStatus::SERVICE_UNAVAILABLE) {
         configuratorCallbacks_.push_back(callback);
     } else {
-     if (callback) {
+        if (callback) {
             std::thread appCallback(callback, configuratorInitStatus_);
             appCallback.detach();
         } else {
@@ -175,20 +175,20 @@ std::shared_ptr<ILocationConfigurator> LocationFactoryStub::getLocationConfigura
     return locConfigurator_;
 }
 
-std::shared_ptr<IDgnssManager> LocationFactoryStub::getDgnssManager(DgnssDataFormat dataFormat,
-        telux::common::InitResponseCb callback) {
+std::shared_ptr<IDgnssManager> LocationFactoryStub::getDgnssManager(
+    DgnssDataFormat dataFormat, telux::common::InitResponseCb callback) {
     std::shared_ptr<IDgnssManager> dgnssManager = nullptr;
     std::lock_guard<std::mutex> lock(locationFactoryMutex_);
-    if(dgnssManager_ == nullptr) {
+    if (dgnssManager_ == nullptr) {
         std::shared_ptr<DgnssManagerStub> dgnssManager = nullptr;
         try {
             dgnssManager = std::make_shared<DgnssManagerStub>(dataFormat);
-        } catch (std::bad_alloc & e) {
-            LOG(ERROR, __FUNCTION__ , e.what());
+        } catch (std::bad_alloc &e) {
+            LOG(ERROR, __FUNCTION__, e.what());
             return nullptr;
         }
-        auto initCb = std::bind(&LocationFactoryStub::onGetDgnssManagerResponse, this,
-            std::placeholders::_1);
+        auto initCb = std::bind(
+            &LocationFactoryStub::onGetDgnssManagerResponse, this, std::placeholders::_1);
         telux::common::Status status = dgnssManager->init(initCb);
         if (status != telux::common::Status::SUCCESS) {
             LOG(ERROR, __FUNCTION__, "Failed to initialize the manager");

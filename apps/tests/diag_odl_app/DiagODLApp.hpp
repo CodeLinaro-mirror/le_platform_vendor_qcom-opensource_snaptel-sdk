@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef DIAGODLAPP_HPP
@@ -22,7 +22,6 @@ class DiagODLApp : public ConsoleApp {
     std::shared_ptr<telux::platform::diag::IDiagLogManager> diagMgr_;
     void fileMethodMenu();
     void callbackMethodMenu();
-
 };
 
-#endif // DIAGODLAPP_HPP
+#endif  // DIAGODLAPP_HPP

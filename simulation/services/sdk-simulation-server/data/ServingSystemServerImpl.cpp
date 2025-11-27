@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "ServingSystemServerImpl.hpp"
@@ -17,7 +17,7 @@
 
 ServingSystemServerImpl::ServingSystemServerImpl(
     std::shared_ptr<DataConnectionServerImpl> dcmServerImpl)
-    :dcmServerImpl_(dcmServerImpl) {
+   : dcmServerImpl_(dcmServerImpl) {
     LOG(DEBUG, __FUNCTION__);
 }
 
@@ -25,23 +25,21 @@ ServingSystemServerImpl::~ServingSystemServerImpl() {
     LOG(DEBUG, __FUNCTION__);
 }
 
-grpc::Status ServingSystemServerImpl::InitService(ServerContext* context,
-    const dataStub::SlotInfo* request, dataStub::GetServiceStatusReply* response) {
+grpc::Status ServingSystemServerImpl::InitService(ServerContext *context,
+    const dataStub::SlotInfo *request, dataStub::GetServiceStatusReply *response) {
     LOG(DEBUG, __FUNCTION__);
 
     Json::Value rootObj;
-    std::string filePath = (request->slot_id() == SLOT_2)? SERVING_SYSTEM_API_SLOT2_JSON
-        : SERVING_SYSTEM_API_SLOT1_JSON;
-    telux::common::ErrorCode error =
-        JsonParser::readFromJsonFile(rootObj, filePath);
+    std::string filePath           = (request->slot_id() == SLOT_2) ? SERVING_SYSTEM_API_SLOT2_JSON
+                                                                    : SERVING_SYSTEM_API_SLOT1_JSON;
+    telux::common::ErrorCode error = JsonParser::readFromJsonFile(rootObj, filePath);
     if (error != ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! ");
         return grpc::Status(grpc::StatusCode::NOT_FOUND, "Json not found");
     }
 
-    int cbDelay = rootObj["IServingSystemManager"]["IsSubsystemReadyDelay"].asInt();
-    std::string cbStatus =
-        rootObj["IServingSystemManager"]["IsSubsystemReady"].asString();
+    int cbDelay          = rootObj["IServingSystemManager"]["IsSubsystemReadyDelay"].asInt();
+    std::string cbStatus = rootObj["IServingSystemManager"]["IsSubsystemReady"].asString();
     telux::common::ServiceStatus status = CommonUtils::mapServiceStatus(cbStatus);
     LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", cbStatus);
 
@@ -49,33 +47,34 @@ grpc::Status ServingSystemServerImpl::InitService(ServerContext* context,
     response->set_delay(cbDelay);
 
     std::vector<std::string> filters = {"data_connection_server"};
-    auto &serverEventManager = ServerEventManager::getInstance();
+    auto &serverEventManager         = ServerEventManager::getInstance();
     serverEventManager.registerListener(shared_from_this(), filters);
 
     return grpc::Status::OK;
 }
 
-grpc::Status ServingSystemServerImpl::GetDrbStatus(ServerContext* context,
-    const dataStub::GetDrbStatusRequest* request,
-    dataStub::GetDrbStatusReply* response) {
+grpc::Status ServingSystemServerImpl::GetDrbStatus(ServerContext *context,
+    const dataStub::GetDrbStatusRequest *request, dataStub::GetDrbStatusReply *response) {
 
     LOG(DEBUG, __FUNCTION__);
-    std::string apiJsonPath = (request->drb_status().slot_id() == SLOT_2)?
-        SERVING_SYSTEM_API_SLOT2_JSON : SERVING_SYSTEM_API_SLOT1_JSON;
-    std::string stateJsonPath = (request->drb_status().slot_id() == SLOT_2)?
-        SERVING_SYSTEM_STATE_SLOT2_JSON : SERVING_SYSTEM_STATE_SLOT1_JSON;
-    std::string subsystem = "IServingSystemManager";
-    std::string method = "getDrbStatus";
+    std::string apiJsonPath   = (request->drb_status().slot_id() == SLOT_2)
+                                    ? SERVING_SYSTEM_API_SLOT2_JSON
+                                    : SERVING_SYSTEM_API_SLOT1_JSON;
+    std::string stateJsonPath = (request->drb_status().slot_id() == SLOT_2)
+                                    ? SERVING_SYSTEM_STATE_SLOT2_JSON
+                                    : SERVING_SYSTEM_STATE_SLOT1_JSON;
+    std::string subsystem     = "IServingSystemManager";
+    std::string method        = "getDrbStatus";
     JsonData data;
-    telux::common::ErrorCode error =
-        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
 
     if (error != ErrorCode::SUCCESS) {
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
     }
 
-    if (data.status == telux::common::Status::SUCCESS &&
-        data.error == telux::common::ErrorCode::SUCCESS) {
+    if (data.status == telux::common::Status::SUCCESS
+        && data.error == telux::common::ErrorCode::SUCCESS) {
         response->mutable_drb_status()->set_drb_status(convertDrbStatusStringToEnum(
             data.stateRootObj[subsystem][method]["drbStatus"].asString()));
     }
@@ -83,27 +82,28 @@ grpc::Status ServingSystemServerImpl::GetDrbStatus(ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status ServingSystemServerImpl::RequestServiceStatus(ServerContext* context,
-    const dataStub::ServingStatusRequest* request,
-    dataStub::ServiceStatusReply* response) {
+grpc::Status ServingSystemServerImpl::RequestServiceStatus(ServerContext *context,
+    const dataStub::ServingStatusRequest *request, dataStub::ServiceStatusReply *response) {
 
     LOG(DEBUG, __FUNCTION__);
-    std::string apiJsonPath = (request->serving_status().slot_id() == SLOT_2)?
-        SERVING_SYSTEM_API_SLOT2_JSON : SERVING_SYSTEM_API_SLOT1_JSON;
-    std::string stateJsonPath = (request->serving_status().slot_id() == SLOT_2)?
-        SERVING_SYSTEM_STATE_SLOT2_JSON : SERVING_SYSTEM_STATE_SLOT1_JSON;
-    std::string subsystem = "IServingSystemManager";
-    std::string method = "requestServiceStatus";
+    std::string apiJsonPath   = (request->serving_status().slot_id() == SLOT_2)
+                                    ? SERVING_SYSTEM_API_SLOT2_JSON
+                                    : SERVING_SYSTEM_API_SLOT1_JSON;
+    std::string stateJsonPath = (request->serving_status().slot_id() == SLOT_2)
+                                    ? SERVING_SYSTEM_STATE_SLOT2_JSON
+                                    : SERVING_SYSTEM_STATE_SLOT1_JSON;
+    std::string subsystem     = "IServingSystemManager";
+    std::string method        = "requestServiceStatus";
     JsonData data;
-    telux::common::ErrorCode error =
-        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
 
     if (error != ErrorCode::SUCCESS) {
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
     }
 
-    if (data.status == telux::common::Status::SUCCESS &&
-        data.error == telux::common::ErrorCode::SUCCESS) {
+    if (data.status == telux::common::Status::SUCCESS
+        && data.error == telux::common::ErrorCode::SUCCESS) {
         response->mutable_data_service_state()->set_data_service_state(
             convertServiceStateStringToEnum(
                 data.stateRootObj[subsystem][method]["serviceState"].asString()));
@@ -118,27 +118,28 @@ grpc::Status ServingSystemServerImpl::RequestServiceStatus(ServerContext* contex
     return grpc::Status::OK;
 }
 
-grpc::Status ServingSystemServerImpl::RequestRoamingStatus(ServerContext* context,
-    const dataStub::RoamingStatusRequest* request,
-    dataStub::RomingStatusReply* response) {
+grpc::Status ServingSystemServerImpl::RequestRoamingStatus(ServerContext *context,
+    const dataStub::RoamingStatusRequest *request, dataStub::RomingStatusReply *response) {
 
     LOG(DEBUG, __FUNCTION__);
-    std::string apiJsonPath = (request->roaming_status().slot_id() == SLOT_2)?
-        SERVING_SYSTEM_API_SLOT2_JSON : SERVING_SYSTEM_API_SLOT1_JSON;
-    std::string stateJsonPath = (request->roaming_status().slot_id() == SLOT_2)?
-        SERVING_SYSTEM_STATE_SLOT2_JSON : SERVING_SYSTEM_STATE_SLOT1_JSON;
-    std::string subsystem = "IServingSystemManager";
-    std::string method = "requestRoamingStatus";
+    std::string apiJsonPath   = (request->roaming_status().slot_id() == SLOT_2)
+                                    ? SERVING_SYSTEM_API_SLOT2_JSON
+                                    : SERVING_SYSTEM_API_SLOT1_JSON;
+    std::string stateJsonPath = (request->roaming_status().slot_id() == SLOT_2)
+                                    ? SERVING_SYSTEM_STATE_SLOT2_JSON
+                                    : SERVING_SYSTEM_STATE_SLOT1_JSON;
+    std::string subsystem     = "IServingSystemManager";
+    std::string method        = "requestRoamingStatus";
     JsonData data;
-    telux::common::ErrorCode error =
-        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
 
     if (error != ErrorCode::SUCCESS) {
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
     }
 
-    if (data.status == telux::common::Status::SUCCESS &&
-        data.error == telux::common::ErrorCode::SUCCESS) {
+    if (data.status == telux::common::Status::SUCCESS
+        && data.error == telux::common::ErrorCode::SUCCESS) {
         response->mutable_roaming_type()->set_roaming_type(convertRoamingTypeStringToEnum(
             data.stateRootObj[subsystem][method]["type"].asString()));
         response->set_is_roaming(data.stateRootObj[subsystem][method]["isRoaming"].asBool());
@@ -151,29 +152,30 @@ grpc::Status ServingSystemServerImpl::RequestRoamingStatus(ServerContext* contex
     return grpc::Status::OK;
 }
 
-grpc::Status ServingSystemServerImpl::RequestNrIconType(ServerContext* context,
-    const dataStub::NrIconTypeRequest* request,
-    dataStub::NrIconTypeReply* response) {
+grpc::Status ServingSystemServerImpl::RequestNrIconType(ServerContext *context,
+    const dataStub::NrIconTypeRequest *request, dataStub::NrIconTypeReply *response) {
 
     LOG(DEBUG, __FUNCTION__);
-    std::string apiJsonPath = (request->nr_icon_status().slot_id() == SLOT_2)?
-        SERVING_SYSTEM_API_SLOT2_JSON : SERVING_SYSTEM_API_SLOT1_JSON;
-    std::string stateJsonPath = (request->nr_icon_status().slot_id() == SLOT_2)?
-        SERVING_SYSTEM_STATE_SLOT2_JSON : SERVING_SYSTEM_STATE_SLOT1_JSON;
-    std::string subsystem = "IServingSystemManager";
-    std::string method = "requestNrIconType";
+    std::string apiJsonPath   = (request->nr_icon_status().slot_id() == SLOT_2)
+                                    ? SERVING_SYSTEM_API_SLOT2_JSON
+                                    : SERVING_SYSTEM_API_SLOT1_JSON;
+    std::string stateJsonPath = (request->nr_icon_status().slot_id() == SLOT_2)
+                                    ? SERVING_SYSTEM_STATE_SLOT2_JSON
+                                    : SERVING_SYSTEM_STATE_SLOT1_JSON;
+    std::string subsystem     = "IServingSystemManager";
+    std::string method        = "requestNrIconType";
     JsonData data;
-    telux::common::ErrorCode error =
-        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
 
     if (error != ErrorCode::SUCCESS) {
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
     }
 
-    if (data.status == telux::common::Status::SUCCESS &&
-        data.error == telux::common::ErrorCode::SUCCESS) {
-        response->mutable_nr_icon_type()->set_nr_icon_type(convertNrIconTypeStringToEnum(
-            data.stateRootObj[subsystem][method]["type"].asString()));
+    if (data.status == telux::common::Status::SUCCESS
+        && data.error == telux::common::ErrorCode::SUCCESS) {
+        response->mutable_nr_icon_type()->set_nr_icon_type(
+            convertNrIconTypeStringToEnum(data.stateRootObj[subsystem][method]["type"].asString()));
     }
 
     response->mutable_reply()->set_status(static_cast<commonStub::Status>(data.status));
@@ -183,23 +185,24 @@ grpc::Status ServingSystemServerImpl::RequestNrIconType(ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status ServingSystemServerImpl::MakeDormant(ServerContext* context,
-    const dataStub::MakeDormantStatusRequest* request,
-    dataStub::DefaultReply* response) {
+grpc::Status ServingSystemServerImpl::MakeDormant(ServerContext *context,
+    const dataStub::MakeDormantStatusRequest *request, dataStub::DefaultReply *response) {
 
     LOG(DEBUG, __FUNCTION__);
-    std::string apiJsonPath = (request->make_dormant_status().slot_id() == SLOT_2)?
-        SERVING_SYSTEM_API_SLOT2_JSON : SERVING_SYSTEM_API_SLOT1_JSON;
-    std::string stateJsonPath = (request->make_dormant_status().slot_id() == SLOT_2)?
-        SERVING_SYSTEM_STATE_SLOT2_JSON : SERVING_SYSTEM_STATE_SLOT1_JSON;
-    std::string subsystem = "IServingSystemManager";
-    std::string method = "makeDormant";
+    std::string apiJsonPath   = (request->make_dormant_status().slot_id() == SLOT_2)
+                                    ? SERVING_SYSTEM_API_SLOT2_JSON
+                                    : SERVING_SYSTEM_API_SLOT1_JSON;
+    std::string stateJsonPath = (request->make_dormant_status().slot_id() == SLOT_2)
+                                    ? SERVING_SYSTEM_STATE_SLOT2_JSON
+                                    : SERVING_SYSTEM_STATE_SLOT1_JSON;
+    std::string subsystem     = "IServingSystemManager";
+    std::string method        = "makeDormant";
     JsonData data;
-    telux::common::ErrorCode error =
-        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data); 
-    if (!dcmServerImpl_->isAnyDataCallActive(static_cast<SlotId>
-        (request->make_dormant_status().slot_id()))) {
-        data.error = telux::common::ErrorCode::GENERIC_FAILURE;
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+    if (!dcmServerImpl_->isAnyDataCallActive(
+            static_cast<SlotId>(request->make_dormant_status().slot_id()))) {
+        data.error  = telux::common::ErrorCode::GENERIC_FAILURE;
         data.status = telux::common::Status::FAILED;
     }
     if (error != ErrorCode::SUCCESS) {

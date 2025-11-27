@@ -97,13 +97,12 @@ void NtnTestApp::onIncomingData(std::unique_ptr<uint8_t[]> data, uint32_t size) 
     std::cout << "**** onIncomingData *****" << std::endl;
 
     std::cout << "===Printing raw data===\n";
-    for(uint32_t i = 0; i < size; ++i)
+    for (uint32_t i = 0; i < size; ++i)
         std::cout << std::setfill('0') << std::hex << std::setw(2) << (uint32_t)data[i] << " ";
     std::cout << "\n===End of raw data===\n";
     std::cout << "===Printing data in ascii format (unprintable characters are printed as -)===\n";
-    for(uint32_t i = 0; i < size; ++i) {
-        if (!isprint((unsigned char)data[i]))
-        {
+    for (uint32_t i = 0; i < size; ++i) {
+        if (!isprint((unsigned char)data[i])) {
             std::cout << "-";
         } else {
             std::cout << data[i];
@@ -133,8 +132,8 @@ void NtnTestApp::onDataAck(ErrorCode err, TransactionId id) {
     if (err == ErrorCode::SUCCESS) {
         std::cout << "**** = onDataAck ack received for id = " << id << std::endl;
     } else {
-        std::cout << "**** = onDataAck error = " << Utils::getErrorCodeAsString(err) <<
-            ", id = " << id << ")" << std::endl;
+        std::cout << "**** = onDataAck error = " << Utils::getErrorCodeAsString(err)
+                  << ", id = " << id << ")" << std::endl;
     }
 }
 
@@ -145,53 +144,52 @@ void NtnTestApp::onCellularCoverageAvailable(bool isCellularCoverageAvailable) {
 void NtnTestApp::onLocationFixRequest(LocationFixRequestReason reqReason) {
     std::cout << "**** onLocationFixRequest Reason = " << toString(reqReason) << std::endl;
 
-    std::thread ([this] {
+    std::thread([this] {
         if (autoSetLocationFix_) {
             std::cout << "** Auto setting location fix **" << std::endl;
             autoSetLocationFix();
         }
-        #ifdef TELSDK_FEATURE_LOC_ENABLED
-            else if(setLiveLocationFix_) {
-                std::cout << "** Triggering location fix **" << std::endl;
-                triggerLocationReports();
-            }
-        #endif
+#ifdef TELSDK_FEATURE_LOC_ENABLED
+        else if (setLiveLocationFix_) {
+            std::cout << "** Triggering location fix **" << std::endl;
+            triggerLocationReports();
+        }
+#endif
     }).detach();
 }
 
-
 void NtnTestApp::setLiveLocationFix() {
-    #ifdef TELSDK_FEATURE_LOC_ENABLED
+#ifdef TELSDK_FEATURE_LOC_ENABLED
     char delimiter = '\n';
     std::string option;
     std::cout << "Enter Y to enable or N to disable live location fix: ";
     std::getline(std::cin, option, delimiter);
-    if(option == "Y" || option == "y") {
+    if (option == "Y" || option == "y") {
         setLiveLocationFix_ = true;
-    } else if(option == "N" || option == "n") {
+    } else if (option == "N" || option == "n") {
         setLiveLocationFix_ = false;
     }
-    #else
-        std::cout << "Location is unsupported" << std::endl;
-    #endif
+#else
+    std::cout << "Location is unsupported" << std::endl;
+#endif
 }
 
 #ifdef TELSDK_FEATURE_LOC_ENABLED
 void NtnTestApp::triggerLocationReports() {
-    if(locationManager_ && posListener_) {
+    if (locationManager_ && posListener_) {
         GnssReportTypeMask reportMask = DEFAULT_REPORT_MASK;
         reportMask |= LOCATION;
         locationManager_->startDetailedReports(1000, nullptr, reportMask);
         {
             std::cout << "Waiting for location reports" << std::endl;
             std::unique_lock<std::mutex> lck(posListener_->locMtx_);
-            posListener_->locCv_.wait(lck, [this]{ return posListener_->isReportReceived_; });
+            posListener_->locCv_.wait(lck, [this] { return posListener_->isReportReceived_; });
         }
         locationManager_->stopReports(nullptr);
         {
             std::unique_lock<std::mutex> lck(posListener_->locMtx_);
             posListener_->isReportReceived_ = false;
-            posListener_->reportCount_ = 0;
+            posListener_->reportCount_      = 0;
         }
         std::cout << "Stopping reports" << std::endl;
         auto err = ntnMgr_->locationFixResponse(telux::satcom::LocationStatus::SUCCESS, 0);
@@ -204,58 +202,58 @@ void NtnTestApp::triggerLocationReports() {
 
 void NtnLocationListener::onDetailedLocationUpdate(
     const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo) {
-    if(reportCount_ > 0) {
+    if (reportCount_ > 0) {
         return;
     }
     std::cout << " Detailed reports received" << std::endl;
-    locFix_.lat = locationInfo->getLatitude();
-    locFix_.lon = locationInfo->getLongitude();
-    locFix_.alt = locationInfo->getAltitude();
+    locFix_.lat           = locationInfo->getLatitude();
+    locFix_.lon           = locationInfo->getLongitude();
+    locFix_.alt           = locationInfo->getAltitude();
     locFix_.uncerCircular = locationInfo->getHorizontalUncertainty();
-    locFix_.heading = locationInfo->getHeading();
-    locFix_.headingUncer = locationInfo->getHeadingUncertainty();
+    locFix_.heading       = locationInfo->getHeading();
+    locFix_.headingUncer  = locationInfo->getHeadingUncertainty();
     std::vector<float> velocityEastNorthUp;
     locationInfo->getVelocityEastNorthUp(velocityEastNorthUp);
     size_t itr = 0;
-    for(auto vel: velocityEastNorthUp) {
+    for (auto vel : velocityEastNorthUp) {
         locFix_.velInfo.enuVel[itr] = vel;
         itr++;
     }
     std::vector<float> velocityUncertaintyEastNorthUp;
     locationInfo->getVelocityUncertaintyEastNorthUp(velocityUncertaintyEastNorthUp);
     itr = 0;
-    for(auto vel: velocityUncertaintyEastNorthUp) {
+    for (auto vel : velocityUncertaintyEastNorthUp) {
         locFix_.velInfo.enuUncer[itr] = vel;
         itr++;
     }
-    telux::loc::LocationInfoValidity validityMask = locationInfo->getLocationInfoValidity();
+    telux::loc::LocationInfoValidity validityMask     = locationInfo->getLocationInfoValidity();
     telux::loc::LocationInfoExValidity validityMaskEx = locationInfo->getLocationInfoExValidity();
-    if((validityMask & telux::loc::HAS_HEADING_BIT)) {
+    if ((validityMask & telux::loc::HAS_HEADING_BIT)) {
         locFix_.isHeadingValid = true;
     } else {
         locFix_.isHeadingValid = false;
     }
-    if((validityMask & telux::loc::HAS_HEADING_ACCURACY_BIT)) {
+    if ((validityMask & telux::loc::HAS_HEADING_ACCURACY_BIT)) {
         locFix_.isHeadingUncerValid = true;
     } else {
         locFix_.isHeadingUncerValid = false;
     }
-    if((validityMask & telux::loc::HAS_HORIZONTAL_ACCURACY_BIT)) {
+    if ((validityMask & telux::loc::HAS_HORIZONTAL_ACCURACY_BIT)) {
         locFix_.isConfidenceValid = true;
-        locFix_.confidence = 68;
+        locFix_.confidence        = 68;
     } else {
         locFix_.isConfidenceValid = false;
-        locFix_.confidence = 0;
+        locFix_.confidence        = 0;
     }
-    if((validityMaskEx & telux::loc::HAS_NORTH_VEL) && (validityMaskEx & telux::loc::HAS_EAST_VEL)
+    if ((validityMaskEx & telux::loc::HAS_NORTH_VEL) && (validityMaskEx & telux::loc::HAS_EAST_VEL)
         && (validityMaskEx & telux::loc::HAS_UP_VEL)) {
         locFix_.velInfo.isEnuValueValid = true;
     } else {
         locFix_.velInfo.isEnuValueValid = false;
     }
-    if((validityMaskEx & telux::loc::HAS_NORTH_VEL_UNC) &&
-        (validityMaskEx & telux::loc::HAS_EAST_VEL_UNC)
-            && (validityMaskEx & telux::loc::HAS_UP_VEL_UNC)) {
+    if ((validityMaskEx & telux::loc::HAS_NORTH_VEL_UNC)
+        && (validityMaskEx & telux::loc::HAS_EAST_VEL_UNC)
+        && (validityMaskEx & telux::loc::HAS_UP_VEL_UNC)) {
         locFix_.velInfo.isEnuUncerValid = true;
     } else {
         locFix_.velInfo.isEnuUncerValid = false;
@@ -297,8 +295,9 @@ void NtnTestApp::getServiceStatus(std::vector<std::string> inputCommand) {
 
 void NtnTestApp::isNtnSupported(std::vector<std::string> inputCommand) {
     bool supported = false;
-    auto err = ntnMgr_->isNtnSupported(supported);
-    std::cout << "isNtnSupported returned error = " << Utils::getErrorCodeAsString(err) <<std::endl;
+    auto err       = ntnMgr_->isNtnSupported(supported);
+    std::cout << "isNtnSupported returned error = " << Utils::getErrorCodeAsString(err)
+              << std::endl;
     if (supported) {
         std::cout << "<Ntn is supported>" << std::endl;
     } else {
@@ -306,8 +305,8 @@ void NtnTestApp::isNtnSupported(std::vector<std::string> inputCommand) {
     }
 }
 
-void NtnTestApp::readData(const std::string& filename,
-    std::vector<std::map<std::string, std::string>>& rows) {
+void NtnTestApp::readData(
+    const std::string &filename, std::vector<std::map<std::string, std::string>> &rows) {
     std::cout << "Reading csv file.\n";
     std::ifstream file(filename);
     std::string line;
@@ -316,8 +315,8 @@ void NtnTestApp::readData(const std::string& filename,
     if (file.is_open()) {
         // Read headers
         std::getline(file, line);
-        //CSV collected in windows add a \r at the end of each row.
-        if(!line.empty() && line.back() == '\r') {
+        // CSV collected in windows add a \r at the end of each row.
+        if (!line.empty() && line.back() == '\r') {
             line.pop_back();
         }
         std::stringstream ss(line);
@@ -328,7 +327,7 @@ void NtnTestApp::readData(const std::string& filename,
 
         // Read rows
         while (std::getline(file, line)) {
-            if(!line.empty() && line.back() == '\r') {
+            if (!line.empty() && line.back() == '\r') {
                 line.pop_back();
             }
             std::stringstream rowValues(line);
@@ -349,7 +348,7 @@ void NtnTestApp::readData(const std::string& filename,
     }
 }
 
-void NtnTestApp::updateLocationFixFromRow(telux::satcom::LocationFix& fixParams) {
+void NtnTestApp::updateLocationFixFromRow(telux::satcom::LocationFix &fixParams) {
     std::map<std::string, std::string> row = rows_[currentIndex_];
     currentIndex_++;
     std::cout << "------------------------------------------" << std::endl;
@@ -375,39 +374,38 @@ void NtnTestApp::updateLocationFixFromRow(telux::satcom::LocationFix& fixParams)
         std::cout << "enuUpwardVel: " << fixParams.velInfo.enuVel[2] << std::endl;
 
         fixParams.velInfo.isEnuUncerValid = std::stoi(row["isEnuUncerValid"]);
-        fixParams.velInfo.enuUncer[0] = std::stof(row["enuEastingUncer"]);
-        fixParams.velInfo.enuUncer[1] = std::stof(row["enuNorthingUncer"]);
-        fixParams.velInfo.enuUncer[2] = std::stof(row["enuUpwardUncer"]);
+        fixParams.velInfo.enuUncer[0]     = std::stof(row["enuEastingUncer"]);
+        fixParams.velInfo.enuUncer[1]     = std::stof(row["enuNorthingUncer"]);
+        fixParams.velInfo.enuUncer[2]     = std::stof(row["enuUpwardUncer"]);
         std::cout << "isEnuUncerValid: " << fixParams.velInfo.isEnuUncerValid << std::endl;
         std::cout << "enuEastingUncer: " << fixParams.velInfo.enuUncer[0] << std::endl;
         std::cout << "enuNorthingUncer: " << fixParams.velInfo.enuUncer[1] << std::endl;
         std::cout << "enuUpwardUncer: " << fixParams.velInfo.enuUncer[2] << std::endl;
 
         fixParams.isHeadingValid = std::stoi(row["isHeadingValid"]);
-        fixParams.heading = std::stoul(row["heading"]);
+        fixParams.heading        = std::stoul(row["heading"]);
         std::cout << "isHeadingValid: " << fixParams.isHeadingValid << std::endl;
         std::cout << "heading: " << fixParams.heading << std::endl;
 
         fixParams.isHeadingUncerValid = std::stoi(row["isHeadingUncerValid"]);
-        fixParams.headingUncer = std::stoul(row["headingUncer"]);
+        fixParams.headingUncer        = std::stoul(row["headingUncer"]);
         std::cout << "isHeadingUncerValid: " << fixParams.isHeadingUncerValid << std::endl;
         std::cout << "headingUncer: " << fixParams.headingUncer << std::endl;
 
         fixParams.isConfidenceValid = std::stoi(row["isConfidenceValid"]);
-        fixParams.confidence = std::stoul(row["confidence"]);
+        fixParams.confidence        = std::stoul(row["confidence"]);
         std::cout << "isConfidenceValid: " << fixParams.isConfidenceValid << std::endl;
         std::cout << "confidence: " << fixParams.confidence << std::endl;
-    } catch (const std::invalid_argument& e) {
+    } catch (const std::invalid_argument &e) {
         std::cerr << "Invalid argument: " << e.what() << '\n';
-    } catch (const std::out_of_range& e) {
+    } catch (const std::out_of_range &e) {
         std::cerr << "Out of range: " << e.what() << '\n';
     }
     std::cout << "------------------------------------------" << std::endl;
 }
 
 void NtnTestApp::autoSetLocationFix() {
-    std::string filename = std::string(DEFAULT_CSV_FILE_PATH) +
-        std::string(DEFAULT_CSV_FILE_NAME);
+    std::string filename = std::string(DEFAULT_CSV_FILE_PATH) + std::string(DEFAULT_CSV_FILE_NAME);
     telux::satcom::LocationFix fixParams;
 
     if (rows_.size() == 0) {
@@ -435,18 +433,18 @@ void NtnTestApp::enableNtn(std::vector<std::string> inputCommand) {
     std::string iccid;
     std::cout << "Enter 0 to disable and 1 to enable NTN: ";
     std::cin >> enable;
-    Utils::validateInput(enable, {0,1});
+    Utils::validateInput(enable, {0, 1});
     if (enable) {
         std::cout << "Enter 0 for non-emergency and 1 for emergency data: ";
         std::cin >> emergency;
-        Utils::validateInput(emergency, {0,1});
+        Utils::validateInput(emergency, {0, 1});
         std::cout << "Enter iccid: ";
         std::cin >> iccid;
         Utils::validateInput(iccid);
     }
-    std::cout
-        << "enableNtn errorno = " <<
-        Utils::getErrorCodeAsString(ntnMgr_->enableNtn(enable, emergency, iccid)) << std::endl;
+    std::cout << "enableNtn errorno = "
+              << Utils::getErrorCodeAsString(ntnMgr_->enableNtn(enable, emergency, iccid))
+              << std::endl;
 }
 
 void NtnTestApp::sendDataString(std::vector<std::string> inputCommand) {
@@ -462,7 +460,7 @@ void NtnTestApp::sendDataString(std::vector<std::string> inputCommand) {
 
     std::vector<uint8_t> data;
     for (char c : str) {
-        data.push_back((uint8_t) c);
+        data.push_back((uint8_t)c);
     }
     TransactionId tId;
     std::cout << "Sending data of size(in bytes) : " << data.size() << std::endl;
@@ -477,7 +475,7 @@ void NtnTestApp::sendDataRaw(std::vector<std::string> inputCommand) {
 
     std::cout << "Enter 0 for non-emergency and 1 for emergency data: ";
     std::cin >> isEmergency;
-    Utils::validateInput(isEmergency, {0,1});
+    Utils::validateInput(isEmergency, {0, 1});
     std::cout << "Enter raw data to be sent: ";
     std::cin >> str;
     Utils::validateInput(str);
@@ -486,9 +484,9 @@ void NtnTestApp::sendDataRaw(std::vector<std::string> inputCommand) {
     std::istringstream ss(str);
     std::string buffer;
 
-    while((ss >> std::setw(2) >> buffer)) {
+    while ((ss >> std::setw(2) >> buffer)) {
         unsigned u;
-        std::istringstream ss2 (buffer);
+        std::istringstream ss2(buffer);
         ss2 >> std::setbase(16) >> u;
         data.push_back((uint8_t)u);
     }
@@ -507,18 +505,18 @@ void NtnTestApp::abortData(std::vector<std::string> inputCommand) {
     }
     TransactionId tId;
     auto err = ntnMgr_->sendData(data.data(), data.size(), true, tId);
-    err = ntnMgr_->sendData(data.data(), data.size(), true, tId);
-    err = ntnMgr_->sendData(data.data(), data.size(), true, tId);
-    err = ntnMgr_->sendData(data.data(), data.size(), true, tId);
-    err = ntnMgr_->sendData(data.data(), data.size(), true, tId);
-    err = ntnMgr_->sendData(data.data(), data.size(), true, tId);
-    err = ntnMgr_->sendData(data.data(), data.size(), true, tId);
-    err = ntnMgr_->sendData(data.data(), data.size(), true, tId);
-    err = ntnMgr_->sendData(data.data(), data.size(), true, tId);
-    err = ntnMgr_->sendData(data.data(), data.size(), true, tId);
+    err      = ntnMgr_->sendData(data.data(), data.size(), true, tId);
+    err      = ntnMgr_->sendData(data.data(), data.size(), true, tId);
+    err      = ntnMgr_->sendData(data.data(), data.size(), true, tId);
+    err      = ntnMgr_->sendData(data.data(), data.size(), true, tId);
+    err      = ntnMgr_->sendData(data.data(), data.size(), true, tId);
+    err      = ntnMgr_->sendData(data.data(), data.size(), true, tId);
+    err      = ntnMgr_->sendData(data.data(), data.size(), true, tId);
+    err      = ntnMgr_->sendData(data.data(), data.size(), true, tId);
+    err      = ntnMgr_->sendData(data.data(), data.size(), true, tId);
     (void)err;
     std::cout << "abortData errno = " << Utils::getErrorCodeAsString(ntnMgr_->abortData())
-        << std::endl;
+              << std::endl;
 }
 
 void NtnTestApp::getNtnCapabilities(std::vector<std::string> inputCommand) {
@@ -579,18 +577,18 @@ void NtnTestApp::enableCellularScan(std::vector<std::string> inputCommand) {
     int flag = 0;
     std::cout << "Enter 1 to enable or 0 to disable cellular scan: \n";
     std::cin >> flag;
-    Utils::validateInput(flag, {0,1});
+    Utils::validateInput(flag, {0, 1});
     auto err = ntnMgr_->enableCellularScan(flag);
     std::cout << "enableCellularScan errno = " << Utils::getErrorCodeAsString(err) << std::endl;
 }
 
 void NtnTestApp::setLocationFix(std::vector<std::string> inputCommand) {
-    LocationFix params = {};
-    int isEnuValueValid = 0;
-    int isEnuUncerValid = 0;
-    int isHeadingValid = 0;
+    LocationFix params      = {};
+    int isEnuValueValid     = 0;
+    int isEnuUncerValid     = 0;
+    int isHeadingValid      = 0;
     int isHeadingUncerValid = 0;
-    int isConfidenceValid = 0;
+    int isConfidenceValid   = 0;
 
     std::cout << "Enter latitude: ";
     std::cin >> params.lat;
@@ -608,7 +606,7 @@ void NtnTestApp::setLocationFix(std::vector<std::string> inputCommand) {
 
     std::cout << "Enter isEnuValueValid (0-No, 1-Yes): ";
     std::cin >> isEnuValueValid;
-    Utils::validateInput(isEnuValueValid, {0,1});
+    Utils::validateInput(isEnuValueValid, {0, 1});
     params.velInfo.isEnuValueValid = static_cast<bool>(isEnuValueValid);
 
     if (params.velInfo.isEnuValueValid) {
@@ -627,7 +625,7 @@ void NtnTestApp::setLocationFix(std::vector<std::string> inputCommand) {
 
     std::cout << "Enter isEnuUncertaintyValid (0-No, 1-Yes): ";
     std::cin >> isEnuUncerValid;
-    Utils::validateInput(isEnuUncerValid, {0,1});
+    Utils::validateInput(isEnuUncerValid, {0, 1});
     params.velInfo.isEnuUncerValid = static_cast<bool>(isEnuUncerValid);
 
     if (params.velInfo.isEnuUncerValid) {
@@ -646,7 +644,7 @@ void NtnTestApp::setLocationFix(std::vector<std::string> inputCommand) {
 
     std::cout << "Enter isHeadingValid (0-No, 1-Yes): ";
     std::cin >> isHeadingValid;
-    Utils::validateInput(isHeadingValid, {0,1});
+    Utils::validateInput(isHeadingValid, {0, 1});
     params.isHeadingValid = static_cast<bool>(isHeadingValid);
 
     if (params.isHeadingValid) {
@@ -657,7 +655,7 @@ void NtnTestApp::setLocationFix(std::vector<std::string> inputCommand) {
 
     std::cout << "Enter isHeadingUncertaintyValid (0-No, 1-Yes): ";
     std::cin >> isHeadingUncerValid;
-    Utils::validateInput(isHeadingUncerValid, {0,1});
+    Utils::validateInput(isHeadingUncerValid, {0, 1});
     params.isHeadingUncerValid = static_cast<bool>(isHeadingUncerValid);
 
     if (params.isHeadingUncerValid) {
@@ -668,7 +666,7 @@ void NtnTestApp::setLocationFix(std::vector<std::string> inputCommand) {
 
     std::cout << "Enter isConfidenceValid (0-No, 1-Yes): ";
     std::cin >> isConfidenceValid;
-    Utils::validateInput(isConfidenceValid, {0,1});
+    Utils::validateInput(isConfidenceValid, {0, 1});
     params.isConfidenceValid = static_cast<bool>(isConfidenceValid);
 
     if (params.isConfidenceValid) {
@@ -701,11 +699,11 @@ void NtnTestApp::locationFixResponse(std::vector<std::string> inputCommand) {
     std::cin >> status;
     std::cout << std::endl;
     Utils::validateInput(status, {static_cast<int>(telux::satcom::LocationStatus::SUCCESS),
-        static_cast<int>(telux::satcom::LocationStatus::INVALID_ARG),
-        static_cast<int>(telux::satcom::LocationStatus::INTERNAL_ERR),
-        static_cast<int>(telux::satcom::LocationStatus::NOT_SUPPORTED),
-        static_cast<int>(telux::satcom::LocationStatus::RETRY),
-        static_cast<int>(telux::satcom::LocationStatus::FAILED)});
+                                     static_cast<int>(telux::satcom::LocationStatus::INVALID_ARG),
+                                     static_cast<int>(telux::satcom::LocationStatus::INTERNAL_ERR),
+                                     static_cast<int>(telux::satcom::LocationStatus::NOT_SUPPORTED),
+                                     static_cast<int>(telux::satcom::LocationStatus::RETRY),
+                                     static_cast<int>(telux::satcom::LocationStatus::FAILED)});
 
     if (status == static_cast<int>(LocationStatus::RETRY)) {
         std::cout << "Enter wait time: ";
@@ -723,7 +721,8 @@ void NtnTestApp::getSignalStrength(std::vector<std::string> inputCommand) {
     if (err == ErrorCode::SUCCESS) {
         std::cout << "Signal Strength: " << toString(signalStrength) << std::endl;
     } else {
-        std::cout << "Error getting signal strength: " << Utils::getErrorCodeAsString(err) << std::endl;
+        std::cout << "Error getting signal strength: " << Utils::getErrorCodeAsString(err)
+                  << std::endl;
     }
 }
 
@@ -744,51 +743,41 @@ void NtnTestApp::consoleInit() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "updateSFL", {},
             std::bind(&NtnTestApp::updateSystemSelectionSpecifiers, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> sendDataStringCmd
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-            "6", "sendData(string)", {}, std::bind(&NtnTestApp::sendDataString,
-            this, std::placeholders::_1)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6", "sendData(string)", {},
+            std::bind(&NtnTestApp::sendDataString, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> sendDataRawCmd
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-            "7", "sendData(raw)", {}, std::bind(&NtnTestApp::sendDataRaw,
-            this, std::placeholders::_1)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "sendData(raw)", {},
+            std::bind(&NtnTestApp::sendDataRaw, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> abortDataCmd
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
             "8", "abortData", {}, std::bind(&NtnTestApp::abortData, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> enableCellularScanCmd
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-            "9", "enableCellularScan", {}, std::bind(&NtnTestApp::enableCellularScan,
-            this, std::placeholders::_1)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("9", "enableCellularScan", {},
+            std::bind(&NtnTestApp::enableCellularScan, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> locationFixResponseCmd
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-            "10", "locationFixResponse", {}, std::bind(&NtnTestApp::locationFixResponse,
-            this, std::placeholders::_1)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("10", "locationFixResponse", {},
+            std::bind(&NtnTestApp::locationFixResponse, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> setLocationFixCmd
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-            "11", "setLocationFix", {}, std::bind(&NtnTestApp::setLocationFix,
-            this, std::placeholders::_1)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("11", "setLocationFix", {},
+            std::bind(&NtnTestApp::setLocationFix, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> autoSetLocationFixFromFileCmd
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-            "12", "autoSetLocationFixFromFile", {}, std::bind(&NtnTestApp::autoSetLocationFixFromFile,
-            this, std::placeholders::_1)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("12", "autoSetLocationFixFromFile",
+            {}, std::bind(&NtnTestApp::autoSetLocationFixFromFile, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> stopAutoSetLocationFixFromFileCmd
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-            "13", "stopAutoSetLocationFix", {}, std::bind(
-            &NtnTestApp::stopAutoSetLocationFixFromFile, this, std::placeholders::_1)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("13", "stopAutoSetLocationFix", {},
+            std::bind(&NtnTestApp::stopAutoSetLocationFixFromFile, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> setLiveLocationFixCmd
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-            "14", "setLiveLocationFix", {}, std::bind(
-            &NtnTestApp::setLiveLocationFix, this)));
+            "14", "setLiveLocationFix", {}, std::bind(&NtnTestApp::setLiveLocationFix, this)));
     std::shared_ptr<ConsoleAppCommand> getSignalStrengthCmd
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-            "15", "getSignalStrength", {}, std::bind(&NtnTestApp::getSignalStrength,
-            this, std::placeholders::_1)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("15", "getSignalStrength", {},
+            std::bind(&NtnTestApp::getSignalStrength, this, std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsNtn
-        = {isNtnSupportedCmd, enableNtnCmd, getNtnStateCmd,
-            getNtnCapabilitiesCmd, updateSflCmd, sendDataStringCmd, sendDataRawCmd, abortDataCmd,
-            enableCellularScanCmd, locationFixResponseCmd, setLocationFixCmd,
-            autoSetLocationFixFromFileCmd, stopAutoSetLocationFixFromFileCmd,
-            setLiveLocationFixCmd, getSignalStrengthCmd};
+        = {isNtnSupportedCmd, enableNtnCmd, getNtnStateCmd, getNtnCapabilitiesCmd, updateSflCmd,
+            sendDataStringCmd, sendDataRawCmd, abortDataCmd, enableCellularScanCmd,
+            locationFixResponseCmd, setLocationFixCmd, autoSetLocationFixFromFileCmd,
+            stopAutoSetLocationFixFromFileCmd, setLiveLocationFixCmd, getSignalStrengthCmd};
     ConsoleApp::addCommands(commandsNtn);
     ConsoleApp::displayMenu();
 }
@@ -818,7 +807,8 @@ std::shared_ptr<NtnTestApp> init() {
         return nullptr;
     }
 
-    std::vector<std::string> supplementaryGrps{"system", "diag", "logd", "dlt", "radio", "locclient"};
+    std::vector<std::string> supplementaryGrps{
+        "system", "diag", "logd", "dlt", "radio", "locclient"};
     auto rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1) {
         std::cout << "Adding supplementary groups failed!" << std::endl;
@@ -830,15 +820,14 @@ std::shared_ptr<NtnTestApp> init() {
         std::lock_guard<std::mutex> lock(initMtx);
         status = sparam;
         initCv.notify_all();
-        };
+    };
 
     auto &satcomFactory = telux::satcom::SatcomFactory::getInstance();
     std::unique_lock<std::mutex> lck(initMtx);
     ntnTestApp->ntnMgr_ = satcomFactory.getNtnManager(initCb);
     initCv.wait(lck);
 
-    if (ntnTestApp->ntnMgr_ == nullptr)
-    {
+    if (ntnTestApp->ntnMgr_ == nullptr) {
         std::cout << "satcomFactory.getNtnManager returned nullptr" << std::endl;
         return ntnTestApp;
     }
@@ -850,8 +839,8 @@ std::shared_ptr<NtnTestApp> init() {
     }
 
 #ifdef TELSDK_FEATURE_LOC_ENABLED
-    if(ntnTestApp->locationManager_ == nullptr) {
-        if(!ntnTestApp->initLocationManager()) {
+    if (ntnTestApp->locationManager_ == nullptr) {
+        if (!ntnTestApp->initLocationManager()) {
             std::cout << "Location manager init failed returned nullptr" << std::endl;
             return nullptr;
         } else {
@@ -866,28 +855,28 @@ std::shared_ptr<NtnTestApp> init() {
 #ifdef TELSDK_FEATURE_LOC_ENABLED
 bool NtnTestApp::initLocationManager() {
     bool locSubsystemReady = true;
-    if(locationManager_ == nullptr) {
+    if (locationManager_ == nullptr) {
         std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
-        auto &locationFactory = LocationFactory::getInstance();
+        auto &locationFactory            = LocationFactory::getInstance();
         locationManager_ = locationFactory.getLocationManager([&](ServiceStatus status) {
             if (status == ServiceStatus::SERVICE_AVAILABLE) {
-                    prom.set_value(ServiceStatus::SERVICE_AVAILABLE);
-                } else {
-                    prom.set_value(ServiceStatus::SERVICE_FAILED);
-                }
-            });
+                prom.set_value(ServiceStatus::SERVICE_AVAILABLE);
+            } else {
+                prom.set_value(ServiceStatus::SERVICE_FAILED);
+            }
+        });
         std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-        startTime = std::chrono::system_clock::now();
+        startTime                  = std::chrono::system_clock::now();
         ServiceStatus locMgrStatus = locationManager_->getServiceStatus();
-        if(locMgrStatus != ServiceStatus::SERVICE_AVAILABLE) {
+        if (locMgrStatus != ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << "Location subsystem is not ready, Please wait" << std::endl;
         }
         locMgrStatus = prom.get_future().get();
-        if(locMgrStatus == ServiceStatus::SERVICE_AVAILABLE) {
-            endTime = std::chrono::system_clock::now();
+        if (locMgrStatus == ServiceStatus::SERVICE_AVAILABLE) {
+            endTime                                   = std::chrono::system_clock::now();
             std::chrono::duration<double> elapsedTime = endTime - startTime;
-            std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count()
-                << "s\n" << std::endl;
+            std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
+                      << std::endl;
         } else {
             std::cout << "ERROR - Unable to initialize Location subsystem" << std::endl;
             locSubsystemReady = false;
@@ -907,9 +896,9 @@ NtnTestApp::NtnTestApp()
 
 NtnTestApp::~NtnTestApp() {
 #ifdef TELSDK_FEATURE_LOC_ENABLED
-    if(locationManager_ && posListener_) {
+    if (locationManager_ && posListener_) {
         locationManager_->deRegisterListenerEx(posListener_);
-        posListener_ = nullptr;
+        posListener_     = nullptr;
         locationManager_ = nullptr;
     }
 #endif
@@ -947,4 +936,3 @@ int main(int argc, char **argv) {
     std::cout << "Exiting application..." << std::endl;
     return 0;
 }
-

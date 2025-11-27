@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef CARD_REFRESH_MENU_HPP
@@ -11,14 +11,13 @@
 #include "console_app_framework/ConsoleApp.hpp"
 
 class CardRefreshMenu : public ConsoleApp {
-public:
+ public:
     CardRefreshMenu(std::string appName, std::string cursor);
     ~CardRefreshMenu();
     bool init();
 
-private:
-    telux::tel::RefreshParams enterRefreshParams
-        (std::vector<std::string> userInput);
+ private:
+    telux::tel::RefreshParams enterRefreshParams(std::vector<std::string> userInput);
     void configureRefreshVote(std::vector<std::string> userInput);
     void allowRefresh(std::vector<std::string> userInput);
     void refreshComplete(std::vector<std::string> userInput);
@@ -31,13 +30,11 @@ private:
 };
 
 class CardRefreshResponseCallback {
-public:
-    static void RefreshLastEventResponseCb(
-        telux::tel::RefreshStage stage, telux::tel::RefreshMode mode,
-        std::vector<telux::tel::IccFile> efFiles, telux::tel::RefreshParams config,
-        telux::common::ErrorCode error);
+ public:
+    static void RefreshLastEventResponseCb(telux::tel::RefreshStage stage,
+        telux::tel::RefreshMode mode, std::vector<telux::tel::IccFile> efFiles,
+        telux::tel::RefreshParams config, telux::common::ErrorCode error);
     static void commandResponse(telux::common::ErrorCode error);
 };
 
 #endif  // CARD_FILE_MENU_HPP
-

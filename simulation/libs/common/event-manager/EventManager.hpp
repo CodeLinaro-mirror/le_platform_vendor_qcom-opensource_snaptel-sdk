@@ -1,37 +1,7 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 
 /**
  * @file       EventManager.hpp
@@ -74,7 +44,7 @@ namespace telux {
 namespace common {
 
 class IEventListener {
-public:
+ public:
     /**
      * @brief This API is to receive the events, broadcasted by EventManager
      * locally to all the managers on libs side.
@@ -82,25 +52,27 @@ public:
      *
      * @param event - A google::protobuf::Any parameter depicting the event.
      */
-    virtual void onEventUpdate(google::protobuf::Any event) {}
+    virtual void onEventUpdate(google::protobuf::Any event) {
+    }
 
-    virtual ~IEventListener() {}
+    virtual ~IEventListener() {
+    }
 };
 
-template<typename T>
+template <typename T>
 class EventManager {
     /**
      * @brief This class defines APIs and manages the unsolicited events that can be notified to
      *        the SDK.
      *
      */
-protected:
+ protected:
     EventManager(std::launch policy = std::launch::async)
-    : policy_(policy) {
+       : policy_(policy) {
         LOG(DEBUG, __FUNCTION__);
         LOG(DEBUG, " Initializing the EventManager");
         taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
-        stub_ = CommonUtils::getGrpcStub<T>();
+        stub_  = CommonUtils::getGrpcStub<T>();
         connectToSimulationServer();
     }
 
@@ -121,19 +93,19 @@ protected:
         LOG(DEBUG, __FUNCTION__);
 
         if (!connectedToSimulationServer_) {
-            auto f = std::async(std::launch::async, [this]() {
-                isEventServiceAvailable();
-            }).share();
+            auto f
+                = std::async(std::launch::async, [this]() { isEventServiceAvailable(); }).share();
             taskQ_->add(f);
         }
     }
 
     std::unique_ptr<typename T::Stub> stub_;
-public:
+
+ public:
     /**
-    * This overloaded method filters the incoming events from simualtion server. Based on the
-    * filtering results, it either notifies that listener or ignores the notification.
-    */
+     * This overloaded method filters the incoming events from simualtion server. Based on the
+     * filtering results, it either notifies that listener or ignores the notification.
+     */
     void handleEventNotifications(::eventService::EventResponse message) {
         LOG(DEBUG, __FUNCTION__);
 
@@ -141,9 +113,9 @@ public:
         std::lock_guard<std::mutex> lk(listenerMutex_);
         if (filter == UNSOLICITED_COMMON_EVENT) {
             LOG(DEBUG, __FUNCTION__, " passing common event");
-            //passing the unsolicited common event to all the listeners
+            // passing the unsolicited common event to all the listeners
             for (auto it = listeners_.begin(); it != listeners_.end(); ++it) {
-                for (auto &listener: it->second) {
+                for (auto &listener : it->second) {
                     auto sp = listener.lock();
                     if (sp) {
                         sp->onEventUpdate(message.any());
@@ -152,8 +124,8 @@ public:
             }
         } else {
             LOG(DEBUG, __FUNCTION__, " passing unsolicited event::", message.filter());
-            //passing the unsolicited event to the listener who subscribed for it
-            if(listeners_.find(filter) != listeners_.end()) {
+            // passing the unsolicited event to the listener who subscribed for it
+            if (listeners_.find(filter) != listeners_.end()) {
                 for (auto it = listeners_[filter].begin(); it != listeners_[filter].end();) {
                     auto sp = (*it).lock();
                     if (sp) {
@@ -171,12 +143,12 @@ public:
         }
     }
 
-    telux::common::Status registerListener(std::weak_ptr<IEventListener> listener,
-        std::vector<std::string> filters) {
+    telux::common::Status registerListener(
+        std::weak_ptr<IEventListener> listener, std::vector<std::string> filters) {
 
         LOG(DEBUG, __FUNCTION__);
         telux::common::Status status = telux::common::Status::SUCCESS;
-        for (auto &x: filters) {
+        for (auto &x : filters) {
             status = registerListener(listener, x);
 
             if (status != telux::common::Status::SUCCESS)
@@ -186,11 +158,11 @@ public:
         return status;
     }
 
-    telux::common::Status deregisterListener(std::weak_ptr<IEventListener> listener,
-        std::vector<std::string> filters) {
+    telux::common::Status deregisterListener(
+        std::weak_ptr<IEventListener> listener, std::vector<std::string> filters) {
         LOG(DEBUG, __FUNCTION__);
         telux::common::Status status = telux::common::Status::SUCCESS;
-        for (auto &x: filters) {
+        for (auto &x : filters) {
             status = deregisterListener(listener, x);
 
             if (status != telux::common::Status::SUCCESS)
@@ -208,10 +180,10 @@ public:
         // to the simulation server is complete.
         {
             std::unique_lock<std::mutex> lck(connectToServerMtx_);
-            connectToServerCv_.wait(lck, [this]{ return connectedToSimulationServer_; });
+            connectToServerCv_.wait(lck, [this] { return connectedToSimulationServer_; });
         }
         std::lock_guard<std::mutex> listenerLock(listenerMutex_);
-        auto spt = listener.lock();
+        auto spt          = listener.lock();
         bool updateFilter = false;
         if (spt != nullptr) {
             if (listeners_.find(filter) == listeners_.end()) {
@@ -220,10 +192,8 @@ public:
                 LOG(INFO, __FUNCTION__, " Filter existing, not updating filter- ", filter);
             }
 
-            const auto listenersItr =
-                find_if(listeners_[filter].begin(), listeners_[filter].end(),
-                        [spt](const std::weak_ptr<IEventListener>& wp){
-                        return (spt == wp.lock());});
+            const auto listenersItr = find_if(listeners_[filter].begin(), listeners_[filter].end(),
+                [spt](const std::weak_ptr<IEventListener> &wp) { return (spt == wp.lock()); });
             if (listenersItr != listeners_[filter].end()) {
                 LOG(INFO, __FUNCTION__, " Listener existing already");
                 return telux::common::Status::ALREADY;
@@ -234,8 +204,7 @@ public:
                 LOG(INFO, "Registering Listener for filter: ", filter);
                 this->updateFilters();
             }
-        }
-        else {
+        } else {
             LOG(ERROR, "Failed to register");
             return telux::common::Status::FAILED;
         }
@@ -271,7 +240,7 @@ public:
         return retVal;
     }
 
-private:
+ private:
     /**
      * @brief This API make sure that, we request the stream initialization only if
      *  server is available.
@@ -282,8 +251,7 @@ private:
             const google::protobuf::Empty request;
             google::protobuf::Empty response;
             ClientContext context;
-            grpc::Status reqStatus =
-                stub_->isServiceAvailable(&context, request, &response);
+            grpc::Status reqStatus = stub_->isServiceAvailable(&context, request, &response);
             if (!reqStatus.ok()) {
                 LOG(DEBUG, __FUNCTION__, " Server not available yet");
                 std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_DELAY));
@@ -310,7 +278,7 @@ private:
             return;
         }
 
-        std::unique_ptr<grpc::ClientReader<::eventService::EventResponse> > reader(
+        std::unique_ptr<grpc::ClientReader<::eventService::EventResponse>> reader(
             stub_->registerForEvents(getClientContext(), request));
 
         if (!reader) {
@@ -330,12 +298,12 @@ private:
             LOG(DEBUG, __FUNCTION__, " Received event for::", response.filter());
             if (response.has_any()) {
                 auto f = std::async(policy_, [this, response]() {
-                        this->handleEventNotifications(response);
-                        }).share();
+                    this->handleEventNotifications(response);
+                }).share();
                 taskQ_->add(f);
             }
         }
-        grpc::Status status = reader->Finish();
+        grpc::Status status          = reader->Finish();
         connectedToSimulationServer_ = false;
 
         if (status.ok()) {
@@ -360,7 +328,7 @@ private:
         ClientContext context;
 
         request.set_client_id(getpid());
-        for (auto& listener: listeners_) {
+        for (auto &listener : listeners_) {
             LOG(DEBUG, __FUNCTION__, " Updating filter::", listener.first);
             request.add_filters(listener.first);
         }
@@ -397,11 +365,11 @@ private:
 
     // we are storing client context so that, we can cancel the blocked stream call,
     // while the application is exiting.
-    grpc::ClientContext* getClientContext() {
+    grpc::ClientContext *getClientContext() {
         LOG(DEBUG, __FUNCTION__);
         std::lock_guard<std::mutex> lck(mtx_);
 
-        if(!contextPtr_) {
+        if (!contextPtr_) {
             contextPtr_ = new grpc::ClientContext();
         }
 
@@ -421,7 +389,7 @@ private:
     }
 
     bool connectedToSimulationServer_ = false;
-    bool exiting_ = false;
+    bool exiting_                     = false;
 
     std::launch policy_;
 
@@ -432,21 +400,21 @@ private:
     std::mutex connectToServerMtx_;
     std::condition_variable connectToServerCv_;
 
-    grpc::ClientContext* contextPtr_;
+    grpc::ClientContext *contextPtr_;
     /*
-    * owner_less performs an owner-based comparison b/w
-    * shared_ptr or weak_ptr. Required for cases when container contains
-    * shared_ptr/weak_ptr & we need to perform comparison.
-    */
+     * owner_less performs an owner-based comparison b/w
+     * shared_ptr or weak_ptr. Required for cases when container contains
+     * shared_ptr/weak_ptr & we need to perform comparison.
+     */
     std::unordered_map<std::string,
-        std::set<std::weak_ptr<IEventListener>,
-        owner_less<std::weak_ptr<IEventListener>>>> listeners_;
+        std::set<std::weak_ptr<IEventListener>, owner_less<std::weak_ptr<IEventListener>>>>
+        listeners_;
 
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
 };
 
-} // end of namespace common
+}  // end of namespace common
 
-} // end of namespace telux
+}  // end of namespace telux
 
 #endif  // EVENT_MANAGER_HPP

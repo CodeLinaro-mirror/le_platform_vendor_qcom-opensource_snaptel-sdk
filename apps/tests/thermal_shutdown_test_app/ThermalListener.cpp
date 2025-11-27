@@ -26,9 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -41,7 +42,7 @@
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
 ThermalListener::ThermalListener(std::weak_ptr<ThermalCommandMgr> MyThermCmdMgr) {
-        myThermCmdMgr_ = MyThermCmdMgr;
+    myThermCmdMgr_ = MyThermCmdMgr;
 }
 
 ThermalListener::~ThermalListener() {
@@ -49,11 +50,11 @@ ThermalListener::~ThermalListener() {
 
 void ThermalListener::printAutoShutdownMode(AutoShutdownMode mode) {
 
-    if(mode == AutoShutdownMode::ENABLE) {
+    if (mode == AutoShutdownMode::ENABLE) {
         PRINT_NOTIFICATION << "Auto shutdown mode : ENABLE" << std::endl;
-    } else if(mode == AutoShutdownMode::DISABLE) {
+    } else if (mode == AutoShutdownMode::DISABLE) {
         PRINT_NOTIFICATION << "Auto shutdown mode : DISABLE" << std::endl;
-    } else if(mode == AutoShutdownMode::UNKNOWN) {
+    } else if (mode == AutoShutdownMode::UNKNOWN) {
         PRINT_NOTIFICATION << "Auto shutdown mode : UNKNOWN" << std::endl;
     } else {
         std::cout << APP_NAME << " ERROR: Invalid Auto shutdown mode notified" << std::endl;
@@ -62,9 +63,9 @@ void ThermalListener::printAutoShutdownMode(AutoShutdownMode mode) {
 
 void ThermalListener::onServiceStatusChange(ServiceStatus status) {
     std::cout << std::endl;
-    if(status == ServiceStatus::SERVICE_UNAVAILABLE) {
+    if (status == ServiceStatus::SERVICE_UNAVAILABLE) {
         PRINT_NOTIFICATION << "Service Status : UNAVAILABLE" << std::endl;
-    } else if(status == ServiceStatus::SERVICE_AVAILABLE) {
+    } else if (status == ServiceStatus::SERVICE_AVAILABLE) {
         PRINT_NOTIFICATION << "Service Status : AVAILABLE" << std::endl;
         std::lock_guard<std::mutex> lock(listenerMtx_);
         taskCompleted_ = true;
@@ -93,10 +94,10 @@ void ThermalListener::onShutdownDisabled() {
 
 void ThermalListener::onImminentShutdownEnablement(uint32_t imminentDuration) {
     std::cout << std::endl;
-    PRINT_NOTIFICATION << "Auto shutdown will be enabled in " <<
-        imminentDuration << " seconds" << std::endl;
+    PRINT_NOTIFICATION << "Auto shutdown will be enabled in " << imminentDuration << " seconds"
+                       << std::endl;
     auto sp = myThermCmdMgr_.lock();
-    if(sp && sp->getAutoDisableFlag()) {
+    if (sp && sp->getAutoDisableFlag()) {
         sp->sendAutoShutdownModeCommand(telux::therm::AutoShutdownMode::DISABLE);
     }
 }

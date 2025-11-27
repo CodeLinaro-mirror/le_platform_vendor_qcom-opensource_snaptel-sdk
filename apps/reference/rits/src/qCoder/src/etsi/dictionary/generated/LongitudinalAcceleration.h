@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_LongitudinalAcceleration_H_
-#define	_LongitudinalAcceleration_H_
-
+#ifndef _LongitudinalAcceleration_H_
+#define _LongitudinalAcceleration_H_
 
 #include <asn_application.h>
 
@@ -22,11 +21,11 @@ extern "C" {
 
 /* LongitudinalAcceleration */
 typedef struct LongitudinalAcceleration {
-	LongitudinalAccelerationValue_t	 longitudinalAccelerationValue;
-	AccelerationConfidence_t	 longitudinalAccelerationConfidence;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    LongitudinalAccelerationValue_t longitudinalAccelerationValue;
+    AccelerationConfidence_t longitudinalAccelerationConfidence;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } LongitudinalAcceleration_t;
 
 /* Implementation */
@@ -36,5 +35,5 @@ extern asn_TYPE_descriptor_t asn_DEF_LongitudinalAcceleration;
 }
 #endif
 
-#endif	/* _LongitudinalAcceleration_H_ */
+#endif /* _LongitudinalAcceleration_H_ */
 #include <asn_internal.h>

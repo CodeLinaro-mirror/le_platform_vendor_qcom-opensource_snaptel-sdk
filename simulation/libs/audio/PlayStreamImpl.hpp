@@ -1,8 +1,7 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 
 #ifndef PLAYSTREAMIMPL_HPP
 #define PLAYSTREAMIMPL_HPP
@@ -11,7 +10,6 @@
 #include <telux/common/SDKListener.hpp>
 #include "common/ListenerManager.hpp"
 #include "AudioStreamImpl.hpp"
-
 
 namespace telux {
 namespace audio {
@@ -36,18 +34,18 @@ class PlayStreamImpl : public IAudioPlayStream,
 
     std::shared_ptr<IStreamBuffer> getStreamBuffer() override;
 
-    telux::common::Status write(std::shared_ptr<IStreamBuffer> buffer,
-        WriteResponseCb callback = nullptr) override;
+    telux::common::Status write(
+        std::shared_ptr<IStreamBuffer> buffer, WriteResponseCb callback = nullptr) override;
 
-    void onWriteResult(telux::common::ErrorCode ec, uint32_t streamId,
-        uint32_t bytesWritten, AudioUserData *audioUserData) override;
+    void onWriteResult(telux::common::ErrorCode ec, uint32_t streamId, uint32_t bytesWritten,
+        AudioUserData *audioUserData) override;
 
     void onFlushResult(telux::common::ErrorCode ec, uint32_t streamId, int cmdId) override;
 
     void onDrainResult(telux::common::ErrorCode ec, uint32_t streamId, int cmdId) override;
 
-    telux::common::Status stopAudio(StopType stopType,
-        telux::common::ResponseCallback callback = nullptr);
+    telux::common::Status stopAudio(
+        StopType stopType, telux::common::ResponseCallback callback = nullptr);
 
     telux::common::Status registerListener(std::weak_ptr<IPlayListener> listener);
 
@@ -62,11 +60,11 @@ class PlayStreamImpl : public IAudioPlayStream,
     uint32_t writeMaxSize_ = 0;
     std::shared_ptr<telux::common::ListenerManager<IPlayListener>> eventListenerMgr_;
 
-    PlayStreamImpl(PlayStreamImpl const &) = delete;
+    PlayStreamImpl(PlayStreamImpl const &)            = delete;
     PlayStreamImpl &operator=(PlayStreamImpl const &) = delete;
 };
 
 }  // end of namespace audio
 }  // end of namespace telux
 
-#endif // PLAYSTREAMIMPL_HPP
+#endif  // PLAYSTREAMIMPL_HPP

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
     /* Step - 1 */
     try {
         stateListener = std::make_shared<LocalMPSSStateListener>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "can't allocate LocalMPSSStateListener" << std::endl;
         return -ENOMEM;
     }
@@ -61,9 +61,7 @@ int main(int argc, char **argv) {
 
     /* Step - 3 */
     subsystemMgr = subsystemFact.getSubsystemManager(
-            [&p](telux::common::ServiceStatus srvStatus) {
-        p.set_value(srvStatus);
-    });
+        [&p](telux::common::ServiceStatus srvStatus) { p.set_value(srvStatus); });
 
     if (!subsystemMgr) {
         std::cout << "Can't get ISubsystemManager" << std::endl;
@@ -77,7 +75,7 @@ int main(int argc, char **argv) {
     }
 
     /* Step - 4 */
-    subsysInfo.location = telux::common::ProcType::LOCAL_PROC;
+    subsysInfo.location   = telux::common::ProcType::LOCAL_PROC;
     subsysInfo.subsystems = telux::common::Subsystem::MPSS;
     listOfSubsystems.push_back(subsysInfo);
     ec = subsystemMgr->registerListener(stateListener, listOfSubsystems);

@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_SrvAdvID_H_
-#define	_SrvAdvID_H_
-
+#ifndef _SrvAdvID_H_
+#define _SrvAdvID_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* SrvAdvID */
-typedef long	 SrvAdvID_t;
+typedef long SrvAdvID_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_SrvAdvID;
@@ -37,5 +36,5 @@ per_type_encoder_f SrvAdvID_encode_uper;
 }
 #endif
 
-#endif	/* _SrvAdvID_H_ */
+#endif /* _SrvAdvID_H_ */
 #include <asn_internal.h>

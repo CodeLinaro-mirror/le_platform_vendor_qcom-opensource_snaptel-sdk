@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_TurningRadius_H_
-#define	_TurningRadius_H_
-
+#ifndef _TurningRadius_H_
+#define _TurningRadius_H_
 
 #include <asn_application.h>
 
@@ -20,12 +19,12 @@ extern "C" {
 
 /* Dependencies */
 typedef enum TurningRadius {
-	TurningRadius_point4Meters	= 1,
-	TurningRadius_unavailable	= 255
+    TurningRadius_point4Meters = 1,
+    TurningRadius_unavailable  = 255
 } e_TurningRadius;
 
 /* TurningRadius */
-typedef long	 TurningRadius_t;
+typedef long TurningRadius_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_TurningRadius;
@@ -43,5 +42,5 @@ per_type_encoder_f TurningRadius_encode_uper;
 }
 #endif
 
-#endif	/* _TurningRadius_H_ */
+#endif /* _TurningRadius_H_ */
 #include <asn_internal.h>

@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_HazardousLocation_DangerousCurveSubCauseCode_H_
-#define	_HazardousLocation_DangerousCurveSubCauseCode_H_
-
+#ifndef _HazardousLocation_DangerousCurveSubCauseCode_H_
+#define _HazardousLocation_DangerousCurveSubCauseCode_H_
 
 #include <asn_application.h>
 
@@ -20,16 +19,17 @@ extern "C" {
 
 /* Dependencies */
 typedef enum HazardousLocation_DangerousCurveSubCauseCode {
-	HazardousLocation_DangerousCurveSubCauseCode_unavailable	= 0,
-	HazardousLocation_DangerousCurveSubCauseCode_dangerousLeftTurnCurve	= 1,
-	HazardousLocation_DangerousCurveSubCauseCode_dangerousRightTurnCurve	= 2,
-	HazardousLocation_DangerousCurveSubCauseCode_multipleCurvesStartingWithUnknownTurningDirection	= 3,
-	HazardousLocation_DangerousCurveSubCauseCode_multipleCurvesStartingWithLeftTurn	= 4,
-	HazardousLocation_DangerousCurveSubCauseCode_multipleCurvesStartingWithRightTurn	= 5
+    HazardousLocation_DangerousCurveSubCauseCode_unavailable             = 0,
+    HazardousLocation_DangerousCurveSubCauseCode_dangerousLeftTurnCurve  = 1,
+    HazardousLocation_DangerousCurveSubCauseCode_dangerousRightTurnCurve = 2,
+    HazardousLocation_DangerousCurveSubCauseCode_multipleCurvesStartingWithUnknownTurningDirection
+        = 3,
+    HazardousLocation_DangerousCurveSubCauseCode_multipleCurvesStartingWithLeftTurn  = 4,
+    HazardousLocation_DangerousCurveSubCauseCode_multipleCurvesStartingWithRightTurn = 5
 } e_HazardousLocation_DangerousCurveSubCauseCode;
 
 /* HazardousLocation-DangerousCurveSubCauseCode */
-typedef long	 HazardousLocation_DangerousCurveSubCauseCode_t;
+typedef long HazardousLocation_DangerousCurveSubCauseCode_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_HazardousLocation_DangerousCurveSubCauseCode;
@@ -47,5 +47,5 @@ per_type_encoder_f HazardousLocation_DangerousCurveSubCauseCode_encode_uper;
 }
 #endif
 
-#endif	/* _HazardousLocation_DangerousCurveSubCauseCode_H_ */
+#endif /* _HazardousLocation_DangerousCurveSubCauseCode_H_ */
 #include <asn_internal.h>

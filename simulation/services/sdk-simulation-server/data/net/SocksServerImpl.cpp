@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <telux/common/DeviceConfig.hpp>
@@ -24,22 +24,20 @@ SocksServerImpl::~SocksServerImpl() {
     LOG(DEBUG, __FUNCTION__);
 }
 
-grpc::Status SocksServerImpl::InitService(ServerContext* context,
-    const dataStub::InitRequest* request, dataStub::GetServiceStatusReply* response) {
+grpc::Status SocksServerImpl::InitService(ServerContext *context,
+    const dataStub::InitRequest *request, dataStub::GetServiceStatusReply *response) {
 
     LOG(DEBUG, __FUNCTION__);
     Json::Value rootObj;
-    std::string filePath = SOCKS_MANAGER_API_LOCAL_JSON;
-    telux::common::ErrorCode error =
-        JsonParser::readFromJsonFile(rootObj, filePath);
+    std::string filePath           = SOCKS_MANAGER_API_LOCAL_JSON;
+    telux::common::ErrorCode error = JsonParser::readFromJsonFile(rootObj, filePath);
     if (error != ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! ");
         return grpc::Status(grpc::StatusCode::NOT_FOUND, "Json not found");
     }
 
-    int cbDelay = rootObj["ISocksManager"]["IsSubsystemReadyDelay"].asInt();
-    std::string cbStatus =
-        rootObj["ISocksManager"]["IsSubsystemReady"].asString();
+    int cbDelay                         = rootObj["ISocksManager"]["IsSubsystemReadyDelay"].asInt();
+    std::string cbStatus                = rootObj["ISocksManager"]["IsSubsystemReady"].asString();
     telux::common::ServiceStatus status = CommonUtils::mapServiceStatus(cbStatus);
     LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", cbStatus);
 
@@ -49,17 +47,17 @@ grpc::Status SocksServerImpl::InitService(ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status SocksServerImpl::enableSocks(ServerContext* context,
-    const dataStub::EnableSocksRequest* request, dataStub::DefaultReply* response) {
+grpc::Status SocksServerImpl::enableSocks(ServerContext *context,
+    const dataStub::EnableSocksRequest *request, dataStub::DefaultReply *response) {
 
     LOG(DEBUG, __FUNCTION__);
-    std::string apiJsonPath = SOCKS_MANAGER_API_LOCAL_JSON;
+    std::string apiJsonPath   = SOCKS_MANAGER_API_LOCAL_JSON;
     std::string stateJsonPath = SOCKS_MANAGER_STATE_JSON;
-    std::string subsystem = "ISocksManager";
-    std::string method = "enableSocks";
+    std::string subsystem     = "ISocksManager";
+    std::string method        = "enableSocks";
     JsonData data;
-    telux::common::ErrorCode error =
-        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
 
     if (error != ErrorCode::SUCCESS) {
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
@@ -69,13 +67,11 @@ grpc::Status SocksServerImpl::enableSocks(ServerContext* context,
         data.error = telux::common::ErrorCode::INVALID_OPERATION;
     }
 
-    if (data.status == telux::common::Status::SUCCESS &&
-        data.error == telux::common::ErrorCode::SUCCESS) {
+    if (data.status == telux::common::Status::SUCCESS
+        && data.error == telux::common::ErrorCode::SUCCESS) {
 
-        if (data.stateRootObj[subsystem]["sockConfig"]["enabled"].asBool() !=
-             request->enable()) {
-                data.stateRootObj[subsystem]["sockConfig"]["enabled"]
-                    = request->enable();
+        if (data.stateRootObj[subsystem]["sockConfig"]["enabled"].asBool() != request->enable()) {
+            data.stateRootObj[subsystem]["sockConfig"]["enabled"] = request->enable();
         } else {
             data.error = telux::common::ErrorCode::NO_EFFECT;
         }

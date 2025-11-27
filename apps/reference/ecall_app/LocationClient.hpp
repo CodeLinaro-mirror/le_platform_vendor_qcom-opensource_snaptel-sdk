@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef LOCCLIENT_HPP
 #define LOCCLIENT_HPP
 
@@ -40,13 +46,13 @@ using namespace telux::loc;
 struct ECallLocationInfo {
     int32_t latitude;
     int32_t longitude;
-    uint8_t direction;  /**< Direction of travel in 2 degrees steps from magnetic north */
+    uint8_t direction; /**< Direction of travel in 2 degrees steps from magnetic north */
     uint32_t timestamp; /**< Seconds elapsed since midnight 01.01.1970 UTC */
 };
 
 /** Listener class that provides location updates */
 class LocationListener {
-public:
+ public:
     /**
      * This function is called when a new location fix is available
      *
@@ -68,7 +74,7 @@ public:
  */
 class LocationClient : public ILocationListener,
                        public std::enable_shared_from_this<LocationClient> {
-public:
+ public:
     /**
      * Initialize location subsystem
      */
@@ -84,8 +90,8 @@ public:
      * @returns Status of startLocUpdates i.e success or suitable status code.
      *
      */
-    telux::common::Status startLocUpdates(uint32_t interval,
-                                                    std::shared_ptr<LocationListener> locListener);
+    telux::common::Status startLocUpdates(
+        uint32_t interval, std::shared_ptr<LocationListener> locListener);
 
     /**
      * This function stops the location updates.
@@ -96,14 +102,14 @@ public:
      */
     telux::common::Status stopLocUpdates();
 
-    void onBasicLocationUpdate(const std::shared_ptr<telux::loc::ILocationInfoBase> &locationInfo)
-                    override;
+    void onBasicLocationUpdate(
+        const std::shared_ptr<telux::loc::ILocationInfoBase> &locationInfo) override;
     void commandCallback(ErrorCode errorCode);
 
     LocationClient();
     ~LocationClient();
 
-private:
+ private:
     /** Member variable to hold Location manager object */
     std::shared_ptr<ILocationManager> locMgr_;
     /** Member variable to hold LocationListener object, to which the location fixes are passed */

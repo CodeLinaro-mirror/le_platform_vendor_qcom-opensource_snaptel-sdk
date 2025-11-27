@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef DATAUTILS_HPP
 #define DATAUTILS_HPP
 
@@ -34,18 +40,17 @@
 #include <telux/data/DataConnectionManager.hpp>
 
 class DataUtils {
-public:
-   static std::string callEndReasonTypeToString(telux::data::EndReasonType type);
-   static int callEndReasonCode(telux::data::DataCallEndReason ceReason);
-   static std::string techPreferenceToString(telux::data::TechPreference techPref);
-   static std::string ipFamilyTypeToString(telux::data::IpFamilyType ipType);
-   static std::string dataCallStatusToString(telux::data::DataCallStatus dcStatus);
-   static std::string bearerTechToString(telux::data::DataBearerTechnology bearerTech);
-   static std::string operationTypeToString(telux::data::OperationType oprType);
-   static std::string protocolToString(telux::data::IpProtocol proto);
-   static std::string flowStateEventToString(telux::data::QosFlowStateChangeEvent state);
-   static std::string trafficClassToString(telux::data::IpTrafficClassType tc);
-
+ public:
+    static std::string callEndReasonTypeToString(telux::data::EndReasonType type);
+    static int callEndReasonCode(telux::data::DataCallEndReason ceReason);
+    static std::string techPreferenceToString(telux::data::TechPreference techPref);
+    static std::string ipFamilyTypeToString(telux::data::IpFamilyType ipType);
+    static std::string dataCallStatusToString(telux::data::DataCallStatus dcStatus);
+    static std::string bearerTechToString(telux::data::DataBearerTechnology bearerTech);
+    static std::string operationTypeToString(telux::data::OperationType oprType);
+    static std::string protocolToString(telux::data::IpProtocol proto);
+    static std::string flowStateEventToString(telux::data::QosFlowStateChangeEvent state);
+    static std::string trafficClassToString(telux::data::IpTrafficClassType tc);
 };
 
 #endif  // DATAUTILS_HPP

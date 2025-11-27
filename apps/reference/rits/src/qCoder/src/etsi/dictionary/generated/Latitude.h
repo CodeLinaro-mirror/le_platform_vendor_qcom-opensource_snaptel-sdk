@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_Latitude_H_
-#define	_Latitude_H_
-
+#ifndef _Latitude_H_
+#define _Latitude_H_
 
 #include <asn_application.h>
 
@@ -20,13 +19,13 @@ extern "C" {
 
 /* Dependencies */
 typedef enum Latitude {
-	Latitude_oneMicrodegreeNorth	= 10,
-	Latitude_oneMicrodegreeSouth	= -10,
-	Latitude_unavailable	= 900000001
+    Latitude_oneMicrodegreeNorth = 10,
+    Latitude_oneMicrodegreeSouth = -10,
+    Latitude_unavailable         = 900000001
 } e_Latitude;
 
 /* Latitude */
-typedef long	 Latitude_t;
+typedef long Latitude_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_Latitude;
@@ -44,5 +43,5 @@ per_type_encoder_f Latitude_encode_uper;
 }
 #endif
 
-#endif	/* _Latitude_H_ */
+#endif /* _Latitude_H_ */
 #include <asn_internal.h>

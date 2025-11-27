@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_ChannelNumber80211_H_
-#define	_ChannelNumber80211_H_
-
+#ifndef _ChannelNumber80211_H_
+#define _ChannelNumber80211_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* ChannelNumber80211 */
-typedef long	 ChannelNumber80211_t;
+typedef long ChannelNumber80211_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_ChannelNumber80211;
@@ -37,5 +36,5 @@ per_type_encoder_f ChannelNumber80211_encode_uper;
 }
 #endif
 
-#endif	/* _ChannelNumber80211_H_ */
+#endif /* _ChannelNumber80211_H_ */
 #include <asn_internal.h>

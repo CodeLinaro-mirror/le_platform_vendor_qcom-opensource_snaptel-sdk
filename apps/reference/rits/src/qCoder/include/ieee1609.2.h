@@ -26,6 +26,13 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef _IEEE1609_2_H_
 #define _IEEE1609_2_H_
 
@@ -33,26 +40,24 @@
 #include "v2x_msg.h"
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 #define IEEE_1609_2_HDR_LEN (3)
 
 typedef enum {
-    unsecuredData = 0,
-    signedData = 1,
-    encryptedData = 2,
+    unsecuredData            = 0,
+    signedData               = 1,
+    encryptedData            = 2,
     signedCertificateRequest = 3,
 } ieee1609_2_content;
 
 typedef enum {
-    UNIVERSAL = 0,
-    APPLICATION = 1,
+    UNIVERSAL        = 0,
+    APPLICATION      = 1,
     CONTEXT_SPECIFIC = 2,
-    PRIVATE = 3,
-}
-ieee1609_2_tagclass;
+    PRIVATE          = 3,
+} ieee1609_2_tagclass;
 
 typedef struct {
     uint8_t protocolVersion;
@@ -67,4 +72,4 @@ extern int ieee1609_2_decode_unsecured(msg_contents *mc);
 }
 #endif
 
-#endif // #ifndef _IEEE1609_2_H_
+#endif  // #ifndef _IEEE1609_2_H_

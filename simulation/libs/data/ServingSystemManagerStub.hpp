@@ -1,10 +1,10 @@
 /*
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
- #ifndef SERVING_SYSTEM_MANAGER_STUB_HPP
- #define SERVING_SYSTEM_MANAGER_STUB_HPP
+#ifndef SERVING_SYSTEM_MANAGER_STUB_HPP
+#define SERVING_SYSTEM_MANAGER_STUB_HPP
 
 #include <telux/data/ServingSystemManager.hpp>
 #include <telux/common/CommonDefines.hpp>
@@ -16,10 +16,9 @@
 namespace telux {
 namespace data {
 
-class ServingSystemManagerStub : public IServingSystemManager,
-                                 public IServingSystemListener {
-public:
-    ServingSystemManagerStub (SlotId slotId);
+class ServingSystemManagerStub : public IServingSystemManager, public IServingSystemListener {
+ public:
+    ServingSystemManagerStub(SlotId slotId);
     ~ServingSystemManagerStub();
 
     telux::common::Status init(telux::common::InitResponseCb callback);
@@ -38,14 +37,15 @@ public:
     SlotId getSlotId() override;
 
     telux::common::Status registerListener(std::weak_ptr<IServingSystemListener> listener) override;
-    telux::common::Status deregisterListener(std::weak_ptr<IServingSystemListener> listener) override;
+    telux::common::Status deregisterListener(
+        std::weak_ptr<IServingSystemListener> listener) override;
 
     void onRoamingStatusChanged(RoamingStatus status);
     void onNrIconTypeChanged(NrIconType type);
     void onServiceStateChangeInd(ServiceStatus status);
     void onDrbStatusChanged(DrbStatus status);
 
-private:
+ private:
     std::mutex mtx_;
     std::mutex initMtx_;
     std::mutex mutex_;
@@ -61,11 +61,11 @@ private:
     void initSync(telux::common::InitResponseCb callback);
     void setSubSystemStatus(telux::common::ServiceStatus status);
     void invokeInitCallback(telux::common::ServiceStatus status);
-    void invokeCallback(telux::common::ResponseCallback callback,
-        telux::common::ErrorCode error, int cbDelay );
+    void invokeCallback(
+        telux::common::ResponseCallback callback, telux::common::ErrorCode error, int cbDelay);
 };
 
-} // end of namespace data
-} // end of namespace telux
+}  // end of namespace data
+}  // end of namespace telux
 
- #endif //SERVING_SYSTEM_MANAGER_STUB_HPP
+#endif  // SERVING_SYSTEM_MANAGER_STUB_HPP

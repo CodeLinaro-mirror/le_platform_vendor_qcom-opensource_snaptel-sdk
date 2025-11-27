@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_RestrictedTypes_H_
-#define	_RestrictedTypes_H_
-
+#ifndef _RestrictedTypes_H_
+#define _RestrictedTypes_H_
 
 #include <asn_application.h>
 
@@ -22,10 +21,10 @@ extern "C" {
 
 /* RestrictedTypes */
 typedef struct RestrictedTypes {
-	A_SEQUENCE_OF(StationType_t) list;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    A_SEQUENCE_OF(StationType_t) list;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } RestrictedTypes_t;
 
 /* Implementation */
@@ -35,5 +34,5 @@ extern asn_TYPE_descriptor_t asn_DEF_RestrictedTypes;
 }
 #endif
 
-#endif	/* _RestrictedTypes_H_ */
+#endif /* _RestrictedTypes_H_ */
 #include <asn_internal.h>

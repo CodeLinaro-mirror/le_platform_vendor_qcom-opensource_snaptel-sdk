@@ -26,10 +26,13 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 /**
  * @file v2xc.c v2x ASN.1 command line decoder
  */
@@ -39,34 +42,30 @@
 #include "v2x_codec.h"
 
 #define MAX_BUF_LEN 2048
-#define PKT_TYPE_UNKNOWN    0
-#define PKT_TYPE_WSMP       1
-#define PKT_TYPE_BSM        2
+#define PKT_TYPE_UNKNOWN 0
+#define PKT_TYPE_WSMP 1
+#define PKT_TYPE_BSM 2
 
-static char *usage =
-    "************************************************************************\n"
-    "v2xc - v2x encoder/decoder command line tool.\n"
-    "\n"
-    "Usage:\n"
-    "\n"
-    "  ./v2xc [options]\n"
-    "\n"
-    "  -i[input packet type] can be 'wsmp', 'bsm'.\n"
-    "  -f[file name] input file name\n"
-    "************************************************************************\n"
-;
-static void print_help(void)
-{
+static char *usage = "************************************************************************\n"
+                     "v2xc - v2x encoder/decoder command line tool.\n"
+                     "\n"
+                     "Usage:\n"
+                     "\n"
+                     "  ./v2xc [options]\n"
+                     "\n"
+                     "  -i[input packet type] can be 'wsmp', 'bsm'.\n"
+                     "  -f[file name] input file name\n"
+                     "************************************************************************\n";
+static void print_help(void) {
     fprintf(stdout, "%s", usage);
     exit(0);
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     int c;
-    FILE *fpi = NULL;
-    size_t buf_len = MAX_BUF_LEN;
-    int pkt_type = PKT_TYPE_UNKNOWN;
+    FILE *fpi       = NULL;
+    size_t buf_len  = MAX_BUF_LEN;
+    int pkt_type    = PKT_TYPE_UNKNOWN;
     msg_contents mc = {0};
 
     abuf_alloc(&mc.abuf, MAX_BUF_LEN, 200);
@@ -76,36 +75,35 @@ int main(int argc, char **argv)
     }
     while ((c = getopt(argc, argv, "i:f:h")) != -1) {
         switch (c) {
-        case 'f':
-            if (!optarg) {
+            case 'f':
+                if (!optarg) {
+                    print_help();
+                } else if (!(fpi = fopen(optarg, "r"))) {
+                    fprintf(stderr, "Failed to open file %s for reading\n", optarg);
+                    exit(-1);
+                } else if ((buf_len = fread(mc.abuf.data, 1, buf_len, fpi)) == MAX_BUF_LEN - 200) {
+                    fprintf(stderr, "File is too large\n");
+                    fclose(fpi);
+                    exit(-1);
+                }
+                abuf_put(&mc.abuf, buf_len);
+                break;
+            case 'i':
+                if (!optarg) {
+                    print_help();
+                } else if (!strncmp(optarg, "wsmp", strlen("wsmp"))) {
+                    pkt_type = PKT_TYPE_WSMP;
+                } else if (!strncmp(optarg, "bsm", strlen("bsm"))) {
+                    pkt_type = PKT_TYPE_BSM;
+                } else {
+                    print_help();
+                }
+                break;
+            case 'h':
                 print_help();
-            } else if (!(fpi = fopen(optarg, "r"))) {
-                fprintf(stderr, "Failed to open file %s for reading\n",
-                        optarg);
-                exit(-1);
-            } else if ((buf_len = fread(mc.abuf.data, 1, buf_len, fpi)) == MAX_BUF_LEN - 200) {
-                fprintf(stderr, "File is too large\n");
-                fclose(fpi);
-                exit(-1);
-            }
-            abuf_put(&mc.abuf, buf_len);
-            break;
-        case 'i':
-            if (!optarg) {
-                print_help();
-            } else if (!strncmp(optarg, "wsmp", strlen("wsmp"))) {
-                pkt_type = PKT_TYPE_WSMP;
-            } else if (!strncmp(optarg, "bsm", strlen("bsm"))) {
-                pkt_type = PKT_TYPE_BSM;
-            } else {
-                print_help();
-            }
-            break;
-        case 'h':
-            print_help();
-            break;
-        default:
-            abort();
+                break;
+            default:
+                abort();
         }
     }
 

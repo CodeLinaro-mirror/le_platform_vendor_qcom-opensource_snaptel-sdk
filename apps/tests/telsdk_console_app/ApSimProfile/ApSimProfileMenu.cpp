@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -15,31 +15,28 @@
 #include "ApSimProfileMenu.hpp"
 
 ApSimProfileMenu::ApSimProfileMenu(std::string appName, std::string cursor)
-    : ConsoleApp(appName, cursor) {
+   : ConsoleApp(appName, cursor) {
     apSimProfileClient_ = std::make_shared<ApSimProfileClient>();
 }
 
 ApSimProfileMenu::~ApSimProfileMenu() {
-     apSimProfileClient_ = nullptr;
+    apSimProfileClient_ = nullptr;
 }
 
 bool ApSimProfileMenu::init() {
 
-    std::shared_ptr<ConsoleAppCommand> getProfilesListCommand =
-        std::make_shared<ConsoleAppCommand>(
-            ConsoleAppCommand("1", "Retrieve_Available_Profile_List", {},
-                std::bind(&ApSimProfileMenu::requestProfileList, this)));
-    std::shared_ptr<ConsoleAppCommand> enableProfileCommand =
-        std::make_shared<ConsoleAppCommand>(
-            ConsoleAppCommand("2", "Enable_Profile", {},
-                std::bind(&ApSimProfileMenu::enableProfile, this)));
-    std::shared_ptr<ConsoleAppCommand> disableProfileCommand =
-        std::make_shared<ConsoleAppCommand>(
-            ConsoleAppCommand("3", "Disable_Profile", {},
-                std::bind(&ApSimProfileMenu::disableProfile, this)));
+    std::shared_ptr<ConsoleAppCommand> getProfilesListCommand = std::make_shared<ConsoleAppCommand>(
+        ConsoleAppCommand("1", "Retrieve_Available_Profile_List", {},
+            std::bind(&ApSimProfileMenu::requestProfileList, this)));
+    std::shared_ptr<ConsoleAppCommand> enableProfileCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "2", "Enable_Profile", {}, std::bind(&ApSimProfileMenu::enableProfile, this)));
+    std::shared_ptr<ConsoleAppCommand> disableProfileCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "3", "Disable_Profile", {}, std::bind(&ApSimProfileMenu::disableProfile, this)));
 
-    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListApSimProfileMenu =
-        {getProfilesListCommand, enableProfileCommand, disableProfileCommand};
+    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListApSimProfileMenu
+        = {getProfilesListCommand, enableProfileCommand, disableProfileCommand};
 
     addCommands(commandsListApSimProfileMenu);
     if (!apSimProfileClient_) {
@@ -59,44 +56,43 @@ void ApSimProfileMenu::requestProfileList() {
 
     if (!apSimProfileClient_) {
         std::cout << "Invalid ApSimProfile Manager, cannot request eUICC profile list "
-            << std::endl;
+                  << std::endl;
         return;
     }
 
     auto ret = apSimProfileClient_->requestProfileList();
     if (ret == telux::common::Status::SUCCESS) {
-        std::cout << "Retrieve available profile list sent successfully"
-            << std::endl;
+        std::cout << "Retrieve available profile list sent successfully" << std::endl;
     } else {
-        std::cout << "Retrieve available profile list failed, status:"
-            << int(ret) << std::endl;
+        std::cout << "Retrieve available profile list failed, status:" << int(ret) << std::endl;
         Utils::printStatus(ret);
     }
 }
 
 void ApSimProfileMenu::enableProfile() {
     std::cout << "\nEnable Profile" << std::endl;
-     if (!apSimProfileClient_) {
-         std::cout << "Invalid ApSimProfile Manager, cannot request eUICC profile operation "
-             << std::endl;
-         return;
+    if (!apSimProfileClient_) {
+        std::cout << "Invalid ApSimProfile Manager, cannot request eUICC profile operation "
+                  << std::endl;
+        return;
     }
 
     telux::common::Status status = apSimProfileClient_->enableProfile();
     if (status == Status::SUCCESS) {
         std::cout << "Enable profile request sent successfully" << std::endl;
     } else {
-        std::cout << "ERROR - Failed to sendProfileOperationResponse, Status:"
-            << static_cast<int>(status) << std::endl;
+        std::cout
+            << "ERROR - Failed to sendProfileOperationResponse, Status:" << static_cast<int>(status)
+            << std::endl;
         Utils::printStatus(status);
     }
 }
 
 void ApSimProfileMenu::disableProfile() {
     std::cout << "\nDisable Profile" << std::endl;
-     if (!apSimProfileClient_) {
+    if (!apSimProfileClient_) {
         std::cout << "Invalid ApSimProfile Manager, cannot request eUICC profile operation "
-            << std::endl;
+                  << std::endl;
         return;
     }
 
@@ -104,8 +100,9 @@ void ApSimProfileMenu::disableProfile() {
     if (status == Status::SUCCESS) {
         std::cout << "Disable profile request sent successfully" << std::endl;
     } else {
-        std::cout << "ERROR - Failed to sendProfileOperationResponse, Status:"
-            << static_cast<int>(status) << std::endl;
+        std::cout
+            << "ERROR - Failed to sendProfileOperationResponse, Status:" << static_cast<int>(status)
+            << std::endl;
         Utils::printStatus(status);
     }
 }

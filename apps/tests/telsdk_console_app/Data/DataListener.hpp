@@ -28,10 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef DATALISTENER_HPP
@@ -44,30 +43,30 @@
 #include <telux/data/DataConnectionManager.hpp>
 
 class DataListener : public telux::data::IDataConnectionListener {
-public:
-   DataListener(SlotId slotId);
-   void onDataCallInfoChanged(const std::shared_ptr<telux::data::IDataCall> &dataCall) override;
-   void onServiceStatusChange(telux::common::ServiceStatus status) override;
-   void onThrottledApnInfoChanged(
+ public:
+    DataListener(SlotId slotId);
+    void onDataCallInfoChanged(const std::shared_ptr<telux::data::IDataCall> &dataCall) override;
+    void onServiceStatusChange(telux::common::ServiceStatus status) override;
+    void onThrottledApnInfoChanged(
         const std::vector<telux::data::APNThrottleInfo> &throttleInfoList) override;
-   void onHwAccelerationChanged(telux::data::ServiceState state) override;
-   void onTrafficFlowTemplateChange(const std::shared_ptr<telux::data::IDataCall> &dataCall,
-      const std::vector<std::shared_ptr<telux::data::TftChangeInfo>> &tfts) override;
-    //Connectivity enablement indication
-   void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed);
-   std::shared_ptr<telux::data::IDataCall> getDataCall(int slotId, int profileId);
-   void initDataCallListResponseCb(
-       const std::vector<std::shared_ptr<telux::data::IDataCall>> &dataCallList,
-       telux::common::ErrorCode error);
+    void onHwAccelerationChanged(telux::data::ServiceState state) override;
+    void onTrafficFlowTemplateChange(const std::shared_ptr<telux::data::IDataCall> &dataCall,
+        const std::vector<std::shared_ptr<telux::data::TftChangeInfo>> &tfts) override;
+    // Connectivity enablement indication
+    void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed);
+    std::shared_ptr<telux::data::IDataCall> getDataCall(int slotId, int profileId);
+    void initDataCallListResponseCb(
+        const std::vector<std::shared_ptr<telux::data::IDataCall>> &dataCallList,
+        telux::common::ErrorCode error);
 
-private:
-   SlotId slotId_;
-   std::mutex mtx_;
-   // Associate profileId, ipfamily type with data call impl
-   std::multimap<int, std::shared_ptr<telux::data::IDataCall>> dataCallMap_;
+ private:
+    SlotId slotId_;
+    std::mutex mtx_;
+    // Associate profileId, ipfamily type with data call impl
+    std::multimap<int, std::shared_ptr<telux::data::IDataCall>> dataCallMap_;
 
-   void updateDataCallMap(const std::shared_ptr<telux::data::IDataCall> &dataCall);
-   void logDataCallDetails(const std::shared_ptr<telux::data::IDataCall> &dataCall);
+    void updateDataCallMap(const std::shared_ptr<telux::data::IDataCall> &dataCall);
+    void logDataCallDetails(const std::shared_ptr<telux::data::IDataCall> &dataCall);
 };
 
 #endif  // DATALISTENER_HPP

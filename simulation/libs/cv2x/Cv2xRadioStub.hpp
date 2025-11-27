@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -25,8 +25,7 @@ class Cv2xRadioEvtListener : public telux::common::IEventListener {
  public:
     Cv2xRadioEvtListener(std::shared_ptr<Cv2xRadioCapabilities> caps);
     void onEventUpdate(google::protobuf::Any event) override;
-    telux::common::Status registerListener(
-        std::weak_ptr<telux::cv2x::ICv2xRadioListener> listener);
+    telux::common::Status registerListener(std::weak_ptr<telux::cv2x::ICv2xRadioListener> listener);
     telux::common::Status deregisterListener(
         std::weak_ptr<telux::cv2x::ICv2xRadioListener> listener);
 
@@ -35,8 +34,8 @@ class Cv2xRadioEvtListener : public telux::common::IEventListener {
     void onCv2xStatusChange(telux::cv2x::Cv2xStatus &status);
     void onL2AddrChanged(uint32_t newL2Address);
     void onDuplicateAddr(const bool detected);
-    void onSpsScheduleInfo(const ::cv2xStub::SpsSchedulingInfo& schedulingInfo);
-    void onCapabilitiesChange(const ::cv2xStub::RadioCapabilites& caps);
+    void onSpsScheduleInfo(const ::cv2xStub::SpsSchedulingInfo &schedulingInfo);
+    void onCapabilitiesChange(const ::cv2xStub::RadioCapabilites &caps);
     std::shared_ptr<Cv2xRadioCapabilities> caps_ = nullptr;
 };
 
@@ -126,8 +125,8 @@ class Cv2xRadioSimulation : public ICv2xRadio,
 
     Cv2xRadioCapabilities getCapabilities() const override;
 
-    telux::common::Status
-        injectVehicleSpeed(uint32_t speed, telux::common::ResponseCallback cb) override;
+    telux::common::Status injectVehicleSpeed(
+        uint32_t speed, telux::common::ResponseCallback cb) override;
 
  private:
     common::Status waitForInitialization();

@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "common/Logger.hpp"
@@ -10,9 +10,8 @@
 namespace telux {
 namespace audio {
 
-VoiceStreamImpl::VoiceStreamImpl(uint32_t streamId,
-        std::shared_ptr<ICommunicator> transportClient)
-            : AudioStreamImpl(streamId, StreamType::VOICE_CALL, transportClient) {
+VoiceStreamImpl::VoiceStreamImpl(uint32_t streamId, std::shared_ptr<ICommunicator> transportClient)
+   : AudioStreamImpl(streamId, StreamType::VOICE_CALL, transportClient) {
 }
 
 VoiceStreamImpl::~VoiceStreamImpl() {
@@ -24,15 +23,14 @@ telux::common::Status VoiceStreamImpl::init() {
     /* Used to pass events on voice-stream like dtmf detection to the registered clients */
     try {
         eventListenerMgr_ = std::make_shared<telux::common::ListenerManager<IVoiceListener>>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         LOG(ERROR, __FUNCTION__, " can't create ListenerManager");
         return telux::common::Status::FAILED;
     }
 
     /* Register to get dtmf detected event */
-    return transportClient_->registerForVoiceStreamEvents(streamId_,
-                downcasted_shared_from_this<VoiceStreamImpl>());
-
+    return transportClient_->registerForVoiceStreamEvents(
+        streamId_, downcasted_shared_from_this<VoiceStreamImpl>());
 }
 
 /*
@@ -58,8 +56,8 @@ telux::common::Status VoiceStreamImpl::startAudio(telux::common::ResponseCallbac
         cmdId = cmdCallbackMgr_.addCallback(callback);
     }
 
-    status = transportClient_->startStream(streamId_,
-            downcasted_shared_from_this<VoiceStreamImpl>(), cmdId);
+    status = transportClient_->startStream(
+        streamId_, downcasted_shared_from_this<VoiceStreamImpl>(), cmdId);
 
     if (status != telux::common::Status::SUCCESS && callback) {
         cmdCallbackMgr_.findAndRemoveCallback(cmdId);
@@ -72,8 +70,8 @@ telux::common::Status VoiceStreamImpl::startAudio(telux::common::ResponseCallbac
  * If application provided a callback to receive the result of VoiceStreamImpl::startAudio
  * invocation, it calls that callback method otherwise simply drops the result.
  */
-void VoiceStreamImpl::onStreamStartResult(telux::common::ErrorCode ec,
-        uint32_t streamId, int cmdId) {
+void VoiceStreamImpl::onStreamStartResult(
+    telux::common::ErrorCode ec, uint32_t streamId, int cmdId) {
 
     std::shared_ptr<telux::common::ICommandCallback> resultListener;
 
@@ -98,8 +96,8 @@ telux::common::Status VoiceStreamImpl::stopAudio(telux::common::ResponseCallback
         cmdId = cmdCallbackMgr_.addCallback(callback);
     }
 
-    status = transportClient_->stopStream(streamId_,
-            downcasted_shared_from_this<VoiceStreamImpl>(), cmdId);
+    status = transportClient_->stopStream(
+        streamId_, downcasted_shared_from_this<VoiceStreamImpl>(), cmdId);
 
     if (status != telux::common::Status::SUCCESS && callback) {
         cmdCallbackMgr_.findAndRemoveCallback(cmdId);
@@ -112,8 +110,8 @@ telux::common::Status VoiceStreamImpl::stopAudio(telux::common::ResponseCallback
  * If application provided a callback to receive the result of VoiceStreamImpl::stopAudio
  * invocation, it calls that callback method otherwise simply drops the result.
  */
-void VoiceStreamImpl::onStreamStopResult(telux::common::ErrorCode ec,
-        uint32_t streamId, int cmdId) {
+void VoiceStreamImpl::onStreamStopResult(
+    telux::common::ErrorCode ec, uint32_t streamId, int cmdId) {
 
     std::shared_ptr<telux::common::ICommandCallback> resultListener;
 
@@ -159,8 +157,8 @@ void VoiceStreamImpl::onStreamStopResult(telux::common::ErrorCode ec,
  *  |              941  |  *   |  0   |  #   |  D   |
  *   -----------------------------------------------
  */
-telux::common::Status VoiceStreamImpl::playDtmfTone(DtmfTone dtmfTone, uint16_t duration,
-        uint16_t gain, telux::common::ResponseCallback callback) {
+telux::common::Status VoiceStreamImpl::playDtmfTone(
+    DtmfTone dtmfTone, uint16_t duration, uint16_t gain, telux::common::ResponseCallback callback) {
 
     intptr_t cmdId;
     telux::common::Status status;
@@ -170,8 +168,8 @@ telux::common::Status VoiceStreamImpl::playDtmfTone(DtmfTone dtmfTone, uint16_t 
         cmdId = cmdCallbackMgr_.addCallback(callback);
     }
 
-    status = transportClient_->playDtmfTone(dtmfTone, duration, gain, streamId_,
-            downcasted_shared_from_this<VoiceStreamImpl>(), cmdId);
+    status = transportClient_->playDtmfTone(
+        dtmfTone, duration, gain, streamId_, downcasted_shared_from_this<VoiceStreamImpl>(), cmdId);
 
     if (status != telux::common::Status::SUCCESS && callback) {
         cmdCallbackMgr_.findAndRemoveCallback(cmdId);
@@ -184,8 +182,7 @@ telux::common::Status VoiceStreamImpl::playDtmfTone(DtmfTone dtmfTone, uint16_t 
  * If application provided a callback to receive the result of VoiceStreamImpl::playDtmfTone
  * invocation, it calls that callback method otherwise simply drops the result.
  */
-void VoiceStreamImpl::onPlayDtmfResult(telux::common::ErrorCode ec, uint32_t streamId,
-            int cmdId) {
+void VoiceStreamImpl::onPlayDtmfResult(telux::common::ErrorCode ec, uint32_t streamId, int cmdId) {
 
     std::shared_ptr<telux::common::ICommandCallback> resultListener;
 
@@ -200,8 +197,8 @@ void VoiceStreamImpl::onPlayDtmfResult(telux::common::ErrorCode ec, uint32_t str
 /*
  * Stops the DTMF tone that was generated using VoiceStreamImpl::playDtmfTone.
  */
-telux::common::Status VoiceStreamImpl::stopDtmfTone(StreamDirection direction,
-        telux::common::ResponseCallback callback) {
+telux::common::Status VoiceStreamImpl::stopDtmfTone(
+    StreamDirection direction, telux::common::ResponseCallback callback) {
 
     intptr_t cmdId;
     telux::common::Status status;
@@ -211,8 +208,8 @@ telux::common::Status VoiceStreamImpl::stopDtmfTone(StreamDirection direction,
         cmdId = cmdCallbackMgr_.addCallback(callback);
     }
 
-    status = transportClient_->stopDtmfTone(direction, streamId_,
-            downcasted_shared_from_this<VoiceStreamImpl>(), cmdId);
+    status = transportClient_->stopDtmfTone(
+        direction, streamId_, downcasted_shared_from_this<VoiceStreamImpl>(), cmdId);
 
     if (status != telux::common::Status::SUCCESS && callback) {
         cmdCallbackMgr_.findAndRemoveCallback(cmdId);
@@ -225,8 +222,7 @@ telux::common::Status VoiceStreamImpl::stopDtmfTone(StreamDirection direction,
  * If application provided a callback to receive the result of VoiceStreamImpl::stopDtmfTone
  * invocation, it calls that callback method otherwise simply drops the result.
  */
-void VoiceStreamImpl::onStopDtmfResult(telux::common::ErrorCode ec, uint32_t streamId,
-            int cmdId) {
+void VoiceStreamImpl::onStopDtmfResult(telux::common::ErrorCode ec, uint32_t streamId, int cmdId) {
 
     std::shared_ptr<telux::common::ICommandCallback> resultListener;
 
@@ -255,8 +251,8 @@ void VoiceStreamImpl::onStopDtmfResult(telux::common::ErrorCode ec, uint32_t str
  * simply append given listener to the list of existing listeners as all of
  * them all are subscribing for events on the same voice-call stream.
  */
-telux::common::Status VoiceStreamImpl::registerListener(std::weak_ptr<IVoiceListener> listener,
-        telux::common::ResponseCallback callback) {
+telux::common::Status VoiceStreamImpl::registerListener(
+    std::weak_ptr<IVoiceListener> listener, telux::common::ResponseCallback callback) {
 
     telux::common::Status status;
     std::shared_future<void> future;
@@ -268,10 +264,9 @@ telux::common::Status VoiceStreamImpl::registerListener(std::weak_ptr<IVoiceList
     }
 
     if (callback) {
-        future = std::async(std::launch::async,
-            [callback]() {
-                callback(telux::common::ErrorCode::SUCCESS);
-            }).share();
+        future = std::async(std::launch::async, [callback]() {
+            callback(telux::common::ErrorCode::SUCCESS);
+        }).share();
 
         asyncTaskQueue_.add(future);
     }
@@ -282,8 +277,7 @@ telux::common::Status VoiceStreamImpl::registerListener(std::weak_ptr<IVoiceList
 /*
  * Unregisteres the listener registered with VoiceStreamImpl::registerListener.
  */
-telux::common::Status VoiceStreamImpl::deRegisterListener(
-        std::weak_ptr<IVoiceListener> listener) {
+telux::common::Status VoiceStreamImpl::deRegisterListener(std::weak_ptr<IVoiceListener> listener) {
 
     telux::common::Status status;
     std::vector<std::weak_ptr<IVoiceListener>> voiceStreamEventListeners;
@@ -308,8 +302,6 @@ void VoiceStreamImpl::onDtmfToneDetected(DtmfTone dtmfTone) {
         }
     }
 }
-
-
 
 }  // end of namespace audio
 }  // end of namespace telux

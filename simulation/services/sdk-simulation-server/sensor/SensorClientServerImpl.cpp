@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -8,7 +8,6 @@
  *
  *
  */
-
 
 #include <thread>
 #include <chrono>
@@ -34,14 +33,14 @@ SensorClientServerImpl::SensorClientServerImpl() {
 }
 
 SensorClientServerImpl::~SensorClientServerImpl() {
-    LOG(DEBUG, __FUNCTION__ , " Destructing");
-    if(fileBuffer_) {
+    LOG(DEBUG, __FUNCTION__, " Destructing");
+    if (fileBuffer_) {
         fileBuffer_->cleanup();
     }
 }
 
 telux::sensor::SensorType SensorClientServerImpl::getSensorType(std::string sensorType) {
-    LOG(DEBUG,__FUNCTION__);
+    LOG(DEBUG, __FUNCTION__);
     telux::sensor::SensorType type = telux::sensor::SensorType::INVALID;
     if (sensorType == "Accelerometer") {
         type = telux::sensor::SensorType::ACCELEROMETER;
@@ -55,56 +54,55 @@ telux::sensor::SensorType SensorClientServerImpl::getSensorType(std::string sens
     return type;
 }
 
-void SensorClientServerImpl::updateSensorInfo(){
-    LOG(DEBUG,__FUNCTION__);
-    try{
+void SensorClientServerImpl::updateSensorInfo() {
+    LOG(DEBUG, __FUNCTION__);
+    try {
         Json::Value rootNode;
         telux::common::ErrorCode errorCode
             = JsonParser::readFromJsonFile(rootNode, SUPPORTED_SENSOR_JSON);
         if (errorCode == ErrorCode::SUCCESS) {
             unsigned int numOfSensors = rootNode["sensors"].size();
-        /* As Json::Value::ArrayIndex is a typedef of unsigned int. */
+            /* As Json::Value::ArrayIndex is a typedef of unsigned int. */
             for (Json::Value::ArrayIndex i = 0; i < numOfSensors; i++) {
                 telux::sensor::SensorInfo info;
-                info.id = std::stoi(rootNode["sensors"][i]["id"].asString());
-                info.type = getSensorType(
-                rootNode["sensors"][i]["sensor_type"].asString());
-                info.name = rootNode["sensors"][i]["sensor_name"].asString();
+                info.id     = std::stoi(rootNode["sensors"][i]["id"].asString());
+                info.type   = getSensorType(rootNode["sensors"][i]["sensor_type"].asString());
+                info.name   = rootNode["sensors"][i]["sensor_name"].asString();
                 info.vendor = rootNode["sensors"][i]["vendor"].asString();
                 for (Json::Value::ArrayIndex j = 0;
-                    j < rootNode["sensors"][i]["sampling_rate"].size(); j++) {
+                     j < rootNode["sensors"][i]["sampling_rate"].size(); j++) {
                     info.samplingRates.push_back(
-                    rootNode["sensors"][i]["sampling_rate"][j].asFloat());
+                        rootNode["sensors"][i]["sampling_rate"][j].asFloat());
                 }
-                info.maxSamplingRate =
-                    std::stof(rootNode["sensors"][i]["max_sampling_rate"].asString());
-                info.maxBatchCountSupported =
-                    std::stoi(rootNode["sensors"][i]["max_batch_count"].asString());
-                info.minBatchCountSupported =
-                    std::stoi(rootNode["sensors"][i]["min_batch_count"].asString());
-                info.range = std::stoi(rootNode["sensors"][i]["range"].asString());
-                info.version = std::stoi(rootNode["sensors"][i]["version"].asString());
+                info.maxSamplingRate
+                    = std::stof(rootNode["sensors"][i]["max_sampling_rate"].asString());
+                info.maxBatchCountSupported
+                    = std::stoi(rootNode["sensors"][i]["max_batch_count"].asString());
+                info.minBatchCountSupported
+                    = std::stoi(rootNode["sensors"][i]["min_batch_count"].asString());
+                info.range      = std::stoi(rootNode["sensors"][i]["range"].asString());
+                info.version    = std::stoi(rootNode["sensors"][i]["version"].asString());
                 info.resolution = std::stof(rootNode["sensors"][i]["resolution"].asString());
-                info.maxRange = std::stof(rootNode["sensors"][i]["max_range"].asString());
+                info.maxRange   = std::stof(rootNode["sensors"][i]["max_range"].asString());
                 sensorInfo_.emplace_back(info);
             }
         }
-    } catch(std::exception const & ex){
+    } catch (std::exception const &ex) {
         LOG(DEBUG, "Exception Occur ", ex.what());
     }
 }
 
-grpc::Status SensorClientServerImpl::GetSensorList(ServerContext* context,
-    const google::protobuf::Empty* request, sensorStub::SensorInfoResponse* response) {
+grpc::Status SensorClientServerImpl::GetSensorList(ServerContext *context,
+    const google::protobuf::Empty *request, sensorStub::SensorInfoResponse *response) {
     LOG(DEBUG, __FUNCTION__);
     updateSensorInfo();
-    for (const auto& dataStruct : sensorInfo_) {
-        sensorStub::SensorInfo* data = response->add_sensor_info();
+    for (const auto &dataStruct : sensorInfo_) {
+        sensorStub::SensorInfo *data = response->add_sensor_info();
         data->set_id(dataStruct.id);
         data->set_sensor_type(static_cast<uint32_t>(dataStruct.type));
         data->set_name(dataStruct.name);
         data->set_vendor(dataStruct.vendor);
-        for (const auto& samplingRate : dataStruct.samplingRates) {
+        for (const auto &samplingRate : dataStruct.samplingRates) {
             data->add_sampling_rates(samplingRate);
         }
         data->set_max_sampling_rate(dataStruct.maxSamplingRate);
@@ -119,25 +117,25 @@ grpc::Status SensorClientServerImpl::GetSensorList(ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status SensorClientServerImpl::InitService(ServerContext* context,
-    const google::protobuf::Empty* request, sensorStub::GetServiceStatusReply* response) {
-    LOG(DEBUG,__FUNCTION__);
-    int cbDelay = 100;
+grpc::Status SensorClientServerImpl::InitService(ServerContext *context,
+    const google::protobuf::Empty *request, sensorStub::GetServiceStatusReply *response) {
+    LOG(DEBUG, __FUNCTION__);
+    int cbDelay                                = 100;
     telux::common::ServiceStatus serviceStatus = telux::common::ServiceStatus::SERVICE_FAILED;
     Json::Value rootNode;
     telux::common::ErrorCode errorCode
         = JsonParser::readFromJsonFile(rootNode, SENSOR_CLIENT_API_JSON);
     if (errorCode == ErrorCode::SUCCESS) {
-        cbDelay = rootNode["ISensorClient"]["IsSubsystemReadyDelay"].asInt();
+        cbDelay              = rootNode["ISensorClient"]["IsSubsystemReadyDelay"].asInt();
         std::string cbStatus = rootNode["ISensorClient"]["IsSubsystemReady"].asString();
-        serviceStatus = CommonUtils::mapServiceStatus(cbStatus);
+        serviceStatus        = CommonUtils::mapServiceStatus(cbStatus);
     } else {
         LOG(ERROR, "Unable to read SensorClient JSON");
     }
     response->set_service_status(static_cast<::commonStub::ServiceStatus>(serviceStatus));
     response->set_delay(cbDelay);
     std::vector<std::string> filters = {"sensor_mgr"};
-    auto &serverEventManager = ServerEventManager::getInstance();
+    auto &serverEventManager         = ServerEventManager::getInstance();
     serverEventManager.registerListener(shared_from_this(), filters);
     return grpc::Status::OK;
 }
@@ -153,112 +151,109 @@ bool SensorClientServerImpl::init() {
     std::string fileName = configParser.getValue("sim.sensor.sensor_report_file_name");
     std::string filePath = std::string(DEFAULT_SIM_CSV_FILE_PATH) + fileName;
     if (!fileExists(filePath)) {
-        filePath = std::string(DEFAULT_SIM_FILE_PREFIX)
-            + std::string(DEFAULT_SIM_CSV_FILE_PATH) + fileName;
+        filePath = std::string(DEFAULT_SIM_FILE_PREFIX) + std::string(DEFAULT_SIM_CSV_FILE_PATH)
+                   + fileName;
         if (!fileExists(filePath)) {
-            LOG(DEBUG, __FUNCTION__ , " Failed to open CSV");
+            LOG(DEBUG, __FUNCTION__, " Failed to open CSV");
             return false;
         }
     }
     fileBuffer_ = std::make_shared<FileBuffer>(filePath, CSV_BATCH_COUNT);
     fileBuffer_->startBuffering();
 
-    bufferingInitialized_ = true;
+    bufferingInitialized_    = true;
     std::string replayCsvStr = configParser.getValue("sim.sensor.sensor_report_replay");
-    if(replayCsvStr == "TRUE") {
+    if (replayCsvStr == "TRUE") {
         replayCsv_ = true;
     }
 
-    accelSelfTestCache_.insert({telux::sensor::SelfTestType::POSITIVE,0});
-    accelSelfTestCache_.insert({telux::sensor::SelfTestType::NEGATIVE,0});
-    accelSelfTestCache_.insert({telux::sensor::SelfTestType::ALL,0});
-    gyroSelfTestCache_.insert({telux::sensor::SelfTestType::POSITIVE,0});
-    gyroSelfTestCache_.insert({telux::sensor::SelfTestType::NEGATIVE,0});
-    gyroSelfTestCache_.insert({telux::sensor::SelfTestType::ALL,0});
+    accelSelfTestCache_.insert({telux::sensor::SelfTestType::POSITIVE, 0});
+    accelSelfTestCache_.insert({telux::sensor::SelfTestType::NEGATIVE, 0});
+    accelSelfTestCache_.insert({telux::sensor::SelfTestType::ALL, 0});
+    gyroSelfTestCache_.insert({telux::sensor::SelfTestType::POSITIVE, 0});
+    gyroSelfTestCache_.insert({telux::sensor::SelfTestType::NEGATIVE, 0});
+    gyroSelfTestCache_.insert({telux::sensor::SelfTestType::ALL, 0});
 
     return true;
 }
 
 void SensorClientServerImpl::updateStreamRequest() {
     LOG(DEBUG, __FUNCTION__);
-    if(bufferingInitialized_) {
+    if (bufferingInitialized_) {
         auto &sensorReportService = SensorReportService::getInstance();
-        size_t clientSize = sensorReportService.getClientsForFilter("SENSOR_REPORTS");
+        size_t clientSize         = sensorReportService.getClientsForFilter("SENSOR_REPORTS");
         LOG(DEBUG, __FUNCTION__, " Client size- ", clientSize);
-        if(clientSize == 1) {
-            //Initializing/Resetting the flag.
+        if (clientSize == 1) {
+            // Initializing/Resetting the flag.
             stopStreamingData_ = false;
-            //Starting the stream.
-            auto f = std::async(std::launch::deferred,
-                [=]() {
-                    this->startStreaming();
-                }).share();
+            // Starting the stream.
+            auto f = std::async(std::launch::deferred, [=]() { this->startStreaming(); }).share();
             taskQ_.add(f);
         }
     }
 }
 
-
 void SensorClientServerImpl::startStreaming() {
     LOG(DEBUG, __FUNCTION__);
-    while(true) {
-        if(fileBuffer_->getNextBuffer(requestBuffer_)) {
-            while(!requestBuffer_.empty()) {
-                //Send requestBuffer_[0] to clients via streams.
+    while (true) {
+        if (fileBuffer_->getNextBuffer(requestBuffer_)) {
+            while (!requestBuffer_.empty()) {
+                // Send requestBuffer_[0] to clients via streams.
                 std::vector<std::string> message = CommonUtils::splitString(requestBuffer_[0]);
-                uint64_t currentTimestamp = std::stoull(message[2]);
-                if(lastBatchStreamed_) {
+                uint64_t currentTimestamp        = std::stoull(message[2]);
+                if (lastBatchStreamed_) {
                     /**
                      * During replay, we may reach EOF in between the sample processing for a batch.
-                     * This 104Hz sleep is to synchronize the last sample and the first sample of the
-                     * CSV since we can't calculate the time difference.
+                     * This 104Hz sleep is to synchronize the last sample and the first sample of
+                     * the CSV since we can't calculate the time difference.
                      */
-                    std::this_thread::sleep_for(
-                            std::chrono::nanoseconds(8500000));
+                    std::this_thread::sleep_for(std::chrono::nanoseconds(8500000));
                     lastBatchStreamed_ = false;
                 } else {
-                    if(previousTimestamp_ != 0) {
+                    if (previousTimestamp_ != 0) {
                         std::this_thread::sleep_for(
-                            std::chrono::nanoseconds(currentTimestamp-previousTimestamp_));
+                            std::chrono::nanoseconds(currentTimestamp - previousTimestamp_));
                     }
                 }
                 previousTimestamp_ = currentTimestamp;
-                //Updating timestamp of sample going out
+                // Updating timestamp of sample going out
                 timespec ts;
                 clock_gettime(CLOCK_MONOTONIC, &ts);
-                uint64_t sampleTimestamp = (uint64_t)ts.tv_sec * SEC_TO_NANOS + (uint64_t)ts.tv_nsec;
-                message[3] = std::to_string(sampleTimestamp);
+                uint64_t sampleTimestamp
+                    = (uint64_t)ts.tv_sec * SEC_TO_NANOS + (uint64_t)ts.tv_nsec;
+                message[3]       = std::to_string(sampleTimestamp);
                 std::string temp = "";
-                for(auto s: message) {
+                for (auto s : message) {
                     temp += s;
                     temp += ",";
                 }
                 temp.pop_back();
                 requestBuffer_[0] = temp;
-                //Send requestBuffer_[0] to clients via streams.
+                // Send requestBuffer_[0] to clients via streams.
                 ::sensorStub::StartReportsEvent startReportsEvent;
                 ::eventService::EventResponse anyResponse;
                 startReportsEvent.set_sensor_report(requestBuffer_[0]);
                 anyResponse.set_filter("SENSOR_REPORTS");
                 anyResponse.mutable_any()->PackFrom(startReportsEvent);
-                //posting the event to EventService event queue
+                // posting the event to EventService event queue
                 auto &SensorReportService = SensorReportService::getInstance();
                 SensorReportService.updateEventQueue(anyResponse);
                 requestBuffer_.erase(requestBuffer_.begin());
                 // Stop Stream on Request as per config.
                 // Will be checked for last client on stop reports.
-                if(stopStreamingData_) {
+                if (stopStreamingData_) {
                     LOG(INFO, " Last client de-registered. Streaming stopped.");
                     return;
                 }
             }
         } else {
-            //EOF is reached and request buffer is empty.
-            if(replayCsv_) {
+            // EOF is reached and request buffer is empty.
+            if (replayCsv_) {
                 LOG(INFO, " Last batch streamed. Replaying CSV.");
-                //Restart buffering
+                // Restart buffering
                 fileBuffer_->startBuffering();
-                //To continue filling the batch since the CSV can terminate in between a batch fill.
+                // To continue filling the batch since the CSV can terminate in between a batch
+                // fill.
                 lastBatchStreamed_ = true;
             } else {
                 LOG(INFO, " Last batch streamed. Streaming stopped.");
@@ -275,43 +270,39 @@ void SensorClientServerImpl::triggerStreamingStoppedEvent() {
     ::eventService::EventResponse anyResponse;
     anyResponse.set_filter("SENSOR_REPORTS");
     anyResponse.mutable_any()->PackFrom(streamingStoppedEvent);
-    //posting the event to EventService event queue
+    // posting the event to EventService event queue
     auto &SensorReportService = SensorReportService::getInstance();
     SensorReportService.updateEventQueue(anyResponse);
 }
 
-grpc::Status SensorClientServerImpl::Configure(ServerContext* context,
-    const google::protobuf::Empty* request,
-    sensorStub::SensorClientCommandReply* response) {
+grpc::Status SensorClientServerImpl::Configure(ServerContext *context,
+    const google::protobuf::Empty *request, sensorStub::SensorClientCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
     apiJsonReader("configure", response);
     return grpc::Status::OK;
 }
 
-grpc::Status SensorClientServerImpl::GetConfiguration(ServerContext* context,
-    const google::protobuf::Empty* request,
-    sensorStub::SensorClientCommandReply* response) {
+grpc::Status SensorClientServerImpl::GetConfiguration(ServerContext *context,
+    const google::protobuf::Empty *request, sensorStub::SensorClientCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
     apiJsonReader("getConfiguration", response);
     return grpc::Status::OK;
 }
 
-grpc::Status SensorClientServerImpl::GetSensorInfo(ServerContext* context,
-    const google::protobuf::Empty* request,
-    sensorStub::SensorClientCommandReply* response) {
+grpc::Status SensorClientServerImpl::GetSensorInfo(ServerContext *context,
+    const google::protobuf::Empty *request, sensorStub::SensorClientCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
     apiJsonReader("getSensorInfo", response);
     return grpc::Status::OK;
 }
 
-grpc::Status SensorClientServerImpl::Activate(ServerContext* context,
-    const sensorStub::ActivateRequest* request,
-    sensorStub::SensorClientCommandReply* response){
+grpc::Status SensorClientServerImpl::Activate(ServerContext *context,
+    const sensorStub::ActivateRequest *request, sensorStub::SensorClientCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
     apiJsonReader("activate", response);
     if (response->status() == ::commonStub::Status::SUCCESS) {
         ::sensorStub::SensorType sensorType = request->sensor_type();
-        if(sensorType == ::sensorStub::SensorType::ACCEL) {
+        if (sensorType == ::sensorStub::SensorType::ACCEL) {
             activeAccelCount_++;
         } else {
             activeGyroCount_++;
@@ -321,27 +312,26 @@ grpc::Status SensorClientServerImpl::Activate(ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status SensorClientServerImpl::Deactivate(ServerContext* context,
-    const sensorStub::DeactivateRequest* request,
-    sensorStub::SensorClientCommandReply* response){
+grpc::Status SensorClientServerImpl::Deactivate(ServerContext *context,
+    const sensorStub::DeactivateRequest *request, sensorStub::SensorClientCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
     apiJsonReader("deactivate", response);
     if (response->status() == ::commonStub::Status::SUCCESS) {
-        if(bufferingInitialized_) {
+        if (bufferingInitialized_) {
             auto &SensorReportService = SensorReportService::getInstance();
-            size_t clientSize = SensorReportService.getClientsForFilter("SENSOR_REPORTS");
+            size_t clientSize         = SensorReportService.getClientsForFilter("SENSOR_REPORTS");
             LOG(DEBUG, __FUNCTION__, " Client size: ", clientSize);
             ::sensorStub::SensorType sensorType = request->sensor_type();
-            if(sensorType == ::sensorStub::SensorType::ACCEL) {
+            if (sensorType == ::sensorStub::SensorType::ACCEL) {
                 activeAccelCount_--;
             } else {
                 activeGyroCount_--;
             }
-            if(clientSize == 0) {
+            if (clientSize == 0) {
                 SimulationConfigParser configParser;
-                std::string stopStreamStr =
-                    configParser.getValue("sim.sensor.sensor_report_consumption");
-                if(stopStreamStr == "TRUE") {
+                std::string stopStreamStr
+                    = configParser.getValue("sim.sensor.sensor_report_consumption");
+                if (stopStreamStr == "TRUE") {
                     stopStreamingData_ = true;
                 }
             }
@@ -350,29 +340,28 @@ grpc::Status SensorClientServerImpl::Deactivate(ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status SensorClientServerImpl::SensorUpdateRotationMatrix(ServerContext* context,
-    const ::google::protobuf::Empty* request,
-    sensorStub::SensorClientCommandReply* response) {
+grpc::Status SensorClientServerImpl::SensorUpdateRotationMatrix(ServerContext *context,
+    const ::google::protobuf::Empty *request, sensorStub::SensorClientCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
     apiJsonReader("sensorUpdateRotationMatrix", response);
     return grpc::Status::OK;
 }
 
-grpc::Status SensorClientServerImpl::SelfTest (ServerContext* context,
-    const sensorStub::SelfTestRequest* request, sensorStub::SelfTestResponse* response) {
+grpc::Status SensorClientServerImpl::SelfTest(ServerContext *context,
+    const sensorStub::SelfTestRequest *request, sensorStub::SelfTestResponse *response) {
     LOG(DEBUG, __FUNCTION__);
     ::sensorStub::SelfTestType selfTestType = request->selftest_type();
     telux::sensor::SelfTestType selfTest_Type;
-    if(selfTestType == ::sensorStub::SelfTestType::SelfTest_Positive) {
+    if (selfTestType == ::sensorStub::SelfTestType::SelfTest_Positive) {
         selfTest_Type = telux::sensor::SelfTestType::POSITIVE;
-    } else if(selfTestType == ::sensorStub::SelfTestType::SelfTest_Negative) {
+    } else if (selfTestType == ::sensorStub::SelfTestType::SelfTest_Negative) {
         selfTest_Type = telux::sensor::SelfTestType::NEGATIVE;
     } else {
         selfTest_Type = telux::sensor::SelfTestType::ALL;
     }
     ::sensorStub::SensorType sensorType = request->sensor_type();
-    bool isActive = false;
-    if((sensorType == ::sensorStub::SensorType::ACCEL) && (activeAccelCount_ > 0)) {
+    bool isActive                       = false;
+    if ((sensorType == ::sensorStub::SensorType::ACCEL) && (activeAccelCount_ > 0)) {
         isActive = true;
     } else if ((sensorType == ::sensorStub::SensorType::GYRO) && (activeGyroCount_ > 0)) {
         isActive = true;
@@ -384,22 +373,22 @@ grpc::Status SensorClientServerImpl::SelfTest (ServerContext* context,
     int cbDelay = rootNode["ISensorClient"]["selfTest"]["callbackDelay"].asInt();
     response->set_delay(cbDelay);
     std::string statusStr = rootNode["ISensorClient"]["selfTest"]["status"].asString();
-    status = CommonUtils::mapStatus(statusStr);
+    status                = CommonUtils::mapStatus(statusStr);
     response->set_status(static_cast<::commonStub::Status>(status));
     std::string errorStr = rootNode["ISensorClient"]["selfTest"]["error"].asString();
-    errorCode = CommonUtils::mapErrorCode(errorStr);
+    errorCode            = CommonUtils::mapErrorCode(errorStr);
 
-    if(status == telux::common::Status::SUCCESS) {
-        if((errorCode != telux::common::ErrorCode::SUCCESS) &&
-            (errorCode != telux::common::ErrorCode::INFO_UNAVAILABLE)) {
+    if (status == telux::common::Status::SUCCESS) {
+        if ((errorCode != telux::common::ErrorCode::SUCCESS)
+            && (errorCode != telux::common::ErrorCode::INFO_UNAVAILABLE)) {
             errorCode = telux::common::ErrorCode::GENERIC_FAILURE;
         }
         uint64_t timestamp;
-        if(!isActive) {
+        if (!isActive) {
             response->set_selftest_result(::sensorStub::Sensor_Idle);
             // Calculating Boot time stamp in ns.
             CommonUtils::calculateBootTimeStamp(timestamp);
-            if(sensorType == ::sensorStub::SensorType::ACCEL) {
+            if (sensorType == ::sensorStub::SensorType::ACCEL) {
                 accelSelfTestCache_[selfTest_Type] = timestamp;
             } else {
                 gyroSelfTestCache_[selfTest_Type] = timestamp;
@@ -407,14 +396,14 @@ grpc::Status SensorClientServerImpl::SelfTest (ServerContext* context,
         } else {
             response->set_selftest_result(::sensorStub::Sensor_Busy);
             // If sensor session is active and this is the first self test.
-            if(sensorType == ::sensorStub::SensorType::ACCEL) {
+            if (sensorType == ::sensorStub::SensorType::ACCEL) {
                 timestamp = accelSelfTestCache_[selfTest_Type];
             } else {
                 timestamp = gyroSelfTestCache_[selfTest_Type];
             }
-            if(timestamp == 0) {
+            if (timestamp == 0) {
                 CommonUtils::calculateBootTimeStamp(timestamp);
-                if(sensorType == ::sensorStub::SensorType::ACCEL) {
+                if (sensorType == ::sensorStub::SensorType::ACCEL) {
                     accelSelfTestCache_[selfTest_Type] = timestamp;
                 } else {
                     gyroSelfTestCache_[selfTest_Type] = timestamp;
@@ -429,7 +418,7 @@ grpc::Status SensorClientServerImpl::SelfTest (ServerContext* context,
 }
 
 void SensorClientServerImpl::apiJsonReader(
-    std::string apiName, sensorStub::SensorClientCommandReply* response) {
+    std::string apiName, sensorStub::SensorClientCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
     Json::Value rootNode;
     JsonParser::readFromJsonFile(rootNode, SENSOR_CLIENT_API_JSON);
@@ -442,20 +431,20 @@ void SensorClientServerImpl::apiJsonReader(
     response->set_delay(cbDelay);
 }
 
-void SensorClientServerImpl::onEventUpdate(::eventService::UnsolicitedEvent event){
+void SensorClientServerImpl::onEventUpdate(::eventService::UnsolicitedEvent event) {
     LOG(DEBUG, __FUNCTION__);
     if (event.filter() == "sensor_mgr") {
         std::string eventStr = event.event();
-        std::string token = EventParserUtil::getNextToken(eventStr, DEFAULT_DELIMITER);
+        std::string token    = EventParserUtil::getNextToken(eventStr, DEFAULT_DELIMITER);
         if (token == "") {
             LOG(ERROR, __FUNCTION__, "The event flag is not set!");
             return;
         }
-        handleEvent(token,eventStr);
+        handleEvent(token, eventStr);
     }
 }
 
-void SensorClientServerImpl::handleEvent(std::string token , std::string event) {
+void SensorClientServerImpl::handleEvent(std::string token, std::string event) {
     LOG(DEBUG, __FUNCTION__, "The data event type is: ", token);
     LOG(DEBUG, __FUNCTION__, "The leftover string is: ", event);
     if (token == "selfTestFailed") {
@@ -465,15 +454,15 @@ void SensorClientServerImpl::handleEvent(std::string token , std::string event) 
 
 void SensorClientServerImpl::triggerSelfTestFailedEvent(std::string event) {
     LOG(DEBUG, __FUNCTION__);
-    uint32_t mask = 0;
+    uint32_t mask     = 0;
     std::string token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
-    if(token == "") {
+    if (token == "") {
         LOG(INFO, __FUNCTION__, " sensor mask is not passed");
         return;
     } else {
         try {
             mask = std::stoul(token);
-        } catch (std::exception& ex) {
+        } catch (std::exception &ex) {
             LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
         }
     }
@@ -482,7 +471,7 @@ void SensorClientServerImpl::triggerSelfTestFailedEvent(std::string event) {
     selfTestFailedEvent.set_sensor_mask(mask);
     anyResponse.set_filter("sensor_mgr");
     anyResponse.mutable_any()->PackFrom(selfTestFailedEvent);
-    //posting the event to EventService event queue
-    auto& eventImpl = EventService::getInstance();
+    // posting the event to EventService event queue
+    auto &eventImpl = EventService::getInstance();
     eventImpl.updateEventQueue(anyResponse);
 }

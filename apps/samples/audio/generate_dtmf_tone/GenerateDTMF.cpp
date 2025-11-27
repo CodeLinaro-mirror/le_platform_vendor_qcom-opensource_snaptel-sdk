@@ -1,35 +1,6 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /*
@@ -72,9 +43,7 @@ int GenerateDTMF::init() {
 
     /* Step - 2 */
     audioManager_ = audioFactory.getAudioManager(
-            [&p](telux::common::ServiceStatus srvStatus) {
-        p.set_value(srvStatus);
-    });
+        [&p](telux::common::ServiceStatus srvStatus) { p.set_value(srvStatus); });
 
     if (!audioManager_) {
         std::cout << "Can't get IAudioManager" << std::endl;
@@ -102,9 +71,9 @@ int GenerateDTMF::createVoiceStream() {
     telux::common::Status status;
     telux::common::ErrorCode ec;
 
-    sc.type = telux::audio::StreamType::VOICE_CALL;
-    sc.slotId = DEFAULT_SLOT_ID;
-    sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
+    sc.type            = telux::audio::StreamType::VOICE_CALL;
+    sc.slotId          = DEFAULT_SLOT_ID;
+    sc.format          = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
     sc.channelTypeMask = telux::audio::ChannelType::LEFT | telux::audio::ChannelType::RIGHT;
 
     /* For voice-call both sink and source device are required.
@@ -112,15 +81,15 @@ int GenerateDTMF::createVoiceStream() {
     sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
     sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_MIC);
 
-    status = audioManager_->createStream(sc, [&p, this] (
-            std::shared_ptr<telux::audio::IAudioStream> &audioStream,
-            telux::common::ErrorCode result) {
-        if (result == telux::common::ErrorCode::SUCCESS) {
-            audioVoiceStream_ = std::dynamic_pointer_cast<
-                telux::audio::IAudioVoiceStream>(audioStream);
-        }
-        p.set_value(result);
-    });
+    status = audioManager_->createStream(
+        sc, [&p, this](std::shared_ptr<telux::audio::IAudioStream> &audioStream,
+                telux::common::ErrorCode result) {
+            if (result == telux::common::ErrorCode::SUCCESS) {
+                audioVoiceStream_
+                    = std::dynamic_pointer_cast<telux::audio::IAudioVoiceStream>(audioStream);
+            }
+            p.set_value(result);
+        });
 
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "can't create voice stream, err " << static_cast<int>(status) << std::endl;
@@ -146,10 +115,8 @@ int GenerateDTMF::deleteVoiceStream() {
     telux::common::Status status;
     telux::common::ErrorCode ec;
 
-    status = audioManager_->deleteStream(audioVoiceStream_, [&p, this] (
-            telux::common::ErrorCode result) {
-        p.set_value(result);
-    });
+    status = audioManager_->deleteStream(
+        audioVoiceStream_, [&p, this](telux::common::ErrorCode result) { p.set_value(result); });
 
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "can't delete voice stream, err " << static_cast<int>(status) << std::endl;
@@ -175,9 +142,8 @@ int GenerateDTMF::startVoiceStream() {
     telux::common::Status status;
     telux::common::ErrorCode ec;
 
-    status = audioVoiceStream_->startAudio([&p] (telux::common::ErrorCode result) {
-        p.set_value(result);
-    });
+    status = audioVoiceStream_->startAudio(
+        [&p](telux::common::ErrorCode result) { p.set_value(result); });
 
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "can't start voice stream, err " << static_cast<int>(status) << std::endl;
@@ -203,9 +169,8 @@ int GenerateDTMF::stopVoiceStream() {
     telux::common::Status status;
     telux::common::ErrorCode ec;
 
-    status = audioVoiceStream_->stopAudio([&p] (telux::common::ErrorCode result) {
-        p.set_value(result);
-    });
+    status = audioVoiceStream_->stopAudio(
+        [&p](telux::common::ErrorCode result) { p.set_value(result); });
 
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "can't stop voice stream, err " << static_cast<int>(status) << std::endl;
@@ -234,16 +199,14 @@ int GenerateDTMF::generateDTMFTone() {
     telux::audio::DtmfTone dtmfTone{};
     std::promise<telux::common::ErrorCode> p{};
 
-    toneGain = 6000; /* 6000 as loudness */
-    toneDuration = 1000; /* 1000 milliseconds */
+    toneGain           = 6000; /* 6000 as loudness */
+    toneDuration       = 1000; /* 1000 milliseconds */
     dtmfTone.direction = telux::audio::StreamDirection::RX;
-    dtmfTone.lowFreq = telux::audio::DtmfLowFreq::FREQ_697;
-    dtmfTone.highFreq = telux::audio::DtmfHighFreq::FREQ_1209;
+    dtmfTone.lowFreq   = telux::audio::DtmfLowFreq::FREQ_697;
+    dtmfTone.highFreq  = telux::audio::DtmfHighFreq::FREQ_1209;
 
     status = audioVoiceStream_->playDtmfTone(dtmfTone, toneDuration, toneGain,
-            [&p] (telux::common::ErrorCode error) {
-        p.set_value(error);
-    });
+        [&p](telux::common::ErrorCode error) { p.set_value(error); });
 
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "can't generate tone, err " << static_cast<int>(status) << std::endl;
@@ -267,7 +230,7 @@ int main(int argc, char **argv) {
 
     try {
         app = std::make_shared<GenerateDTMF>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "can't allocate GenerateDTMF" << std::endl;
         return -ENOMEM;
     }

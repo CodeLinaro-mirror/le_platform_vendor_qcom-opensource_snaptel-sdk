@@ -26,6 +26,13 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef AUDIOLOOPBACKAPP_HPP
 #define AUDIOLOOPBACKAPP_HPP
 
@@ -37,7 +44,7 @@ using namespace telux::common;
 using namespace telux::audio;
 
 class AudioLoopbackApp {
-public:
+ public:
     AudioLoopbackApp();
 
     ~AudioLoopbackApp();
@@ -47,7 +54,7 @@ public:
     Status startLoopback();
     Status stopLoopback();
 
-private:
+ private:
     void changeInputDevice(int inputDevice);
     void changeOutputDevice(int outputDevice);
     void printHelp();
@@ -62,4 +69,4 @@ private:
     bool ready_;
 };
 
-#endif // end of AUDIOLOOPBACKAPP_HPP
+#endif  // end of AUDIOLOOPBACKAPP_HPP

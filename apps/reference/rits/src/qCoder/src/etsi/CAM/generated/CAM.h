@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_CAM_H_
-#define	_CAM_H_
-
+#ifndef _CAM_H_
+#define _CAM_H_
 
 #include <asn_application.h>
 
@@ -22,11 +21,11 @@ extern "C" {
 
 /* CAM */
 typedef struct CAM {
-	ItsPduHeader_t	 header;
-	CoopAwareness_t	 cam;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    ItsPduHeader_t header;
+    CoopAwareness_t cam;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } CAM_t;
 
 /* Implementation */
@@ -36,5 +35,5 @@ extern asn_TYPE_descriptor_t asn_DEF_CAM;
 }
 #endif
 
-#endif	/* _CAM_H_ */
+#endif /* _CAM_H_ */
 #include <asn_internal.h>

@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_SrvAdvMsg_H_
-#define	_SrvAdvMsg_H_
-
+#ifndef _SrvAdvMsg_H_
+#define _SrvAdvMsg_H_
 
 #include <asn_application.h>
 
@@ -22,11 +21,11 @@ extern "C" {
 
 /* SrvAdvMsg */
 typedef struct SrvAdvMsg {
-	RsvAdvPrtVersion_t	 version;
-	SrvAdvBody_t	 body;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    RsvAdvPrtVersion_t version;
+    SrvAdvBody_t body;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } SrvAdvMsg_t;
 
 /* Implementation */
@@ -36,5 +35,5 @@ extern asn_TYPE_descriptor_t asn_DEF_SrvAdvMsg;
 }
 #endif
 
-#endif	/* _SrvAdvMsg_H_ */
+#endif /* _SrvAdvMsg_H_ */
 #include <asn_internal.h>

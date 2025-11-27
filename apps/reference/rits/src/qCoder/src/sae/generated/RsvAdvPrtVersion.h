@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_RsvAdvPrtVersion_H_
-#define	_RsvAdvPrtVersion_H_
-
+#ifndef _RsvAdvPrtVersion_H_
+#define _RsvAdvPrtVersion_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* RsvAdvPrtVersion */
-typedef long	 RsvAdvPrtVersion_t;
+typedef long RsvAdvPrtVersion_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_RsvAdvPrtVersion;
@@ -37,5 +36,5 @@ per_type_encoder_f RsvAdvPrtVersion_encode_uper;
 }
 #endif
 
-#endif	/* _RsvAdvPrtVersion_H_ */
+#endif /* _RsvAdvPrtVersion_H_ */
 #include <asn_internal.h>

@@ -26,6 +26,7 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
  * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
@@ -99,14 +100,13 @@ void TelSdkConsoleApp::init() {
             "6", "Data", {}, std::bind(&TelSdkConsoleApp::dataMenu, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> multiSimMenuCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "MultiSim", {},
-        std::bind(&TelSdkConsoleApp::multiSimMenu, this, std::placeholders::_1)));
+            std::bind(&TelSdkConsoleApp::multiSimMenu, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> cbMenuCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8", "CellBroadcast", {},
             std::bind(&TelSdkConsoleApp::cellbroadcastMenu, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> rspMenuCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-            "9", "Sim_Profile_Management", {}, std::bind(&TelSdkConsoleApp::rspMenu, this,
-               std::placeholders::_1)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("9", "Sim_Profile_Management", {},
+            std::bind(&TelSdkConsoleApp::rspMenu, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> imssMenuCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("10", "IMS_Settings", {},
             std::bind(&TelSdkConsoleApp::imsSettingsMenu, this, std::placeholders::_1)));
@@ -114,13 +114,12 @@ void TelSdkConsoleApp::init() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("11", "IMS_Serving_System", {},
             std::bind(&TelSdkConsoleApp::imsServingSystemMenu, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> apSimProfileMenuCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-            "12", "AP_Sim_Profile_Management", {}, std::bind(&TelSdkConsoleApp::apSimProfileMenu,
-               this, std::placeholders::_1)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("12", "AP_Sim_Profile_Management",
+            {}, std::bind(&TelSdkConsoleApp::apSimProfileMenu, this, std::placeholders::_1)));
     std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
         = {phoneMenuCommand, callMenuCommand, eCallMenuCommand, smsMenuCommand, simCardMenuCommand,
-             dataMenuCommand, multiSimMenuCommand, cbMenuCommand, rspMenuCommand, imssMenuCommand,
-             imsaMenuCommand, apSimProfileMenuCommand};
+            dataMenuCommand, multiSimMenuCommand, cbMenuCommand, rspMenuCommand, imssMenuCommand,
+            imsaMenuCommand, apSimProfileMenuCommand};
 
     // This instance is needed to hold the audio for the voice call in case the user comes out of
     // dialer menu.
@@ -134,7 +133,7 @@ void TelSdkConsoleApp::phoneMenu(std::vector<std::string> userInput) {
     TelSdkConsoleApp::onModemAvailable();
     PhoneMenu phoneMenu("Phone Menu", "phone> ");
     if (phoneMenu.init()) {
-       phoneMenu.mainLoop();
+        phoneMenu.mainLoop();
     }
     TelSdkConsoleApp::displayMenu();
 #else
@@ -147,7 +146,7 @@ void TelSdkConsoleApp::callMenu(std::vector<std::string> userInput) {
     TelSdkConsoleApp::onModemAvailable();
     CallMenu callMenu("Dialer Menu", "dialer> ");
     if (callMenu.init()) {
-       callMenu.mainLoop();
+        callMenu.mainLoop();
     }
     TelSdkConsoleApp::displayMenu();
 #else
@@ -160,7 +159,7 @@ void TelSdkConsoleApp::eCallMenu(std::vector<std::string> userInput) {
     TelSdkConsoleApp::onModemAvailable();
     ECallMenu eCallMenu("eCall Menu", "eCall> ");
     if (eCallMenu.init()) {
-       eCallMenu.mainLoop();
+        eCallMenu.mainLoop();
     }
     TelSdkConsoleApp::displayMenu();
 #else
@@ -173,7 +172,7 @@ void TelSdkConsoleApp::simCardMenu(std::vector<std::string> userInput) {
     TelSdkConsoleApp::onModemAvailable();
     SimCardServicesMenu simCardServicesMenu("SIM Card Services Menu", "card_services> ");
     if (simCardServicesMenu.init()) {
-       simCardServicesMenu.mainLoop();
+        simCardServicesMenu.mainLoop();
     }
     TelSdkConsoleApp::displayMenu();
 #else
@@ -186,7 +185,7 @@ void TelSdkConsoleApp::smsMenu(std::vector<std::string> userInput) {
     TelSdkConsoleApp::onModemAvailable();
     SmsMenu smsMenu("SMS Menu", "sms> ");
     if (smsMenu.init()) {
-       smsMenu.mainLoop();
+        smsMenu.mainLoop();
     }
     TelSdkConsoleApp::displayMenu();
 #else
@@ -209,7 +208,7 @@ void TelSdkConsoleApp::multiSimMenu(std::vector<std::string> userInput) {
 #ifdef TELSDK_FEATURE_TEL_ENABLED
     MultiSimMenu multiSimMenu("MultiSim Menu", "multisim> ");
     if (multiSimMenu.init()) {
-       multiSimMenu.mainLoop();
+        multiSimMenu.mainLoop();
     }
     TelSdkConsoleApp::displayMenu();
 #else
@@ -221,7 +220,7 @@ void TelSdkConsoleApp::cellbroadcastMenu(std::vector<std::string> userInput) {
 #ifdef TELSDK_FEATURE_TEL_ENABLED
     CellbroadcastMenu cbMenu("Cellbroadcast Menu", "cb> ");
     if (cbMenu.init()) {
-       cbMenu.mainLoop();
+        cbMenu.mainLoop();
     }
     TelSdkConsoleApp::displayMenu();
 #else
@@ -233,7 +232,7 @@ void TelSdkConsoleApp::rspMenu(std::vector<std::string> userInput) {
 #ifdef TELSDK_FEATURE_TEL_ENABLED
     RemoteSimProfileMenu rspMenu("Sim Profile Management Menu", "sim_profile_management> ");
     if (rspMenu.init()) {
-       rspMenu.mainLoop();
+        rspMenu.mainLoop();
     }
     TelSdkConsoleApp::displayMenu();
 #else
@@ -245,7 +244,7 @@ void TelSdkConsoleApp::imsSettingsMenu(std::vector<std::string> userInput) {
 #ifdef TELSDK_FEATURE_TEL_ENABLED
     ImsSettingsMenu imsSettingsMenu("IMS Settings Menu", "ims_settings> ");
     if (imsSettingsMenu.init()) {
-       imsSettingsMenu.mainLoop();
+        imsSettingsMenu.mainLoop();
     }
     TelSdkConsoleApp::displayMenu();
 #else
@@ -257,7 +256,7 @@ void TelSdkConsoleApp::imsServingSystemMenu(std::vector<std::string> userInput) 
 #ifdef TELSDK_FEATURE_TEL_ENABLED
     ImsServingSystemMenu imsaMenu("IMS Serving System Menu", "ims_serving_system> ");
     if (imsaMenu.init()) {
-       imsaMenu.mainLoop();
+        imsaMenu.mainLoop();
     }
     TelSdkConsoleApp::displayMenu();
 #else
@@ -267,8 +266,8 @@ void TelSdkConsoleApp::imsServingSystemMenu(std::vector<std::string> userInput) 
 
 void TelSdkConsoleApp::apSimProfileMenu(std::vector<std::string> userInput) {
 #ifdef TELSDK_FEATURE_TEL_ENABLED
-    ApSimProfileMenu apSimProfileMenu("AP Sim Profile Management Menu",
-        "ap_sim_profile_management> ");
+    ApSimProfileMenu apSimProfileMenu(
+        "AP Sim Profile Management Menu", "ap_sim_profile_management> ");
     if (apSimProfileMenu.init()) {
         apSimProfileMenu.mainLoop();
     }
@@ -284,12 +283,12 @@ void TelSdkConsoleApp::displayMenu() {
 
 #ifdef TELSDK_FEATURE_TEL_ENABLED
 void TelSdkConsoleApp::onModemAvailable() {
-// Do not perform requestOperatingMode in CV2X machine
-// since operating mode cannot be changed
+    // Do not perform requestOperatingMode in CV2X machine
+    // since operating mode cannot be changed
     std::cout << "\n\nChecking telephony subsystem, Please wait!!!..." << std::endl;
     std::shared_ptr<ModemStatus> modemStatus = std::make_shared<ModemStatus>();
     if (modemStatus->init()) {
-       modemStatus->printOperatingMode();
+        modemStatus->printOperatingMode();
     }
 }
 #endif
@@ -309,16 +308,16 @@ int main(int argc, char **argv) {
         exit(sig);
     };
     SignalHandler::registerSignalHandler(sigset, cb);
-    auto sdkVersion = telux::common::Version::getSdkVersion();
+    auto sdkVersion            = telux::common::Version::getSdkVersion();
     std::string sdkReleaseName = telux::common::Version::getReleaseName();
-    std::string appName = "Telematics SDK v" + std::to_string(sdkVersion.major) + "."
+    std::string appName        = "Telematics SDK v" + std::to_string(sdkVersion.major) + "."
                           + std::to_string(sdkVersion.minor) + "."
-                          + std::to_string(sdkVersion.patch) +"\n" +
-                          "Release name: " + sdkReleaseName;
+                          + std::to_string(sdkVersion.patch) + "\n"
+                          + "Release name: " + sdkReleaseName;
     // Setting required secondary groups for SDK file/diag logging
     std::vector<std::string> supplementaryGrps{"system", "diag", "radio", "logd", "dlt"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
-    if (rc == -1){
+    if (rc == -1) {
         std::cout << "Adding supplementary groups failed!" << std::endl;
     }
 

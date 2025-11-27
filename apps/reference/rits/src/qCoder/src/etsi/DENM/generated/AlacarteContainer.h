@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_AlacarteContainer_H_
-#define	_AlacarteContainer_H_
-
+#ifndef _AlacarteContainer_H_
+#define _AlacarteContainer_H_
 
 #include <asn_application.h>
 
@@ -28,19 +27,19 @@ struct StationaryVehicleContainer;
 
 /* AlacarteContainer */
 typedef struct AlacarteContainer {
-	LanePosition_t	*lanePosition	/* OPTIONAL */;
-	struct ImpactReductionContainer	*impactReduction	/* OPTIONAL */;
-	Temperature_t	*externalTemperature	/* OPTIONAL */;
-	struct RoadWorksContainerExtended	*roadWorks	/* OPTIONAL */;
-	PositioningSolutionType_t	*positioningSolution	/* OPTIONAL */;
-	struct StationaryVehicleContainer	*stationaryVehicle	/* OPTIONAL */;
-	/*
-	 * This type is extensible,
-	 * possible extensions are below.
-	 */
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    LanePosition_t *lanePosition /* OPTIONAL */;
+    struct ImpactReductionContainer *impactReduction /* OPTIONAL */;
+    Temperature_t *externalTemperature /* OPTIONAL */;
+    struct RoadWorksContainerExtended *roadWorks /* OPTIONAL */;
+    PositioningSolutionType_t *positioningSolution /* OPTIONAL */;
+    struct StationaryVehicleContainer *stationaryVehicle /* OPTIONAL */;
+    /*
+     * This type is extensible,
+     * possible extensions are below.
+     */
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } AlacarteContainer_t;
 
 /* Implementation */
@@ -55,5 +54,5 @@ extern asn_TYPE_descriptor_t asn_DEF_AlacarteContainer;
 #include "RoadWorksContainerExtended.h"
 #include "StationaryVehicleContainer.h"
 
-#endif	/* _AlacarteContainer_H_ */
+#endif /* _AlacarteContainer_H_ */
 #include <asn_internal.h>

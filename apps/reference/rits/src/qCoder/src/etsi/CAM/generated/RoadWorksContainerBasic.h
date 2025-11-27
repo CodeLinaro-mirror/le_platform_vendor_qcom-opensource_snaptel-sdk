@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_RoadWorksContainerBasic_H_
-#define	_RoadWorksContainerBasic_H_
-
+#ifndef _RoadWorksContainerBasic_H_
+#define _RoadWorksContainerBasic_H_
 
 #include <asn_application.h>
 
@@ -25,12 +24,12 @@ struct ClosedLanes;
 
 /* RoadWorksContainerBasic */
 typedef struct RoadWorksContainerBasic {
-	RoadworksSubCauseCode_t	*roadworksSubCauseCode	/* OPTIONAL */;
-	LightBarSirenInUse_t	 lightBarSirenInUse;
-	struct ClosedLanes	*closedLanes	/* OPTIONAL */;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    RoadworksSubCauseCode_t *roadworksSubCauseCode /* OPTIONAL */;
+    LightBarSirenInUse_t lightBarSirenInUse;
+    struct ClosedLanes *closedLanes /* OPTIONAL */;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } RoadWorksContainerBasic_t;
 
 /* Implementation */
@@ -43,5 +42,5 @@ extern asn_TYPE_descriptor_t asn_DEF_RoadWorksContainerBasic;
 /* Referred external types */
 #include "ClosedLanes.h"
 
-#endif	/* _RoadWorksContainerBasic_H_ */
+#endif /* _RoadWorksContainerBasic_H_ */
 #include <asn_internal.h>

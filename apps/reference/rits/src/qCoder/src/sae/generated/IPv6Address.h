@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_IPv6Address_H_
-#define	_IPv6Address_H_
-
+#ifndef _IPv6Address_H_
+#define _IPv6Address_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* IPv6Address */
-typedef OCTET_STRING_t	 IPv6Address_t;
+typedef OCTET_STRING_t IPv6Address_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_IPv6Address;
@@ -37,5 +36,5 @@ per_type_encoder_f IPv6Address_encode_uper;
 }
 #endif
 
-#endif	/* _IPv6Address_H_ */
+#endif /* _IPv6Address_H_ */
 #include <asn_internal.h>

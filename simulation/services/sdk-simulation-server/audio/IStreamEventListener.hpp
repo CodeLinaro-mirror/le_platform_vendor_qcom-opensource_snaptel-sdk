@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef ISTREAMEVENTLISTENER_HPP
@@ -18,8 +18,9 @@ namespace audio {
 class IStreamEventListener {
 
  public:
-    virtual void onDTMFDetectedEvent(uint32_t streamId, uint32_t lowFreq,
-        uint32_t highFreq, StreamDirection streamDirection) = 0;
+    virtual void onDTMFDetectedEvent(
+        uint32_t streamId, uint32_t lowFreq, uint32_t highFreq, StreamDirection streamDirection)
+        = 0;
 
     virtual void onDrainDoneEvent(uint32_t streamId) = 0;
 

@@ -33,7 +33,7 @@
 #include <telux/tel/SignalStrength.hpp>
 
 class PhoneMaker : public telux::tel::ISignalStrengthCallback,
-                public std::enable_shared_from_this<PhoneMaker> {
+                   public std::enable_shared_from_this<PhoneMaker> {
  public:
     int init() {
         telux::common::ServiceStatus serviceStatus;
@@ -44,9 +44,7 @@ class PhoneMaker : public telux::tel::ISignalStrengthCallback,
 
         /* Step - 2 */
         phoneMgr_ = phoneFactory.getPhoneManager(
-                [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+            [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!phoneMgr_) {
             std::cout << "Can't get IPhoneManager" << std::endl;
@@ -56,8 +54,8 @@ class PhoneMaker : public telux::tel::ISignalStrengthCallback,
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Phone manager service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Phone manager service unavailable, status "
+                      << static_cast<int>(serviceStatus) << std::endl;
             return -EIO;
         }
         /* Step - 4 */
@@ -66,13 +64,13 @@ class PhoneMaker : public telux::tel::ISignalStrengthCallback,
             telux::common::Status status = phoneMgr_->getPhoneIds(phoneIds);
             if (status == telux::common::Status::SUCCESS) {
                 for (unsigned int index = 1; index <= phoneIds.size(); index++) {
-                     auto phone = phoneMgr_->getPhone(index);
-                     if (phone != nullptr) {
-                         phones_.emplace_back(phone);
-                     }
+                    auto phone = phoneMgr_->getPhone(index);
+                    if (phone != nullptr) {
+                        phones_.emplace_back(phone);
+                    }
                 }
             }
-       }
+        }
 
         std::cout << "Initialization complete" << std::endl;
         return 0;
@@ -98,13 +96,19 @@ class PhoneMaker : public telux::tel::ISignalStrengthCallback,
     }
 
     std::string signalLevelToString(telux::tel::SignalStrengthLevel level) {
-        switch(level){
-            case telux::tel::SignalStrengthLevel::LEVEL_1 : return "LEVEL_1";
-            case telux::tel::SignalStrengthLevel::LEVEL_2 : return "LEVEL_2";
-            case telux::tel::SignalStrengthLevel::LEVEL_3 : return "LEVEL_3";
-            case telux::tel::SignalStrengthLevel::LEVEL_4 : return "LEVEL_4";
-            case telux::tel::SignalStrengthLevel::LEVEL_5 : return "LEVEL_5";
-            case telux::tel::SignalStrengthLevel::LEVEL_UNKNOWN : return "LEVEL_UNKNOWN";
+        switch (level) {
+            case telux::tel::SignalStrengthLevel::LEVEL_1:
+                return "LEVEL_1";
+            case telux::tel::SignalStrengthLevel::LEVEL_2:
+                return "LEVEL_2";
+            case telux::tel::SignalStrengthLevel::LEVEL_3:
+                return "LEVEL_3";
+            case telux::tel::SignalStrengthLevel::LEVEL_4:
+                return "LEVEL_4";
+            case telux::tel::SignalStrengthLevel::LEVEL_5:
+                return "LEVEL_5";
+            case telux::tel::SignalStrengthLevel::LEVEL_UNKNOWN:
+                return "LEVEL_UNKNOWN";
             default:
                 return "Invalid Signal Level";
         }
@@ -113,254 +117,282 @@ class PhoneMaker : public telux::tel::ISignalStrengthCallback,
     void signalStrengthResponse(std::shared_ptr<telux::tel::SignalStrength> signalStrength,
         telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
-        std::cout << "Received Signal Strength Callback with Error Code: "
-             << static_cast<int>(error) << std::endl;
+        std::cout
+            << "Received Signal Strength Callback with Error Code: " << static_cast<int>(error)
+            << std::endl;
         if (signalStrength->getGsmSignalStrength() != nullptr) {
             if (signalStrength->getGsmSignalStrength()->getGsmSignalStrength()
                 == INVALID_SIGNAL_STRENGTH_VALUE) {
-                std::cout << "GSM Signal Strength: "<< "UNAVAILABLE" << std::endl;
+                std::cout << "GSM Signal Strength: "
+                          << "UNAVAILABLE" << std::endl;
             } else {
                 std::cout << "GSM Signal Strength: "
-                    << signalStrength->getGsmSignalStrength()->getGsmSignalStrength() << std::endl;
+                          << signalStrength->getGsmSignalStrength()->getGsmSignalStrength()
+                          << std::endl;
             }
 
-           if (signalStrength->getGsmSignalStrength()->getGsmBitErrorRate()
-               == INVALID_SIGNAL_STRENGTH_VALUE) {
-               std::cout << "GSM Bit Error Rate: "<< "UNAVAILABLE" << std::endl;
-           } else {
-               std::cout << "GSM Bit Error Rate: "
-                   << signalStrength->getGsmSignalStrength()->getGsmBitErrorRate()<< std::endl;
-           }
-
-           if (signalStrength->getGsmSignalStrength()->getDbm() == INVALID_SIGNAL_STRENGTH_VALUE) {
-               std::cout << "GSM Signal Strength(in dBm): " << "UNAVAILABLE" << std::endl;
-           } else {
-               std::cout << "GSM Signal Strength(in dBm): "
-                   << signalStrength->getGsmSignalStrength()->getDbm() << std::endl;
-           }
-
-           if (signalStrength->getGsmSignalStrength()->getRssi() == INVALID_SIGNAL_STRENGTH_VALUE) {
-               std::cout << "GSM Received Signal Strength Indicator(in dBm): " << "UNAVAILABLE"
-                   << std::endl;
-           } else {
-               std::cout << "GSM Received Signal Strength Indicator(in dBm): "
-                   << signalStrength->getGsmSignalStrength()->getRssi() << std::endl;
-           }
-           if (signalStrength->getGsmSignalStrength()->getTimingAdvance()
+            if (signalStrength->getGsmSignalStrength()->getGsmBitErrorRate()
                 == INVALID_SIGNAL_STRENGTH_VALUE) {
-                std::cout << "GSM Timing Advance(in bit periods): " << "UNAVAILABLE" << std::endl;
-           } else {
+                std::cout << "GSM Bit Error Rate: "
+                          << "UNAVAILABLE" << std::endl;
+            } else {
+                std::cout << "GSM Bit Error Rate: "
+                          << signalStrength->getGsmSignalStrength()->getGsmBitErrorRate()
+                          << std::endl;
+            }
+
+            if (signalStrength->getGsmSignalStrength()->getDbm() == INVALID_SIGNAL_STRENGTH_VALUE) {
+                std::cout << "GSM Signal Strength(in dBm): "
+                          << "UNAVAILABLE" << std::endl;
+            } else {
+                std::cout << "GSM Signal Strength(in dBm): "
+                          << signalStrength->getGsmSignalStrength()->getDbm() << std::endl;
+            }
+
+            if (signalStrength->getGsmSignalStrength()->getRssi()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+                std::cout << "GSM Received Signal Strength Indicator(in dBm): "
+                          << "UNAVAILABLE" << std::endl;
+            } else {
+                std::cout << "GSM Received Signal Strength Indicator(in dBm): "
+                          << signalStrength->getGsmSignalStrength()->getRssi() << std::endl;
+            }
+            if (signalStrength->getGsmSignalStrength()->getTimingAdvance()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
                 std::cout << "GSM Timing Advance(in bit periods): "
-                    << signalStrength->getGsmSignalStrength()->getTimingAdvance() << std::endl;
-           }
+                          << "UNAVAILABLE" << std::endl;
+            } else {
+                std::cout << "GSM Timing Advance(in bit periods): "
+                          << signalStrength->getGsmSignalStrength()->getTimingAdvance()
+                          << std::endl;
+            }
 
-           std::cout << "GSM Signal Level: "
-               << signalLevelToString(signalStrength->getGsmSignalStrength()->getLevel())
-               << std::endl;
-       }
-
-       if (signalStrength->getLteSignalStrength() != nullptr) {
-           if (signalStrength->getLteSignalStrength()->getLteSignalStrength()
-               == INVALID_SIGNAL_STRENGTH_VALUE) {
-               std::cout << "LTE Signal Strength: "<< "UNAVAILABLE" << std::endl;
-           } else {
-               std::cout << "LTE Signal Strength: "
-                   << signalStrength->getLteSignalStrength()->getLteSignalStrength() << std::endl;
-           }
-
-           if (signalStrength->getLteSignalStrength()->getDbm() == INVALID_SIGNAL_STRENGTH_VALUE) {
-               std::cout << "LTE Signal Strength(in dBm): "<< "UNAVAILABLE" << std::endl;
-               std::cout << "LTE Reference Signal Receive Power(in dBm): "<< "UNAVAILABLE"
-                   << std::endl;
-           } else {
-               std::cout << "LTE Signal Strength(in dBm): "
-                   << signalStrength->getLteSignalStrength()->getDbm() << std::endl;
-               std::cout << "LTE Reference Signal Receive Power(in dBm): "
-                   << signalStrength->getLteSignalStrength()->getDbm() << std::endl;
-           }
-
-           if (signalStrength->getLteSignalStrength()->getRssi() == INVALID_SIGNAL_STRENGTH_VALUE) {
-               std::cout << "LTE Received Signal Strength Indicator(in dBm): " << "UNAVAILABLE"
-                   << std::endl;
-           } else {
-               std::cout << "LTE Received Signal Strength Indicator(in dBm): "
-                   << signalStrength->getLteSignalStrength()->getRssi() << std::endl;
-           }
-
-           if (signalStrength->getLteSignalStrength()->getLteReferenceSignalReceiveQuality()
-               == INVALID_SIGNAL_STRENGTH_VALUE) {
-               std::cout << "LTE Reference Signal Receive Quality(in dB): "
-                   << "UNAVAILABLE" << std::endl;
-           } else {
-               std::cout << "LTE Reference Signal Receive Quality(in dB): "
-                   << signalStrength->getLteSignalStrength()->getLteReferenceSignalReceiveQuality()
-                   << std::endl;
-           }
-
-           if (signalStrength->getLteSignalStrength()->getLteReferenceSignalSnr()
-               == INVALID_SIGNAL_STRENGTH_VALUE) {
-               std::cout << "LTE Reference Signal SNR(in dB): "<< "UNAVAILABLE" << std::endl;
-           } else {
-               std::cout << "LTE Reference Signal SNR(in dB): "
-                   << signalStrength->getLteSignalStrength()->getLteReferenceSignalSnr() * 0.1
-                 << std::endl;
-           }
-
-           std::cout << "LTE Signal Level: "
-               << signalLevelToString(signalStrength->getLteSignalStrength()->getLevel())
-               << std::endl;
-       }
-
-       if (signalStrength->getWcdmaSignalStrength() != nullptr) {
-           if (signalStrength->getWcdmaSignalStrength()->getSignalStrength()
-               == INVALID_SIGNAL_STRENGTH_VALUE) {
-               std::cout << "WCDMA Signal Strength: "<< "UNAVAILABLE" << std::endl;
-           } else {
-                std::cout << "WCDMA Signal Strength: "
-                    << signalStrength->getWcdmaSignalStrength()->getSignalStrength() << std::endl;
-           }
-
-           if (signalStrength->getWcdmaSignalStrength()->getDbm() == INVALID_SIGNAL_STRENGTH_VALUE)
-           {
-               std::cout << "WCDMA Signal Strength(in dBm): "<< "UNAVAILABLE" << std::endl;
-           } else {
-               std::cout << "WCDMA Signal Strength(in dBm): "
-                   << signalStrength->getWcdmaSignalStrength()->getDbm() << std::endl;
-           }
-
-           if (signalStrength->getWcdmaSignalStrength()->getRssi() == INVALID_SIGNAL_STRENGTH_VALUE)
-           {
-               std::cout << "WCDMA Received Signal Strength Indicator(in dBm): " << "UNAVAILABLE"
-                   << std::endl;
-           } else {
-               std::cout << "WCDMA Received Signal Strength Indicator(in dBm): "
-                   << signalStrength->getWcdmaSignalStrength()->getRssi() << std::endl;
-           }
-
-           if (signalStrength->getWcdmaSignalStrength()->getBitErrorRate()
-               == INVALID_SIGNAL_STRENGTH_VALUE) {
-               std::cout << "WCDMA Bit Error Rate: "<< "UNAVAILABLE" << std::endl;
-           } else {
-               std::cout << "WCDMA Bit Error Rate: "
-                   << signalStrength->getWcdmaSignalStrength()->getBitErrorRate() << std::endl;
-           }
-
-           if (signalStrength->getWcdmaSignalStrength()->getEcio()
-               == INVALID_SIGNAL_STRENGTH_VALUE) {
-               std::cout << "WCDMA Energy per chip to Interference Power Ratio(in dB): "
-                  << "UNAVAILABLE" << std::endl;
-           } else {
-               std::cout << "WCDMA Energy per chip to Interference Power Ratio(in dB): "
-                  << signalStrength->getWcdmaSignalStrength()->getEcio() << std::endl;
-           }
-
-          if (signalStrength->getWcdmaSignalStrength()->getRscp()
-              == INVALID_SIGNAL_STRENGTH_VALUE) {
-              std::cout << "WCDMA Reference Signal Code Power(in dBm): "
-                  << "UNAVAILABLE" << std::endl;
-          } else {
-              std::cout << "WCDMA Reference Signal Code Power(in dBm): "
-                  << signalStrength->getWcdmaSignalStrength()->getRscp() << std::endl;
-          }
-
-          std::cout
-              << "WCDMA Signal Level: "
-              << signalLevelToString(signalStrength->getWcdmaSignalStrength()->getLevel())
-              << std::endl;
+            std::cout << "GSM Signal Level: "
+                      << signalLevelToString(signalStrength->getGsmSignalStrength()->getLevel())
+                      << std::endl;
         }
 
+        if (signalStrength->getLteSignalStrength() != nullptr) {
+            if (signalStrength->getLteSignalStrength()->getLteSignalStrength()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+                std::cout << "LTE Signal Strength: "
+                          << "UNAVAILABLE" << std::endl;
+            } else {
+                std::cout << "LTE Signal Strength: "
+                          << signalStrength->getLteSignalStrength()->getLteSignalStrength()
+                          << std::endl;
+            }
+
+            if (signalStrength->getLteSignalStrength()->getDbm() == INVALID_SIGNAL_STRENGTH_VALUE) {
+                std::cout << "LTE Signal Strength(in dBm): "
+                          << "UNAVAILABLE" << std::endl;
+                std::cout << "LTE Reference Signal Receive Power(in dBm): "
+                          << "UNAVAILABLE" << std::endl;
+            } else {
+                std::cout << "LTE Signal Strength(in dBm): "
+                          << signalStrength->getLteSignalStrength()->getDbm() << std::endl;
+                std::cout << "LTE Reference Signal Receive Power(in dBm): "
+                          << signalStrength->getLteSignalStrength()->getDbm() << std::endl;
+            }
+
+            if (signalStrength->getLteSignalStrength()->getRssi()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+                std::cout << "LTE Received Signal Strength Indicator(in dBm): "
+                          << "UNAVAILABLE" << std::endl;
+            } else {
+                std::cout << "LTE Received Signal Strength Indicator(in dBm): "
+                          << signalStrength->getLteSignalStrength()->getRssi() << std::endl;
+            }
+
+            if (signalStrength->getLteSignalStrength()->getLteReferenceSignalReceiveQuality()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+                std::cout << "LTE Reference Signal Receive Quality(in dB): "
+                          << "UNAVAILABLE" << std::endl;
+            } else {
+                std::cout
+                    << "LTE Reference Signal Receive Quality(in dB): "
+                    << signalStrength->getLteSignalStrength()->getLteReferenceSignalReceiveQuality()
+                    << std::endl;
+            }
+
+            if (signalStrength->getLteSignalStrength()->getLteReferenceSignalSnr()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+                std::cout << "LTE Reference Signal SNR(in dB): "
+                          << "UNAVAILABLE" << std::endl;
+            } else {
+                std::cout
+                    << "LTE Reference Signal SNR(in dB): "
+                    << signalStrength->getLteSignalStrength()->getLteReferenceSignalSnr() * 0.1
+                    << std::endl;
+            }
+
+            std::cout << "LTE Signal Level: "
+                      << signalLevelToString(signalStrength->getLteSignalStrength()->getLevel())
+                      << std::endl;
+        }
+
+        if (signalStrength->getWcdmaSignalStrength() != nullptr) {
+            if (signalStrength->getWcdmaSignalStrength()->getSignalStrength()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+                std::cout << "WCDMA Signal Strength: "
+                          << "UNAVAILABLE" << std::endl;
+            } else {
+                std::cout << "WCDMA Signal Strength: "
+                          << signalStrength->getWcdmaSignalStrength()->getSignalStrength()
+                          << std::endl;
+            }
+
+            if (signalStrength->getWcdmaSignalStrength()->getDbm()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+                std::cout << "WCDMA Signal Strength(in dBm): "
+                          << "UNAVAILABLE" << std::endl;
+            } else {
+                std::cout << "WCDMA Signal Strength(in dBm): "
+                          << signalStrength->getWcdmaSignalStrength()->getDbm() << std::endl;
+            }
+
+            if (signalStrength->getWcdmaSignalStrength()->getRssi()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+                std::cout << "WCDMA Received Signal Strength Indicator(in dBm): "
+                          << "UNAVAILABLE" << std::endl;
+            } else {
+                std::cout << "WCDMA Received Signal Strength Indicator(in dBm): "
+                          << signalStrength->getWcdmaSignalStrength()->getRssi() << std::endl;
+            }
+
+            if (signalStrength->getWcdmaSignalStrength()->getBitErrorRate()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+                std::cout << "WCDMA Bit Error Rate: "
+                          << "UNAVAILABLE" << std::endl;
+            } else {
+                std::cout << "WCDMA Bit Error Rate: "
+                          << signalStrength->getWcdmaSignalStrength()->getBitErrorRate()
+                          << std::endl;
+            }
+
+            if (signalStrength->getWcdmaSignalStrength()->getEcio()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+                std::cout << "WCDMA Energy per chip to Interference Power Ratio(in dB): "
+                          << "UNAVAILABLE" << std::endl;
+            } else {
+                std::cout << "WCDMA Energy per chip to Interference Power Ratio(in dB): "
+                          << signalStrength->getWcdmaSignalStrength()->getEcio() << std::endl;
+            }
+
+            if (signalStrength->getWcdmaSignalStrength()->getRscp()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+                std::cout << "WCDMA Reference Signal Code Power(in dBm): "
+                          << "UNAVAILABLE" << std::endl;
+            } else {
+                std::cout << "WCDMA Reference Signal Code Power(in dBm): "
+                          << signalStrength->getWcdmaSignalStrength()->getRscp() << std::endl;
+            }
+
+            std::cout << "WCDMA Signal Level: "
+                      << signalLevelToString(signalStrength->getWcdmaSignalStrength()->getLevel())
+                      << std::endl;
+        }
 
         if (signalStrength->getNr5gSignalStrength() != nullptr) {
             if (signalStrength->getNr5gSignalStrength()->getNr5gSignalStrength()
                 == INVALID_SIGNAL_STRENGTH_VALUE) {
-                std::cout << "5G NR Signal Strength: "<< "UNAVAILABLE" << std::endl;
+                std::cout << "5G NR Signal Strength: "
+                          << "UNAVAILABLE" << std::endl;
             } else {
                 std::cout << "5G NR Signal Strength: "
-                    << signalStrength->getNr5gSignalStrength()->getNr5gSignalStrength()
-                    << std::endl;
+                          << signalStrength->getNr5gSignalStrength()->getNr5gSignalStrength()
+                          << std::endl;
             }
-            if (signalStrength->getNr5gSignalStrength()->getDbm() == INVALID_SIGNAL_STRENGTH_VALUE)
-            {
-                std::cout << "5G NR Signal Strength(in dBm): "<< "UNAVAILABLE" << std::endl;
+            if (signalStrength->getNr5gSignalStrength()->getDbm()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+                std::cout << "5G NR Signal Strength(in dBm): "
+                          << "UNAVAILABLE" << std::endl;
             } else {
                 std::cout << "5G NR Signal Strength(in dBm): "
-                    << signalStrength->getNr5gSignalStrength()->getDbm() << std::endl;
+                          << signalStrength->getNr5gSignalStrength()->getDbm() << std::endl;
             }
 
             if (signalStrength->getNr5gSignalStrength()->getReferenceSignalReceiveQuality()
                 == INVALID_SIGNAL_STRENGTH_VALUE) {
-                std::cout << "5G NR Receive Quality(in dB): "<< "UNAVAILABLE" << std::endl;
-            } else {
                 std::cout << "5G NR Receive Quality(in dB): "
+                          << "UNAVAILABLE" << std::endl;
+            } else {
+                std::cout
+                    << "5G NR Receive Quality(in dB): "
                     << signalStrength->getNr5gSignalStrength()->getReferenceSignalReceiveQuality()
                     << std::endl;
             }
 
             if (signalStrength->getNr5gSignalStrength()->getReferenceSignalSnr()
                 == INVALID_SIGNAL_STRENGTH_VALUE) {
-                std::cout << "5G Reference Signal SNR(in dB): "<< "UNAVAILABLE" << std::endl;
+                std::cout << "5G Reference Signal SNR(in dB): "
+                          << "UNAVAILABLE" << std::endl;
             } else {
                 std::cout << "5G Reference Signal SNR(in dB): "
-                    << signalStrength->getNr5gSignalStrength()->getReferenceSignalSnr() * 0.1
-                    << std::endl;
+                          << signalStrength->getNr5gSignalStrength()->getReferenceSignalSnr() * 0.1
+                          << std::endl;
             }
 
             std::cout << "5G Signal Level: "
-                << signalLevelToString(signalStrength->getNr5gSignalStrength()->getLevel())
-                << std::endl;
+                      << signalLevelToString(signalStrength->getNr5gSignalStrength()->getLevel())
+                      << std::endl;
         }
 
         if (signalStrength->getNb1NtnSignalStrength() != nullptr) {
             if (signalStrength->getNb1NtnSignalStrength()->getSignalStrength()
                 == INVALID_SIGNAL_STRENGTH_VALUE) {
-                std::cout << "NB1 NTN Signal Strength: "<< "UNAVAILABLE" << std::endl;
+                std::cout << "NB1 NTN Signal Strength: "
+                          << "UNAVAILABLE" << std::endl;
             } else {
                 std::cout << "NB1 NTN Signal Strength: "
-                    << signalStrength->getNb1NtnSignalStrength()->getSignalStrength()
-                    << std::endl;
+                          << signalStrength->getNb1NtnSignalStrength()->getSignalStrength()
+                          << std::endl;
             }
 
             if (signalStrength->getNb1NtnSignalStrength()->getDbm()
                 == INVALID_SIGNAL_STRENGTH_VALUE) {
-                std::cout << "NB1 NTN Signal Strength(in dBm): "<< "UNAVAILABLE" << std::endl;
-                std::cout << "NB1 NTN Reference Signal Receive Power(in dBm): " << "UNAVAILABLE"
-                    << std::endl;
+                std::cout << "NB1 NTN Signal Strength(in dBm): "
+                          << "UNAVAILABLE" << std::endl;
+                std::cout << "NB1 NTN Reference Signal Receive Power(in dBm): "
+                          << "UNAVAILABLE" << std::endl;
             } else {
                 std::cout << "NB1 NTN Signal Strength(in dBm): "
-                    << signalStrength->getNb1NtnSignalStrength()->getDbm() << std::endl;
+                          << signalStrength->getNb1NtnSignalStrength()->getDbm() << std::endl;
                 std::cout << "NB1 NTN Reference Signal Receive Power(in dBm): "
-                    << signalStrength->getNb1NtnSignalStrength()->getDbm() << std::endl;
+                          << signalStrength->getNb1NtnSignalStrength()->getDbm() << std::endl;
             }
 
             if (signalStrength->getNb1NtnSignalStrength()->getRssi()
                 == INVALID_SIGNAL_STRENGTH_VALUE) {
-                std::cout << "NB1 NTN Received Signal Strength Indicator(in dBm): " << "UNAVAILABLE"
-                    << std::endl;
+                std::cout << "NB1 NTN Received Signal Strength Indicator(in dBm): "
+                          << "UNAVAILABLE" << std::endl;
             } else {
                 std::cout << "NB1 NTN Received Signal Strength Indicator(in dBm): "
-                    << signalStrength->getNb1NtnSignalStrength()->getRssi() << std::endl;
+                          << signalStrength->getNb1NtnSignalStrength()->getRssi() << std::endl;
             }
 
             if (signalStrength->getNb1NtnSignalStrength()->getRsrq()
                 == INVALID_SIGNAL_STRENGTH_VALUE) {
                 std::cout << "NB1 NTN Reference Signal Receive Quality(in dB): "
-                    << "UNAVAILABLE" << std::endl;
+                          << "UNAVAILABLE" << std::endl;
             } else {
                 std::cout << "NB1 NTN Reference Signal Receive Quality(in dB): "
-                    << signalStrength->getNb1NtnSignalStrength()->getRsrq() << std::endl;
+                          << signalStrength->getNb1NtnSignalStrength()->getRsrq() << std::endl;
             }
 
             if (signalStrength->getNb1NtnSignalStrength()->getRssnr()
                 == INVALID_SIGNAL_STRENGTH_VALUE) {
-                std::cout << "NB1 NTN Reference Signal SNR(in dB): " << "UNAVAILABLE" << std::endl;
+                std::cout << "NB1 NTN Reference Signal SNR(in dB): "
+                          << "UNAVAILABLE" << std::endl;
             } else {
                 std::cout << "NB1 NTN Reference Signal SNR(in dB): "
-                    << signalStrength->getNb1NtnSignalStrength()->getRssnr() * 0.1 << std::endl;
+                          << signalStrength->getNb1NtnSignalStrength()->getRssnr() * 0.1
+                          << std::endl;
             }
 
             std::cout << "NB1 NTN Signal Level: "
-                << signalLevelToString(signalStrength->getNb1NtnSignalStrength()->getLevel())
-                << std::endl;
+                      << signalLevelToString(signalStrength->getNb1NtnSignalStrength()->getLevel())
+                      << std::endl;
         }
     }
 
@@ -376,7 +408,7 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<PhoneMaker>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate PhoneMaker" << std::endl;
         return -ENOMEM;
     }

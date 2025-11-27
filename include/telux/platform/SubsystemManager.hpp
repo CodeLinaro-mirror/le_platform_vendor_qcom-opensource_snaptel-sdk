@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -35,12 +35,14 @@ class ISubsystemListener : public telux::common::ISDKListener {
      * @param[in] newOperationalStatus New functional state
      */
     virtual void onStateChange(telux::common::SubsystemInfo subsystemInfo,
-        telux::common::OperationalStatus newOperationalStatus) { }
+        telux::common::OperationalStatus newOperationalStatus) {
+    }
 
     /**
      * Destructor for ISubsystemListener.
      */
-    virtual ~ISubsystemListener() { }
+    virtual ~ISubsystemListener() {
+    }
 };
 
 /**
@@ -57,51 +59,51 @@ class ISubsystemListener : public telux::common::ISDKListener {
  */
 class ISubsystemManager {
  public:
-   /**
-    * Registers the given listener to receive subsystem related notifications.
-    *
-    * @param[in] listener Receives notifications
-    * @param[in] subsystems List of subsystems to monitor
-    *
-    * @returns @ref telux::common::Status::SUCCESS if the listener is registered,
-    *          otherwise, an appropriate error code
-    *
-    * @note Eval: This is a new API and is being evaluated. It is subject
-    *             to change and could break backwards compatibility.
-    */
-   virtual telux::common::ErrorCode registerListener(
-        std::weak_ptr<ISubsystemListener> listener,
-        std::vector<telux::common::SubsystemInfo> subsystems) = 0;
+    /**
+     * Registers the given listener to receive subsystem related notifications.
+     *
+     * @param[in] listener Receives notifications
+     * @param[in] subsystems List of subsystems to monitor
+     *
+     * @returns @ref telux::common::Status::SUCCESS if the listener is registered,
+     *          otherwise, an appropriate error code
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject
+     *             to change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode registerListener(std::weak_ptr<ISubsystemListener> listener,
+        std::vector<telux::common::SubsystemInfo> subsystems)
+        = 0;
 
-   /**
-    * Deregisters the given listener registered previously with @ref registerListener().
-    *
-    * @param[in] listener Listener to deregister
-    *
-    * @returns @ref telux::common::Status::SUCCESS if the listener is deregistered,
-    *          otherwise, an appropriate error code
-    *
-    * @note Eval: This is a new API and is being evaluated. It is subject
-    *             to change and could break backwards compatibility.
-    */
-   virtual telux::common::ErrorCode deRegisterListener(
-        std::weak_ptr<ISubsystemListener> listener) = 0;
+    /**
+     * Deregisters the given listener registered previously with @ref registerListener().
+     *
+     * @param[in] listener Listener to deregister
+     *
+     * @returns @ref telux::common::Status::SUCCESS if the listener is deregistered,
+     *          otherwise, an appropriate error code
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject
+     *             to change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode deRegisterListener(std::weak_ptr<ISubsystemListener> listener)
+        = 0;
 
-   /**
-    * Gets the subsystem service status.
-    *
-    * @returns @ref telux::common::ServiceStatus::SERVICE_AVAILABLE if the service is ready
-    *          for use, @ref telux::common::ServiceStatus::SERVICE_UNAVAILABLE if the service
-    *          is temporarily unavailable (possibly undergoing initialization),
-    *          @ref telux::common::ServiceStatus::SERVICE_FAILED if the service needs
-    *          re-initialization
-    */
-   virtual telux::common::ServiceStatus getServiceStatus() = 0;
+    /**
+     * Gets the subsystem service status.
+     *
+     * @returns @ref telux::common::ServiceStatus::SERVICE_AVAILABLE if the service is ready
+     *          for use, @ref telux::common::ServiceStatus::SERVICE_UNAVAILABLE if the service
+     *          is temporarily unavailable (possibly undergoing initialization),
+     *          @ref telux::common::ServiceStatus::SERVICE_FAILED if the service needs
+     *          re-initialization
+     */
+    virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
-   /**
-    * Performs cleanup and destroys the ISubsystemManager instance.
-    */
-   virtual ~ISubsystemManager() {};
+    /**
+     * Performs cleanup and destroys the ISubsystemManager instance.
+     */
+    virtual ~ISubsystemManager(){};
 };
 
 /** @} */ /* end_addtogroup telematics_platform */
@@ -109,4 +111,4 @@ class ISubsystemManager {
 }  // End of namespace platform
 }  // End of namespace telux
 
-#endif // TELUX_PLATFORM_SUBSYSTEMMANAGER_HPP
+#endif  // TELUX_PLATFORM_SUBSYSTEMMANAGER_HPP

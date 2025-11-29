@@ -102,6 +102,20 @@ public:
       std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
    }
 
+   /// Validates that an integer input fits within the range
+   //  of type T and is not zero, then assigns it if valid.
+   template <typename T>
+    static bool validateAndAssign(int input, T &outValue, const std::string &paramName) {
+       long long maxVal = static_cast<long long>(std::numeric_limits<T>::max());
+      if (input <= 0 || static_cast<long long>(input) > maxVal) {
+            std::cerr << "Error: " << paramName << " value " << input
+              << " is out of range (0 - " << std::numeric_limits<T>::max() << ").\n";
+            return false;
+        }
+        outValue = static_cast<T>(input);
+        return true;
+   }
+
    // Validate the input and in case of invalid input request
    // for proper input from user.
    template <typename T>

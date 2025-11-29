@@ -25,41 +25,11 @@
  *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-/*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 extern "C" {
@@ -504,11 +474,18 @@ void FirewallMenu::getProtocolParams(telux::data::IpProtocol proto,
         int srcPort = 0, srcRange = 0;
         int destPort = 0, destRange = (uint16_t)0;
 
-        getProtocolParamsFromUser("TCP", srcPort, srcRange, destPort, destRange);
-        tcpInfo.src.port = static_cast<uint16_t>(srcPort);
-        tcpInfo.src.range = static_cast<uint16_t>(srcRange);
-        tcpInfo.dest.port = static_cast<uint16_t>(destPort);
-        tcpInfo.dest.range = static_cast<uint16_t>(destRange);
+        while (true) {
+          getProtocolParamsFromUser("TCP", srcPort, srcRange, destPort, destRange);
+
+          bool valid = Utils::validateAndAssign(srcPort, tcpInfo.src.port, "Source Port") &&
+          Utils::validateAndAssign(srcRange, tcpInfo.src.range, "Source Range") &&
+          Utils::validateAndAssign(destPort, tcpInfo.dest.port, "Destination Port") &&
+          Utils::validateAndAssign(destRange, tcpInfo.dest.range, "Destination Range");
+
+        if (valid) break;
+
+        std::cerr << "Invalid input detected. Please re-enter values.\n";
+        }
 
         auto tcpFilter = std::dynamic_pointer_cast<ITcpFilter>(ipFilter);
         if(tcpFilter) {
@@ -521,11 +498,19 @@ void FirewallMenu::getProtocolParams(telux::data::IpProtocol proto,
         int srcPort = 0, srcRange = 0;
         int destPort = 0, destRange = 0;
 
-        getProtocolParamsFromUser("UDP", srcPort, srcRange, destPort, destRange);
-        info.src.port = static_cast<uint16_t>(srcPort);
-        info.src.range = static_cast<uint16_t>(srcRange);
-        info.dest.port = static_cast<uint16_t>(destPort);
-        info.dest.range = static_cast<uint16_t>(destRange);
+        while (true) {
+          getProtocolParamsFromUser("UDP", srcPort, srcRange, destPort, destRange);
+
+          bool valid = Utils::validateAndAssign(srcPort, info.src.port, "Source Port") &&
+          Utils::validateAndAssign(srcRange, info.src.range, "Source Range") &&
+          Utils::validateAndAssign(destPort, info.dest.port, "Destination Port") &&
+          Utils::validateAndAssign(destRange, info.dest.range, "Destination Range");
+
+          if (valid) break;
+
+          std::cerr << "Invalid input detected. Please re-enter values.\n";
+        }
+
 
         auto udpFilter = std::dynamic_pointer_cast<IUdpFilter>(ipFilter);
         if(udpFilter) {
@@ -539,16 +524,33 @@ void FirewallMenu::getProtocolParams(telux::data::IpProtocol proto,
         int srcPort = 0, srcRange = 0;
         int destPort = 0, destRange = 0;
 
-        getProtocolParamsFromUser("", srcPort, srcRange, destPort, destRange);
-        tcpInfo.src.port = static_cast<uint16_t>(srcPort);
-        tcpInfo.src.range = static_cast<uint16_t>(srcRange);
-        tcpInfo.dest.port = static_cast<uint16_t>(destPort);
-        tcpInfo.dest.range = static_cast<uint16_t>(destRange);
+        uint16_t validatedSrcPort, validatedSrcRange, validatedDestPort, validatedDestRange;
 
-        udpInfo.src.port = static_cast<uint16_t>(srcPort);
-        udpInfo.src.range = static_cast<uint16_t>(srcRange);
-        udpInfo.dest.port = static_cast<uint16_t>(destPort);
-        udpInfo.dest.range = static_cast<uint16_t>(destRange);
+        while (true) {
+          getProtocolParamsFromUser("", srcPort, srcRange, destPort, destRange);
+
+          bool valid = Utils::validateAndAssign(srcPort, validatedSrcPort, "Source Port") &&
+          Utils::validateAndAssign(srcRange, validatedSrcRange, "Source Range") &&
+          Utils::validateAndAssign(destPort, validatedDestPort, "Destination Port") &&
+          Utils::validateAndAssign(destRange, validatedDestRange, "Destination Range");
+
+          if (valid) break;
+
+          std::cerr << "Invalid input detected. Please re-enter values.\n";
+        }
+
+        // Assign validated values to TCP struct
+        tcpInfo.src.port = validatedSrcPort;
+        tcpInfo.src.range = validatedSrcRange;
+        tcpInfo.dest.port = validatedDestPort;
+        tcpInfo.dest.range = validatedDestRange;
+
+        // Assign validated values to UDP struct
+        udpInfo.src.port = validatedSrcPort;
+        udpInfo.src.range = validatedSrcRange;
+        udpInfo.dest.port = validatedDestPort;
+        udpInfo.dest.range = validatedDestRange;
+
         auto tcpFilter = std::dynamic_pointer_cast<ITcpFilter>(ipFilter);
         if(tcpFilter) {
             tcpFilter->setTcpInfo(tcpInfo);

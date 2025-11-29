@@ -42,6 +42,9 @@ class DataFilterManagerStub : public IDataFilterManager,
     telux::common::Status addDataRestrictFilter(std::shared_ptr<IIpFilter> &filter,
         telux::common::ResponseCallback callback = nullptr) override;
 
+    telux::common::Status addDataRestrictFilters(std::vector<std::shared_ptr<IIpFilter>> &filters,
+        telux::common::ResponseCallback callback = nullptr) override;
+
     telux::common::Status removeAllDataRestrictFilters(
         telux::common::ResponseCallback callback = nullptr) override;
 
@@ -51,7 +54,7 @@ class DataFilterManagerStub : public IDataFilterManager,
 
     telux::common::Status deregisterListener(std::weak_ptr<IDataFilterListener> listener) override;
 
-    virtual void onDataRestrictModeChange(DataRestrictMode mode) override;
+    virtual void onDataFilterModeChange(DataRestrictModeType filterMode) override;
     virtual void onServiceStatusChange(telux::common::ServiceStatus status) override;
 
     /* @deprecated because NAO IP filters are global filters */

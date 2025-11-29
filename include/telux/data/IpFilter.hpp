@@ -124,8 +124,8 @@ struct EspInfo {
 
 /**
  * @brief       A IP filter class to add specific filters like what data will be allowed from
- *              the modem to the application processor. Only data packets that match the filter
- *              will be sent to the apps processor. Also used to configure Firewall rules.
+ *              the modem. Only data packets that match the filter will be forwarded from
+ *              the modem. Also used to configure Firewall rules.
  */
 class IIpFilter {
  public:

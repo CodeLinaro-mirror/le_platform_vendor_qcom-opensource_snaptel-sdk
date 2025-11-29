@@ -246,9 +246,11 @@ class IServingSystemManager {
      * @returns
      * telux::common::ErrorCode::SUCCESS if request is honored by network.
      * telux::common::ErrorCode::INVALID_STATE is returned if:
-     *  - There is no active data calls
-     *  - Any Data calls is going through bring up/tear down
-     *  - There is data traffic on any active data calls
+     *  - The device is not camped on WCDMA.
+     *  - There are no active data calls.
+     *  - Any Data calls is going through bring up/tear down.
+     *  - There is data traffic on any active data calls.
+     *
      * If API fails, application is responsible for re-attempting operation at later time once the
      * above conditions are met.
      *

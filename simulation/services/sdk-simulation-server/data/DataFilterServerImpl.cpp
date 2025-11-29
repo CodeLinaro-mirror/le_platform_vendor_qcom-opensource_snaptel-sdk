@@ -70,10 +70,12 @@ grpc::Status DataFilterServerImpl::SetDataRestrictMode(ServerContext *context,
         = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
 
     if (error != ErrorCode::SUCCESS) {
+        LOG(DEBUG, __FUNCTION__, " failed to read json.");
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
     }
 
     if (!dcmServerImpl_->isAnyDataCallActive(static_cast<SlotId>(request->slot_id()))) {
+        LOG(DEBUG, __FUNCTION__, " datacall doesn't exist.");
         data.error  = telux::common::ErrorCode::GENERIC_FAILURE;
         data.status = telux::common::Status::FAILED;
     }
@@ -135,32 +137,14 @@ grpc::Status DataFilterServerImpl::GetDataRestrictMode(ServerContext *context,
 
 grpc::Status DataFilterServerImpl::AddDataRestrictFilter(ServerContext *context,
     const dataStub::AddDataRestrictFilterRequest *request, dataStub::DefaultReply *response) {
-
     LOG(DEBUG, __FUNCTION__);
-    std::string apiJsonPath
-        = (request->slot_id() == SLOT_2) ? DATA_FILTER_API_SLOT2_JSON : DATA_FILTER_API_SLOT1_JSON;
-    std::string stateJsonPath = (request->slot_id() == SLOT_2) ? DATA_FILTER_STATE_SLOT2_JSON
-                                                               : DATA_FILTER_STATE_SLOT1_JSON;
-    std::string subsystem     = "IDataFilterManager";
-    std::string method        = "addDataRestrictFilter";
-    JsonData data;
-    telux::common::ErrorCode error
-        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+    return addFilters(request, response, "addDataRestrictFilter");
+}
 
-    if (error != ErrorCode::SUCCESS) {
-        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
-    }
-
-    if (!dcmServerImpl_->isAnyDataCallActive(static_cast<SlotId>(request->slot_id()))) {
-        data.error  = telux::common::ErrorCode::GENERIC_FAILURE;
-        data.status = telux::common::Status::FAILED;
-    }
-
-    response->set_status(static_cast<commonStub::Status>(data.status));
-    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
-    response->set_delay(data.cbDelay);
-
-    return grpc::Status::OK;
+grpc::Status DataFilterServerImpl::AddDataRestrictFilters(ServerContext *context,
+    const dataStub::AddDataRestrictFilterRequest *request, dataStub::DefaultReply *response) {
+    LOG(DEBUG, __FUNCTION__);
+    return addFilters(request, response, "addDataRestrictFilters");
 }
 
 grpc::Status DataFilterServerImpl::RemoveAllDataRestrictFilter(ServerContext *context,
@@ -212,37 +196,6 @@ std::string DataFilterServerImpl::convertFilterEnumToString(
     return ::dataStub::DataRestrictMode::UNKNOWN;
 }
 
-void DataFilterServerImpl::onServerEvent(google::protobuf::Any event) {
-    LOG(DEBUG, __FUNCTION__);
-    if (event.Is<::dataStub::NoActiveDataCall>()) {
-        ::dataStub::NoActiveDataCall callEvent;
-        event.UnpackTo(&callEvent);
-
-        std::string apiJsonPath   = (callEvent.slot_id() == SLOT_2) ? DATA_FILTER_API_SLOT2_JSON
-                                                                    : DATA_FILTER_API_SLOT1_JSON;
-        std::string stateJsonPath = (callEvent.slot_id() == SLOT_2) ? DATA_FILTER_STATE_SLOT2_JSON
-                                                                    : DATA_FILTER_STATE_SLOT1_JSON;
-        std::string subsystem     = "IDataFilterManager";
-        std::string method        = "setDataRestrictMode";
-        JsonData data;
-        telux::common::ErrorCode error
-            = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
-
-        if (error != ErrorCode::SUCCESS) {
-            return;
-        }
-
-        if (data.status == telux::common::Status::SUCCESS
-            && data.error == telux::common::ErrorCode::SUCCESS) {
-            std::string mode                                                            = "DISABLE";
-            data.stateRootObj[subsystem]["requestDataRestrictMode"]["filter_mode"]      = mode;
-            data.stateRootObj[subsystem]["requestDataRestrictMode"]["filter_auto_exit"] = mode;
-            JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
-            sendDataRestrictModeEvent(callEvent.slot_id(), mode, mode);
-        }
-    }
-}
-
 void DataFilterServerImpl::sendDataRestrictModeEvent(
     int slot_id, std::string filterMode, std::string autoExitMode) {
     // sending event for notification on client side
@@ -258,4 +211,33 @@ void DataFilterServerImpl::sendDataRestrictModeEvent(
     // posting the event to EventService event queue
     auto &eventImpl = EventService::getInstance();
     eventImpl.updateEventQueue(anyResponse);
+}
+
+grpc::Status DataFilterServerImpl::addFilters(const dataStub::AddDataRestrictFilterRequest *request,
+    dataStub::DefaultReply *response, std::string method) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath
+        = (request->slot_id() == SLOT_2) ? DATA_FILTER_API_SLOT2_JSON : DATA_FILTER_API_SLOT1_JSON;
+    std::string stateJsonPath = (request->slot_id() == SLOT_2) ? DATA_FILTER_STATE_SLOT2_JSON
+                                                               : DATA_FILTER_STATE_SLOT1_JSON;
+    std::string subsystem     = "IDataFilterManager";
+
+    JsonData data;
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    if (!dcmServerImpl_->isAnyDataCallActive(static_cast<SlotId>(request->slot_id()))) {
+        data.error  = telux::common::ErrorCode::GENERIC_FAILURE;
+        data.status = telux::common::Status::FAILED;
+    }
+
+    response->set_status(static_cast<commonStub::Status>(data.status));
+    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    response->set_delay(data.cbDelay);
+
+    return grpc::Status::OK;
 }

@@ -97,6 +97,11 @@ class DataFilterMenu : public IDataFilterListener, public ConsoleApp {
 
  private:
     bool initDataFilterManagerAndListener(SlotId slotId);
+    bool getDataFiltersConfig(int slotId, std::string filePath,
+        std::vector<std::shared_ptr<telux::data::IIpFilter>> &dataFilters);
+    void getIPInfo(std::shared_ptr<telux::data::IIpFilter> &dataFilter);
+    void getPortInfo(int &srcPort, int &srcRange, int &destPort, int &destRange);
+    bool getDataFiltersInput(std::vector<std::shared_ptr<telux::data::IIpFilter>> &dataFilters);
 
     std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
     std::map<SlotId, std::shared_ptr<telux::data::IDataConnectionManager>> dataConnManagerMap_;

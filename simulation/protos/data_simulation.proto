@@ -73,6 +73,7 @@ service DataFilterManager {
     rpc GetDataRestrictMode(GetDataRestrictModeRequest) returns (GetDataRestrictModeReply) {}
     rpc SetDataRestrictMode(SetDataRestrictModeRequest) returns (DefaultReply) {}
     rpc AddDataRestrictFilter(AddDataRestrictFilterRequest) returns (DefaultReply) {}
+    rpc AddDataRestrictFilters(AddDataRestrictFilterRequest) returns (DefaultReply) {}
     rpc RemoveAllDataRestrictFilter(RemoveDataRestrictFilterRequest) returns
         (DefaultReply) {}
 }

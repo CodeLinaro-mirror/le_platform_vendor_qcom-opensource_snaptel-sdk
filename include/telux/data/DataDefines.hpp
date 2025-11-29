@@ -135,16 +135,23 @@ enum class LinkState {
  * @ref DataRestrictModeType
  */
 struct DataRestrictMode {
-    DataRestrictModeType filterMode;
-    /**< Disable or enable data filter mode. When disabled all the
-         data packets will be forwarded from modem to the apps.
-         When enabled only the data matching the filters will be
-         forwarded from modem to the apps. */
-    DataRestrictModeType filterAutoExit;
-    /**< Disable or enable autoexit feature. When enabled, once
-         an incoming packet matching the filter is received,
-         filter mode will we disable automatically and any
-         packet will be allowed to be forwarded from modem to apps.*/
+    DataRestrictModeType filterMode; /**< Disable or enable data filter mode. When disabled all the
+                                          data packets will be forwarded from modem. When enabled
+                                          only the data packets matching the filters will be
+                                          forwarded from the modem. */
+    DataRestrictModeType filterAutoExit
+        = DataRestrictModeType::ENABLE; /**< Enable or disable the auto-exit feature. When enabled:
+                                           - If an incoming packet matches the filter or any
+                                             outgoing packet is sent, the filter mode is
+                                             automatically disabled.
+                                           - After disabling, all packets are allowed to be
+                                             forwarded from the modem.
+
+                                             @note It is recommended to keep filterAutoExit set to
+                                             @ref DataRestrictModeType::ENABLE and clients should
+                                             listen to the @ref onDataRestrictModeChange
+                                             notification, to be notified of any changes in the
+                                             filter mode.  */
 };
 
 /**

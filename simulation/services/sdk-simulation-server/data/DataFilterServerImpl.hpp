@@ -41,11 +41,13 @@ class DataFilterServerImpl final : public dataStub::DataFilterManager::Service,
         const dataStub::AddDataRestrictFilterRequest *request,
         dataStub::DefaultReply *response) override;
 
+    grpc::Status AddDataRestrictFilters(ServerContext *context,
+        const dataStub::AddDataRestrictFilterRequest *request,
+        dataStub::DefaultReply *response) override;
+
     grpc::Status RemoveAllDataRestrictFilter(ServerContext *context,
         const dataStub::RemoveDataRestrictFilterRequest *request,
         dataStub::DefaultReply *response) override;
-
-    void onServerEvent(google::protobuf::Any event) override;
 
  private:
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
@@ -56,6 +58,8 @@ class DataFilterServerImpl final : public dataStub::DataFilterManager::Service,
     std::string convertFilterEnumToString(
         ::dataStub::DataRestrictMode::DataRestrictModeType status);
     void sendDataRestrictModeEvent(int slot_id, std::string filterMode, std::string autoExitMode);
+    grpc::Status addFilters(const dataStub::AddDataRestrictFilterRequest *request,
+        dataStub::DefaultReply *response, std::string method);
 };
 
 #endif  // DATA_FILTER_SERVER_HPP

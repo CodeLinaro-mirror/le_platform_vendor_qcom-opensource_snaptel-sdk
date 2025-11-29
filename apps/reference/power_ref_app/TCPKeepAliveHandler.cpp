@@ -108,7 +108,7 @@ bool TCPKeepAliveHandler::startKAOffload() {
       LOG(DEBUG, __FUNCTION__, " KA offload already started");
       continue;
     }
-    if (!(connectionKaInfo->connection || connectionKaInfo->connection->socketConnection ||
+    if (!(connectionKaInfo->connection && connectionKaInfo->connection->socketConnection &&
       connectionKaInfo->connection->socketConnection->isConnected())) {
       LOG(DEBUG, __FUNCTION__, " connection not connected");
       continue;
@@ -133,7 +133,7 @@ bool TCPKeepAliveHandler::startKAOffload() {
         kaPram, connectionKaInfo->monitorHandle) == telux::common::ErrorCode::SUCCESS) {
         IPMessage msg;
         memset(&msg, 0, sizeof(msg));
-        const char *message = (std::string("Hello\n")).c_str();
+        const char *message = "Hello\n";
         std::copy(message, message + strlen(message) + 1, msg.msg);
         connectionKaInfo->connection->socketConnection->sendMessage(msg);
         connectionKaInfo->connection->socketConnection->ensureAllPacketsAcknowledged();

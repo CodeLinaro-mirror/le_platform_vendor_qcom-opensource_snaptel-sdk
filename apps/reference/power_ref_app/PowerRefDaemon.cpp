@@ -1,7 +1,5 @@
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -39,7 +37,26 @@ telux::common::Status PowerRefDaemon::init() {
             break;
         }
 
-        if (config_->getValue("TRIGGER", "NAOIP_TRIGGER") == "ENABLE") {
+        /**
+         * By default, the app can register for SMS and CAN triggers. However, when power refd
+         * runs in an environment where SATCOM is enabled, we need to check if NTN is enabled.
+         * If NTN is enabled, NAOIP trigger shouldn't be allowed.
+         */
+        bool allowNaoIp = true;
+
+#ifdef TELSDK_FEATURE_SATCOM_ENABLED
+        //By default, the app runs in TN mode.
+        if (config_->getValue("NTN_CONFIGS", "ENABLE_NTN") == "TRUE") {
+            ntnEnabled_ = true;
+        }
+        // If NTN is enabled, disallow NAOIP and CAN triggers
+        if (ntnEnabled_) {
+            allowNaoIp = false;
+            LOG(DEBUG, __FUNCTION__, " NTN enabled: only SMS trigger will run");
+        }
+#endif
+
+        if (config_->getValue("TRIGGER", "NAOIP_TRIGGER") == "ENABLE" && allowNaoIp) {
             naoIpTrigger_ = make_shared<NAOIpTrigger>(eventManager);
             if (naoIpTrigger_ && naoIpTrigger_->init()) {
                 LOG(DEBUG, __FUNCTION__, " naoIpTrigger init succeed");
@@ -53,6 +70,7 @@ telux::common::Status PowerRefDaemon::init() {
                 config_->getValue("TRIGGER", "NAOIP_TRIGGER"));
         }
 
+        //Register for SMS trigger regardless of NTN enabled/disabled.
         if (config_->getValue("TRIGGER", "SMS_TRIGGER") == "ENABLE") {
             smsTrigger_ = make_shared<SMSTrigger>(eventManager);
             if (smsTrigger_ && smsTrigger_->init()) {
@@ -83,6 +101,32 @@ telux::common::Status PowerRefDaemon::init() {
         } else {
             LOG(DEBUG, __FUNCTION__, " CAN trigger ", config_->getValue("TRIGGER", "CAN_TRIGGER"));
         }
+
+#ifdef TELSDK_FEATURE_SATCOM_ENABLED
+        //Perform ntn enablement.
+        if(ntnEnabled_) {
+            ntnClient_ = std::make_shared<NtnClient>();
+            telux::common::Status retStatus = ntnClient_->init();
+            if(retStatus == telux::common::Status::SUCCESS) {
+                ntnClient_->registerForUpdates();
+                //Enable NTN
+                telux::common::ErrorCode err = ntnClient_->enableNtn();
+                if(err == telux::common::ErrorCode::SUCCESS) {
+                    LOG(DEBUG, __FUNCTION__, " ntn enable success");
+                    if(smsTrigger_) {
+                        //Needed for SMS trigger
+                        smsTrigger_->setNtnClientInstance(ntnClient_);
+                    }
+                } else {
+                    std::string ec = Utils::getErrorCodeAsString(err);
+                    LOG(ERROR, __FUNCTION__, " ntn enable failed, ec: ", ec);
+                }
+            } else {
+                LOG(ERROR, __FUNCTION__, " ntn init failed");
+            }
+        }
+#endif
+
     } while (0);
 
     return initStatus;
@@ -111,6 +155,12 @@ int PowerRefDaemon::startDaemon(int argc, char **argv) {
         if (smsTrigger_) {
             smsTrigger_ = nullptr;
         }
+#ifdef TELSDK_FEATURE_SATCOM_ENABLED
+        if(ntnClient_) {
+            ntnClient_->cleanup();
+            ntnClient_ = nullptr;
+        }
+#endif
         return EXIT_FAILURE;
     }
 
@@ -130,6 +180,9 @@ void PowerRefDaemon::stopDaemon() {
     naoIpTrigger_.reset();
     eventManager_.reset();
     smsTrigger_.reset();
+#ifdef TELSDK_FEATURE_SATCOM_ENABLED
+    ntnClient_.reset();
+#endif
     fflush(stdout);
     cv_.notify_all();
 }
@@ -183,7 +236,7 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
     // Setting required secondary groups for SDK file/diag logging
-    vector<string> supplementaryGrps{"system", "diag", "radio", "logd", "dlt"};
+    vector<string> supplementaryGrps{"system", "diag", "radio", "logd", "dlt", "locclient"};
     int rc =  Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1) {
         LOG(DEBUG, __FUNCTION__, " Adding supplementary groups failed ");

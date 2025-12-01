@@ -53,10 +53,10 @@ class HpcmMenu : public ConsoleApp, public std::enable_shared_from_this<HpcmMenu
     SlotId slotId_;
     std::atomic<bool> hpcmReady_;
     std::atomic<bool> exitHpcm_;
-    bool readErrorOccurred_;
-    bool writeErrorOccurred_;
-    bool exitPlayThread_;
-    bool exitRecordThread_;
+    std::atomic<bool> readErrorOccurred_;
+    std::atomic<bool> writeErrorOccurred_;
+    std::atomic<bool> exitPlayThread_;
+    std::atomic<bool> exitRecordThread_;
     std::mutex mutex_;
     std::mutex captureMutex_;
     std::mutex bufferReadyMutex_;

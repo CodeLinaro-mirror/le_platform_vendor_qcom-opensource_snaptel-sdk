@@ -2163,6 +2163,33 @@ If DMZ is needed:
 12. Application receives the status i.e. either SUCCESS or FAILED which indicates if the request was sent successfully.
 13. Optionally, the application gets asynchronous response for enableBridge via the application-supplied callback.
 
+@subsubsection data_start_tcp_keep_alive Call flow to start TCP keep alive offload to modem
+
+@anchor fig_data_start_tcp_keep_alive_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.35]{data_start_tcp_keep_alive.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to start TCP keep alive offload to modem}
+  \label{fig_data_start_tcp_keep_alive_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{data_start_tcp_keep_alive.png,Call flow to start TCP keep alive offload to modem,80,80,Call flow to start TCP keep alive offload to modem}
+
+1. Application initiates the process by requesting the Keep Alive Manager instance from DataFactory using getKeepAliveManager(slotId, clientCallback). DataFactory responds with an instance of IKeepAliveManager.
+2. If IKeepAliveManager is not null, the application should wait for initialization to complete, i.e., clientCallback should be called with service status as AVAILABLE.
+3. Once ready, the application registers a listener using registerListener(IKeepAliveListener). Precondition Checks, the application ensures that; The data call has started. The TCP socket connection (required for offloading keep-alive to the modem) is established.
+4. If operating in Monitor Mode, TCP session info (e.g., sequence numbers) is not needed. The application calls enableTCPMonitor() with input parameters.
+5. The application receives monitorHandle and ErrorCode. If successful At least one packet must be exchanged between the TCP client and server after calling enableTCPMonitor() for the modem to learn the TCP session parameters. The modem must learn these parameters before startTCPKeepAliveOffload() is called with monitorHandle. For example, consider an application on a UE that uses MQTT over TCP to communicate with the cloud. After entering Monitor Mode, the client can either send a dummy PUBLISH message or resend a previous PUBLISH with the same topic. This ensures the modem receives a TCP packet after Monitor Mode is initiated. The application waits sufficiently for the sample packet to be acknowledged (e.g., tcpi_unacked becomes 0).
+6. The application starts the keep-alive offload using startTCPKeepAliveOffload() with monitorHandle and interval. The keep-alive interval is expected to be ≥ 60,000 milliseconds.
+7. The modem returns tcpKAOffloadHandle and ErrorCode.
+8. If operating in Default Mode, TCP session info (e.g., sequence numbers) is required. The application calls startTCPKeepAliveOffload() with tcpKaParams, tcpSessionParams, and interval. The keep-alive interval is expected to be ≥ 60,000 milliseconds.
+9. The modem returns tcpKAOffloadHandle and ErrorCode. Once offload is started, TCP keep-alive messages are sent by the modem at the configured interval. This continues even if the device enters suspend mode.
+10. Any TCP packet transfer over the same session results in failure or stopping of the keep-alive offload. The application is notified via onKeepAliveStatusChange(NETWORK_ERR, tcpKAOffloadHandle) from IKeepAliveListener`
+
+
 @section cv2x_call_flows C-V2X
 
 Applications need to have "radio" Linux group permissions to be able to operate successfully with underlying services.

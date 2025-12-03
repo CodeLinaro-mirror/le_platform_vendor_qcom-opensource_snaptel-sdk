@@ -69,3 +69,4 @@ that illustrate the use of various TelSDK APIs, it includes samples of
   * [How to trigger sensor self test](sensor/sensor_self_test.md)
   * [How to make a Third Party Service (TPS) emergency call over IMS](phone/make_tps_eCall_over_Ims.md)
   * [How to configure and enable WLAN](wlan/wlan_config.md)
+  * [How to start TCP Keep-Alive Offload](data/start_tcp_keep_alive_offload.md)

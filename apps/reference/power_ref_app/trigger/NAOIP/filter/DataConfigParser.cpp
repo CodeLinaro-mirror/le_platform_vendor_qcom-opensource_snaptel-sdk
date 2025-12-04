@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -128,7 +128,7 @@ void DataConfigParser::readConfigFile(std::string configFile) {
   // regular expressions to process configuration files filter section
   std::regex sectionMatch_("\\[(.*?)\\]");
   // regular expressions to process configuration files key=value pairs
-  std::regex keyValueMatch_("(\\w+)=([^\\+]+(?!\\+{3}))");
+  std::regex keyValueMatch_("^(?!#)(\\w+)=([^\\+]+(?!\\+{3}))");
 
   // Create a file stream from the file name
   std::ifstream configFileStream(configFile);

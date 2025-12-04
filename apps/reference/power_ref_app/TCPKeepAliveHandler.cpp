@@ -18,7 +18,14 @@ TCPKeepAliveHandler::TCPKeepAliveHandler(
     std::shared_ptr<EventManager> eventManager)
     : eventManager_(eventManager) {}
 
-TCPKeepAliveHandler::~TCPKeepAliveHandler() {}
+TCPKeepAliveHandler::~TCPKeepAliveHandler() {
+  if (connectionHandler_) {
+    connectionHandler_->cleanup();
+    connectionHandler_ = nullptr;
+  }
+  connectionKaInfoList_ = {};
+  eventManager_= nullptr;
+}
 
 bool TCPKeepAliveHandler::init() {
     // Connection handler initialisation

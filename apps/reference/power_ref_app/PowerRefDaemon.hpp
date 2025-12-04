@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -80,7 +80,7 @@ public:
 private:
    std::mutex mtx_;
    std::condition_variable cv_;
-   bool exiting_ = false;
+   std::atomic<bool> exiting_ = {false};
    ConfigParser* config_;
    shared_ptr<EventManager> eventManager_;
    shared_ptr<NAOIpTrigger> naoIpTrigger_;

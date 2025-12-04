@@ -25,6 +25,7 @@ ConnectionHandler::~ConnectionHandler() {
     for (const auto &entry : connectionConfigList_) {
         entry->dataConnectionManager = nullptr;
     }
+    connectionConfigList_ = {};
 }
 
 std::shared_ptr<ConnectionHandler>ConnectionHandler::getInstance() {
@@ -138,8 +139,11 @@ void ConnectionHandler::cleanup() {
     isCleanupTriggered_ = true;
     cvStatusUpdate_.notify_all();
     for (const auto &entry : connectionConfigList_) {
-        entry->socketConnection->cleanup();
+        if(entry->socketConnection)
+            entry->socketConnection->cleanup();
+        entry->dataConnectionManager = nullptr;
     }
+    connectionConfigList_ = {};
 }
 
 void ConnectionHandler::onDataCallInfoChanged(

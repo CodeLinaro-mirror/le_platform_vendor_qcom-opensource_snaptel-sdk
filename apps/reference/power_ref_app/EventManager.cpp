@@ -66,9 +66,16 @@ bool EventManager::init() {
 EventManager::EventManager() {
     LOG(DEBUG, __FUNCTION__);
 }
+
 EventManager::~EventManager() {
     LOG(DEBUG, __FUNCTION__);
-    tcuActivityStateMgr_.reset();
+}
+
+void EventManager::cleanup() {
+    LOG(DEBUG, __FUNCTION__);
+    std::lock_guard<std::mutex> lk(cleanup_);
+    if (tcuActivityStateMgr_)
+        tcuActivityStateMgr_.reset();
     eventQueue_.clear();
 }
 

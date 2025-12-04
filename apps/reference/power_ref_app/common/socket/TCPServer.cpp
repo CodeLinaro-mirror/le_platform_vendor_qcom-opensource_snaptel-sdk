@@ -35,7 +35,7 @@ public:
   bool bindToDevice(int clientSocket, std::string deviceName) {
       LOG(DEBUG, __FUNCTION__);
       if (setsockopt(clientSocket, SOL_SOCKET, SO_BINDTODEVICE,
-          deviceName.c_str(), deviceName.size()) != 0) {
+          deviceName.c_str(), deviceName.size() + 1) != 0) {
           LOG(ERROR, __FUNCTION__, "Failed to bind to device: ", std::string(strerror(errno)));
           return false;
       }
@@ -43,7 +43,8 @@ public:
   }
 
   bool start(std::shared_ptr<Connection> connectionConfig) override {
-    LOG(DEBUG, __FUNCTION__);
+    LOG(DEBUG, __FUNCTION__, " connection Config: ", connectionConfig->toString());
+    LOG(DEBUG, __FUNCTION__, " connection ipFamily: ", (int)connectionConfig->ipFamily);
     connectionConfig_ = connectionConfig;
     isReceivedStopServer_ = false;
     int domain = connectionConfig->ipFamily == telux::data::IpFamilyType::IPV4
@@ -145,33 +146,64 @@ private:
                sizeof(reuse));
 
     if (this->connectionConfig_->ipFamily == telux::data::IpFamilyType::IPV4) {
-      struct sockaddr_in v4ServerAddr = {};
+      struct sockaddr_in v4ServerAddr{};
+      memset(&v4ServerAddr, 0, sizeof(v4ServerAddr));
       if (!this->connectionConfig_->dataCall->getIpv4Info().addr.ifAddress.empty()) {
-        inet_pton(AF_INET, this->connectionConfig_->dataCall->getIpv4Info().addr.ifAddress.c_str(),
-                  &(v4ServerAddr.sin_addr));
+        LOG(ERROR, __FUNCTION__, " IPv4 address format: ",
+          this->connectionConfig_->dataCall->getIpv4Info().addr.ifAddress);
+        int ret = inet_pton(AF_INET,
+          this->connectionConfig_->dataCall->getIpv4Info().addr.ifAddress.c_str(),
+          &(v4ServerAddr.sin_addr));
+        if (ret <= 0) {
+          if (ret == 0) {
+            LOG(ERROR, __FUNCTION__, " Invalid IPv4 address format: ",
+              this->connectionConfig_->dataCall->getIpv4Info().addr.ifAddress);
+          } else {
+            LOG(ERROR, __FUNCTION__, " inet_pton failed: ", std::string(strerror(errno)));
+          }
+          return false;
+        }
       }
       v4ServerAddr.sin_family = AF_INET;
       v4ServerAddr.sin_port = htons(this->connectionConfig_->serverPort);
       sockAddr = reinterpret_cast<struct sockaddr *>(&v4ServerAddr);
       sockSize = sizeof(sockaddr_in);
+
+      if (bind(this->serverSocket_, sockAddr, sockSize) < 0) {
+        LOG(ERROR, __FUNCTION__, " bind : ", std::string(strerror(errno)));
+        this->isConnected_ = false;
+        return false;
+      }
     } else {
       struct sockaddr_in6 v6ServerAddr = {};
+      memset(&v6ServerAddr, 0, sizeof(v6ServerAddr));
       if (!this->connectionConfig_->dataCall->getIpv6Info().addr.ifAddress.empty()) {
-        inet_pton(AF_INET6, this->connectionConfig_->dataCall->getIpv6Info().addr.ifAddress.c_str(),
-                  &(v6ServerAddr.sin6_addr));
+        LOG(ERROR, __FUNCTION__, " IPv6 address format: ",
+          this->connectionConfig_->dataCall->getIpv6Info().addr.ifAddress);
+        int ret = inet_pton(AF_INET6,
+          this->connectionConfig_->dataCall->getIpv6Info().addr.ifAddress.c_str(),
+          &(v6ServerAddr.sin6_addr));
+        if (ret <= 0) {
+          if (ret == 0) {
+            LOG(ERROR, __FUNCTION__, " Invalid IPv6 address format: ",
+              this->connectionConfig_->dataCall->getIpv6Info().addr.ifAddress);
+          } else {
+            LOG(ERROR, __FUNCTION__, " inet_pton failed: ", std::string(strerror(errno)));
+          }
+          return false;
+        }
       }
       v6ServerAddr.sin6_family = AF_INET6;
       v6ServerAddr.sin6_port = htons(this->connectionConfig_->serverPort);
       sockAddr = reinterpret_cast<struct sockaddr *>(&v6ServerAddr);
       sockSize = sizeof(sockaddr_in6);
-    }
 
-    if (bind(this->serverSocket_, sockAddr, sockSize) < 0) {
-      LOG(ERROR, __FUNCTION__, " bind : ", std::string(strerror(errno)));
-      this->isConnected_ = false;
-      return false;
+      if (bind(this->serverSocket_, sockAddr, sockSize) < 0) {
+        LOG(ERROR, __FUNCTION__, " bind : ", std::string(strerror(errno)));
+        this->isConnected_ = false;
+        return false;
+      }
     }
-
     return true;
   }
 

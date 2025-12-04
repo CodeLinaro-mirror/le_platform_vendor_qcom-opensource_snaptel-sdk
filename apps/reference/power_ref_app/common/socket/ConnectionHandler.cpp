@@ -105,7 +105,6 @@ bool ConnectionHandler::start(std::vector<std::shared_ptr<Connection>> &connecti
         if(!initialiseSocketConnection(connectionConfig)) {
             return false;
         }
-
         std::thread([this, connectionConfig] {
             do {
                 {

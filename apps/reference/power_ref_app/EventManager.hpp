@@ -88,9 +88,7 @@ public:
    void updateEventStatus(shared_ptr<Event> event, bool processed, bool succeed,
                           EventStatus status);
    TcuActivityState getActivityState();
-   void holdWakeLock();
    void holdWakeLock(const std::string& wakeLockValue);
-   void releaseWakeLock();
    void releaseWakeLock(const std::string& wakeLockValue);
 };
 

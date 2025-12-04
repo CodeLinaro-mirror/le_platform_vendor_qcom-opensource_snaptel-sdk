@@ -696,143 +696,93 @@ bool RefAppUtils::isClient() {
    return true;
 }
 
-bool RefAppUtils::isKeepAliveEnabled() {
-   std::string value = ConfigParser::getInstance()->getValue("communication", "TCP_KEEP_ALIVE");
-   LOG(DEBUG, __FUNCTION__, " value: ", value);
-   return RefAppUtils::stringToBool(value);
-}
-
-bool RefAppUtils::isAutoExitEnabled() {
-   std::string value =
-      ConfigParser::getInstance()->getValue("communication", "DATA_FILTER_AUTO_EXIT");
-   LOG(DEBUG, __FUNCTION__, " value: ", value);
-   return RefAppUtils::stringToBool(value);
-}
-
-uint32_t RefAppUtils::getKeepAliveInterval() {
-   std::string interval = ConfigParser::getInstance()->getValue(
-      "communication", "TCP_KEEP_ALIVE_PACKET_INTERVAL");
-   return interval.empty() ? std::stoul(DEFAULT_TCP_KEEP_ALIVE_PACKET_INTERVAL) :
-      std::stoul(interval);
-}
-
 std::vector<std::shared_ptr<Connection>> RefAppUtils::getConnectionConfigs() {
    std::vector<std::shared_ptr<Connection>> connectionList;
-   std::shared_ptr<Connection> commonConnection = std::make_shared<Connection>();
    auto config = ConfigParser::getInstance();
 
-   std::string value = config->getValue("communication", "ROLE");
-   commonConnection->connectionRole = (!value.compare("SERVER")) ? ConnectionRole::SERVER :
-      ConnectionRole::CLIENT;
+   std::vector<std::map<std::string, std::string>> allSocketConnectionsStr =
+      config->getDuplicateSectionValue("SOCKET_COMMUNICATION");
 
-   value = config->getValue("communication", "IP_FAMILY");
-   commonConnection->ipFamily = (!value.compare("6")) ? telux::data::IpFamilyType::IPV6 :
-      telux::data::IpFamilyType::IPV4;
+   for (auto socketConnectionStr : allSocketConnectionsStr) {
+      std::shared_ptr<Connection> connection = std::make_shared<Connection>();
+      std::string value = socketConnectionStr["ROLE"];
+      connection->connectionRole = (!value.compare("SERVER")) ? ConnectionRole::SERVER :
+         ConnectionRole::CLIENT;
 
-   value = config->getValue("communication", "TRANSPORT_PROTOCOL");
-   commonConnection->protocol = (!value.compare("UDP")) ? Protocol::UDP : Protocol::TCP;
+      value = socketConnectionStr["IP_FAMILY"];
+      connection->ipFamily = (!value.compare("6")) ? telux::data::IpFamilyType::IPV6 :
+         telux::data::IpFamilyType::IPV4;
 
-   value = config->getValue("communication", "CLIENT_ADDRESS");
-   commonConnection->clientIpAddr = (!value.empty()) ? value : "";
+      value = socketConnectionStr["TRANSPORT_PROTOCOL"];
+      connection->protocol = (!value.compare("UDP")) ? Protocol::UDP : Protocol::TCP;
 
-   value = config->getValue("communication", "SERVER_PORT");
-   commonConnection->serverPort = (!value.empty()) ? std::stoi(value) : 0;
+      connection->isKeepAliveEnabled =
+         RefAppUtils::stringToBool(socketConnectionStr["TCP_KEEP_ALIVE"]);
 
-   value = config->getValue("communication", "CLIENT_PORT");
-   commonConnection->clientPort = (!value.empty()) ? std::stoi(value) : 0;
+      connection->installDataFilterForSocket =
+         RefAppUtils::stringToBool(socketConnectionStr["INSTALL_DATA_FILTER_FOR_SOCKET"]);
+      connection->serverIpAddr = socketConnectionStr["SERVER_ADDRESS"];
 
-   try {
-      std::string ipValue = config->getValue("communication", "SERVER_ADDRESS");
-      std::string portValue = config->getValue("communication", "SERVER_PORT");
-      std::string profileIdValue = config->getValue(
-         "communication", "START_DATA_CALL_ON_PROFILE_ID");
 
-      std::vector<std::string> ipList;
-      std::vector<std::string> portList;
-      std::vector<std::string> profileIdList;
+      std::string serverPortValue = socketConnectionStr["SERVER_PORT"];
+      std::string profileIdValue = socketConnectionStr["PROFILE_ID"];
+      std::string slotIdValue = socketConnectionStr["SLOT_ID"];
+      std::string keepAliveIntervalValue = socketConnectionStr["TCP_KEEP_ALIVE_PACKET_INTERVAL"];
 
-      // Split and clean IP addresses
-      if (!ipValue.empty()) {
-         std::stringstream ss(ipValue);
-         std::string ip;
-         while (std::getline(ss, ip, ',')) {
-               ip.erase(std::remove_if(ip.begin(), ip.end(), ::isspace), ip.end());
-               ipList.push_back(ip);
-         }
+      try {
+         connection->serverPort = std::stoi(serverPortValue);
+      } catch (const std::exception &e) {
+         LOG(WARNING, __FUNCTION__, " Invalid port format: ", serverPortValue);
+         connection->serverPort = 0;
       }
 
-      // Split and clean ports
-      if (!portValue.empty()) {
-         std::stringstream ss(portValue);
-         std::string port;
-         while (std::getline(ss, port, ',')) {
-               port.erase(std::remove_if(port.begin(), port.end(), ::isspace), port.end());
-               portList.push_back(port);
-         }
+      try {
+         connection->profileId = std::stoi(profileIdValue);
+      } catch (const std::exception &e) {
+         LOG(WARNING, __FUNCTION__, " Invalid profileIdValue format: ", profileIdValue);
+         connection->profileId = 0;
       }
 
-      // Split and clean ports
-      if (!profileIdValue.empty()) {
-         std::stringstream ss(profileIdValue);
-         std::string profileId;
-         while (std::getline(ss, profileId, ',')) {
-               profileId.erase(
-                  std::remove_if(profileId.begin(), profileId.end(), ::isspace), profileId.end());
-               profileIdList.push_back(profileId);
-         }
+      try {
+         connection->slotId = static_cast<SlotId>(std::stoi(slotIdValue));
+      } catch (const std::exception &e) {
+         LOG(WARNING, __FUNCTION__, " Invalid slotId: ", slotIdValue);
+         connection->slotId = DEFAULT_SLOT_ID;
       }
 
-      // Match IPs and ports by index
-      size_t count = std::max(ipList.size(), portList.size());
-      for (size_t i = 0; i < count; ++i) {
-         std::shared_ptr<Connection> connection = std::make_shared<Connection>(*commonConnection);
-
-
-         if (i < ipList.size()) {
-            connection->serverIpAddr = ipList[i];
-         }
-
-         if (i < portList.size()) {
-            try {
-               connection->serverPort = std::stoi(portList[i]);
-            } catch (const std::exception &e) {
-               LOG(WARNING, __FUNCTION__, "Invalid port format: ", portList[i]);
-               connection->serverPort = 0;
-            }
-         }
-
-         if (i < profileIdList.size()) {
-            try {
-               connection->profileId = std::stoi(profileIdList[i]);
-            } catch (const std::exception &e) {
-               LOG(WARNING, __FUNCTION__, "Invalid profile id format: ", profileIdList[i]);
-               connection->profileId = 0;
-            }
-         }
-         connection->slotId = static_cast<SlotId>(i+1);
-         connectionList.push_back(connection);
+      try {
+         connection->keepAliveInterval = std::stoul(keepAliveIntervalValue);
+      } catch (const std::exception &e) {
+         LOG(WARNING, __FUNCTION__, " Invalid keepAliveInterval: ", keepAliveIntervalValue);
+         connection->keepAliveInterval = 60000;
       }
-
-   } catch (const std::exception &e) {
-      LOG(ERROR, __FUNCTION__, e.what());
+      connectionList.push_back(connection);
+      LOG(DEBUG, __FUNCTION__, " connection: ", connection->toString());
    }
    return connectionList;
 }
 
 bool RefAppUtils::isDataFilterInstallationEnabled() {
    std::string value =
-      ConfigParser::getInstance()->getValue("communication", "INSTALL_DATA_FILTER");
+      ConfigParser::getInstance()->getValue("NAOIP_TRIGGER", "DATA_FILTER");
+   LOG(DEBUG, __FUNCTION__, " value: ", value);
+   return RefAppUtils::stringToBool(value);
+}
+
+bool RefAppUtils::isAutoExitEnabled() {
+   std::string value =
+      ConfigParser::getInstance()->getValue("NAOIP_TRIGGER", "DATA_FILTER_AUTO_EXIT");
    LOG(DEBUG, __FUNCTION__, " value: ", value);
    return RefAppUtils::stringToBool(value);
 }
 
 bool RefAppUtils::stringToBool(std::string enable) {
-    if (!enable.compare("ENABLE")) {
-        return true;
-    } else if (!enable.compare("DISABLE")) {
-        return false;
-    } else {
-        LOG(ERROR, __FUNCTION__, " Invalid value ");
-        return false;
-    }
+   if (!enable.compare("ENABLE")) {
+      return true;
+   } else if (!enable.compare("DISABLE")) {
+      return false;
+   } else {
+      LOG(ERROR, __FUNCTION__, " Invalid value ");
+      return false;
+   }
 }

@@ -5,6 +5,7 @@
 
 #include "EventManager.hpp"
 #include <algorithm>
+#define TELUX_POWER "telux_power_refd"
 
 EventManager *EventManager::instance = nullptr;
 
@@ -18,6 +19,9 @@ EventManager *EventManager::getInstance() {
 
 bool EventManager::init() {
     LOG(DEBUG, __FUNCTION__);
+    // It is the responsibility of the application to hold a wake lock if the power manager daemon
+    // is running in passive mode (/etc/power_state.conf power_daemon_in_active_mode=false).
+    holdWakeLock(DAEMON_NAME);
     bool initSucceed = true;
     //  Get the ConnectionFactory instances.
     auto &powerFactory = telux::power::PowerFactory::getInstance();
@@ -151,7 +155,9 @@ void EventManager::printQueue() {
 // event management
 void EventManager::pushEvent(shared_ptr<Event> event) {
     LOG(DEBUG, __FUNCTION__, " event = ", event->toString());
-
+    // Hold the wake lock temporarily to avoid the device getting suspended automatically
+    // while processing the event
+    holdWakeLock(DAEMON_NAME);
     LOG(DEBUG, __FUNCTION__,
         "local state: ", RefAppUtils::tcuActivityStateToString(localState_),
         " incoming state: ", RefAppUtils::tcuActivityStateToString(event->getTriggeredState()));
@@ -191,9 +197,6 @@ void EventManager::pushEvent(shared_ptr<Event> event) {
                 updateEventStatus(event, false, false, EventStatus::FAILED_TCU_ACTIVITY);
                 break;
             }
-            // Hold the wake lock temporarily to avoid the device getting suspended automatically
-            // while processing the event
-            holdWakeLock();
             eventQueue_.push_back(event);
             setActivityState(event);
         }
@@ -207,13 +210,16 @@ void EventManager::setActivityState(shared_ptr<Event> event) {
         if (errorCode != telux::common::ErrorCode::SUCCESS ) {
             LOG(ERROR, __FUNCTION__,  " Command failed !!!"  );
             processedEventHandler(EventStatus::FAILED_TCU_ACTIVITY);
+            // If suspend is send when device alreasy in suspend it will fail make sure device goes back to suspend in this case
+            releaseWakeLock(DAEMON_NAME);
         } else {
             LOG(DEBUG, __FUNCTION__,  " Command initiated successfully " );
             if (event->getTriggeredState() == TcuActivityState::RESUME) {
                 //Acknowledgment message (onSlaveAckStatusUpdate) is not expected for resume.
                 processedEventHandler(EventStatus::SUCCEED);
-                releaseWakeLock();
             } else {
+                // Wait for consolidated acknowledgment (onSlaveAckStatusUpdate) from all clients
+                // before starting SUSPEND or SHUTDOWN.
                 event->setEventStatus(EventStatus::IN_PROGRESS_TCU_ACTIVITY);
             }
         }
@@ -259,22 +265,11 @@ void EventManager::writeToSystemNode(char *nodepath, char *value, int length) {
     close(fd);
 }
 
-void EventManager::holdWakeLock() {
-    LOG(DEBUG, __FUNCTION__);
-    writeToSystemNode((char *)WAKELOCK_PATH, (char *)WAKE_LOCK,
-        strlen(WAKE_LOCK));
-}
-
 void EventManager::holdWakeLock(const std::string& wakeLockValue) {
     LOG(DEBUG, __FUNCTION__);
     writeToSystemNode((char *)WAKELOCK_PATH, (char *)wakeLockValue.c_str(), wakeLockValue.length());
 }
 
-void EventManager::releaseWakeLock() {
-    LOG(DEBUG, __FUNCTION__);
-    writeToSystemNode((char *)WAKEUNLOCK_PATH, (char *)WAKE_LOCK,
-        strlen(WAKE_LOCK));
-}
 void EventManager::releaseWakeLock(const std::string& wakeLockValue) {
     LOG(DEBUG, __FUNCTION__);
     writeToSystemNode((char *)WAKEUNLOCK_PATH, (char *)wakeLockValue.c_str(), wakeLockValue.length());
@@ -308,9 +303,6 @@ void EventManager::processedEventHandler(EventStatus status) {
                 *((std::deque<shared_ptr<Event>>::iterator)eventQueue_.begin());
             LOG(DEBUG, __FUNCTION__, " execute next event. event = ", nextEvent->toString());
             setActivityState(nextEvent);
-        } else {
-            //after processing all event in queue remove temporary wake lock
-            releaseWakeLock();
         }
     } else {
         LOG(ERROR, __FUNCTION__, "  eventQueue is empty");
@@ -332,7 +324,34 @@ void EventManager::onSlaveAckStatusUpdate(const telux::common::Status status) {
         LOG(ERROR, __FUNCTION__, " Failed to receive acknowledgements from slave applications");
         eventStatus = EventStatus::FAILED_TCU_ACTIVITY;
     }
-    processedEventHandler(eventStatus);
+
+    // Users can implement their own logic to release the wake lock based on the suspend status
+    // provided by this API.
+    // In case of failure, one can resume the device and re-initiate suspend or proceed to
+    // suspend.
+
+    // Check if there are additional events in the queue to process.
+    if(!eventQueue_.empty()) {
+        if((*eventQueue_.begin())->getTriggeredState() == TcuActivityState::SHUTDOWN) {
+            // Process SHUTDOWN
+            processedEventHandler(eventStatus);
+            int ret = system("shutdown -hP now");
+            if (ret == -1) {
+                LOG(ERROR, __FUNCTION__, "system() failed: ", std::string(strerror(errno)));
+            } else {
+                if (WIFEXITED(ret)) {
+                    int status = WEXITSTATUS(ret);
+                    if (status != 0) {
+                        LOG(DEBUG, __FUNCTION__, "Shutdown command exited with status ", status);
+                    }
+                }
+            }
+        } else {
+            // Process SUSPEND
+            processedEventHandler(eventStatus);
+            releaseWakeLock(DAEMON_NAME);
+        }
+    }
 }
 
 void EventManager::onServiceStatusChange(telux::common::ServiceStatus status) {

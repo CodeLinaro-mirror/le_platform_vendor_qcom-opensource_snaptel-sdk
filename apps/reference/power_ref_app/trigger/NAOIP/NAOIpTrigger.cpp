@@ -47,7 +47,7 @@ bool NAOIpTrigger::init() {
                 return false;
             }
         }
-        if (!RefAppUtils::isUDP() && RefAppUtils::isKeepAliveEnabled()) {
+        if (!RefAppUtils::isUDP()) {
             tcpKeepAliveHandler_ = TCPKeepAliveHandler::getInstance(eventManager_);
             if (tcpKeepAliveHandler_ && tcpKeepAliveHandler_->init()) {
                 LOG(DEBUG, __FUNCTION__, " naoIpTrigger init succeed");

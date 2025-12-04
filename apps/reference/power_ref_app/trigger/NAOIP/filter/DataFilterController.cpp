@@ -240,6 +240,8 @@ bool DataFilterController::addFilter(std::vector<std::shared_ptr<Connection>> co
         // Add data filter for socket connections
         for(auto connection: connectionList) {
             LOG(DEBUG, __FUNCTION__, " connection: ", connection->toString());
+            if (!connection->installDataFilterForSocket) continue;
+
             std::shared_ptr<telux::data::IIpFilter> dataFilter =
                 configureConnectionToDataFilter(connection);
 

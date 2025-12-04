@@ -108,7 +108,7 @@ bool TCPKeepAliveHandler::startKAOffload() {
       LOG(DEBUG, __FUNCTION__, " KA offload already started");
       continue;
     }
-    if (!(connectionKaInfo->connection || connectionKaInfo->connection->socketConnection ||
+    if (!(connectionKaInfo->connection && connectionKaInfo->connection->socketConnection &&
       connectionKaInfo->connection->socketConnection->isConnected())) {
       LOG(DEBUG, __FUNCTION__, " connection not connected");
       continue;

@@ -19,3 +19,4 @@ Data {#data}
 * @subpage get_service_status_and_indication
 * @subpage get_roaming_status_and_indication
 * @subpage on_demand_pdn_connectivity
+* @subpage start_tcp_keep_alive_offload

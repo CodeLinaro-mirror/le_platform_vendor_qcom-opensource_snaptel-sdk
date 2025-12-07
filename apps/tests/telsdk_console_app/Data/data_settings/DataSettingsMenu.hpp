@@ -52,8 +52,6 @@ class DataSettingsMenu : public ConsoleApp ,
     void getIpConfig(std::vector<std::string> inputCommand);
     void setIpConfig(std::vector<std::string> inputCommand);
     void isDeviceDataUsageMonitoringEnabled(std::vector<std::string> inputCommand);
-    void setLatencyConfig(std::vector<std::string> inputCommand);
-    void getLatencyConfig(std::vector<std::string> inputCommand);
     void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) override;
     void onDdsChange(DdsInfo currentState) override;
 

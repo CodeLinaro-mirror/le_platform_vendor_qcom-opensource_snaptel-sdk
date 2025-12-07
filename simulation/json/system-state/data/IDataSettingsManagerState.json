@@ -38,9 +38,6 @@
         ],
         "getIpPassThroughNatConfig" : {
                 "natEnable": 1
-        },
-        "getLatencyConfig" : {
-            "uplink": 1
         }
     }
 }

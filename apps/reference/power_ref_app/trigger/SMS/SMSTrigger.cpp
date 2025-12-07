@@ -45,6 +45,10 @@ SMSTrigger::SMSTrigger(std::shared_ptr<EventManager> eventManager) {
 
 SMSTrigger::~SMSTrigger() {
    LOG(DEBUG, __FUNCTION__);
+   if (smsManager_) {
+      smsManager_->removeListener(myself_);
+      smsManager_ = nullptr;
+   }
 }
 
 bool SMSTrigger::init() {
@@ -69,12 +73,12 @@ bool SMSTrigger::init() {
       LOG(ERROR, __FUNCTION__, " ERROR - Failed to get SMS Manager instance slotId = ", slotId);
       return false;
    }
-
+   myself_ = shared_from_this();
    LOG(DEBUG, __FUNCTION__, " Waiting for SMS Manager to be ready slotId = ", slotId);
    telux::common::ServiceStatus smsMgrStatus = prom.get_future().get();
    if (smsMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
       LOG(DEBUG, __FUNCTION__,  " SMS Manager is ready slotId = ", slotId);
-      auto status = smsMgr->registerListener(shared_from_this());
+      auto status = smsMgr->registerListener(myself_);
       if (status != telux::common::Status::SUCCESS) {
          LOG(ERROR, __FUNCTION__,  " ERROR - Failed to register listener slotId = ", slotId);
          return false;

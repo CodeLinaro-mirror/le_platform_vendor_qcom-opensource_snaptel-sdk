@@ -73,7 +73,6 @@ class WlanApInterfaceManagerMenu : public ConsoleApp ,
     void onApDeviceStatusChanged(telux::wlan::ApDeviceConnectionEvent event,
         std::vector<telux::wlan::DeviceIndInfo> info) override;
     void onApConfigChanged(telux::wlan::Id apId) override;
-    void onApStatusChanged(const std::vector<telux::wlan::ApStatus> &status) override;
  private:
     bool menuOptionsAdded_;
     std::shared_ptr<telux::wlan::IApInterfaceManager> wlanApInterfaceManager_ = nullptr;

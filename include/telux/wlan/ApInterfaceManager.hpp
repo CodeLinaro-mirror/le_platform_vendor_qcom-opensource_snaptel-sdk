@@ -310,12 +310,7 @@ class IApInterfaceManager {
      virtual telux::common::ErrorCode getConfig(std::vector<ApConfig>& config) = 0;
 
     /**
-     * Request AP Status.
-     *
-     * @note After updating the AP status and restarting the AP,
-     * it is essential to wait for the @ref telux::wlan::IApListener::onApStatusChanged
-     * notification before invoking getStatus(). This ensures that the AP status is updated and
-     * synchronised internally.
+     * Request AP Status
      *
      * @param [in] status         Vector of AP network Status @ref telux::wlan::ApStatus
      *
@@ -351,7 +346,6 @@ class IApInterfaceManager {
      * API is called.
      * This API should be called only when access point is configured using
      * @ref telux::wlan::IWlanDeviceManager::setMode.
-     * Details about the AP status are provided via @ref telux::wlan::IApListener::onApStatusChanged
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_CONFIG
      * permission to invoke this API successfully.
@@ -406,14 +400,6 @@ public:
      * @param [in] radio        New AP operation band @ref telux::wlan::BandType
      */
     virtual void onApBandChanged(BandType radio) {}
-
-    /**
-     * This function is called when the AP status changes.
-     *
-     * @param [in] status       List of APs whose status has been updated @ref telux::wlan::ApStatus
-     */
-
-    virtual void onApStatusChanged(const std::vector<ApStatus> &status) {}
 
     /**
      * This function is called when AP configuration has changed

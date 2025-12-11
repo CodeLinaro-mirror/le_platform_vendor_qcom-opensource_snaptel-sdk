@@ -22,6 +22,7 @@
 
 #include "../../common/utils/Utils.hpp"
 #include "../../common/utils/SignalHandler.hpp"
+#include "../../common/utils/ThreadSafeOStreamBuf.hpp"
 
 #define APP_NAME "ntn_test_app"
 #define DEFAULT_CSV_FILE_PATH "/data/vendor/telsdk/"
@@ -909,6 +910,11 @@ NtnTestApp::~NtnTestApp() {
  */
 int main(int argc, char **argv) {
     std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    if (isatty(fileno(stdout))) {
+        std::cout << std::unitbuf;
+    }
+    static ThreadSafeOStreamBuf safeCout;
     std::cout << "\n#################################################\n"
               << "  Ntn test app\n"
               << "#################################################\n"

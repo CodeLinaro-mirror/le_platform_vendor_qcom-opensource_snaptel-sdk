@@ -25,6 +25,7 @@
 
 #include "../../common/utils/Utils.hpp"
 #include "../../common/utils/SignalHandler.hpp"
+#include "../../common/utils/ThreadSafeOStreamBuf.hpp"
 
 using std::cerr;
 using std::cout;
@@ -215,6 +216,11 @@ static int deregisterUtcReport() {
 
 int main(int argc, char *argv[]) {
     std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    if (isatty(fileno(stdout))) {
+        std::cout << std::unitbuf;
+    }
+    static ThreadSafeOStreamBuf safeCout;
     cout << "Running CV2X SLSS UTC Test APP" << endl;
 
     std::vector<std::string> groups{"system", "diag", "radio", "locclient", "logd", "dlt"};

@@ -53,12 +53,13 @@
 #include <map>
 #include <vector>
 
-#include "../../common/utils/Utils.hpp"
-
-#include "../../common/utils/SignalHandler.hpp"
 #include <telux/cv2x/Cv2xRadio.hpp>
 #include <telux/cv2x/Cv2xRadioListener.hpp>
 #include <telux/cv2x/Cv2xRadioTypes.hpp>
+
+#include "../../common/utils/Utils.hpp"
+#include "../../common/utils/SignalHandler.hpp"
+#include "../../common/utils/ThreadSafeOStreamBuf.hpp"
 
 using std::atomic;
 using std::cerr;
@@ -226,6 +227,11 @@ static void requestCapabilitiesCallback(
 
 int main(int argc, char *argv[]) {
     std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    if (isatty(fileno(stdout))) {
+        std::cout << std::unitbuf;
+    }
+    static ThreadSafeOStreamBuf safeCout;
     sigset_t sigset;
     sigemptyset(&sigset);
     sigaddset(&sigset, SIGINT);

@@ -36,6 +36,7 @@
 #include <bitset>
 #include <string>
 #include <vector>
+#include <cstdint>
 
 namespace telux {
 namespace sensor {

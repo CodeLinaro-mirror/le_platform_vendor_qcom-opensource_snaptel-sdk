@@ -97,6 +97,8 @@ enum class ECallMsdTransmissionStatus {
     MSD_AL_ACK_CLEARDOWN = 14, /**< Modem can cleardown the eCall after receipt of
                                     Application-Layer Acknowledgement(AL-LCK) during in-band MSD
                                     transmission */
+    INIT_SENT     = 15, /**< Initialization frames sent to public safety answering point (PSAP) */
+    NACK_RECEIVED = 16, /**< NACK received from public safety answering point (PSAP) */
 };
 
 /*

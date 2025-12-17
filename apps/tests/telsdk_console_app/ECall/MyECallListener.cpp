@@ -143,6 +143,10 @@ std::string MyECallListener::eCallMsdTransmissionStatusToString(
           return std::string("OUTBAND MSD TRANSMISSION SUCCESS");
       case telux::tel::ECallMsdTransmissionStatus::OUTBAND_MSD_TRANSMISSION_FAILURE:
           return std::string("OUTBAND MSD TRANSMISSION FAILURE");
+      case telux::tel::ECallMsdTransmissionStatus::INIT_SENT:
+          return std::string("INIT SENT");
+      case telux::tel::ECallMsdTransmissionStatus::NACK_RECEIVED:
+          return std::string("NACK RECEIVED");
       default:
          std::stringstream ss;
          ss << "Unknown ECallMsdTransmissionStatus  = " << (int)status;

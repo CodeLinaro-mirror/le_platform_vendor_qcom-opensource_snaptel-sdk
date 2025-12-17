@@ -27,6 +27,11 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
  #include <iostream>
  #include <sstream>
  #include <string>
@@ -149,6 +154,10 @@
            return std::string("OUTBAND MSD TRANSMISSION SUCCESS");
        case telux::tel::ECallMsdTransmissionStatus::OUTBAND_MSD_TRANSMISSION_FAILURE:
            return std::string("OUTBAND MSD TRANSMISSION FAILURE");
+       case telux::tel::ECallMsdTransmissionStatus::INIT_SENT:
+          return std::string("INIT SENT");
+       case telux::tel::ECallMsdTransmissionStatus::NACK_RECEIVED:
+          return std::string("NACK RECEIVED");
        default:
           std::stringstream ss;
           ss << "Unknown ECallMsdTransmissionStatus  = " << (int)status;

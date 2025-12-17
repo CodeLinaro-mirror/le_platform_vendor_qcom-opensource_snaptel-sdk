@@ -385,27 +385,28 @@ telux::wlan::SecEncrypt WlanUtils::convertIntToSecEncrypt(int encrypt) {
    return retEncrypt;
 }
 
-void WlanUtils::printAPStatus(std::vector<telux::wlan::ApStatus>& apStatus) {
+void WlanUtils::printAPStatus(const std::vector<telux::wlan::ApStatus> &apStatus) {
    if(apStatus.size() > 0) {
-       std::cout << "List of APs:" << std::endl;
-       for(auto& ap:apStatus) {
-           std::cout << "--------------------------------------------" << std::endl;
-           std::cout << "Id                 : " << WlanUtils::getWlanId(ap.id) << std::endl;
-           std::cout << "Network Interface  : " << ap.name << std::endl;
-           std::cout << "IPv4 Addr          : " << ap.ipv4Address << std::endl;
-           std::cout << "MAC Addr           : " << ap.macAddress << std::endl;
-           for(auto& netInfo:ap.network) {
-               std::cout << "SSID               : " << netInfo.ssid << std::endl;
-               std::cout << "Radio Type         : "
-                  << RadioTypeToString(netInfo.info.apRadio) << std::endl;
-               std::cout << "AP Type            : "
-                  << WlanUtils::getWlanApType(netInfo.info.apType) << std::endl;
-           }
-           std::cout << std::endl;
-       }
-   } else {
-       std::cout << "No AP is currently active" << std::endl;
-   }
+        std::cout << "Status of all APs:" << std::endl;
+        for(const auto &ap :apStatus) {
+            std::cout << "--------------------------------------------" << std::endl;
+            std::cout << "Id                 : " << WlanUtils::getWlanId(ap.id) << std::endl;
+            std::cout << "Network Interface  : " << ap.name << std::endl;
+            std::cout << "IPv4 Addr          : " << ap.ipv4Address << std::endl;
+            std::cout << "MAC Addr           : " << ap.macAddress << std::endl;
+            for (auto &netInfo : ap.network) {
+                std::cout << "SSID               : " << netInfo.ssid << std::endl;
+                std::cout << "Radio Type         : " << RadioTypeToString(netInfo.info.apRadio)
+                          << std::endl;
+                std::cout
+                    << "AP Type            : " << WlanUtils::getWlanApType(netInfo.info.apType)
+                    << std::endl;
+            }
+            std::cout << std::endl;
+        }
+    } else {
+        std::cout << "No AP is currently active" << std::endl;
+    }
 }
 
 void WlanUtils::printStaStatus(std::vector<telux::wlan::StaStatus>& staStatus) {

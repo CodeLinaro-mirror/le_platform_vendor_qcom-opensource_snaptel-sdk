@@ -128,10 +128,11 @@ std::string WlanUtils::getStaConnectionStatus(telux::wlan::StaInterfaceStatus st
    return retStr;
 }
 
-void WlanUtils::printAPStatus(std::vector<telux::wlan::ApStatus>& apStatus) {
+
+void WlanUtils::printAPStatus(const std::vector<telux::wlan::ApStatus> &apStatus) {
    if(apStatus.size() > 0) {
-       std::cout << "List of APs:" << std::endl;
-       for(auto& ap:apStatus) {
+        std::cout << "Status of all APs:" << std::endl;
+        for(const auto &ap :apStatus) {
            std::cout << "--------------------------------------------" << std::endl;
            std::cout << "Id                 : " << WlanUtils::getWlanId(ap.id) << std::endl;
            std::cout << "Network Interface  : " << ap.name << std::endl;
@@ -142,7 +143,7 @@ void WlanUtils::printAPStatus(std::vector<telux::wlan::ApStatus>& apStatus) {
                          << WlanUtils::getWlanApType(netInfo.info.apType) << std::endl;
            }
            std::cout << std::endl;
-       }
+        }
    } else {
        std::cout << "No AP is currently active" << std::endl;
    }

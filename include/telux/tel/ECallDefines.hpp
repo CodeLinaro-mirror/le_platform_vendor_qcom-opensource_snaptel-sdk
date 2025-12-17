@@ -28,9 +28,8 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2021, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -89,6 +88,8 @@ enum class ECallMsdTransmissionStatus {
    OUTBAND_MSD_TRANSMISSION_STARTED = 10,    /**< Outband MSD transmission started in NG eCall */
    OUTBAND_MSD_TRANSMISSION_SUCCESS = 11,    /**< Outband MSD transmission succeeded in NG eCall */
    OUTBAND_MSD_TRANSMISSION_FAILURE = 12,    /**< Outband MSD transmission failed in NG eCall */
+   INIT_SENT = 15, /**< Initialization frames sent to public safety answering point (PSAP) */
+   NACK_RECEIVED = 16, /**< NACK received from public safety answering point (PSAP) */
 };
 
 /**

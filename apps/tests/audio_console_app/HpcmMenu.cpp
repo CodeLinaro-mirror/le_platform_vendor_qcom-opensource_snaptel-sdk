@@ -14,6 +14,8 @@ HpcmMenu::HpcmMenu(
    , slotId_(DEFAULT_SLOT_ID)
    , hpcmReady_(false)
    , exitHpcm_(true)
+   , readErrorOccurred_(false)
+   , writeErrorOccurred_(false)
    , exitPlayThread_(false)
    , exitRecordThread_(false)
    , audioManager_(audioManager) {

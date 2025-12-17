@@ -308,7 +308,12 @@ class IApInterfaceManager {
     virtual telux::common::ErrorCode getConfig(std::vector<ApConfig> &config) = 0;
 
     /**
-     * Request AP Status
+     * Request AP Status.
+     *
+     * @note After updating the AP status and restarting the AP,
+     * it is essential to wait for the @ref telux::wlan::IApListener::onApStatusChanged
+     * notification before invoking getStatus(). This ensures that the AP status is updated and
+     * synchronised internally.
      *
      * @param [in] status         Vector of AP network Status @ref telux::wlan::ApStatus
      *
@@ -336,14 +341,15 @@ class IApInterfaceManager {
     /**
      * Execute an operation on hostapd service. Provides ability for client to either stop/start or
      * restart hostapd service for selected access point. Restarting hostapd service is required
-     * for any changes made to hostapd.conf file and changes made by
+     * for any changes made to hosapd.conf file and changes made by
      * @ref telux::wlan::IApInterfaceManager::setConfig to take effect.
      * Stop/Start operation @ref telux::wlan::ServiceOperation will Stop/Start WiFi service for
      * access point.
      * Access points selected to execute operation on, will temporarily go out of service when this
      * API is called.
      * This API should be called only when access point is configured using
-     * @ref telux::wlan::IDeviceManager::setMode.
+     * @ref telux::wlan::IWlanDeviceManager::setMode.
+     * Details about the AP status are provided via @ref telux::wlan::IApListener::onApStatusChanged
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_CONFIG
      * permission to invoke this API successfully.
@@ -408,6 +414,14 @@ class IApListener : public telux::common::ISDKListener {
      */
     virtual void onApConfigChanged(Id apId) {
     }
+
+    /**
+     * This function is called when the AP status changes.
+     *
+     * @param [in] status       List of APs whose status has been updated @ref telux::wlan::ApStatus
+     */
+
+    virtual void onApStatusChanged(const std::vector<ApStatus> &status) {}
 
     virtual ~IApListener() {
     }

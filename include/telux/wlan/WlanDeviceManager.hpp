@@ -100,10 +100,18 @@ class IWlanDeviceManager {
      * Enable or Disable Wlan Service.
      * Configurations set by @ref telux::wlan::IWlanDeviceManager::setMode must be completed before
      * enabling Wlan.
+     *
+     * It is strongly recommended that users configure AP and STA explicitly using the appropriate
+     * APIs such as @ref telux::wlan::IApInterfaceManager::setConfig and
+     * @ref telux::wlan::IStaInterfaceManager::addNetworkConfig after setting mode with
+     * @ref telux::wlan::IWlanDeviceManager::setMode but before enabling WLAN, rather than relying
+     * on default configurations to ensure that the intended settings are applied when WLAN is
+     * enabled.
+     *
      * If any of configurations need to be changed after Wlan is enabled, this API must be called
      * with enable set to false followed by a call with enable set to true for the new
      * configurations to take effect.
-     * Calling this API with enable, will start hostapd and wpa_supplicant daemons.
+     * Calling this API with enable set to true will start hostapd and wpa_supplicant daemons.
      * Further changes to hostapd and wpa_supplicant will require calling
      * @ref telux::wlan::IApInterfaceManager::manageApService and
      * @ref telux::wlan::IStaInterfaceManager::manageStaService respectively.

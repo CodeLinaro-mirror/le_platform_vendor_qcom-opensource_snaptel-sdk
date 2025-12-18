@@ -469,9 +469,7 @@ void MyLocationListener::printSvUsedInPosition(telux::loc::SvUsedInPosition svUs
     std::cout << "SVs from NAVIC constellation " << svUsedInPosition.navic << std::endl;
 }
 
-void MyLocationListener::printGnssSystemTime(
-    std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo) {
-    telux::loc::SystemTime sysTime = locationInfo->getGnssSystemTime();
+void MyLocationListener::printGnssSystemTime(const telux::loc::SystemTime &sysTime) {
     std::cout << " GNSS System Time : " << std::endl;
 
     telux::loc::GnssSystem system          = sysTime.gnssSystemTimeSrc;
@@ -904,8 +902,7 @@ void MyLocationListener::printSolutionStatus(
 }
 
 void MyLocationListener::printLocOutputEngineType(
-    std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo) {
-    telux::loc::LocationAggregationType locEngineType = locationInfo->getLocOutputEngType();
+    telux::loc::LocationAggregationType locEngineType) {
     if (locEngineType == telux::loc::LOC_OUTPUT_ENGINE_FUSED) {
         std::cout << " This is FUSED engine reports" << std::endl;
     }
@@ -1503,7 +1500,7 @@ void MyLocationListener::onDetailedLocationUpdate(
     printLocationPositionTech(locationInfo);
     printLocationPositionDynamics(locationInfo);
     printGnssMeasurementInfo(locationInfo);
-    printGnssSystemTime(locationInfo);
+    printGnssSystemTime(locationInfo->getGnssSystemTime());
     std::cout << " Time Uncertainty : " << locationInfo->getTimeUncMs() << std::endl;
     uint8_t leapSeconds = 0;
 
@@ -1546,7 +1543,7 @@ void MyLocationListener::onDetailedLocationUpdate(
               << unsigned(locationInfo->getCalibrationConfidencePercent()) << std::endl;
     printCalibrationStatus(locationInfo);
     printSolutionStatus(locationInfo);
-    printLocOutputEngineType(locationInfo);
+    printLocOutputEngineType(locationInfo->getLocOutputEngType());
     printLocOutputEngineMask(locationInfo);
     std::cout << "Conformity index : " << locationInfo->getConformityIndex() << std::endl;
     printLLAVRPBasedInfo(locationInfo->getVRPBasedLLA());
@@ -1650,7 +1647,7 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
         printLocationPositionTech(locationInfo);
         printLocationPositionDynamics(locationInfo);
         printGnssMeasurementInfo(locationInfo);
-        printGnssSystemTime(locationInfo);
+        printGnssSystemTime(locationInfo->getGnssSystemTime());
         std::cout << " Time Uncertainty : " << locationInfo->getTimeUncMs() << std::endl;
         uint8_t leapSeconds = 0;
 
@@ -1687,7 +1684,7 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
                   << unsigned(locationInfo->getCalibrationConfidencePercent()) << std::endl;
         printCalibrationStatus(locationInfo);
         printSolutionStatus(locationInfo);
-        printLocOutputEngineType(locationInfo);
+        printLocOutputEngineType(locationInfo->getLocOutputEngType());
         printLocOutputEngineMask(locationInfo);
         std::cout << "Conformity index : " << locationInfo->getConformityIndex() << std::endl;
         printLLAVRPBasedInfo(locationInfo->getVRPBasedLLA());
@@ -2319,8 +2316,217 @@ void MyLocationListener::onLocationSystemInfo(
               << unsigned(locationSystemInfo.info.info.leapSecondsAfterChange) << std::endl;
 }
 
+void MyLocationListener::printResidualPVTInfo(const telux::loc::ResidualPVTInfo &pvt) {
+    std::cout << "Residual PVT Validity Mask: " << pvt.validityMask << std::endl;
+    std::cout << std::setprecision(15) << std::showpoint;
+    std::cout << "Ref LLA (rad,rad,m): " << pvt.refPosLla[0] << ", " << pvt.refPosLla[1] << ", "
+              << pvt.refPosLla[2] << std::endl;
+    std::cout << "Ref ENU velocity (m/s): " << pvt.refVelEnu[0] << ", " << pvt.refVelEnu[1] << ", "
+              << pvt.refVelEnu[2] << std::endl;
+    std::cout << "Heading (rad): " << pvt.headingAngle << "  Heading Unc (rad): " << pvt.headingUnc
+              << std::endl;
+    std::cout << "Pos Unc (m) Lat,Lon: " << pvt.posUncLatLonMeters[0] << ", "
+              << pvt.posUncLatLonMeters[1] << "  Vert: " << pvt.posUncVertMeters << std::endl;
+    std::cout << "Vel Unc (m/s) East,North: " << pvt.velUncEastNorthMps[0] << ", "
+              << pvt.velUncEastNorthMps[1] << "  Vert: " << pvt.velUncVertMps << std::endl;
+    std::cout << "Clock Bias (m): " << pvt.clockBiasMeters
+              << "  Clock Bias Unc (m): " << pvt.clockBiasUncMeters << std::endl;
+    std::cout << "Clock Drift (m/s): " << pvt.clockDriftRateMps
+              << "  Clock Drift Unc (m/s): " << pvt.clockDriftRateUncMps << std::endl;
+    std::cout << "Position DOP: " << pvt.positionDop << std::endl;
+}
+
+void MyLocationListener::printSvResidualValidity(uint32_t validityMask) {
+    std::cout << "Sv Residual Validity :" << std::endl;
+
+    if (validityMask & telux::loc::PR_RES_VALID) {
+        std::cout << " valid pseudorange residual" << std::endl;
+    }
+    if (validityMask & telux::loc::PR_UNC_VALID) {
+        std::cout << " valid pseudorange uncertainty" << std::endl;
+    }
+    if (validityMask & telux::loc::CP_RES_VALID) {
+        std::cout << " valid carrier phase residual" << std::endl;
+    }
+    if (validityMask & telux::loc::CP_UNC_VALID) {
+        std::cout << " valid carrier phase uncertainty" << std::endl;
+    }
+    if (validityMask & telux::loc::DOPPLER_RES_VALID) {
+        std::cout << " valid doppler residual" << std::endl;
+    }
+    if (validityMask & telux::loc::DOPPLER_UNC_VALID) {
+        std::cout << " valid doppler uncertainty" << std::endl;
+    }
+    if (validityMask & telux::loc::IODE_VALID) {
+        std::cout << " valid iode" << std::endl;
+    }
+    if (validityMask & telux::loc::GLO_TB_VALID) {
+        std::cout << " valid glonass Tb" << std::endl;
+    }
+    if (validityMask & telux::loc::FREQ_NUM_VALID) {
+        std::cout << " valid glonass frequency number" << std::endl;
+    }
+    if (validityMask & telux::loc::CNO_VALID) {
+        std::cout << " valid carrier to noise ratio" << std::endl;
+    }
+    if (validityMask & telux::loc::AZIM_VALID) {
+        std::cout << " valid azimuth" << std::endl;
+    }
+    if (validityMask & telux::loc::ELEV_VALID) {
+        std::cout << " valid elevation" << std::endl;
+    }
+}
+
+void MyLocationListener::printSvResidualDataVector(
+    const std::vector<telux::loc::SvResidualData> &svResidualDataList) {
+
+    std::cout << "\nSV Residuals (" << svResidualDataList.size() << "):" << std::endl;
+    for (const auto &svResidualData : svResidualDataList) {
+        std::cout << "  -- SV " << svResidualData.svId << " --" << std::endl;
+        printGnssSignalType(svResidualData.gnssSignalType);
+        printSvResidualValidity(svResidualData.validityMask);
+        std::cout << "   PR(m): " << svResidualData.prResidual
+                  << "  PR_unc(m): " << svResidualData.prUncertainty
+                  << "   CP(m): " << svResidualData.cpResidual
+                  << "  CP_unc(m): " << svResidualData.cpUncertainty << std::endl;
+        std::cout << "   Doppler(m/s): " << svResidualData.dopplerResidual
+                  << "  Doppler_unc(m/s): " << svResidualData.dopplerUncertainty << std::endl;
+        std::cout << "   IODE: " << unsigned(svResidualData.iodephemeris)
+                  << "  GLO Tb: " << unsigned(svResidualData.gloTbEpoch)
+                  << "  GLO Freq#: " << int(svResidualData.gloFreqNum) << std::endl;
+        std::cout << "   C/N0(dB-Hz): " << svResidualData.carrierNoiseRatio
+                  << "  Az(rad): " << svResidualData.azimuth
+                  << "  El(rad): " << svResidualData.elevation << std::endl;
+    }
+}
+
+void MyLocationListener::printSvAvailValidity(uint32_t validityMask) {
+    std::cout << "SV Availability/Usage Validity :" << std::endl;
+
+    if (validityMask & telux::loc::GPS_NUM_SV_MEAS_VALID) {
+        std::cout << " valid gpsNumSvMeas" << std::endl;
+    }
+    if (validityMask & telux::loc::GPS_NUM_SV_POS_FIX_VALID) {
+        std::cout << " valid gpsNumSvPosFix" << std::endl;
+    }
+    if (validityMask & telux::loc::GPS_NUM_SV_VEL_FIX_VALID) {
+        std::cout << " valid gpsNumSvVelFix" << std::endl;
+    }
+    if (validityMask & telux::loc::GPS_SV_MASK_USED_VALID) {
+        std::cout << " valid gpsSvMaskUsed" << std::endl;
+    }
+    if (validityMask & telux::loc::GLO_NUM_SV_MEAS_VALID) {
+        std::cout << " valid gloNumSvMeas" << std::endl;
+    }
+    if (validityMask & telux::loc::GLO_NUM_SV_POS_FIX_VALID) {
+        std::cout << " valid gloNumSvPosFix" << std::endl;
+    }
+    if (validityMask & telux::loc::GLO_NUM_SV_VEL_FIX_VALID) {
+        std::cout << " valid gloNumSvVelFix" << std::endl;
+    }
+    if (validityMask & telux::loc::GLO_SV_MASK_USED_VALID) {
+        std::cout << " valid gloSvMaskUsed" << std::endl;
+    }
+    if (validityMask & telux::loc::BDS_NUM_SV_MEAS_VALID) {
+        std::cout << " valid bdsNumSvMeas" << std::endl;
+    }
+    if (validityMask & telux::loc::BDS_NUM_SV_POS_FIX_VALID) {
+        std::cout << " valid bdsNumSvPosFix" << std::endl;
+    }
+    if (validityMask & telux::loc::BDS_NUM_SV_VEL_FIX_VALID) {
+        std::cout << " valid bdsNumSvVelFix" << std::endl;
+    }
+    if (validityMask & telux::loc::BDS_SV_MASK_USED_VALID) {
+        std::cout << " valid bdsSvMaskUsed" << std::endl;
+    }
+    if (validityMask & telux::loc::GAL_NUM_SV_MEAS_VALID) {
+        std::cout << " valid galNumSvMeas" << std::endl;
+    }
+    if (validityMask & telux::loc::GAL_NUM_SV_POS_FIX_VALID) {
+        std::cout << " valid galNumSvPosFix" << std::endl;
+    }
+    if (validityMask & telux::loc::GAL_NUM_SV_VEL_FIX_VALID) {
+        std::cout << " valid galNumSvVelFix" << std::endl;
+    }
+    if (validityMask & telux::loc::GAL_SV_MASK_USED_VALID) {
+        std::cout << " valid galSvMaskUsed" << std::endl;
+    }
+    if (validityMask & telux::loc::QZSS_NUM_SV_MEAS_VALID) {
+        std::cout << " valid qzssNumSvMeas" << std::endl;
+    }
+    if (validityMask & telux::loc::QZSS_NUM_SV_POS_FIX_VALID) {
+        std::cout << " valid qzssNumSvPosFix" << std::endl;
+    }
+    if (validityMask & telux::loc::QZSS_NUM_SV_VEL_FIX_VALID) {
+        std::cout << " valid qzssNumSvVelFix" << std::endl;
+    }
+    if (validityMask & telux::loc::QZSS_SV_MASK_USED_VALID) {
+        std::cout << " valid qzssSvMaskUsed" << std::endl;
+    }
+    if (validityMask & telux::loc::NAVIC_NUM_SV_MEAS_VALID) {
+        std::cout << " valid navicNumSvMeas" << std::endl;
+    }
+    if (validityMask & telux::loc::NAVIC_NUM_SV_POS_FIX_VALID) {
+        std::cout << " valid navicNumSvPosFix" << std::endl;
+    }
+    if (validityMask & telux::loc::NAVIC_NUM_SV_VEL_FIX_VALID) {
+        std::cout << " valid navicNumSvVelFix" << std::endl;
+    }
+    if (validityMask & telux::loc::NAVIC_SV_MASK_USED_VALID) {
+        std::cout << " valid navicSvMaskUsed" << std::endl;
+    }
+}
+
+void MyLocationListener::printSvAvailabilityUsage(
+    const telux::loc::SvAvailabilityUsage &svAvailabilityUsage) {
+
+    printSvAvailValidity(svAvailabilityUsage.validityMask);
+    std::cout << " GPS:  meas=" << unsigned(svAvailabilityUsage.gpsSvCountMeasured)
+              << " pos=" << unsigned(svAvailabilityUsage.gpsSvCountInPositionFix)
+              << " vel=" << unsigned(svAvailabilityUsage.gpsSvCountInVelocityFix) << " mask=0x"
+              << std::hex << svAvailabilityUsage.gpsSvUsedMask << std::dec << std::endl;
+    std::cout << " GLO:  meas=" << unsigned(svAvailabilityUsage.glonassSvCountMeasured)
+              << " pos=" << unsigned(svAvailabilityUsage.glonassSvCountInPositionFix)
+              << " vel=" << unsigned(svAvailabilityUsage.glonassSvCountInVelocityFix) << " mask=0x"
+              << std::hex << svAvailabilityUsage.glonassSvUsedMask << std::dec << std::endl;
+    std::cout << " BDS:  meas=" << unsigned(svAvailabilityUsage.beidouSvCountMeasured)
+              << " pos=" << unsigned(svAvailabilityUsage.beidouSvCountInPositionFix)
+              << " vel=" << unsigned(svAvailabilityUsage.beidouSvCountInVelocityFix) << " mask=0x"
+              << std::hex << svAvailabilityUsage.beidouSvUsedMask << std::dec << std::endl;
+    std::cout << " GAL:  meas=" << unsigned(svAvailabilityUsage.galileoSvCountMeasured)
+              << " pos=" << unsigned(svAvailabilityUsage.galileoSvCountInPositionFix)
+              << " vel=" << unsigned(svAvailabilityUsage.galileoSvCountInVelocityFix) << " mask=0x"
+              << std::hex << svAvailabilityUsage.galileoSvUsedMask << std::dec << std::endl;
+    std::cout << " QZSS: meas=" << unsigned(svAvailabilityUsage.qzssSvCountMeasured)
+              << " pos=" << unsigned(svAvailabilityUsage.qzssSvCountInPositionFix)
+              << " vel=" << unsigned(svAvailabilityUsage.qzssSvCountInVelocityFix) << " mask=0x"
+              << std::hex << svAvailabilityUsage.qzssSvUsedMask << std::dec << std::endl;
+    std::cout << " NAVIC: meas=" << unsigned(svAvailabilityUsage.navicSvCountMeasured)
+              << " pos=" << unsigned(svAvailabilityUsage.navicSvCountInPositionFix)
+              << " vel=" << unsigned(svAvailabilityUsage.navicSvCountInVelocityFix) << " mask=0x"
+              << std::hex << svAvailabilityUsage.navicSvUsedMask << std::dec << std::endl;
+}
+
+void MyLocationListener::onGnssSVResidualInfo(const telux::loc::GnssSvResidualReport &svResReport) {
+    if (!isSvResidualInfoFlagEnabled_) {
+        return;
+    }
+    std::cout << std::endl;
+    PRINT_NOTIFICATION << "\n*************** GNSS SV Residual Report ***************" << std::endl;
+    printLocOutputEngineType(svResReport.locEngineType);
+    printGnssSystemTime(svResReport.gnssSystemTime);
+    printResidualPVTInfo(svResReport.residualPVTInfo);
+    printSvResidualDataVector(svResReport.svResidualData);
+    printSvAvailabilityUsage(svResReport.svAvailabilityUsage);
+    std::cout << "********************************************************" << std::endl;
+}
+
 void MyLocationListener::setDetailedLocationReportFlag(bool enable) {
     isDetailedReportFlagEnabled_ = enable;
+}
+
+void MyLocationListener::setSvResidualInfoFlag(bool enable) {
+    isSvResidualInfoFlagEnabled_ = enable;
 }
 
 void MyLocationListener::setBasicLocationReportFlag(bool enable) {

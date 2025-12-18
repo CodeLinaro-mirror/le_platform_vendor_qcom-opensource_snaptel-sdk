@@ -88,6 +88,8 @@ class DgnssMenu : public ConsoleApp,
     int waitforSock(int fd);
     int processRtcmFromServer(void);
     int processRtcmFromFile(void);
+    int processRtxFromServer(void);
+    int processRtxFromFile(void);
     int startNmeaReport(uint32_t interval);
     int sendGGAString(void);
 
@@ -99,5 +101,6 @@ class DgnssMenu : public ConsoleApp,
     bool stop_                                          = false;
     bool reconnect_                                     = false;
     DgnssSourceType dgnssSourceType_;
+    DgnssDataFormat dataFormat_;
 };
 #endif  // DGNSMENU_HPP

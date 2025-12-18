@@ -26,11 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
- */
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+*/
 
 /**
  * @file       LocationListener.hpp
@@ -190,6 +191,21 @@ public:
  */
   virtual void onCapabilitiesInfo(const telux::loc::LocCapability capabilityInfo) {}
 
+/**
+ * This function is invoked when the SV residual report is received during a positioning
+ * session. Support for residual reporting callbacks is available only for specific engine
+ * types and requires the appropriate license on supported platforms.
+ *
+ * On platforms with access control enabled, the client needs to have TELUX_LOC_DATA permission
+ * for this listener API to be invoked.
+ *
+ * @param [in] gnssSvResidualReport - @ref telux::loc::GnssSvResidualReport containing SV Residual
+ * information.
+ *
+ * @note  Eval: This is a new API and is being evaluated. It is subject to change
+ *              and could break backwards compatibility.
+ */
+  virtual void onGnssSVResidualInfo(const telux::loc::GnssSvResidualReport &gnssSvResidualReport) {}
 
 /**
  * Destructor of ILocationListener

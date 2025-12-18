@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <chrono>
 #include <future>
 #include <iostream>
@@ -66,7 +72,7 @@ telux::common::Status DgnssMenu::initDgnssManager(std::shared_ptr<IDgnssManager>
     if(dgnssManager == nullptr) {
         std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
         auto &locationFactory = LocationFactory::getInstance();
-        dgnssManager = locationFactory.getDgnssManager(DgnssDataFormat::DATA_FORMAT_RTCM_3,
+        dgnssManager = locationFactory.getDgnssManager(dataFormat_,
             [&](ServiceStatus status) {
                 if (status == ServiceStatus::SERVICE_AVAILABLE) {
                     prom.set_value(ServiceStatus::SERVICE_AVAILABLE);
@@ -103,28 +109,54 @@ telux::common::Status DgnssMenu::initDgnssManager(std::shared_ptr<IDgnssManager>
 }
 
 int DgnssMenu::init() {
-   std::shared_ptr<ConsoleAppCommand> injectFromFileCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "1", "Inject_From_File", {},
-         std::bind(&DgnssMenu::injectFromFile, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> injectFromServerCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "2", "Inject_From_Server", {},
-         std::bind(&DgnssMenu::injectFromServer, this, std::placeholders::_1)));
+    while (true) {
+        std::cout
+            << "Enter Dgnss Data Format:\n"
+            << "  1 - DATA_FORMAT_RTCM_3\n"
+            << "  2 - DATA_FORMAT_3GPP_RTK_R15\n"
+            << "  3 - DATA_FORMAT_RTX\n"
+            << "Selection: ";
 
-   std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListDgnssSubMenu
-      = {injectFromFileCommand, injectFromServerCommand};
-   addCommands(commandsListDgnssSubMenu);
-   ConsoleApp::displayMenu();
+        std::string usrInput;
+        std::getline(std::cin, usrInput);
 
-   telux::common::Status status = telux::common::Status::FAILED;
-   int rc = 0;
-   status = initDgnssManager(dgnssManager_);
-   if (status != telux::common::Status::SUCCESS) {
-       rc = -1;
-   }
-   return rc;
+        if (usrInput == "1") {
+            dataFormat_ = DgnssDataFormat::DATA_FORMAT_RTCM_3;
+            break;
+        } else if (usrInput == "2") {
+            dataFormat_ = DgnssDataFormat::DATA_FORMAT_3GPP_RTK_R15;
+            break;
+        } else if (usrInput == "3") {
+            dataFormat_ = DgnssDataFormat::DATA_FORMAT_RTX;
+            break;
+        } else {
+            std::cout << "Invalid input. Please enter 1, 2, or 3.\n\n";
+        }
+    }
+
+    telux::common::Status status = initDgnssManager(dgnssManager_);
+    if (status != telux::common::Status::SUCCESS) {
+        return -1;
+    }
+
+    std::shared_ptr<ConsoleAppCommand> injectFromFileCommand =
+        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "1", "Inject_From_File", {},
+            std::bind(&DgnssMenu::injectFromFile, this, std::placeholders::_1)));
+
+    std::shared_ptr<ConsoleAppCommand> injectFromServerCommand =
+        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "2", "Inject_From_Server", {},
+            std::bind(&DgnssMenu::injectFromServer, this, std::placeholders::_1)));
+
+    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListDgnssSubMenu =
+        {injectFromFileCommand, injectFromServerCommand};
+
+    addCommands(commandsListDgnssSubMenu);
+    ConsoleApp::displayMenu();
+
+    return 0;
 }
 
 int DgnssMenu::processRtcmFromServer(void) {

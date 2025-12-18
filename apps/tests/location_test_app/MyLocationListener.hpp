@@ -26,10 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef MYLOCATIONLISTENER_HPP
@@ -65,6 +66,8 @@ public:
 
    void onCapabilitiesInfo(const telux::loc::LocCapability capabilityMask) override;
 
+   void onGnssSVResidualInfo(const telux::loc::GnssSvResidualReport &svResReport) override;
+
    void setDetailedLocationReportFlag(bool enable);
    void setDetailedEngineLocReportFlag(bool enable);
    void setBasicLocationReportFlag(bool enable);
@@ -74,6 +77,7 @@ public:
    void setMeasurementsInfoFlag(bool enable);
    void setDisasterCrisisInfoFlag(bool enable);
    void setLocSystemInfoFlag(bool enable);
+   void setSvResidualInfoFlag(bool enable);
 
    ~MyLocationListener() {
    }
@@ -85,12 +89,13 @@ private:
    bool isMeasurementsInfoFlagEnabled_ = false;
    bool isDisasterCrisisInfoFlagEnabled_ = false;
    bool isLocSysInfoFlagEnabled_ = false;
+   bool isSvResidualInfoFlagEnabled_ = false;
    void printSbasCorrectionEx(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printHorizontalReliability(telux::loc::LocationReliability locReliability);
    void printLocationPositionTech(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printLocationPositionDynamics(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printGnssMeasurementInfo(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
-   void printGnssSystemTime(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
+   void printGnssSystemTime(const telux::loc::SystemTime &sysTime);
    void printLocationValidity(telux::loc::LocationInfoValidity validityMask);
    void printLocationExValidity(telux::loc::LocationInfoExValidity validityMask);
    void printLocationTech(telux::loc::LocationTechnology techMask);
@@ -102,7 +107,8 @@ private:
    void printFixAvailability(telux::loc::SVInfoAvailability availability);
    void printSvUsedInPosition(telux::loc::SvUsedInPosition svUsedInPosition);
    void printCalibrationStatus(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
-   void printLocOutputEngineType(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
+   void printSolutionStatus(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
+   void printLocOutputEngineType(telux::loc::LocationAggregationType locEngineType);
    void printLocOutputEngineMask(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printMeasurementsClockValidity(telux::loc::GnssMeasurementsClockValidity flags);
    void printMeasurementsDataValidity(telux::loc::GnssMeasurementsDataValidity flags);
@@ -114,6 +120,13 @@ private:
    void printENUVelocityVRPBased(std::vector<float> enuVelocityVRPBased);
    void printAltitudeType(telux::loc::AltitudeType type);
    void printReportStatus(telux::loc::ReportStatus status);
+   void printResidualPVTInfo(const telux::loc::ResidualPVTInfo &pvt);
+   void printSvResidualValidity(uint32_t mask);
+   void printSvResidualDataVector(const std::vector<telux::loc::SvResidualData>
+       &svResidualDataList);
+   void printSvAvailValidity(uint32_t mask);
+   void printSvAvailabilityUsage(const telux::loc::SvAvailabilityUsage &svAvailabilityUsage);
+   void printDgnssStationIds(std::vector<uint16_t> dgnssStationIds);
 };
 
 class MyLocationConfigListener : public telux::loc::ILocationConfigListener {

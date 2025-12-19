@@ -70,7 +70,7 @@ bool SMSTrigger::init() {
 
 void SMSTrigger::onIncomingSms(
     int phoneId, std::shared_ptr<std::vector<telux::tel::SmsMessage>> msgs) {
-
+    eventManager_->holdWakeLock("SMSReceived");
     LOG(DEBUG, __FUNCTION__, " Consolidated Multipart Message: ");
     std::string text                             = "";
     std::vector<telux::tel::SmsMessage> messages = *(msgs.get());
@@ -114,6 +114,7 @@ void SMSTrigger::onIncomingSms(
     });
 
     future.wait();
+    eventManager_->releaseWakeLock("SMSReceived");
 }
 
 void SMSTrigger::onEventRejected(shared_ptr<Event> event, EventStatus reason) {

@@ -26,11 +26,13 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
  * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 /**
  * @file       LocationDefines.hpp
  *
@@ -1276,7 +1278,9 @@ enum GnssMeasurementsAdrStateValidityType {
     /** State is "reset".*/
     RESET_BIT       = (1<<1),
     /** State is "cycle slip".*/
-    CYCLE_SLIP_BIT  = (1<<2)
+    CYCLE_SLIP_BIT  = (1<<2),
+    /** State is "half cycle resolved".*/
+    HALF_CYCLE_RESOLVED_BIT  = (1<<3)
 };
 
 /** Specifies GnssMeasurementsAdrStateValidityType.*/

@@ -1,5 +1,6 @@
-# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
-# SPDX-License-Identifier: BSD-3-Clause-Clear
+#/* Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# * SPDX-License-Identifier: BSD-3-Clause-Clear
+# */
 TimeStamp,TimeStamp_ms,Time_monotonic,LogRecType,L2 ID,CBR Percent,CPU_Util,TXInterval,msgCnt,TempId,GPGSAMode,secMark,lat,long,semi_major_dev,speed,heading,longAccel,latAccel,Tracking_Error,vehicleDensityInRange,ChannelQualityIndication,BSMValid,max_ITT,GPS-Time,Events,DCC random time,Hysterisis,TotalRVs,DistanceFromRV
 2024-05-24-18:42:35.024,1716576155023,71467773,Rx,36273340,0,0,0,1,1,0,39663,32.902743,-117.200772,2.000000,0.000000,0.000000,0.000000,0.000000,0.0,0.0,0.0,1,100,0.0,0,0,5,0,0.000000
 2024-05-24-18:42:35.024,1716576155024,71467773,Rx,36273340,0,0,0,24,2,0,39705,32.902747,-117.200771,0.750000,0.000000,0.000000,0.000000,0.000000,0.0,0.0,0.0,1,100,0.0,0,0,5,0,0.000000

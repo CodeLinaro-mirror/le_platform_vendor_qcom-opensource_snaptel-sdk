@@ -142,7 +142,7 @@ class CallManagerServerImpl final : public telStub::DialerService::Service,
         telStub::GetInProgressCallsData *response);
     void startTimer(std::string timer, int phoneId);
     void msdTransmissionStatus(std::string msdtransmision, int phoneId);
-    void changeCallState(int phoneId, std::string callstate, int index);
+    void changeCallState(int phoneId, std::string callstate, int index, bool retainCache = false);
     void expiryTimer(std::string timer, int phoneId);
     void sendEvent(std::string timer, std::string status, int phoneId);
     void onEventUpdate(::eventService::UnsolicitedEvent event) override;
@@ -178,7 +178,7 @@ class CallManagerServerImpl final : public telStub::DialerService::Service,
     void triggerTimerExpiry(std::string timer, int phoneId);
     void triggerECallInfoChangeEvent(
         int phoneId, std::string timer, telux::tel::HlapTimerEvent action);
-    void triggerCallInfoChangeEvent(int phoneId, int callIndex);
+    void triggerCallInfoChangeEvent(int phoneId, int callIndex, bool retainCache = false);
     void triggerCallInfoChange(int phoneId);
     void triggerMsdPullrequestEvent(int phoneId);
     void triggerCallStateChangeEvent(
@@ -187,7 +187,7 @@ class CallManagerServerImpl final : public telStub::DialerService::Service,
     std::vector<std::shared_ptr<CallInfo>> fetchSlotIdCalls(int phoneId);
     void triggerModifyCallRequestEvent(int phoneId, int callIndex);
     void triggerRttMessageEvent(int phoneId, std::string message);
-    bool findAndRemoveMatchingCall(int callIndex);
+    bool findAndRemoveMatchingCall(int callIndex, bool retainCache = false);
     void updateEcallHlapTimer(int phoneId, std::string timer, HlapTimerStatus status);
     std::vector<std::string> parseUserInput();
     bool getUserConfiguredeCallRat();

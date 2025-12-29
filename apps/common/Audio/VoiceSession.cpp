@@ -28,10 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2023,2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <chrono>
@@ -43,13 +42,27 @@
 #include "VoiceSession.hpp"
 
 VoiceSession::VoiceSession()
-    : audioStarted_(false) {
+   : audioStarted_(false)
+   , ready_(true) {
 }
 
 VoiceSession::~VoiceSession() {
 }
 
+void VoiceSession::setReady(bool ready) {
+    ready_ = ready;
+}
+
+bool VoiceSession::isReady() const {
+    return ready_;
+}
+
 Status VoiceSession::startAudio() {
+    if (!ready_) {
+        LOG(ERROR, "Audio Service UNAVAILABLE");
+        return Status::FAILED;
+    }
+
     auto statusFromRequest = Status::FAILED;
     auto audioVoiceStream_ = std::dynamic_pointer_cast<IAudioVoiceStream>(stream_);
     telux::common::Status statusFromResponse;
@@ -83,6 +96,11 @@ Status VoiceSession::startAudio() {
 }
 
 Status VoiceSession::stopAudio() {
+    if (!ready_) {
+        LOG(ERROR, "Audio Service UNAVAILABLE");
+        return Status::FAILED;
+    }
+
     auto audioVoiceStream_ = std::dynamic_pointer_cast<IAudioVoiceStream>(stream_);
     auto statusFromRequest = Status::FAILED;
     telux::common::Status statusFromResponse;
@@ -111,6 +129,11 @@ Status VoiceSession::stopAudio() {
 }
 
 Status VoiceSession::startDtmf(DtmfTone tone, uint32_t duration, uint16_t gain) {
+    if (!ready_) {
+        LOG(ERROR, "Audio Service UNAVAILABLE");
+        return Status::FAILED;
+    }
+
     auto audioVoiceStream_ = std::dynamic_pointer_cast<IAudioVoiceStream>(stream_);
     auto statusFromRequest = Status::FAILED;
     telux::common::Status statusFromResponse;
@@ -138,6 +161,11 @@ Status VoiceSession::startDtmf(DtmfTone tone, uint32_t duration, uint16_t gain) 
 }
 
 Status VoiceSession::stopDtmf() {
+    if (!ready_) {
+        LOG(ERROR, "Audio Service UNAVAILABLE");
+        return Status::FAILED;
+    }
+
     auto audioVoiceStream_ = std::dynamic_pointer_cast<IAudioVoiceStream>(stream_);
     auto statusFromRequest = Status::FAILED;
     telux::common::Status statusFromResponse;
@@ -165,6 +193,11 @@ Status VoiceSession::stopDtmf() {
 }
 
 Status VoiceSession::registerListener(std::weak_ptr<IVoiceListener> listener) {
+    if (!ready_) {
+        LOG(ERROR, "Audio Service UNAVAILABLE");
+        return Status::FAILED;
+    }
+
     auto audioVoiceStream_ = std::dynamic_pointer_cast<IAudioVoiceStream>(stream_);
     auto statusFromRequest = Status::FAILED;
     telux::common::Status statusFromResponse;
@@ -193,6 +226,11 @@ Status VoiceSession::registerListener(std::weak_ptr<IVoiceListener> listener) {
 }
 
 Status VoiceSession::deRegisterListener(std::weak_ptr<IVoiceListener> listener) {
+    if (!ready_) {
+        LOG(ERROR, "Audio Service UNAVAILABLE");
+        return Status::FAILED;
+    }
+
     auto audioVoiceStream_ = std::dynamic_pointer_cast<IAudioVoiceStream>(stream_);
     auto statusFromRequest = Status::FAILED;
     if (audioVoiceStream_ && audioStarted_) {

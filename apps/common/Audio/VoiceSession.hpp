@@ -60,10 +60,13 @@ class VoiceSession : public AudioSession {
     Status registerListener(std::weak_ptr<IVoiceListener> listener);
     Status deRegisterListener(std::weak_ptr<IVoiceListener> listener);
     SlotId getSlotId();
+    void setReady(bool ready);
+    bool isReady() const;
 
  private:
     std::atomic<bool> audioStarted_;
     SlotId slotId_;
+    std::atomic<bool> ready_{true};
 };
 
 #endif  // VOICESESSION_HPP

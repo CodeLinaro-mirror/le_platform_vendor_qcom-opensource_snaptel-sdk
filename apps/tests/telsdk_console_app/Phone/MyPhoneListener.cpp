@@ -26,8 +26,9 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+
+/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -306,19 +307,7 @@ std::string MyPhoneListener::radioStateToString(telux::tel::RadioState radioStat
     return state;
 }
 
-void MyVoiceRadioTechnologyCallback::voiceRadioTechnologyResponse(
-    telux::tel::RadioTechnology radioTechnology, telux::common::ErrorCode error) {
-    std::cout << "\n";
-    if (error == telux::common::ErrorCode::SUCCESS) {
-        PRINT_CB << "requestVoiceRadioTechnology successful, Radio technology: "
-                 << radioTechToString(radioTechnology) << std::endl;
-    } else {
-        PRINT_CB << "Request Voice Technology failed, errorCode: " << static_cast<int>(error)
-                 << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
-    }
-}
-
-std::string MyVoiceRadioTechnologyCallback::radioTechToString(
+std::string MyPhoneHelper::radioTechToString(
     telux::tel::RadioTechnology radioTech) {
     std::string rtString = "";
     switch (radioTech) {
@@ -390,6 +379,7 @@ void MyVoiceServiceStateCallback::voiceServiceStateResponse(
     if (error == telux::common::ErrorCode::SUCCESS) {
         PRINT_CB << "requestVoiceServiceState successful, Service State: "
                  << MyPhoneHelper::voiceServiceStateToString(serviceInfo->getVoiceServiceState())
+                 << " , Radio Technology: " << MyPhoneHelper::radioTechToString(serviceInfo->getRadioTechnology())
                  << std::endl;
     } else {
         PRINT_CB << "requestVoiceServiceState is failed, errorCode: " << static_cast<int>(error)
@@ -454,13 +444,19 @@ void MyPhoneListener::onVoiceServiceStateChanged(
             PRINT_NOTIFICATION << "\n\nonVoiceServiceStateChanged: State: "
                                << MyPhoneHelper::voiceServiceStateToString(voiceSrvState);
             if (srvInfo->isEmergency()) {
-                std::cout << ", Phone is in EMERGENCY_ONLY mode" << std::endl;
+                std::cout << ", Phone is in EMERGENCY_ONLY mode" <<
+                ", Radio Technology: " <<
+                MyPhoneHelper::radioTechToString(srvInfo->getRadioTechnology()) << std::endl;
             }
             if (srvInfo->isInService()) {
-                std::cout << ", Phone is in HOME network mode" << std::endl;
+                std::cout << ", Phone is in HOME network mode" <<
+                ", Radio Technology: " <<
+                MyPhoneHelper::radioTechToString(srvInfo->getRadioTechnology()) << std::endl;
             }
             if (srvInfo->isOutOfService()) {
-                std::cout << ", Phone is in OUT_OF_SERVICE mode" << std::endl;
+                std::cout << ", Phone is in OUT_OF_SERVICE mode" <<
+                ", Radio Technology: " <<
+                MyPhoneHelper::radioTechToString(srvInfo->getRadioTechnology()) << std::endl;
             }
         }
     }

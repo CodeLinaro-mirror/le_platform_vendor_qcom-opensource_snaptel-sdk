@@ -295,6 +295,30 @@ class ICallListener : public common::IServiceStatusListener {
     virtual void onECallRedial(int phoneId, ECallRedialInfo info) {
     }
 
+    /**
+     * This function is invoked upon detection of a DTMF tone at the receiving endpoint during
+     * a Packet Switched (PS) calls. For Circuit Switched (CS) calls, @ref telux::audio::
+     * IVoiceListener::onDtmfToneDetection is invoked instead, as DTMF tone is delivered as part
+     * of signaling information.
+     * @ref telux::audio::IVoiceListener::onDtmfToneDetection is used in conjuction with
+     * @ref telux::audio::IAudioVoiceStream::registerListener().
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_INFO_READ
+     * permission to receive this notification.
+     *
+     * @param [in] phoneId    Represents the phone corresponding to which the DTMF digit
+     *                        was received
+     * @param [in] dtmfTone   Represents the detected DTMF digit.
+     *                        Valid values:
+     *                        • Digits: 0–9
+     *                        • Special characters: '*' and '#'
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change and
+     *          could break backward compatibility.
+     */
+    virtual void onDtmfReceived(int phoneId, char dtmfTone) {
+    }
+
     virtual ~ICallListener() {
     }
 };

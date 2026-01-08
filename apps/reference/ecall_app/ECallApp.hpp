@@ -71,8 +71,6 @@ class ECallApp : public ConsoleApp {
     ~ECallApp();
 
  private:
-    /** Aecs sub menu */
-    void aecsCallSubMenu(std::vector<std::string> userInput);
     /**
      * Trigger a standard eCall using the emergency number configured in FDN (eg.112)
      */

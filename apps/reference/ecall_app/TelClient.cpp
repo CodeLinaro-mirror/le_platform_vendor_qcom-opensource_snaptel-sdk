@@ -107,6 +107,11 @@ void TelClient::cleanup() {
     if (callListener_) {
         callListener_ = nullptr;
     }
+
+    // Reset all callback pointers
+    hangupCommandCallback_ = nullptr;
+    updateMsdCommandCallback_ = nullptr;
+    answerCommandCallback_ = nullptr;
 }
 
 // Initialize the telephony subsystem

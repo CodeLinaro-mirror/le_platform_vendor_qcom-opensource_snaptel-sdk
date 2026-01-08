@@ -56,8 +56,36 @@ bool AecsCallManager::init() {
         return false;
     }
 
-    // Init audio
+    // ---------- SMS Manager init ----------
+    int noOfSlots = MIN_SIM_SLOT_COUNT;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        noOfSlots = MAX_SIM_SLOT_COUNT;
+    }
 
+    smsMgrs_.clear();
+
+    for (int index = 1; index <= noOfSlots; ++index) {
+        std::promise<telux::common::ServiceStatus> prom;
+        auto smsMgr = phoneFactory.getSmsManager(
+            index, [&](telux::common::ServiceStatus status) { prom.set_value(status); });
+
+        if (!smsMgr) {
+            std::cout << "ERROR - Failed to get SMS Manager instance \n";
+            return false;
+        }
+
+        std::cout << " Waiting for SMS Manager to be ready \n";
+        telux::common::ServiceStatus smsMgrStatus = prom.get_future().get();
+        if (smsMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "SMS Manager is ready \n";
+            smsMgrs_.emplace(index, smsMgr);
+        } else {
+            std::cout << "ERROR - Unable to initialize SMS Manager \n";
+            return false;
+        }
+    }
+
+    // Init audio
     audioClient_       = std::make_shared<AudioClient>();
     Status audioStatus = audioClient_->init();
     if (audioStatus != Status::SUCCESS) {
@@ -65,11 +93,11 @@ bool AecsCallManager::init() {
         return false;
     }
 
-    parseAudioConfig();
+    parseConfig();
     return true;
 }
 
-void AecsCallManager::parseAudioConfig() {
+void AecsCallManager::parseConfig() {
     auto appSettings = std::make_shared<ConfigParser>(
         DEFAULT_AECS_CONFIG_FILE_NAME, DEFAULT_AECS_CONFIG_FILE_PATH);
 
@@ -124,6 +152,65 @@ void AecsCallManager::parseAudioConfig() {
     } else {
         std::cout << "AecsCallManager: Enabling ECNR by default" << std::endl;
     }
+
+    param = appSettings->getValue("AECS_CALL_OR_MSD_FAIL_RETRY_INTERVAL");
+    if (!param.empty()) {
+        aecsRetryInterval_ = atol(param.c_str());
+    } else {
+        aecsRetryInterval_ = AECS_CALL_OR_MSD_RETRY_INTERVAL_MAX_S;
+        std::cout << "AecsCallManager: Using default interval " << aecsRetryInterval_ << std::endl;
+    }
+
+    param = appSettings->getValue("AECS_CALL_OR_MSD_FAIL_RETRY_DURATION");
+    if (!param.empty()) {
+        aecsRetryDuration_ = atol(param.c_str());
+    } else {
+        aecsRetryDuration_ = AECS_CALL_OR_MSD_RETRY_DURATION_MIN_S;
+        std::cout << "AecsCallManager: Using default duration " << aecsRetryDuration_ << std::endl;
+    }
+
+    param = appSettings->getValue("AECS_OEM_CALL_DROP_RETRY_INTERVAL");
+    if (!param.empty()) {
+        aecsOemRetryInterval_ = atol(param.c_str());
+    } else {
+        aecsOemRetryInterval_ = AECS_CALL_OR_MSD_RETRY_INTERVAL_MAX_S;
+        std::cout << "AecsCallManager: Using default interval " << aecsOemRetryInterval_
+                  << std::endl;
+    }
+
+    param = appSettings->getValue("AECS_OEM_CALL_DROP_RETRY_DURATION");
+    if (!param.empty()) {
+        aecsOemRetryDuration_ = atol(param.c_str());
+    } else {
+        aecsOemRetryDuration_ = AECS_CALL_OR_MSD_RETRY_DURATION_MIN_S;
+        std::cout << "AecsCallManager: Using default duration " << aecsOemRetryDuration_
+                  << std::endl;
+    }
+}
+
+int AecsCallManager::getAecsRetryInterval() {
+    return aecsRetryInterval_;
+}
+
+int AecsCallManager::getAecsRetryDuration() {
+    return aecsRetryDuration_;
+}
+
+int AecsCallManager::getAecsOemRetryInterval() {
+    return aecsOemRetryInterval_;
+}
+
+int AecsCallManager::getAecsOemRetryDuration() {
+    return aecsOemRetryDuration_;
+}
+
+std::vector<telux::tel::PduBuffer> AecsCallManager::getRetryRawPdu() {
+    return retryRawPdu_;
+}
+
+void AecsCallManager::setRetryRawPdu(std::vector<telux::tel::PduBuffer> rawPdus) {
+    retryRawPdu_.clear();
+    retryRawPdu_ = rawPdus;
 }
 
 // ---------------------- Audio ----------------------
@@ -169,69 +256,17 @@ void AecsCallManager::stopAudioIfNoCalls(int phoneId) {
     }
 }
 
+// ---------------------- Emergency mode ----------------------
 // Callback which provides response for set emergency mode
 void AecsCallManager::setEmergencyModeResponse(telux::common::ErrorCode error) {
-    if (error != telux::common::ErrorCode::SUCCESS) {
+    if (error != telux::common::ErrorCode::SUCCESS
+        && error != telux::common::ErrorCode::NO_EFFECT) {
         std::cout << "Failed to set emergency mode with error code: "
                   << Utils::getErrorCodeAsString(error) << std::endl;
         return;
     } else {
         std::cout << "Successfully set emergency mode " << std::endl;
     }
-}
-
-// ---------------------- Emergency mode ----------------------
-
-Status AecsCallManager::enterEmergencyMode(int phoneId, bool enableAntennaSwitch) {
-    if (!callMgr_) {
-        std::cout << "AecsCallManager: CallManager not initialized\n";
-        return Status::FAILED;
-    }
-
-    // If already in emergency mode, just return success
-    auto it = emergencyMode_.find(phoneId);
-    if (it != emergencyMode_.end() && it->second) {
-        std::cout << "AecsCallManager: Emergency mode already enabled on phoneId " << phoneId
-                  << std::endl;
-        return Status::SUCCESS;
-    }
-
-    Status status
-        = callMgr_->setEmergencyMode(phoneId, /*emergencyModeEnabled*/ true, enableAntennaSwitch,
-            std::bind(&AecsCallManager::setEmergencyModeResponse, this, std::placeholders::_1));
-    if (status == Status::SUCCESS) {
-        emergencyMode_[phoneId] = true;
-        std::cout << "AecsCallManager: Emergency mode enabled on phoneId " << phoneId << std::endl;
-    } else {
-        std::cout << "AecsCallManager: Failed to enable emergency mode on phoneId " << phoneId
-                  << ", status=" << (int)status << std::endl;
-    }
-    return status;
-}
-
-Status AecsCallManager::exitEmergencyMode(int phoneId) {
-    if (!callMgr_) {
-        std::cout << "AecsCallManager: CallManager not initialized\n";
-        return Status::FAILED;
-    }
-
-    auto it = emergencyMode_.find(phoneId);
-    if (it == emergencyMode_.end() || !it->second) {
-        std::cout << "AecsCallManager: Emergency mode already disabled on phoneId " << phoneId
-                  << std::endl;
-        return Status::SUCCESS;
-    }
-
-    Status status = callMgr_->setEmergencyMode(
-        phoneId, /*emergencyModeEnabled*/ false, /*antennaSwitchEnabled*/ false, nullptr);
-    if (status == Status::SUCCESS) {
-        emergencyMode_[phoneId] = false;
-        std::cout << "AecsCallManager: Emergency mode disabled on phoneId " << phoneId << std::endl;
-    } else {
-        std::cout << "AecsCallManager: Failed to disable emergency mode on phoneId " << phoneId
-                  << ", status=" << (int)status << std::endl;
-    }
-    return status;
 }
 
 Status AecsCallManager::setEmergencyMode(
@@ -244,6 +279,7 @@ Status AecsCallManager::setEmergencyMode(
     Status status = callMgr_->setEmergencyMode(phoneId, emergencyModeEnabled, antennaSwitchEnabled,
         std::bind(&AecsCallManager::setEmergencyModeResponse, this, std::placeholders::_1));
     if (status == Status::SUCCESS) {
+        std::lock_guard<std::mutex> lock(emergencyModeMutex_);
         emergencyMode_[phoneId] = emergencyModeEnabled;
         std::cout << "AecsCallManager: set Emergency mode: " << emergencyModeEnabled
                   << ", antenna switching: " << antennaSwitchEnabled << " on phoneId " << phoneId
@@ -256,6 +292,7 @@ Status AecsCallManager::setEmergencyMode(
 }
 
 bool AecsCallManager::isEmergencyMode(int phoneId) const {
+    std::lock_guard<std::mutex> lock(emergencyModeMutex_);
     auto it = emergencyMode_.find(phoneId);
     if (it == emergencyMode_.end()) {
         return false;

@@ -587,23 +587,6 @@ public:
     }
 };
 
-// --------------------------------------------------------------
-//  DSDS helpers for calls / emergency mode
-// --------------------------------------------------------------
-static void terminateCallsOnOtherPhones(std::shared_ptr<ICallManager> cm, int targetPhoneId) {
-    auto calls = cm->getInProgressCalls();
-    for (auto &c : calls) {
-        if (!c) continue;
-        if (c->getCallState() != CallState::CALL_ENDED &&
-            c->getPhoneId()   != targetPhoneId) {
-            std::cout << "[Helper] Hanging up call on other phoneId="
-                      << c->getPhoneId() << "\n";
-            auto st = c->hangup();
-            std::cout << "  hangup() status: " << static_cast<int>(st) << "\n";
-        }
-    }
-}
-
 static bool prepareSelectedPhoneForAecs(std::shared_ptr<ICallManager> cm, int phoneId) {
     auto calls = cm->getInProgressCalls();
     for (auto &c : calls) {
@@ -744,12 +727,6 @@ int main() {
     }
 
     const int phoneId = DEFAULT_PHONE_ID;
-
-    // DSDS: clean other subs
-    if (DeviceConfig::isMultiSimSupported()) {
-        std::cout << "[DSDS] Multi-SIM detected – cleaning calls on other phones\n";
-        terminateCallsOnOtherPhones(callMgr, phoneId);
-    }
 
     if (!enterEmergencyMode(callMgr, phoneId)) {
         std::cerr << "ERROR: Failed to enter emergency mode – aborting.\n";

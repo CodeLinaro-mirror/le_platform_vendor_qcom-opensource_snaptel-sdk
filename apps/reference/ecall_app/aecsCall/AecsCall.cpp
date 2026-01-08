@@ -25,6 +25,14 @@ AecsCall::AecsCall(std::string appName, std::string cursor)
 }
 
 AecsCall::~AecsCall() {
+    // Exit emergency mode before closing the application
+    auto &aecsMgr = AecsCallManager::getInstance();
+    // Only disable emergency mode if phoneId_ was actually set
+    if (phoneId_.load() != INVALID_PHONE_ID) {
+        aecsMgr.setEmergencyMode(phoneId_, false, false);
+    }
+    aecsMgr.stopAudioAll();
+
     aecsHangupCb_ = nullptr;
     aecsAnswerCb_ = nullptr;
     aecsRejectCb_ = nullptr;
@@ -37,79 +45,54 @@ AecsCall::~AecsCall() {
     for (unsigned int index = 0; index < smsMgrs_.size(); index++) {
         smsMgrs_[index]->removeListener(smsListener_);
     }
-    aecsSmsCmdCb_ = nullptr;
     smsListener_ = nullptr;
-    aecsSmsDeliveryCb_ = nullptr;
 }
 
 bool AecsCall::init() {
 
-    int noOfSlots = MIN_SIM_SLOT_COUNT;
-    if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        noOfSlots = MAX_SIM_SLOT_COUNT;
+    // First, init the central manager (creates callMgr_ + smsMgrs_ + audio)
+    auto &aecsMgr = AecsCallManager::getInstance();
+    if (!aecsMgr.init()) {
+        std::cout << "Failed to initialize AecsCallManager" << std::endl;
+        return false;
     }
-    telux::common::Status status = telux::common::Status::FAILED;
-    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-    std::promise<telux::common::ServiceStatus> callMgrprom;
 
-    // Get the PhoneFactory and CallManager instances.
-    callMgr_ = phoneFactory.getCallManager([&](telux::common::ServiceStatus status) {
-        callMgrprom.set_value(status);
-    });
+    // ---- Use CallManager from AecsCallManager ----
+    callMgr_ = aecsMgr.getCallManager();
     if (!callMgr_) {
-        std::cout << "ERROR - Failed to get CallManager instance \n";
-        return false;
-    }
-    std::cout << "CallManager subsystem is not ready "
-              << ", Please wait " << std::endl;
-    telux::common::ServiceStatus callMgrStatus = callMgrprom.get_future().get();
-
-    if (callMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "CallManager subsystem is ready \n";
-        aecsHangupCb_ = std::make_shared<AecsCallCommandCallback>("Hang");
-        aecsAnswerCb_ = std::make_shared<AecsCallCommandCallback>("Answer");
-        aecsRejectCb_ = std::make_shared<AecsCallCommandCallback>("Reject");
-        callListener_ = std::make_shared<AecsCallListener>();
-        // registering listener
-        status = callMgr_->registerListener(callListener_);
-        if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Unable to register Call Manager listener" << std::endl;
-            return false;
-        }
-    } else {
-        std::cout << "Unable to initialise CallManager subsystem " << std::endl;
+        std::cout << "ERROR - CallManager instance not available from AecsCallManager\n";
         return false;
     }
 
-    // initialize SMS Manager
-    aecsSmsCmdCb_ = std::make_shared<AecsSmsCommandCallback>();
-    aecsSmsDeliveryCb_ = std::make_shared<AecsSmsDeliveryCallback>();
-    smsListener_ = std::make_shared<AecsSmsListener>();
+    // CallManager is ready at this point (AecsCallManager already waited).
 
-    for (auto index = 1; index <= noOfSlots; index++) {
-        std::promise<telux::common::ServiceStatus> prom;
-        auto smsMgr = phoneFactory.getSmsManager(
-            index, [&](telux::common::ServiceStatus status) { prom.set_value(status); });
+    aecsHangupCb_ = std::make_shared<AecsCallCommandCallback>("Hang");
+    aecsAnswerCb_ = std::make_shared<AecsCallCommandCallback>("Answer");
+    aecsRejectCb_ = std::make_shared<AecsCallCommandCallback>("Reject");
+    callListener_ = std::make_shared<AecsCallListener>();
 
-        if (!smsMgr) {
-            std::cout << "ERROR - Failed to get SMS Manager instance \n";
+    telux::common::Status status =
+        callMgr_->registerListener(callListener_);
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "Unable to register Call Manager listener" << std::endl;
+        return false;
+    }
+
+    // ---- Use SmsManagers from AecsCallManager ----
+    smsListener_       = std::make_shared<AecsSmsListener>();
+
+    // Fill local smsMgrs_ for menu functions, but from central manager:
+    smsMgrs_.clear();
+    for (const auto &entry : aecsMgr.getAllSmsManagers()) {
+        int slotId = entry.first;
+        auto mgr   = entry.second;
+        telux::common::Status s = mgr->registerListener(smsListener_);
+        if (s != telux::common::Status::SUCCESS) {
+            std::cout << "ERROR - Failed to register SMS listener on slot " << slotId << "\n";
             return false;
         }
-
-        std::cout << " Waiting for SMS Manager to be ready \n";
-        telux::common::ServiceStatus smsMgrStatus = prom.get_future().get();
-        if (smsMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "SMS Manager is ready \n";
-            status = smsMgr->registerListener(smsListener_);
-            if (status != telux::common::Status::SUCCESS) {
-                std::cout << "ERROR - Failed to register listener \n";
-                return false;
-            }
-            smsMgrs_.emplace_back(smsMgr);
-        } else {
-            std::cout << "ERROR - Unable to initialize SMS Manager \n";
-            return false;
-        }
+        // we still keep a per-slot vector as your existing code assumes phoneId-1 index
+        smsMgrs_.push_back(mgr);
     }
 
     if (menuOptionsAdded_ == false) {
@@ -138,21 +121,9 @@ bool AecsCall::init() {
             std::make_shared<ConsoleAppCommand>(
                 ConsoleAppCommand("6", "Get_InProgress_Calls", {},
                     std::bind(&AecsCall::getAllCalls, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> retryDroppedAecsCallCommand =
-            std::make_shared<ConsoleAppCommand>(
-                ConsoleAppCommand("7", "Retry_Dropped_AECS_call", {},
-                    std::bind(&AecsCall::retryDroppedAecsCall, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> retryFailedAecsCallCommand =
-            std::make_shared<ConsoleAppCommand>(
-                ConsoleAppCommand("8", "Retry_Failed_AECS_call", {},
-                    std::bind(&AecsCall::retryFailedAecsCall, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> retryMsdSmsCommand =
-            std::make_shared<ConsoleAppCommand>(
-                ConsoleAppCommand("9", "Retry_MSD_over_SMS", {},
-                    std::bind(&AecsCall::retryMsdOverSms, this, std::placeholders::_1)));
         std::shared_ptr<ConsoleAppCommand> setEmergencyModeCommand =
             std::make_shared<ConsoleAppCommand>(
-                ConsoleAppCommand("10", "Set_Emergency_Mode", {},
+                ConsoleAppCommand("7", "Set_Emergency_Mode", {},
                     std::bind(&AecsCall::setEmergencyMode, this, std::placeholders::_1)));
 
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {
@@ -162,27 +133,12 @@ bool AecsCall::init() {
             sendAecsMessageCommand,
             hangupCommand,
             getCallsCommand,
-            retryDroppedAecsCallCommand,
-            retryFailedAecsCallCommand,
-            retryMsdSmsCommand,
             setEmergencyModeCommand};
         addCommands(commandsList);
     }
 
-    if (!AecsCallManager::getInstance().init()) {
-        std::cout << "Failed to initialize AecsCallManager" << std::endl;
-        return false;
-    }
     ConsoleApp::displayMenu();
     return true;
-}
-
-void AecsCall::makeCallResponse(telux::common::ErrorCode error,
-                                std::shared_ptr<telux::tel::ICall> call) {
-   std::cout << std::endl << std::endl;
-   std::cout << "makeAecsCall response ErrorCode: " << int(error)
-            << ", description: " << Utils::getErrorCodeAsString(error)
-            << ", slot id: " << call->getPhoneId() << std::endl;
 }
 
 /**
@@ -203,33 +159,11 @@ void AecsCall::dialAecsCall(std::vector<std::string> userInput) {
     PRINT_NOTIFICATION << " AECS information: AECS function being triggered" << std::endl;
 
     // Step1: Enter emergency mode
-    if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        // 1.1 check if any ongoing calls on other phone before entering into
-        // emergency mode and disconnect if any calls found
-        std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls =
-            callMgr_->getInProgressCalls();
-        for (auto &call : inProgressCalls) {
-            if (call->getCallState() != telux::tel::CallState::CALL_ENDED &&
-                call->getPhoneId() != phoneId) {
-                spCall = call;
-                if (spCall) {
-                    status = spCall->hangup(aecsHangupCb_);
-                    if (status != telux::common::Status::SUCCESS) {
-                        std::cout << " Failed to hangup ongoing call" << std::endl;
-                    } else {
-                        std::cout << " Ongoing call hanged up successfully" << std::endl;
-                    }
-                }
-            }
-        }
-    }
-
-    // 1.2 Enter emergency mode
     auto &aecsMgr = AecsCallManager::getInstance();
     std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls =
             callMgr_->getInProgressCalls();
     if (!aecsMgr.isEmergencyMode(phoneId)) {
-        // 1.2.1 Check if any ongoing non-AECS call, if found disconnect.
+        // 1.1 Check if any ongoing non-AECS call, if found disconnect.
         for (auto &call : inProgressCalls) {
             if (call->getCallState() != telux::tel::CallState::CALL_ENDED &&
                 call->getPhoneId() == phoneId) {
@@ -245,7 +179,8 @@ void AecsCall::dialAecsCall(std::vector<std::string> userInput) {
             }
         }
         std::cout << std::endl << std::endl;
-        std::cout << "Enter 10 to enable emergency mode" << std::endl;
+        // 1.2 enable emergency mode
+        std::cout << "Enter 7 to enable emergency mode" << std::endl;
         int opt = -1;
         char delimiter = '\n';
         std::string temp = "";
@@ -258,10 +193,10 @@ void AecsCall::dialAecsCall(std::vector<std::string> userInput) {
                     << std::endl;
             }
         }
-        if (opt != 10) {
+        if (opt != 7) {
             return;
         } else {
-            std::vector<std::string> args; // menu 10 takes no explicit args
+            std::vector<std::string> args; // menu 7 takes no explicit args
             setEmergencyMode(args);
         }
     } else {
@@ -279,9 +214,7 @@ void AecsCall::dialAecsCall(std::vector<std::string> userInput) {
 
     // Step 2: Make AECS call
     telux::common::Status makeCallStatus =
-        callMgr_->makeAecsCall(phoneId, phoneNumber,
-        std::bind(&AecsCall::makeCallResponse, this, std::placeholders::_1,
-                 std::placeholders::_2));
+        callMgr_->makeAecsCall(phoneId, phoneNumber, AecsDialCallback::makeCallResponse);
     if (makeCallStatus == telux::common::Status::SUCCESS) {
         std::cout << "makeAecsCall is successful.\n";
         std::cout << std::endl << std::endl;
@@ -292,7 +225,7 @@ void AecsCall::dialAecsCall(std::vector<std::string> userInput) {
         aecsMgr.stopAudioAll();
         if (aecsMgr.isEmergencyMode(phoneId)) {
             std::cout << std::endl << std::endl;
-            std::cout << "Enter 10 to exit emergency mode" << std::endl;
+            std::cout << "Enter 7 to exit emergency mode" << std::endl;
         }
     }
 }
@@ -317,8 +250,11 @@ void AecsCall::acceptCall(std::vector<std::string> userInput) {
     auto &aecsMgr = AecsCallManager::getInstance();
 
     for (auto &call : inProgressCalls) {
-        if (call->getCallState() != telux::tel::CallState::CALL_ENDED &&
+        if ((call->getCallState() != telux::tel::CallState::CALL_ENDED &&
+            call->getCallState() != telux::tel::CallState::CALL_INCOMING &&
+            call->getCallState() != telux::tel::CallState::CALL_WAITING) &&
             aecsMgr.isEmergencyMode(call->getPhoneId())) {
+            std::cout<< "AECS call ongoing\n";
             aecsOngoing = true;
             break;
         }
@@ -364,6 +300,7 @@ void AecsCall::acceptCall(std::vector<std::string> userInput) {
     if (incomingAecsCall == "y") {
         isIncomingAecs = true;
     } else {
+        isIncomingAecs = false;
         std::cout << " Proceed with non-AECS call" << std::endl;
     }
 
@@ -376,26 +313,8 @@ void AecsCall::acceptCall(std::vector<std::string> userInput) {
     // CASE A: Incoming call is AECS
     // ------------------------------------------------------------------
     if (isIncomingAecs) {
-        // 1.1 If AECS call, enter into emergency mode (multi-sim handling)
-        if (telux::common::DeviceConfig::isMultiSimSupported()) {
-            // Disconnect any ongoing calls on other subs before emergency mode
-            for (auto &call : inProgressCalls) {
-                if (call->getCallState() != telux::tel::CallState::CALL_ENDED &&
-                    call->getPhoneId() != incomingCallPhoneId) {
-                    auto spCall = call;
-                    status = spCall->hangup(aecsHangupCb_);
-                    if (status != telux::common::Status::SUCCESS) {
-                        std::cout << " Failed to hangup ongoing call" << std::endl;
-                    } else {
-                        std::cout << " Ongoing call hanged up successfully" << std::endl;
-                    }
-                }
-            }
-        }
-
         // Step 2: Answer AECS call
         // 2.1 Check if any ongoing non-AECS calls on same phoneId, if found disconnect.
-        inProgressCalls = callMgr_->getInProgressCalls();
         for (auto &call : inProgressCalls) {
             auto state = call->getCallState();
             if ((state != telux::tel::CallState::CALL_ENDED &&
@@ -406,6 +325,7 @@ void AecsCall::acceptCall(std::vector<std::string> userInput) {
                     status = call->hangup(aecsHangupCb_);
                     if (status != telux::common::Status::SUCCESS) {
                         std::cout << " Failed to hangup ongoing non-AECS call" << std::endl;
+                        return;
                     } else {
                         std::cout << " Ongoing non-AECS call hanged up successfully"
                                   << std::endl;
@@ -415,10 +335,11 @@ void AecsCall::acceptCall(std::vector<std::string> userInput) {
         }
 
 
-        // 1.1.2 Enter emergency mode
+        // 2.2 Enter emergency mode
+        phoneId_ = incomingCallPhoneId;
         if (!aecsMgr.isEmergencyMode(incomingCallPhoneId)) {
             std::cout << std::endl << std::endl;
-            std::cout << "Enter 10 to enable emergency mode" << std::endl;
+            std::cout << "Enter 7 to enable emergency mode" << std::endl;
             int opt = -1;
             char delimiter = '\n';
             std::string temp = "";
@@ -431,14 +352,14 @@ void AecsCall::acceptCall(std::vector<std::string> userInput) {
                         << std::endl;
                 }
             }
-            if (opt != 10) {
+            if (opt != 7) {
                 return;
             } else {
                 std::vector<std::string> args;
                 setEmergencyMode(args);
             }
         }
-        // Step 2: Answer AECS call
+        // Step 2.3: Answer AECS call
         // start audio
         aecsMgr.startAudio(incomingCallPhoneId);
         status = incomingCall->answer(aecsAnswerCb_);
@@ -447,7 +368,7 @@ void AecsCall::acceptCall(std::vector<std::string> userInput) {
             aecsMgr.stopAudioAll();
             if (aecsMgr.isEmergencyMode(incomingCallPhoneId)) {
                 std::cout << std::endl << std::endl;
-                std::cout << "Enter 10 to exit emergency mode" << std::endl;
+                std::cout << "Enter 7 to exit emergency mode" << std::endl;
             }
         } else {
             std::cout << std::endl << std::endl;
@@ -473,6 +394,13 @@ void AecsCall::acceptCall(std::vector<std::string> userInput) {
         }
     } else {
         // B.2 No AECS call in progress -> just answer normal call
+        if (aecsMgr.isEmergencyMode(incomingCallPhoneId)) {
+            status =  aecsMgr.setEmergencyMode(incomingCallPhoneId, false, false);
+            if (status != telux::common::Status::SUCCESS) {
+                std::cout << "Failed to set emergency mode" << std::endl;
+                return;
+            }
+        }
         status = incomingCall->answer(aecsAnswerCb_);
         if (status != telux::common::Status::SUCCESS) {
             std::cout << " Failed to answer incoming call" << std::endl;
@@ -566,6 +494,7 @@ int AecsCall::getInputPhoneId() {
             return INVALID_PHONE_ID;
         }
     }
+    phoneId_ = phoneId;
     return phoneId;
 }
 
@@ -581,7 +510,7 @@ void AecsCall::sendAecsMessage(std::vector<std::string> userInput) {
     auto &aecsMgr = AecsCallManager::getInstance();
     if (!aecsMgr.isEmergencyMode(phoneId)) {
         std::cout << std::endl << std::endl;
-            std::cout << "Enter 10 to enable emergency mode" << std::endl;
+            std::cout << "Enter 7 to enable emergency mode" << std::endl;
             int opt = -1;
             char delimiter = '\n';
             std::string temp = "";
@@ -594,7 +523,7 @@ void AecsCall::sendAecsMessage(std::vector<std::string> userInput) {
                         << std::endl;
                 }
             }
-            if (opt != 10) {
+            if (opt != 7) {
                 return;
             } else {
                 std::vector<std::string> args;
@@ -612,7 +541,7 @@ void AecsCall::sendAecsMessage(std::vector<std::string> userInput) {
 
     do {
         std::string message;
-        std::cout << "Enter AECS encoded message: ";
+        std::cout << "Enter AECS encoded message(raw PDU): ";
         std::getline(std::cin, message, delimiter);
         if (message.empty()) {
             std::cout << " AECS encoded message(PDU) input is empty\n";
@@ -632,8 +561,28 @@ void AecsCall::sendAecsMessage(std::vector<std::string> userInput) {
         return;
     }
 
-    telux::common::Status status =
-        smsMgr->sendRawSms(rawPdus, AecsSmsCommandCallback::sendSmsResponse);
+    aecsMgr.setRetryRawPdu(rawPdus);
+    std::weak_ptr<telux::tel::ISmsListener> weakBaseListener(smsListener_);
+    auto cb = [weakBaseListener, phoneId](std::vector<int> msgRefs, telux::common::ErrorCode error)
+    {
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "\n\nCallback: sendSmsResponse successfully\n";
+            std::cout << "Callback:  MsgRefs Size: " << msgRefs.size() << "\n";
+            for (int i : msgRefs) {
+                std::cout << "Callback:  MsgRef : " << i << "\n";
+            }
+        } else {
+            std::cout << "\n\nCallback: sendSmsResponse failed, errorCode: " << (int)error
+                      << ", description: " << Utils::getErrorCodeAsString(error) << "\n";
+            PRINT_NOTIFICATION << "AECS information: data transmission failed" << std::endl;
+            if (auto baseSp = weakBaseListener.lock()) {
+                if (auto sp = std::dynamic_pointer_cast<AecsSmsListener>(baseSp)) {
+                    sp->onMsdAttemptFailed(phoneId);
+                }
+            }
+        }
+    };
+    telux::common::Status status = smsMgr->sendRawSms(rawPdus, cb);
     if (status == telux::common::Status::SUCCESS) {
         std::cout << "sendAecsMessage is successful.\n";
     } else if (status == telux::common::Status::INVALIDPARAM) {
@@ -696,7 +645,7 @@ void AecsCall::hangup(std::vector<std::string> userInput) {
           }
           if (!aecsOnThisSlot) {
               std::cout << std::endl << std::endl;
-              std::cout << "Enter 10 to exit emergency mode" << std::endl;
+              std::cout << "Enter 7 to exit emergency mode" << std::endl;
           }
        }
     } else {
@@ -725,235 +674,6 @@ void AecsCall::getAllCalls(std::vector<std::string> userInput) {
                   << " SlotId: " << call->getPhoneId()
                   << " isMpty: " << call->isMultiPartyCall()
                   << std::endl;
-    }
-}
-
-/**
- * Retry dropped AECS call (isAecsCallDrop == true)
- */
-void AecsCall::retryDroppedAecsCall(std::vector<std::string> userInput) {
-    int phoneId = getInputPhoneId();
-    if (phoneId == INVALID_PHONE_ID) {
-        std::cout << "Invalid Phone ID. Retry aborted." << std::endl;
-        return;
-    }
-
-    // Check if AECS call was dropped
-    bool droppedDetected = false;
-    auto &mgr = AecsCallManager::getInstance();
-    droppedDetected = mgr.getAecsCallDropStatus();
-
-    if (!droppedDetected) {
-        std::cout << "No dropped AECS call detected for retry." << std::endl;
-        return;
-    }
-    // AECS identifier
-    std::string phoneNumber;
-    std::cout << "\nEnter AECS identifier (dial number or URN): ";
-    std::getline(std::cin, phoneNumber);
-    if (phoneNumber.empty()) {
-        std::cerr << "AECS identifier required for retry.\n";
-        return;
-    }
-
-    int interval = DEFAULT_RETRY_INTERVAL_SEC;
-    int duration = DEFAULT_RETRY_DURATION_SEC;
-    char delimiter = '\n';
-    std::string temp = "";
-    std::cout << "Enter interval for call retry in seconds(optional): ";
-    std::getline(std::cin, temp, delimiter);
-    if (temp.empty()) {
-        std::cout << "No input received for call interval, proceeding with default interval"
-            << std::endl;
-    } else {
-        try {
-            interval = std::stoi(temp);
-        } catch (const std::exception &e) {
-            std::cout << "ERROR: invalid input, please enter numerical values " << interval
-                << std::endl;
-        }
-    }
-    std::cout << "Enter duration for call retry in seconds(optional): ";
-    std::getline(std::cin, temp, delimiter);
-    if (temp.empty()) {
-        std::cout << "No input received for call interval, proceeding with default interval"
-            << std::endl;
-    } else {
-        try {
-            duration = std::stoi(temp);
-        } catch (const std::exception &e) {
-            std::cout << "ERROR: invalid input, please enter numerical values " << duration
-                << std::endl;
-        }
-    }
-
-    auto startTime = std::chrono::steady_clock::now();
-    std::cout << "Starting retry for dropped AECS call for up to 60 minutes..."
-              << std::endl;
-
-    while (true) {
-        telux::common::Status status =
-            callMgr_->makeAecsCall(phoneId, phoneNumber,
-             std::bind(&AecsCall::makeCallResponse, this, std::placeholders::_1,
-                 std::placeholders::_2));
-        if (status == telux::common::Status::SUCCESS) {
-            std::cout << "Dropped AECS call retry initiated successfully." << std::endl;
-            break;
-        } else {
-            std::cout << "Dropped AECS call retry failed. Will retry every 2 minutes..."
-                << std::endl;
-        }
-
-        std::this_thread::sleep_for(std::chrono::seconds(interval));
-
-        auto elapsed = std::chrono::steady_clock::now() - startTime;
-        if (std::chrono::duration_cast<std::chrono::seconds>(elapsed).count() >=
-            duration) {
-            std::cout << "Retry window expired (60 minutes). Stopping retries." << std::endl;
-            break;
-        }
-    }
-}
-
-/**
- * Retry failed AECS call (RedialState::MODEM_RETRY_END)
- */
-void AecsCall::retryFailedAecsCall(std::vector<std::string> userInput) {
-    int phoneId = getInputPhoneId();
-    if (phoneId == INVALID_PHONE_ID) {
-        std::cout << "Invalid Phone ID. Retry aborted." << std::endl;
-        return;
-    }
-
-    bool failureDetected = false;
-    auto &mgr = AecsCallManager::getInstance();
-    failureDetected = mgr.getAecsCallFailStatus();
-
-    if (!failureDetected) {
-        std::cout << "No AECS call failure detected for retry." << std::endl;
-        return;
-    }
-
-    // AECS identifier
-    std::string phoneNumber;
-    std::cout << "\nEnter AECS identifier (dial number or URN): ";
-    std::getline(std::cin, phoneNumber);
-    if (phoneNumber.empty()) {
-        std::cerr << "AECS identifier required for retry.\n";
-        return;
-    }
-
-    auto startTime = std::chrono::steady_clock::now();
-    std::cout << "Starting AECS call retry for up to 60 minutes..." << std::endl;
-
-    while (true) {
-        telux::common::Status status =
-            callMgr_->makeAecsCall(phoneId, phoneNumber,
-            std::bind(&AecsCall::makeCallResponse, this, std::placeholders::_1,
-                 std::placeholders::_2));
-        if (status == telux::common::Status::SUCCESS) {
-            std::cout << "AECS call retry initiated successfully." << std::endl;
-            break;
-        } else {
-            std::cout << "AECS call retry failed. Will retry every 2 minutes..." << std::endl;
-        }
-
-        std::this_thread::sleep_for(std::chrono::seconds(DEFAULT_RETRY_INTERVAL_SEC));
-
-        auto elapsed = std::chrono::steady_clock::now() - startTime;
-        if (std::chrono::duration_cast<std::chrono::seconds>(elapsed).count() >=
-            DEFAULT_RETRY_DURATION_SEC) {
-            std::cout << "Retry window expired (60 minutes). Stopping retries." << std::endl;
-            break;
-        }
-    }
-}
-
-/**
- * Retry MSD over SMS with retry window
- */
-void AecsCall::retryMsdOverSms(std::vector<std::string> userInput) {
-    int phoneId = getInputPhoneId();
-    if (phoneId == INVALID_PHONE_ID) {
-        std::cout << "Invalid Phone ID. Retry aborted." << std::endl;
-        return;
-    }
-    auto &aecsMgr = AecsCallManager::getInstance();
-    if (!aecsMgr.isEmergencyMode(phoneId)) {
-        std::cout << std::endl << std::endl;
-            std::cout << "Enter 10 to enable emergency mode" << std::endl;
-            int opt = -1;
-            char delimiter = '\n';
-            std::string temp = "";
-            std::getline(std::cin, temp, delimiter);
-            if (!temp.empty()) {
-                try {
-                    opt = std::stoi(temp);
-                 } catch (const std::exception &e) {
-                    std::cout << "ERROR: invalid input, please enter numerical values " << opt
-                        << std::endl;
-                }
-            }
-            if (opt != 10) {
-                return;
-            } else {
-                std::vector<std::string> args;
-                setEmergencyMode(args);
-            }
-    }
-
-    auto smsMgr = smsMgrs_[phoneId - 1];
-    char delimiter = '\n';
-
-    PRINT_NOTIFICATION << " AECS information: data transmission in progress" << std::endl;
-
-    std::string needMorePdu;
-    std::vector<telux::tel::PduBuffer> rawPdus;
-
-    do {
-        std::string message;
-        std::cout << "Enter AECS encoded message: ";
-        std::getline(std::cin, message, delimiter);
-        if (message.empty()) {
-            std::cout << " AECS encoded message(PDU) input is empty\n";
-            return;
-        }
-
-        std::vector<uint8_t> buffer(message.begin(), message.end());
-        rawPdus.emplace_back(buffer);
-
-        std::cout << "Do you want to enter more messages (y/n): ";
-        std::getline(std::cin, needMorePdu, delimiter);
-        std::transform(needMorePdu.begin(), needMorePdu.end(),
-                       needMorePdu.begin(), ::tolower);
-    } while (needMorePdu == "y");
-
-    if (needMorePdu != "n") {
-        std::cout << "Invalid input provided \n";
-        return;
-    }
-
-    auto startTime = std::chrono::steady_clock::now();
-    std::cout << "Starting MSD over SMS retry for up to 60 minutes..." << std::endl;
-
-    while (true) {
-        telux::common::Status status =
-            smsMgr->sendRawSms(rawPdus, AecsSmsCommandCallback::sendSmsResponse);
-        if (status == telux::common::Status::SUCCESS) {
-            std::cout << "MSD over SMS retry initiated successfully." << std::endl;
-            break;
-        } else {
-            std::cout << "MSD over SMS retry failed. Will retry every 2 minutes..." << std::endl;
-        }
-
-        std::this_thread::sleep_for(std::chrono::seconds(DEFAULT_RETRY_INTERVAL_SEC));
-
-        auto elapsed = std::chrono::steady_clock::now() - startTime;
-        if (std::chrono::duration_cast<std::chrono::seconds>(elapsed).count() >=
-            DEFAULT_RETRY_DURATION_SEC) {
-            std::cout << "Retry window expired (60 minutes). Stopping retries." << std::endl;
-            break;
-        }
     }
 }
 
@@ -1013,5 +733,6 @@ void AecsCall::setEmergencyMode(std::vector<std::string> userInput) {
         static_cast<bool>(antennaSwitchEnabled));
     if(emStatus != telux::common::Status::SUCCESS) {
        std::cout << "Failed to set emergency mode" << std::endl;
+       return;
     }
 }

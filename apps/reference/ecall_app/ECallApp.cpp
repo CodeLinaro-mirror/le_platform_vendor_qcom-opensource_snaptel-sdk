@@ -67,6 +67,10 @@ ECallApp::ECallApp(std::string appName, std::string cursor)
 }
 
 ECallApp::~ECallApp() {
+
+    if (eCallMgr_) {
+        eCallMgr_->cleanup();
+    }
     eCallMgr_ = nullptr;
 }
 

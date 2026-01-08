@@ -26,10 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <bitset>
@@ -1029,6 +1030,9 @@ void MyLocationListener::printMeasurementAdrState(
   }
   if(mask & telux::loc::CYCLE_SLIP_BIT) {
     std::cout << " State is cycle slip" << std::endl;
+  }
+  if(mask & telux::loc::HALF_CYCLE_RESOLVED_BIT) {
+    std::cout << " State is half cycle resolved" << std::endl;
   }
 }
 

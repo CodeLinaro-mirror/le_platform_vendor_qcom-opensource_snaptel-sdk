@@ -82,6 +82,8 @@ static std::thread gFailRetryThread;
 static std::thread gMsdRetryThread;
 // Emergency-mode per phoneId
 std::map<int,bool> emergencyMode_;   // true when enabled
+// Add mutex for emergency mode map
+static std::mutex gEmergencyModeMutex;
 
 // CallManager and SmsManager for the AECS slot
 std::shared_ptr<ICallManager> callMgr_;
@@ -131,6 +133,7 @@ public:
 };
 
 static bool isEmergencyMode(int phoneId) {
+    std::lock_guard<std::mutex> lock(gEmergencyModeMutex);
     auto it = emergencyMode_.find(phoneId);
     if (it == emergencyMode_.end()) {
         return false;
@@ -587,23 +590,6 @@ public:
     }
 };
 
-// --------------------------------------------------------------
-//  DSDS helpers for calls / emergency mode
-// --------------------------------------------------------------
-static void terminateCallsOnOtherPhones(std::shared_ptr<ICallManager> cm, int targetPhoneId) {
-    auto calls = cm->getInProgressCalls();
-    for (auto &c : calls) {
-        if (!c) continue;
-        if (c->getCallState() != CallState::CALL_ENDED &&
-            c->getPhoneId()   != targetPhoneId) {
-            std::cout << "[Helper] Hanging up call on other phoneId="
-                      << c->getPhoneId() << "\n";
-            auto st = c->hangup();
-            std::cout << "  hangup() status: " << static_cast<int>(st) << "\n";
-        }
-    }
-}
-
 static bool prepareSelectedPhoneForAecs(std::shared_ptr<ICallManager> cm, int phoneId) {
     auto calls = cm->getInProgressCalls();
     for (auto &c : calls) {
@@ -632,14 +618,18 @@ static bool prepareSelectedPhoneForAecs(std::shared_ptr<ICallManager> cm, int ph
 static bool enterEmergencyMode(std::shared_ptr<ICallManager> cm, int phoneId) {
     std::cout << "[EM] Enabling emergency mode on phoneId=" << phoneId << "\n";
     // If already in emergency mode, just return success
-    auto it = emergencyMode_.find(phoneId);
-    if (it != emergencyMode_.end() && it->second) {
-        std::cout << "[EM] Emergency mode already enabled on phoneId "
+    {
+        std::lock_guard<std::mutex> lock(gEmergencyModeMutex);
+        auto it = emergencyMode_.find(phoneId);
+        if (it != emergencyMode_.end() && it->second) {
+            std::cout << "[EM] Emergency mode already enabled on phoneId "
                   << phoneId << std::endl;
-        return true;
+            return true;
+        }
     }
     Status st = cm->setEmergencyMode(phoneId, true, false);
-     if (st == Status::SUCCESS) {
+    if (st == Status::SUCCESS) {
+        std::lock_guard<std::mutex> lock(gEmergencyModeMutex);
         emergencyMode_[phoneId] = true;
         std::cout << "[EM] Emergency mode enabled on phoneId "
                   << phoneId << std::endl;
@@ -744,12 +734,6 @@ int main() {
     }
 
     const int phoneId = DEFAULT_PHONE_ID;
-
-    // DSDS: clean other subs
-    if (DeviceConfig::isMultiSimSupported()) {
-        std::cout << "[DSDS] Multi-SIM detected – cleaning calls on other phones\n";
-        terminateCallsOnOtherPhones(callMgr, phoneId);
-    }
 
     if (!enterEmergencyMode(callMgr, phoneId)) {
         std::cerr << "ERROR: Failed to enter emergency mode – aborting.\n";

@@ -27,10 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -359,6 +357,9 @@ class TelClient : public ICallListener,
     void restartHlapTimerResponse(telux::common::ErrorCode error);
     void configureECallRedialResponse(telux::common::ErrorCode error);
     void onServiceStatusChange(ServiceStatus status) override;
+
+    // clean up objects and remove listener upon ecall menu exit
+    void cleanup();
 
     TelClient();
     ~TelClient();

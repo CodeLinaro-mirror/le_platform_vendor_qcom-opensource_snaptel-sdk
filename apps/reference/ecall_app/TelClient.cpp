@@ -27,10 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -68,6 +66,23 @@ TelClient::~TelClient() {
     eCallInprogress_ = false;
     isPrivateEcallTriggered = false;
     eCallDataMap_.clear();
+}
+
+void TelClient::cleanup() {
+    if (callMgr_) {
+        callMgr_->removeListener(shared_from_this());
+    }
+
+    // Remove EcallScanFailHandler listener if registered
+    if (callMgr_ && eCallScanFailHdlrInstance_) {
+        callMgr_->removeListener(eCallScanFailHdlrInstance_);
+        eCallScanFailHdlrInstance_.reset();
+    }
+
+    // Clear CallStatusListener
+    if (callListener_) {
+        callListener_ = nullptr;
+    }
 }
 
 // Initialize the telephony subsystem
@@ -890,3 +905,4 @@ telux::common::Status TelClient::configureECallRedial(int config, std::vector<in
     }
     return telux::common::Status::SUCCESS;
 }
+

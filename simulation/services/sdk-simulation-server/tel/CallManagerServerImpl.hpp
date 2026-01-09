@@ -168,6 +168,9 @@ public:
     grpc::Status restartECallHlapTimer(ServerContext* context,
         const telStub::RestartECallHlapTimerRequest* request,
         telStub::RestartECallHlapTimerResponse* response);
+    grpc::Status setEmergencyMode(ServerContext *context,
+        const telStub::SetEmergencyModeRequest *request,
+        telStub::SetEmergencyModeResponse *response);
     grpc::Status getInProgressCalls(ServerContext* context,
         const telStub::GetInProgressCallsRequest* request,
         telStub::GetInProgressCallsData* response);

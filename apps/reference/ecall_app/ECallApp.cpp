@@ -166,6 +166,10 @@ void ECallApp::init() {
             "Make_Self_Test_ERAGLONASS_ECall", {},
         std::bind(&ECallApp::makeSelfTestECall, this)));
 
+    std::shared_ptr<ConsoleAppCommand> setEmergencyModeCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "21", "Set_Emergency_Mode", {}, std::bind(&ECallApp::setEmergencyMode, this)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList
         = {eCallCommand, customNumberECallCommand, answerCallCommand, hangupCallCommand,
             getCallsCommand, hlapTimerStatusCommand, customNumberECallOverImsCommand,
@@ -173,7 +177,7 @@ void ECallApp::init() {
             setEcallConfigCommand, getEncodedOADContentCommand, getECallMsdPayloadCommand,
             setECallRedialConfigCommand, restartECallHlapTimerCommand, getECallRedialConfigCommand,
             setPostTestRegistrationCommand, getPostTestRegistrationCommand,
-            makeSelfTestECallCommand};
+            makeSelfTestECallCommand, setEmergencyModeCommand};
     addCommands(commandsList);
 
     if (!eCallMgr_) {
@@ -829,6 +833,63 @@ void ECallApp::getECallRedialConfig() {
     if (ret != telux::common::ErrorCode::SUCCESS) {
         std::cout << "Failed to get eCall redial config" << std::endl;
         return;
+    }
+}
+
+void ECallApp::setEmergencyMode() {
+    if (!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+    // Get phoneId from user
+    int phoneId = getPhoneId();
+    // Get configuration from user
+    char delimiter   = '\n';
+    std::string temp = "";
+    std::cout << "Enter emergency mode configuration (0-disable, 1- enable): ";
+    std::getline(std::cin, temp, delimiter);
+    uint32_t emergencyModeEnabled = 0;
+    uint32_t antennaSwitchEnabled = 0;
+    if (!temp.empty()) {
+        try {
+            emergencyModeEnabled = std::stoi(temp);
+            if (emergencyModeEnabled != 0 && emergencyModeEnabled != 1) {
+                std::cout << "ERROR: Invalid value. Please enter 0 (disable) or 1 (enable)"
+                          << std::endl;
+                return;
+            }
+        } catch (const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values, "
+                      << emergencyModeEnabled << std::endl;
+            return;
+        }
+    } else {
+        std::cout << "No input" << std::endl;
+        return;
+    }
+    std::cout << "Enter antenna switching configuration (0-disable, 1- enable): ";
+    std::getline(std::cin, temp, delimiter);
+    if (!temp.empty()) {
+        try {
+            antennaSwitchEnabled = std::stoi(temp);
+            if (antennaSwitchEnabled != 0 && antennaSwitchEnabled != 1) {
+                std::cout << "ERROR: Invalid value. Please enter 0 (disable) or 1 (enable)"
+                          << std::endl;
+                return;
+            }
+        } catch (const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values, "
+                      << antennaSwitchEnabled << std::endl;
+            return;
+        }
+    } else {
+        std::cout << "No input" << std::endl;
+        return;
+    }
+    auto ret = eCallMgr_->setEmergencyMode(
+        phoneId, static_cast<bool>(emergencyModeEnabled), static_cast<bool>(antennaSwitchEnabled));
+    if (ret != telux::common::Status::SUCCESS) {
+        std::cout << "Failed to set emergency mode" << std::endl;
     }
 }
 

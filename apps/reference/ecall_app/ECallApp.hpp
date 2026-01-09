@@ -197,6 +197,11 @@ class ECallApp : public ConsoleApp {
      */
     void getECallPostTestRegistrationTimer();
 
+    /**
+     * Request to set emergency mode configuration for ecall
+     */
+    void setEmergencyMode();
+
     // Member variable to keep the eCall manager object alive until the application quits.
     std::shared_ptr<ECallManager> eCallMgr_;
 };

@@ -28,6 +28,7 @@
  */
 
 /*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -128,6 +129,14 @@ void AudioClient::onServiceStatusChange(ServiceStatus status) {
                 streamConfig_.sampleRate, streamConfig_.format, streamConfig_.channelTypeMask,
                 streamConfig_.ecnrMode);
         }
+    }
+}
+
+void AudioClient::onVoiceCallAndAudioStateChange(State state) {
+    if (state == State::READY) {
+        std::cout << "The voice-call and audio have been established " << std::endl;
+    } else {
+        std::cout << "either the voice-call or audio is not established " << std::endl;
     }
 }
 

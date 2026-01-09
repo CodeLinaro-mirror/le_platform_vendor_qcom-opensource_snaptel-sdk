@@ -27,6 +27,12 @@
 *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file    AudioListener.hpp
  *
@@ -65,7 +71,22 @@ public:
     }
 
     /**
-     * Destructor of IVoiceListener
+     * Called whenever the state of a voice call stream transitions, covering both the voice‑call
+     * active state and the audio path (input/output) readiness.
+     *
+     * This indicates whether the overall VoiceCall+Audio pipeline is in a "ready" or "not ready"
+     * state.
+     *
+     * @param [in] state @ref State::READY: The voice call is active and the audio path is fully
+     *                   established, meaning audio can flow in both directions.
+     *                   @ref State::NOT_READY: One or both conditions are not satisfied. This
+     *                   includes cases where the voice call is not yet active, the audio path is
+     *                   not established, or either subsystem becomes unavailable.
+     */
+    virtual void onVoiceCallAndAudioStateChange(State state) {}
+
+    /**
+     * Destructor of the IVoiceListener.
      */
     virtual ~IVoiceListener() {
     }

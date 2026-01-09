@@ -27,6 +27,12 @@
 *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file    AudioManager.hpp
  *
@@ -513,10 +519,13 @@ public:
                     telux::common::ResponseCallback callback = nullptr) = 0;
 
    /**
-    * Register a listener to get notified when a DTMF tone is detected in the active voice stream
+    * Registers the given listener to get notified whenever a DTMF tone is detected on a
+    * voice-call stream or when the voice-call and audio state changes. Used in conjunction with
+    * @ref IVoiceListener::onDtmfToneDetection() and
+    * @ref IVoiceListener::onVoiceCallAndAudioStateChange()
     *
-    * @param [in] listener     Pointer of IVoiceListener object that processes the notification
-    *        [in] callback     callback to get the response of registerListener
+    * @param [in] listener Receives the DTMF tone detected or for changes in the voice-call and
+    * audio state
     *
     * @returns Status of registerListener i.e success or suitable status code.
     */

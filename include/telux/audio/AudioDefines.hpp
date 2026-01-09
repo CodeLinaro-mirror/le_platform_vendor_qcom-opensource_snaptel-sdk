@@ -27,6 +27,12 @@
 *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file    AudioDefines.hpp
  *
@@ -157,6 +163,17 @@ enum class AmrwbpFrameFormat {
     UNKNOWN = -1,        /**< Unknown format */
     TRANSPORT_INTERFACE_FORMAT,
     FILE_STORAGE_FORMAT,
+};
+/**
+ * Defines the readiness state of the voice call and audio
+ */
+enum class State {
+    /** Unknown state */
+    UNKNOWN = -1,
+    /** Not ready state */
+    NOT_READY = 0,
+    /** Ready state */
+    READY = 1,
 };
 
 /**

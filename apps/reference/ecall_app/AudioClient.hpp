@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef AUDIOCLIENT_HPP
 #define AUDIOCLIENT_HPP
 
@@ -38,6 +44,7 @@ using namespace telux::audio;
 
 /** AudioClient class provides methods to start and stop a voice session */
 class AudioClient : public IAudioListener,
+                    public IVoiceListener,
                     public std::enable_shared_from_this<AudioClient> {
 public:
     /**
@@ -76,6 +83,7 @@ public:
     void startAudioCallback(ErrorCode error);
     void stopAudioCallback(ErrorCode error);
     void onServiceStatusChange(ServiceStatus status) override;
+    void onVoiceCallAndAudioStateChange(State state) override;
 
     AudioClient();
     ~AudioClient();

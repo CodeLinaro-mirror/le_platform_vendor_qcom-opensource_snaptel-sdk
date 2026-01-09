@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file       AudioClient.cpp
  *
@@ -117,6 +123,14 @@ void AudioClient::onServiceStatusChange(ServiceStatus status) {
         audioVoiceStream_ = nullptr;
     } else if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "Audio subsystem is AVAILABLE" << std::endl;
+    }
+}
+
+void AudioClient::onVoiceCallAndAudioStateChange(State state) {
+    if (state == State::READY) {
+        std::cout << "The voice-call and audio have been established " << std::endl;
+    } else {
+        std::cout << "either the voice-call or audio is not established " << std::endl;
     }
 }
 

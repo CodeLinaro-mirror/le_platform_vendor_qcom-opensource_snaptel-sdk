@@ -27,10 +27,17 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <chrono>
 #include <iostream>
 
 #include "VoiceMenu.hpp"
+#include "../../common/utils/Utils.hpp"
 
 VoiceMenu::VoiceMenu(std::string appName, std::string cursor,
                                             std::shared_ptr<AudioClient> audioClient)
@@ -212,6 +219,8 @@ void VoiceMenu::startAudio(std::vector<std::string> userInput) {
             if (error == telux::common::ErrorCode::SUCCESS) {
                 p.set_value(true);
             } else {
+                LOG(ERROR, "startAudio Failed with error: ",
+                            Utils::getErrorCodeAsString(error));
                 p.set_value(false);
                 std::cout << "Failed to start audio" << std::endl;
             }
@@ -243,6 +252,7 @@ void VoiceMenu::stopAudio(std::vector<std::string> userInput) {
             if (error == telux::common::ErrorCode::SUCCESS) {
                 p.set_value(true);
             } else {
+                LOG(ERROR, "stopAudio Failed with error: ", Utils::getErrorCodeAsString(error));
                 p.set_value(false);
                 std::cout << "Failed to stop audio" << std::endl;
             }
@@ -460,4 +470,10 @@ void VoiceMenu::onDtmfToneDetection(DtmfTone dtmfTone) {
     std::cout << "High Frequency is " <<  static_cast<uint32_t>(dtmfTone.highFreq)  << std::endl;
 }
 
-
+void VoiceMenu::onVoiceCallAndAudioStateChange(State state) {
+    if (state == State::READY) {
+        std::cout << "The voice-call and audio have been established " << std::endl;
+    } else {
+        std::cout << "Either the voice-call or audio is not established " << std::endl;
+    }
+}

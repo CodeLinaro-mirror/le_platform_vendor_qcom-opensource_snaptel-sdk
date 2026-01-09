@@ -27,12 +27,19 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef VOICEMENU_HPP
 #define VOICEMENU_HPP
 
 #include "ConsoleApp.hpp"
 #include "AudioClient.hpp"
 #include <telux/audio/AudioListener.hpp>
+#include <telux/common/Log.hpp>
 
 class VoiceMenu : public ConsoleApp,
                   public telux::audio::IVoiceListener,
@@ -44,6 +51,7 @@ public:
     void setSystemReady();
     void cleanup();
     virtual void onDtmfToneDetection(DtmfTone dtmfTone) override;
+    virtual void onVoiceCallAndAudioStateChange(State state) override;
 
 private:
     void createStream(std::vector<std::string> userInput);

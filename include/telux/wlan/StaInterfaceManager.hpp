@@ -144,7 +144,7 @@ class IStaInterfaceManager {
      * @ref telux::wlan::IStaInterfaceManager::setIpConfig and
      * @ref telux::wlan::IStaInterfaceManager::setBridgeMode
      *
-     * @param [in] config         Station configurations @ref telux::wlan::StaConfig
+     * @param [out] config         Station configurations @ref telux::wlan::StaConfig
       *
      * @returns operation error code (if any). @ref telux::common::ErrorCode.
      *
@@ -157,7 +157,7 @@ class IStaInterfaceManager {
      * Request current station status: Returns current Sta interface status such as network
      * interface name and IP address.
      *
-     * @param [in] status         Station Status @ref telux::wlan::StaStatus
+     * @param [out] status         Station Status @ref telux::wlan::StaStatus
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode.
      *
@@ -167,14 +167,14 @@ class IStaInterfaceManager {
     virtual telux::common::ErrorCode getStatus(std::vector<StaStatus>& status) = 0;
 
     /**
-     * Execute an operation on wpa_supplicant service. Provides ability for client to either
-     * stop/start or restart wpa_supplicant service for selected station.
+     * Execute an operation on wpa_supplicant service. Currently, this API only supports
+     * restarting the wpa_supplicant service for a specified station.
      * Restarting wpa_supplicant service is required for any changes made to wpa_supplicant.conf
      * file to take effect.
      * Station selected to execute operation on, will temporarily go out of service when this
      * API is called.
      * This API should be called only when station mode is configured through
-     * @ref telux::wlan::IDeviceManager::setMode
+     * @ref telux::wlan::IDeviceManager::setMode.
      *
      * @param [in] staId         Station identifier to execute operation on. @ref telux::wlan::Id
      * @param [in] opr           Operation to be performed on wpa_supplicant

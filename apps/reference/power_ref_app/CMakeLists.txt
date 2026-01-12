@@ -34,6 +34,10 @@ if (CAN_WRAPPER_LIB_FOUND)
     list(APPEND TARGET_POWER_REF_DAEMON_SOURCES trigger/CAN/CANTrigger.cpp )
 endif (CAN_WRAPPER_LIB_FOUND)
 
+if (TELSDK_FEATURE_SATCOM)
+    list(APPEND TARGET_POWER_REF_DAEMON_SOURCES NtnClient.cpp)
+endif (TELSDK_FEATURE_SATCOM)
+
 include_directories(BEFORE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_LIST_DIR}/../../common/utils
@@ -48,6 +52,14 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 add_executable (${TARGET_POWER_REF_DAEMON} ${TARGET_POWER_REF_DAEMON_SOURCES})
 target_link_libraries(${TARGET_POWER_REF_DAEMON} telux_common telux_tel telux_power
     telux_data pthread)
+
+if (TELSDK_FEATURE_SATCOM)
+    target_link_libraries(${TARGET_POWER_REF_DAEMON} telux_satcom)
+endif (TELSDK_FEATURE_SATCOM)
+
+if (TELSDK_FEATURE_LOC)
+    target_link_libraries(${TARGET_POWER_REF_DAEMON} telux_loc)
+endif (TELSDK_FEATURE_LOC)
 
 if (CAN_WRAPPER_LIB_FOUND)
     target_link_libraries(${TARGET_POWER_REF_DAEMON} canwrapper)

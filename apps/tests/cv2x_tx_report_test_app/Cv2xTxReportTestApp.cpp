@@ -767,7 +767,7 @@ static void signalHandler(int signum) {
 }
 
 int main(int argc, char *argv[]) {
-    std::vector<std::string> groups{"system", "diag", "radio"};
+    std::vector<std::string> groups{"system", "diag", "radio", "logd"};
     if (-1 == Utils::setSupplementaryGroups(groups)){
         cout << "Adding supplementary group failed!" << std::endl;
     }

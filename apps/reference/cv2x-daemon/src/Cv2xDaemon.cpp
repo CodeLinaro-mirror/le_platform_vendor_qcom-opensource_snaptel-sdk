@@ -522,7 +522,7 @@ int setSupplementaryGroups(std::vector<std::string> grps) {
 
 int main(int argc, char **argv) {
     // Setting required secondary groups for SDK file logging
-    std::vector<std::string> supplementaryGrps{"system", "gps", "radio"};
+    std::vector<std::string> supplementaryGrps{"system", "gps", "radio", "logd"};
     int rc = setSupplementaryGroups(supplementaryGrps);
     if (rc == -1) {
         LOGE("Adding supplementary groups failed.\n");

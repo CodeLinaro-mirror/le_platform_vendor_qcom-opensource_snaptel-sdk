@@ -519,7 +519,7 @@ int main(int argc, char ** argv) {
       return -1;
    }
 
-   std::vector<std::string> supplementaryGrps{"system"};
+   std::vector<std::string> supplementaryGrps{"system", "logd"};
    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
    if (rc == -1) {
       std::cout << APP_NAME << "Adding supplementary groups failed!" << std::endl;

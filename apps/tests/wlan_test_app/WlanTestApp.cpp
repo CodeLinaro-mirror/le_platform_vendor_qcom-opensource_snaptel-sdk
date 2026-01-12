@@ -91,7 +91,7 @@ void WlanTestApp::wlanStaInterfaceManagerMenu(std::vector<std::string> inputComm
 // Main function that displays the console and processes user input
 int main(int argc, char **argv) {
     // Setting required secondary groups for SDK file/diag logging
-    std::vector<std::string> supplementaryGrps{"system", "diag"};
+    std::vector<std::string> supplementaryGrps{"system", "diag", "logd"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1){
         std::cout << "Wlan Test App: Adding supplementary groups failed!" << std::endl;

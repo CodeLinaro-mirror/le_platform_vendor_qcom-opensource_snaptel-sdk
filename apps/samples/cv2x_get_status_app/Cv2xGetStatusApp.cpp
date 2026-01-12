@@ -188,7 +188,7 @@ static int parseOpts(int argc, char *argv[]) {
 int main(int argc, char *argv[]) {
     cout << "Running Sample C-V2X Get Status APP" << endl;
 
-    std::vector<std::string> groups{"radio", "system", "gps"};
+    std::vector<std::string> groups{"radio", "system", "gps", "logd"};
     if (-1 == Utils::setSupplementaryGroups(groups)){
         cout << "Adding supplementary group failed!" << std::endl;
     }

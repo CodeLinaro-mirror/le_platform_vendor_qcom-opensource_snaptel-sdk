@@ -230,7 +230,7 @@ static void closeFlowCallback(shared_ptr<ICv2xTxFlow> flow, ErrorCode error) {
 }
 
 int main(int argc, char *argv[]) {
-    std::vector<std::string> groups{"radio", "system", "gps"};
+    std::vector<std::string> groups{"radio", "system", "gps", "logd"};
     if (-1 == Utils::setSupplementaryGroups(groups)){
         cout << "Adding supplementary group failed!" << std::endl;
     }

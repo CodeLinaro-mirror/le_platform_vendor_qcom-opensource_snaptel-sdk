@@ -700,7 +700,7 @@ void setupSignalHandler() {
 // Main function that displays the interactive console for eCall related operations
 int main(int argc, char **argv) {
     setupSignalHandler();
-    std::vector<std::string> supplementaryGrps{"system"};
+    std::vector<std::string> supplementaryGrps{"system", "logd"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1){
         std::cout << "Adding supplementary groups failed!" << std::endl;

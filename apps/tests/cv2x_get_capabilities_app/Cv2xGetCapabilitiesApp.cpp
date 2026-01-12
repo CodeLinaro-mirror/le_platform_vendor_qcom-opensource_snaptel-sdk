@@ -236,7 +236,7 @@ static void requestCapabilitiesCallback(const Cv2xRadioCapabilities & capabiliti
 
 int main(int argc, char *argv[]) {
     // Setting required secondary groups for SDK file/diag logging
-    std::vector<std::string> supplementaryGrps{"system", "gps", "radio"};
+    std::vector<std::string> supplementaryGrps{"system", "gps", "radio", "logd"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1) {
         cout << "Adding supplementary groups failed." << endl;

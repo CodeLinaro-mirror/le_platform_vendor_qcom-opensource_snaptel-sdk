@@ -244,7 +244,7 @@ int main(int argc, char **argv) {
                           + std::to_string(sdkVersion.patch)+ "\n"
                           + "Process ID: " + std::to_string(pid);
     setupSignal();
-    std::vector<std::string> supplementaryGrps{"system", "diag", "radio"};
+    std::vector<std::string> supplementaryGrps{"system", "diag", "radio", "logd"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1){
         std::cout << "Adding supplementary groups failed!" << std::endl;

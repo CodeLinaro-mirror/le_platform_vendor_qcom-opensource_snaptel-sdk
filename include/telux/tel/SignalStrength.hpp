@@ -27,6 +27,11 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file       SignalStrength.hpp
  * @brief      SignalStrength is a container class for obtaining the LTE, GSM, WCDMA, TDSCDMA and
@@ -195,7 +200,6 @@ public:
     *
     * @returns LteCqI.
     *
-    * @deprecated As of version 1.54.0 this API is no longer supported.
     */
    const int getLteChannelQualityIndicator() const;
 

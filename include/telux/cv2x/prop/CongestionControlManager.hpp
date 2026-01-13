@@ -78,7 +78,8 @@ class ICongestionControlListener {
  public:
     /**
      * Called when the new congestion control data is available.
-     *
+     * By default, this will be at a 100ms interval. However, this API may be called
+     * asynchronously if there is a tracking error event.
      * @param [in] congestionControlUserData - pointer to output user data
      *      which manager will fill. Lets the user know they should immediately
      *      send a new message. If SPS enhancements are enabled, they may
@@ -92,11 +93,13 @@ class ICongestionControlListener {
     }
 
     /** @param [in] newItt - updated inter-transmit time in milliseconds that the library computes
+     * The Congestion Control Manager will call this Listener API when it computes a new
+     * inter-transmit time based on the smoothed density of vehicles within range of 
+     * the host vehicle.
      * @note -  Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual void onIttUpdate(uint64_t newItt) {
-    }
+    virtual void onIttUpdate (uint64_t newItt) {}
 
     /**
      * Destructor for ICongestionControlListener
@@ -371,7 +374,8 @@ class ICongestionControlManager {
 
     /**
      * Called whenever there is a packet received from new vehicle nearby
-     *
+     * For a new vehicle's data to be added, the host vehicle needs to be within 100m
+     * of the new vehicle. This is calculated based on their latitudes and longitudes.
      * @param [in] id - A remote vehicle identity
      * @param [in]  - latitude - latitude of the vehicle
      * @param [in]  - longitude - longitude of the vehicle

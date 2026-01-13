@@ -42,9 +42,9 @@ class MyMultiSimListener : public telux::tel::IMultiSimListener {
  public:
     void onServiceStatusChange(telux::common::ServiceStatus status) override;
     void onHighCapabilityChanged(int slotId);
-    void onSlotStatusChanged(std::map<SlotId, telux::tel::SlotStatus> slotStatus);
-    ~MyMultiSimListener() {
-    }
+    void onSlotStatusChanged(std::map<PhysicalSlotId,
+        telux::tel::SimSlotStatus> slotStatus) override;
+    ~MyMultiSimListener() {}
 };
 
 #endif  // MYMULTISIMLISTENER_HPP

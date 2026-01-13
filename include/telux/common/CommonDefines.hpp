@@ -76,6 +76,16 @@ typedef enum {
     MAX_SLOT_ID     = SLOT_ID_2,
 } SlotId;
 
+/**
+ * Refers to the actual hardware slot available on a device.
+ */
+typedef SlotId PhysicalSlotId;
+
+/**
+ * Refers to the logical modem stack that is mapped to a physical slot.
+ */
+typedef SlotId LogicalSlotId;
+
 namespace telux {
 namespace common {
 

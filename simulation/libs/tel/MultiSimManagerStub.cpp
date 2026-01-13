@@ -103,6 +103,21 @@ telux::common::Status MultiSimManagerStub::requestSlotStatus(SlotStatusCallback 
     return telux::common::Status::NOTSUPPORTED;
 }
 
+telux::common::Status MultiSimManagerStub::configureLogicalSlotMapping(
+    std::map <LogicalSlotId, LogicalSlotMapInfo> mapInfo, common::ResponseCallback callback) {
+    return telux::common::Status::NOTSUPPORTED;
+}
+
+telux::common::ErrorCode MultiSimManagerStub::getLogicalSlotMapping(std::map <LogicalSlotId,
+    LogicalSlotMapInfo> &mapInfo) {
+    return telux::common::ErrorCode::INVALID_STATE;
+}
+
+telux::common::ErrorCode MultiSimManagerStub::getPhysicalSlotStatus(std::map<PhysicalSlotId,
+    SimSlotStatus> &slotStatus) {
+    return telux::common::ErrorCode::INVALID_STATE;
+}
+
 void MultiSimManagerStub::onEventUpdate(google::protobuf::Any event) {
     LOG(DEBUG, __FUNCTION__);
 }

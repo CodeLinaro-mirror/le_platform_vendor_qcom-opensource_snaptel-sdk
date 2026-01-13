@@ -165,3 +165,37 @@ std::string MyMultiSimHelper::cardErrorToString(telux::tel::CardError cardError)
     }
     return cardErrorString;
 }
+
+// Update implementation to use fully qualified types
+std::string MyMultiSimHelper::portStateToString(telux::tel::PortState state) {
+    switch (state) {
+        case telux::tel::PortState::INACTIVE:
+            return "INACTIVE";
+        case telux::tel::PortState::ACTIVE:
+            return "ACTIVE";
+        default:
+            return "UNKNOWN";
+    }
+}
+
+std::string MyMultiSimHelper::mepModeToString(telux::tel::Mode mode) {
+    switch (mode) {
+        case telux::tel::Mode::NONE:
+            return "NONE";
+        case telux::tel::Mode::MEP_A1:
+            return "MEP_A1";
+        case telux::tel::Mode::MEP_B:
+            return "MEP_B";
+        default:
+            return "UNKNOWN";
+    }
+}
+
+void MyMultiSimCallback::configureLogicalSlotMappingResponse(telux::common::ErrorCode error) {
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        std::cout << "Configure logical slot mapping completed successfully" << std::endl;
+    } else {
+        std::cout << "Configure logical slot mapping failed, error: "
+                  << static_cast<int>(error) << std::endl;
+    }
+}

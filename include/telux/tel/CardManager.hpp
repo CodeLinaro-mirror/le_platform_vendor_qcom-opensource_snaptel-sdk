@@ -422,12 +422,13 @@ class ICardManager {
 };  // end of ICardManager
 
 /**
- *@brief ICard represents currently inserted UICC or eUICC
+ * @brief ICard represents a traditional removable physical SIM card or eUICC that is capable of
+ * either a Single Enabled Profile (SEP) or Multiple Enabled Profiles (MEP).
  */
 class ICard {
  public:
     /**
-     * Get the card state for the slot id.
+     * Get the card state for the logical slot id.
      *
      * @param [out] cardState  @ref CardState - state of the card.
      *
@@ -458,8 +459,7 @@ class ICard {
      * @returns Status of openLogicalChannel i.e. success or suitable status code.
      */
     virtual telux::common::Status openLogicalChannel(
-        std::string applicationId, std::shared_ptr<ICardChannelCallback> callback = nullptr)
-        = 0;
+        std::string applicationId, std::shared_ptr<ICardChannelCallback> callback = nullptr) = 0;
 
     /**
      * Close a previously opened logical channel to the SIM.
@@ -470,11 +470,15 @@ class ICard {
      * @param [in] channelId   The channel ID to be closed.
      * @param [in] callback    Optional callback pointer to get the response of close logical
      *                         channel request.
+     * @param [in] isEs10      Optional flag indicating whether the streamed APDU is an ES10
+     *                         command. Applicable only in @ref telux::tel::Mode::MEP_A1 mode.
      *
      * @returns Status of closeLogicalChannel i.e. success or suitable status code.
      */
     virtual telux::common::Status closeLogicalChannel(
-        int channelId, std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)
+        int channelId,
+        std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr,
+        bool isEs10 = false)
         = 0;
 
     /**
@@ -494,12 +498,14 @@ class ICard {
      * @param [in] data          Data to be sent with the APDU.
      * @param [in] callback      Optional callback pointer to get the response of
      *                           transmit APDU request.
+     * @param [in] isEs10        Optional flag indicating whether the streamed APDU is an ES10
+     *                           command. Applicable only in @ref telux::tel::Mode::MEP_A1 mode.
      *
      * @returns Status of transmitApduLogicalChannel i.e. success or suitable status code.
      */
     virtual telux::common::Status transmitApduLogicalChannel(int channel, uint8_t cla,
         uint8_t instruction, uint8_t p1, uint8_t p2, uint8_t p3, std::vector<uint8_t> data,
-        std::shared_ptr<ICardCommandCallback> callback = nullptr)
+        std::shared_ptr<ICardCommandCallback> callback = nullptr, bool isES10 = false)
         = 0;
 
     /**
@@ -517,12 +523,14 @@ class ICard {
      * @param [in] data          Data to be sent with the APDU.
      * @param [in] callback      Optional callback pointer to get the response of
      *                           transmit APDU request.
+     * @param [in] isEs10        Optional flag indicating whether the streamed APDU is an ES10
+     *                           command. Applicable only in @ref telux::tel::Mode::MEP_A1 mode.
      *
      * @returns Status of transmitApduBasicChannel i.e. success or suitable status code.
      */
     virtual telux::common::Status transmitApduBasicChannel(uint8_t cla, uint8_t instruction,
         uint8_t p1, uint8_t p2, uint8_t p3, std::vector<uint8_t> data,
-        std::shared_ptr<ICardCommandCallback> callback = nullptr)
+        std::shared_ptr<ICardCommandCallback> callback = nullptr, bool isES10 = false)
         = 0;
 
     /**
@@ -554,14 +562,14 @@ class ICard {
         = 0;
 
     /**
-     * Get associated slot id for ICard
+     * Get associated logical slot id for ICard
      *
      * @returns SlotId
      */
     virtual int getSlotId() = 0;
 
     /**
-     * Request eUICC identifier (EID) of eUICC card.
+     * Request eUICC identifier (EID) of eUICC physical SIM card.
      *
      * On platforms with access control enabled, caller needs to have TELUX_TEL_PRIVATE_INFO_READ
      * permission to invoke this API successfully.
@@ -582,17 +590,30 @@ class ICard {
      */
     virtual std::shared_ptr<ICardFileHandler> getFileHandler() = 0;
 
-    /**
-     * Checks whether the NTN profile is activated on a given slot.
-     *
-     * @returns If true NTN profile is activated or else not-activated.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
-     */
-    virtual bool isNtnProfileActive() = 0;
+   /**
+    * Checks whether the NTN profile is activated on a given logical slot.
+    *
+    * @returns If true NTN profile is activated or else not-activated.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual bool isNtnProfileActive() = 0;
 
-    virtual ~ICard(){};
+   /**
+    * Provides Multiple Enabled Profiles (MEP) information on the logical slot.
+    *
+    * On platforms with access control enabled, caller needs to have TELUX_TEL_PRIVATE_INFO_READ
+    * permission to invoke this API successfully.
+    *
+    * @param [out] info  MEP info.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual void getMepInfo(MepInfo &info) = 0;
+
+   virtual ~ICard() {};
 };
 
 /**

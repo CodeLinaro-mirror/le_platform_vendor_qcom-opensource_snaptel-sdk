@@ -193,39 +193,175 @@ class IMultiSimManager {
         SlotId slotId, common::ResponseCallback callback = nullptr)
         = 0;
 
-    /**
-     * Request the status of physical slots.
-     *
-     * @param [in] callback     Callback function to get the response of slot status request
-     *
-     * @returns Status of requestSlotStatus i.e. success or suitable error code.
-     *
-     */
-    virtual telux::common::Status requestSlotStatus(SlotStatusCallback callback) = 0;
+   /**
+    * Configure logical slot to physical slot and port.
+    *
+    * Logical slot index @ref telux::common::LogicalSlotId - It refers to the logical modem stack
+    * that is mapped to a physical slot.
+    *
+    * Physical slot index @ref telux::tel::PhysicalToPort::physicalSlot - Unique index referring
+    * to a physical SIM slot on the device.
+    * This differs from the number of logical slots a device has, which corresponds to the number
+    * of active slots a device is capable of using. For example, if device has two physical slots
+    * but only one active slot, holding MEP card with two enabled profiles, it will have two
+    * logical slots telux::common::LogicalSlotId::SLOT_ID_1 and
+    * telux::common::LogicalSlotId::SLOT_ID_2 but only one physical slot
+    * @ref telux::common::PhysicalSlotId.
+    *
+    * Port index @ref telux::tel::PhysicalToPort::portId - Unique index referring to a port
+    * belonging to the physical SIM slot. For UICC/ eUICC card with single enabled profile (SEP)
+    * the port information is not applicable. However, it's port index value is 0 by default.
+    *
+    * Currently device supports MEP mode @ref telux::tel::Mode::MEP_A1 and
+    * @ref telux::tel::Mode::MEP_B.
+    * MEP sim card @ref telux::tel::Mode::MEP_B :
+    * Port Index starts from 0 and the maximum number of supported ports is defined by the
+    * baseband's capabilities.
+    * MEP sim card @ref telux::tel::Mode::MEP_A1 :
+    * Port Index starts from 1 and the maximum number of supported ports is defined by the
+    * baseband's capabilities.
+    * It's value is unique within a physical slot but can be identical across different physical
+    * slots.
+    *
+    * This API should be used when the application needs to dynamically map logical modem stacks to
+    * physical SIM slots and ports based on MEP/SEP (eUICC) or traditional physical SIM (UICC)
+    * configurations.
+    *
+    * a) Configure a MEP card with two enabled profiles.
+    *
+    * b) Configure a SEP card with one enabled profile and MEP card with one enabled profile.
+    *
+    * Application is expected to configure the device with dual-sim configuration with
+    * MULTISIM_CONFIG=dsda or MULTISIM_CONFIG=dsds in /etc/tel.conf file.
+    *
+    * @param [in] mapInfo A map of logical to physical slot and port.
+    * For instance, consider a device with dual baseband support and application wishes to
+    * configure MEP A1 card with two enabled profiles.
+    *
+    * Configuration:
+    * mapInfo[0]=
+    *   {telux::common::LogicalSlotId::SLOT_ID_1, {telux::common::PhysicalSlotId::SLOT_ID_1,1}} ,
+    * mapInfo[1]=
+    *   {telux::common::LogicalSlotId::SLOT_ID_2, {telux::common::PhysicalSlotId::SLOT_ID_1,2}}
+    *
+    * @param [in] callback     Callback function to get the response of
+    *                          configureLogicalSlotMapping request.
+    *
+    * @returns ErrorCode of configureLogicalSlotMapping i.e. success or suitable error code.
+    *
+    * The configuration remains persistent across device reboot.
+    * The information about this transition is notified using
+    * @ref telux::tel::IMultiSimListener::onSlotStatusChanged(std::map<PhysicalSlotId,
+    * SimSlotStatus> slotStatus). Application must monitor the slotStatus::slotState and
+    * mepSlotInfo::port::state data to determine operation completeness has been achieved or not as
+    * the transition might take few seconds to complete.
+    *
+    * Mapping Overview for MEP A1 card with two enabled profiles on physical slot 1:
+    * - Both logical slots are mapped to the same physical slot (eUICC).
+    * - Each logical slot uses a unique port to access a distinct profile.
+    * - Enables dual-profile operation on a single MEP A1 card.
+    * - Logical Slot 1 ↔ Port 1 ↔ Profile A
+    * - Logical Slot 2 ↔ Port 2 ↔ Profile B
+    * +------------------+------------------+
+    * | Logical Slot 1   | Logical Slot 2   |
+    * +------------------+------------------+
+    * | Port 1           | Port 2           |
+    * +------------------+------------------+
+    * |          Physical Slot 1            |
+    * +------------------+------------------+
+    * | Profile A        | Profile B        |
+    * +------------------+------------------+
+    *
+    * Below are the sequence of steps to be followed to download, enable or disable profile for MEP
+    * card.
+    * 1.Download profile: Exchanging APDUs with the card using logical channel.
+    * 1.1 Open the logical channel by providing application identifier(AID) =
+    *     A0000005591010FFFFFFFF8900000100 @ref telux::tel::ICard::openLogicalChannel.
+    * 1.2 Exchange the APDUs @ref telux::tel::ICard::transmitApduLogicalChannel in the APDU request
+    *     to download profile.
+    * 1.3 Close the channel once APDU exchange is complete @ref telux::tel::ICard::
+    *     closeLogicalChannel.
+    * 2.Enable/disable profile: Exchanging APDUs with the card using logical channel.
+    * Follow the sequence below for exchanging the APDUs.
+    * 2.1 Open the logical channel by providing application identifier(AID) =
+    *     A0000005591010FFFFFFFF8900000100 @ref telux::tel::ICard::openLogicalChannel.
+    * 2.2 Exchange the APDUs @ref telux::tel::ICard::transmitApduLogicalChannel and specify the
+    *     portId using @ref telux::tel::ICard::getMepInfo() in the APDU request to enable or
+    *     disable profile.
+    *     @note PortId in a APDU transcations is required only in MEP A1 mode @ref
+    *     telux::tel::Mode::MEP_A1 .
+    * 2.3 Close the channel once APDU exchange is complete @ref telux::tel::ICard::
+    *     closeLogicalChannel.
+    *
+    * On platforms with access control enabled, caller needs to have TELUX_TEL_CARD_OPS permission
+    * to invoke this API successfully.
+    */
+   virtual telux::common::Status configureLogicalSlotMapping(
+        std::map <LogicalSlotId, LogicalSlotMapInfo> mapInfo,
+        common::ResponseCallback callback = nullptr) = 0;
 
-    /**
-     * Register a listener for specific events in the Multi SIM subsystem.
-     *
-     * @param [in] listener  Pointer to IMultiSimListener object that processes the
-     *                       notification
-     *
-     * @returns Status of registerListener i.e. success or suitable error code.
-     *
-     */
-    virtual telux::common::Status registerListener(std::weak_ptr<IMultiSimListener> listener) = 0;
+   /**
+    * Retrieves the logical slot to physical slot and port.
+    *
+    * On platforms with access control enabled, caller needs to have TELUX_TEL_CARD_OPS permission
+    * to invoke this API successfully.
+    *
+    * @param [out] mapInfo A map of logical to physical slot and port.
+    *
+    * @returns ErrorCode of getLogicalSlotMapping i.e. success or suitable error code.
+    */
+    virtual telux::common::ErrorCode getLogicalSlotMapping(std::map <LogicalSlotId,
+        LogicalSlotMapInfo> &mapInfo) = 0;
 
-    /**
-     * Deregister the previously added listener.
-     *
-     * @param [in] listener    Pointer to IMultiSimListener object that needs to be
-     *                         deregistered.
-     *
-     * @returns Status of deregisterListener i.e. success or suitable error code.
-     *
-     */
-    virtual telux::common::Status deregisterListener(std::weak_ptr<IMultiSimListener> listener) = 0;
+   /**
+    * Retrieves the status of physical SIM slots for MEP or non-MEP SIM card.
+    *
+    * On platforms with access control enabled, caller needs to have TELUX_TEL_CARD_OPS permission
+    * to invoke this API successfully.
+    *
+    * @param [out] slotStatus Map containing physical slot identifiers and their corresponding
+    * @ref telux::tel::SimSlotStatus information.
+    *
+    * @returns ErrorCode of getPhysicalSlotStatus i.e. success or suitable error code.
+    */
+   virtual telux::common::ErrorCode getPhysicalSlotStatus(std::map<PhysicalSlotId,
+        SimSlotStatus> &slotStatus) = 0;
 
-    virtual ~IMultiSimManager(){};
+   /**
+    * Register a listener for specific events in the Multi SIM subsystem.
+    *
+    * @param [in] listener  Pointer to IMultiSimListener object that processes the
+    *                       notification
+    *
+    * @returns Status of registerListener i.e. success or suitable error code.
+    *
+    */
+   virtual telux::common::Status registerListener(std::weak_ptr<IMultiSimListener> listener) = 0;
+
+   /**
+    * Deregister the previously added listener.
+    *
+    * @param [in] listener    Pointer to IMultiSimListener object that needs to be
+    *                         deregistered.
+    *
+    * @returns Status of deregisterListener i.e. success or suitable error code.
+    *
+    */
+   virtual telux::common::Status deregisterListener(std::weak_ptr<IMultiSimListener> listener) = 0;
+
+   virtual ~IMultiSimManager(){};
+
+   /**
+    * Request the status of physical slots.
+    *
+    * @param [in] callback     Callback function to get the response of slot status request
+    *
+    * @returns Status of requestSlotStatus i.e. success or suitable error code.
+    *
+    * @deprecated Use IMultiSimManager::getPhysicalSlotStatus instead.
+    *
+    */
+   virtual telux::common::Status requestSlotStatus(SlotStatusCallback callback) = 0;
 };
 
 /**
@@ -244,14 +380,36 @@ class IMultiSimListener : public common::IServiceStatusListener {
     virtual void onHighCapabilityChanged(int slotId) {
     }
 
-    /**
-     * This function is called whenever there is change in physical SIM slots status.
-     *
-     * @param [in] slotStatus   list of slots status @ref SlotStatus
-     *
-     */
-    virtual void onSlotStatusChanged(std::map<SlotId, SlotStatus> slotStatus) {
-    }
+   /**
+    * This function is called whenever there is change in physical SIM slots status for a
+    * MEP or Non MEP SIM card.
+    *
+    * Physical slot status can change during below usecases:
+    * 1) When application configures physical to logical slot using
+    *    @ref IMultiSimManager::configureLogicalSlotMapping .
+    * 2) When application download, enable or disable the MEP profile using
+    *    @ref ICardManager::transmitApduLogicalChannel on a logical slot.
+    *
+    * @note: In SEP card, the contents of status.isMep is false , status.port.mep mode is NONE
+    * status.port.isActive is telux::tel::PortState::INACTIVE and status.port.iccid = 0 .
+    *
+    * @param [in] slotStatus   list of slots status @ref telux::tel::SimSlotStatus
+    *
+    */
+   virtual void onSlotStatusChanged(std::map<PhysicalSlotId, SimSlotStatus> slotStatus) {
+   }
+
+   /**
+    * This function is called whenever there is change in physical SIM slots status.
+    *
+    * @param [in] slotStatus   list of slots status @ref SlotStatus
+    *
+    * @deprecated Use IMultiSimManager::onSlotStatusChanged(std::map<SlotId, SimSlotStatus>
+    * &slotStatus) instead.
+    *
+    */
+   virtual void onSlotStatusChanged(std::map<SlotId, SlotStatus> slotStatus) {
+   }
 
     /**
      * Destructor of IMultiSimListener

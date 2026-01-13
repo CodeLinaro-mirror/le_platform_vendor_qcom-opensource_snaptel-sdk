@@ -243,15 +243,20 @@ bool CardServicesMenu::init() {
     std::shared_ptr<ConsoleAppCommand> checkNtnProfileActiveCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("16", "Check_NTN_Profile_Active",
             {}, std::bind(&CardServicesMenu::checkNtnProfileActive, this, std::placeholders::_1)));
-    std::shared_ptr<ConsoleAppCommand> selectCardSlotCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("17", "Select_card_slot", {},
-            std::bind(&CardServicesMenu::selectCardSlot, this, std::placeholders::_1)));
-    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListCardServicesSubMenu = {
-        getCardStateCommand, getSupportedAppsCommand, openLogicalChannelCommand,
-        closeLogicalChannelCommand, transmitApduCommand, basicTransmitApduCommand,
-        changeCardPinCommand, unlockCardByPinCommand, unlockCardByPukCommand,
-        queryPin1LockStateCommand, queryFdnLockStateCommand, setCardLockCommand, cardPowerCommand,
-        cardFileHandlerMenuCommand, cardRefreshMenuCommand, checkNtnProfileActiveCommand};
+   std::shared_ptr<ConsoleAppCommand> getMepInformationCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "17", "Get_MEP_information", {},
+            std::bind(&CardServicesMenu::getMepInformation, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> selectCardSlotCommand = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("18", "Select_card_slot", {},
+                        std::bind(&CardServicesMenu::selectCardSlot, this, std::placeholders::_1)));
+   std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListCardServicesSubMenu
+      = {getCardStateCommand,        getSupportedAppsCommand,  openLogicalChannelCommand,
+         closeLogicalChannelCommand, transmitApduCommand,      basicTransmitApduCommand,
+         changeCardPinCommand,       unlockCardByPinCommand,   unlockCardByPukCommand,
+         queryPin1LockStateCommand,  queryFdnLockStateCommand, setCardLockCommand,
+         cardPowerCommand, cardFileHandlerMenuCommand, cardRefreshMenuCommand,
+         checkNtnProfileActiveCommand, getMepInformationCommand};
 
     if (cards_.size() > 1) {
         commandsListCardServicesSubMenu.emplace_back(selectCardSlotCommand);
@@ -388,7 +393,8 @@ void CardServicesMenu::transmitApdu(std::vector<std::string> userInput) {
     auto card = cards_[slot_ - 1];
     if (card) {
         int channel = INVALID;
-        int cla, instruction, p1, p2, p3;
+        int cla, instruction, p1, p2, p3, es10Input;
+        bool isEs10 = false;
         std::vector<uint8_t> data;
 
         cla         = 0;
@@ -424,28 +430,38 @@ void CardServicesMenu::transmitApdu(std::vector<std::string> userInput) {
             data.emplace_back((uint8_t)dataInput);
         }
 
-        auto ret = card->transmitApduLogicalChannel(channel, (uint8_t)cla, (uint8_t)instruction,
-            (uint8_t)p1, (uint8_t)p2, (uint8_t)p3, data, myTransmitApduCb_);
-        std::cout
-            << (ret == telux::common::Status::SUCCESS ? "Transmit APDU request sent successfully"
-                                                      : "Transmit APDU request failed")
-            << '\n';
-    } else {
-        std::cout << "ERROR: Unable to get card instance";
-    }
+        std::cout << " Enter es10 : 1 - yes, 0 - no : ";
+        std::cin >> es10Input;
+        Utils::validateInput(es10Input);
+        if (es10Input != 0 && es10Input != 1) {
+            std::cout << "Invalid input, defaulting to false" << std::endl;
+            isEs10 = false;
+        } else {
+            isEs10 = (es10Input == 1);
+        }
+
+      auto ret = card->transmitApduLogicalChannel(channel, (uint8_t)cla, (uint8_t)instruction,
+                                                   (uint8_t)p1, (uint8_t)p2, (uint8_t)p3, data,
+                                                   myTransmitApduCb_, isEs10);
+      std::cout << (ret == telux::common::Status::SUCCESS ?"Transmit APDU request sent successfully"
+                                                          : "Transmit APDU request failed")
+                << '\n';
+   }  else {
+      std::cout << "ERROR: Unable to get card instance";
+   }
 }
 
 void CardServicesMenu::basicTransmitApdu(std::vector<std::string> userInput) {
-    auto card = cards_[slot_ - 1];
-    if (card) {
-        int cla, instruction, p1, p2, p3;
-        std::vector<uint8_t> data;
-
+   auto card = cards_[slot_ - 1];
+   if(card) {
+      int cla, instruction, p1, p2, p3, es10Input;
+      std::vector<uint8_t> data;
         cla         = 0;
         instruction = 0;
         p1          = 0;
         p2          = 0;
         p3          = 0;
+      bool isEs10 = false;
 
         std::string user_input;
         std::cout << std::endl;
@@ -471,32 +487,54 @@ void CardServicesMenu::basicTransmitApdu(std::vector<std::string> userInput) {
             Utils::validateInput(tmpInp);
             data.emplace_back((uint8_t)tmpInp);
         }
-        auto ret = card->transmitApduBasicChannel((uint8_t)cla, (uint8_t)instruction, (uint8_t)p1,
-            (uint8_t)p2, (uint8_t)p3, data, myTransmitApduCb_);
-        if (ret == telux::common::Status::SUCCESS) {
-            std::cout << "Basic transmit APDU request sent successfully\n";
+        std::cout << " Enter es10 : 1 - yes, 0 - no : ";
+        std::cin >> es10Input;
+        Utils::validateInput(es10Input);
+        if (es10Input != 0 && es10Input != 1) {
+            std::cout << "Invalid input, defaulting to false" << std::endl;
+            isEs10 = false;
         } else {
-            std::cout << "Basic transmit APDU request failed\n";
+            isEs10 = (es10Input == 1);
         }
-    } else {
-        std::cout << "ERROR: Unable to get card instance";
-    }
+
+      auto ret = card->transmitApduBasicChannel((uint8_t)cla, (uint8_t)instruction, (uint8_t)p1,
+                                                 (uint8_t)p2, (uint8_t)p3, data,
+                                                 myTransmitApduCb_, isEs10);
+      if(ret == telux::common::Status::SUCCESS) {
+         std::cout << "Basic transmit APDU request sent successfully\n";
+      } else {
+         std::cout << "Basic transmit APDU request failed\n";
+      }
+   }  else {
+      std::cout << "ERROR: Unable to get card instance";
+   }
 }
 
 void CardServicesMenu::closeLogicalChannel(std::vector<std::string> userInput) {
     auto card = cards_[slot_ - 1];
     if (card) {
         int channel = std::stoi(userInput[1]);
-        std::cout << "Close logical channel with channel:" << channel << std::endl;
-        auto ret = card->closeLogicalChannel(channel, myCloseLogicalChannelCb_);
-        if (ret == telux::common::Status::SUCCESS) {
-            std::cout << "Close logical channel request sent successfully \n";
-        } else {
-            std::cout << "Close logical channel request failed \n";
-        }
+        int es10Input;
+      bool isEs10 = false;
+      std::cout << " Enter es10 : 1 - yes, 0 - no : ";
+    std::cin >> es10Input;
+    Utils::validateInput(es10Input);
+    if (es10Input != 0 && es10Input != 1) {
+        std::cout << "Invalid input, defaulting to false" << std::endl;
+        isEs10 = false;
     } else {
-        std::cout << "ERROR: Unable to get card instance";
+        isEs10 = (es10Input == 1);
     }
+      std::cout << "Close logical channel with channel:" << channel << ", ises10 " << isEs10 <<std::endl;
+      auto ret = card->closeLogicalChannel(channel, myCloseLogicalChannelCb_, isEs10);
+      if(ret == telux::common::Status::SUCCESS) {
+         std::cout << "Close logical channel request sent successfully \n";
+      } else {
+         std::cout << "Close logical channel request failed \n";
+      }
+   }  else {
+      std::cout << "ERROR: Unable to get card instance";
+   }
 }
 
 void CardServicesMenu::changeCardPin(std::vector<std::string> userInput) {
@@ -857,9 +895,22 @@ void CardServicesMenu::checkNtnProfileActive(std::vector<std::string> userInput)
     }
 }
 
-void CardServicesMenu::selectCardSlot(std::vector<std::string> userInput) {
-    std::string slotSelection;
-    char delimiter = '\n';
+void CardServicesMenu::getMepInformation(std::vector<std::string> userInput) {
+   auto card = cards_[slot_ - 1];
+   std::cout << "Logical SlotId: " << slot_ << std::endl;
+   if (card) {
+       telux::tel::MepInfo info;
+       card->getMepInfo(info);
+       std::cout << " is MEP enabled " << info.isMep << std::endl;
+       std::cout << " portId  " << info.portId << std::endl;
+       std::cout << " negotiatedMepMode  " << static_cast<int>(info.negotiatedMepMode) << std::endl;
+   }
+}
+
+void CardServicesMenu::selectCardSlot(std::vector<std::string> userInput)
+{
+   std::string slotSelection;
+   char delimiter = '\n';
 
     std::cout << "Enter the desired card slot (1-Primary, 2-Secondary): ";
     std::getline(std::cin, slotSelection, delimiter);

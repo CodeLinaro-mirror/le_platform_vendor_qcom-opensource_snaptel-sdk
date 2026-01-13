@@ -198,6 +198,15 @@ enum class RefreshStage {
 };
 
 /**
+ * Represents different mode of the MEP card
+ */
+enum class Mode {
+   NONE = 0,      /**< mode is None when the card supports Single Enabled Profile (SEP) */
+   MEP_A1 = 1,    /**< mode is A1 and the card supports Multiple Enabled Profile (MEP) */
+   MEP_B = 3      /**< mode is B and the card supports Multiple Enabled Profile (MEP) */
+};
+
+/**
  * Defines the card refresh mode
  */
 enum class RefreshMode {
@@ -212,6 +221,23 @@ enum class RefreshMode {
     RESET_APP = 5, /**< Reset UICC application and performs initialization of application. */
     RESET_3G  = 6 /**< Reset 3G session. This mode is equivalent to INIT_FCN and additionally some
                      applications procedure are followed at modem. */
+};
+
+/**
+ * Represents information related to multiple enabled profiles (MEP) for the card.
+ */
+struct MepInfo
+{
+    bool isMep;  /* Indicates whether MEP is enabled. */
+    int portId;  /* Port identifier of the card.
+                    For @ref telux::tel::Mode::NONE i.e SEP card, port identifiers is 0.
+                    For @ref telux::tel::Mode::MEP_A1 i.e MEP A1 card, port identifier start from
+                    1 and the maximum number of supported ports is defined by the
+                    baseband's capabilities.​
+                    For @ref telux::tel::Mode::MEP_B i.e MEP B card, port identifier start from
+                    0 and the maximum number of supported ports is defined by the
+                    baseband's capabilities.​*/
+    Mode negotiatedMepMode; /* Indicates the MEP mode negotiated for the card.*/
 };
 
 }  // End of namespace tel

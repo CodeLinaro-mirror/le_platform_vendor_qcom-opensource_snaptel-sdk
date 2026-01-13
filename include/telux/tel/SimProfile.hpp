@@ -61,7 +61,7 @@ class SimProfile {
     SimProfile(int profileId, ProfileType profileType, const std::string &iccid, bool isActive,
         const std::string &nickName, const std::string &spn, const std::string &name,
         IconType iconType, std::vector<uint8_t> icon, ProfileClass profileClass,
-        PolicyRuleMask policyRuleMask, int slotId = DEFAULT_SLOT_ID);
+        PolicyRuleMask policyRuleMask, int slotId = DEFAULT_SLOT_ID, uint8_t portId = 0);
 
     /**
      * Get slot id associated for this profile
@@ -157,6 +157,14 @@ class SimProfile {
      */
     std::string toString();
 
+    /**
+     * Provides the port identifer for the profile.
+     *
+     * @note Port identifer for inactive profile returns 255.
+     * @returns portId for the profile
+     */
+    uint8_t getPortId();
+
  private:
     int profileId_;
     ProfileType profileType_;
@@ -170,6 +178,7 @@ class SimProfile {
     ProfileClass profileClass_;
     PolicyRuleMask policyRuleMask_;
     int slotId_;
+    uint8_t portId_;
 };
 
 /** @} */ /* end_addtogroup telematics_rsp */

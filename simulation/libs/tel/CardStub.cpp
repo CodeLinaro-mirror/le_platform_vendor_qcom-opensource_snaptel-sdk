@@ -146,7 +146,8 @@ void CardStub::invokeCallback(std::shared_ptr<ICardChannelCallback> callback, in
 }
 
 telux::common::Status CardStub::closeLogicalChannel(
-    int channelId, std::shared_ptr<telux::common::ICommandResponseCallback> callback) {
+    int channelId, std::shared_ptr<telux::common::ICommandResponseCallback> callback,
+    bool isEs10) {
     ::telStub::CloseLogicalChannelRequest request;
     ::telStub::CloseLogicalChannelReply response;
     ClientContext context;
@@ -184,7 +185,7 @@ void CardStub::invokeCallback(std::shared_ptr<telux::common::ICommandResponseCal
 
 telux::common::Status CardStub::transmitApduLogicalChannel(int channel, uint8_t cla,
     uint8_t instruction, uint8_t p1, uint8_t p2, uint8_t p3, std::vector<uint8_t> data,
-    std::shared_ptr<ICardCommandCallback> callback) {
+    std::shared_ptr<ICardCommandCallback> callback, bool isEs10) {
     ::telStub::TransmitAPDURequest request;
     ::telStub::TransmitAPDUReply response;
     ClientContext context;
@@ -240,7 +241,7 @@ void CardStub::invokeCallback(std::shared_ptr<ICardCommandCallback> callback, in
 
 telux::common::Status CardStub::transmitApduBasicChannel(uint8_t cla, uint8_t instruction,
     uint8_t p1, uint8_t p2, uint8_t p3, std::vector<uint8_t> data,
-    std::shared_ptr<ICardCommandCallback> callback) {
+    std::shared_ptr<ICardCommandCallback> callback, bool isEs10) {
     ::telStub::TransmitBasicAPDURequest request;
     ::telStub::TransmitBasicAPDUReply response;
     ClientContext context;

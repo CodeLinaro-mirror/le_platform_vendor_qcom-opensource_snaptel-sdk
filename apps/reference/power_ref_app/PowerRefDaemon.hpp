@@ -31,6 +31,10 @@
 #include "trigger/CAN/CANTrigger.hpp"
 #endif  // CAN_TRIGGER_SUPPORTED
 
+#ifdef TELSDK_FEATURE_SATCOM_ENABLED
+#include "NtnClient.hpp"
+#endif
+
 using namespace telux::power;
 using namespace telux::common;
 /**
@@ -50,15 +54,20 @@ class PowerRefDaemon {
  private:
     std::mutex mtx_;
     std::condition_variable cv_;
-    bool exiting_ = false;
-    ConfigParser *config_;
+    std::atomic<bool> exiting_ = {false};
+    ConfigParser* config_;
     shared_ptr<EventManager> eventManager_;
     shared_ptr<NAOIpTrigger> naoIpTrigger_;
     shared_ptr<SMSTrigger> smsTrigger_;
 
 #ifdef CAN_TRIGGER_SUPPORTED
     shared_ptr<CANTrigger> canTrigger_;
-#endif  // CAN_TRIGGER_SUPPORTED
+#endif // CAN_TRIGGER_SUPPORTED
+
+#ifdef TELSDK_FEATURE_SATCOM_ENABLED
+   bool ntnEnabled_ = false;
+   std::shared_ptr<NtnClient> ntnClient_ = nullptr;
+#endif
 
     static void signalHandler(int signum);
     void printUsage(char **argv);

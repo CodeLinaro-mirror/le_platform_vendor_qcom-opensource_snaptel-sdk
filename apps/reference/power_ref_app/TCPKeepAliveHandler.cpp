@@ -18,6 +18,12 @@ TCPKeepAliveHandler::TCPKeepAliveHandler(std::shared_ptr<EventManager> eventMana
 }
 
 TCPKeepAliveHandler::~TCPKeepAliveHandler() {
+    if(connectionHandler_) {
+        connectionHandler_->cleanup();
+        connectionHandler_ = nullptr;
+    }
+    connectionKaInfoList_ = {};
+    eventManager_= nullptr;
 }
 
 bool TCPKeepAliveHandler::init() {
@@ -125,7 +131,7 @@ bool TCPKeepAliveHandler::startKAOffload() {
                 == telux::common::ErrorCode::SUCCESS) {
                 IPMessage msg;
                 memset(&msg, 0, sizeof(msg));
-                const char *message = (std::string("Hello\n")).c_str();
+                const char *message = "Hello\n";
                 std::copy(message, message + strlen(message) + 1, msg.msg);
                 connectionKaInfo->connection->socketConnection->sendMessage(msg);
                 connectionKaInfo->connection->socketConnection->ensureAllPacketsAcknowledged();

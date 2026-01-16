@@ -135,6 +135,8 @@ public:
         int secVerbosity, RadioReceive* radioReceive);
     static void postprocessing_cleanup();
     void PostProcessingThread();
+    void registerVerificationSemaphore();
+    void unregisterVerificationSemaphore();
 private:
     uint32_t fakeTmpId = 0;
     bool exit_ = false;

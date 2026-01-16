@@ -129,6 +129,17 @@ static VerifStats* asyncVerifStat;
 static MisbehaviorStats* asyncMbdStat;
 static ResultLoggingStats* asyncLogStat ;
 static bool resFileLogging = false;
+void SaeApplication::registerVerificationSemaphore() {
+    if (configuration.enableAsync) {
+        AerolinkSecurity::registerCallbackSemaphore(&verificationSem);
+    }
+}
+
+void SaeApplication::unregisterVerificationSemaphore() {
+    if (configuration.enableAsync) {
+        AerolinkSecurity::unregisterCallbackSemaphore(&verificationSem);
+    }
+}
 
 SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType,
     bool enableCsvLog, bool enableDiagLog):
@@ -853,8 +864,26 @@ static void AsyncCallbackFunction (AEROLINK_RESULT returnCode,
     void *userData)
 {
     // need to make sure this function is completed before closing qits
-
+    if (AerolinkSecurity::isShutdownInProgress()) {
+        if (secVerbosity > 5) {
+            fprintf(stdout, "[ASYNC_CB] Shutdown in progress, returning immediately\n");
+        }
+        // Use safe semaphore posting that validates before posting
+        if (!AerolinkSecurity::postSemaphoreIfValid(&verificationSem)) {
+            if (secVerbosity > 5) {
+                fprintf(stdout, "[ASYNC_CB] Semaphore invalid during shutdown\n");
+            }
+        }
+        return;  // Safe - no semaphore access
+    }
     std::unique_lock<std::mutex> lock(AsyncMtx);
+    // Recheck after acquiring lock
+    if (AerolinkSecurity::isShutdownInProgress()) {
+        if (secVerbosity > 5) {
+            fprintf(stdout, "[ASYNC_CB] Shutdown detected after lock\n");
+        }
+        return;
+    }
     asyncCbData_t* cb_data = (asyncCbData_t*) userData;
     if(cb_data == nullptr){
         printf("cb_data is a null pointer\n");
@@ -899,7 +928,11 @@ static void AsyncCallbackFunction (AEROLINK_RESULT returnCode,
         begin_flag = true;
     }
     // wake up post processing thread
-    sem_post(&verificationSem);
+    if (!AerolinkSecurity::postSemaphoreIfValid(&verificationSem)) {
+        if (secVerbosity > 5) {
+            fprintf(stdout, "[ASYNC_CB] Semaphore invalid, skipping post\n");
+        }
+    }
 }
 #endif
 

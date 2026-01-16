@@ -261,3 +261,18 @@ void DataListener::onTrafficFlowTemplateChange(
       std::cout << " ----------------------------------------------------------\n\n";
    }
 }
+
+void DataListener::onThroughputInfoAvailable(const std::vector<telux::data::ThroughputInfo> &info) {
+    std::cout << "---------------------------------------------------------------" << "\n";
+    std::cout << "Throughput details \n";
+    std::cout << "---------------------------------------------------------------" << "\n";
+    for(size_t i = 0; i < info.size(); i++) {
+        std::cout << "--------------Profile ID: " << info[i].profileId << "---------------" << "\n";
+        std::cout << "UL throughput: " << info[i].ulThroughput.throughput << "\n";
+        std::cout << "UL max throughput: " << info[i].ulThroughput.maxThroughput << "\n";
+        std::cout << "UL queue size: " << info[i].ulThroughput.queueSize << "\n";
+        std::cout << "DL throughput: " << info[i].dlThroughput.throughput << "\n";
+        std::cout << "Slot ID: " << static_cast<int>(info[i].slot) << "\n";
+    }
+    std::cout << "---------------------------------------------------------------" << "\n";
+}

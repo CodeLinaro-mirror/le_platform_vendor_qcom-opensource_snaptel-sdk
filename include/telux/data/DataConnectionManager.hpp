@@ -28,40 +28,9 @@
  */
 /*
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+*/
 
 /**
  * @file       DataConnectionManager.hpp
@@ -187,6 +156,64 @@ struct DataCallParams {
     OperationType operationType = OperationType::DATA_LOCAL; /** Optional
                                                                  @ref telux::data::OperationType*/
 };
+
+/**
+ * Represents uplink throughput information for a profile.
+ */
+struct UplinkThroughputInfo {
+    uint32_t throughput;                       /**< Current uplink throughput in kbps. */
+    uint32_t maxThroughput;                    /**< Maximum allowed uplink throughput in kbps. */
+    uint32_t queueSize;                        /**< Number of bytes pending in the uplink queue. */
+};
+
+/**
+ * Represents downlink throughput information for a profile.
+ */
+struct DownlinkThroughputInfo {
+    uint32_t throughput;                       /**< Current downlink throughput in kbps. */
+};
+
+/**
+ * Represents combined uplink and downlink throughput information for a profile.
+ */
+struct ThroughputInfo {
+    SlotId slot;                   /**< Slot on which throughput info is received. */
+    int profileId;                 /**< Profile identifier for which throughput info is received. */
+    UplinkThroughputInfo ulThroughput;         /**< Uplink throughput details. */
+    DownlinkThroughputInfo dlThroughput;       /**< Downlink throughput details. */
+};
+
+/** Enum of all the possible indications invoked by a data connection listener.  */
+enum DataConnectionIndicationsType {
+    /** Register to receive below updates -
+     * DataCallInfoChanged -
+     * @ref telux::data::IDataConnectionListener::onDataCallInfoChanged
+     * HwAccelerationChanged -
+     * @ref telux::data::IDataConnectionListener::onHwAccelerationChanged
+     * TrafficFlowTemplateChange -
+     * @ref telux::data::IDataConnectionListener::onTrafficFlowTemplateChange
+     * WwanConnectivityConfigChange -
+     * @ref telux::data::IDataConnectionListener:: onWwanConnectivityConfigChange
+     * ThrottledApnInfoChanged -
+     * @ref telux::data::IDataConnectionListener::onThrottledApnInfoChanged
+     * SSR indication -
+     * @ref telux::data::IDataConnectionListener::onServiceStatusChange
+    */
+    DEFAULT = 0,
+    /** Register to receive throughput updates -
+     * @ref telux::data::IDataConnectionListener::onThroughputInfoAvailable
+     */
+    THROUGHPUT
+};
+
+/** This bitset represents the list of the data connection indications selected by the client. */
+using DataConnectionIndications = std::bitset<32>;
+
+/**
+ * Default indication list subscribes to DEFAULT indications only (excludes THROUGHPUT).
+ */
+const DataConnectionIndications DEFAULT_INDICATIONS =
+    DataConnectionIndications().set(DataConnectionIndicationsType::DEFAULT);
 
 /**
  * This function is called with the response to startDataCall / stopDataCall API.
@@ -521,25 +548,44 @@ class IDataConnectionManager {
      * Register a listener for specific events in the Connection Manager like establishment of new
      * data call, data call info change and call failure.
      *
-     * @param [in] listener    pointer of IDataConnectionListener object that processes the
-     * notification
+     * @param [in] listener        Pointer of IDataConnectionListener object that processes the
+     *                             notification
+     * @param [in] indicationList  Optional list of specific indications to register for.
+     *                             If not provided, registers for all default indications
+     *                             @ref telux::data::DataConnectionIndicationsType
      *
      * @returns Status of registerListener success or suitable status code
      *
+     * @note    Eval: This is a new API signature and is being evaluated. It is subject to change
+     *          and could break backward compatibility.
      */
-    virtual telux::common::Status registerListener(std::weak_ptr<IDataConnectionListener> listener)
-        = 0;
+    virtual telux::common::Status registerListener(
+        std::weak_ptr<IDataConnectionListener> listener,
+        DataConnectionIndications indicationList = DEFAULT_INDICATIONS) = 0;
 
     /**
-     * Removes a previously added listener.
+     * Removes a previously added listener. Deregisters the listener from the list of indications
+     * provided via  @ref telux::data::DataConnectionIndicationsType . If not provided, deregisters
+     * from all default indications  @ref telux::data::DataConnectionIndicationsType::DEFAULT
      *
-     * @param [in] listener    pointer of IDataConnectionListener object that needs to be removed
+     * For example- Client registers for both DEFAULT and THROUGHPUT indication.
+     * During dergisteration, if client only provides DEFAULT indication in
+     * the indication list, the listener will be deregistered from the DEFAULT indication
+     * but will still be registered to the THROUGHPUT indication.
+     *
+     * @param [in] listener        Pointer of IDataConnectionListener object that has to be removed
+     * @param [in] indicationList  Optional list of specific indications to deregister from.
+     *                             If not provided, deregisters from all default indications
+     *                             @ref telux::data::DataConnectionIndicationsType
      *
      * @returns Status of deregisterListener success or suitable status code
      *
+     * @note    Eval: This is a new API signature and is being evaluated. It is subject to change
+     *          and could break backward compatibility.
      */
     virtual telux::common::Status deregisterListener(
-        std::weak_ptr<IDataConnectionListener> listener) = 0;
+        std::weak_ptr<IDataConnectionListener> listener,
+        DataConnectionIndications indicationList = DEFAULT_INDICATIONS) = 0;
 
     /**
      * Get associated slot id for the Data Connection Manager.
@@ -643,6 +689,44 @@ class IDataConnectionManager {
      *          break backward compatibility.
      */
     virtual telux::common::Status requestThrottledApnInfo(ThrottleInfoCb callback) = 0;
+
+    /**
+     * Configure the interval for generating periodic uplink and downlink throughput reports.
+     * Reports are delivered by @ref telux::data::IDataConnectionListener::onThroughputInfoAvailable
+     *
+     * @note The minimum allowed interval is 50 ms. Passing a value of 0 disables generation
+     * of throughput reports. The application of this interval is a global setting.
+     *
+     * On platforms with Access control enabled, caller needs to have TELUX_DATA_SETTING permission
+     * to invoke this API successfully.
+     *
+     * @param [in] reportInterval  Interval in milliseconds (ms) for throughput reporting.
+     *
+     * @return telux::common::ErrorCode
+     *         - `SUCCESS` if the interval was set successfully.
+     *         - Appropriate error code if the operation fails.
+     *
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
+     *          break backward compatibility.
+     */
+    virtual telux::common::ErrorCode setThroughputInterval(uint32_t reportInterval) = 0;
+
+    /**
+     * Retrieves the most recent uplink and downlink throughput information
+     * for all the active profiles.
+     *
+     * @param [out] info           A list of throughput information for all the active profiles.
+     *
+     * @return telux::common::ErrorCode
+     *         - `SUCCESS` if the throughput info was retrieved successfully.
+     *         - Appropriate error code if the operation fails.
+     *
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
+     *          break backward compatibility.
+     */
+    virtual telux::common::ErrorCode getLastThroughputInfo(std::vector<ThroughputInfo> &info) = 0;
 
     /**
      * Destructor for IDataConnectionManager
@@ -879,6 +963,26 @@ class IDataConnectionListener : public telux::common::IServiceStatusListener {
      *          break backward compatibility.
      */
     virtual void onThrottledApnInfoChanged(const std::vector<APNThrottleInfo> &throttleInfoList){};
+
+    /**
+     * This function is invoked periodically at the interval configured via
+     * @ref telux::data::IDataConnectionManager::setThroughputInterval API
+     * to provide the latest uplink and downlink throughput information for all the active profiles.
+     *
+     * This indication will be triggered only when:
+     * (1) A client registers for throughput updates using
+     *     @ref telux::data::IDataConnectionManager::registerListener with
+     *     @ref DataConnectionIndicationsType::THROUGHPUT bit set in the indication list.
+     *
+     * (2) At least one client has requested throughput reporting by calling
+     *     @ref telux::data::IDataConnectionManager::setThroughputInterval.
+     *
+     * @param [out] info           A list of throughput information for all the active profiles.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
+     *          break backward compatibility.
+     */
+    virtual void onThroughputInfoAvailable(const std::vector<ThroughputInfo> &info) {};
 
     /**
      * Destructor for IDataConnectionListener

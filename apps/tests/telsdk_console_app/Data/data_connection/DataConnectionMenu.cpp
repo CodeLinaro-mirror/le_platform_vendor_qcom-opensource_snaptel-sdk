@@ -112,11 +112,24 @@ bool DataConnectionMenu::init() {
             "11", "request_traffic_flow_template", {},
             std::bind(&DataConnectionMenu::requestTrafficFlowTemplate, this,
                       std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> registerForThroughput
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("12", "register_for_throughput", {},
+            std::bind(&DataConnectionMenu::registerForThroughput, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> deregisterForThroughput
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("13", "deregister_for_throughput", {},
+            std::bind(&DataConnectionMenu::deregisterForThroughput, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> setThroughputInterval
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("14", "set_throughput_interval", {},
+            std::bind(&DataConnectionMenu::setThroughputInterval, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> getLastThroughputInfo
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("15", "get_last_throughput_info", {},
+            std::bind(&DataConnectionMenu::getLastThroughputInfo, this, std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {startDataCall, stopDataCall,
         reqDataCallStats, resetDataCallStats, reqDataCallList, setDefaultProfile,
         getDefaultProfile, reqDataCallBitRate, setRoamingMode, requestRoamingMode,
-        requestTrafficFlowTemplate};
+        requestTrafficFlowTemplate, registerForThroughput, deregisterForThroughput,
+        setThroughputInterval, getLastThroughputInfo};
 
     addCommands(commandsList);
     return dcmSubSystemStatus;
@@ -738,4 +751,115 @@ void DataConnectionMenu::requestTrafficFlowTemplate(std::vector<std::string> inp
                      "request TFT info on that data call."
                   << std::endl;
     };
+}
+
+void DataConnectionMenu::registerForThroughput(std::vector<std::string> inputCommand) {
+    std::cout << "\nRegister For Throughput" << std::endl;
+    telux::common::Status retStat;
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+    if (dataConnectionManagerMap_.find(static_cast<SlotId>(slotId)) ==
+                                        dataConnectionManagerMap_.end()) {
+        std::cout << "\nData Connection Manager on slot "<< slotId << " is not ready" << std::endl;
+        return;
+    }
+    DataConnectionIndications indicationList;
+    indicationList.set(telux::data::DataConnectionIndicationsType::THROUGHPUT);
+    retStat = dataConnectionManagerMap_[static_cast<SlotId>(slotId)]->registerListener(
+                dataListeners_[static_cast<SlotId>(slotId)], indicationList);
+    Utils::printStatus(retStat);
+}
+
+void DataConnectionMenu::deregisterForThroughput(std::vector<std::string> inputCommand) {
+    std::cout << "\nDeregister for Throughput" << std::endl;
+    telux::common::Status retStat;
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+    if (dataConnectionManagerMap_.find(static_cast<SlotId>(slotId)) ==
+                                        dataConnectionManagerMap_.end()) {
+        std::cout << "\nData Connection Manager on slot "<< slotId << " is not ready" << std::endl;
+        return;
+    }
+    DataConnectionIndications indicationList;
+    indicationList.set(telux::data::DataConnectionIndicationsType::THROUGHPUT);
+    retStat = dataConnectionManagerMap_[static_cast<SlotId>(slotId)]->deregisterListener(
+                dataListeners_[static_cast<SlotId>(slotId)], indicationList);
+    Utils::printStatus(retStat);
+}
+
+void DataConnectionMenu::setThroughputInterval(std::vector<std::string> inputCommand) {
+    std::cout << "\nSet Throughput Interval" << std::endl;
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+    if (dataConnectionManagerMap_.find(static_cast<SlotId>(slotId)) ==
+                                        dataConnectionManagerMap_.end()) {
+        std::cout << "\nData Connection Manager on slot "<< slotId << " is not ready" << std::endl;
+        return;
+    }
+    uint32_t reportInterval;
+    std::cout << "Enter reportInterval: ";
+    std::cin >> reportInterval;
+    telux::common::ErrorCode error =
+        dataConnectionManagerMap_[static_cast<SlotId>(slotId)]->setThroughputInterval(reportInterval);
+    std::cout << "ErrorCode: " << static_cast<int>(error)
+        << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+}
+
+void DataConnectionMenu::getLastThroughputInfo(std::vector<std::string> inputCommand) {
+    std::cout << "\nGet Last Throughput Info" << std::endl;
+    telux::common::Status retStat;
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+    if (dataConnectionManagerMap_.find(static_cast<SlotId>(slotId)) ==
+                                        dataConnectionManagerMap_.end()) {
+        std::cout << "\nData Connection Manager on slot "<< slotId << " is not ready" << std::endl;
+        return;
+    }
+    std::vector<telux::data::ThroughputInfo> info = {};
+    telux::common::ErrorCode error =
+        dataConnectionManagerMap_[static_cast<SlotId>(slotId)]->getLastThroughputInfo(info);
+    std::cout << "ErrorCode: " << static_cast<int>(error)
+        << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    if(error == telux::common::ErrorCode::SUCCESS) {
+        std::cout << "---------------------------------------------------------------" << "\n";
+        std::cout << "Throughput details \n";
+        std::cout << "---------------------------------------------------------------" << "\n";
+        for(size_t i = 0; i < info.size(); i++) {
+            std::cout << "------------Profile ID: " << info[i].profileId << "-------------" << "\n";
+            std::cout << "UL throughput: " << info[i].ulThroughput.throughput << " kbps\n";
+            std::cout << "Total UL queue size: " << info[i].ulThroughput.queueSize << " bytes\n";
+
+            if (!info[i].ulThroughput.priorityQueues.empty()) {
+                std::cout << "UL Priority Queues:\n";
+                for (const auto& queue : info[i].ulThroughput.priorityQueues) {
+                    std::cout << "  Queue Type: ";
+                    switch (queue.queueType) {
+                        case telux::data::UplinkPriorityQueueType::PRIORITY_QUEUE_1:
+                            std::cout << "PRIORITY_QUEUE_1";
+                            break;
+                        case telux::data::UplinkPriorityQueueType::PRIORITY_QUEUE_2:
+                            std::cout << "PRIORITY_QUEUE_2";
+                            break;
+                        default:
+                            std::cout << "UNKNOWN";
+                            break;
+                    }
+                    std::cout << ", Queue Size: " << queue.queueSize << " bytes\n";
+                }
+            } else {
+                std::cout << "UL Priority Queues: None\n";
+            }
+
+            std::cout << "Slot ID: " << static_cast<int>(info[i].slot) << "\n";
+        }
+        std::cout << "---------------------------------------------------------------" << "\n";
+    }
 }

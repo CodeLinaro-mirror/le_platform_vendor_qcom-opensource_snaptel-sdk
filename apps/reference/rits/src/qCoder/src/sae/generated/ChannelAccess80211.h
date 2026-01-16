@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_ChannelAccess80211_H_
-#define	_ChannelAccess80211_H_
-
+#ifndef _ChannelAccess80211_H_
+#define _ChannelAccess80211_H_
 
 #include <asn_application.h>
 
@@ -20,13 +19,13 @@ extern "C" {
 
 /* Dependencies */
 typedef enum ChannelAccess80211 {
-	ChannelAccess80211_continuous	= 0,
-	ChannelAccess80211_alternatingSCH	= 1,
-	ChannelAccess80211_alternatingCCH	= 2
+    ChannelAccess80211_continuous     = 0,
+    ChannelAccess80211_alternatingSCH = 1,
+    ChannelAccess80211_alternatingCCH = 2
 } e_ChannelAccess80211;
 
 /* ChannelAccess80211 */
-typedef long	 ChannelAccess80211_t;
+typedef long ChannelAccess80211_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_ChannelAccess80211;
@@ -44,5 +43,5 @@ per_type_encoder_f ChannelAccess80211_encode_uper;
 }
 #endif
 
-#endif	/* _ChannelAccess80211_H_ */
+#endif /* _ChannelAccess80211_H_ */
 #include <asn_internal.h>

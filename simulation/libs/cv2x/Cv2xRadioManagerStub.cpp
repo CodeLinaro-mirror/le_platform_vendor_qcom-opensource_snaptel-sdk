@@ -1,7 +1,8 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 #include <grpcpp/grpcpp.h>
 
 #include "Cv2xRadioManagerStub.hpp"
@@ -32,8 +33,7 @@ void Cv2xEvtListener::onCv2xStatusChange(telux::cv2x::Cv2xStatus &status) {
     }
 }
 
-
-void Cv2xEvtListener::onSlssRxInfoChange(const ::cv2xStub::SyncRefUeInfo& rcpSlssUe) {
+void Cv2xEvtListener::onSlssRxInfoChange(const ::cv2xStub::SyncRefUeInfo &rcpSlssUe) {
     LOG(DEBUG, __FUNCTION__);
     cv2x::SyncRefUeInfo cv2xUeInfo;
     cv2x::Cv2xRadioHelper::rpcSlssInfoToSlssInfo(rcpSlssUe, cv2xUeInfo);

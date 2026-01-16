@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef LOC_REPORT_LISTENER_HPP
@@ -12,18 +12,17 @@
 namespace telux {
 namespace common {
 
-class LocationReportListener :
-    public EventManager<::locStub::EventDispatcherService> {
+class LocationReportListener : public EventManager<::locStub::EventDispatcherService> {
 
-public:
+ public:
     static LocationReportListener &getInstance();
 
-private:
+ private:
     LocationReportListener();
     virtual ~LocationReportListener();
 };
 
-} // end of namespace common
-} // end of namespace telux
+}  // end of namespace common
+}  // end of namespace telux
 
-#endif //LOC_REPORT_LISTENER_HPP
+#endif  // LOC_REPORT_LISTENER_HPP

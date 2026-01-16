@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "common/Logger.hpp"
@@ -10,15 +10,15 @@
 namespace telux {
 namespace audio {
 
-TranscoderImpl::TranscoderImpl(CreatedTranscoderInfo transcoderInfo,
-        std::shared_ptr<ICommunicator> transportClient) {
+TranscoderImpl::TranscoderImpl(
+    CreatedTranscoderInfo transcoderInfo, std::shared_ptr<ICommunicator> transportClient) {
 
     transportClient_ = transportClient;
 
-    inStreamId_ = transcoderInfo.inStreamId;
-    outStreamId_ = transcoderInfo.outStreamId;
-    readMinSize_ = transcoderInfo.readMinSize;
-    readMaxSize_ = transcoderInfo.readMaxSize;
+    inStreamId_   = transcoderInfo.inStreamId;
+    outStreamId_  = transcoderInfo.outStreamId;
+    readMinSize_  = transcoderInfo.readMinSize;
+    readMaxSize_  = transcoderInfo.readMaxSize;
     writeMinSize_ = transcoderInfo.writeMinSize;
     writeMaxSize_ = transcoderInfo.writeMaxSize;
     isLastBuffer_ = 0;
@@ -38,9 +38,8 @@ telux::common::Status TranscoderImpl::init() {
     /* Used to pass events on playback-stream like drain done and write ready
      * to the registered client (application) */
     try {
-        eventListenerMgr_ = std::make_shared<
-            telux::common::ListenerManager<ITranscodeListener>>();
-    } catch (const std::exception& e) {
+        eventListenerMgr_ = std::make_shared<telux::common::ListenerManager<ITranscodeListener>>();
+    } catch (const std::exception &e) {
         LOG(ERROR, __FUNCTION__, " can't create ListenerManager");
         return telux::common::Status::FAILED;
     }
@@ -55,9 +54,8 @@ telux::common::Status TranscoderImpl::init() {
 std::shared_ptr<IAudioBuffer> TranscoderImpl::getWriteBuffer() {
 
     try {
-        return std::make_shared<AudioBufferImpl>(writeMinSize_, writeMaxSize_,
-            0, writeMaxSize_);
-    } catch (const std::exception& e) {
+        return std::make_shared<AudioBufferImpl>(writeMinSize_, writeMaxSize_, 0, writeMaxSize_);
+    } catch (const std::exception &e) {
         LOG(ERROR, __FUNCTION__, " can't create AudioBufferImpl");
     }
 
@@ -70,9 +68,8 @@ std::shared_ptr<IAudioBuffer> TranscoderImpl::getWriteBuffer() {
 std::shared_ptr<IAudioBuffer> TranscoderImpl::getReadBuffer() {
 
     try {
-        return std::make_shared<AudioBufferImpl>(readMinSize_, readMaxSize_,
-            0, readMaxSize_);
-    } catch (const std::exception& e) {
+        return std::make_shared<AudioBufferImpl>(readMinSize_, readMaxSize_, 0, readMaxSize_);
+    } catch (const std::exception &e) {
         LOG(ERROR, __FUNCTION__, " can't create AudioBufferImpl");
     }
 
@@ -86,7 +83,7 @@ std::shared_ptr<IAudioBuffer> TranscoderImpl::getReadBuffer() {
  * be sent only after 'write ready indication' has been received.
  */
 telux::common::Status TranscoderImpl::write(std::shared_ptr<IAudioBuffer> buffer,
-        uint32_t isLastBuffer, TranscoderWriteResponseCb callback) {
+    uint32_t isLastBuffer, TranscoderWriteResponseCb callback) {
 
     uint32_t numBytesToWrite = 0;
     telux::common::Status status;
@@ -134,8 +131,8 @@ telux::common::Status TranscoderImpl::write(std::shared_ptr<IAudioBuffer> buffer
 
     transportBuffer = audioUserData->audioBuffer->getTransportBuffer();
 
-    status = transportClient_->write(inStreamId_, transportBuffer, isLastBuffer,
-                shared_from_this(), audioUserData, numBytesToWrite);
+    status = transportClient_->write(inStreamId_, transportBuffer, isLastBuffer, shared_from_this(),
+        audioUserData, numBytesToWrite);
     if (status != telux::common::Status::SUCCESS) {
         if (callback) {
             cmdCallbackMgr_.findAndRemoveCallback(audioUserData->cmdCallbackId);
@@ -150,7 +147,7 @@ telux::common::Status TranscoderImpl::write(std::shared_ptr<IAudioBuffer> buffer
  * Indicates data has been sent for transcoding.
  */
 void TranscoderImpl::onWriteResult(telux::common::ErrorCode ec, uint32_t streamId,
-        uint32_t bytesWritten, AudioUserData *audioUserData) {
+    uint32_t bytesWritten, AudioUserData *audioUserData) {
 
     std::shared_ptr<telux::common::ICommandCallback> resultListener;
 
@@ -166,8 +163,7 @@ void TranscoderImpl::onWriteResult(telux::common::ErrorCode ec, uint32_t streamI
         return;
     }
 
-    cmdCallbackMgr_.executeCallback(resultListener, audioUserData->audioBuffer,
-        bytesWritten, ec);
+    cmdCallbackMgr_.executeCallback(resultListener, audioUserData->audioBuffer, bytesWritten, ec);
 
     delete audioUserData;
 }
@@ -176,7 +172,7 @@ void TranscoderImpl::onWriteResult(telux::common::ErrorCode ec, uint32_t streamI
  * Read request to get transcoded data.
  */
 telux::common::Status TranscoderImpl::read(std::shared_ptr<IAudioBuffer> buffer,
-        uint32_t numBytesToRead, TranscoderReadResponseCb callback) {
+    uint32_t numBytesToRead, TranscoderReadResponseCb callback) {
 
     telux::common::Status status;
     AudioUserData *audioUserData = nullptr;
@@ -217,8 +213,8 @@ telux::common::Status TranscoderImpl::read(std::shared_ptr<IAudioBuffer> buffer,
 
     transportBuffer = audioUserData->audioBuffer->getTransportBuffer();
 
-    status = transportClient_->read(outStreamId_, numBytesToRead, transportBuffer,
-                shared_from_this(), audioUserData);
+    status = transportClient_->read(
+        outStreamId_, numBytesToRead, transportBuffer, shared_from_this(), audioUserData);
     if (status != telux::common::Status::SUCCESS) {
         LOG(ERROR, __FUNCTION__, "can't read stream, err ", static_cast<int>(status));
         if (callback) {
@@ -236,7 +232,7 @@ telux::common::Status TranscoderImpl::read(std::shared_ptr<IAudioBuffer> buffer,
  * protect isLastBuffer_.
  */
 void TranscoderImpl::onReadResult(telux::common::ErrorCode ec, uint32_t streamId,
-        uint32_t numBytesActuallyRead, AudioUserData *audioUserData) {
+    uint32_t numBytesActuallyRead, AudioUserData *audioUserData) {
 
     std::shared_ptr<telux::common::ICommandCallback> resultListener;
 
@@ -254,8 +250,7 @@ void TranscoderImpl::onReadResult(telux::common::ErrorCode ec, uint32_t streamId
 
     audioUserData->audioBuffer->setDataSize(numBytesActuallyRead);
 
-    cmdCallbackMgr_.executeCallback(resultListener, audioUserData->audioBuffer,
-        isLastBuffer_, ec);
+    cmdCallbackMgr_.executeCallback(resultListener, audioUserData->audioBuffer, isLastBuffer_, ec);
 
     delete audioUserData;
 }
@@ -263,8 +258,7 @@ void TranscoderImpl::onReadResult(telux::common::ErrorCode ec, uint32_t streamId
 /*
  * Delete the streams and release resources allocated for transcoding.
  */
-telux::common::Status TranscoderImpl::tearDown(
-        telux::common::ResponseCallback callback) {
+telux::common::Status TranscoderImpl::tearDown(telux::common::ResponseCallback callback) {
 
     intptr_t cmdId;
     telux::common::Status status;
@@ -274,8 +268,8 @@ telux::common::Status TranscoderImpl::tearDown(
         cmdId = cmdCallbackMgr_.addCallback(callback);
     }
 
-    status = transportClient_->deleteTranscoder(inStreamId_, outStreamId_,
-            shared_from_this(), cmdId);
+    status
+        = transportClient_->deleteTranscoder(inStreamId_, outStreamId_, shared_from_this(), cmdId);
 
     if (status != telux::common::Status::SUCCESS && callback) {
         cmdCallbackMgr_.findAndRemoveCallback(cmdId);
@@ -287,8 +281,8 @@ telux::common::Status TranscoderImpl::tearDown(
 /*
  * Result of transcoder deletion.
  */
-void TranscoderImpl::onDeleteTranscoderResult(telux::common::ErrorCode ec,
-        uint32_t inStreamId_, uint32_t outStreamId_, int cmdId) {
+void TranscoderImpl::onDeleteTranscoderResult(
+    telux::common::ErrorCode ec, uint32_t inStreamId_, uint32_t outStreamId_, int cmdId) {
 
     std::shared_ptr<telux::common::ICommandCallback> resultListener;
 
@@ -304,8 +298,7 @@ void TranscoderImpl::onDeleteTranscoderResult(telux::common::ErrorCode ec,
 /*
  * Register application listener for write ready event.
  */
-telux::common::Status TranscoderImpl::registerListener(
-        std::weak_ptr<ITranscodeListener> listener) {
+telux::common::Status TranscoderImpl::registerListener(std::weak_ptr<ITranscodeListener> listener) {
 
     std::vector<std::weak_ptr<ITranscodeListener>> transcodeListeners;
 
@@ -318,7 +311,7 @@ telux::common::Status TranscoderImpl::registerListener(
  * De-register application listener for write ready event.
  */
 telux::common::Status TranscoderImpl::deRegisterListener(
-        std::weak_ptr<ITranscodeListener> listener) {
+    std::weak_ptr<ITranscodeListener> listener) {
 
     return eventListenerMgr_->deRegisterListener(listener);
 }

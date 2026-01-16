@@ -1,35 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /*
@@ -72,8 +43,8 @@ std::promise<bool> callInfoChange{};
 class MyCallListener : public telux::tel::ICallListener {
  public:
     void onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) {
-       std::cout << " Call State: " << (int)(call->getCallState()) << std::endl;
-        if(call->getCallState() == telux::tel::CallState::CALL_ACTIVE) {
+        std::cout << " Call State: " << (int)(call->getCallState()) << std::endl;
+        if (call->getCallState() == telux::tel::CallState::CALL_ACTIVE) {
             std::cout << " Call State is ACTIVE " << std::endl;
             callInfoChange.set_value(true);
         }
@@ -83,7 +54,7 @@ class MyCallListener : public telux::tel::ICallListener {
 // Response callback function for sendRtt
 /* Step - 9 */
 void sendRttMessageResponse(telux::common::ErrorCode error) {
-    if(error == telux::common::ErrorCode::SUCCESS) {
+    if (error == telux::common::ErrorCode::SUCCESS) {
         std::cout << " Send RTT data request is successful \n ";
     } else {
         std::cout << " Send RTT data request request failed with error ";
@@ -91,7 +62,7 @@ void sendRttMessageResponse(telux::common::ErrorCode error) {
 }
 
 class CallMaker : public telux::tel::IMakeCallCallback,
-                public std::enable_shared_from_this<CallMaker> {
+                  public std::enable_shared_from_this<CallMaker> {
  public:
     int init() {
         telux::common::ServiceStatus serviceStatus;
@@ -102,9 +73,7 @@ class CallMaker : public telux::tel::IMakeCallCallback,
 
         /* Step - 2 */
         callMgr_ = phoneFactory.getCallManager(
-                [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+            [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!callMgr_) {
             std::cout << "Can't get ICallManager" << std::endl;
@@ -114,15 +83,15 @@ class CallMaker : public telux::tel::IMakeCallCallback,
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Call manager service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Call manager service unavailable, status "
+                      << static_cast<int>(serviceStatus) << std::endl;
             return -EIO;
         } else {
             /* Step - 4 */
             callListener_ = std::make_shared<MyCallListener>();
             // registering listener
             telux::common::Status status = callMgr_->registerListener(callListener_);
-            if(status != telux::common::Status::SUCCESS) {
+            if (status != telux::common::Status::SUCCESS) {
                 std::cout << "Unable to register Call Manager listener" << std::endl;
                 return false;
             }
@@ -134,7 +103,7 @@ class CallMaker : public telux::tel::IMakeCallCallback,
 
     int triggerCall() {
         telux::common::Status status;
-        int phoneId = DEFAULT_PHONE_ID;
+        int phoneId             = DEFAULT_PHONE_ID;
         std::string phoneNumber = "6666";
 
         /* Step - 5 */
@@ -150,7 +119,7 @@ class CallMaker : public telux::tel::IMakeCallCallback,
 
     int sendMessage() {
         telux::common::Status status;
-        int phoneId = DEFAULT_PHONE_ID;
+        int phoneId         = DEFAULT_PHONE_ID;
         std::string message = "Hello World";
 
         /* Step - 8 */
@@ -179,8 +148,8 @@ class CallMaker : public telux::tel::IMakeCallCallback,
     }
 
     /* Step - 6 */
-    void makeCallResponse(telux::common::ErrorCode ec,
-            std::shared_ptr<telux::tel::ICall> call) override {
+    void makeCallResponse(
+        telux::common::ErrorCode ec, std::shared_ptr<telux::tel::ICall> call) override {
         std::cout << "makeCallResponse()" << std::endl;
 
         if (ec != telux::common::ErrorCode::SUCCESS) {
@@ -190,10 +159,10 @@ class CallMaker : public telux::tel::IMakeCallCallback,
 
         dialedCall_ = call;
 
-        std::cout << "Index " << call->getCallIndex() <<
-            " direction " << static_cast<int>(call->getCallDirection()) <<
-            " number " << call->getRemotePartyNumber() << " rtt mode of call" <<
-            (int)call->getRttMode() << std::endl;
+        std::cout << "Index " << call->getCallIndex() << " direction "
+                  << static_cast<int>(call->getCallDirection()) << " number "
+                  << call->getRemotePartyNumber() << " rtt mode of call" << (int)call->getRttMode()
+                  << std::endl;
     }
 
  private:
@@ -210,7 +179,7 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<CallMaker>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate CallMaker" << std::endl;
         return -ENOMEM;
     }
@@ -227,7 +196,7 @@ int main(int argc, char *argv[]) {
     // Wait for call state to change to CallState::ACTIVE
     /* Step - 7 */
     isCallActive = callInfoChange.get_future().get();
-    if(isCallActive == true) {
+    if (isCallActive == true) {
         ret = app->sendMessage();
         if (ret < 0) {
             return ret;

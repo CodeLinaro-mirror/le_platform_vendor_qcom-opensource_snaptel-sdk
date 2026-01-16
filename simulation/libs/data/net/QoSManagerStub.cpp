@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <thread>
@@ -24,8 +24,8 @@ namespace net {
 
 QoSManagerStub::QoSManagerStub() {
     LOG(DEBUG, __FUNCTION__);
-    taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
-    listenerMgr_ = std::make_shared<telux::common::ListenerManager<IQoSListener>>();
+    taskQ_           = std::make_shared<AsyncTaskQueue<void>>();
+    listenerMgr_     = std::make_shared<telux::common::ListenerManager<IQoSListener>>();
     subSystemStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
 }
 
@@ -40,9 +40,8 @@ telux::common::Status QoSManagerStub::init(telux::common::InitResponseCb callbac
     LOG(DEBUG, __FUNCTION__);
 
     initCb_ = callback;
-    auto f =
-        std::async(std::launch::async, [this, callback]() {
-        this->initSync(callback);}).share();
+    auto f
+        = std::async(std::launch::async, [this, callback]() { this->initSync(callback); }).share();
     taskQ_->add(f);
 
     return telux::common::Status::SUCCESS;
@@ -58,12 +57,10 @@ void QoSManagerStub::initSync(telux::common::InitResponseCb callback) {
     ::dataStub::GetServiceStatusReply response;
     ClientContext context;
 
-    request.set_operation_type(::dataStub::OperationType(
-        telux::data::OperationType::DATA_LOCAL));
-    grpc::Status reqStatus = stub_->InitService(&context, request, &response);
-    telux::common::ServiceStatus cbStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
-    int cbDelay = DEFAULT_DELAY;
+    request.set_operation_type(::dataStub::OperationType(telux::data::OperationType::DATA_LOCAL));
+    grpc::Status reqStatus                = stub_->InitService(&context, request, &response);
+    telux::common::ServiceStatus cbStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    int cbDelay                           = DEFAULT_DELAY;
 
     do {
         if (!reqStatus.ok()) {
@@ -71,9 +68,8 @@ void QoSManagerStub::initSync(telux::common::InitResponseCb callback) {
             break;
         }
 
-        cbStatus =
-            static_cast<telux::common::ServiceStatus>(response.service_status());
-        cbDelay = static_cast<int>(response.delay());
+        cbStatus = static_cast<telux::common::ServiceStatus>(response.service_status());
+        cbDelay  = static_cast<int>(response.delay());
 
         this->onServiceStatusChange(cbStatus);
         LOG(DEBUG, __FUNCTION__, " ServiceStatus: ", static_cast<int>(cbStatus));
@@ -83,8 +79,7 @@ void QoSManagerStub::initSync(telux::common::InitResponseCb callback) {
 
     if (callback && (cbDelay != SKIP_CALLBACK)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay,
-            " cbStatus::", static_cast<int>(cbStatus));
+        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", static_cast<int>(cbStatus));
         invokeInitCallback(cbStatus);
     }
 }
@@ -107,14 +102,12 @@ telux::common::ServiceStatus QoSManagerStub::getServiceStatus() {
     return subSystemStatus_;
 }
 
-telux::common::Status QoSManagerStub::registerListener(
-    std::weak_ptr<IQoSListener> listener) {
+telux::common::Status QoSManagerStub::registerListener(std::weak_ptr<IQoSListener> listener) {
     LOG(DEBUG, __FUNCTION__);
     return listenerMgr_->registerListener(listener);
 }
 
-telux::common::Status QoSManagerStub::deregisterListener(
-    std::weak_ptr<IQoSListener> listener) {
+telux::common::Status QoSManagerStub::deregisterListener(std::weak_ptr<IQoSListener> listener) {
     LOG(DEBUG, __FUNCTION__);
     return listenerMgr_->deRegisterListener(listener);
 }
@@ -134,9 +127,8 @@ void QoSManagerStub::onServiceStatusChange(ServiceStatus status) {
     }
 }
 
-telux::common::ErrorCode QoSManagerStub::addQoSFilter(
-    QoSFilterConfig qosFilterConfig, QoSFilterHandle &filterHandle,
-    QoSFilterErrorCode &QoSFilterErrorCode) {
+telux::common::ErrorCode QoSManagerStub::addQoSFilter(QoSFilterConfig qosFilterConfig,
+    QoSFilterHandle &filterHandle, QoSFilterErrorCode &QoSFilterErrorCode) {
     return telux::common::ErrorCode::NOT_SUPPORTED;
 }
 
@@ -150,8 +142,7 @@ telux::common::ErrorCode QoSManagerStub::getQosFilters(
     return telux::common::ErrorCode::NOT_SUPPORTED;
 }
 
-telux::common::ErrorCode QoSManagerStub::deleteQosFilter(
-    uint32_t policyHandle) {
+telux::common::ErrorCode QoSManagerStub::deleteQosFilter(uint32_t policyHandle) {
     return telux::common::ErrorCode::NOT_SUPPORTED;
 }
 
@@ -160,8 +151,7 @@ telux::common::ErrorCode QoSManagerStub::deleteAllQosConfigs() {
 }
 
 telux::common::ErrorCode QoSManagerStub::createTrafficClass(
-    std::shared_ptr<ITcConfig> tcConfig,
-    TcConfigErrorCode &tcConfigErrorCode) {
+    std::shared_ptr<ITcConfig> tcConfig, TcConfigErrorCode &tcConfigErrorCode) {
     return telux::common::ErrorCode::NOT_SUPPORTED;
 }
 
@@ -170,8 +160,7 @@ telux::common::ErrorCode QoSManagerStub::getAllTrafficClasses(
     return telux::common::ErrorCode::NOT_SUPPORTED;
 }
 
-telux::common::ErrorCode QoSManagerStub::deleteTrafficClass(
-    std::shared_ptr<ITcConfig> tcConfig) {
+telux::common::ErrorCode QoSManagerStub::deleteTrafficClass(std::shared_ptr<ITcConfig> tcConfig) {
     return telux::common::ErrorCode::NOT_SUPPORTED;
 }
 
@@ -250,9 +239,9 @@ BandwidthConfig TcConfigImpl::getBandwidthConfig() {
 }
 std::string TcConfigImpl::toString() {
     std::stringstream outStr;
-    outStr  << " Traffic class: "   << +trafficClass_
-            << ", Data path: "      << telux::data::TrafficFilterImpl::dataPathToString(dataPath_)
-            << ", direction : "     << telux::data::TrafficFilterImpl::directionToString(direction_);
+    outStr << " Traffic class: " << +trafficClass_
+           << ", Data path: " << telux::data::TrafficFilterImpl::dataPathToString(dataPath_)
+           << ", direction : " << telux::data::TrafficFilterImpl::directionToString(direction_);
     if (validityMask_ & TcConfigValidField::TC_BANDWIDTH_CONFIG_VALID) {
         outStr << ", Min bandwidth config : "
                << +bandwidthConfig_.dlBandwidthValue.bandwidthRange.minBandwidth
@@ -273,14 +262,14 @@ void TcConfigImpl::setTrafficClass(TrafficClass trafficClass) {
 }
 void TcConfigImpl::setDirection(Direction direction) {
     validityMask_ = validityMask_ | TcConfigValidField::TC_DIRECTION_VALID;
-    direction_ = direction;
+    direction_    = direction;
 }
 void TcConfigImpl::setDataPath(DataPath dataPath) {
     validityMask_ = validityMask_ | TcConfigValidField::TC_DATA_PATH_VALID;
-    dataPath_ = dataPath;
+    dataPath_     = dataPath;
 }
 void TcConfigImpl::setBandwidthConfig(BandwidthConfig bandwidthConfig) {
-    validityMask_ = validityMask_ | TcConfigValidField::TC_BANDWIDTH_CONFIG_VALID;
+    validityMask_    = validityMask_ | TcConfigValidField::TC_BANDWIDTH_CONFIG_VALID;
     bandwidthConfig_ = bandwidthConfig;
 }
 
@@ -320,6 +309,6 @@ std::shared_ptr<ITcConfig> TcConfigBuilder::build() {
     return tcConfig_;
 }
 
-} // end of namespace net
-} // end of namespace data
-} // end of namespace telux
+}  // end of namespace net
+}  // end of namespace data
+}  // end of namespace telux

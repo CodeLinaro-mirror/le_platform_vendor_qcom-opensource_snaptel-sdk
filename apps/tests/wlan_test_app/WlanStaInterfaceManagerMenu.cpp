@@ -9,7 +9,7 @@
 
 WlanStaInterfaceManagerMenu::WlanStaInterfaceManagerMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
-       menuOptionsAdded_ = false;
+    menuOptionsAdded_ = false;
 }
 
 WlanStaInterfaceManagerMenu::~WlanStaInterfaceManagerMenu() {
@@ -20,12 +20,12 @@ WlanStaInterfaceManagerMenu::~WlanStaInterfaceManagerMenu() {
 
 bool WlanStaInterfaceManagerMenu::init() {
     if (wlanStaInterfaceManager_ == nullptr) {
-        auto &wlanFactory = telux::wlan::WlanFactory::getInstance();
+        auto &wlanFactory        = telux::wlan::WlanFactory::getInstance();
         wlanStaInterfaceManager_ = wlanFactory.getStaInterfaceManager();
         if (wlanStaInterfaceManager_ == nullptr) {
-            //Return immediately
-            std::cout <<
-                "\nError encountered in initializing Wlan Station Interface Manager" << std::endl;
+            // Return immediately
+            std::cout << "\nError encountered in initializing Wlan Station Interface Manager"
+                      << std::endl;
             return false;
         }
         wlanStaInterfaceManager_->registerListener(shared_from_this());
@@ -35,64 +35,54 @@ bool WlanStaInterfaceManagerMenu::init() {
 
 void WlanStaInterfaceManagerMenu::showMenu() {
     if (menuOptionsAdded_ == false) {
-        menuOptionsAdded_ = true;
-		  int stepID = 1;
-        std::shared_ptr<ConsoleAppCommand> setIpConfig
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
-            "set_ip_config", {},
-            std::bind(&WlanStaInterfaceManagerMenu::setIpConfig, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> setBridgeMode
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
-            "set_bridge_mode", {},
-            std::bind(&WlanStaInterfaceManagerMenu::setBridgeMode, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> enableHotspot2
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
-            "enable_hotspot2_support", {},
-            std::bind(&WlanStaInterfaceManagerMenu::enableHotspot2, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> getConfig
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
-            "get_config", {},
-            std::bind(&WlanStaInterfaceManagerMenu::getConfig, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> getStatus
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
-            "get_status", {},
-            std::bind(&WlanStaInterfaceManagerMenu::getStatus, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> startScan
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
-            "start_scan", {},
-            std::bind(&WlanStaInterfaceManagerMenu::startScan, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> addNetworkConfig
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
-            "add_network_config", {},
-            std::bind(&WlanStaInterfaceManagerMenu::addNetworkConfig, this,
-                std::placeholders::_1)));
+        menuOptionsAdded_                              = true;
+        int stepID                                     = 1;
+        std::shared_ptr<ConsoleAppCommand> setIpConfig = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand(std::to_string(stepID++), "set_ip_config", {},
+                std::bind(&WlanStaInterfaceManagerMenu::setIpConfig, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setBridgeMode = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand(std::to_string(stepID++), "set_bridge_mode", {},
+                std::bind(
+                    &WlanStaInterfaceManagerMenu::setBridgeMode, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> enableHotspot2 = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand(std::to_string(stepID++), "enable_hotspot2_support", {},
+                std::bind(
+                    &WlanStaInterfaceManagerMenu::enableHotspot2, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> getConfig = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand(std::to_string(stepID++), "get_config", {},
+                std::bind(&WlanStaInterfaceManagerMenu::getConfig, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> getStatus = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand(std::to_string(stepID++), "get_status", {},
+                std::bind(&WlanStaInterfaceManagerMenu::getStatus, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> startScan = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand(std::to_string(stepID++), "start_scan", {},
+                std::bind(&WlanStaInterfaceManagerMenu::startScan, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> addNetworkConfig = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand(std::to_string(stepID++), "add_network_config", {},
+                std::bind(
+                    &WlanStaInterfaceManagerMenu::addNetworkConfig, this, std::placeholders::_1)));
         std::shared_ptr<ConsoleAppCommand> removeNetworkConfig
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
-            "remove_network_config", {},
-            std::bind(&WlanStaInterfaceManagerMenu::removeNetworkConfig, this,
-                std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> getNetworkConfigs
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
-            "get_network_configs", {},
-            std::bind(&WlanStaInterfaceManagerMenu::getNetworkConfigs, this,
-                std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> connect
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
-            "connect", {},
-            std::bind(&WlanStaInterfaceManagerMenu::connect, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> disconnect
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
-            "disconnect", {},
-            std::bind(&WlanStaInterfaceManagerMenu::disconnect, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> manageStaService
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
-            "manage_service", {},
-            std::bind(&WlanStaInterfaceManagerMenu::manageStaService, this,
-                std::placeholders::_1)));
-        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {
-            setIpConfig, setBridgeMode, enableHotspot2, getConfig, getStatus, startScan,
-            addNetworkConfig, removeNetworkConfig, getNetworkConfigs, connect, disconnect,
-            manageStaService};
+            = std::make_shared<ConsoleAppCommand>(
+                ConsoleAppCommand(std::to_string(stepID++), "remove_network_config", {},
+                    std::bind(&WlanStaInterfaceManagerMenu::removeNetworkConfig, this,
+                        std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> getNetworkConfigs = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand(std::to_string(stepID++), "get_network_configs", {},
+                std::bind(
+                    &WlanStaInterfaceManagerMenu::getNetworkConfigs, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> connect = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand(std::to_string(stepID++), "connect", {},
+                std::bind(&WlanStaInterfaceManagerMenu::connect, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> disconnect = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand(std::to_string(stepID++), "disconnect", {},
+                std::bind(&WlanStaInterfaceManagerMenu::disconnect, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> manageStaService = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand(std::to_string(stepID++), "manage_service", {},
+                std::bind(
+                    &WlanStaInterfaceManagerMenu::manageStaService, this, std::placeholders::_1)));
+        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {setIpConfig, setBridgeMode,
+            enableHotspot2, getConfig, getStatus, startScan, addNetworkConfig, removeNetworkConfig,
+            getNetworkConfigs, connect, disconnect, manageStaService};
         addCommands(commandsList);
     }
     ConsoleApp::displayMenu();
@@ -110,7 +100,7 @@ void WlanStaInterfaceManagerMenu::setIpConfig(std::vector<std::string> userInput
     std::cin >> ipConfig;
     WlanUtils::validateInput(ipConfig, {1, 2});
 
-    if(ipConfig == 2){
+    if (ipConfig == 2) {
         staIpConfig = telux::wlan::StaIpConfig::STATIC_IP;
         std::string userInput{};
         std::cout << "Enter IPv4 Address: ";
@@ -136,7 +126,7 @@ void WlanStaInterfaceManagerMenu::setIpConfig(std::vector<std::string> userInput
         Utils::validateInput(userInput);
         staticIpConfig.dnsAddr = userInput;
         std::cout << std::endl;
-    }else{
+    } else {
         staIpConfig = telux::wlan::StaIpConfig::DYNAMIC_IP;
     }
     telux::common::ErrorCode retCode = wlanStaInterfaceManager_->setIpConfig(
@@ -179,15 +169,13 @@ void WlanStaInterfaceManagerMenu::enableHotspot2(std::vector<std::string> userIn
     std::cout << std::endl;
     WlanUtils::validateInput(hotspotEnable, {0, 1});
 
-    telux::common::ErrorCode retCode =
-        wlanStaInterfaceManager_->enableHotspot2(
-            telux::wlan::Id::PRIMARY, static_cast<bool>(hotspotEnable));
+    telux::common::ErrorCode retCode = wlanStaInterfaceManager_->enableHotspot2(
+        telux::wlan::Id::PRIMARY, static_cast<bool>(hotspotEnable));
     std::cout << "\nEnable Hotspot2 Response"
               << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
               << ". ErrorCode: " << static_cast<int>(retCode)
               << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
 }
-
 
 void WlanStaInterfaceManagerMenu::getConfig(std::vector<std::string> userInput) {
     std::vector<telux::wlan::StaConfig> config;
@@ -196,25 +184,27 @@ void WlanStaInterfaceManagerMenu::getConfig(std::vector<std::string> userInput) 
     telux::common::ErrorCode retCode = wlanStaInterfaceManager_->getConfig(config);
 
     std::cout << "\nrequest Station Configuration Response"
-                << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
-                << ". ErrorCode: " << static_cast<int>(retCode)
-                << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
-    if(retCode == telux::common::ErrorCode::SUCCESS) {
+              << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(retCode)
+              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+    if (retCode == telux::common::ErrorCode::SUCCESS) {
         for (auto &cfg : config) {
             std::cout << "------------------------------------------" << std::endl;
             std::cout << "Id         : " << WlanUtils::getWlanId(cfg.staId) << std::endl;
-            std::cout << "IP config  : "
-                      << ((cfg.ipConfig == telux::wlan::StaIpConfig::DYNAMIC_IP)?
-                            "DYNAMIC":"STATIC") << std::endl;
-            if(cfg.ipConfig == telux::wlan::StaIpConfig::STATIC_IP) {
+            std::cout
+                << "IP config  : "
+                << ((cfg.ipConfig == telux::wlan::StaIpConfig::DYNAMIC_IP) ? "DYNAMIC" : "STATIC")
+                << std::endl;
+            if (cfg.ipConfig == telux::wlan::StaIpConfig::STATIC_IP) {
                 std::cout << "IPv4 Addr        : " << cfg.staticIpConfig.ipAddr << std::endl;
                 std::cout << "Gateway IPv4 Addr: " << cfg.staticIpConfig.gwIpAddr << std::endl;
                 std::cout << "Subnet Mask      : " << cfg.staticIpConfig.netMask << std::endl;
                 std::cout << "DNS IPv4 Addr    : " << cfg.staticIpConfig.dnsAddr << std::endl;
             }
-            std::cout << "Bridge Mode: "
-                        << ((cfg.bridgeMode == telux::wlan::StaBridgeMode::BRIDGE)?
-                            "Bridge":"Router") << std::endl;
+            std::cout
+                << "Bridge Mode: "
+                << ((cfg.bridgeMode == telux::wlan::StaBridgeMode::BRIDGE) ? "Bridge" : "Router")
+                << std::endl;
         }
     }
 }
@@ -225,34 +215,32 @@ void WlanStaInterfaceManagerMenu::getStatus(std::vector<std::string> userInput) 
 
     telux::common::ErrorCode retCode = wlanStaInterfaceManager_->getStatus(status);
     std::cout << "\nRequest Station Status Response"
-                << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
-                << ". ErrorCode: " << static_cast<int>(retCode)
-                << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
-    if(retCode == telux::common::ErrorCode::SUCCESS) {
+              << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(retCode)
+              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+    if (retCode == telux::common::ErrorCode::SUCCESS) {
         WlanUtils::printStaStatus(status);
     }
 }
 
-
 void WlanStaInterfaceManagerMenu::startScan(std::vector<std::string> userInput) {
     std::cout << "Start scan for nearby APs" << std::endl;
 
-    telux::common::ErrorCode retCode =
-        wlanStaInterfaceManager_->startScan(telux::wlan::Id::PRIMARY);
+    telux::common::ErrorCode retCode
+        = wlanStaInterfaceManager_->startScan(telux::wlan::Id::PRIMARY);
 
     std::cout << "\nStart scan Response"
-            << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
-            << ". ErrorCode: " << static_cast<int>(retCode)
-            << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
-
+              << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(retCode)
+              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
 }
 
 void WlanStaInterfaceManagerMenu::addNetworkConfig(std::vector<std::string> userInput) {
     std::cout << "Add Network Config entry" << std::endl;
 
     telux::wlan::StaNetworkConfigEntry staNetConfigEntry = {};
-    std::string ssid = "";
-    char delimiter = '\n';
+    std::string ssid                                     = "";
+    char delimiter                                       = '\n';
     std::cout << "Enter SSID (Without Quotes): ";
     std::getline(std::cin, ssid, delimiter);
     staNetConfigEntry.ssid = ssid;
@@ -262,7 +250,7 @@ void WlanStaInterfaceManagerMenu::addNetworkConfig(std::vector<std::string> user
     std::cin >> input;
     std::cout << std::endl;
     WlanUtils::validateInput(input, {0, 1});
-    if(input) {
+    if (input) {
         std::string passPhrase = "";
         std::cout << "Enter passphrase (Without Quotes): ";
         std::getline(std::cin, passPhrase, delimiter);
@@ -276,7 +264,7 @@ void WlanStaInterfaceManagerMenu::addNetworkConfig(std::vector<std::string> user
     WlanUtils::validateInput(userResp, {1, 2, 3});
     std::cout << std::endl;
     telux::wlan::ApNetConfig apNetConfig = {};
-    if(userResp == 1) {
+    if (userResp == 1) {
         staNetConfigEntry.band = telux::wlan::BandType::BAND_2GHZ;
     } else if (userResp == 2) {
         staNetConfigEntry.band = telux::wlan::BandType::BAND_5GHZ;
@@ -292,7 +280,7 @@ void WlanStaInterfaceManagerMenu::addNetworkConfig(std::vector<std::string> user
         try {
             staNetConfigEntry.priority = std::stoi(priority);
         } catch (const std::exception &e) {
-            std::cout << "ERROR: "<< e.what() << std::endl;
+            std::cout << "ERROR: " << e.what() << std::endl;
             return;
         }
     }
@@ -307,16 +295,15 @@ void WlanStaInterfaceManagerMenu::addNetworkConfig(std::vector<std::string> user
     WlanUtils::validateInput(enable, {0, 1});
     staNetConfigEntry.enable = static_cast<bool>(enable);
 
-    telux::common::ErrorCode retCode = wlanStaInterfaceManager_->addNetworkConfig(
-        telux::wlan::Id::PRIMARY, staNetConfigEntry);
+    telux::common::ErrorCode retCode
+        = wlanStaInterfaceManager_->addNetworkConfig(telux::wlan::Id::PRIMARY, staNetConfigEntry);
     std::cout << "\nAdd Network config Response"
-            << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
-            << ". ErrorCode: " << static_cast<int>(retCode)
-            << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
-
+              << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(retCode)
+              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
 }
 
-void WlanStaInterfaceManagerMenu::removeNetworkConfig(std::vector<std::string> userInput){
+void WlanStaInterfaceManagerMenu::removeNetworkConfig(std::vector<std::string> userInput) {
     std::cout << "Remove network config entry" << std::endl;
 
     telux::wlan::NetworkId networkId;
@@ -324,13 +311,13 @@ void WlanStaInterfaceManagerMenu::removeNetworkConfig(std::vector<std::string> u
     std::cin >> networkId;
     Utils::validateInput(networkId);
 
-    telux::common::ErrorCode retCode =
-        wlanStaInterfaceManager_->removeNetworkConfig(telux::wlan::Id::PRIMARY, networkId);
+    telux::common::ErrorCode retCode
+        = wlanStaInterfaceManager_->removeNetworkConfig(telux::wlan::Id::PRIMARY, networkId);
 
     std::cout << "\nRemove network config Response"
-            << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
-            << ". ErrorCode: " << static_cast<int>(retCode)
-            << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+              << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(retCode)
+              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
 }
 
 void WlanStaInterfaceManagerMenu::getNetworkConfigs(std::vector<std::string> userInput) {
@@ -338,14 +325,14 @@ void WlanStaInterfaceManagerMenu::getNetworkConfigs(std::vector<std::string> use
 
     std::vector<telux::wlan::StaNetworkConfigInfo> networkConfigInfo;
 
-    telux::common::ErrorCode retCode =
-        wlanStaInterfaceManager_->getNetworkConfigs(telux::wlan::Id::PRIMARY, networkConfigInfo);
+    telux::common::ErrorCode retCode
+        = wlanStaInterfaceManager_->getNetworkConfigs(telux::wlan::Id::PRIMARY, networkConfigInfo);
 
     std::cout << "\nGet network configs Response"
-            << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
-            << ". ErrorCode: " << static_cast<int>(retCode)
-            << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
-    if(retCode == telux::common::ErrorCode::SUCCESS) {
+              << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(retCode)
+              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+    if (retCode == telux::common::ErrorCode::SUCCESS) {
         WlanUtils::printNetworkConfigs(networkConfigInfo);
     }
 }
@@ -358,25 +345,25 @@ void WlanStaInterfaceManagerMenu::connect(std::vector<std::string> userInput) {
     std::cin >> networkId;
     Utils::validateInput(networkId);
 
-    telux::common::ErrorCode retCode =
-        wlanStaInterfaceManager_->connect(telux::wlan::Id::PRIMARY, networkId);
+    telux::common::ErrorCode retCode
+        = wlanStaInterfaceManager_->connect(telux::wlan::Id::PRIMARY, networkId);
 
     std::cout << "\nConnecting to External AP with NetworkId: " << networkId
-            << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
-            << ". ErrorCode: " << static_cast<int>(retCode)
-            << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+              << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(retCode)
+              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
 }
 
 void WlanStaInterfaceManagerMenu::disconnect(std::vector<std::string> userInput) {
     std::cout << "Disconnect from External AP" << std::endl;
 
-    telux::common::ErrorCode retCode =
-        wlanStaInterfaceManager_->disconnect(telux::wlan::Id::PRIMARY);
+    telux::common::ErrorCode retCode
+        = wlanStaInterfaceManager_->disconnect(telux::wlan::Id::PRIMARY);
 
     std::cout << "\nDisconnecting from External AP"
-            << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
-            << ". ErrorCode: " << static_cast<int>(retCode)
-            << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+              << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(retCode)
+              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
 }
 
 void WlanStaInterfaceManagerMenu::manageStaService(std::vector<std::string> userInput) {
@@ -412,14 +399,13 @@ void WlanStaInterfaceManagerMenu::onScanResultUpdated(
 }
 
 void WlanStaInterfaceManagerMenu::onStationBandChanged(telux::wlan::BandType radio) {
-   PRINT_NOTIFICATION << " ** Wlan onStationOperationBandChanged **\n";
+    PRINT_NOTIFICATION << " ** Wlan onStationOperationBandChanged **\n";
 
-   if(radio == telux::wlan::BandType::BAND_2GHZ) {
-       std::cout << "Station has switched to 2G band" << std::endl;
-   } else if(radio == telux::wlan::BandType::BAND_5GHZ) {
-       std::cout << "Station has switched to 5G band" << std::endl;
-   } else {
-       std::cout << "Station has switched to 6G band" << std::endl;
-   }
+    if (radio == telux::wlan::BandType::BAND_2GHZ) {
+        std::cout << "Station has switched to 2G band" << std::endl;
+    } else if (radio == telux::wlan::BandType::BAND_5GHZ) {
+        std::cout << "Station has switched to 5G band" << std::endl;
+    } else {
+        std::cout << "Station has switched to 6G band" << std::endl;
+    }
 }
-

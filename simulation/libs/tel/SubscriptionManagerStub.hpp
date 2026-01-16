@@ -1,8 +1,7 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 
 /**
  * @file       SubscriptionManagerStub.hpp
@@ -36,8 +35,8 @@ class SubscriptionManagerStub : public ISubscriptionManager,
                                 public IEventListener,
                                 public ICardListener,
                                 public ISubscriptionListener,
-                                public std::enable_shared_from_this<SubscriptionManagerStub>  {
-public:
+                                public std::enable_shared_from_this<SubscriptionManagerStub> {
+ public:
     SubscriptionManagerStub();
     telux::common::Status init(telux::common::InitResponseCb callback);
     ~SubscriptionManagerStub();
@@ -46,13 +45,14 @@ public:
     telux::common::ServiceStatus getServiceStatus() override;
     telux::common::Status registerListener(std::weak_ptr<ISubscriptionListener> listener) override;
     telux::common::Status removeListener(std::weak_ptr<ISubscriptionListener> listener) override;
-    std::shared_ptr<ISubscription> getSubscription(int slotId = DEFAULT_SLOT_ID,
+    std::shared_ptr<ISubscription> getSubscription(
+        int slotId = DEFAULT_SLOT_ID, telux::common::Status *status = nullptr) override;
+    std::vector<std::shared_ptr<ISubscription>> getAllSubscriptions(
         telux::common::Status *status = nullptr) override;
-    std::vector<std::shared_ptr<ISubscription>>
-        getAllSubscriptions(telux::common::Status *status = nullptr) override;
     void onEventUpdate(google::protobuf::Any event);
     void cleanup();
-private:
+
+ private:
     SlotId slotId_;
     std::mutex subscriptionManagerMutex_;
     telux::common::InitResponseCb initCb_;
@@ -62,9 +62,9 @@ private:
     std::unique_ptr<::telStub::SubscriptionService::Stub> stub_;
     std::unique_ptr<::telStub::CardService::Stub> cardstub_;
     std::map<int, std::shared_ptr<SubscriptionStub>> subscriptionMap_;
-    std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_ = nullptr;
+    std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_                         = nullptr;
     std::shared_ptr<telux::common::ListenerManager<ISubscriptionListener>> listenerMgr_ = nullptr;
-    bool ready_ = false;
+    bool ready_                                                                         = false;
     bool waitForInitialization();
     void setSubsystemReady(bool status);
     void initSync();
@@ -80,13 +80,13 @@ private:
     telux::common::Status getState(CardState &cardState, int phoneId);
     telux::common::Status getAppInfo(std::vector<CardAppStatus> &apps, int phoneId);
     telux::common::Status fetchSubscription(int slotId, std::string *carrierName,
-        std::string *iccId, int* mcc, int* mnc, std::string *number, std::string *imsi,
-        std::string *gid1, std::string *gid2 );
+        std::string *iccId, int *mcc, int *mnc, std::string *number, std::string *imsi,
+        std::string *gid1, std::string *gid2);
     void onEventUpdate(std::string event);
 };
 
-} // end of namespace tel
+}  // end of namespace tel
 
-} // end of namespace telux
+}  // end of namespace telux
 
-#endif // SUBSCRIPTION_MANAGER_STUB_HPP
+#endif  // SUBSCRIPTION_MANAGER_STUB_HPP

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -20,14 +20,13 @@ FsManagerServerImpl::FsManagerServerImpl()
    : otaSession_(false)
    , abSyncState_(false)
    , serverEvent_(ServerEventManager::getInstance())
-   , clientEvent_(EventService::getInstance()){
+   , clientEvent_(EventService::getInstance()) {
     LOG(DEBUG, __FUNCTION__);
 }
 
 FsManagerServerImpl::~FsManagerServerImpl() {
-    LOG(DEBUG, __FUNCTION__ , " Destructing");
+    LOG(DEBUG, __FUNCTION__, " Destructing");
 }
-
 
 telux::common::Status FsManagerServerImpl::registerDefaultIndications() {
     LOG(DEBUG, __FUNCTION__);
@@ -41,8 +40,8 @@ telux::common::Status FsManagerServerImpl::registerDefaultIndications() {
     return status;
 }
 
-void FsManagerServerImpl::notifyServiceStateChanged(telux::common::ServiceStatus srvStatus,
-        std::string srvStatusStr) {
+void FsManagerServerImpl::notifyServiceStateChanged(
+    telux::common::ServiceStatus srvStatus, std::string srvStatusStr) {
     LOG(DEBUG, __FUNCTION__, ":: Service status Changed to ", srvStatusStr);
 
     onSSREvent(srvStatus);
@@ -60,7 +59,7 @@ void FsManagerServerImpl::setServiceStatus(telux::common::ServiceStatus srvStatu
 
     std::lock_guard<std::mutex> lock(mutex_);
     if (serviceStatus_ != srvStatus) {
-        serviceStatus_ = srvStatus;
+        serviceStatus_           = srvStatus;
         std::string srvStrStatus = CommonUtils::mapServiceString(srvStatus);
         notifyServiceStateChanged(serviceStatus_, srvStrStatus);
     }
@@ -82,7 +81,7 @@ void FsManagerServerImpl::updateSystemStateJson() {
     Json::Value root;
     Json::Value events(Json::objectValue);
 
-    for (const auto& event : fsEventsMap_) {
+    for (const auto &event : fsEventsMap_) {
         events[event.first] = event.second;
     }
 
@@ -91,18 +90,18 @@ void FsManagerServerImpl::updateSystemStateJson() {
     JsonParser::writeToJsonFile(root, FS_EVENT_INFO_JSON);
 }
 
-grpc::Status FsManagerServerImpl::InitService(ServerContext* context,
-    const google::protobuf::Empty* request, commonStub::GetServiceStatusReply* response) {
-    LOG(DEBUG,__FUNCTION__);
+grpc::Status FsManagerServerImpl::InitService(ServerContext *context,
+    const google::protobuf::Empty *request, commonStub::GetServiceStatusReply *response) {
+    LOG(DEBUG, __FUNCTION__);
 
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status           = telux::common::Status::SUCCESS;
     telux::common::ServiceStatus srvStatus = telux::common::ServiceStatus::SERVICE_FAILED;
     Json::Value rootNode;
 
     status = registerDefaultIndications();
     if (status != telux::common::Status::SUCCESS) {
-        return grpc::Status(grpc::StatusCode::CANCELLED,
-                ":: Could not register indication with EventMgr");
+        return grpc::Status(
+            grpc::StatusCode::CANCELLED, ":: Could not register indication with EventMgr");
     }
 
     telux::common::ErrorCode errorCode
@@ -110,18 +109,18 @@ grpc::Status FsManagerServerImpl::InitService(ServerContext* context,
 
     if (errorCode == ErrorCode::SUCCESS) {
         std::lock_guard<std::mutex> lock(mutex_);
-        cbDelay_ = rootNode["IFsManager"]["IsSubsystemReadyDelay"].asInt();
+        cbDelay_             = rootNode["IFsManager"]["IsSubsystemReadyDelay"].asInt();
         std::string cbStatus = rootNode["IFsManager"]["IsSubsystemReady"].asString();
-        srvStatus = CommonUtils::mapServiceStatus(cbStatus);
-        try{
+        srvStatus            = CommonUtils::mapServiceStatus(cbStatus);
+        try {
             errorCode = JsonParser::readFromJsonFile(rootNode, FS_EVENT_INFO_JSON);
             if (errorCode == ErrorCode::SUCCESS) {
                 // Iterate through the JSON object
                 const Json::Value events = rootNode["fsEventsState"];
                 std::lock_guard<std::mutex> lock(eventMutex_);
                 for (Json::Value::const_iterator it = events.begin(); it != events.end(); ++it) {
-                    std::string eventName = it.key().asString();
-                    bool state = it->asBool();
+                    std::string eventName   = it.key().asString();
+                    bool state              = it->asBool();
                     fsEventsMap_[eventName] = state;
                 }
                 checkRebootDuringOTA();
@@ -129,7 +128,7 @@ grpc::Status FsManagerServerImpl::InitService(ServerContext* context,
                 LOG(ERROR, "Unable to read FS_EVENT_INFO_JSON JSON");
                 srvStatus = telux::common::ServiceStatus::SERVICE_FAILED;
             }
-        } catch(std::exception const & ex) {
+        } catch (std::exception const &ex) {
             LOG(DEBUG, "Exception Occur ", ex.what());
             srvStatus = telux::common::ServiceStatus::SERVICE_FAILED;
         }
@@ -141,28 +140,27 @@ grpc::Status FsManagerServerImpl::InitService(ServerContext* context,
     setServiceStatus(srvStatus);
     response->set_delay(cbDelay_);
 
-    return setResponse(srvStatus,response);
+    return setResponse(srvStatus, response);
 }
 
-grpc::Status FsManagerServerImpl::GetServiceStatus(ServerContext* context,
-        const google::protobuf::Empty* request,
-        commonStub::GetServiceStatusReply* response) {
+grpc::Status FsManagerServerImpl::GetServiceStatus(ServerContext *context,
+    const google::protobuf::Empty *request, commonStub::GetServiceStatusReply *response) {
     LOG(DEBUG, __FUNCTION__);
 
     telux::common::ServiceStatus srvStatus = getServiceStatus();
     LOG(DEBUG, __FUNCTION__, ":: SubSystemStatus: ", static_cast<int>(srvStatus));
 
-    return setResponse(srvStatus,response);
+    return setResponse(srvStatus, response);
 }
 
 void FsManagerServerImpl::updateFsStateMachine(std::string eventName, bool state) {
-    LOG(DEBUG,__FUNCTION__);
+    LOG(DEBUG, __FUNCTION__);
 
     fsEventsMap_[eventName] = state;
 }
 
 void FsManagerServerImpl::onEventUpdate(::eventService::UnsolicitedEvent event) {
-    LOG(DEBUG,__FUNCTION__);
+    LOG(DEBUG, __FUNCTION__);
 
     if (event.filter() == FS_MANAGER_FILTER) {
         onEventUpdate(event.event());
@@ -177,7 +175,7 @@ void FsManagerServerImpl::onEventUpdate(std::string event) {
         LOG(ERROR, __FUNCTION__, "The event flag is not set!");
         return;
     }
-    handleEvent(token,event);
+    handleEvent(token, event);
 }
 
 void FsManagerServerImpl::handleEvent(std::string token, std::string event) {
@@ -193,20 +191,18 @@ void FsManagerServerImpl::handleEvent(std::string token, std::string event) {
     } else if (token == "fsImminent") {
         handleFsOpImminentEvent(event);
     } else if (token == "ssr") {
-        //INPUT-token: ssr
-        //INPUT-event: SERVICE_AVAILABLE/SERVICE_UNAVAILABLE/SERVICE_FAILED
+        // INPUT-token: ssr
+        // INPUT-event: SERVICE_AVAILABLE/SERVICE_UNAVAILABLE/SERVICE_FAILED
         handleSSREvent(event);
     } else {
-        LOG(DEBUG, __FUNCTION__, ":: Invalid event ! Ignoring token: ",
-                token, ", event: ", event);
+        LOG(DEBUG, __FUNCTION__, ":: Invalid event ! Ignoring token: ", token, ", event: ", event);
     }
 }
 
 void FsManagerServerImpl::handleSSREvent(std::string eventParams) {
     LOG(DEBUG, __FUNCTION__, ":: SSR event: ", eventParams);
 
-    telux::common::ServiceStatus srvcStatus =
-        telux::common::ServiceStatus::SERVICE_FAILED;
+    telux::common::ServiceStatus srvcStatus = telux::common::ServiceStatus::SERVICE_FAILED;
     if (eventParams == "SERVICE_AVAILABLE") {
         srvcStatus = telux::common::ServiceStatus::SERVICE_AVAILABLE;
     } else if (eventParams == "SERVICE_UNAVAILABLE") {
@@ -222,11 +218,11 @@ void FsManagerServerImpl::handleSSREvent(std::string eventParams) {
     setServiceStatus(srvcStatus);
 }
 
-grpc::Status FsManagerServerImpl::setResponse(telux::common::ServiceStatus srvStatus,
-        commonStub::GetServiceStatusReply* response) {
-    LOG(DEBUG,__FUNCTION__);
+grpc::Status FsManagerServerImpl::setResponse(
+    telux::common::ServiceStatus srvStatus, commonStub::GetServiceStatusReply *response) {
+    LOG(DEBUG, __FUNCTION__);
 
-    switch(srvStatus) {
+    switch (srvStatus) {
         case telux::common::ServiceStatus::SERVICE_AVAILABLE:
             response->set_service_status(commonStub::ServiceStatus::SERVICE_AVAILABLE);
             break;
@@ -247,7 +243,7 @@ grpc::Status FsManagerServerImpl::setResponse(telux::common::ServiceStatus srvSt
 }
 
 void FsManagerServerImpl::onSSREvent(telux::common::ServiceStatus srvStatus) {
-    LOG(DEBUG,__FUNCTION__);
+    LOG(DEBUG, __FUNCTION__);
 
     commonStub::GetServiceStatusReply ssrResp;
     ::eventService::EventResponse anyResponse;
@@ -259,8 +255,8 @@ void FsManagerServerImpl::onSSREvent(telux::common::ServiceStatus srvStatus) {
     clientEvent_.updateEventQueue(anyResponse);
 }
 
-grpc::Status FsManagerServerImpl::setSrvcResponse(telux::common::ServiceStatus srvStatus,
-        commonStub::GetServiceStatusReply* response) {
+grpc::Status FsManagerServerImpl::setSrvcResponse(
+    telux::common::ServiceStatus srvStatus, commonStub::GetServiceStatusReply *response) {
     LOG(DEBUG, __FUNCTION__);
 
     Json::Value rootNode;
@@ -271,7 +267,7 @@ grpc::Status FsManagerServerImpl::setSrvcResponse(telux::common::ServiceStatus s
     if (errorCode == ErrorCode::SUCCESS) {
         int subSysDelay = rootNode["IFsManager"]["IsSubsystemReadyDelay"].asInt();
 
-        switch(srvStatus) {
+        switch (srvStatus) {
             case telux::common::ServiceStatus::SERVICE_AVAILABLE:
                 response->set_service_status(commonStub::ServiceStatus::SERVICE_AVAILABLE);
                 break;
@@ -302,17 +298,15 @@ void FsManagerServerImpl::handleEfsBackup(std::string eventParams) {
     try {
         eventName = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
         errorCode = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    } catch (exception const & ex) {
+    } catch (exception const &ex) {
         LOG(ERROR, __FUNCTION__, ":: Exception Occured: ", ex.what());
         return;
     }
 
-    if(!isValidKey(eventName))
-    {
+    if (!isValidKey(eventName)) {
         LOG(ERROR, __FUNCTION__, "Invlaid Event Name", eventName);
         return;
     }
-
 
     {
         std::lock_guard<std::mutex> lock(eventMutex_);
@@ -320,7 +314,6 @@ void FsManagerServerImpl::handleEfsBackup(std::string eventParams) {
             LOG(DEBUG, eventName, " is not Valid");
             return;
         }
-
     }
 
     platformStub::DefaultReply response;
@@ -343,7 +336,7 @@ void FsManagerServerImpl::handleEfsBackup(std::string eventParams) {
         }
     }
 
-    triggerFsEvent(eventName,&response);
+    triggerFsEvent(eventName, &response);
 }
 
 void FsManagerServerImpl::handleEfsRestore(std::string eventParams) {
@@ -355,13 +348,12 @@ void FsManagerServerImpl::handleEfsRestore(std::string eventParams) {
     try {
         eventName = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
         errorCode = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    } catch (exception const & ex) {
+    } catch (exception const &ex) {
         LOG(ERROR, __FUNCTION__, ":: Exception Occured: ", ex.what());
         return;
     }
 
-    if(!isValidKey(eventName))
-    {
+    if (!isValidKey(eventName)) {
         LOG(ERROR, __FUNCTION__, "Invlaid Event Name", eventName);
         return;
     }
@@ -372,7 +364,6 @@ void FsManagerServerImpl::handleEfsRestore(std::string eventParams) {
             LOG(DEBUG, eventName, " is not Valid");
             return;
         }
-
     }
 
     platformStub::DefaultReply response;
@@ -397,7 +388,7 @@ void FsManagerServerImpl::handleEfsRestore(std::string eventParams) {
         }
     }
 
-    triggerFsEvent(eventName,&response);
+    triggerFsEvent(eventName, &response);
 }
 
 void FsManagerServerImpl::handleFsOpImminentEvent(std::string eventParams) {
@@ -409,8 +400,8 @@ void FsManagerServerImpl::handleFsOpImminentEvent(std::string eventParams) {
 
     try {
         eventName = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-        if(token == "") {
+        token     = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        if (token == "") {
             LOG(DEBUG, __FUNCTION__, " The timeToExpiry is not passed");
             return;
         } else {
@@ -421,15 +412,15 @@ void FsManagerServerImpl::handleFsOpImminentEvent(std::string eventParams) {
             try {
                 // Convert to uint32_t
                 timeToExpiry = static_cast<uint32_t>(std::stoull(token));
-            } catch (const std::invalid_argument& e) {
+            } catch (const std::invalid_argument &e) {
                 LOG(ERROR, __FUNCTION__, " Invalid input: not a valid number.");
                 return;
-            } catch (const std::out_of_range& e) {
+            } catch (const std::out_of_range &e) {
                 LOG(ERROR, __FUNCTION__, " timeToExpiry out of range for uint32_t.");
                 return;
             }
         }
-    } catch (exception const & ex) {
+    } catch (exception const &ex) {
         LOG(ERROR, __FUNCTION__, ":: Exception Occured: ", ex.what());
         return;
     }
@@ -442,10 +433,10 @@ void FsManagerServerImpl::handleFsOpImminentEvent(std::string eventParams) {
     platformStub::DefaultReply response;
     response.set_delay(timeToExpiry);
 
-    triggerFsEvent(eventName,&response);
+    triggerFsEvent(eventName, &response);
 }
 
-bool FsManagerServerImpl::isValidKey(const std::string& key) {
+bool FsManagerServerImpl::isValidKey(const std::string &key) {
     LOG(DEBUG, __FUNCTION__);
 
     std::lock_guard<std::mutex> lock(eventMutex_);
@@ -461,13 +452,12 @@ void FsManagerServerImpl::handleOtaAbSyncEvent(std::string eventParams) {
     try {
         eventName = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
         errorCode = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    } catch (exception const & ex) {
+    } catch (exception const &ex) {
         LOG(ERROR, __FUNCTION__, ":: Exception Occured: ", ex.what());
         return;
     }
 
-    if(!isValidKey(eventName))
-    {
+    if (!isValidKey(eventName)) {
         LOG(ERROR, __FUNCTION__, "Invlaid Event Name", eventName);
         return;
     }
@@ -478,7 +468,6 @@ void FsManagerServerImpl::handleOtaAbSyncEvent(std::string eventParams) {
             LOG(DEBUG, eventName, " is not Valid");
             return;
         }
-
     }
 
     {
@@ -506,11 +495,11 @@ void FsManagerServerImpl::handleOtaAbSyncEvent(std::string eventParams) {
         } else if (eventName == "MRC_ABSYNC" && errorCode == "SUCCESS") {
             updateFsStateMachine("MRC_ABSYNC", false);
             abSyncState_ = false;
-            otaSession_ = false;
+            otaSession_  = false;
         } else if (eventName == "MRC_ABSYNC" && errorCode == "FAILURE") {
             updateFsStateMachine("MRC_ABSYNC", false);
             abSyncState_ = false;
-            otaSession_ = false;
+            otaSession_  = false;
         } else {
             LOG(ERROR, "Invalid eventName or errorCode", eventName, errorCode);
             return;
@@ -520,11 +509,11 @@ void FsManagerServerImpl::handleOtaAbSyncEvent(std::string eventParams) {
     platformStub::DefaultReply response;
     response.set_error(static_cast<::commonStub::ErrorCode>(CommonUtils::mapErrorCode(errorCode)));
 
-    triggerFsEvent(eventName,&response);
+    triggerFsEvent(eventName, &response);
 }
 
-void FsManagerServerImpl::updateFsEventReply(platformStub::DefaultReply* source,
-    platformStub::DefaultReply* destination) {
+void FsManagerServerImpl::updateFsEventReply(
+    platformStub::DefaultReply *source, platformStub::DefaultReply *destination) {
     LOG(DEBUG, __FUNCTION__);
 
     destination->set_error(source->error());
@@ -532,8 +521,8 @@ void FsManagerServerImpl::updateFsEventReply(platformStub::DefaultReply* source,
     destination->set_delay(source->delay());
 }
 
-void FsManagerServerImpl::triggerFsEvent(std::string fsEventName,
-    platformStub::DefaultReply* response){
+void FsManagerServerImpl::triggerFsEvent(
+    std::string fsEventName, platformStub::DefaultReply *response) {
     LOG(DEBUG, __FUNCTION__);
 
     ::platformStub::FsEventReply fsEvent;
@@ -547,9 +536,9 @@ void FsManagerServerImpl::triggerFsEvent(std::string fsEventName,
     clientEvent_.updateEventQueue(anyResponse);
 }
 
-grpc::Status FsManagerServerImpl::StartEfsBackup(ServerContext* context,
-    const google::protobuf::Empty* request, platformStub::DefaultReply* response) {
-    LOG(DEBUG,__FUNCTION__);
+grpc::Status FsManagerServerImpl::StartEfsBackup(ServerContext *context,
+    const google::protobuf::Empty *request, platformStub::DefaultReply *response) {
+    LOG(DEBUG, __FUNCTION__);
 
     apiJsonReader("startEfsBackup", response);
     std::lock_guard<std::mutex> lock(eventMutex_);
@@ -558,26 +547,25 @@ grpc::Status FsManagerServerImpl::StartEfsBackup(ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status FsManagerServerImpl::PrepareForEcall(ServerContext* context,
-    const google::protobuf::Empty* request, platformStub::DefaultReply* response) {
-    LOG(DEBUG,__FUNCTION__);
+grpc::Status FsManagerServerImpl::PrepareForEcall(ServerContext *context,
+    const google::protobuf::Empty *request, platformStub::DefaultReply *response) {
+    LOG(DEBUG, __FUNCTION__);
 
     apiJsonReader("prepareForEcall", response);
     return grpc::Status::OK;
 }
 
-grpc::Status FsManagerServerImpl::ECallCompleted(ServerContext* context,
-    const google::protobuf::Empty* request, platformStub::DefaultReply* response) {
-    LOG(DEBUG,__FUNCTION__);
+grpc::Status FsManagerServerImpl::ECallCompleted(ServerContext *context,
+    const google::protobuf::Empty *request, platformStub::DefaultReply *response) {
+    LOG(DEBUG, __FUNCTION__);
 
     apiJsonReader("eCallCompleted", response);
     return grpc::Status::OK;
 }
 
-grpc::Status FsManagerServerImpl::PrepareForOta(ServerContext* context,
-    const ::platformStub::FsEventName* request,
-    platformStub::DefaultReply* response) {
-    LOG(DEBUG,__FUNCTION__);
+grpc::Status FsManagerServerImpl::PrepareForOta(ServerContext *context,
+    const ::platformStub::FsEventName *request, platformStub::DefaultReply *response) {
+    LOG(DEBUG, __FUNCTION__);
 
     std::string fsEventName;
     fsEventName = request->fs_event_name();
@@ -586,16 +574,17 @@ grpc::Status FsManagerServerImpl::PrepareForOta(ServerContext* context,
     std::lock_guard<std::mutex> lock(eventMutex_);
     if (fsEventName == "MRC_OTA_START" && !otaSession_) {
         fsEventsMap_["MRC_OTA_START"] = true;
-        otaSession_ = true;
+        otaSession_                   = true;
         updateSystemStateJson();
         response->set_status(static_cast<::commonStub::Status>(CommonUtils::mapStatus("SUCCESS")));
-    // The OTA RESUME is allowed in case of below scenarios:
-    // 1. When OTA START is true and reboot happens, OTA RESUME and otaSession_ will be set to true
-    // 2. When there is no otaSession_ in progress.
-    } else if ((fsEventName == "MRC_OTA_RESUME") &&
-        ((otaSession_ && fsEventsMap_[fsEventName]) || (!otaSession_))) {
+        // The OTA RESUME is allowed in case of below scenarios:
+        // 1. When OTA START is true and reboot happens, OTA RESUME and otaSession_ will be set to
+        // true
+        // 2. When there is no otaSession_ in progress.
+    } else if ((fsEventName == "MRC_OTA_RESUME")
+               && ((otaSession_ && fsEventsMap_[fsEventName]) || (!otaSession_))) {
         fsEventsMap_["MRC_OTA_RESUME"] = true;
-        otaSession_ = true;
+        otaSession_                    = true;
         response->set_status(static_cast<::commonStub::Status>(CommonUtils::mapStatus("SUCCESS")));
     } else {
         response->set_status(static_cast<::commonStub::Status>(CommonUtils::mapStatus("FAILED")));
@@ -604,16 +593,15 @@ grpc::Status FsManagerServerImpl::PrepareForOta(ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status FsManagerServerImpl::OtaCompleted(ServerContext* context,
-    const google::protobuf::Empty* request,
-    platformStub::DefaultReply* response) {
-    LOG(DEBUG,__FUNCTION__);
+grpc::Status FsManagerServerImpl::OtaCompleted(ServerContext *context,
+    const google::protobuf::Empty *request, platformStub::DefaultReply *response) {
+    LOG(DEBUG, __FUNCTION__);
 
     apiJsonReader("otaCompleted", response);
 
     std::lock_guard<std::mutex> lock(eventMutex_);
-    if (otaSession_ && !fsEventsMap_["MRC_OTA_START"] &&
-            !fsEventsMap_["MRC_OTA_RESUME"] && !abSyncState_) {
+    if (otaSession_ && !fsEventsMap_["MRC_OTA_START"] && !fsEventsMap_["MRC_OTA_RESUME"]
+        && !abSyncState_) {
         fsEventsMap_["MRC_OTA_END"] = true;
     } else {
         response->set_status(static_cast<::commonStub::Status>(CommonUtils::mapStatus("FAILED")));
@@ -622,9 +610,9 @@ grpc::Status FsManagerServerImpl::OtaCompleted(ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status FsManagerServerImpl::StartAbSync(ServerContext* context,
-const google::protobuf::Empty* request, platformStub::DefaultReply* response) {
-    LOG(DEBUG,__FUNCTION__);
+grpc::Status FsManagerServerImpl::StartAbSync(ServerContext *context,
+    const google::protobuf::Empty *request, platformStub::DefaultReply *response) {
+    LOG(DEBUG, __FUNCTION__);
 
     apiJsonReader("startAbSync", response);
 
@@ -638,8 +626,7 @@ const google::protobuf::Empty* request, platformStub::DefaultReply* response) {
     return grpc::Status::OK;
 }
 
-void FsManagerServerImpl::apiJsonReader(
-    std::string apiName, platformStub::DefaultReply* response) {
+void FsManagerServerImpl::apiJsonReader(std::string apiName, platformStub::DefaultReply *response) {
     LOG(DEBUG, __FUNCTION__);
 
     Json::Value rootNode;

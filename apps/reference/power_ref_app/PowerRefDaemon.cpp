@@ -1,7 +1,5 @@
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -9,8 +7,7 @@
 #include <csignal>
 #include <future>
 
-extern "C"
-{
+extern "C" {
 #include <getopt.h>
 }
 
@@ -26,7 +23,7 @@ PowerRefDaemon &PowerRefDaemon::getInstance() {
 telux::common::Status PowerRefDaemon::init() {
     LOG(DEBUG, __FUNCTION__);
     telux::common::Status initStatus = telux::common::Status::SUCCESS;
-    config_ = ConfigParser::getInstance();
+    config_                          = ConfigParser::getInstance();
 
     do {
         shared_ptr<EventManager> eventManager(EventManager::getInstance());
@@ -68,17 +65,17 @@ telux::common::Status PowerRefDaemon::init() {
 
         if (config_->getValue("TRIGGER", "CAN_TRIGGER") == "ENABLE") {
 #ifdef CAN_TRIGGER_SUPPORTED
-                canTrigger_ = CANTrigger::getInstance(eventManager);
-                if (canTrigger_ && canTrigger_->init()) {
-                    LOG(DEBUG, __FUNCTION__, " canTrigger init succeeded");
-                } else {
-                    LOG(ERROR, __FUNCTION__, " canTrigger init failed");
-                    initStatus = telux::common::Status::FAILED;
-                    break;
-                }
-#else // CAN_TRIGGER_SUPPORTED
-                LOG(ERROR, " CAN trigger is not supported");
-#endif // CAN_TRIGGER_SUPPORTED
+            canTrigger_ = CANTrigger::getInstance(eventManager);
+            if (canTrigger_ && canTrigger_->init()) {
+                LOG(DEBUG, __FUNCTION__, " canTrigger init succeeded");
+            } else {
+                LOG(ERROR, __FUNCTION__, " canTrigger init failed");
+                initStatus = telux::common::Status::FAILED;
+                break;
+            }
+#else  // CAN_TRIGGER_SUPPORTED
+            LOG(ERROR, " CAN trigger is not supported");
+#endif  // CAN_TRIGGER_SUPPORTED
 
         } else {
             LOG(DEBUG, __FUNCTION__, " CAN trigger ", config_->getValue("TRIGGER", "CAN_TRIGGER"));
@@ -117,8 +114,7 @@ int PowerRefDaemon::startDaemon(int argc, char **argv) {
     {
         // block current thread, till we get signal
         std::unique_lock<std::mutex> lock(mtx_);
-        cv_.wait(lock, [this]
-                 { return exiting_; });
+        cv_.wait(lock, [this] { return exiting_; });
     }
     return EXIT_SUCCESS;
 }
@@ -135,7 +131,7 @@ void PowerRefDaemon::stopDaemon() {
 }
 
 void PowerRefDaemon::signalHandler(int signum) {
-    LOG(DEBUG, __FUNCTION__, "Received signal = ",signum, " terminating program.");
+    LOG(DEBUG, __FUNCTION__, "Received signal = ", signum, " terminating program.");
     PowerRefDaemon::getInstance().stopDaemon();
 
     std::signal(signum, SIG_DFL);
@@ -157,34 +153,32 @@ void PowerRefDaemon::printUsage(char **argv) {
 telux::common::Status PowerRefDaemon::parseArguments(int argc, char **argv) {
     LOG(DEBUG, __FUNCTION__);
     int c;
-    struct option long_options[] = {{"help", no_argument, 0, 'h'},
-                                    {"interface", required_argument, 0, 'i'},
-                                    {0, 0, 0, 0}};
+    struct option long_options[]
+        = {{"help", no_argument, 0, 'h'}, {"interface", required_argument, 0, 'i'}, {0, 0, 0, 0}};
     while (1) {
         int option_index = 0;
-        c = getopt_long(argc, argv, "dshi:", long_options, &option_index);
+        c                = getopt_long(argc, argv, "dshi:", long_options, &option_index);
         /* Detect the end of the options. */
         if (c == -1) {
             break;
         }
         switch (c) {
-        case 'h':
-        default:
-            printUsage(argv);
-            return telux::common::Status::INVALIDPARAM;
-            break;
+            case 'h':
+            default:
+                printUsage(argv);
+                return telux::common::Status::INVALIDPARAM;
+                break;
         }
     }
     return telux::common::Status::SUCCESS;
 }
-
 
 using namespace std;
 
 int main(int argc, char *argv[]) {
     // Setting required secondary groups for SDK file/diag logging
     vector<string> supplementaryGrps{"system", "diag", "radio", "logd", "dlt"};
-    int rc =  Utils::setSupplementaryGroups(supplementaryGrps);
+    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1) {
         LOG(DEBUG, __FUNCTION__, " Adding supplementary groups failed ");
     }

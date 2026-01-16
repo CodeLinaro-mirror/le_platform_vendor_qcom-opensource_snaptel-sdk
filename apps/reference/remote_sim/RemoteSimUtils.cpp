@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file    RemoteSimUtils.cpp
  * @brief   This file contains the implementation for Remote SIM utility functions.
@@ -37,11 +43,10 @@
 
 #include "RemoteSimUtils.hpp"
 
-bool RemoteSimUtils::enableDebug_ = false;
+bool RemoteSimUtils::enableDebug_  = false;
 bool RemoteSimUtils::enableStdOut_ = false;
 
-void RemoteSimUtils::printLog(int level, const char *fmt, ...)
-{
+void RemoteSimUtils::printLog(int level, const char *fmt, ...) {
     va_list args;
 
     va_start(args, fmt);

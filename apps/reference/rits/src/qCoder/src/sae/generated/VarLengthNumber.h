@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_VarLengthNumber_H_
-#define	_VarLengthNumber_H_
-
+#ifndef _VarLengthNumber_H_
+#define _VarLengthNumber_H_
 
 #include <asn_application.h>
 
@@ -22,21 +21,21 @@ extern "C" {
 
 /* Dependencies */
 typedef enum VarLengthNumber_PR {
-	VarLengthNumber_PR_NOTHING,	/* No components present */
-	VarLengthNumber_PR_content,
-	VarLengthNumber_PR_extension
+    VarLengthNumber_PR_NOTHING, /* No components present */
+    VarLengthNumber_PR_content,
+    VarLengthNumber_PR_extension
 } VarLengthNumber_PR;
 
 /* VarLengthNumber */
 typedef struct VarLengthNumber {
-	VarLengthNumber_PR present;
-	union VarLengthNumber_u {
-		long	 content;
-		Ext1_t	 extension;
-	} choice;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    VarLengthNumber_PR present;
+    union VarLengthNumber_u {
+        long content;
+        Ext1_t extension;
+    } choice;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } VarLengthNumber_t;
 
 /* Implementation */
@@ -46,5 +45,5 @@ extern asn_TYPE_descriptor_t asn_DEF_VarLengthNumber;
 }
 #endif
 
-#endif	/* _VarLengthNumber_H_ */
+#endif /* _VarLengthNumber_H_ */
 #include <asn_internal.h>

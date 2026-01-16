@@ -26,10 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -96,19 +96,19 @@ class Utils {
 
     void populateTunnelConfig(telux::data::net::L2tpTunnelConfig l2tpTunnelConfig) {
         l2tpTunnelConfig.locIface = configParser_->getValue(std::string("HW_IF_NAME"));
-        l2tpTunnelConfig.prot = static_cast<telux::data::net::L2tpProtocol>(std::atoi(
-            configParser_->getValue(std::string("ENCAP_PROTOCOL")).c_str()));
-        l2tpTunnelConfig.locId = std::atoi(
-            configParser_->getValue(std::string("LOCAL_TUNNEL_ID")).c_str());
-        l2tpTunnelConfig.peerId = std::atoi(
-            configParser_->getValue(std::string("PEER_TUNNEL_ID")).c_str());
-        l2tpTunnelConfig.localUdpPort = std::atoi(
-            configParser_->getValue(std::string("LOCAL_UDP_PORT")).c_str());
-        l2tpTunnelConfig.peerUdpPort = std::atoi(
-            configParser_->getValue(std::string("PEER_UDP_PORT")).c_str());
-        l2tpTunnelConfig.ipType =  static_cast<telux::data::IpFamilyType>(std::atoi(
-            configParser_->getValue(std::string("PEER_IP_FAMILY")).c_str()));
-        l2tpTunnelConfig.peerIpv6Addr =  configParser_->getValue(std::string("PEER_IP_ADDRESS"));
+        l2tpTunnelConfig.prot     = static_cast<telux::data::net::L2tpProtocol>(
+            std::atoi(configParser_->getValue(std::string("ENCAP_PROTOCOL")).c_str()));
+        l2tpTunnelConfig.locId
+            = std::atoi(configParser_->getValue(std::string("LOCAL_TUNNEL_ID")).c_str());
+        l2tpTunnelConfig.peerId
+            = std::atoi(configParser_->getValue(std::string("PEER_TUNNEL_ID")).c_str());
+        l2tpTunnelConfig.localUdpPort
+            = std::atoi(configParser_->getValue(std::string("LOCAL_UDP_PORT")).c_str());
+        l2tpTunnelConfig.peerUdpPort
+            = std::atoi(configParser_->getValue(std::string("PEER_UDP_PORT")).c_str());
+        l2tpTunnelConfig.ipType = static_cast<telux::data::IpFamilyType>(
+            std::atoi(configParser_->getValue(std::string("PEER_IP_FAMILY")).c_str()));
+        l2tpTunnelConfig.peerIpv6Addr = configParser_->getValue(std::string("PEER_IP_ADDRESS"));
     }
 
  private:
@@ -129,10 +129,8 @@ class DataL2TP : public std::enable_shared_from_this<DataL2TP> {
         auto &dataFactory = telux::data::DataFactory::getInstance();
 
         /* Step - 2 */
-        dataL2TPMgr_  = dataFactory.getL2tpManager(
-                [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+        dataL2TPMgr_ = dataFactory.getL2tpManager(
+            [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!dataL2TPMgr_) {
             std::cout << "Can't get IL2tpManager" << std::endl;
@@ -142,8 +140,8 @@ class DataL2TP : public std::enable_shared_from_this<DataL2TP> {
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "L2TP service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "L2TP service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
@@ -159,25 +157,22 @@ class DataL2TP : public std::enable_shared_from_this<DataL2TP> {
         telux::common::Status status;
 
         enableL2tp = utils_->getL2TPEnable();
-        enableMss = utils_->getMSSEnable();
-        enableMtu = utils_->getMTUEnable();
-        mtuSize = utils_->getMtuSize();
+        enableMss  = utils_->getMSSEnable();
+        enableMtu  = utils_->getMTUEnable();
+        mtuSize    = utils_->getMtuSize();
 
-        auto responseCb = std::bind(
-            &DataL2TP::onConfigResponseAvailable, this, std::placeholders::_1);
+        auto responseCb
+            = std::bind(&DataL2TP::onConfigResponseAvailable, this, std::placeholders::_1);
 
         /* Step - 4 */
-        status = dataL2TPMgr_->setConfig(
-            enableL2tp, enableMss, enableMtu, responseCb, mtuSize);
+        status = dataL2TPMgr_->setConfig(enableL2tp, enableMss, enableMtu, responseCb, mtuSize);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't set config, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't set config, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
         if (!waitForResponse()) {
-            std::cout << "Failed to set config, err " <<
-                static_cast<int>(errorCode_) << std::endl;
+            std::cout << "Failed to set config, err " << static_cast<int>(errorCode_) << std::endl;
             return -EIO;
         }
 
@@ -192,24 +187,22 @@ class DataL2TP : public std::enable_shared_from_this<DataL2TP> {
 
         utils_->populateTunnelConfig(l2tpTunnelConfig);
 
-        l2tpSessionConfig.locId = 1;
+        l2tpSessionConfig.locId  = 1;
         l2tpSessionConfig.peerId = 1;
         l2tpTunnelConfig.sessionConfig.emplace_back(l2tpSessionConfig);
 
-        auto responseCb = std::bind(
-            &DataL2TP::onAddTunnelResponseAvailable, this, std::placeholders::_1);
+        auto responseCb
+            = std::bind(&DataL2TP::onAddTunnelResponseAvailable, this, std::placeholders::_1);
 
         /* Step - 5 */
         status = dataL2TPMgr_->addTunnel(l2tpTunnelConfig, responseCb);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't add tunnel, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't add tunnel, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
         if (!waitForResponse()) {
-            std::cout << "Failed to add tunnel, err " <<
-                static_cast<int>(errorCode_) << std::endl;
+            std::cout << "Failed to add tunnel, err " << static_cast<int>(errorCode_) << std::endl;
             return -EIO;
         }
 
@@ -221,8 +214,7 @@ class DataL2TP : public std::enable_shared_from_this<DataL2TP> {
         int const DEFAULT_TIMEOUT_SECONDS = 5;
         std::unique_lock<std::mutex> lock(updateMutex_);
 
-        auto cvStatus = updateCV_.wait_for(lock,
-            std::chrono::seconds(DEFAULT_TIMEOUT_SECONDS));
+        auto cvStatus = updateCV_.wait_for(lock, std::chrono::seconds(DEFAULT_TIMEOUT_SECONDS));
 
         if (cvStatus == std::cv_status::timeout) {
             std::cout << "Timedout" << std::endl;
@@ -271,8 +263,8 @@ int main(int argc, char *argv[]) {
 
     try {
         utils = std::make_shared<Utils>(argv[1]);
-        app = std::make_shared<DataL2TP>(utils);
-    } catch (const std::exception& e) {
+        app   = std::make_shared<DataL2TP>(utils);
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate Utils/DataL2TP" << std::endl;
         return -ENOMEM;
     }

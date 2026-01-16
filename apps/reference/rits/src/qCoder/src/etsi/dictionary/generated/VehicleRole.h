@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_VehicleRole_H_
-#define	_VehicleRole_H_
-
+#ifndef _VehicleRole_H_
+#define _VehicleRole_H_
 
 #include <asn_application.h>
 
@@ -20,26 +19,26 @@ extern "C" {
 
 /* Dependencies */
 typedef enum VehicleRole {
-	VehicleRole_default	= 0,
-	VehicleRole_publicTransport	= 1,
-	VehicleRole_specialTransport	= 2,
-	VehicleRole_dangerousGoods	= 3,
-	VehicleRole_roadWork	= 4,
-	VehicleRole_rescue	= 5,
-	VehicleRole_emergency	= 6,
-	VehicleRole_safetyCar	= 7,
-	VehicleRole_agriculture	= 8,
-	VehicleRole_commercial	= 9,
-	VehicleRole_military	= 10,
-	VehicleRole_roadOperator	= 11,
-	VehicleRole_taxi	= 12,
-	VehicleRole_reserved1	= 13,
-	VehicleRole_reserved2	= 14,
-	VehicleRole_reserved3	= 15
+    VehicleRole_default          = 0,
+    VehicleRole_publicTransport  = 1,
+    VehicleRole_specialTransport = 2,
+    VehicleRole_dangerousGoods   = 3,
+    VehicleRole_roadWork         = 4,
+    VehicleRole_rescue           = 5,
+    VehicleRole_emergency        = 6,
+    VehicleRole_safetyCar        = 7,
+    VehicleRole_agriculture      = 8,
+    VehicleRole_commercial       = 9,
+    VehicleRole_military         = 10,
+    VehicleRole_roadOperator     = 11,
+    VehicleRole_taxi             = 12,
+    VehicleRole_reserved1        = 13,
+    VehicleRole_reserved2        = 14,
+    VehicleRole_reserved3        = 15
 } e_VehicleRole;
 
 /* VehicleRole */
-typedef long	 VehicleRole_t;
+typedef long VehicleRole_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_VehicleRole;
@@ -57,5 +56,5 @@ per_type_encoder_f VehicleRole_encode_uper;
 }
 #endif
 
-#endif	/* _VehicleRole_H_ */
+#endif /* _VehicleRole_H_ */
 #include <asn_internal.h>

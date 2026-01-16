@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -30,73 +30,73 @@ namespace common {
 // derived class to wrap std::function
 template <typename... Args>
 class FunctionalCallback : public ICommandCallback {
-public:
-   using fnCb = std::function<void(Args...)>;
-   fnCb callback_;
-   FunctionalCallback(fnCb callback)
-      : callback_(callback) {
-   }
+ public:
+    using fnCb = std::function<void(Args...)>;
+    fnCb callback_;
+    FunctionalCallback(fnCb callback)
+       : callback_(callback) {
+    }
 };
 
 class CommandCallbackManager {
-public:
-   CommandCallbackManager();
-   ~CommandCallbackManager();
+ public:
+    CommandCallbackManager();
+    ~CommandCallbackManager();
 
-   void reset(void);
-   int addCallback(std::shared_ptr<telux::common::ICommandCallback> callback);
-   std::shared_ptr<telux::common::ICommandCallback> findAndRemoveCallback(int cmdId);
+    void reset(void);
+    int addCallback(std::shared_ptr<telux::common::ICommandCallback> callback);
+    std::shared_ptr<telux::common::ICommandCallback> findAndRemoveCallback(int cmdId);
 
-   template <typename... Args>
-   std::shared_ptr<ICommandCallback> createCallback(std::function<void(Args...)> callback) {
-      if(callback) {
-         using functionCb = FunctionalCallback<Args...>;
-         return std::make_shared<functionCb>(callback);
-      }
-      return nullptr;
-   }
-
-   template <typename... Args>
-   int addCallback(std::function<void(Args...)> callback) {
-      std::lock_guard<std::mutex> m(mutex_);
-      int cmdId = getNextCommandId();
-      auto cb = createCallback(callback);
-      funCallbackMap_[cmdId] = cb;
-      return cmdId;
-   }
-
-   // Wrapper function to execute the functional callback
-   // This is a utility function so that clients do not have to deal with the
-   // templatized CommandCallback object
-   template <typename... Args>
-   void executeCallback(std::shared_ptr<ICommandCallback> callback, Args &&... args) {
-      if(callback) {
-         try {
+    template <typename... Args>
+    std::shared_ptr<ICommandCallback> createCallback(std::function<void(Args...)> callback) {
+        if (callback) {
             using functionCb = FunctionalCallback<Args...>;
-            std::shared_ptr<functionCb> cb = std::static_pointer_cast<functionCb>(callback);
-            cb->callback_(std::forward<Args>(args)...);
-         } catch(const std::bad_function_call &e) {
-            LOG(DEBUG, __FUNCTION__, " Exception during executeCallback: ", e.what());
-         }
-      } else {
-         LOG(DEBUG, __FUNCTION__, "Command Callback is null");
-      }
-   }
+            return std::make_shared<functionCb>(callback);
+        }
+        return nullptr;
+    }
 
-   CommandCallbackManager(const CommandCallbackManager &) = delete;
-   CommandCallbackManager &operator=(const CommandCallbackManager &) = delete;
+    template <typename... Args>
+    int addCallback(std::function<void(Args...)> callback) {
+        std::lock_guard<std::mutex> m(mutex_);
+        int cmdId              = getNextCommandId();
+        auto cb                = createCallback(callback);
+        funCallbackMap_[cmdId] = cb;
+        return cmdId;
+    }
 
-private:
-   // Mutex for guarding callbackMap
-   std::mutex mutex_;
+    // Wrapper function to execute the functional callback
+    // This is a utility function so that clients do not have to deal with the
+    // templatized CommandCallback object
+    template <typename... Args>
+    void executeCallback(std::shared_ptr<ICommandCallback> callback, Args &&...args) {
+        if (callback) {
+            try {
+                using functionCb               = FunctionalCallback<Args...>;
+                std::shared_ptr<functionCb> cb = std::static_pointer_cast<functionCb>(callback);
+                cb->callback_(std::forward<Args>(args)...);
+            } catch (const std::bad_function_call &e) {
+                LOG(DEBUG, __FUNCTION__, " Exception during executeCallback: ", e.what());
+            }
+        } else {
+            LOG(DEBUG, __FUNCTION__, "Command Callback is null");
+        }
+    }
 
-   std::unordered_map<int, std::weak_ptr<telux::common::ICommandCallback>> cmdCallbackMap_;
+    CommandCallbackManager(const CommandCallbackManager &)            = delete;
+    CommandCallbackManager &operator=(const CommandCallbackManager &) = delete;
 
-   // map to store the functional callbacks
-   std::unordered_map<int, std::shared_ptr<ICommandCallback>> funCallbackMap_;
+ private:
+    // Mutex for guarding callbackMap
+    std::mutex mutex_;
 
-   int commandId_;  // Unique identifier for the callback
-   int getNextCommandId();
+    std::unordered_map<int, std::weak_ptr<telux::common::ICommandCallback>> cmdCallbackMap_;
+
+    // map to store the functional callbacks
+    std::unordered_map<int, std::shared_ptr<ICommandCallback>> funCallbackMap_;
+
+    int commandId_;  // Unique identifier for the callback
+    int getNextCommandId();
 };
 
 }  // End of namespace common

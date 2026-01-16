@@ -28,9 +28,8 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -57,39 +56,38 @@
 #include "../../../common/utils/Utils.hpp"
 
 using std::array;
-using std::string;
 using std::cerr;
 using std::cout;
 using std::endl;
 using std::promise;
 using std::shared_ptr;
+using std::string;
 using telux::common::ErrorCode;
-using telux::common::Status;
 using telux::common::ServiceStatus;
+using telux::common::Status;
 using telux::cv2x::Cv2xFactory;
 using telux::cv2x::Cv2xStatus;
 using telux::cv2x::Cv2xStatusType;
+using telux::cv2x::EventFlowInfo;
 using telux::cv2x::ICv2xRadio;
 using telux::cv2x::ICv2xTxRxSocket;
 using telux::cv2x::Periodicity;
 using telux::cv2x::Priority;
-using telux::cv2x::TrafficCategory;
 using telux::cv2x::SocketInfo;
-using telux::cv2x::EventFlowInfo;
+using telux::cv2x::TrafficCategory;
 
-static constexpr uint32_t SERVIC_ID = 1u;
-static constexpr uint8_t TCP_CLIENT = 0u;
-static constexpr uint8_t TCP_SERVER = 1u;
-static constexpr uint16_t DEFAULT_PORT = 5000u;
-static constexpr int      PRIORITY = 5;
-static constexpr uint32_t PACKET_LEN = 128u;
-static constexpr uint32_t PACKET_NUM = 2u;
+static constexpr uint32_t SERVIC_ID            = 1u;
+static constexpr uint8_t TCP_CLIENT            = 0u;
+static constexpr uint8_t TCP_SERVER            = 1u;
+static constexpr uint16_t DEFAULT_PORT         = 5000u;
+static constexpr int PRIORITY                  = 5;
+static constexpr uint32_t PACKET_LEN           = 128u;
+static constexpr uint32_t PACKET_NUM           = 2u;
 static constexpr uint32_t MAX_DUMMY_PACKET_LEN = 10000;
 
 static constexpr char TEST_VERNO_MAGIC = 'Q';
-static constexpr char CLIENT_UEID = 1;
-static constexpr char SERVER_UEID = 2;
-
+static constexpr char CLIENT_UEID      = 1;
+static constexpr char SERVER_UEID      = 2;
 
 static std::shared_ptr<ICv2xRadio> gCv2xRadio;
 static Cv2xStatus gCv2xStatus;
@@ -97,13 +95,13 @@ static promise<ErrorCode> gCallbackPromise;
 static shared_ptr<ICv2xTxRxSocket> gTcpSock;
 static array<char, MAX_DUMMY_PACKET_LEN> gBuf;
 
-static uint8_t gTcpMode = TCP_CLIENT;
+static uint8_t gTcpMode  = TCP_CLIENT;
 static uint16_t gSrcPort = DEFAULT_PORT;
 static uint16_t gDstPort = DEFAULT_PORT;
 static string gDstAddr;
 static int32_t gAcceptedSock = -1;
-static uint32_t gServiceId = SERVIC_ID;
-static uint32_t gPacketLen = PACKET_LEN;
+static uint32_t gServiceId   = SERVIC_ID;
+static uint32_t gPacketLen   = PACKET_LEN;
 
 static int g_terminate = 0;
 static int g_terminate_pipe[2];
@@ -122,8 +120,7 @@ static void cv2xStatusCallback(Cv2xStatus status, ErrorCode error) {
 }
 
 // Callback function for ICv2xRadio->createCv2xTcpSocket()
-static void createTcpSocketCallback(shared_ptr<ICv2xTxRxSocket> sock,
-                                     ErrorCode error) {
+static void createTcpSocketCallback(shared_ptr<ICv2xTxRxSocket> sock, ErrorCode error) {
     if (ErrorCode::SUCCESS == error) {
         gTcpSock = sock;
     }
@@ -141,7 +138,7 @@ static uint64_t getCurrentTimestamp(void) {
 static void fillBuffer(void) {
 
     static uint16_t seq_num = 0u;
-    auto timestamp = getCurrentTimestamp();
+    auto timestamp          = getCurrentTimestamp();
 
     // Very first payload is test Magic number, this is  where V2X Family ID would normally be.
     gBuf[0] = TEST_VERNO_MAGIC;
@@ -160,12 +157,12 @@ static void fillBuffer(void) {
     dataPtr += sizeof(uint16_t);
 
     // Timestamp
-    dataPtr += snprintf(dataPtr, gPacketLen - (2 + sizeof(uint16_t)),
-                        "<%llu> ", static_cast<long long unsigned>(timestamp));
+    dataPtr += snprintf(dataPtr, gPacketLen - (2 + sizeof(uint16_t)), "<%llu> ",
+        static_cast<long long unsigned>(timestamp));
 
     // Dummy payload
     constexpr int NUM_LETTERS = 26;
-    auto i = 2 + sizeof(uint16_t) + sizeof(long long unsigned);
+    auto i                    = 2 + sizeof(uint16_t) + sizeof(long long unsigned);
     for (; i < gPacketLen; ++i) {
         gBuf[i] = 'a' + ((seq_num + i) % NUM_LETTERS);
     }
@@ -174,7 +171,7 @@ static void fillBuffer(void) {
 // Function for transmitting data
 static int sampleTx(void) {
     static uint32_t txCount = 0u;
-    int sock = -1;
+    int sock                = -1;
 
     if (gTcpMode == TCP_CLIENT) {
         // For TCP client, use the created socket for send/recv on successful connection
@@ -186,25 +183,25 @@ static int sampleTx(void) {
 
     cout << "sampleTx(" << sock << ")" << endl;
 
-    struct msghdr message = {0};
-    struct iovec iov[1] = {0};
-    struct cmsghdr * cmsghp = NULL;
+    struct msghdr message  = {0};
+    struct iovec iov[1]    = {0};
+    struct cmsghdr *cmsghp = NULL;
     char control[CMSG_SPACE(sizeof(int))];
 
     // Send data using sendmsg to provide IPV6_TCLASS per packet
-    iov[0].iov_base = gBuf.data();
-    iov[0].iov_len = gPacketLen;
-    message.msg_iov = iov;
-    message.msg_iovlen = 1;
-    message.msg_control = control;
+    iov[0].iov_base        = gBuf.data();
+    iov[0].iov_len         = gPacketLen;
+    message.msg_iov        = iov;
+    message.msg_iovlen     = 1;
+    message.msg_control    = control;
     message.msg_controllen = sizeof(control);
 
     // Fill ancillary data
-    int priority = PRIORITY;
-    cmsghp = CMSG_FIRSTHDR(&message);
+    int priority       = PRIORITY;
+    cmsghp             = CMSG_FIRSTHDR(&message);
     cmsghp->cmsg_level = IPPROTO_IPV6;
-    cmsghp->cmsg_type = IPV6_TCLASS;
-    cmsghp->cmsg_len = CMSG_LEN(sizeof(int));
+    cmsghp->cmsg_type  = IPV6_TCLASS;
+    cmsghp->cmsg_len   = CMSG_LEN(sizeof(int));
     memcpy(CMSG_DATA(cmsghp), &priority, sizeof(int));
 
     // Send data
@@ -224,7 +221,7 @@ static int sampleTx(void) {
 // Function for reading from Rx socket
 static int sampleRx(void) {
     static uint32_t rxCount = 0u;
-    int sock = -1;
+    int sock                = -1;
 
     if (gTcpMode == TCP_CLIENT) {
         // For TCP client, use the created socket for send/recv
@@ -260,8 +257,9 @@ static void printUsage(const char *Opt) {
     cout << "-m <tcpMode>       0--Client, 1--Server" << endl;
     cout << "-s <srcPort>       Source port used for binding, default is 5000" << endl;
     cout << "-t <dstPort>       Destination port used for connecting, default is 5000" << endl;
-    cout << "-p <service ID>    Service ID used for Tx and Rx flows, default is " << gServiceId << endl;
-    cout << "-l <packet length> Tx Packet length, default is " << gPacketLen <<endl;
+    cout << "-p <service ID>    Service ID used for Tx and Rx flows, default is " << gServiceId
+         << endl;
+    cout << "-l <packet length> Tx Packet length, default is " << gPacketLen << endl;
 }
 
 // Parse options
@@ -270,47 +268,47 @@ static int parseOpts(int argc, char *argv[]) {
     int c;
     while ((c = getopt(argc, argv, "?d:m:s:t:p:l:")) != -1) {
         switch (c) {
-        case 'd':
-            if (optarg) {
-                gDstAddr = optarg;
-                cout << "dstAddr: " << gDstAddr << endl;
-            }
-            break;
-        case 'm':
-            if (optarg) {
-                gTcpMode = atoi(optarg);
-                cout << "tcpMode: " << gTcpMode << endl;
-            }
-            break;
-        case 's':
-            if (optarg) {
-                gSrcPort = atoi(optarg);
-                cout << "srcPort: " << gSrcPort << endl;
-            }
-            break;
-        case 't':
-            if (optarg) {
-                gDstPort = atoi(optarg);
-                cout << "dstPort: " << gDstPort << endl;
-            }
-            break;
-        case 'p':
-            if (optarg) {
-                gServiceId = atoi(optarg);
-                cout << "service ID: " << gServiceId << endl;
-            }
-            break;
-        case 'l':
-            if (optarg) {
-                gPacketLen = atoi(optarg);
-                cout << "packet length: " << gPacketLen << endl;
-            }
-            break;
-        case '?':
-        default:
-            rc = -1;
-            printUsage(argv[0]);
-            return rc;
+            case 'd':
+                if (optarg) {
+                    gDstAddr = optarg;
+                    cout << "dstAddr: " << gDstAddr << endl;
+                }
+                break;
+            case 'm':
+                if (optarg) {
+                    gTcpMode = atoi(optarg);
+                    cout << "tcpMode: " << gTcpMode << endl;
+                }
+                break;
+            case 's':
+                if (optarg) {
+                    gSrcPort = atoi(optarg);
+                    cout << "srcPort: " << gSrcPort << endl;
+                }
+                break;
+            case 't':
+                if (optarg) {
+                    gDstPort = atoi(optarg);
+                    cout << "dstPort: " << gDstPort << endl;
+                }
+                break;
+            case 'p':
+                if (optarg) {
+                    gServiceId = atoi(optarg);
+                    cout << "service ID: " << gServiceId << endl;
+                }
+                break;
+            case 'l':
+                if (optarg) {
+                    gPacketLen = atoi(optarg);
+                    cout << "packet length: " << gPacketLen << endl;
+                }
+                break;
+            case '?':
+            default:
+                rc = -1;
+                printUsage(argv[0]);
+                return rc;
         }
     }
 
@@ -335,8 +333,8 @@ static void termination_cleanup() {
     if (gTcpSock) {
         cout << "closing Tcp socket, fd:" << gTcpSock->getSocket() << endl;
         resetCallbackPromise();
-        if(Status::SUCCESS != gCv2xRadio->closeCv2xTcpSocket(gTcpSock, closeTcpSocketCallback) ||
-           ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
+        if (Status::SUCCESS != gCv2xRadio->closeCv2xTcpSocket(gTcpSock, closeTcpSocketCallback)
+            || ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
             cout << "close Tcp socket err" << endl;
         }
     }
@@ -346,14 +344,12 @@ static void termination_cleanup() {
     exit(0);
 }
 
-static void termination_handler(int signum)
-{
+static void termination_handler(int signum) {
     g_terminate = 1;
     write(g_terminate_pipe[1], &g_terminate, sizeof(int));
 }
 
-static void install_signal_handler()
-{
+static void install_signal_handler() {
     struct sigaction sig_action;
 
     sig_action.sa_handler = termination_handler;
@@ -368,7 +364,7 @@ static void install_signal_handler()
 int main(int argc, char *argv[]) {
     cout << "Running Sample C-V2X TCP app" << endl;
     std::vector<std::string> groups{"system", "diag", "radio", "logd"};
-    if (-1 == Utils::setSupplementaryGroups(groups)){
+    if (-1 == Utils::setSupplementaryGroups(groups)) {
         cout << "Adding supplementary group failed!" << std::endl;
     }
 
@@ -379,13 +375,12 @@ int main(int argc, char *argv[]) {
 
     install_signal_handler();
 
-    auto f = std::async(std::launch::async, []()
-        {
-            int terminate = 0;
-            read(g_terminate_pipe[0], &terminate, sizeof(int));
-            cout << "Read terminate:" << terminate << endl;
-            termination_cleanup();
-        });
+    auto f = std::async(std::launch::async, []() {
+        int terminate = 0;
+        read(g_terminate_pipe[0], &terminate, sizeof(int));
+        cout << "Read terminate:" << terminate << endl;
+        termination_cleanup();
+    });
 
     // Parse parameters
     if (parseOpts(argc, argv) < 0) {
@@ -394,18 +389,18 @@ int main(int argc, char *argv[]) {
 
     // Get handle to Cv2xRadioManager
     bool cv2xRadioManagerStatusUpdated = false;
-    telux::common::ServiceStatus cv2xRadioManagerStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    telux::common::ServiceStatus cv2xRadioManagerStatus
+        = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
     std::condition_variable cv;
     std::mutex mtx;
     auto statusCb = [&](telux::common::ServiceStatus status) {
         std::lock_guard<std::mutex> lock(mtx);
         cv2xRadioManagerStatusUpdated = true;
-        cv2xRadioManagerStatus = status;
+        cv2xRadioManagerStatus        = status;
         cv.notify_all();
     };
     // Get handle to Cv2xRadioManager
-    auto & cv2xFactory = Cv2xFactory::getInstance();
+    auto &cv2xFactory     = Cv2xFactory::getInstance();
     auto cv2xRadioManager = cv2xFactory.getCv2xRadioManager(statusCb);
     if (!cv2xRadioManager) {
         cout << "Error: failed to get Cv2xRadioManager." << endl;
@@ -414,8 +409,7 @@ int main(int argc, char *argv[]) {
     {
         std::unique_lock<std::mutex> lck(mtx);
         cv.wait(lck, [&] { return cv2xRadioManagerStatusUpdated; });
-        if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
-            cv2xRadioManagerStatus) {
+        if (telux::common::ServiceStatus::SERVICE_AVAILABLE != cv2xRadioManagerStatus) {
             cerr << "C-V2X Radio Manager initialization failed, exiting" << endl;
             return EXIT_FAILURE;
         }
@@ -434,13 +428,13 @@ int main(int argc, char *argv[]) {
 
     // Get handle to Cv2xRadio
     bool cv2x_radio_status_updated = false;
-    telux::common::ServiceStatus cv2xRadioStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    telux::common::ServiceStatus cv2xRadioStatus
+        = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
 
     auto cb = [&](ServiceStatus status) {
         std::lock_guard<std::mutex> lock(mtx);
         cv2x_radio_status_updated = true;
-        cv2xRadioStatus = status;
+        cv2xRadioStatus           = status;
         cv.notify_all();
     };
 
@@ -472,9 +466,9 @@ int main(int argc, char *argv[]) {
     tcpInfo.localPort = gSrcPort;
     EventFlowInfo eventInfo;
     resetCallbackPromise();
-    if (Status::SUCCESS != gCv2xRadio->createCv2xTcpSocket(eventInfo, tcpInfo,
-                                                           createTcpSocketCallback) ||
-        ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
+    if (Status::SUCCESS
+            != gCv2xRadio->createCv2xTcpSocket(eventInfo, tcpInfo, createTcpSocketCallback)
+        || ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
         cout << "Tcp Socket creation failed." << endl;
         gCv2xRadio = nullptr;
         return EXIT_FAILURE;
@@ -483,8 +477,8 @@ int main(int argc, char *argv[]) {
     int sock = gTcpSock->getSocket();
     if (gTcpMode == TCP_CLIENT) {
         // For TCP client, establish connection with the created sock
-        struct sockaddr_in6 dstSockAddr = {0}; //must reset the sockaddr
-        dstSockAddr.sin6_port = htons((uint16_t)gDstPort);
+        struct sockaddr_in6 dstSockAddr = {0};  // must reset the sockaddr
+        dstSockAddr.sin6_port           = htons((uint16_t)gDstPort);
         inet_pton(AF_INET6, gDstAddr.c_str(), (void *)&dstSockAddr.sin6_addr);
         dstSockAddr.sin6_family = AF_INET6;
 
@@ -521,8 +515,8 @@ int main(int argc, char *argv[]) {
             // Accept connection request
             cout << "accepting connection..." << endl;
             struct sockaddr_in6 tmpAddr = {0};
-            socklen_t socklen = sizeof(tmpAddr);
-            gAcceptedSock = accept(sock, (struct sockaddr *)&tmpAddr, &socklen);
+            socklen_t socklen           = sizeof(tmpAddr);
+            gAcceptedSock               = accept(sock, (struct sockaddr *)&tmpAddr, &socklen);
             if (gAcceptedSock < 0) {
                 cout << "accept err:" << strerror(errno) << endl;
                 goto bail;

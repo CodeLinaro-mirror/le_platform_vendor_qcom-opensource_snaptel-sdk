@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "libs/common/Logger.hpp"
@@ -9,7 +9,7 @@
 #include <algorithm>
 
 /* Used to check if a voice call is initiated on Slot Id 1 & Slot Id 2. */
-std::vector<int> voiceCallList(3,0);
+std::vector<int> voiceCallList(3, 0);
 
 namespace telux {
 namespace audio {
@@ -27,21 +27,21 @@ telux::common::Status AudioServiceImpl::initService() {
     telux::common::ErrorCode ec;
     try {
         streamCache_ = std::make_shared<StreamCache>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         LOG(ERROR, __FUNCTION__, " can't create StreamCache");
         return telux::common::Status::FAILED;
     }
 
     try {
         clientCache_ = std::make_shared<ClientCache>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         LOG(ERROR, __FUNCTION__, " can't create ClientCache");
         return telux::common::Status::FAILED;
     }
 
     try {
         audioBackend_ = std::make_shared<Alsa>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         LOG(ERROR, __FUNCTION__, " can't create audio backend");
         return telux::common::Status::FAILED;
     }
@@ -52,23 +52,21 @@ telux::common::Status AudioServiceImpl::initService() {
         return telux::common::Status::FAILED;
     }
 
-    serviceCommonTaskExecutor_ = std::unique_ptr<
-        telux::common::TaskDispatcher>(new telux::common::TaskDispatcher());
+    serviceCommonTaskExecutor_
+        = std::unique_ptr<telux::common::TaskDispatcher>(new telux::common::TaskDispatcher());
 
     return telux::common::Status::SUCCESS;
 }
 
-void AudioServiceImpl::handleClientConnect(
-        std::shared_ptr<AudioClient> audioClient) {
+void AudioServiceImpl::handleClientConnect(std::shared_ptr<AudioClient> audioClient) {
     clientCache_->cacheClient(audioClient->getClientId(), audioClient);
 }
 
-telux::common::Status AudioServiceImpl::onClientConnected(
-        std::shared_ptr<AudioClient> audioClient,
-        std::weak_ptr<IAudioMsgDispatcher> audioMsgDispatcher) {
+telux::common::Status AudioServiceImpl::onClientConnected(std::shared_ptr<AudioClient> audioClient,
+    std::weak_ptr<IAudioMsgDispatcher> audioMsgDispatcher) {
 
     audioMsgDispatcher_ = audioMsgDispatcher;
-    serviceCommonTaskExecutor_->submitTask([=]{ handleClientConnect(audioClient); });
+    serviceCommonTaskExecutor_->submitTask([=] { handleClientConnect(audioClient); });
 
     LOG(DEBUG, __FUNCTION__, " client connected ", audioClient);
     return telux::common::Status::SUCCESS;
@@ -79,7 +77,7 @@ void AudioServiceImpl::handleClientDisconnect(std::shared_ptr<AudioClient> audio
 
     clientStreamIdsList = audioClient->getAssociatedStreamIdList();
     for (auto itr = clientStreamIdsList.rbegin(); itr != clientStreamIdsList.rend(); ++itr) {
-        for(auto streamId : itr->second) {
+        for (auto streamId : itr->second) {
             clientCache_->disassociateStream(streamId);
             {
                 std::shared_ptr<Stream> stream = streamCache_->retrieveStream(streamId);
@@ -98,7 +96,7 @@ void AudioServiceImpl::handleClientDisconnect(std::shared_ptr<AudioClient> audio
 }
 
 telux::common::Status AudioServiceImpl::onClientDisconnected(
-        std::shared_ptr<AudioClient> audioClient) {
+    std::shared_ptr<AudioClient> audioClient) {
 
     /* Execution must be in separate thread for following reasons
      (1) SSR event must serialize with disconnect event.
@@ -107,7 +105,7 @@ telux::common::Status AudioServiceImpl::onClientDisconnected(
      (3) service specific task may executes any QCSI APIs. to complete
          those APIs, service main task has to return back to QCSI.
      */
-    serviceCommonTaskExecutor_->submitTask([=]{ handleClientDisconnect(audioClient); });
+    serviceCommonTaskExecutor_->submitTask([=] { handleClientDisconnect(audioClient); });
     return telux::common::Status::SUCCESS;
 }
 
@@ -134,7 +132,7 @@ telux::common::Status AudioServiceImpl::onClientDisconnected(
  */
 void AudioServiceImpl::handleSSREvent(SSREvent event) {
 
-    std::map<int,std::shared_ptr<AudioClient>> audioClientsList;
+    std::map<int, std::shared_ptr<AudioClient>> audioClientsList;
     std::shared_ptr<IAudioMsgDispatcher> audioMsgDispatcher;
 
     audioMsgDispatcher = audioMsgDispatcher_.lock();
@@ -161,10 +159,10 @@ void AudioServiceImpl::handleSSREvent(SSREvent event) {
 
     /* Now while application-side is cleaning up, we will clean up the server-side */
     audioClientsList = clientCache_->getClientsList();
-    for (auto it = audioClientsList.begin(); it != audioClientsList.end(); it++){
+    for (auto it = audioClientsList.begin(); it != audioClientsList.end(); it++) {
         auto clientStreamIdsList = it->second->getAssociatedStreamIdList();
         for (auto itr = clientStreamIdsList.rbegin(); itr != clientStreamIdsList.rend(); ++itr) {
-            for(auto streamId : itr->second) {
+            for (auto streamId : itr->second) {
                 {
                     std::shared_ptr<Stream> stream = streamCache_->retrieveStream(streamId);
                     if (stream) {
@@ -180,7 +178,6 @@ void AudioServiceImpl::handleSSREvent(SSREvent event) {
     streamCache_->purgeAllStreamIds();
 }
 
-
 /*
  * Post ssr event on server's common dispatcher thread for further processing when
  * HAL/PAL sends SSR state updates to us.
@@ -191,7 +188,7 @@ void AudioServiceImpl::handleSSREvent(SSREvent event) {
  *    APIs to get SSR events.
  */
 void AudioServiceImpl::onSSREvent(SSREvent event) {
-    serviceCommonTaskExecutor_->submitTask([=]{ handleSSREvent(event); });
+    serviceCommonTaskExecutor_->submitTask([=] { handleSSREvent(event); });
 }
 
 inline bool AudioServiceImpl::isSSRInProgress(void) {
@@ -229,7 +226,7 @@ result:
 }
 
 void AudioServiceImpl::getSupportedDevices(std::shared_ptr<AudioRequest> audioReq) {
-    serviceCommonTaskExecutor_->submitTask([=]{ doGetSupportedDevices(audioReq); });
+    serviceCommonTaskExecutor_->submitTask([=] { doGetSupportedDevices(audioReq); });
 }
 
 /*
@@ -258,7 +255,7 @@ result:
 }
 
 void AudioServiceImpl::getSupportedStreamTypes(std::shared_ptr<AudioRequest> audioReq) {
-    serviceCommonTaskExecutor_->submitTask([=]{ doGetSupportedStreamTypes(audioReq); });
+    serviceCommonTaskExecutor_->submitTask([=] { doGetSupportedStreamTypes(audioReq); });
 }
 
 /*
@@ -286,7 +283,7 @@ result:
 }
 
 void AudioServiceImpl::getCalibrationStatus(std::shared_ptr<AudioRequest> audioReq) {
-    serviceCommonTaskExecutor_->submitTask([=]{ doGetCalibrationStatus(audioReq); });
+    serviceCommonTaskExecutor_->submitTask([=] { doGetCalibrationStatus(audioReq); });
 }
 
 /*
@@ -295,13 +292,12 @@ void AudioServiceImpl::getCalibrationStatus(std::shared_ptr<AudioRequest> audioR
  * 3. Cache stream at server-side. Stream is associated with identifier now.
  * 4. Associate this stream with the audio client.
  */
-telux::common::ErrorCode AudioServiceImpl::doCreateStream(
-        std::shared_ptr<AudioRequest> audioReq, StreamConfiguration config,
-        TranscodingFormatInfo inInfo, TranscodingFormatInfo outInfo,
-        StreamPurpose streamPurpose, CreatedTranscoderInfo *createdTranscoderInfo) {
+telux::common::ErrorCode AudioServiceImpl::doCreateStream(std::shared_ptr<AudioRequest> audioReq,
+    StreamConfiguration config, TranscodingFormatInfo inInfo, TranscodingFormatInfo outInfo,
+    StreamPurpose streamPurpose, CreatedTranscoderInfo *createdTranscoderInfo) {
 
-    uint32_t streamId=0;
-    uint32_t readMinSize=0, writeMinSize=0;
+    uint32_t streamId    = 0;
+    uint32_t readMinSize = 0, writeMinSize = 0;
     std::shared_ptr<Stream> stream;
     telux::common::ErrorCode ec = telux::common::ErrorCode::GENERIC_FAILURE;
 
@@ -318,13 +314,13 @@ telux::common::ErrorCode AudioServiceImpl::doCreateStream(
         return ec;
     }
 
-    if(config.streamConfig.type == telux::audio::StreamType::VOICE_CALL){
+    if (config.streamConfig.type == telux::audio::StreamType::VOICE_CALL) {
         voiceCallList[config.streamConfig.slotId] = 1;
     }
 
     try {
         stream = std::make_shared<Stream>(audioBackend_, clientCache_);
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         LOG(ERROR, __FUNCTION__, " can't allocate Stream");
         ec = telux::common::ErrorCode::NO_MEMORY;
         goto result;
@@ -367,8 +363,8 @@ telux::common::ErrorCode AudioServiceImpl::doCreateStream(
 
     LOG(INFO, __FUNCTION__, " stream created, strmid: ", streamId, " type ",
         static_cast<uint32_t>(config.streamConfig.type), " read min size ", readMinSize,
-        " write min size ", writeMinSize, " read max size ", MAX_BUFFER_SIZE,
-        " write max size ", MAX_BUFFER_SIZE);
+        " write min size ", writeMinSize, " read max size ", MAX_BUFFER_SIZE, " write max size ",
+        MAX_BUFFER_SIZE);
 
 result:
     if (streamPurpose != StreamPurpose::DEFAULT) {
@@ -376,19 +372,21 @@ result:
         return ec;
     }
 
-    audioMsgDispatcher->sendCreateStreamResponse(audioReq, ec, streamId,
-        config.streamConfig.type, readMinSize, writeMinSize);
+    audioMsgDispatcher->sendCreateStreamResponse(
+        audioReq, ec, streamId, config.streamConfig.type, readMinSize, writeMinSize);
 
     return ec;
 }
 
-void AudioServiceImpl::createStream(std::shared_ptr<AudioRequest> audioReq,
-        StreamConfiguration config) {
+void AudioServiceImpl::createStream(
+    std::shared_ptr<AudioRequest> audioReq, StreamConfiguration config) {
 
     TranscodingFormatInfo transcodeInfo{};
 
-    serviceCommonTaskExecutor_->submitTask([=]{ doCreateStream(audioReq,
-        config, transcodeInfo, transcodeInfo, StreamPurpose::DEFAULT, nullptr); });
+    serviceCommonTaskExecutor_->submitTask([=] {
+        doCreateStream(
+            audioReq, config, transcodeInfo, transcodeInfo, StreamPurpose::DEFAULT, nullptr);
+    });
 }
 
 /*
@@ -398,8 +396,7 @@ void AudioServiceImpl::createStream(std::shared_ptr<AudioRequest> audioReq,
  *    stream.
  */
 telux::common::ErrorCode AudioServiceImpl::doDeleteStream(
-        std::shared_ptr<AudioRequest> audioReq,
-        uint32_t streamId, bool sendResponse) {
+    std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, bool sendResponse) {
 
     std::shared_ptr<Stream> stream;
     std::shared_ptr<IAudioMsgDispatcher> audioMsgDispatcher;
@@ -439,16 +436,13 @@ result:
     return ec;
 }
 
-void AudioServiceImpl::deleteStream(std::shared_ptr<AudioRequest> audioReq,
-        uint32_t streamId) {
+void AudioServiceImpl::deleteStream(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) {
 
-    serviceCommonTaskExecutor_->submitTask([=] {
-            doDeleteStream(audioReq, streamId, true); });
+    serviceCommonTaskExecutor_->submitTask([=] { doDeleteStream(audioReq, streamId, true); });
 }
 
-
 void AudioServiceImpl::doCreateTranscoder(std::shared_ptr<AudioRequest> audioReq,
-        TranscodingFormatInfo inInfo, TranscodingFormatInfo outInfo) {
+    TranscodingFormatInfo inInfo, TranscodingFormatInfo outInfo) {
 
     telux::common::ErrorCode ec;
     StreamConfiguration config{};
@@ -456,15 +450,15 @@ void AudioServiceImpl::doCreateTranscoder(std::shared_ptr<AudioRequest> audioReq
     std::shared_ptr<IAudioMsgDispatcher> audioMsgDispatcher;
 
     config.streamConfig.type = StreamType::PLAY;
-    ec = doCreateStream(audioReq, config, inInfo, outInfo,
-            StreamPurpose::TRANSCODER_IN, &createdTranscoderInfo);
+    ec                       = doCreateStream(
+        audioReq, config, inInfo, outInfo, StreamPurpose::TRANSCODER_IN, &createdTranscoderInfo);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         goto result;
     }
 
     config.streamConfig.type = StreamType::CAPTURE;
-    ec = doCreateStream(audioReq, config, inInfo, outInfo,
-            StreamPurpose::TRANSCODER_OUT, &createdTranscoderInfo);
+    ec                       = doCreateStream(
+        audioReq, config, inInfo, outInfo, StreamPurpose::TRANSCODER_OUT, &createdTranscoderInfo);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         doDeleteStream(audioReq, createdTranscoderInfo.inStreamId, false);
     }
@@ -479,14 +473,13 @@ result:
 }
 
 void AudioServiceImpl::createTranscoder(std::shared_ptr<AudioRequest> audioReq,
-        TranscodingFormatInfo inInfo, TranscodingFormatInfo outInfo) {
+    TranscodingFormatInfo inInfo, TranscodingFormatInfo outInfo) {
 
-    serviceCommonTaskExecutor_->submitTask([=]{ doCreateTranscoder(audioReq,
-        inInfo, outInfo); });
+    serviceCommonTaskExecutor_->submitTask([=] { doCreateTranscoder(audioReq, inInfo, outInfo); });
 }
 
-void AudioServiceImpl::doDeleteTranscoder(std::shared_ptr<AudioRequest> audioReq,
-        uint32_t inStreamId, uint32_t outStreamId) {
+void AudioServiceImpl::doDeleteTranscoder(
+    std::shared_ptr<AudioRequest> audioReq, uint32_t inStreamId, uint32_t outStreamId) {
 
     telux::common::ErrorCode ec;
     std::shared_ptr<IAudioMsgDispatcher> audioMsgDispatcher;
@@ -510,137 +503,129 @@ void AudioServiceImpl::doDeleteTranscoder(std::shared_ptr<AudioRequest> audioReq
         return;
     }
 
-    audioMsgDispatcher->sendDeleteTranscoderResponse(audioReq, finalErrorCode,
-        inStreamId, outStreamId);
+    audioMsgDispatcher->sendDeleteTranscoderResponse(
+        audioReq, finalErrorCode, inStreamId, outStreamId);
 }
 
-void AudioServiceImpl::deleteTranscoder(std::shared_ptr<AudioRequest> audioReq,
-        uint32_t inStreamId, uint32_t outStreamId) {
+void AudioServiceImpl::deleteTranscoder(
+    std::shared_ptr<AudioRequest> audioReq, uint32_t inStreamId, uint32_t outStreamId) {
 
-    serviceCommonTaskExecutor_->submitTask([=]{ doDeleteTranscoder(audioReq,
-        inStreamId, outStreamId); });
+    serviceCommonTaskExecutor_->submitTask(
+        [=] { doDeleteTranscoder(audioReq, inStreamId, outStreamId); });
 }
 
-void AudioServiceImpl::start(std::shared_ptr<AudioRequest> audioReq,
-        uint32_t streamId) {
+void AudioServiceImpl::start(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) {
     std::shared_ptr<Stream> stream = streamCache_->retrieveStream(streamId);
     if (stream) {
         stream->start(audioReq, streamId);
     }
 }
 
-void AudioServiceImpl::stop(std::shared_ptr<AudioRequest> audioReq,
-        uint32_t streamId) {
+void AudioServiceImpl::stop(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) {
     std::shared_ptr<Stream> stream = streamCache_->retrieveStream(streamId);
     if (stream) {
         stream->stop(audioReq, streamId);
     }
 }
 
-void AudioServiceImpl::setDevice(std::shared_ptr<AudioRequest> audioReq,
-        uint32_t streamId, std::vector<DeviceType> const &devices) {
+void AudioServiceImpl::setDevice(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
+    std::vector<DeviceType> const &devices) {
     std::shared_ptr<Stream> stream = streamCache_->retrieveStream(streamId);
     if (stream) {
         stream->setDevice(audioReq, streamId, devices);
     }
 }
 
-void AudioServiceImpl::getDevice(std::shared_ptr<AudioRequest> audioReq,
-        uint32_t streamId) {
+void AudioServiceImpl::getDevice(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) {
     std::shared_ptr<Stream> stream = streamCache_->retrieveStream(streamId);
     if (stream) {
         stream->getDevice(audioReq, streamId);
     }
 }
 
-void AudioServiceImpl::setVolume(std::shared_ptr<AudioRequest> audioReq,
-        uint32_t streamId, StreamDirection direction,
-        std::vector<ChannelVolume> channelsVolume) {
+void AudioServiceImpl::setVolume(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
+    StreamDirection direction, std::vector<ChannelVolume> channelsVolume) {
     std::shared_ptr<Stream> stream = streamCache_->retrieveStream(streamId);
     if (stream) {
         stream->setVolume(audioReq, streamId, direction, channelsVolume);
     }
 }
 
-void AudioServiceImpl::getVolume(std::shared_ptr<AudioRequest> audioReq,
-        uint32_t streamId, StreamDirection direction) {
+void AudioServiceImpl::getVolume(
+    std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, StreamDirection direction) {
     std::shared_ptr<Stream> stream = streamCache_->retrieveStream(streamId);
     if (stream) {
         stream->getVolume(audioReq, streamId, direction);
     }
 }
 
-void AudioServiceImpl::setMuteState(std::shared_ptr<AudioRequest> audioReq,
-        uint32_t streamId, StreamMute muteInfo) {
+void AudioServiceImpl::setMuteState(
+    std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, StreamMute muteInfo) {
     std::shared_ptr<Stream> stream = streamCache_->retrieveStream(streamId);
     if (stream) {
         stream->setMuteState(audioReq, streamId, muteInfo);
     }
 }
 
-void AudioServiceImpl::getMuteState(std::shared_ptr<AudioRequest> audioReq,
-        uint32_t streamId, StreamDirection direction) {
+void AudioServiceImpl::getMuteState(
+    std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, StreamDirection direction) {
     std::shared_ptr<Stream> stream = streamCache_->retrieveStream(streamId);
     if (stream) {
         stream->getMuteState(audioReq, streamId, direction);
     }
 }
 
-void AudioServiceImpl::write(std::shared_ptr<AudioRequest> audioReq,
-        uint32_t streamId, uint8_t *data, uint32_t writeLengthRequested,
-        uint32_t offset, int64_t timeStamp, bool isLastBuffer) {
+void AudioServiceImpl::write(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
+    uint8_t *data, uint32_t writeLengthRequested, uint32_t offset, int64_t timeStamp,
+    bool isLastBuffer) {
     std::shared_ptr<Stream> stream = streamCache_->retrieveStream(streamId);
     if (stream) {
-        stream->write(audioReq, streamId, data, writeLengthRequested, offset,
-            timeStamp, isLastBuffer, voiceCallList);
+        stream->write(audioReq, streamId, data, writeLengthRequested, offset, timeStamp,
+            isLastBuffer, voiceCallList);
     }
 }
 
-void AudioServiceImpl::read(std::shared_ptr<AudioRequest> audioReq,
-        uint32_t streamId, uint32_t readLengthRequested) {
-            LOG(ERROR, __FUNCTION__);
+void AudioServiceImpl::read(
+    std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, uint32_t readLengthRequested) {
+    LOG(ERROR, __FUNCTION__);
     std::shared_ptr<Stream> stream = streamCache_->retrieveStream(streamId);
     if (stream) {
         stream->read(audioReq, streamId, readLengthRequested, voiceCallList);
     }
 }
 
-void AudioServiceImpl::startDtmf(std::shared_ptr<AudioRequest> audioReq,
-        uint32_t streamId, uint16_t gain, uint16_t duration,
-        DtmfTone dtmfTone) {
+void AudioServiceImpl::startDtmf(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
+    uint16_t gain, uint16_t duration, DtmfTone dtmfTone) {
     std::shared_ptr<Stream> stream = streamCache_->retrieveStream(streamId);
     if (stream) {
         stream->startDtmf(audioReq, streamId, gain, duration, dtmfTone);
     }
 }
 
-void AudioServiceImpl::stopDtmf(std::shared_ptr<AudioRequest> audioReq,
-        uint32_t streamId, StreamDirection direction) {
+void AudioServiceImpl::stopDtmf(
+    std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, StreamDirection direction) {
     std::shared_ptr<Stream> stream = streamCache_->retrieveStream(streamId);
     if (stream) {
         stream->stopDtmf(audioReq, streamId, direction);
     }
 }
 
-void AudioServiceImpl::startTone(std::shared_ptr<AudioRequest> audioReq,
-        uint32_t streamId, uint16_t gain, uint16_t duration,
-        std::vector<uint16_t> toneFrequencies) {
+void AudioServiceImpl::startTone(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
+    uint16_t gain, uint16_t duration, std::vector<uint16_t> toneFrequencies) {
     std::shared_ptr<Stream> stream = streamCache_->retrieveStream(streamId);
     if (stream) {
         stream->startTone(audioReq, streamId, gain, duration, toneFrequencies);
     }
 }
 
-void AudioServiceImpl::stopTone(std::shared_ptr<AudioRequest> audioReq,
-        uint32_t streamId) {
+void AudioServiceImpl::stopTone(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) {
     std::shared_ptr<Stream> stream = streamCache_->retrieveStream(streamId);
     if (stream) {
         stream->stopTone(audioReq, streamId);
     }
 }
 
-void AudioServiceImpl::drain(std::shared_ptr<AudioRequest> audioReq,
-        uint32_t streamId) {
+void AudioServiceImpl::drain(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) {
 
     std::shared_ptr<Stream> stream = streamCache_->retrieveStream(streamId);
     if (stream) {
@@ -649,8 +634,7 @@ void AudioServiceImpl::drain(std::shared_ptr<AudioRequest> audioReq,
     }
 }
 
-void AudioServiceImpl::flush(std::shared_ptr<AudioRequest> audioReq,
-        uint32_t streamId) {
+void AudioServiceImpl::flush(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) {
 
     std::shared_ptr<Stream> stream = streamCache_->retrieveStream(streamId);
     if (stream) {
@@ -659,17 +643,17 @@ void AudioServiceImpl::flush(std::shared_ptr<AudioRequest> audioReq,
     }
 }
 
-void AudioServiceImpl::registerForIndication(std::shared_ptr<AudioRequest> audioReq,
-        uint32_t streamId, uint32_t indicationType) {
+void AudioServiceImpl::registerForIndication(
+    std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, uint32_t indicationType) {
 }
 
-void AudioServiceImpl::deRegisterForIndication(std::shared_ptr<AudioRequest> audioReq,
-        uint32_t streamId, uint32_t indicationType) {
+void AudioServiceImpl::deRegisterForIndication(
+    std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, uint32_t indicationType) {
 }
 
 std::shared_ptr<ClientCache> AudioServiceImpl::getClientCache() {
     return clientCache_;
 }
 
-} // end namespace audio
-} // end namespace telux
+}  // end namespace audio
+}  // end namespace telux

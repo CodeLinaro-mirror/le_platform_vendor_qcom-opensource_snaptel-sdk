@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "common/Logger.hpp"
@@ -14,7 +14,7 @@ namespace loc {
 
 TimeWindow::TimeWindow(uint64_t timeInterval) {
     LOG(DEBUG, __FUNCTION__, " timeInterval: ", timeInterval);
-    timeInterval_ = timeInterval;
+    timeInterval_      = timeInterval;
     previousTimeStamp_ = telux::loc::UNKNOWN_TIMESTAMP;
 }
 
@@ -46,9 +46,9 @@ bool TimeWindow::isInWindow(uint64_t currentTimeStamp) {
     LOG(DEBUG, __FUNCTION__, " Current Timestamp: ", currentTimeStamp);
     std::lock_guard<std::mutex> lock(mutex_);
     uint64_t timeDifference = currentTimeStamp - previousTimeStamp_;
-    uint64_t lowerBound = timeInterval_ - GRACE_TIME_MS;
-    uint64_t upperBound = timeInterval_ + GRACE_TIME_MS;
-    bool isFiltered = false;
+    uint64_t lowerBound     = timeInterval_ - GRACE_TIME_MS;
+    uint64_t upperBound     = timeInterval_ + GRACE_TIME_MS;
+    bool isFiltered         = false;
     if (!isTimeStampValid()) {
         LOG(WARNING, __FUNCTION__, " Window doesn't have a valid previous timestamp");
         updateTimeStamp(currentTimeStamp);
@@ -77,8 +77,8 @@ Status LocationReportFilter::startReportFilter(uint64_t timeInterval, ReportType
     if (windows_.find(reportType) == windows_.end()) {
         try {
             windows_[reportType] = std::make_shared<TimeWindow>(timeInterval);
-            status = Status::SUCCESS;
-        } catch (std::bad_alloc & e) {
+            status               = Status::SUCCESS;
+        } catch (std::bad_alloc &e) {
             LOG(ERROR, __FUNCTION__, " TimeWindow: ", e.what());
             status = Status::NOMEMORY;
         }
@@ -107,13 +107,13 @@ bool LocationReportFilter::isReportIgnored(const uint64_t timestamp, const Repor
      *
      */
     std::lock_guard<std::mutex> lock(mutex_);
-    if(windows_.find(reportType) != windows_.end()) {
+    if (windows_.find(reportType) != windows_.end()) {
         if (timestamp == telux::loc::UNKNOWN_TIMESTAMP) {
             LOG(ERROR, __FUNCTION__, " Unknown timestamp is reported");
             return false;
         }
         auto TimeWindow = windows_[reportType];
-        bool status = TimeWindow->isInWindow(timestamp);
+        bool status     = TimeWindow->isInWindow(timestamp);
         return status;
     } else {
         LOG(ERROR, __FUNCTION__, " Window not yet initialized");
@@ -121,6 +121,6 @@ bool LocationReportFilter::isReportIgnored(const uint64_t timestamp, const Repor
     }
 }
 
-} // end of namespace loc
+}  // end of namespace loc
 
-} // end of namespace telux
+}  // end of namespace telux

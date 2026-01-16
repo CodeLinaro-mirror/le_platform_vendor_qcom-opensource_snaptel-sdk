@@ -27,10 +27,10 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -52,12 +52,12 @@
 #include "console_app_framework/ConsoleApp.hpp"
 
 class CellbroadcastMenu : public ConsoleApp {
-public:
+ public:
     CellbroadcastMenu(std::string appName, std::string cursor);
     ~CellbroadcastMenu();
     bool init();
 
-private:
+ private:
     std::vector<std::shared_ptr<telux::tel::ICellBroadcastManager>> cbManagers_;
     std::shared_ptr<CellbroadcastListener> cbListener_ = nullptr;
     void updateMessageFilters(std::vector<std::string> userInput);
@@ -70,8 +70,6 @@ private:
     void onRequestMsgFilterResponse(std::vector<telux::tel::CellBroadcastFilter> filters,
         bool isActivated, telux::common::ErrorCode errorCode);
     void onResponseCallback(telux::common::ErrorCode error);
-
 };
 
 #endif  // CELLBROADCASTMENU_HPP
-

@@ -26,9 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -47,21 +48,21 @@ using namespace telux::therm;
 using namespace telux::common;
 
 class ThermalListener : public telux::therm::IThermalShutdownListener {
-public:
-   void onShutdownEnabled() override;
-   void onShutdownDisabled() override;
-   void onImminentShutdownEnablement(uint32_t imminentDuration) override;
-   void onServiceStatusChange(ServiceStatus status) override;
-   std::mutex listenerMtx_;
-   std::condition_variable listenerCv_;
-   bool taskCompleted_ = false;
+ public:
+    void onShutdownEnabled() override;
+    void onShutdownDisabled() override;
+    void onImminentShutdownEnablement(uint32_t imminentDuration) override;
+    void onServiceStatusChange(ServiceStatus status) override;
+    std::mutex listenerMtx_;
+    std::condition_variable listenerCv_;
+    bool taskCompleted_ = false;
 
-   ThermalListener(std::weak_ptr<ThermalCommandMgr> MyThermCmdMgr);
-   ~ThermalListener();
+    ThermalListener(std::weak_ptr<ThermalCommandMgr> MyThermCmdMgr);
+    ~ThermalListener();
 
-private:
-   std::weak_ptr<ThermalCommandMgr> myThermCmdMgr_;
-   void printAutoShutdownMode(AutoShutdownMode mode);
+ private:
+    std::weak_ptr<ThermalCommandMgr> myThermCmdMgr_;
+    void printAutoShutdownMode(AutoShutdownMode mode);
 };
 
 #endif  // THERMALLISTENER_HPP

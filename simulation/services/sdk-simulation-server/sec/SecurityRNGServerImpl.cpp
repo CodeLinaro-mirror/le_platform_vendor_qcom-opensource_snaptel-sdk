@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <errno.h>
@@ -32,10 +32,10 @@ SecurityRNGServerImpl::~SecurityRNGServerImpl() {
     }
 }
 
-grpc::Status SecurityRNGServerImpl::Init(::grpc::ServerContext* context,
-    const ::securityStub::RNGSource* request, ::securityStub::RNGInitInfo* response) {
+grpc::Status SecurityRNGServerImpl::Init(::grpc::ServerContext *context,
+    const ::securityStub::RNGSource *request, ::securityStub::RNGInitInfo *response) {
 
-    int ret = -1;
+    int ret             = -1;
     char *rngDeviceNode = NULL;
     telux::common::ErrorCode ec{};
     telux::sec::RNGSource rngSource{};
@@ -61,7 +61,7 @@ grpc::Status SecurityRNGServerImpl::Init(::grpc::ServerContext* context,
                 break;
             }
             rngDeviceNode = const_cast<char *>(HWRNG_DEV_NODE);
-            ret = open(rngDeviceNode, O_RDONLY);
+            ret           = open(rngDeviceNode, O_RDONLY);
             if (ret < 0) {
                 LOG(ERROR, __FUNCTION__, " can't open ", rngDeviceNode, " lnx err ", errno);
                 response->set_error_code(commonStub::ErrorCode::SYSTEM_ERR);
@@ -77,7 +77,7 @@ grpc::Status SecurityRNGServerImpl::Init(::grpc::ServerContext* context,
                 break;
             }
             rngDeviceNode = const_cast<char *>(DEV_RANDOM_DEV_NODE);
-            ret = open(rngDeviceNode, O_RDONLY);
+            ret           = open(rngDeviceNode, O_RDONLY);
             if (ret < 0) {
                 LOG(ERROR, __FUNCTION__, " can't open ", rngDeviceNode, " lnx err ", errno);
                 response->set_error_code(commonStub::ErrorCode::SYSTEM_ERR);
@@ -98,11 +98,11 @@ grpc::Status SecurityRNGServerImpl::Init(::grpc::ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status SecurityRNGServerImpl::GetRandomNumber(::grpc::ServerContext* context,
-    const ::securityStub::RandomNumber* request, ::securityStub::RandomNumber* response) {
+grpc::Status SecurityRNGServerImpl::GetRandomNumber(::grpc::ServerContext *context,
+    const ::securityStub::RandomNumber *request, ::securityStub::RandomNumber *response) {
 
-    int ret = 0;
-    int rngFd = 0;
+    int ret           = 0;
+    int rngFd         = 0;
     uint32_t number32 = 0;
     uint64_t number64 = 0;
     std::string ecStr = "";
@@ -114,7 +114,7 @@ grpc::Status SecurityRNGServerImpl::GetRandomNumber(::grpc::ServerContext* conte
     response->set_rng_fd(rngFd);
 
     ecStr = apiConfigJsonRoot_["IRandomNumberManager"]["getRandomNumber"]["error"].asString();
-    ec = CommonUtils::mapErrorCode(ecStr);
+    ec    = CommonUtils::mapErrorCode(ecStr);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         response->set_error_code(static_cast<commonStub::ErrorCode>(ec));
         return grpc::Status::OK;
@@ -150,10 +150,10 @@ grpc::Status SecurityRNGServerImpl::GetRandomNumber(::grpc::ServerContext* conte
     return grpc::Status::OK;
 }
 
-grpc::Status SecurityRNGServerImpl::GetRandomData(::grpc::ServerContext* context,
-    const ::securityStub::RandomData* request, ::securityStub::RandomData* response) {
+grpc::Status SecurityRNGServerImpl::GetRandomData(::grpc::ServerContext *context,
+    const ::securityStub::RandomData *request, ::securityStub::RandomData *response) {
 
-    int ret = 0;
+    int ret   = 0;
     int rngFd = 0;
     std::vector<uint8_t> generatedData(request->length(), 0);
     std::string ecStr = "";
@@ -165,7 +165,7 @@ grpc::Status SecurityRNGServerImpl::GetRandomData(::grpc::ServerContext* context
     response->set_rng_fd(rngFd);
 
     ecStr = apiConfigJsonRoot_["IRandomNumberManager"]["getRandomData"]["error"].asString();
-    ec = CommonUtils::mapErrorCode(ecStr);
+    ec    = CommonUtils::mapErrorCode(ecStr);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         response->set_error_code(static_cast<commonStub::ErrorCode>(ec));
         return grpc::Status::OK;
@@ -192,8 +192,8 @@ grpc::Status SecurityRNGServerImpl::GetRandomData(::grpc::ServerContext* context
     return grpc::Status::OK;
 }
 
-grpc::Status SecurityRNGServerImpl::RNGClientCleanup(::grpc::ServerContext* context,
-    const ::securityStub::RNGClientInfo* request, ::google::protobuf::Empty* response) {
+grpc::Status SecurityRNGServerImpl::RNGClientCleanup(::grpc::ServerContext *context,
+    const ::securityStub::RNGClientInfo *request, ::google::protobuf::Empty *response) {
 
     int rngFd = 0;
 

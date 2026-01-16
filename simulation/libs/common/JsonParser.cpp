@@ -1,8 +1,7 @@
 /*
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 
 #include "JsonParser.hpp"
 #include "Logger.hpp"
@@ -13,8 +12,7 @@
 
 std::mutex JsonParser::fileMutex_;
 
-telux::common::ErrorCode JsonParser::readFromJsonFile(Json::Value &rootNode,
-        std::string path) {
+telux::common::ErrorCode JsonParser::readFromJsonFile(Json::Value &rootNode, std::string path) {
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
     std::lock_guard<std::mutex> lk(JsonParser::fileMutex_);
 
@@ -23,12 +21,11 @@ telux::common::ErrorCode JsonParser::readFromJsonFile(Json::Value &rootNode,
     std::ifstream ifs(filePath);
 
     if (!ifs.good()) {
-        filePath = std::string(DEFAULT_SIM_FILE_PREFIX)
-            + std::string(DEFAULT_JSON_FILE_PATH) + path;
+        filePath
+            = std::string(DEFAULT_SIM_FILE_PREFIX) + std::string(DEFAULT_JSON_FILE_PATH) + path;
         ifs.open(filePath);
         LOG(DEBUG, "ReTrying to read: ", filePath);
-        if (!ifs.good())
-        {
+        if (!ifs.good()) {
             LOG(ERROR, "Failed to open Json file");
         }
     }
@@ -43,8 +40,7 @@ telux::common::ErrorCode JsonParser::readFromJsonFile(Json::Value &rootNode,
     return error;
 }
 
-telux::common::ErrorCode JsonParser::writeToJsonFile(Json::Value rootNode,
-        std::string path) {
+telux::common::ErrorCode JsonParser::writeToJsonFile(Json::Value rootNode, std::string path) {
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
 
     std::lock_guard<std::mutex> lk(JsonParser::fileMutex_);
@@ -52,8 +48,8 @@ telux::common::ErrorCode JsonParser::writeToJsonFile(Json::Value rootNode,
 
     std::ofstream ofs(filePath);
     if (!ofs.good()) {
-        filePath = std::string(DEFAULT_SIM_FILE_PREFIX)
-            + std::string(DEFAULT_JSON_FILE_PATH) + path;
+        filePath
+            = std::string(DEFAULT_SIM_FILE_PREFIX) + std::string(DEFAULT_JSON_FILE_PATH) + path;
         // Create the directory if it doesn't exist
         size_t pos = filePath.find_last_of('/');
         if (pos != std::string::npos) {
@@ -67,8 +63,7 @@ telux::common::ErrorCode JsonParser::writeToJsonFile(Json::Value rootNode,
             }
         }
         ofs.open(filePath);
-        if (!ofs.good())
-        {
+        if (!ofs.good()) {
             LOG(ERROR, "Failed to open Json file");
         }
     }

@@ -26,11 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <iostream>
@@ -39,45 +39,45 @@
 
 #define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
 
-void MyImsSettingsCallback::onRequestImsServiceConfig(SlotId slotId,
-   telux::tel::ImsServiceConfig config, telux::common::ErrorCode errorCode) {
+void MyImsSettingsCallback::onRequestImsServiceConfig(
+    SlotId slotId, telux::tel::ImsServiceConfig config, telux::common::ErrorCode errorCode) {
     std::cout << " Request IMS service config response received on slotId "
               << static_cast<int>(slotId) << "\n";
     if (errorCode != telux::common::ErrorCode::SUCCESS) {
         PRINT_CB << "Request failed with errorCode: " << static_cast<int>(errorCode)
                  << " Description : " << Utils::getErrorCodeAsString(errorCode) << "\n";
     } else {
-        //For VOIMS configuration
+        // For VOIMS configuration
         if (config.configValidityMask[telux::tel::ImsServiceConfigType::IMSSETTINGS_VOIMS]) {
-           if (config.voImsEnabled) {
-               PRINT_CB << "VOIMS is enabled \n";
-           } else {
-               PRINT_CB << "VOIMS is disabled \n";
-           }
+            if (config.voImsEnabled) {
+                PRINT_CB << "VOIMS is enabled \n";
+            } else {
+                PRINT_CB << "VOIMS is disabled \n";
+            }
         }
-        //For IMS service configuration
+        // For IMS service configuration
         if (config.configValidityMask[telux::tel::ImsServiceConfigType::IMSSETTINGS_IMS_SERVICE]) {
-           if (config.imsServiceEnabled) {
-               PRINT_CB << "IMS service is enabled \n";
-           } else {
-               PRINT_CB << "IMS service is disabled \n";
-           }
+            if (config.imsServiceEnabled) {
+                PRINT_CB << "IMS service is enabled \n";
+            } else {
+                PRINT_CB << "IMS service is disabled \n";
+            }
         }
-        //For SMS over IMS configuration
+        // For SMS over IMS configuration
         if (config.configValidityMask[telux::tel::ImsServiceConfigType::IMSSETTINGS_SMS]) {
-           if (config.smsEnabled) {
-               PRINT_CB << "SMS over IMS is enabled \n";
-           } else {
-               PRINT_CB << "SMS over IMS is disabled \n";
-           }
+            if (config.smsEnabled) {
+                PRINT_CB << "SMS over IMS is enabled \n";
+            } else {
+                PRINT_CB << "SMS over IMS is disabled \n";
+            }
         }
-        //For RTT over IMS configuration
+        // For RTT over IMS configuration
         if (config.configValidityMask[telux::tel::ImsServiceConfigType::IMSSETTINGS_RTT]) {
-           if (config.rttEnabled) {
-               PRINT_CB << "RTT over IMS is enabled \n";
-           } else {
-               PRINT_CB << "RTT over IMS is disabled \n";
-           }
+            if (config.rttEnabled) {
+                PRINT_CB << "RTT over IMS is enabled \n";
+            } else {
+                PRINT_CB << "RTT over IMS is disabled \n";
+            }
         }
     }
 }
@@ -92,15 +92,15 @@ void MyImsSettingsCallback::onResponseCallback(telux::common::ErrorCode error) {
     }
 }
 
-void MyImsSettingsCallback::onRequestImsSipUserAgentConfig(SlotId slotId,
-   std::string sipUserAgent, telux::common::ErrorCode errorCode) {
+void MyImsSettingsCallback::onRequestImsSipUserAgentConfig(
+    SlotId slotId, std::string sipUserAgent, telux::common::ErrorCode errorCode) {
     std::cout << " Request IMS SIP user agent config response received on slotId "
               << static_cast<int>(slotId) << "\n";
     if (errorCode != telux::common::ErrorCode::SUCCESS) {
         PRINT_CB << "Request failed with errorCode: " << static_cast<int>(errorCode)
                  << " Description : " << Utils::getErrorCodeAsString(errorCode) << "\n";
     } else {
-        //SipUserAgent configuration
+        // SipUserAgent configuration
         if (!sipUserAgent.empty()) {
             PRINT_CB << "sipUserAgent is " << sipUserAgent << "\n";
         } else {
@@ -109,18 +109,18 @@ void MyImsSettingsCallback::onRequestImsSipUserAgentConfig(SlotId slotId,
     }
 }
 
-void MyImsSettingsCallback::onRequestImsVonr(SlotId slotId,
-    bool isEnable, telux::common::ErrorCode errorCode) {
-    std::cout << " Request IMS VoNR response received on slotId "
-              << static_cast<int>(slotId) << "\n";
+void MyImsSettingsCallback::onRequestImsVonr(
+    SlotId slotId, bool isEnable, telux::common::ErrorCode errorCode) {
+    std::cout << " Request IMS VoNR response received on slotId " << static_cast<int>(slotId)
+              << "\n";
     if (errorCode != telux::common::ErrorCode::SUCCESS) {
         PRINT_CB << "Request failed with errorCode: " << static_cast<int>(errorCode)
                  << " Description : " << Utils::getErrorCodeAsString(errorCode) << "\n";
     } else {
-       if (isEnable) {
-           PRINT_CB << "VoNR is enabled \n";
-       } else {
-           PRINT_CB << "VoNR is disabled \n";
-       }
+        if (isEnable) {
+            PRINT_CB << "VoNR is enabled \n";
+        } else {
+            PRINT_CB << "VoNR is disabled \n";
+        }
     }
 }

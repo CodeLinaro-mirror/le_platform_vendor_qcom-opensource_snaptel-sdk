@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef CONSOLEAPPCOMMAND_HPP
 #define CONSOLEAPPCOMMAND_HPP
 
@@ -40,40 +46,40 @@
  * It is intended to be used in console applications derived from Console App Framework.
  */
 class ConsoleAppCommand {
-public:
-   ConsoleAppCommand(std::string id, std::string name, std::vector<std::string> arguments,
-                     std::function<void(std::vector<std::string> &)> command);
+ public:
+    ConsoleAppCommand(std::string id, std::string name, std::vector<std::string> arguments,
+        std::function<void(std::vector<std::string> &)> command);
 
-   /**
-    * Get command id
-    */
-   std::string getId();
+    /**
+     * Get command id
+     */
+    std::string getId();
 
-   /**
-    * Get command name
-    */
-   std::string getName();
+    /**
+     * Get command name
+     */
+    std::string getName();
 
-   /**
-    * Get command arguments
-    */
-   std::vector<std::string> getArguments();
+    /**
+     * Get command arguments
+     */
+    std::vector<std::string> getArguments();
 
-   /**
-    * Display the command
-    */
-   void displayCommand();
+    /**
+     * Display the command
+     */
+    void displayCommand();
 
-   /**
-    * Executes the command
-    */
-   void executeCommand(std::vector<std::string> userInput);
+    /**
+     * Executes the command
+     */
+    void executeCommand(std::vector<std::string> userInput);
 
-private:
-   std::string id_;                      // Command id
-   std::string name_;                    // Command  name
-   std::vector<std::string> arguments_;  // Input arguments sequence
-   std::function<void(std::vector<std::string> &)> command_;
+ private:
+    std::string id_;  // Command id
+    std::string name_;  // Command  name
+    std::vector<std::string> arguments_;  // Input arguments sequence
+    std::function<void(std::vector<std::string> &)> command_;
 };
 
 #endif  // CONSOLEAPPCOMMAND_HPP

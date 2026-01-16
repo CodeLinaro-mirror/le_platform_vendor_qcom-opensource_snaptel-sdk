@@ -26,41 +26,13 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 /**
  * @file: Cv2xTxServiceStatusApp.cpp
  *
@@ -91,39 +63,39 @@ using std::array;
 using std::cerr;
 using std::cout;
 using std::endl;
+using std::lock_guard;
+using std::make_shared;
+using std::map;
+using std::mutex;
 using std::promise;
 using std::shared_ptr;
 using std::static_pointer_cast;
-using std::make_shared;
-using std::mutex;
-using std::lock_guard;
 using std::string;
-using std::map;
 using telux::common::ErrorCode;
-using telux::common::Status;
 using telux::common::ServiceStatus;
+using telux::common::Status;
 using telux::cv2x::Cv2xFactory;
 using telux::cv2x::Cv2xStatus;
 using telux::cv2x::Cv2xStatusEx;
 using telux::cv2x::Cv2xStatusType;
+using telux::cv2x::ICv2xListener;
+using telux::cv2x::ICv2xRadio;
+using telux::cv2x::ICv2xRadioListener;
 using telux::cv2x::ICv2xTxFlow;
 using telux::cv2x::Periodicity;
 using telux::cv2x::Priority;
+using telux::cv2x::SpsFlowInfo;
 using telux::cv2x::TrafficCategory;
 using telux::cv2x::TrafficIpType;
-using telux::cv2x::SpsFlowInfo;
-using telux::cv2x::ICv2xListener;
-using telux::cv2x::ICv2xRadioListener;
-using telux::cv2x::ICv2xRadio;
 
-static constexpr uint32_t SPS_SERVICE_ID = 1u;
-static constexpr uint16_t SPS_SRC_PORT_NUM = 2500u;
-static constexpr uint32_t G_BUF_LEN = 128;
+static constexpr uint32_t SPS_SERVICE_ID      = 1u;
+static constexpr uint16_t SPS_SRC_PORT_NUM    = 2500u;
+static constexpr uint32_t G_BUF_LEN           = 128;
 static constexpr uint16_t NUM_TEST_ITERATIONS = 128;
-static constexpr int      PRIORITY = 3;
+static constexpr int PRIORITY                 = 3;
 
 static constexpr char TEST_VERNO_MAGIC = 'Q';
-static constexpr char UEID = 1;
+static constexpr char UEID             = 1;
 
 static Cv2xStatusEx gCv2xStatus;
 static promise<ErrorCode> gCallbackPromise;
@@ -143,15 +115,17 @@ static map<Cv2xStatusType, string> cv2xStatusToString = {
 };
 
 class Cv2xListener : public ICv2xListener {
-public:
-    Cv2xListener(Cv2xStatusEx status) : status_(status) { }
+ public:
+    Cv2xListener(Cv2xStatusEx status)
+       : status_(status) {
+    }
 
     void onServiceStatusChange(ServiceStatus status) override {
         cout << "Service status changed to: " << serviceStatusToString[status] << endl;
     }
 
     void onStatusChanged(Cv2xStatusEx status) override {
-        cout << "Cv2x TX status changed to: " <<  cv2xStatusToString[status.status.txStatus] << endl;
+        cout << "Cv2x TX status changed to: " << cv2xStatusToString[status.status.txStatus] << endl;
         lock_guard<mutex> lock(mutex_);
         status_ = status;
     }
@@ -161,7 +135,7 @@ public:
         return status_;
     }
 
-protected:
+ protected:
     Cv2xStatusEx status_;
     mutex mutex_;
 };
@@ -181,9 +155,7 @@ static void cv2xStatusCallback(Cv2xStatus status, ErrorCode error) {
 
 // Callback function for ICv2xRadio->createTxSpsFlow()
 static void createSpsFlowCallback(shared_ptr<ICv2xTxFlow> txSpsFlow,
-                                  shared_ptr<ICv2xTxFlow> unusedFlow,
-                                  ErrorCode spsError,
-                                  ErrorCode unusedError) {
+    shared_ptr<ICv2xTxFlow> unusedFlow, ErrorCode spsError, ErrorCode unusedError) {
     if (ErrorCode::SUCCESS == spsError) {
         gSpsFlow = txSpsFlow;
     }
@@ -201,7 +173,7 @@ static uint64_t getCurrentTimestamp(void) {
 static void fillBuffer(void) {
 
     static uint16_t seq_num = 0u;
-    auto timestamp = getCurrentTimestamp();
+    auto timestamp          = getCurrentTimestamp();
 
     // Very first payload is test Magic number, this is  where V2X Family ID would normally be.
     gBuf[0] = TEST_VERNO_MAGIC;
@@ -217,12 +189,12 @@ static void fillBuffer(void) {
 
     // Timestamp
 
-    dataPtr += snprintf(dataPtr, G_BUF_LEN - (2 + sizeof(uint16_t)),
-            "<%llu> ", static_cast<long long unsigned>(timestamp));
+    dataPtr += snprintf(dataPtr, G_BUF_LEN - (2 + sizeof(uint16_t)), "<%llu> ",
+        static_cast<long long unsigned>(timestamp));
 
     // Dummy payload
     constexpr int NUM_LETTERS = 26;
-    auto i = 2 + sizeof(uint16_t) - sizeof(long long unsigned);
+    auto i                    = 2 + sizeof(uint16_t) - sizeof(long long unsigned);
     for (; i < G_BUF_LEN; ++i) {
         gBuf[i] = 'a' + ((seq_num + i) % NUM_LETTERS);
     }
@@ -232,29 +204,29 @@ static void fillBuffer(void) {
 static void sampleSpsTx(void) {
 
     static uint32_t txCount = 0u;
-    int sock = gSpsFlow->getSock();
+    int sock                = gSpsFlow->getSock();
 
     cout << "sampleSpsTx(" << sock << ")" << endl;
 
-    struct msghdr message = {0};
-    struct iovec iov[1] = {0};
-    struct cmsghdr * cmsghp = NULL;
+    struct msghdr message  = {0};
+    struct iovec iov[1]    = {0};
+    struct cmsghdr *cmsghp = NULL;
     char control[CMSG_SPACE(sizeof(int))];
 
     // Send data using sendmsg to provide IPV6_TCLASS per packet
-    iov[0].iov_base = gBuf.data();
-    iov[0].iov_len = G_BUF_LEN;
-    message.msg_iov = iov;
-    message.msg_iovlen = 1;
-    message.msg_control = control;
+    iov[0].iov_base        = gBuf.data();
+    iov[0].iov_len         = G_BUF_LEN;
+    message.msg_iov        = iov;
+    message.msg_iovlen     = 1;
+    message.msg_control    = control;
     message.msg_controllen = sizeof(control);
 
     // Fill ancillary data
-    int priority = PRIORITY;
-    cmsghp = CMSG_FIRSTHDR(&message);
+    int priority       = PRIORITY;
+    cmsghp             = CMSG_FIRSTHDR(&message);
     cmsghp->cmsg_level = IPPROTO_IPV6;
-    cmsghp->cmsg_type = IPV6_TCLASS;
-    cmsghp->cmsg_len = CMSG_LEN(sizeof(int));
+    cmsghp->cmsg_type  = IPV6_TCLASS;
+    cmsghp->cmsg_len   = CMSG_LEN(sizeof(int));
     memcpy(CMSG_DATA(cmsghp), &priority, sizeof(int));
 
     // Send data
@@ -268,7 +240,7 @@ static void sampleSpsTx(void) {
         bytes_sent = -1;
     } else {
         if (bytes_sent == G_BUF_LEN) {
-           ++txCount;
+            ++txCount;
         } else {
             cerr << "Error : " << bytes_sent << " bytes sent." << endl;
         }
@@ -291,18 +263,18 @@ int main(int argc, char *argv[]) {
 
     // Get handle to Cv2xRadioManager
     bool cv2xRadioManagerStatusUpdated = false;
-    telux::common::ServiceStatus cv2xRadioManagerStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    telux::common::ServiceStatus cv2xRadioManagerStatus
+        = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
     std::condition_variable cv;
     std::mutex mtx;
     auto statusCb = [&](telux::common::ServiceStatus status) {
         std::lock_guard<std::mutex> lock(mtx);
         cv2xRadioManagerStatusUpdated = true;
-        cv2xRadioManagerStatus = status;
+        cv2xRadioManagerStatus        = status;
         cv.notify_all();
     };
 
-    auto & cv2xFactory = Cv2xFactory::getInstance();
+    auto &cv2xFactory     = Cv2xFactory::getInstance();
     auto cv2xRadioManager = cv2xFactory.getCv2xRadioManager(statusCb);
     if (!cv2xRadioManager) {
         cout << "Error: failed to get Cv2xRadioManager." << endl;
@@ -312,8 +284,7 @@ int main(int argc, char *argv[]) {
     {
         std::unique_lock<std::mutex> lck(mtx);
         cv.wait(lck, [&] { return cv2xRadioManagerStatusUpdated; });
-        if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
-            cv2xRadioManagerStatus) {
+        if (telux::common::ServiceStatus::SERVICE_AVAILABLE != cv2xRadioManagerStatus) {
             cerr << "C-V2X Radio Manager initialization failed, exiting" << endl;
             return EXIT_FAILURE;
         }
@@ -325,8 +296,7 @@ int main(int argc, char *argv[]) {
 
     if (Cv2xStatusType::ACTIVE == gCv2xStatus.status.txStatus) {
         cout << "C-V2X TX status is active" << endl;
-    }
-    else {
+    } else {
         cerr << "C-V2X TX is inactive" << endl;
         return EXIT_FAILURE;
     }
@@ -334,13 +304,13 @@ int main(int argc, char *argv[]) {
     shared_ptr<Cv2xListener> listener = make_shared<Cv2xListener>(gCv2xStatus);
     cv2xRadioManager->registerListener(static_pointer_cast<ICv2xListener>(listener));
 
-     // Create new Tx SPS flow
+    // Create new Tx SPS flow
     SpsFlowInfo spsInfo;
-    spsInfo.priority = Priority::PRIORITY_2;
-    spsInfo.periodicity = Periodicity::PERIODICITY_100MS;
-    spsInfo.nbytesReserved = G_BUF_LEN;
+    spsInfo.priority                = Priority::PRIORITY_2;
+    spsInfo.periodicity             = Periodicity::PERIODICITY_100MS;
+    spsInfo.nbytesReserved          = G_BUF_LEN;
     spsInfo.autoRetransEnabledValid = true;
-    spsInfo.autoRetransEnabled = true;
+    spsInfo.autoRetransEnabled      = true;
 
     bool flowUp = false;
 
@@ -353,16 +323,16 @@ int main(int argc, char *argv[]) {
         if (gCv2xStatus.status.txStatus == Cv2xStatusType::INACTIVE) {
             flowUp = false;
         } else if (gCv2xStatus.status.txStatus == Cv2xStatusType::ACTIVE) {
-            if (not flowUp) {   // Get handle to Cv2xRadio
+            if (not flowUp) {  // Get handle to Cv2xRadio
                 // Get handle to Cv2xRadio
                 bool cv2x_radio_status_updated = false;
-                telux::common::ServiceStatus cv2xRadioStatus =
-                    telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+                telux::common::ServiceStatus cv2xRadioStatus
+                    = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
 
                 auto cb = [&](ServiceStatus status) {
                     std::lock_guard<std::mutex> lock(mtx);
                     cv2x_radio_status_updated = true;
-                    cv2xRadioStatus = status;
+                    cv2xRadioStatus           = status;
                     cv.notify_all();
                 };
 
@@ -376,10 +346,8 @@ int main(int argc, char *argv[]) {
                 {
                     // Wait for cv2x radio to complete initialization
                     std::unique_lock<std::mutex> lc(mtx);
-                    cv.wait(lc,
-                            [&cv2x_radio_status_updated]() {
-                                return cv2x_radio_status_updated;
-                            });
+                    cv.wait(
+                        lc, [&cv2x_radio_status_updated]() { return cv2x_radio_status_updated; });
 
                     if (cv2xRadioStatus != ServiceStatus::SERVICE_AVAILABLE) {
                         cerr << "C-V2X Radio initialization failed." << endl;
@@ -390,13 +358,9 @@ int main(int argc, char *argv[]) {
                 }
 
                 resetCallbackPromise();
-                assert(Status::SUCCESS == cv2xRadio->createTxSpsFlow(TrafficIpType::TRAFFIC_NON_IP,
-                                                                     SPS_SERVICE_ID,
-                                                                     spsInfo,
-                                                                     SPS_SRC_PORT_NUM,
-                                                                     false,
-                                                                     0,
-                                                                     createSpsFlowCallback));
+                assert(Status::SUCCESS
+                       == cv2xRadio->createTxSpsFlow(TrafficIpType::TRAFFIC_NON_IP, SPS_SERVICE_ID,
+                           spsInfo, SPS_SRC_PORT_NUM, false, 0, createSpsFlowCallback));
                 assert(ErrorCode::SUCCESS == gCallbackPromise.get_future().get());
                 flowUp = true;
             }
@@ -405,7 +369,6 @@ int main(int argc, char *argv[]) {
             ++i;
         }
         usleep(100000u);
-
     }
 
     // Deregister SPS flow

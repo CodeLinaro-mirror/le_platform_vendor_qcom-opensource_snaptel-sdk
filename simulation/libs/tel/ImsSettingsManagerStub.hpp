@@ -1,8 +1,7 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 
 /**
  * @file       ImsSettingsManagerStub.hpp
@@ -27,7 +26,7 @@ namespace tel {
 class ImsSettingsManagerStub : public IImsSettingsManager,
                                public IEventListener,
                                public std::enable_shared_from_this<ImsSettingsManagerStub> {
-public:
+ public:
     ImsSettingsManagerStub();
     telux::common::Status init(telux::common::InitResponseCb callback);
     ~ImsSettingsManagerStub();
@@ -35,26 +34,25 @@ public:
     telux::common::ServiceStatus getServiceStatus() override;
 
     telux::common::Status registerListener(std::weak_ptr<IImsSettingsListener> listener) override;
-    telux::common::Status
-        deregisterListener(std::weak_ptr<telux::tel::IImsSettingsListener> listener) override;
+    telux::common::Status deregisterListener(
+        std::weak_ptr<telux::tel::IImsSettingsListener> listener) override;
 
-    telux::common::Status
-        requestServiceConfig(SlotId slotId, ImsServiceConfigCb callback) override;
-    telux::common::Status
-        requestSipUserAgent(SlotId slotId, ImsSipUserAgentConfigCb callback) override;
-    telux::common::Status setSipUserAgent(SlotId slotId,
-        std::string userAgent, telux::common::ResponseCallback callback = nullptr) override;
-    telux::common::Status setServiceConfig(SlotId slotId,
-        ImsServiceConfig config, telux::common::ResponseCallback callback = nullptr) override;
+    telux::common::Status requestServiceConfig(SlotId slotId, ImsServiceConfigCb callback) override;
+    telux::common::Status requestSipUserAgent(
+        SlotId slotId, ImsSipUserAgentConfigCb callback) override;
+    telux::common::Status setSipUserAgent(SlotId slotId, std::string userAgent,
+        telux::common::ResponseCallback callback = nullptr) override;
+    telux::common::Status setServiceConfig(SlotId slotId, ImsServiceConfig config,
+        telux::common::ResponseCallback callback = nullptr) override;
     telux::common::Status requestVonrStatus(SlotId slotId, ImsVonrStatusCb callback) override;
-    telux::common::Status toggleVonr(SlotId slotId,
-        bool isEnable, common::ResponseCallback callback = nullptr) override;
+    telux::common::Status toggleVonr(
+        SlotId slotId, bool isEnable, common::ResponseCallback callback = nullptr) override;
     void onServiceStatusChange(telux::common::ServiceStatus status);
 
     void cleanup();
-    void onEventUpdate(google::protobuf::Any event)  override;
+    void onEventUpdate(google::protobuf::Any event) override;
 
-private:
+ private:
     int noOfSlots_ = 0;
     std::mutex mtx_;
     telux::common::InitResponseCb initCb_;
@@ -69,7 +67,7 @@ private:
     void handleImsSipUserAgentChange(::telStub::ImsSipUserAgentChangeEvent event);
 };
 
-} // end of namespace tel
-} // end of namespace telux
+}  // end of namespace tel
+}  // end of namespace telux
 
-#endif // IMS_SETTINGS_MANAGER_STUB_HPP
+#endif  // IMS_SETTINGS_MANAGER_STUB_HPP

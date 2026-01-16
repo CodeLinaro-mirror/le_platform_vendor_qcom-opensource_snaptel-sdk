@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef DATAQOSAPP_HPP
@@ -18,9 +18,9 @@
 using namespace telux::common;
 
 class DataQoSApp : public telux::data::IDataConnectionListener,
-                    public ConsoleApp,
-                    public std::enable_shared_from_this<telux::data::IDataConnectionListener> {
-public:
+                   public ConsoleApp,
+                   public std::enable_shared_from_this<telux::data::IDataConnectionListener> {
+ public:
     DataQoSApp();
     ~DataQoSApp();
 
@@ -35,8 +35,8 @@ public:
     void stopDataCall();
     void removeVlan(int vlanId);
     bool createUplinkTrafficClass(int trafficClass, telux::data::net::DataPath dataPath);
-    bool createDownLinkTrafficClass(int trafficClass, telux::data::net::DataPath dataPath,
-        int minBandwidth, int maxBandwidth);
+    bool createDownLinkTrafficClass(
+        int trafficClass, telux::data::net::DataPath dataPath, int minBandwidth, int maxBandwidth);
     uint32_t addVlanPcpQoSFilter(int trafficClass, telux::data::Direction direction,
         telux::data::net::DataPath dataPath, int vlanId, int pcp = 0);
     uint32_t addVlanQoSFilter(int trafficClass, telux::data::Direction direction,
@@ -64,7 +64,8 @@ public:
     std::string backhaulToString(telux::data::BackhaulType backhaul);
 
     void consoleInit();
-private:
+
+ private:
     void logDataCallDetails(const std::shared_ptr<telux::data::IDataCall> &dataCall);
 
     std::shared_ptr<telux::data::net::IQoSManager> dataQoSManager_;

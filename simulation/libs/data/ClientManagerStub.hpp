@@ -57,7 +57,6 @@ class ClientManagerStub : public IClientManager,
     std::weak_ptr<IClientListener> listeners_;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     std::shared_ptr<telux::common::ListenerManager<IClientListener>> listenerMgr_;
-
 };
 }  // namespace data
 }  // namespace telux

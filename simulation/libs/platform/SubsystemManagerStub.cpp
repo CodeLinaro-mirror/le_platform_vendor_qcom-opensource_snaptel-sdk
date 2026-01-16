@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -51,13 +51,14 @@ void SubsystemManagerStub::onEventUpdate(google::protobuf::Any event) {
     LOG(DEBUG, __FUNCTION__);
     // Execute all events in separate thread
     auto f = std::async(std::launch::deferred, [this, event]() {
-            if (event.Is<commonStub::GetServiceStatusReply>()) {
-                handleSSREvent(event);
-            } else if (event.Is<::platformStub::SubsystemStatusreply>()) {
-                handleSubsystemEvent(event);
-            } else {
-                LOG(ERROR, __FUNCTION__, ":: Invalid event");
-    }}).share();
+        if (event.Is<commonStub::GetServiceStatusReply>()) {
+            handleSSREvent(event);
+        } else if (event.Is<::platformStub::SubsystemStatusreply>()) {
+            handleSubsystemEvent(event);
+        } else {
+            LOG(ERROR, __FUNCTION__, ":: Invalid event");
+        }
+    }).share();
 
     taskQ_.add(f);
 }
@@ -94,11 +95,11 @@ void SubsystemManagerStub::handleSubsystemEvent(google::protobuf::Any event) {
     }
 
     telux::common::Subsystem subsystem = static_cast<Subsystem>(subsystemResp.subsystem());
-    telux::common::ProcType procType = static_cast<ProcType>(subsystemResp.proc_type());
+    telux::common::ProcType procType   = static_cast<ProcType>(subsystemResp.proc_type());
 
     if (!isSupported(subsystem, procType)) {
         LOG(DEBUG, __FUNCTION__, " ", static_cast<int>(subsystem), " and ",
-        static_cast<int>(procType), " combination is not supported/registered. ");
+            static_cast<int>(procType), " combination is not supported/registered. ");
         return;
     }
 
@@ -108,14 +109,14 @@ void SubsystemManagerStub::handleSubsystemEvent(google::protobuf::Any event) {
 /*
  * Find all the registered clients and pass them the latest state.
  */
-void SubsystemManagerStub::sendNewStatusToClients(telux::common::OperationalStatus newOpStatus,
-    Subsystem subsystem, ProcType procType) {
+void SubsystemManagerStub::sendNewStatusToClients(
+    telux::common::OperationalStatus newOpStatus, Subsystem subsystem, ProcType procType) {
     LOG(DEBUG, __FUNCTION__);
 
     telux::common::SubsystemInfo subsystemInfo{};
 
     subsystemInfo.subsystems = subsystem;
-    subsystemInfo.location = procType;
+    subsystemInfo.location   = procType;
 
     std::vector<std::weak_ptr<ISubsystemListener>> applisteners;
 
@@ -162,8 +163,7 @@ void SubsystemManagerStub::handleSSREvent(google::protobuf::Any event) {
 /*
  * Invoked when DMS service is no longer available.
  */
-void SubsystemManagerStub::onDmsServiceStatusChange(
-    telux::common::ServiceStatus srvcStatus) {
+void SubsystemManagerStub::onDmsServiceStatusChange(telux::common::ServiceStatus srvcStatus) {
     LOG(DEBUG, __FUNCTION__, ":: Service Status: ", static_cast<int>(srvcStatus));
 
     if (srvcStatus == getServiceStatus()) {
@@ -201,29 +201,25 @@ Status SubsystemManagerStub::registerDefaultIndications() {
     LOG(INFO, __FUNCTION__, ":: Registering default SSR indications");
 
     status = clientEventMgr_.registerListener(shared_from_this(), DEVICEINFO_MANAGER_FILTER);
-    if ((status != Status::SUCCESS) &&
-        (status != Status::ALREADY)) {
+    if ((status != Status::SUCCESS) && (status != Status::ALREADY)) {
         LOG(ERROR, __FUNCTION__, ":: Registering default SSR indications failed");
         return status;
     }
     return status;
 }
 
-Status SubsystemManagerStub::initSyncComplete(
-        ServiceStatus srvcStatus) {
+Status SubsystemManagerStub::initSyncComplete(ServiceStatus srvcStatus) {
     LOG(DEBUG, __FUNCTION__);
 
     Status status = Status::FAILED;
-    status = registerDefaultIndications();
+    status        = registerDefaultIndications();
 
-    if ((status != Status::SUCCESS) &&
-        (status != Status::ALREADY)) {
+    if ((status != Status::SUCCESS) && (status != Status::ALREADY)) {
         LOG(ERROR, __FUNCTION__, ":: Registering default SSR indications failed");
         return status;
     }
 
-    if (srvcStatus != ServiceStatus::SERVICE_AVAILABLE)
-    {
+    if (srvcStatus != ServiceStatus::SERVICE_AVAILABLE) {
         return Status::FAILED;
     }
 
@@ -233,8 +229,7 @@ Status SubsystemManagerStub::initSyncComplete(
     }
 
     status = clientEventMgr_.registerListener(shared_from_this(), SUBSYSTEM_MANAGER_FILTER);
-    if ((status != Status::SUCCESS) &&
-            (status != Status::ALREADY)) {
+    if ((status != Status::SUCCESS) && (status != Status::ALREADY)) {
         LOG(ERROR, __FUNCTION__, ":: Registering subsystem monitor event failed");
     }
 
@@ -361,15 +356,13 @@ telux::common::ErrorCode SubsystemManagerStub::deRegisterListener(
     resetCombination();
 
     status = q6ListenerMgr_->deRegisterListener(listener);
-    if ((status != telux::common::Status::SUCCESS)
-        && (status != telux::common::Status::NOSUCH)) {
+    if ((status != telux::common::Status::SUCCESS) && (status != telux::common::Status::NOSUCH)) {
         LOG(ERROR, __FUNCTION__, " can't deregister q6, err ", static_cast<int>(status));
         return telux::common::CommonUtils::toErrorCode(status);
     }
 
     status = a7ListenerMgr_->deRegisterListener(listener);
-    if ((status != telux::common::Status::SUCCESS)
-        && (status != telux::common::Status::NOSUCH)) {
+    if ((status != telux::common::Status::SUCCESS) && (status != telux::common::Status::NOSUCH)) {
         LOG(ERROR, __FUNCTION__, " can't deregister a7, err ", static_cast<int>(status));
         return telux::common::CommonUtils::toErrorCode(status);
     }

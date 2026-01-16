@@ -1,35 +1,6 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <sys/stat.h>
@@ -46,8 +17,7 @@ int CommandProcessor::init() {
 
     cryptMgr_ = secFact.getCryptoManager(ec);
     if (!cryptMgr_) {
-        std::cout << "Can't get ICryptoManager, err: " <<
-            static_cast<int>(ec) << std::endl;
+        std::cout << "Can't get ICryptoManager, err: " << static_cast<int>(ec) << std::endl;
         return -1;
     }
 
@@ -60,7 +30,7 @@ void CommandProcessor::byteArrayToHexString(std::vector<uint8_t> data) {
 
     if (data.size()) {
         length = data.size();
-        buf = data.data();
+        buf    = data.data();
         for (uint32_t x = 0; x < length; x++) {
             printf("%02x", buf[x] & 0xffU);
             if (x & !(x % 32)) {
@@ -72,22 +42,21 @@ void CommandProcessor::byteArrayToHexString(std::vector<uint8_t> data) {
     }
 }
 
-int CommandProcessor::saveOnFileSystem(std::vector<uint8_t> const &data,
-        std::shared_ptr<std::string> absoluteFilePath) {
+int CommandProcessor::saveOnFileSystem(
+    std::vector<uint8_t> const &data, std::shared_ptr<std::string> absoluteFilePath) {
 
     FILE *file;
     size_t dataLenSaved;
 
     file = fopen(absoluteFilePath->c_str(), "wb");
-    if(!file) {
+    if (!file) {
         std::cout << "can't create file " << *absoluteFilePath << std::endl;
         return -1;
     }
 
     dataLenSaved = fwrite(data.data(), 1, data.size(), file);
     if (dataLenSaved != data.size()) {
-        std::cout <<
-        "can't save full data on file, data size: " << data.size() << std::endl;
+        std::cout << "can't save full data on file, data size: " << data.size() << std::endl;
         /* don't treat as fatal, continue further */
     }
 
@@ -97,8 +66,8 @@ int CommandProcessor::saveOnFileSystem(std::vector<uint8_t> const &data,
     return 0;
 }
 
-int CommandProcessor::readFileIntoVector(std::vector<uint8_t>& data,
-        std::shared_ptr<std::string> absoluteFilePath) {
+int CommandProcessor::readFileIntoVector(
+    std::vector<uint8_t> &data, std::shared_ptr<std::string> absoluteFilePath) {
 
     FILE *file;
     uint8_t *tmp = nullptr;
@@ -119,7 +88,7 @@ int CommandProcessor::readFileIntoVector(std::vector<uint8_t>& data,
     }
 
     file = fopen(absoluteFilePath->c_str(), "rb");
-    if(!file) {
+    if (!file) {
         std::cout << "can't open file " << *absoluteFilePath << std::endl;
         delete[] tmp;
         return -1;
@@ -129,7 +98,7 @@ int CommandProcessor::readFileIntoVector(std::vector<uint8_t>& data,
     lastChunkSize = fileInfo.st_size % 1024;
 
     idx = 0;
-    for (int x=0; x < fullLoopCount; x++) {
+    for (int x = 0; x < fullLoopCount; x++) {
         dataLengthRead = fread(&tmp[idx], 1, 1024, file);
         if (dataLengthRead != 1024) {
             std::cout << "can't read file " << *absoluteFilePath << std::endl;
@@ -158,8 +127,7 @@ int CommandProcessor::readFileIntoVector(std::vector<uint8_t>& data,
     return 0;
 }
 
-void CommandProcessor::generateKey(Request request,
-        std::shared_ptr<std::string> keyBlobFile) {
+void CommandProcessor::generateKey(Request request, std::shared_ptr<std::string> keyBlobFile) {
 
     int ret;
     telux::common::ErrorCode ec;
@@ -176,7 +144,7 @@ void CommandProcessor::generateKey(Request request,
     cpb = cpb.setMinimumMacLength(request.minMacLength);
     cpb = cpb.setPublicExponent(request.publicExponent);
     cpb = cpb.setKeySize(request.keySize);
-    cp = cpb.build();
+    cp  = cpb.build();
 
     ec = cryptMgr_->generateKey(cp, request.textA);
     if (ec != telux::common::ErrorCode::SUCCESS) {
@@ -198,10 +166,8 @@ void CommandProcessor::generateKey(Request request,
     byteArrayToHexString(request.textA);
 }
 
-void CommandProcessor::signData(Request request,
-        std::shared_ptr<std::string> keyBlobFile,
-        std::shared_ptr<std::string> plainTxtFile,
-        std::shared_ptr<std::string> signatureFile) {
+void CommandProcessor::signData(Request request, std::shared_ptr<std::string> keyBlobFile,
+    std::shared_ptr<std::string> plainTxtFile, std::shared_ptr<std::string> signatureFile) {
 
     int ret;
     telux::common::ErrorCode ec;
@@ -212,7 +178,7 @@ void CommandProcessor::signData(Request request,
     cpb = cpb.setDigest(request.digest);
     cpb = cpb.setPadding(request.padding);
     cpb = cpb.setMacLength(request.macLength);
-    cp = cpb.build();
+    cp  = cpb.build();
 
     if (keyBlobFile) {
         ret = readFileIntoVector(request.textA, keyBlobFile);
@@ -248,10 +214,8 @@ void CommandProcessor::signData(Request request,
     byteArrayToHexString(request.textC);
 }
 
-void CommandProcessor::verifySignature(Request request,
-        std::shared_ptr<std::string> keyBlobFile,
-        std::shared_ptr<std::string> plainTxtFile,
-        std::shared_ptr<std::string> signatureFile) {
+void CommandProcessor::verifySignature(Request request, std::shared_ptr<std::string> keyBlobFile,
+    std::shared_ptr<std::string> plainTxtFile, std::shared_ptr<std::string> signatureFile) {
 
     int ret;
     telux::common::ErrorCode ec;
@@ -262,7 +226,7 @@ void CommandProcessor::verifySignature(Request request,
     cpb = cpb.setCryptoOperation(request.operation);
     cpb = cpb.setDigest(request.digest);
     cpb = cpb.setPadding(request.padding);
-    cp = cpb.build();
+    cp  = cpb.build();
 
     if (keyBlobFile) {
         ret = readFileIntoVector(request.textA, keyBlobFile);
@@ -294,10 +258,8 @@ void CommandProcessor::verifySignature(Request request,
     std::cout << "verification succeeded, err " << static_cast<int>(ec) << std::endl;
 }
 
-void CommandProcessor::encryptData(Request request,
-        std::shared_ptr<std::string> keyBlobFile,
-        std::shared_ptr<std::string> plainTxtFile,
-        std::shared_ptr<std::string> encTxtFile) {
+void CommandProcessor::encryptData(Request request, std::shared_ptr<std::string> keyBlobFile,
+    std::shared_ptr<std::string> plainTxtFile, std::shared_ptr<std::string> encTxtFile) {
 
     int ret;
     telux::common::ErrorCode ec;
@@ -310,7 +272,7 @@ void CommandProcessor::encryptData(Request request,
     cpb = cpb.setBlockMode(request.blockMode);
     cpb = cpb.setInitVector(request.initVector);
     cpb = cpb.setMacLength(request.macLength);
-    cp = cpb.build();
+    cp  = cpb.build();
 
     if (keyBlobFile) {
         ret = readFileIntoVector(request.textA, keyBlobFile);
@@ -346,10 +308,8 @@ void CommandProcessor::encryptData(Request request,
     byteArrayToHexString(request.encData->encryptedText);
 }
 
-void CommandProcessor::decryptData(Request request,
-        std::shared_ptr<std::string> keyBlobFile,
-        std::shared_ptr<std::string> encTxtFile,
-        std::shared_ptr<std::string> plainTxtFile) {
+void CommandProcessor::decryptData(Request request, std::shared_ptr<std::string> keyBlobFile,
+    std::shared_ptr<std::string> encTxtFile, std::shared_ptr<std::string> plainTxtFile) {
 
     int ret;
     telux::common::ErrorCode ec;
@@ -362,7 +322,7 @@ void CommandProcessor::decryptData(Request request,
     cpb = cpb.setBlockMode(request.blockMode);
     cpb = cpb.setInitVector(request.initVector);
     cpb = cpb.setMacLength(request.macLength);
-    cp = cpb.build();
+    cp  = cpb.build();
 
     if (keyBlobFile) {
         ret = readFileIntoVector(request.textA, keyBlobFile);
@@ -398,9 +358,8 @@ void CommandProcessor::decryptData(Request request,
     byteArrayToHexString(request.textB);
 }
 
-void CommandProcessor::importKey(Request request,
-        std::shared_ptr<std::string> keyDataFile,
-        std::shared_ptr<std::string> keyBlobFile) {
+void CommandProcessor::importKey(Request request, std::shared_ptr<std::string> keyDataFile,
+    std::shared_ptr<std::string> keyBlobFile) {
 
     int ret;
     telux::common::ErrorCode ec;
@@ -415,7 +374,7 @@ void CommandProcessor::importKey(Request request,
     cpb = cpb.setPublicExponent(request.publicExponent);
     cpb = cpb.setMinimumMacLength(request.minMacLength);
     cpb = cpb.setCallerNonce(request.callerNoncePresent);
-    cp = cpb.build();
+    cp  = cpb.build();
 
     if (keyDataFile) {
         ret = readFileIntoVector(request.textB, keyDataFile);
@@ -444,9 +403,8 @@ void CommandProcessor::importKey(Request request,
     byteArrayToHexString(request.textA);
 }
 
-void CommandProcessor::exportKey(Request request,
-        std::shared_ptr<std::string> keyBlobFile,
-        std::shared_ptr<std::string> expDataFile) {
+void CommandProcessor::exportKey(Request request, std::shared_ptr<std::string> keyBlobFile,
+    std::shared_ptr<std::string> expDataFile) {
 
     int ret;
     telux::common::ErrorCode ec;
@@ -478,18 +436,15 @@ void CommandProcessor::exportKey(Request request,
     byteArrayToHexString(request.textB);
 }
 
-void CommandProcessor::upgradeKey(Request request,
-        std::shared_ptr<std::string> keyBlobFileOld,
-        std::shared_ptr<std::string> keyBlobFileNew) {
+void CommandProcessor::upgradeKey(Request request, std::shared_ptr<std::string> keyBlobFileOld,
+    std::shared_ptr<std::string> keyBlobFileNew) {
 
     int ret;
     telux::common::ErrorCode ec;
     std::shared_ptr<telux::sec::ICryptoParam> cp;
 
     if (request.uniqueData.size() > 0) {
-        cp = telux::sec::CryptoParamBuilder()
-                .setUniqueData(request.uniqueData)
-                .build();
+        cp = telux::sec::CryptoParamBuilder().setUniqueData(request.uniqueData).build();
     }
 
     if (keyBlobFileOld) {

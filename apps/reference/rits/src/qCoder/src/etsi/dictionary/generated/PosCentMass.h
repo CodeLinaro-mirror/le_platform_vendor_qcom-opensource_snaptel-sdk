@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_PosCentMass_H_
-#define	_PosCentMass_H_
-
+#ifndef _PosCentMass_H_
+#define _PosCentMass_H_
 
 #include <asn_application.h>
 
@@ -20,12 +19,12 @@ extern "C" {
 
 /* Dependencies */
 typedef enum PosCentMass {
-	PosCentMass_tenCentimeters	= 1,
-	PosCentMass_unavailable	= 63
+    PosCentMass_tenCentimeters = 1,
+    PosCentMass_unavailable    = 63
 } e_PosCentMass;
 
 /* PosCentMass */
-typedef long	 PosCentMass_t;
+typedef long PosCentMass_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_PosCentMass;
@@ -43,5 +42,5 @@ per_type_encoder_f PosCentMass_encode_uper;
 }
 #endif
 
-#endif	/* _PosCentMass_H_ */
+#endif /* _PosCentMass_H_ */
 #include <asn_internal.h>

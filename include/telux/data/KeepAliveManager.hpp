@@ -1,8 +1,7 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
-*/
-
+ */
 
 /**
  * @file   KeepAliveManager.hpp
@@ -41,20 +40,20 @@ namespace data {
  * @{ */
 
 struct TCPKAParams {
-    std::string srcIp;      /**< Source IPv4/IPv6 address */
-    std::string dstIp;      /**< Destination IPv4/IPv6 address */
-    int srcPort;            /* Source port */
-    int dstPort;            /**< Destination port */
+    std::string srcIp; /**< Source IPv4/IPv6 address */
+    std::string dstIp; /**< Destination IPv4/IPv6 address */
+    int srcPort; /* Source port */
+    int dstPort; /**< Destination port */
 };
 
 struct TCPSessionParams {
-    uint32_t recvNext;     /**< Next sequence number expected on the incoming packet. */
-    uint32_t recvWindow;   /**< Receive window */
-    uint32_t sendNext;     /**< Next sequence number to be sent */
-    uint32_t sendWindow;   /**< Send window */
+    uint32_t recvNext; /**< Next sequence number expected on the incoming packet. */
+    uint32_t recvWindow; /**< Receive window */
+    uint32_t sendNext; /**< Next sequence number to be sent */
+    uint32_t sendWindow; /**< Send window */
 };
 
-using MonitorHandleType = uint32_t;
+using MonitorHandleType  = uint32_t;
 using TCPKAOffloadHandle = uint32_t;
 
 class IKeepAliveListener;
@@ -66,7 +65,7 @@ class IKeepAliveListener;
  * could break backwards compatibility.
  */
 class IKeepAliveManager {
-public:
+ public:
     /**
      * Checks the status of the TCPKAOffload manager and returns the result.
      *
@@ -108,7 +107,8 @@ public:
      *
      */
     virtual telux::common::ErrorCode enableTCPMonitor(
-        const TCPKAParams &tcpKaParams, MonitorHandleType &monHandle) = 0;
+        const TCPKAParams &tcpKaParams, MonitorHandleType &monHandle)
+        = 0;
 
     /**
      * Stops the TCP monitor for the specified MonitorHandle.
@@ -160,9 +160,10 @@ public:
      * could break backwards compatibility.
      *
      */
-    virtual telux::common::ErrorCode startTCPKeepAliveOffload(
-        const TCPKAParams &tcpKaParams, const TCPSessionParams &tcpSessionParams,
-        const uint32_t interval, TCPKAOffloadHandle &handle) = 0;
+    virtual telux::common::ErrorCode startTCPKeepAliveOffload(const TCPKAParams &tcpKaParams,
+        const TCPSessionParams &tcpSessionParams, const uint32_t interval,
+        TCPKAOffloadHandle &handle)
+        = 0;
 
     /**
      * Starts TCP keep-alive offloading based on the active TCP monitor.
@@ -198,7 +199,8 @@ public:
      *
      */
     virtual telux::common::ErrorCode startTCPKeepAliveOffload(
-        const MonitorHandleType monHandle, const uint32_t interval, TCPKAOffloadHandle &handle) = 0;
+        const MonitorHandleType monHandle, const uint32_t interval, TCPKAOffloadHandle &handle)
+        = 0;
 
     /**
      * Stops TCP keep-alive offloading for the specified TCPKAOffloadHandle.
@@ -218,8 +220,7 @@ public:
      * could break backwards compatibility.
      *
      */
-    virtual telux::common::ErrorCode stopTCPKeepAliveOffload(
-        const TCPKAOffloadHandle handle) = 0;
+    virtual telux::common::ErrorCode stopTCPKeepAliveOffload(const TCPKAOffloadHandle handle) = 0;
 
     /**
      * Registers with the DataTCPKAOffloadManager as a listener to receive TCP connection
@@ -234,7 +235,8 @@ public:
      * could break backwards compatibility.
      */
     virtual telux::common::Status registerListener(
-        std::weak_ptr<telux::data::IKeepAliveListener> listener) = 0;
+        std::weak_ptr<telux::data::IKeepAliveListener> listener)
+        = 0;
 
     /**
      * Deregisters the given listener previously registered with @ref registerListener.
@@ -248,7 +250,8 @@ public:
      * could break backwards compatibility.
      */
     virtual telux::common::Status deregisterListener(
-        std::weak_ptr<telux::data::IKeepAliveListener> listener) = 0;
+        std::weak_ptr<telux::data::IKeepAliveListener> listener)
+        = 0;
 };
 
 /**
@@ -263,13 +266,13 @@ public:
  *
  */
 class IKeepAliveListener : public telux::common::ISDKListener {
-public:
-
+ public:
     /**
      * Constructor for the IKeepAliveListener class.
      *
      */
-    IKeepAliveListener() {}
+    IKeepAliveListener() {
+    }
     /**
      * This function is called in case of the start of a keep-alive message or an error. The modem
      * can stop sending keep-alive messages as a result of network failure.
@@ -282,14 +285,16 @@ public:
      * could break backwards compatibility.
      */
     virtual void onKeepAliveStatusChange(
-        telux::common::ErrorCode error, TCPKAOffloadHandle handle) {}
+        telux::common::ErrorCode error, TCPKAOffloadHandle handle) {
+    }
 
     /**
      * This function is called when service status changes.
      *
      * @param [in] status @ref ServiceStatus
      */
-    virtual void onServiceStatusChange(telux::common::ServiceStatus status) {}
+    virtual void onServiceStatusChange(telux::common::ServiceStatus status) {
+    }
 
     /**
      * Destructor of IKeepAliveListener.
@@ -301,7 +306,7 @@ public:
 };
 
 /** @} */ /* end_addtogroup telematics_data */
-} // namespace data
-} // namespace telux
+}  // namespace data
+}  // namespace telux
 
-#endif // TELUX_KEEPALIVEMANAGER_HPP
+#endif  // TELUX_KEEPALIVEMANAGER_HPP

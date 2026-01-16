@@ -15,6 +15,7 @@
 
 #include "../../common/utils/Utils.hpp"
 #include "../../common/utils/SignalHandler.hpp"
+#include "../../common/utils/ThreadSafeOStreamBuf.hpp"
 
 using namespace telux::data;
 using namespace telux::common;
@@ -81,7 +82,7 @@ void KeepAliveTestApp::startTCPServer(std::vector<std::string> inputCommand) {
     std::string ipaddr;
     int port;
     std::string serverInterface = "";
-    int userChoice = 0;
+    int userChoice              = 0;
 
     std::cout << "Enter IPv4/IPV6 address: ";
     std::cin >> ipaddr;
@@ -92,7 +93,7 @@ void KeepAliveTestApp::startTCPServer(std::vector<std::string> inputCommand) {
     std::cin >> userChoice;
     Utils::validateInput(userChoice, {0, 1});
     std::cout << std::endl;
-    if(userChoice) {
+    if (userChoice) {
         std::cout << "Enter server interface to bind to (e.g. rmnet_data0): ";
         std::cin >> serverInterface;
     }
@@ -104,12 +105,12 @@ void KeepAliveTestApp::startTCPServer(std::vector<std::string> inputCommand) {
 }
 
 void KeepAliveTestApp::stopTCPServer(std::vector<std::string> inputCommand) {
-    if(server_) {
+    if (server_) {
         server_->disconnect();
         server_ = nullptr;
     }
     std::unique_lock<std::mutex> lock(serverExitMutex);
-    serverExitCondition.wait(lock, [&]{ return (bool)serverExited; });
+    serverExitCondition.wait(lock, [&] { return (bool)serverExited; });
     if (serverThread_.joinable()) {
         serverThread_.join();
     }
@@ -118,21 +119,20 @@ void KeepAliveTestApp::stopTCPServer(std::vector<std::string> inputCommand) {
 void KeepAliveTestApp::sendMessage(std::vector<std::string> inputCommand) {
     kaproto msg;
     memset(&msg, 0, sizeof(msg));
-    const char* message = (inputCommand[1]+ "\n").c_str();
+    const char *message = (inputCommand[1] + "\n").c_str();
     std::copy(message, message + strlen(message) + 1, msg.msg);
-    if(isServer_) {
-        if(server_) {
+    if (isServer_) {
+        if (server_) {
             server_->sendMessage(&msg);
         } else {
             std::cout << " start server first\n";
         }
     } else {
-        if(client_){
+        if (client_) {
             client_->sendMessage(&msg);
         } else {
             std::cout << " start client first\n";
         }
-
     }
 }
 
@@ -155,8 +155,8 @@ void KeepAliveTestApp::startTCPClient(std::vector<std::string> inputCommand) {
 
     std::string serverIpAddr;
     int serverPort;
-    std::string clientIpAddr = "";
-    int clientPort = 0;
+    std::string clientIpAddr    = "";
+    int clientPort              = 0;
     std::string clientInterface = "";
 
     std::cout << "Enter IPv4/IPV6 server address to connect to: ";
@@ -169,7 +169,7 @@ void KeepAliveTestApp::startTCPClient(std::vector<std::string> inputCommand) {
     std::cin >> userChoice;
     Utils::validateInput(userChoice, {0, 1});
     std::cout << std::endl;
-    if(userChoice) {
+    if (userChoice) {
         std::cout << "Enter IPv4/IPV6 client address start listening on: ";
         std::cin >> clientIpAddr;
         std::cout << "Enter client port number: ";
@@ -180,25 +180,25 @@ void KeepAliveTestApp::startTCPClient(std::vector<std::string> inputCommand) {
     std::cin >> userChoice;
     Utils::validateInput(userChoice, {0, 1});
     std::cout << std::endl;
-    if(userChoice) {
+    if (userChoice) {
         std::cout << "Enter client interface to bind to (e.g. rmnet_data0): ";
         std::cin >> clientInterface;
     }
 
     clientWorker_ = std::make_shared<TCPClientWorker<kaproto>>();
-    client_ = std::make_shared<TCPClient<kaproto>>(clientWorker_, serverPort, serverIpAddr,
-        clientPort, clientIpAddr, clientInterface);
+    client_       = std::make_shared<TCPClient<kaproto>>(
+        clientWorker_, serverPort, serverIpAddr, clientPort, clientIpAddr, clientInterface);
     clientThread_ = std::thread{&KeepAliveTestApp::startClientThread, this};
     clientThread_.detach();
 }
 
 void KeepAliveTestApp::stopTCPClient(std::vector<std::string> inputCommand) {
-    if(client_) {
+    if (client_) {
         client_->disconnect();
         client_ = nullptr;
     }
     std::unique_lock<std::mutex> lock(clientExitMutex);
-    clientExitCondition.wait(lock, [&]{ return (bool)clientExited; });
+    clientExitCondition.wait(lock, [&] { return (bool)clientExited; });
     if (clientThread_.joinable()) {
         clientThread_.join();
     }
@@ -210,7 +210,7 @@ void KeepAliveTestApp::enableTCPMonitor(std::vector<std::string> inputCommand) {
         return;
     }
 
-    struct TCPKAParams params{};
+    struct TCPKAParams params {};
 
     std::cout << "Enter source IPv4/IPv6 address: ";
     std::cin >> params.srcIp;
@@ -257,12 +257,12 @@ void KeepAliveTestApp::startTCPKeepAliveOffload(std::vector<std::string> inputCo
     std::cin >> mode;
     TCPKAOffloadHandle handle;
     ErrorCode err = ErrorCode::SUCCESS;
-    struct TCPKAParams params{};
-    struct TCPSessionParams session{};
+    struct TCPKAParams params {};
+    struct TCPSessionParams session {};
     uint32_t interval = 0;
     MonitorHandleType monHandle;
 
-    switch(mode) {
+    switch (mode) {
         case 0:
             std::cout << "Enter source IPv4/IPv6 address: ";
             std::cin >> params.srcIp;
@@ -324,76 +324,76 @@ void KeepAliveTestApp::stopTCPKeepAliveOffload(std::vector<std::string> inputCom
 
 void KeepAliveTestApp::consoleInit(bool isServer) {
     isServer_ = isServer;
-   std::shared_ptr<ConsoleAppCommand> startTCPServerCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand( "1", "startTCPServer", {},
-         std::bind(&KeepAliveTestApp::startTCPServer, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> startTCPServerCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "startTCPServer", {},
+            std::bind(&KeepAliveTestApp::startTCPServer, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> stopTCPServerCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand( "2", "stopTCPServer", {},
-         std::bind(&KeepAliveTestApp::stopTCPServer, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> stopTCPServerCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "stopTCPServer", {},
+            std::bind(&KeepAliveTestApp::stopTCPServer, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> startTCPClientCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand( "1", "startTCPClient", {},
-         std::bind(&KeepAliveTestApp::startTCPClient, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> startTCPClientCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "startTCPClient", {},
+            std::bind(&KeepAliveTestApp::startTCPClient, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> stopTCPClientCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand( "2", "stopTCPClient", {},
-         std::bind(&KeepAliveTestApp::stopTCPClient, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> stopTCPClientCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "stopTCPClient", {},
+            std::bind(&KeepAliveTestApp::stopTCPClient, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> sendMessageCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand( "3", "sendMessage", {"message"},
-         std::bind(&KeepAliveTestApp::sendMessage, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> sendMessageCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "sendMessage", {"message"},
+            std::bind(&KeepAliveTestApp::sendMessage, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> enableTCPMonitorCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand( "4", "enableTCPMonitor", {},
-         std::bind(&KeepAliveTestApp::enableTCPMonitor, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> enableTCPMonitorCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "enableTCPMonitor", {},
+            std::bind(&KeepAliveTestApp::enableTCPMonitor, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> disableTCPMonitorCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand( "5", "disableTCPMonitor", {},
-         std::bind(&KeepAliveTestApp::disableTCPMonitor, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> disableTCPMonitorCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "disableTCPMonitor", {},
+            std::bind(&KeepAliveTestApp::disableTCPMonitor, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> startTCPKeepAliveOffloadCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand( "6", "startTCPKeepAliveOffload", {},
-         std::bind(&KeepAliveTestApp::startTCPKeepAliveOffload, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> startTCPKeepAliveOffloadCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6", "startTCPKeepAliveOffload", {},
+            std::bind(&KeepAliveTestApp::startTCPKeepAliveOffload, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> stopTCPKeepAliveOffloadCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand( "7", "stopTCPKeepAliveOffload", {},
-         std::bind(&KeepAliveTestApp::stopTCPKeepAliveOffload, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> stopTCPKeepAliveOffloadCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "stopTCPKeepAliveOffload", {},
+            std::bind(&KeepAliveTestApp::stopTCPKeepAliveOffload, this, std::placeholders::_1)));
 
-    if(isServer){
-        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListTCPKAMenu = {
-            startTCPServerCommand, stopTCPServerCommand, sendMessageCommand,
-            enableTCPMonitorCommand, disableTCPMonitorCommand, startTCPKeepAliveOffloadCommand,
-            stopTCPKeepAliveOffloadCommand};
+    if (isServer) {
+        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListTCPKAMenu
+            = {startTCPServerCommand, stopTCPServerCommand, sendMessageCommand,
+                enableTCPMonitorCommand, disableTCPMonitorCommand, startTCPKeepAliveOffloadCommand,
+                stopTCPKeepAliveOffloadCommand};
         ConsoleApp::addCommands(commandsListTCPKAMenu);
     } else {
-        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListTCPKAMenu = {
-            startTCPClientCommand, stopTCPClientCommand, sendMessageCommand,
-            enableTCPMonitorCommand, disableTCPMonitorCommand, startTCPKeepAliveOffloadCommand,
-            stopTCPKeepAliveOffloadCommand};
+        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListTCPKAMenu
+            = {startTCPClientCommand, stopTCPClientCommand, sendMessageCommand,
+                enableTCPMonitorCommand, disableTCPMonitorCommand, startTCPKeepAliveOffloadCommand,
+                stopTCPKeepAliveOffloadCommand};
         ConsoleApp::addCommands(commandsListTCPKAMenu);
     }
-   ConsoleApp::displayMenu();
+    ConsoleApp::displayMenu();
 }
 
 void KeepAliveTestApp::registerForUpdates() {
-   Status status = keepAliveMgr_->registerListener(shared_from_this());
-   if(status != Status::SUCCESS) {
-      std::cout << APP_NAME << " ERROR - Failed to register for keep-alive notification"
-         << std::endl;
-   } else {
-      std::cout << APP_NAME << " Registered Listener for keep-alive notification" << std::endl;
-   }
+    Status status = keepAliveMgr_->registerListener(shared_from_this());
+    if (status != Status::SUCCESS) {
+        std::cout << APP_NAME << " ERROR - Failed to register for keep-alive notification"
+                  << std::endl;
+    } else {
+        std::cout << APP_NAME << " Registered Listener for keep-alive notification" << std::endl;
+    }
 }
 
 void KeepAliveTestApp::deregisterForUpdates() {
-   Status status = keepAliveMgr_->deregisterListener(shared_from_this());
-   if(status != Status::SUCCESS) {
-      std::cout << APP_NAME << " ERROR - Failed to de-register for keep-alive notification"
-         << std::endl;
-   } else {
-      std::cout << APP_NAME << " De-registered listener" << std::endl;
-   }
+    Status status = keepAliveMgr_->deregisterListener(shared_from_this());
+    if (status != Status::SUCCESS) {
+        std::cout << APP_NAME << " ERROR - Failed to de-register for keep-alive notification"
+                  << std::endl;
+    } else {
+        std::cout << APP_NAME << " De-registered listener" << std::endl;
+    }
 }
 
 std::shared_ptr<KeepAliveTestApp> init() {
@@ -411,11 +411,11 @@ std::shared_ptr<KeepAliveTestApp> init() {
     }
 
     std::promise<telux::common::ServiceStatus> kaProm;
-    keepAliveApp->keepAliveMgr_ = dataFactory.getKeepAliveManager(static_cast<SlotId>(slotId),
-        [&kaProm](telux::common::ServiceStatus status) {
-        std::cout << " Callback invoked "<< static_cast<int>(status);
-        kaProm.set_value(status);
-    });
+    keepAliveApp->keepAliveMgr_ = dataFactory.getKeepAliveManager(
+        static_cast<SlotId>(slotId), [&kaProm](telux::common::ServiceStatus status) {
+            std::cout << " Callback invoked " << static_cast<int>(status);
+            kaProm.set_value(status);
+        });
 
     if (!keepAliveApp->keepAliveMgr_) {
         std::cout << " Failed to get keepAliveMgr object";
@@ -425,7 +425,7 @@ std::shared_ptr<KeepAliveTestApp> init() {
     std::cout << " Initializing keep alive subsystem Please wait";
     subSystemStatus = kaProm.get_future().get();
     if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout <<" Keep alive Manager is ready";
+        std::cout << " Keep alive Manager is ready";
 
     } else {
         std::cout << " Keep alive Manager is failed";
@@ -433,35 +433,34 @@ std::shared_ptr<KeepAliveTestApp> init() {
         return nullptr;
     }
 
-    if(keepAliveApp->keepAliveMgr_->getServiceStatus() ==
-        telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+    if (keepAliveApp->keepAliveMgr_->getServiceStatus()
+        == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << " *** KeepAlive Sub System is Ready *** " << std::endl;
     } else {
         std::cout << " *** ERROR - Unable to initialize keep-alive subsystem *** " << std::endl;
         return nullptr;
     }
 
-   return keepAliveApp;
+    return keepAliveApp;
 }
 
 static void printHelp() {
-    std::cout <<
-    "-----------------------------------------------\n"
-    "./keepAlive_test_app <-cs> <-S> <-h>\n"
-    "   -c : run as client\n"
-    "   -s : run as server\n"
-    "   -h : print the help menu" << std::endl;
+    std::cout << "-----------------------------------------------\n"
+                 "./keepAlive_test_app <-cs> <-S> <-h>\n"
+                 "   -c : run as client\n"
+                 "   -s : run as server\n"
+                 "   -h : print the help menu"
+              << std::endl;
 }
 
 KeepAliveTestApp::KeepAliveTestApp()
-    : ConsoleApp("TCP KeepAlive Test app Menu", "tcpka-test> ")
-    , keepAliveMgr_(nullptr)
-    , server_(nullptr)
-    {
+   : ConsoleApp("TCP KeepAlive Test app Menu", "tcpka-test> ")
+   , keepAliveMgr_(nullptr)
+   , server_(nullptr) {
 }
 
 void KeepAliveTestApp::cleanup() {
-    //cleanup server/client thread
+    // cleanup server/client thread
     std::cout << APP_NAME << " Cleanup server/client" << std::endl;
     stopTCPClient({});
     stopTCPServer({});
@@ -482,12 +481,17 @@ KeepAliveTestApp::~KeepAliveTestApp() {
 /**
  * Main routine
  */
-int main(int argc, char ** argv) {
+int main(int argc, char **argv) {
     std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    if (isatty(fileno(stdout))) {
+        std::cout << std::unitbuf;
+    }
+    static ThreadSafeOStreamBuf safeCout;
     // Setting required secondary groups for SDK file/diag logging
     std::vector<std::string> supplementaryGrps{"system", "diag", "logd", "dlt"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
-    if (rc == -1){
+    if (rc == -1) {
         std::cout << APP_NAME << "Adding supplementary groups failed!" << std::endl;
     }
 
@@ -500,7 +504,7 @@ int main(int argc, char ** argv) {
         // We can call exit() here if no cleanups needed,
         // or maybe just set a flag, and let the main thread to decide
         // when to exit.
-        if(myKeepAliveTestApp) {
+        if (myKeepAliveTestApp) {
             std::cout << APP_NAME << " myKeepAliveTestApp = nullptr " << std::endl;
             myKeepAliveTestApp = nullptr;
         }
@@ -518,15 +522,15 @@ int main(int argc, char ** argv) {
     };
     SignalHandler::registerSignalHandler(sigset, cb);
 
-    std::cout <<argc<<std::endl;
-    if(argc != 2) {
+    std::cout << argc << std::endl;
+    if (argc != 2) {
         printHelp();
         return -1;
     }
-   std::cout
-       << "\n#################################################\n"
-       << "KeepAlive Offload Test Application\n"
-       << "#################################################\n" << std::endl;
+    std::cout << "\n#################################################\n"
+              << "KeepAlive Offload Test Application\n"
+              << "#################################################\n"
+              << std::endl;
 
     bool isServer = true;
     int opt;

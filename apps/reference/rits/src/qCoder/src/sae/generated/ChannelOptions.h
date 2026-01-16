@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_ChannelOptions_H_
-#define	_ChannelOptions_H_
-
+#ifndef _ChannelOptions_H_
+#define _ChannelOptions_H_
 
 #include <asn_application.h>
 
@@ -24,12 +23,12 @@ struct ServiceInfoExts;
 
 /* ChannelOptions */
 typedef struct ChannelOptions {
-	NULL_t	*reserved1	/* OPTIONAL */;
-	NULL_t	*reserved2	/* OPTIONAL */;
-	struct ServiceInfoExts	*extensions	/* OPTIONAL */;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    NULL_t *reserved1 /* OPTIONAL */;
+    NULL_t *reserved2 /* OPTIONAL */;
+    struct ServiceInfoExts *extensions /* OPTIONAL */;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } ChannelOptions_t;
 
 /* Implementation */
@@ -42,5 +41,5 @@ extern asn_TYPE_descriptor_t asn_DEF_ChannelOptions;
 /* Referred external types */
 #include "ServiceInfoExts.h"
 
-#endif	/* _ChannelOptions_H_ */
+#endif /* _ChannelOptions_H_ */
 #include <asn_internal.h>

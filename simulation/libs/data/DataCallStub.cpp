@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "DataCallStub.hpp"
@@ -20,13 +20,13 @@ namespace telux {
 namespace data {
 
 DataCallStub::DataCallStub(std::string ifaceName) {
-   LOG(DEBUG, __FUNCTION__);
-   taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
-   ifaceName_ = ifaceName;
+    LOG(DEBUG, __FUNCTION__);
+    taskQ_     = std::make_shared<AsyncTaskQueue<void>>();
+    ifaceName_ = ifaceName;
 }
 
 DataCallStub::~DataCallStub() {
-   LOG(DEBUG, __FUNCTION__);
+    LOG(DEBUG, __FUNCTION__);
 }
 
 const std::string &DataCallStub::getInterfaceName() {
@@ -116,10 +116,9 @@ telux::common::Status DataCallStub::requestDataCallStatistics(StatisticsResponse
     ErrorCode error = ErrorCode::SUCCESS;
     lock_guard<mutex> lock(statusMutex_);
     DataCallStats stats;
-    auto f = std::async(std::launch::async,
-             [this, stats, error, callback]() {
-                   callback(stats, error);
-               }).share();
+    auto f = std::async(std::launch::async, [this, stats, error, callback]() {
+        callback(stats, error);
+    }).share();
     taskQ_->add(f);
     return Status::SUCCESS;
 }
@@ -129,16 +128,13 @@ telux::common::Status DataCallStub::resetDataCallStatistics(
     LOG(DEBUG, __FUNCTION__);
     ErrorCode error = ErrorCode::SUCCESS;
     lock_guard<mutex> lock(statusMutex_);
-    auto f = std::async(std::launch::async,
-             [this, error, callback]() {
-                   callback(error);
-               }).share();
+    auto f = std::async(std::launch::async, [this, error, callback]() { callback(error); }).share();
     taskQ_->add(f);
     return Status::SUCCESS;
 }
 
-telux::common::Status DataCallStub::requestTrafficFlowTemplate(IpFamilyType family,
-        TrafficFlowTemplateCb callback) {
+telux::common::Status DataCallStub::requestTrafficFlowTemplate(
+    IpFamilyType family, TrafficFlowTemplateCb callback) {
     LOG(ERROR, __FUNCTION__, "Not Supported");
     return telux::common::Status::NOTSUPPORTED;
 }
@@ -146,16 +142,15 @@ telux::common::Status DataCallStub::requestTrafficFlowTemplate(IpFamilyType fami
 telux::common::Status DataCallStub::requestDataCallBitRate(
     requestDataCallBitRateResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
-    auto f = std::async(std::launch::async,
-             [this, callback]() {
-                    BitRateInfo bitRate{};
-                    bitRate.maxTxRate = MAX_LTE_TX_RATE;
-                    bitRate.maxRxRate = MAX_LTE_RX_RATE;
-                    bitRate.txRate = LTE_AVG_TX_RATE;
-                    bitRate.rxRate = LTE_AVG_RX_RATE;
-                    ErrorCode error = ErrorCode::SUCCESS;
-                   callback(bitRate, error);
-               }).share();
+    auto f = std::async(std::launch::async, [this, callback]() {
+        BitRateInfo bitRate{};
+        bitRate.maxTxRate = MAX_LTE_TX_RATE;
+        bitRate.maxRxRate = MAX_LTE_RX_RATE;
+        bitRate.txRate    = LTE_AVG_TX_RATE;
+        bitRate.rxRate    = LTE_AVG_RX_RATE;
+        ErrorCode error   = ErrorCode::SUCCESS;
+        callback(bitRate, error);
+    }).share();
     taskQ_->add(f);
     return Status::SUCCESS;
 }
@@ -217,62 +212,63 @@ void DataCallStub::setDataCallStatus(DataCallStatus status) {
  */
 
 void DataCallStub::setDataCallStatus(DataCallStatus status, IpFamilyType family) {
-    //ToDo: Break up this function to simpler short functions
+    // ToDo: Break up this function to simpler short functions
     LOG(DEBUG, __FUNCTION__);
     lock_guard<mutex> lock(statusMutex_);
-    if(family == IpFamilyType::UNKNOWN) {
+    if (family == IpFamilyType::UNKNOWN) {
         LOG(DEBUG, __FUNCTION__, " invalid family ", static_cast<int>(family));
         return;
     }
 
-    if((family == IpFamilyType::IPV4) || (family == IpFamilyType::IPV4V6)) {
-        //If IP Family is in NET_NO_NET state and status is NET_DISCONNECTING, do not change it
-        // it will show datacall disconnecting if though it is already discconeted
-        if (!((ipv4Status_ == DataCallStatus::NET_NO_NET) &&
-              (status == DataCallStatus::NET_DISCONNECTING))) {
-                  ipv4Status_ = status;
-              }
+    if ((family == IpFamilyType::IPV4) || (family == IpFamilyType::IPV4V6)) {
+        // If IP Family is in NET_NO_NET state and status is NET_DISCONNECTING, do not change it
+        //  it will show datacall disconnecting if though it is already discconeted
+        if (!((ipv4Status_ == DataCallStatus::NET_NO_NET)
+                && (status == DataCallStatus::NET_DISCONNECTING))) {
+            ipv4Status_ = status;
+        }
     }
 
-    if((family == IpFamilyType::IPV6) || (family == IpFamilyType::IPV4V6)) {
-        //If IP Family is in NET_NO_NET state and status is NET_DISCONNECTING, do not change it
-        // it will show datacall disconnecting if though it is already discconeted
-        if (!((ipv6Status_ == DataCallStatus::NET_NO_NET) &&
-              (status == DataCallStatus::NET_DISCONNECTING))) {
-                  ipv6Status_ = status;
-              }
+    if ((family == IpFamilyType::IPV6) || (family == IpFamilyType::IPV4V6)) {
+        // If IP Family is in NET_NO_NET state and status is NET_DISCONNECTING, do not change it
+        //  it will show datacall disconnecting if though it is already discconeted
+        if (!((ipv6Status_ == DataCallStatus::NET_NO_NET)
+                && (status == DataCallStatus::NET_DISCONNECTING))) {
+            ipv6Status_ = status;
+        }
     }
 
     // Usecase 1 and 2
-    if (ipv4Status_ == DataCallStatus::NET_CONNECTED ||
-        ipv6Status_ == DataCallStatus::NET_CONNECTED) {
+    if (ipv4Status_ == DataCallStatus::NET_CONNECTED
+        || ipv6Status_ == DataCallStatus::NET_CONNECTED) {
         status_ = DataCallStatus::NET_CONNECTED;
     }
     // Usecase 3, 4 and 5
     else if ((ipv4Status_ == DataCallStatus::NET_NO_NET || ipv4Status_ == DataCallStatus::INVALID)
-        && (ipv6Status_ == DataCallStatus::NET_NO_NET || ipv6Status_ == DataCallStatus::INVALID)){
+             && (ipv6Status_ == DataCallStatus::NET_NO_NET
+                 || ipv6Status_ == DataCallStatus::INVALID)) {
         status_ = DataCallStatus::NET_NO_NET;
-    // Usecase 6, 7 and 8
+        // Usecase 6, 7 and 8
     } else if ((ipv4Status_ == DataCallStatus::NET_NO_NET || ipv4Status_ == DataCallStatus::INVALID
-        || ipv4Status_ == DataCallStatus::NET_CONNECTING) &&
-        (ipv6Status_ == DataCallStatus::NET_CONNECTING )){
+                   || ipv4Status_ == DataCallStatus::NET_CONNECTING)
+               && (ipv6Status_ == DataCallStatus::NET_CONNECTING)) {
         status_ = DataCallStatus::NET_CONNECTING;
-    // Usecase 9 and 10
+        // Usecase 9 and 10
     } else if ((ipv6Status_ == DataCallStatus::NET_NO_NET || ipv6Status_ == DataCallStatus::INVALID)
-        && (ipv4Status_ == DataCallStatus::NET_CONNECTING )){
+               && (ipv4Status_ == DataCallStatus::NET_CONNECTING)) {
         status_ = DataCallStatus::NET_CONNECTING;
-    // Usecase 11, 12 and 13
+        // Usecase 11, 12 and 13
     } else if ((ipv4Status_ == DataCallStatus::NET_NO_NET || ipv4Status_ == DataCallStatus::INVALID
-        || ipv4Status_ == DataCallStatus::NET_DISCONNECTING) &&
-        (ipv6Status_ == DataCallStatus::NET_DISCONNECTING )){
+                   || ipv4Status_ == DataCallStatus::NET_DISCONNECTING)
+               && (ipv6Status_ == DataCallStatus::NET_DISCONNECTING)) {
         status_ = DataCallStatus::NET_DISCONNECTING;
-    // Usecase 14 and 15
+        // Usecase 14 and 15
     } else if ((ipv6Status_ == DataCallStatus::NET_NO_NET || ipv6Status_ == DataCallStatus::INVALID)
-        && (ipv4Status_ == DataCallStatus::NET_DISCONNECTING )){
+               && (ipv4Status_ == DataCallStatus::NET_DISCONNECTING)) {
         status_ = DataCallStatus::NET_DISCONNECTING;
     }
-    LOG(DEBUG, __FUNCTION__, " family ", static_cast<int>(family),
-        " status ", static_cast<int>(status), " status _ ", static_cast<int>(status_));
+    LOG(DEBUG, __FUNCTION__, " family ", static_cast<int>(family), " status ",
+        static_cast<int>(status), " status _ ", static_cast<int>(status_));
 }
 
 void DataCallStub::setDataCallEndReason(DataCallEndReason endReason) {
@@ -299,7 +295,6 @@ void DataCallStub::setOperationType(OperationType type) {
     operationType_ = type;
 }
 
+}  // end of namespace data
 
-} // end of namespace data
-
-} // end of namespace telux
+}  // end of namespace telux

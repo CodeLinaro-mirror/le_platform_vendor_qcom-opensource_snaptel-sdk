@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_SecondaryDns_H_
-#define	_SecondaryDns_H_
-
+#ifndef _SecondaryDns_H_
+#define _SecondaryDns_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* SecondaryDns */
-typedef IPv6Address_t	 SecondaryDns_t;
+typedef IPv6Address_t SecondaryDns_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_SecondaryDns;
@@ -37,5 +36,5 @@ per_type_encoder_f SecondaryDns_encode_uper;
 }
 #endif
 
-#endif	/* _SecondaryDns_H_ */
+#endif /* _SecondaryDns_H_ */
 #include <asn_internal.h>

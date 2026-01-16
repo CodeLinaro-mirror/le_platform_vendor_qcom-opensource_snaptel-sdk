@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef TRANSPORTDEFINES_HPP
@@ -45,10 +45,10 @@ constexpr uint32_t MAX_TONE_FREQ_SUPPORTED = 2;
 constexpr uint32_t MAX_VOICE_PATH = 3;
 
 /* Current audio service status */
-constexpr uint32_t AUDIO_SERVICE_ONLINE = 1;
+constexpr uint32_t AUDIO_SERVICE_ONLINE  = 1;
 constexpr uint32_t AUDIO_SERVICE_OFFLINE = 2;
 
 }  // end of namespace audio
 }  // end of namespace telux
 
-#endif // TRANSPORTDEFINES_HPP
+#endif  // TRANSPORTDEFINES_HPP

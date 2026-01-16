@@ -1,10 +1,7 @@
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2021, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 
 /**
  * This is a test application to register and receive EFS related events
@@ -39,7 +36,7 @@ Status FileSystemTestApp::parseArguments(int argc, char **argv) {
     int arg;
     while (1) {
         static struct option long_options[] = {{"help", no_argument, 0, 'h'}, {0, 0, 0, 0}};
-        int opt_index = 0;
+        int opt_index                       = 0;
         arg = getopt_long(argc, argv, "h", long_options, &opt_index);
         if (arg == -1) {
             break;
@@ -80,7 +77,7 @@ void FileSystemTestApp::signalHandler(int signum) {
 
 int FileSystemTestApp::init() {
     myFsCmdMgr_ = std::make_shared<FileSystemCommandMgr>();
-    int rc = myFsCmdMgr_->init();
+    int rc      = myFsCmdMgr_->init();
     if (rc) {
         return -1;
     }

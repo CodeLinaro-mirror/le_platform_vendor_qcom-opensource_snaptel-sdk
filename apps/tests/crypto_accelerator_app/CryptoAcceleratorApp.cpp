@@ -1,7 +1,5 @@
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -15,7 +13,7 @@
 #include "CryptoOperationMenu.hpp"
 
 CryptoAcceleratorApp::CryptoAcceleratorApp(std::string appName, std::string cursor)
-    : ConsoleApp(appName, cursor) {
+   : ConsoleApp(appName, cursor) {
 }
 
 CryptoAcceleratorApp::~CryptoAcceleratorApp() {
@@ -29,27 +27,26 @@ void CryptoAcceleratorApp::cryptoOperationMenu(telux::sec::Mode mode) {
     switch (mode) {
         case telux::sec::Mode::MODE_SYNC:
             try {
-                operationMenu = std::make_shared<
-                    CryptoOperationMenu>("Crypto Operation", "sync> ");
-            } catch (const std::exception& e) {
+                operationMenu = std::make_shared<CryptoOperationMenu>("Crypto Operation", "sync> ");
+            } catch (const std::exception &e) {
                 std::cout << "can't create CryptoOperationMenu" << std::endl;
                 return;
             }
             break;
         case telux::sec::Mode::MODE_ASYNC_POLL:
             try {
-                operationMenu = std::make_shared<
-                    CryptoOperationMenu>("Crypto Operation", "async poll> ");
-            } catch (const std::exception& e) {
+                operationMenu
+                    = std::make_shared<CryptoOperationMenu>("Crypto Operation", "async poll> ");
+            } catch (const std::exception &e) {
                 std::cout << "can't create CryptoOperationMenu" << std::endl;
                 return;
             }
             break;
         case telux::sec::Mode::MODE_ASYNC_LISTENER:
             try {
-                operationMenu = std::make_shared<
-                    CryptoOperationMenu>("Crypto Operation", "async listener> ");
-            } catch (const std::exception& e) {
+                operationMenu
+                    = std::make_shared<CryptoOperationMenu>("Crypto Operation", "async listener> ");
+            } catch (const std::exception &e) {
                 std::cout << "can't create CryptoOperationMenu" << std::endl;
                 return;
             }
@@ -73,24 +70,22 @@ void CryptoAcceleratorApp::cryptoOperationMenu(telux::sec::Mode mode) {
  */
 void CryptoAcceleratorApp::init() {
 
-    std::shared_ptr<ConsoleAppCommand> syncMode = std::make_shared<
-        ConsoleAppCommand>(ConsoleAppCommand("1", "Sync mode", {},
-        std::bind(&CryptoAcceleratorApp::cryptoOperationMenu, this,
-        telux::sec::Mode::MODE_SYNC)));
+    std::shared_ptr<ConsoleAppCommand> syncMode
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "Sync mode", {},
+            std::bind(
+                &CryptoAcceleratorApp::cryptoOperationMenu, this, telux::sec::Mode::MODE_SYNC)));
 
-    std::shared_ptr<ConsoleAppCommand> asyncMode = std::make_shared<
-        ConsoleAppCommand>(ConsoleAppCommand("2", "Async listener mode", {},
-        std::bind(&CryptoAcceleratorApp::cryptoOperationMenu, this,
-        telux::sec::Mode::MODE_ASYNC_LISTENER)));
+    std::shared_ptr<ConsoleAppCommand> asyncMode
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "Async listener mode", {},
+            std::bind(&CryptoAcceleratorApp::cryptoOperationMenu, this,
+                telux::sec::Mode::MODE_ASYNC_LISTENER)));
 
-    std::shared_ptr<ConsoleAppCommand> asyncPollMode = std::make_shared<
-        ConsoleAppCommand>(ConsoleAppCommand("3", "Async poll mode", {},
-        std::bind(&CryptoAcceleratorApp::cryptoOperationMenu, this,
-        telux::sec::Mode::MODE_ASYNC_POLL)));
+    std::shared_ptr<ConsoleAppCommand> asyncPollMode
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "Async poll mode", {},
+            std::bind(&CryptoAcceleratorApp::cryptoOperationMenu, this,
+                telux::sec::Mode::MODE_ASYNC_POLL)));
 
-    std::vector<std::shared_ptr<ConsoleAppCommand>> mainCmds = {
-        syncMode, asyncMode, asyncPollMode
-    };
+    std::vector<std::shared_ptr<ConsoleAppCommand>> mainCmds = {syncMode, asyncMode, asyncPollMode};
 
     ConsoleApp::addCommands(mainCmds);
     ConsoleApp::displayMenu();
@@ -98,13 +93,12 @@ void CryptoAcceleratorApp::init() {
 
 int main(int argc, char **argv) {
 
-    auto sdkVersion = telux::common::Version::getSdkVersion();
+    auto sdkVersion            = telux::common::Version::getSdkVersion();
     std::string sdkReleaseName = telux::common::Version::getReleaseName();
-    std::string appName = "Crypto accelerator console app - SDK v"
-                            + std::to_string(sdkVersion.major) + "."
-                            + std::to_string(sdkVersion.minor) + "."
-                            + std::to_string(sdkVersion.patch) + "\n"
-                            + "Release name: " + sdkReleaseName;
+    std::string appName
+        = "Crypto accelerator console app - SDK v" + std::to_string(sdkVersion.major) + "."
+          + std::to_string(sdkVersion.minor) + "." + std::to_string(sdkVersion.patch) + "\n"
+          + "Release name: " + sdkReleaseName;
 
     auto cryptApp = std::make_shared<CryptoAcceleratorApp>(appName, "crptoaccelerator> ");
 

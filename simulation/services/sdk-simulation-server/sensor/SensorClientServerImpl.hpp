@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -36,64 +36,62 @@ using grpc::Status;
 
 using sensorStub::SensorClientService;
 
-class SensorClientServerImpl final :
-    public sensorStub::SensorClientService::Service,
-    public IServerEventListener,
-    public std::enable_shared_from_this<SensorClientServerImpl> {
+class SensorClientServerImpl final : public sensorStub::SensorClientService::Service,
+                                     public IServerEventListener,
+                                     public std::enable_shared_from_this<SensorClientServerImpl> {
  public:
     SensorClientServerImpl();
     ~SensorClientServerImpl();
-    grpc::Status InitService(ServerContext* context, const google::protobuf::Empty* request,
-        sensorStub::GetServiceStatusReply* response);
+    grpc::Status InitService(ServerContext *context, const google::protobuf::Empty *request,
+        sensorStub::GetServiceStatusReply *response);
 
-    grpc::Status GetSensorList(ServerContext* context, const google::protobuf::Empty* request,
-        sensorStub::SensorInfoResponse* response);
+    grpc::Status GetSensorList(ServerContext *context, const google::protobuf::Empty *request,
+        sensorStub::SensorInfoResponse *response);
 
-    grpc::Status Configure(ServerContext* context, const google::protobuf::Empty* request,
-        sensorStub::SensorClientCommandReply* response);
+    grpc::Status Configure(ServerContext *context, const google::protobuf::Empty *request,
+        sensorStub::SensorClientCommandReply *response);
 
-    grpc::Status GetConfiguration(ServerContext* context, const google::protobuf::Empty* request,
-        sensorStub::SensorClientCommandReply* response);
+    grpc::Status GetConfiguration(ServerContext *context, const google::protobuf::Empty *request,
+        sensorStub::SensorClientCommandReply *response);
 
-    grpc::Status GetSensorInfo(ServerContext* context, const google::protobuf::Empty* request,
-        sensorStub::SensorClientCommandReply* response);
+    grpc::Status GetSensorInfo(ServerContext *context, const google::protobuf::Empty *request,
+        sensorStub::SensorClientCommandReply *response);
 
-    grpc::Status Activate(ServerContext* context, const sensorStub::ActivateRequest* request,
-        sensorStub::SensorClientCommandReply* response);
+    grpc::Status Activate(ServerContext *context, const sensorStub::ActivateRequest *request,
+        sensorStub::SensorClientCommandReply *response);
 
-    grpc::Status Deactivate(ServerContext* context, const sensorStub::DeactivateRequest* request,
-        sensorStub::SensorClientCommandReply* response);
+    grpc::Status Deactivate(ServerContext *context, const sensorStub::DeactivateRequest *request,
+        sensorStub::SensorClientCommandReply *response);
 
-    grpc::Status SensorUpdateRotationMatrix(ServerContext* context,
-        const ::google::protobuf::Empty* request,
-        sensorStub::SensorClientCommandReply* response);
+    grpc::Status SensorUpdateRotationMatrix(ServerContext *context,
+        const ::google::protobuf::Empty *request, sensorStub::SensorClientCommandReply *response);
 
-    grpc::Status SelfTest (ServerContext* context,
-        const sensorStub::SelfTestRequest* request, sensorStub::SelfTestResponse* response);
+    grpc::Status SelfTest(ServerContext *context, const sensorStub::SelfTestRequest *request,
+        sensorStub::SelfTestResponse *response);
 
     void onEventUpdate(::eventService::UnsolicitedEvent event) override;
 
  private:
-    void apiJsonReader(std::string apiName, sensorStub::SensorClientCommandReply* response);
+    void apiJsonReader(std::string apiName, sensorStub::SensorClientCommandReply *response);
     bool init();
     void updateSensorInfo();
     telux::sensor::SensorType getSensorType(std::string sensorType);
     void startStreaming();
     void updateStreamRequest();
     void triggerStreamingStoppedEvent();
-    void handleEvent(std::string token , std::string event);
+    void handleEvent(std::string token, std::string event);
     void triggerSelfTestFailedEvent(std::string event);
     std::vector<telux::sensor::SensorInfo> sensorInfo_;
     std::shared_ptr<FileBuffer> fileBuffer_ = nullptr;
     std::vector<std::string> requestBuffer_;
     telux::common::AsyncTaskQueue<void> taskQ_;
-    bool bufferingInitialized_ = false;
-    bool stopStreamingData_ = false;
-    bool replayCsv_ = false;
+    bool bufferingInitialized_  = false;
+    bool stopStreamingData_     = false;
+    bool replayCsv_             = false;
     uint64_t previousTimestamp_ = 0;
-    bool lastBatchStreamed_ = false;
-    int activeAccelCount_ = 0;
-    int activeGyroCount_ = 0;
+    bool lastBatchStreamed_     = false;
+    int activeAccelCount_       = 0;
+    int activeGyroCount_        = 0;
     std::unordered_map<telux::sensor::SelfTestType, uint64_t> accelSelfTestCache_;
     std::unordered_map<telux::sensor::SelfTestType, uint64_t> gyroSelfTestCache_;
 };

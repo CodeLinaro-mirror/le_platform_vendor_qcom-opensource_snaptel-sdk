@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -44,7 +44,7 @@ class LogsReceiver : public telux::platform::diag::IDiagListener {
         /* Print data in hexadecimal format (N row * 32 columns) */
         for (int x = 0; x < length; x++) {
             printf("%02x ", data[x] & 0xffU);
-            if (x && !((x+1) % 32) && (x != (length - 1))) {
+            if (x && !((x + 1) % 32) && (x != (length - 1))) {
                 printf("\n");
             }
         }
@@ -64,9 +64,7 @@ class DiagLogCollector : public std::enable_shared_from_this<DiagLogCollector> {
 
         /* Step - 2 */
         diagMgr_ = diagFactory.getDiagLogManager(
-                [&p](telux::common::ServiceStatus srvStatus) {
-            p.set_value(srvStatus);
-        });
+            [&p](telux::common::ServiceStatus srvStatus) { p.set_value(srvStatus); });
 
         if (!diagMgr_) {
             std::cout << "Can't get IDiagLogManager" << std::endl;
@@ -76,23 +74,22 @@ class DiagLogCollector : public std::enable_shared_from_this<DiagLogCollector> {
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Diag service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Diag service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
         /* Step - 4 */
         try {
             logsReceiver_ = std::make_shared<LogsReceiver>();
-        } catch (const std::exception& e) {
+        } catch (const std::exception &e) {
             std::cout << "can't allocate LogsReceiver" << std::endl;
             return -ENOMEM;
         }
 
         status = diagMgr_->registerListener(logsReceiver_);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "can't register listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "can't register listener, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -106,8 +103,7 @@ class DiagLogCollector : public std::enable_shared_from_this<DiagLogCollector> {
         /* Step - 9 */
         status = diagMgr_->deregisterListener(logsReceiver_);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "can't deregister listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "can't deregister listener, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -119,17 +115,16 @@ class DiagLogCollector : public std::enable_shared_from_this<DiagLogCollector> {
         telux::common::ErrorCode ec;
         telux::platform::diag::DiagConfig fileMethodCfg{};
 
-        fileMethodCfg.method = telux::platform::diag::LogMethod::CALLBACK;
-        fileMethodCfg.srcType = telux::platform::diag::SourceType::DEVICE;
+        fileMethodCfg.method         = telux::platform::diag::LogMethod::CALLBACK;
+        fileMethodCfg.srcType        = telux::platform::diag::SourceType::DEVICE;
         fileMethodCfg.srcInfo.device = telux::platform::diag::DeviceType::DIAG_DEVICE_MDM;
         fileMethodCfg.mdmLogMaskFile = mdmMaskFile;
-        fileMethodCfg.modeType = telux::platform::diag::DiagLogMode::STREAMING;
+        fileMethodCfg.modeType       = telux::platform::diag::DiagLogMode::STREAMING;
 
         /* Step - 5 */
         ec = diagMgr_->setConfig(fileMethodCfg);
         if (ec != telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Can't config, err " <<
-                static_cast<int>(ec) << std::endl;
+            std::cout << "Can't config, err " << static_cast<int>(ec) << std::endl;
             return -EIO;
         }
 
@@ -143,8 +138,7 @@ class DiagLogCollector : public std::enable_shared_from_this<DiagLogCollector> {
         /* Step - 6 */
         ec = diagMgr_->startLogCollection();
         if (ec != telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Can't start collection, err " <<
-                static_cast<int>(ec) << std::endl;
+            std::cout << "Can't start collection, err " << static_cast<int>(ec) << std::endl;
             return -EIO;
         }
 
@@ -158,8 +152,7 @@ class DiagLogCollector : public std::enable_shared_from_this<DiagLogCollector> {
         /* Step - 8 */
         ec = diagMgr_->stopLogCollection();
         if (ec != telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Can't stop collection, err " <<
-                static_cast<int>(ec) << std::endl;
+            std::cout << "Can't stop collection, err " << static_cast<int>(ec) << std::endl;
             return -EIO;
         }
 
@@ -184,7 +177,7 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<DiagLogCollector>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate DiagLogCollector" << std::endl;
         return -ENOMEM;
     }

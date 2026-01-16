@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_Elevation_H_
-#define	_Elevation_H_
-
+#ifndef _Elevation_H_
+#define _Elevation_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* Elevation */
-typedef long	 Elevation_t;
+typedef long Elevation_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_Elevation;
@@ -37,5 +36,5 @@ per_type_encoder_f Elevation_encode_uper;
 }
 #endif
 
-#endif	/* _Elevation_H_ */
+#endif /* _Elevation_H_ */
 #include <asn_internal.h>

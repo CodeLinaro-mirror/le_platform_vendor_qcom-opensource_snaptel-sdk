@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_DataRate80211_H_
-#define	_DataRate80211_H_
-
+#ifndef _DataRate80211_H_
+#define _DataRate80211_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* DataRate80211 */
-typedef long	 DataRate80211_t;
+typedef long DataRate80211_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_DataRate80211;
@@ -37,5 +36,5 @@ per_type_encoder_f DataRate80211_encode_uper;
 }
 #endif
 
-#endif	/* _DataRate80211_H_ */
+#endif /* _DataRate80211_H_ */
 #include <asn_internal.h>

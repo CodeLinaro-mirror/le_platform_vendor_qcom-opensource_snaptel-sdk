@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef SASQUISHCLIENT_HPP
@@ -24,26 +24,26 @@
 #include <fstream>
 #include <unistd.h>
 #include <thread>
-#include <stdio.h>      /* printf, NULL */
-#include <stdlib.h>     /* srand, rand */
-#include <time.h>       /* time */
+#include <stdio.h> /* printf, NULL */
+#include <stdlib.h> /* srand, rand */
+#include <time.h> /* time */
 
 using namespace std;
 using namespace telux;
 using namespace telux::cv2x::prop;
 using namespace telux::common;
 
-class SquishClient : public ICongestionControlListener{
-public:
+class SquishClient : public ICongestionControlListener {
+ public:
     void updateSpsTransmitFlow(
         std::shared_ptr<CongestionControlUserData> congestionControlUserData);
-    void onCongestionControlDataReady (
+    void onCongestionControlDataReady(
         std::shared_ptr<CongestionControlUserData> congestionControlUserData,
-            bool critEvent) override;
-     void setDataReadySemaphore(sem_t* dataReadySem);
-private:
-    sem_t* dataReadySem_;
-};
+        bool critEvent) override;
+    void setDataReadySemaphore(sem_t *dataReadySem);
 
+ private:
+    sem_t *dataReadySem_;
+};
 
 #endif  // SASQUISHCLIENT_HPP

@@ -28,9 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <vector>
@@ -53,20 +53,20 @@ SdkVersion Version::getSdkVersion() {
     std::string token;
     std::vector<std::string> tokens;
 
-    size_t position = 0;
-    size_t end = 0;
+    size_t position  = 0;
+    size_t end       = 0;
     size_t strLength = 0;
     do {
-        end = versionStr.find(delimiter, position);
+        end       = versionStr.find(delimiter, position);
         strLength = end - position;
-        token = versionStr.substr(position, strLength);
-        if(!token.empty()) {
+        token     = versionStr.substr(position, strLength);
+        if (!token.empty()) {
             tokens.emplace_back(token);
         }
         position += strLength + delimiter.length();
-    } while(end != std::string::npos);
+    } while (end != std::string::npos);
 
-    if(tokens.size() == VERSIONS_SIZE) {
+    if (tokens.size() == VERSIONS_SIZE) {
         sdkVersion.major = std::stoi(tokens.at(0));
         sdkVersion.minor = std::stoi(tokens.at(1));
         sdkVersion.patch = std::stoi(tokens.at(2));
@@ -77,8 +77,8 @@ SdkVersion Version::getSdkVersion() {
 }
 
 std::string Version::getReleaseName() {
-   return RELEASE_NAME;
+    return RELEASE_NAME;
 }
 
-}
-}
+}  // namespace common
+}  // namespace telux

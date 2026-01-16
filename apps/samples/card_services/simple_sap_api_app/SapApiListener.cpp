@@ -26,40 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021, 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /*
@@ -99,10 +70,10 @@
 
 /* SAP events */
 enum SapEvent {
-   OPEN_SAP_CONNECTION = 1,  /* SAP Open connection */
-   CLOSE_SAP_CONNECTION = 2, /* SAP disconnection */
-   SAP_GET_ATR = 3,          /* SAP Answer To Reset */
-   SAP_TRANSMIT_APDU = 4     /* Transmit of APDU in SAP mode */
+    OPEN_SAP_CONNECTION  = 1, /* SAP Open connection */
+    CLOSE_SAP_CONNECTION = 2, /* SAP disconnection */
+    SAP_GET_ATR          = 3, /* SAP Answer To Reset */
+    SAP_TRANSMIT_APDU    = 4 /* Transmit of APDU in SAP mode */
 };
 
 class SAPListener : public telux::tel::ISapCardCommandCallback,
@@ -118,10 +89,8 @@ class SAPListener : public telux::tel::ISapCardCommandCallback,
         auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
 
         /* Step - 2 */
-        sapCardMgr_ = phoneFactory.getSapCardManager(DEFAULT_SLOT_ID,
-                [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+        sapCardMgr_ = phoneFactory.getSapCardManager(
+            DEFAULT_SLOT_ID, [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!sapCardMgr_) {
             std::cout << "Can't get ISapCardManager" << std::endl;
@@ -131,8 +100,8 @@ class SAPListener : public telux::tel::ISapCardCommandCallback,
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "SAP service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "SAP service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
@@ -147,13 +116,13 @@ class SAPListener : public telux::tel::ISapCardCommandCallback,
         status = sapCardMgr_->openConnection(
             telux::tel::SapCondition::SAP_CONDITION_BLOCK_VOICE_OR_DATA, shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't open SAP connection, status " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't open SAP connection, status " << static_cast<int>(status)
+                      << std::endl;
             return -EIO;
         }
 
-        if (!waitForSapEvent(SapEvent::OPEN_SAP_CONNECTION) ||
-            (errorCode_ != telux::common::ErrorCode::SUCCESS)) {
+        if (!waitForSapEvent(SapEvent::OPEN_SAP_CONNECTION)
+            || (errorCode_ != telux::common::ErrorCode::SUCCESS)) {
             std::cout << "Failed to open SAP connection" << std::endl;
             return -EIO;
         }
@@ -168,13 +137,13 @@ class SAPListener : public telux::tel::ISapCardCommandCallback,
         /* Step - 10 */
         status = sapCardMgr_->closeConnection(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't close SAP connection, status " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't close SAP connection, status " << static_cast<int>(status)
+                      << std::endl;
             return -EIO;
         }
 
-        if (!waitForSapEvent(SapEvent::CLOSE_SAP_CONNECTION) ||
-            (errorCode_ != telux::common::ErrorCode::SUCCESS)) {
+        if (!waitForSapEvent(SapEvent::CLOSE_SAP_CONNECTION)
+            || (errorCode_ != telux::common::ErrorCode::SUCCESS)) {
             std::cout << "Failed to close SAP connection" << std::endl;
             return -EIO;
         }
@@ -189,13 +158,12 @@ class SAPListener : public telux::tel::ISapCardCommandCallback,
         /* Step - 6 */
         status = sapCardMgr_->requestAtr(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't request ATR, status " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't request ATR, status " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
-        if (!waitForSapEvent(SapEvent::SAP_GET_ATR) ||
-            (errorCode_ != telux::common::ErrorCode::SUCCESS)) {
+        if (!waitForSapEvent(SapEvent::SAP_GET_ATR)
+            || (errorCode_ != telux::common::ErrorCode::SUCCESS)) {
             std::cout << "Failed to request ATR" << std::endl;
             return -EIO;
         }
@@ -209,24 +177,23 @@ class SAPListener : public telux::tel::ISapCardCommandCallback,
 
         /* Sample SAP APDU to open master file */
         /* APDU Command - 00 A4 00 04 02 3F 00 */
-        const uint8_t CLA = 0;
-        const uint8_t INSTRUCTION = 164;
-        const uint8_t P1 = 0;
-        const uint8_t P2 = 4;
-        const uint8_t LC = 2;
+        const uint8_t CLA               = 0;
+        const uint8_t INSTRUCTION       = 164;
+        const uint8_t P1                = 0;
+        const uint8_t P2                = 4;
+        const uint8_t LC                = 2;
         const std::vector<uint8_t> DATA = {63, 0};
 
         /* Step - 8 */
-        status = sapCardMgr_->transmitApdu(
-            CLA, INSTRUCTION, P1, P2, LC, DATA, 0, shared_from_this());
+        status
+            = sapCardMgr_->transmitApdu(CLA, INSTRUCTION, P1, P2, LC, DATA, 0, shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't transmit APDU, status " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't transmit APDU, status " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
-        if (!waitForSapEvent(SapEvent::SAP_TRANSMIT_APDU) ||
-            (errorCode_ != telux::common::ErrorCode::SUCCESS)) {
+        if (!waitForSapEvent(SapEvent::SAP_TRANSMIT_APDU)
+            || (errorCode_ != telux::common::ErrorCode::SUCCESS)) {
             std::cout << "Failed to transmit APDU" << std::endl;
             return -EIO;
         }
@@ -239,8 +206,7 @@ class SAPListener : public telux::tel::ISapCardCommandCallback,
         int const DEFAULT_TIMEOUT_SECONDS = 5;
         std::unique_lock<std::mutex> lock(eventMutex_);
 
-        auto cvStatus = eventCV_.wait_for(lock,
-            std::chrono::seconds(DEFAULT_TIMEOUT_SECONDS));
+        auto cvStatus = eventCV_.wait_for(lock, std::chrono::seconds(DEFAULT_TIMEOUT_SECONDS));
 
         if (cvStatus == std::cv_status::timeout) {
             std::cout << "Timedout" << std::endl;
@@ -266,9 +232,9 @@ class SAPListener : public telux::tel::ISapCardCommandCallback,
         std::cout << "atrResponse()" << std::endl;
         std::cout << "Error: " << static_cast<int>(error) << std::endl;
 
-        if(eventExpected_ == SapEvent::SAP_GET_ATR) {
+        if (eventExpected_ == SapEvent::SAP_GET_ATR) {
             std::cout << "\tATR.data:";
-            for(int val : responseAtr) {
+            for (int val : responseAtr) {
                 std::cout << " " << val;
             }
         }
@@ -302,7 +268,7 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<SAPListener>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate SAPListener" << std::endl;
         return -ENOMEM;
     }

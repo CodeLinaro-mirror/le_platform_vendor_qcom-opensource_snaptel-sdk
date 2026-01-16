@@ -26,42 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * @file       DataConnectionManager.hpp
@@ -101,17 +71,18 @@ class IDataCall;
  * IP Family related Info
  */
 struct IpFamilyInfo {
-    DataCallStatus status;  /**< Data call status */
-    IpAddrInfo addr;       /**< IP address info */
+    DataCallStatus status; /**< Data call status */
+    IpAddrInfo addr; /**< IP address info */
 };
 
 /**
  * Encapsulate the Qos Filter rule
  */
-struct QosFilterRule{
+struct QosFilterRule {
     std::vector<std::shared_ptr<IIpFilter>> filter; /**< @ref IIpFilter */
-    uint16_t filterId;                              /**< Unique identifier for each filter. */
-    uint16_t filterPrecedence;                      /**< Specifies the order in which filters are applied. A lower numerical value has a higher precedence. */
+    uint16_t filterId; /**< Unique identifier for each filter. */
+    uint16_t filterPrecedence; /**< Specifies the order in which filters are applied. A lower
+                                  numerical value has a higher precedence. */
 };
 
 /**
@@ -119,71 +90,72 @@ struct QosFilterRule{
  */
 struct TrafficFlowTemplate {
     /** Mandatory */
-    QosFlowId qosId;                            /**< defines current flow id */
-    QosFlowStateChangeEvent stateChange;        /**< Flow state change event */
+    QosFlowId qosId; /**< defines current flow id */
+    QosFlowStateChangeEvent stateChange; /**< Flow state change event */
 
-    QosFlowMask mask;                           /**< bitmask to denote which of the optional fields in TrafficFlowTemplate are valid */
+    QosFlowMask mask; /**< bitmask to denote which of the optional fields in TrafficFlowTemplate are
+                         valid */
     /** Optional */
-    QosIPFlowInfo txGrantedFlow;                /**< Tx Granted Flow IP info */
-    QosIPFlowInfo rxGrantedFlow;                /**< Rx Granted Flow IP info */
+    QosIPFlowInfo txGrantedFlow; /**< Tx Granted Flow IP info */
+    QosIPFlowInfo rxGrantedFlow; /**< Rx Granted Flow IP info */
 
-    uint32_t txFiltersLength;                   /**< Tx Filters length */
-    QosFilterRule txFilters[MAX_QOS_FILTERS];   /**< Tx QoS Filters that apply to a
-                                                   granted Tx QoS flow. */
+    uint32_t txFiltersLength; /**< Tx Filters length */
+    QosFilterRule txFilters[MAX_QOS_FILTERS]; /**< Tx QoS Filters that apply to a
+                                                 granted Tx QoS flow. */
 
-    uint32_t rxFiltersLength;                   /**< Rx Filters length*/
-    QosFilterRule rxFilters[MAX_QOS_FILTERS];   /**< Rx QoS Filters that apply to a
-                                                   granted Rx QoS flow. */
+    uint32_t rxFiltersLength; /**< Rx Filters length*/
+    QosFilterRule rxFilters[MAX_QOS_FILTERS]; /**< Rx QoS Filters that apply to a
+                                                 granted Rx QoS flow. */
 };
 
 /**
  * QOS TFT flow change info
  */
 struct TftChangeInfo {
-    std::shared_ptr<TrafficFlowTemplate> tft;   /**< TFT flow info @ref TrafficFlowTemplate */
-    QosFlowStateChangeEvent stateChange;        /**< Flow state change event */
+    std::shared_ptr<TrafficFlowTemplate> tft; /**< TFT flow info @ref TrafficFlowTemplate */
+    QosFlowStateChangeEvent stateChange; /**< Flow state change event */
 };
 
 /**
  * Data call bit rate info
  */
 struct BitRateInfo {
-    uint64_t txRate;      /**< @deprecated Unused */
-    uint64_t rxRate;      /**< @deprecated Unused */
-    uint64_t maxTxRate;   /**< Maximum transmit rate that can be assigned to device in bits/sec */
-    uint64_t maxRxRate;   /**< Maximum receive rate that can be assigned to device in bits/sec  */
+    uint64_t txRate; /**< @deprecated Unused */
+    uint64_t rxRate; /**< @deprecated Unused */
+    uint64_t maxTxRate; /**< Maximum transmit rate that can be assigned to device in bits/sec */
+    uint64_t maxRxRate; /**< Maximum receive rate that can be assigned to device in bits/sec  */
 };
 
 /**
  * Throttle information for the corresponding APN
  */
 struct APNThrottleInfo {
-    std::string apn;                            /**< APN name */
-    std::vector<int> profileIds;                /**< Profile IDs with the same APN */
-    uint32_t ipv4Time;                          /**< Remaining IPv4 throttled time in milliseconds*/
-    uint32_t ipv6Time;                          /**< Remaining IPv6 throttled time in milliseconds*/
-    bool isBlocked;                             /**< Is APN blocked on all plmns */
-    std::string mcc;                            /**< Mobile Country Code */
-    std::string mnc;                            /**< Mobile Network Code */
+    std::string apn; /**< APN name */
+    std::vector<int> profileIds; /**< Profile IDs with the same APN */
+    uint32_t ipv4Time; /**< Remaining IPv4 throttled time in milliseconds*/
+    uint32_t ipv6Time; /**< Remaining IPv6 throttled time in milliseconds*/
+    bool isBlocked; /**< Is APN blocked on all plmns */
+    std::string mcc; /**< Mobile Country Code */
+    std::string mnc; /**< Mobile Network Code */
 };
 
 /**
  * Data call related parameters
  */
 struct DataCallParams {
-    int profileId;                      /** Profile identifier corresponding to which data call
-                                            bring up will be done. Use
-                                            @ref IDataProfileManager::requestProfileList to get
-                                            the list of available profiles. */
-    std::string interfaceName = "";     /** Optional name to be assigned to the network interface
-                                            representing this data call. This option is not
-                                            supported on all platforms. See
-                                            @ref  telux::data::DataCallResponseCb for the error
-                                            returned when not supported. It is intended to be
-                                            used with @ref telux::data::startDataCall
-                                            only and is ignored if used with
-                                            @ref telux::data::stopDataCall*/
-    IpFamilyType ipFamilyType = IpFamilyType::IPV4V6;        /** Identifies IP family type */
+    int profileId; /** Profile identifier corresponding to which data call
+                       bring up will be done. Use
+                       @ref IDataProfileManager::requestProfileList to get
+                       the list of available profiles. */
+    std::string interfaceName = ""; /** Optional name to be assigned to the network interface
+                                        representing this data call. This option is not
+                                        supported on all platforms. See
+                                        @ref  telux::data::DataCallResponseCb for the error
+                                        returned when not supported. It is intended to be
+                                        used with @ref telux::data::startDataCall
+                                        only and is ignored if used with
+                                        @ref telux::data::stopDataCall*/
+    IpFamilyType ipFamilyType   = IpFamilyType::IPV4V6; /** Identifies IP family type */
     OperationType operationType = OperationType::DATA_LOCAL; /** Optional
                                                                  @ref telux::data::OperationType*/
 };
@@ -214,7 +186,8 @@ struct DataCallParams {
  *    not get called.
  *  - If any client attemp to stop data call and error detected, error argument will contain error
  *    code and onDataCallInfoChanged will not get called.
- *  - If the client tries to start a data call on specific profile id and network interface name and:
+ *  - If the client tries to start a data call on specific profile id and network interface name
+and:
 *       - If data call already exists with the same profile ID but a different network interface
  *        then error will be set to telux::ErrorCode::DEVICE_IN_USE and onDataCallInfoChanged
  *        will not get called.
@@ -299,16 +272,15 @@ using DefaultProfileIdResponseCb
  * @param [in] error      Code which indicates whether the operation succeeded or not.
  *                        @ref ErrorCode.
  */
-using TrafficFlowTemplateCb =
-    std::function<void(const std::vector<std::shared_ptr<TrafficFlowTemplate>> &tft,
-        telux::common::ErrorCode error)>;
+using TrafficFlowTemplateCb = std::function<void(
+    const std::vector<std::shared_ptr<TrafficFlowTemplate>> &tft, telux::common::ErrorCode error)>;
 
 /**
  * This function is called in response to requestDataCallBitRate.
  * Returned bitRate will contain data call bit rates @ref telux::data::BitRateInfo if reported
  * error is telux::common::ErrorCode::SUCCESS. If error is reported, content of bitRate is
  * don't care
-*
+ *
  * The callback can be invoked from multiple different threads.
  * The implementation should be thread safe.
  *
@@ -317,7 +289,7 @@ using TrafficFlowTemplateCb =
  *
  */
 using requestDataCallBitRateResponseCb
-    = std::function<void(BitRateInfo& bitRate, telux::common::ErrorCode error)>;
+    = std::function<void(BitRateInfo &bitRate, telux::common::ErrorCode error)>;
 
 /**
  * This function is called in response to requestRoamingMode.
@@ -330,8 +302,8 @@ using requestDataCallBitRateResponseCb
  * @param [in] error               Return code for whether the operation succeeded or failed.
  *
  */
-using requestRoamingModeResponseCb =
-    std::function<void(bool isRoamingEnabled, int profileId, telux::common::ErrorCode error)>;
+using requestRoamingModeResponseCb
+    = std::function<void(bool isRoamingEnabled, int profileId, telux::common::ErrorCode error)>;
 
 /**
  * This function is called with the response to requestThrottledApnInfo API.
@@ -344,8 +316,7 @@ using requestRoamingModeResponseCb =
  *                                      succeeded or failed
  */
 using ThrottleInfoCb = std::function<void(
-    const std::vector<APNThrottleInfo> &throttleInfoList,
-    telux::common::ErrorCode error)>;
+    const std::vector<APNThrottleInfo> &throttleInfoList, telux::common::ErrorCode error)>;
 
 /**
  *@brief IDataConnectionManager is a primary interface for cellular connectivity
@@ -361,7 +332,8 @@ class IDataConnectionManager {
      *
      * @returns SERVICE_AVAILABLE    If data connection manager is ready for service.
      *          SERVICE_UNAVAILABLE  If data connection manager is temporarily unavailable.
-     *          SERVICE_FAILED       If data connection manager encountered an irrecoverable failure.
+     *          SERVICE_FAILED       If data connection manager encountered an irrecoverable
+     * failure.
      *
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
@@ -386,37 +358,40 @@ class IDataConnectionManager {
      */
     virtual std::future<bool> onSubsystemReady() = 0;
 
-   /**
-    * Set a profile as default which results in following:
-    * Traffic from devices tethered to MDM via default network interfaces such as eth0, ecm0, and
-    * mhi0 will be directed to rmnet_data that was brought up with default profile.
-    * Traffic initiated within MDM or EAP that is destined for WAN network and is not bound to a
-    * WAN interface will be routed by default to WAN network corresponding to the default profile ID
-    *
-    * On platforms with Access control enabled, Caller needs to have TELUX_DATA_SETTING permission
-    * to invoke this API successfully.
-    *
-    * @param [in] operationType     @ref telux::data::OperationType
-    * @param [in] profileId         Profile identifier to be set as default
-    * @param [in] callback          optional callback to get the response setDefaultProfile
-    *
-    * @returns Immediate status of setDefaultProfile i.e. success or suitable status.
-    *
-    */
-   virtual telux::common::Status setDefaultProfile(OperationType operationType, uint8_t profileId,
-       telux::common::ResponseCallback callback = nullptr)  = 0;
+    /**
+     * Set a profile as default which results in following:
+     * Traffic from devices tethered to MDM via default network interfaces such as eth0, ecm0, and
+     * mhi0 will be directed to rmnet_data that was brought up with default profile.
+     * Traffic initiated within MDM or EAP that is destined for WAN network and is not bound to a
+     * WAN interface will be routed by default to WAN network corresponding to the default profile
+     * ID
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_SETTING permission
+     * to invoke this API successfully.
+     *
+     * @param [in] operationType     @ref telux::data::OperationType
+     * @param [in] profileId         Profile identifier to be set as default
+     * @param [in] callback          optional callback to get the response setDefaultProfile
+     *
+     * @returns Immediate status of setDefaultProfile i.e. success or suitable status.
+     *
+     */
+    virtual telux::common::Status setDefaultProfile(OperationType operationType, uint8_t profileId,
+        telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
-   /**
-    * Get current default profile
-    *
-    * @param [in] operationType     @ref telux::data::OperationType
-    * @param [in] callback          callback to get the response getDefaultProfile
-    *
-    * @returns Immediate status of getDefaultProfile i.e. success or suitable status.
-    *
-    */
-   virtual telux::common::Status getDefaultProfile(
-       OperationType operationType, DefaultProfileIdResponseCb callback)  = 0;
+    /**
+     * Get current default profile
+     *
+     * @param [in] operationType     @ref telux::data::OperationType
+     * @param [in] callback          callback to get the response getDefaultProfile
+     *
+     * @returns Immediate status of getDefaultProfile i.e. success or suitable status.
+     *
+     */
+    virtual telux::common::Status getDefaultProfile(
+        OperationType operationType, DefaultProfileIdResponseCb callback)
+        = 0;
 
     /**
      * Enable roaming mode for profile id. If disabled, any client attempt to bring up data call on
@@ -439,7 +414,8 @@ class IDataConnectionManager {
      *
      */
     virtual telux::common::Status setRoamingMode(bool enable, uint8_t profileId,
-        OperationType operationType, telux::common::ResponseCallback callback = nullptr) = 0;
+        OperationType operationType, telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Request current roaming mode for profile id.
@@ -451,8 +427,9 @@ class IDataConnectionManager {
      * @returns Status of requestRoamingMode i.e. success or suitable status code.
      *
      */
-    virtual telux::common::Status requestRoamingMode(uint8_t profileId, OperationType operationType,
-        requestRoamingModeResponseCb callback) = 0;
+    virtual telux::common::Status requestRoamingMode(
+        uint8_t profileId, OperationType operationType, requestRoamingModeResponseCb callback)
+        = 0;
 
     /**
      * Starts a data call corresponding to default or specified profile identifier.
@@ -482,8 +459,9 @@ class IDataConnectionManager {
      * @note     Eval: This is a new API and is being evaluated. It is subject to
      *                 change and could break backwards compatibility.
      */
-    virtual telux::common::Status startDataCall(const DataCallParams &dataCallParams,
-        DataCallResponseCb callback = nullptr) = 0;
+    virtual telux::common::Status startDataCall(
+        const DataCallParams &dataCallParams, DataCallResponseCb callback = nullptr)
+        = 0;
 
     /**
      * Tear down data call connection based on specified profile identifier, IP family
@@ -514,8 +492,9 @@ class IDataConnectionManager {
      * @note     Eval: This is a new API and is being evaluated. It is subject to
      *                 change and could break backwards compatibility.
      */
-    virtual telux::common::Status stopDataCall(const DataCallParams &dataCallParams,
-        DataCallResponseCb callback = nullptr) = 0;
+    virtual telux::common::Status stopDataCall(
+        const DataCallParams &dataCallParams, DataCallResponseCb callback = nullptr)
+        = 0;
 
     /**
      * Register a listener for specific events in the Connection Manager like establishment of new
@@ -539,7 +518,8 @@ class IDataConnectionManager {
      *
      */
     virtual telux::common::Status deregisterListener(
-        std::weak_ptr<IDataConnectionListener> listener) = 0;
+        std::weak_ptr<IDataConnectionListener> listener)
+        = 0;
 
     /**
      * Get associated slot id for the Data Connection Manager.
@@ -556,8 +536,9 @@ class IDataConnectionManager {
      * @param [out] callback         Callback with list of supported data calls
      *
      */
-    virtual telux::common::Status requestDataCallList(OperationType operationType,
-        DataCallListResponseCb callback) = 0;
+    virtual telux::common::Status requestDataCallList(
+        OperationType operationType, DataCallListResponseCb callback)
+        = 0;
 
     /**
      * Starts a data call corresponding to the default or specified profile identifier.
@@ -591,7 +572,8 @@ class IDataConnectionManager {
      */
     virtual telux::common::Status startDataCall(int profileId,
         IpFamilyType ipFamilyType = IpFamilyType::IPV4V6, DataCallResponseCb callback = nullptr,
-        OperationType operationType = OperationType::DATA_LOCAL, std::string apn = "") = 0;
+        OperationType operationType = OperationType::DATA_LOCAL, std::string apn = "")
+        = 0;
 
     /**
      * Tears down a data call connection based on the specified profile identifier, IP family
@@ -625,7 +607,8 @@ class IDataConnectionManager {
      */
     virtual telux::common::Status stopDataCall(int profileId,
         IpFamilyType ipFamilyType = IpFamilyType::IPV4V6, DataCallResponseCb callback = nullptr,
-        OperationType operationType = OperationType::DATA_LOCAL, std::string apn = "") = 0;
+        OperationType operationType = OperationType::DATA_LOCAL, std::string apn = "")
+        = 0;
 
     /**
      * Request information about APNs that are throttled by the network
@@ -753,8 +736,9 @@ class IDataCall {
      * @returns Status of requestTrafficFlowTemplate i.e. success or suitable status code.
      *
      */
-    virtual telux::common::Status requestTrafficFlowTemplate(IpFamilyType ipFamilyType,
-        TrafficFlowTemplateCb callback) = 0;
+    virtual telux::common::Status requestTrafficFlowTemplate(
+        IpFamilyType ipFamilyType, TrafficFlowTemplateCb callback)
+        = 0;
 
     /**
      * Request the data transfer statistics for data call corresponding
@@ -791,8 +775,8 @@ class IDataCall {
      * @returns Status of requestDataCallBitRate success or suitable status code
      *
      */
-    virtual telux::common::Status requestDataCallBitRate(
-        requestDataCallBitRateResponseCb callback) = 0;
+    virtual telux::common::Status requestDataCallBitRate(requestDataCallBitRateResponseCb callback)
+        = 0;
 
     /**
      * Destructor for IDataCall
@@ -857,7 +841,7 @@ class IDataConnectionListener : public telux::common::IServiceStatusListener {
      *
      */
     virtual void onTrafficFlowTemplateChange(const std::shared_ptr<IDataCall> &dataCall,
-        const std::vector<std::shared_ptr<TftChangeInfo>> &tft) {};
+        const std::vector<std::shared_ptr<TftChangeInfo>> &tft){};
 
     /**
      * This function is called when WWAN backhaul connectivity config changes.
@@ -866,7 +850,8 @@ class IDataConnectionListener : public telux::common::IServiceStatusListener {
      * @param [in] isConnectivityAllowed - Connectivity status allowed/disallowed.
      *
      */
-    virtual void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) {}
+    virtual void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) {
+    }
 
     /**
      * This function is called when the throttled state changes, such as when a new APN is throttled
@@ -887,7 +872,7 @@ class IDataConnectionListener : public telux::common::IServiceStatusListener {
 };
 
 /** @} */ /* end_addtogroup telematics_data */
-}
-}
+}  // namespace data
+}  // namespace telux
 
-#endif // TELUX_DATA_DATACONNECTIONMANAGER_HPP
+#endif  // TELUX_DATA_DATACONNECTIONMANAGER_HPP

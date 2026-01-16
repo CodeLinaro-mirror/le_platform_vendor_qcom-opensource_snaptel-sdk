@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_WrongWayDrivingSubCauseCode_H_
-#define	_WrongWayDrivingSubCauseCode_H_
-
+#ifndef _WrongWayDrivingSubCauseCode_H_
+#define _WrongWayDrivingSubCauseCode_H_
 
 #include <asn_application.h>
 
@@ -20,13 +19,13 @@ extern "C" {
 
 /* Dependencies */
 typedef enum WrongWayDrivingSubCauseCode {
-	WrongWayDrivingSubCauseCode_unavailable	= 0,
-	WrongWayDrivingSubCauseCode_wrongLane	= 1,
-	WrongWayDrivingSubCauseCode_wrongDirection	= 2
+    WrongWayDrivingSubCauseCode_unavailable    = 0,
+    WrongWayDrivingSubCauseCode_wrongLane      = 1,
+    WrongWayDrivingSubCauseCode_wrongDirection = 2
 } e_WrongWayDrivingSubCauseCode;
 
 /* WrongWayDrivingSubCauseCode */
-typedef long	 WrongWayDrivingSubCauseCode_t;
+typedef long WrongWayDrivingSubCauseCode_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_WrongWayDrivingSubCauseCode;
@@ -44,5 +43,5 @@ per_type_encoder_f WrongWayDrivingSubCauseCode_encode_uper;
 }
 #endif
 
-#endif	/* _WrongWayDrivingSubCauseCode_H_ */
+#endif /* _WrongWayDrivingSubCauseCode_H_ */
 #include <asn_internal.h>

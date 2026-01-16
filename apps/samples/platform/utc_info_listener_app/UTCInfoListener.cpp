@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 /*
@@ -29,9 +29,9 @@
 
 #include "SignalHandler.hpp"
 
-using telux::platform::PlatformFactory;
-using telux::platform::ITimeManager;
 using telux::platform::ITimeListener;
+using telux::platform::ITimeManager;
+using telux::platform::PlatformFactory;
 
 // Used to get the Telux async result
 std::mutex mtx;
@@ -42,9 +42,8 @@ static bool gExit = false;
 using namespace telux::platform;
 using namespace telux::common;
 
-class UtcInfoListener : public ITimeListener,
-                        public std::enable_shared_from_this<UtcInfoListener> {
-   public:
+class UtcInfoListener : public ITimeListener, public std::enable_shared_from_this<UtcInfoListener> {
+ public:
     int initTimeListener() {
         telux::common::ServiceStatus serviceStatus;
         std::promise<telux::common::ServiceStatus> p{};
@@ -53,10 +52,8 @@ class UtcInfoListener : public ITimeListener,
         auto &platformFactory = PlatformFactory::getInstance();
 
         /* Step - 2 */
-        timeManager_  = platformFactory.getTimeManager(
-                [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+        timeManager_ = platformFactory.getTimeManager(
+            [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!timeManager_) {
             std::cout << "Can't get ITimeListenerManager" << std::endl;
@@ -66,8 +63,8 @@ class UtcInfoListener : public ITimeListener,
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Time Listener service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Time Listener service unavailable, status "
+                      << static_cast<int>(serviceStatus) << std::endl;
             return -EIO;
         }
 
@@ -130,7 +127,7 @@ int main(int argc, char **argv) {
 
     try {
         app = std::make_shared<UtcInfoListener>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate UtcInfoListener" << std::endl;
         return -ENOMEM;
     }

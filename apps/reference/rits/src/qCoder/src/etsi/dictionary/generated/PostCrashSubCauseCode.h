@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_PostCrashSubCauseCode_H_
-#define	_PostCrashSubCauseCode_H_
-
+#ifndef _PostCrashSubCauseCode_H_
+#define _PostCrashSubCauseCode_H_
 
 #include <asn_application.h>
 
@@ -20,15 +19,15 @@ extern "C" {
 
 /* Dependencies */
 typedef enum PostCrashSubCauseCode {
-	PostCrashSubCauseCode_unavailable	= 0,
-	PostCrashSubCauseCode_accidentWithoutECallTriggered	= 1,
-	PostCrashSubCauseCode_accidentWithECallManuallyTriggered	= 2,
-	PostCrashSubCauseCode_accidentWithECallAutomaticallyTriggered	= 3,
-	PostCrashSubCauseCode_accidentWithECallTriggeredWithoutAccessToCellularNetwork	= 4
+    PostCrashSubCauseCode_unavailable                                              = 0,
+    PostCrashSubCauseCode_accidentWithoutECallTriggered                            = 1,
+    PostCrashSubCauseCode_accidentWithECallManuallyTriggered                       = 2,
+    PostCrashSubCauseCode_accidentWithECallAutomaticallyTriggered                  = 3,
+    PostCrashSubCauseCode_accidentWithECallTriggeredWithoutAccessToCellularNetwork = 4
 } e_PostCrashSubCauseCode;
 
 /* PostCrashSubCauseCode */
-typedef long	 PostCrashSubCauseCode_t;
+typedef long PostCrashSubCauseCode_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_PostCrashSubCauseCode;
@@ -46,5 +45,5 @@ per_type_encoder_f PostCrashSubCauseCode_encode_uper;
 }
 #endif
 
-#endif	/* _PostCrashSubCauseCode_H_ */
+#endif /* _PostCrashSubCauseCode_H_ */
 #include <asn_internal.h>

@@ -27,49 +27,18 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
- /**
-  * @file: RadioInterface.h
-  *
-  * @brief: Simple application that queries C-V2X Status, interacts with
-  *         telSDK and prints information to stdout
-  */
+/**
+ * @file: RadioInterface.h
+ *
+ * @brief: Simple application that queries C-V2X Status, interacts with
+ *         telSDK and prints information to stdout
+ */
 
 #pragma once
 
@@ -83,31 +52,31 @@
 #include <telux/cv2x/Cv2xRadio.hpp>
 #include <telux/cv2x/Cv2xRadioTypes.hpp>
 
-using std::cout;
+using std::array;
 using std::cerr;
+using std::cout;
 using std::endl;
-using std::shared_ptr;
+using std::make_shared;
 using std::map;
 using std::promise;
+using std::shared_ptr;
 using std::string;
 using std::thread;
-using std::array;
-using std::make_shared;
 using telux::common::ErrorCode;
 using telux::common::Status;
 using telux::cv2x::Cv2xFactory;
-using telux::cv2x::ICv2xRadioManager;
-using telux::cv2x::ICv2xRadio;
 using telux::cv2x::Cv2xStatusEx;
 using telux::cv2x::Cv2xStatusType;
-using telux::cv2x::TrafficCategory;
-using telux::cv2x::TrafficIpType;
+using telux::cv2x::EventFlowInfo;
+using telux::cv2x::ICv2xRadio;
 using telux::cv2x::ICv2xRadioListener;
+using telux::cv2x::ICv2xRadioManager;
 using telux::cv2x::ICv2xRxSubscription;
 using telux::cv2x::ICv2xTxRxSocket;
-using telux::cv2x::SocketInfo;
-using telux::cv2x::EventFlowInfo;
 using telux::cv2x::L2FilterInfo;
+using telux::cv2x::SocketInfo;
+using telux::cv2x::TrafficCategory;
+using telux::cv2x::TrafficIpType;
 
 typedef void (*v2x_src_l2_addr_update)(uint32_t newAddr);
 
@@ -124,54 +93,50 @@ typedef struct RadioOpt {
 } RadioOpt_t;
 
 class CommonCallback {
-public:
+ public:
     void onResponse(ErrorCode error);
     ErrorCode getResponse();
 
-private:
+ private:
     std::mutex cbMtx_;
     std::condition_variable cbCv_;
-    bool cbRecvd_ = false;
+    bool cbRecvd_  = false;
     ErrorCode err_ = ErrorCode::GENERIC_FAILURE;
 };
 
-
 class Cv2xStatusListener : public telux::cv2x::ICv2xListener {
-public:
-
+ public:
     Cv2xStatusListener(telux::cv2x::Cv2xStatus status, int rVerbosity);
     telux::cv2x::Cv2xStatus getCurrentStatus();
     uint8_t getCurrentCbr();
-    int waitForCv2xStatus(telux::cv2x::Cv2xStatusType status, bool& restartFlow);
-    int waitForCv2xRxStatus(telux::cv2x::Cv2xStatusType status, bool& restartFlow);
-    int waitForCv2xTxStatus(telux::cv2x::Cv2xStatusType status, bool& restartFlow);
+    int waitForCv2xStatus(telux::cv2x::Cv2xStatusType status, bool &restartFlow);
+    int waitForCv2xRxStatus(telux::cv2x::Cv2xStatusType status, bool &restartFlow);
+    int waitForCv2xTxStatus(telux::cv2x::Cv2xStatusType status, bool &restartFlow);
     void onStatusChanged(telux::cv2x::Cv2xStatus status) override;
     void deinit();
 
     // avoid potential stuck in case deinit is not invoked
     ~Cv2xStatusListener();
-private:
+
+ private:
     std::condition_variable cv_;
     std::mutex mtx_;
     telux::cv2x::Cv2xStatus cv2xStatus_;
     int radioVerbosity = 0;
 };
 
-
 class RadioInterface {
 
-private:
-
+ private:
     static map<Cv2xStatusType, string> gCv2xStatusToString;
-    //static map<int, string> gCv2xReadyToString;
+    // static map<int, string> gCv2xReadyToString;
 
     /*
      * shared_ptr to the radio listener.
      */
     shared_ptr<ICv2xRadioListener> radioListener_ = nullptr;
 
-
-    std::shared_ptr<ICv2xTxRxSocket>tcpSockInfo = nullptr;
+    std::shared_ptr<ICv2xTxRxSocket> tcpSockInfo = nullptr;
 
     /*
      * shared_ptr to the singleton radio manager of the SDK.
@@ -183,18 +148,17 @@ private:
      */
     shared_ptr<ICv2xRadio> cv2xRadio_ = nullptr;
 
-protected:
-    //variable to store cv2x status listener
+ protected:
+    // variable to store cv2x status listener
     static std::shared_ptr<Cv2xStatusListener> cv2xStatusListener_;
     TrafficCategory category;
     bool enableCsvLog_ = false;
     static bool enableDiagLogPacket_;
 
-public:
-
+ public:
     /*
-    * A Cv2xStatus that holds the radio status information.
-    */
+     * A Cv2xStatus that holds the radio status information.
+     */
     Cv2xStatusEx gCv2xStatus;
 
     /*
@@ -210,29 +174,29 @@ public:
     /*
      * Method to get V2X network interface name according to the traffic type.
      */
-    int getV2xIfaceName(TrafficIpType type, string& ifName);
+    int getV2xIfaceName(TrafficIpType type, string &ifName);
 
     /**
-    * Non-blocking method that requests and returns TX/RX radio status.
-    * @param type a RadioType.
-    * @return String with possible values
-    * "INACTIVE", "ACTIVE", "SUSPENDED", "UNKNOWN".
-    */
+     * Non-blocking method that requests and returns TX/RX radio status.
+     * @param type a RadioType.
+     * @return String with possible values
+     * "INACTIVE", "ACTIVE", "SUSPENDED", "UNKNOWN".
+     */
     Cv2xStatusType statusCheck(RadioType type);
     /**
-    * Blocking method that checks manager, radio and TX/RX status.
-    * @param category a TrafficCategory.
-    * @param type a RadioType.
-    * @return bool
-    * @see TrafficCategory
-    */
+     * Blocking method that checks manager, radio and TX/RX status.
+     * @param category a TrafficCategory.
+     * @param type a RadioType.
+     * @return bool
+     * @see TrafficCategory
+     */
     bool ready(TrafficCategory category, RadioType type);
 
     /**
-    * Set the verbosity for the specific RadioInterface implementation.
-    * @param interger value representing level of verbosity
-    * @return none
-    */
+     * Set the verbosity for the specific RadioInterface implementation.
+     * @param interger value representing level of verbosity
+     * @return none
+     */
     void set_radio_verbosity(int value);
     int rVerbosity = 0;
     /**
@@ -241,7 +205,7 @@ public:
      * @return 0 if wait for cv2x active success
      * @return -1 if error occurs
      */
-    virtual int waitForCv2xToActivate(bool& restartFlow);
+    virtual int waitForCv2xToActivate(bool &restartFlow);
 
     telux::cv2x::Cv2xStatus getCurrentStatus();
 
@@ -251,21 +215,21 @@ public:
     void prepareForExit();
 
     /**
-    * Method that requests src L2 address update.
-    * @return bool
-    */
+     * Method that requests src L2 address update.
+     * @return bool
+     */
     bool updateSrcL2();
 
     /**
-    * Method to get latest cv2x channel busy ratio value.
-    * @return uint8_t, 255 means invalid
-    */
+     * Method to get latest cv2x channel busy ratio value.
+     * @return uint8_t, 255 means invalid
+     */
     virtual uint8_t getCBRValue();
 
     /**
-    * Method to get latest radio Tx message monotonic time.
-    * @return uint64_t, 0 indicate this radio interface has not trasmitted any message yet
-    */
+     * Method to get latest radio Tx message monotonic time.
+     * @return uint64_t, 0 indicate this radio interface has not trasmitted any message yet
+     */
     virtual uint64_t latestTxRxTimeMonotonic();
 
     virtual void enableCsvLog(bool enable);
@@ -278,15 +242,14 @@ public:
     int setRoutingInfo(const telux::cv2x::GlobalIPUnicastRoutingInfo &destL2Addr);
 
     /**
-    * Method to get local stored cv2x radio manager.
-    * @return ICv2xRadioManager, nullptr indicates cv2x radio manager is not ready.
-    */
+     * Method to get local stored cv2x radio manager.
+     * @return ICv2xRadioManager, nullptr indicates cv2x radio manager is not ready.
+     */
     shared_ptr<ICv2xRadioManager> getCv2xRadioManager();
 
     /**
-    * Method to get local stored cv2x radio.
-    * @return ICv2xRadio, nullptr indicates cv2x radio is not ready.
-    */
+     * Method to get local stored cv2x radio.
+     * @return ICv2xRadio, nullptr indicates cv2x radio is not ready.
+     */
     shared_ptr<ICv2xRadio> getCv2xRadio();
 };
-

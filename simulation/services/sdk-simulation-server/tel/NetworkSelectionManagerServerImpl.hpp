@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -22,57 +22,55 @@
 #include "event/ServerEventManager.hpp"
 #include "event/EventService.hpp"
 
+class NetworkSelectionManagerServerImpl final
+   : public telStub::NetworkSelectionService::Service,
+     public IServerEventListener,
+     public std::enable_shared_from_this<NetworkSelectionManagerServerImpl> {
 
-class NetworkSelectionManagerServerImpl final : public telStub::NetworkSelectionService::Service,
-                                                public IServerEventListener,
-                                                public
-                                  std::enable_shared_from_this<NetworkSelectionManagerServerImpl> {
-
-public:
+ public:
     NetworkSelectionManagerServerImpl();
     ~NetworkSelectionManagerServerImpl();
-    grpc::Status InitService(ServerContext* context,
-        const ::commonStub::GetServiceStatusRequest* request,
-        commonStub::GetServiceStatusReply* response) override;
-    grpc::Status GetServiceStatus(ServerContext* context,
-        const ::commonStub::GetServiceStatusRequest* request,
-        commonStub::GetServiceStatusReply* response) override;
-    grpc::Status CleanUpService(ServerContext* context,
-        const ::google::protobuf::Empty* request, ::google::protobuf::Empty* response) override;
+    grpc::Status InitService(ServerContext *context,
+        const ::commonStub::GetServiceStatusRequest *request,
+        commonStub::GetServiceStatusReply *response) override;
+    grpc::Status GetServiceStatus(ServerContext *context,
+        const ::commonStub::GetServiceStatusRequest *request,
+        commonStub::GetServiceStatusReply *response) override;
+    grpc::Status CleanUpService(ServerContext *context, const ::google::protobuf::Empty *request,
+        ::google::protobuf::Empty *response) override;
     void onEventUpdate(::eventService::UnsolicitedEvent message) override;
-    grpc::Status RequestNetworkSelectionMode(ServerContext* context,
-        const ::telStub::RequestNetworkSelectionModeRequest* request,
-        telStub::RequestNetworkSelectionModeReply* response) override;
-    grpc::Status SetNetworkSelectionMode(ServerContext* context,
-        const ::telStub::SetNetworkSelectionModeRequest* request,
-        telStub::SetNetworkSelectionModeReply* response) override;
-    grpc::Status RequestPreferredNetworks(ServerContext* context,
-        const ::telStub::RequestPreferredNetworksRequest* request,
-        telStub::RequestPreferredNetworksReply* response) override;
-    grpc::Status PerformNetworkScan(ServerContext* context,
-        const ::telStub::PerformNetworkScanRequest* request,
-        telStub::PerformNetworkScanReply* response) override;
-    grpc::Status SetPreferredNetworks(ServerContext* context,
-        const ::telStub::SetPreferredNetworksRequest* request,
-        telStub::SetPreferredNetworksReply* response) override;
-    grpc::Status SetLteDubiousCell(ServerContext* context,
-            const ::telStub::SetLteDubiousCellRequest* request,
-            ::telStub::SetLteDubiousCellReply* response) override;
-    grpc::Status SetNrDubiousCell(ServerContext* context,
-            const ::telStub::SetNrDubiousCellRequest* request,
-            ::telStub::SetNrDubiousCellReply* response) override;
+    grpc::Status RequestNetworkSelectionMode(ServerContext *context,
+        const ::telStub::RequestNetworkSelectionModeRequest *request,
+        telStub::RequestNetworkSelectionModeReply *response) override;
+    grpc::Status SetNetworkSelectionMode(ServerContext *context,
+        const ::telStub::SetNetworkSelectionModeRequest *request,
+        telStub::SetNetworkSelectionModeReply *response) override;
+    grpc::Status RequestPreferredNetworks(ServerContext *context,
+        const ::telStub::RequestPreferredNetworksRequest *request,
+        telStub::RequestPreferredNetworksReply *response) override;
+    grpc::Status PerformNetworkScan(ServerContext *context,
+        const ::telStub::PerformNetworkScanRequest *request,
+        telStub::PerformNetworkScanReply *response) override;
+    grpc::Status SetPreferredNetworks(ServerContext *context,
+        const ::telStub::SetPreferredNetworksRequest *request,
+        telStub::SetPreferredNetworksReply *response) override;
+    grpc::Status SetLteDubiousCell(ServerContext *context,
+        const ::telStub::SetLteDubiousCellRequest *request,
+        ::telStub::SetLteDubiousCellReply *response) override;
+    grpc::Status SetNrDubiousCell(ServerContext *context,
+        const ::telStub::SetNrDubiousCellRequest *request,
+        ::telStub::SetNrDubiousCellReply *response) override;
 
-private:
-    void createPreferredNetworkInfo(telux::tel::PreferredNetworkInfo input,
-        telStub::PreferredNetworkInfo* output);
+ private:
+    void createPreferredNetworkInfo(
+        telux::tel::PreferredNetworkInfo input, telStub::PreferredNetworkInfo *output);
     void requestPreferredNetworks(int phoneId,
-        std::vector<telux::tel::PreferredNetworkInfo>& preferredNetworks3gppInfo,
-        std::vector<telux::tel::PreferredNetworkInfo>& staticPreferredNetworksInfo);
+        std::vector<telux::tel::PreferredNetworkInfo> &preferredNetworks3gppInfo,
+        std::vector<telux::tel::PreferredNetworkInfo> &staticPreferredNetworksInfo);
     void setPreferredNetworks(int phoneId,
         std::vector<telux::tel::PreferredNetworkInfo> preferredNetworksInfo,
         bool clearPrevPreferredNetworks);
-    telux::tel::PreferredNetworkInfo parsePreferredNetworkInfo(
-        telStub::PreferredNetworkInfo input);
+    telux::tel::PreferredNetworkInfo parsePreferredNetworkInfo(telStub::PreferredNetworkInfo input);
     /**
      * @brief Sorts the database of preferred network database.
      * @ref [INetworkSelectionManager][PreferredNetworksInfo]
@@ -96,4 +94,4 @@ private:
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
 };
 
-#endif // NETWORK_SELECTION_MANAGER_SERVER_HPP
+#endif  // NETWORK_SELECTION_MANAGER_SERVER_HPP

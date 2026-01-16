@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_RoutAdvertExts_H_
-#define	_RoutAdvertExts_H_
-
+#ifndef _RoutAdvertExts_H_
+#define _RoutAdvertExts_H_
 
 #include <asn_application.h>
 
@@ -24,10 +23,10 @@ struct Extension;
 
 /* RoutAdvertExts */
 typedef struct RoutAdvertExts {
-	A_SEQUENCE_OF(struct Extension) list;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    A_SEQUENCE_OF(struct Extension) list;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } RoutAdvertExts_t;
 
 /* Implementation */
@@ -40,5 +39,5 @@ extern asn_TYPE_descriptor_t asn_DEF_RoutAdvertExts;
 /* Referred external types */
 #include "Extension.h"
 
-#endif	/* _RoutAdvertExts_H_ */
+#endif /* _RoutAdvertExts_H_ */
 #include <asn_internal.h>

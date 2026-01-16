@@ -27,8 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -56,61 +57,57 @@ using grpc::ClientContext;
 
 using sensorStub::SensorClientService;
 
+namespace telux {
 
-
-namespace telux{
-
-namespace sensor{
+namespace sensor {
 
 class SensorManagerStub : public ISensorManager,
                           public std::enable_shared_from_this<SensorManagerStub> {
-public:
-
+ public:
     telux::common::Status init(telux::common::InitResponseCb initCb);
 
-/**
- * This status indicates whether the object is in a usable state.
- *
- * returns SERVICE_AVAILABLE    -  If sensor client is ready for service.
- *          SERVICE_UNAVAILABLE  -  If sensor client is temporarily unavailable.
- *          SERVICE_FAILED       -  If sensor client encountered an irrecoverable failure.
- */
+    /**
+     * This status indicates whether the object is in a usable state.
+     *
+     * returns SERVICE_AVAILABLE    -  If sensor client is ready for service.
+     *          SERVICE_UNAVAILABLE  -  If sensor client is temporarily unavailable.
+     *          SERVICE_FAILED       -  If sensor client encountered an irrecoverable failure.
+     */
     telux::common::ServiceStatus getServiceStatus() override;
 
-/**
- * This API retrieves the available sensors information.
- *
- * param[in] info - vector of SensorInfo to get details of available sensors
- *
- * returns Status of getAvailableSensorInfo i.e success or suitable status code.
- *
- */
+    /**
+     * This API retrieves the available sensors information.
+     *
+     * param[in] info - vector of SensorInfo to get details of available sensors
+     *
+     * returns Status of getAvailableSensorInfo i.e success or suitable status code.
+     *
+     */
     telux::common::Status getAvailableSensorInfo(std::vector<SensorInfo> &info) override;
     telux::common::Status getSensor(
-    std::shared_ptr<ISensorClient> &sensor, std::string name) override;
+        std::shared_ptr<ISensorClient> &sensor, std::string name) override;
     telux::common::Status getSensorClient(
-    std::shared_ptr<ISensorClient> &sensor, std::string name) override;
+        std::shared_ptr<ISensorClient> &sensor, std::string name) override;
     telux::common::Status setEulerAngleConfig(EulerAngleConfig eulerAngleConfig) override;
     SensorManagerStub();
     ~SensorManagerStub();
     void cleanup();
 
-private:
-  void updateSensorInfo();
-  void initSync(telux::common::InitResponseCb callback);
-  void setServiceStatus(telux::common::ServiceStatus status);
-  telux::common::Status apiJsonReader(std::string apiName);
-  SensorInfo &getSensorInfo(std::string name);
-  telux::common::ServiceStatus serviceStatus_;
-  std::mutex serviceStatusMutex_;
-  telux::common::InitResponseCb initCb_;
-  telux::common::AsyncTaskQueue<void> taskQ_;
-  std::vector<SensorInfo> sensorInfo_;
-  std::shared_ptr<::sensorStub::SensorClientService::Stub> stub_;
+ private:
+    void updateSensorInfo();
+    void initSync(telux::common::InitResponseCb callback);
+    void setServiceStatus(telux::common::ServiceStatus status);
+    telux::common::Status apiJsonReader(std::string apiName);
+    SensorInfo &getSensorInfo(std::string name);
+    telux::common::ServiceStatus serviceStatus_;
+    std::mutex serviceStatusMutex_;
+    telux::common::InitResponseCb initCb_;
+    telux::common::AsyncTaskQueue<void> taskQ_;
+    std::vector<SensorInfo> sensorInfo_;
+    std::shared_ptr<::sensorStub::SensorClientService::Stub> stub_;
 };
 
+}  // namespace sensor
 
-}
-
-}
+}  // namespace telux
 #endif  // SENSORMANAGERSTUB_HPP

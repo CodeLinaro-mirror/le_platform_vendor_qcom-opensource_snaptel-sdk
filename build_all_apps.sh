@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
-#SPDX-License-Identifier: BSD-3-Clause-Clear
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
 
 # This script is designed to check if individual applications are compilable from their respective CMake files.
 # Additionally, it maintains a list of applications that it will ignore if their compilation fails.

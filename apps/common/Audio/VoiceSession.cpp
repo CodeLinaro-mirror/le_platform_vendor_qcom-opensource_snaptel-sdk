@@ -28,10 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2023,2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <chrono>
@@ -43,7 +42,7 @@
 #include "VoiceSession.hpp"
 
 VoiceSession::VoiceSession()
-    : audioStarted_(false) {
+   : audioStarted_(false) {
 }
 
 VoiceSession::~VoiceSession() {
@@ -59,16 +58,16 @@ Status VoiceSession::startAudio() {
             std::promise<bool> p;
             statusFromRequest = audioVoiceStream_->startAudio(
                 [&p, &statusFromResponse, &audioVoiceStream_, this](ErrorCode error) {
-                if (error == ErrorCode::SUCCESS) {
-                    statusFromResponse = telux::common::Status::SUCCESS;
-                    audioStarted_ = true;
-                    p.set_value(true);
-                } else {
-                    statusFromResponse = telux::common::Status::FAILED;
-                    p.set_value(false);
-                }
-            });
-            if(statusFromRequest == Status::SUCCESS) {
+                    if (error == ErrorCode::SUCCESS) {
+                        statusFromResponse = telux::common::Status::SUCCESS;
+                        audioStarted_      = true;
+                        p.set_value(true);
+                    } else {
+                        statusFromResponse = telux::common::Status::FAILED;
+                        p.set_value(false);
+                    }
+                });
+            if (statusFromRequest == Status::SUCCESS) {
                 p.get_future().wait();
                 return statusFromResponse;
             }
@@ -91,16 +90,16 @@ Status VoiceSession::stopAudio() {
         std::promise<bool> p;
         statusFromRequest = audioVoiceStream_->stopAudio(
             [&p, &statusFromResponse, &audioVoiceStream_, this](ErrorCode error) {
-            if (error == ErrorCode::SUCCESS) {
-                statusFromResponse = telux::common::Status::SUCCESS;
-                audioStarted_ = false;
-                p.set_value(true);
-            } else {
-                statusFromResponse = telux::common::Status::FAILED;
-                p.set_value(false);
-            }
-        });
-        if(statusFromRequest == Status::SUCCESS) {
+                if (error == ErrorCode::SUCCESS) {
+                    statusFromResponse = telux::common::Status::SUCCESS;
+                    audioStarted_      = false;
+                    p.set_value(true);
+                } else {
+                    statusFromResponse = telux::common::Status::FAILED;
+                    p.set_value(false);
+                }
+            });
+        if (statusFromRequest == Status::SUCCESS) {
             p.get_future().wait();
             return statusFromResponse;
         }
@@ -117,17 +116,17 @@ Status VoiceSession::startDtmf(DtmfTone tone, uint32_t duration, uint16_t gain) 
 
     if (audioVoiceStream_ && audioStarted_) {
         std::promise<bool> p;
-        statusFromRequest = audioVoiceStream_->playDtmfTone(tone, duration, gain,
-            [&p, &statusFromResponse, &audioVoiceStream_](ErrorCode error) {
-            if (error == ErrorCode::SUCCESS) {
-                statusFromResponse = telux::common::Status::SUCCESS;
-                p.set_value(true);
-            } else {
-                statusFromResponse = telux::common::Status::FAILED;
-                p.set_value(false);
-            }
-        });
-        if(statusFromRequest == Status::SUCCESS) {
+        statusFromRequest = audioVoiceStream_->playDtmfTone(
+            tone, duration, gain, [&p, &statusFromResponse, &audioVoiceStream_](ErrorCode error) {
+                if (error == ErrorCode::SUCCESS) {
+                    statusFromResponse = telux::common::Status::SUCCESS;
+                    p.set_value(true);
+                } else {
+                    statusFromResponse = telux::common::Status::FAILED;
+                    p.set_value(false);
+                }
+            });
+        if (statusFromRequest == Status::SUCCESS) {
             p.get_future().wait();
             return statusFromResponse;
         }
@@ -144,17 +143,17 @@ Status VoiceSession::stopDtmf() {
 
     if (audioVoiceStream_) {
         std::promise<bool> p;
-        statusFromRequest = audioVoiceStream_->stopDtmfTone(StreamDirection::RX,
-            [&p, &statusFromResponse, &audioVoiceStream_](ErrorCode error) {
-            if (error == ErrorCode::SUCCESS) {
-                statusFromResponse = telux::common::Status::SUCCESS;
-                p.set_value(true);
-            } else {
-                statusFromResponse = telux::common::Status::FAILED;
-                p.set_value(false);
-            }
+        statusFromRequest = audioVoiceStream_->stopDtmfTone(
+            StreamDirection::RX, [&p, &statusFromResponse, &audioVoiceStream_](ErrorCode error) {
+                if (error == ErrorCode::SUCCESS) {
+                    statusFromResponse = telux::common::Status::SUCCESS;
+                    p.set_value(true);
+                } else {
+                    statusFromResponse = telux::common::Status::FAILED;
+                    p.set_value(false);
+                }
             });
-        if(statusFromRequest == Status::SUCCESS) {
+        if (statusFromRequest == Status::SUCCESS) {
             p.get_future().wait();
             return statusFromResponse;
         }
@@ -171,18 +170,18 @@ Status VoiceSession::registerListener(std::weak_ptr<IVoiceListener> listener) {
 
     if (audioVoiceStream_ && audioStarted_) {
         std::promise<bool> p;
-        statusFromRequest = audioVoiceStream_ ->registerListener(
+        statusFromRequest = audioVoiceStream_->registerListener(
             listener, [&p, &statusFromResponse, &audioVoiceStream_](ErrorCode error) {
-            if (error == ErrorCode::SUCCESS) {
-                statusFromResponse = telux::common::Status::SUCCESS;
-                p.set_value(true);
-            } else {
-                statusFromResponse = telux::common::Status::FAILED;
-                p.set_value(false);
-                LOG(ERROR, "Failed to register Listener");
-            }
+                if (error == ErrorCode::SUCCESS) {
+                    statusFromResponse = telux::common::Status::SUCCESS;
+                    p.set_value(true);
+                } else {
+                    statusFromResponse = telux::common::Status::FAILED;
+                    p.set_value(false);
+                    LOG(ERROR, "Failed to register Listener");
+                }
             });
-        if(statusFromRequest == Status::SUCCESS) {
+        if (statusFromRequest == Status::SUCCESS) {
             p.get_future().wait();
             return statusFromResponse;
         }
@@ -196,7 +195,7 @@ Status VoiceSession::deRegisterListener(std::weak_ptr<IVoiceListener> listener) 
     auto audioVoiceStream_ = std::dynamic_pointer_cast<IAudioVoiceStream>(stream_);
     auto statusFromRequest = Status::FAILED;
     if (audioVoiceStream_ && audioStarted_) {
-        statusFromRequest = audioVoiceStream_ ->deRegisterListener(listener);
+        statusFromRequest = audioVoiceStream_->deRegisterListener(listener);
         if (statusFromRequest == Status::SUCCESS) {
             LOG(DEBUG, "Request to deregister DTMF Sent");
         }

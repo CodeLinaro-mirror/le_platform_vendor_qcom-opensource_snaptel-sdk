@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_DangerousSituationSubCauseCode_H_
-#define	_DangerousSituationSubCauseCode_H_
-
+#ifndef _DangerousSituationSubCauseCode_H_
+#define _DangerousSituationSubCauseCode_H_
 
 #include <asn_application.h>
 
@@ -20,18 +19,18 @@ extern "C" {
 
 /* Dependencies */
 typedef enum DangerousSituationSubCauseCode {
-	DangerousSituationSubCauseCode_unavailable	= 0,
-	DangerousSituationSubCauseCode_emergencyElectronicBrakeEngaged	= 1,
-	DangerousSituationSubCauseCode_preCrashSystemEngaged	= 2,
-	DangerousSituationSubCauseCode_espEngaged	= 3,
-	DangerousSituationSubCauseCode_absEngaged	= 4,
-	DangerousSituationSubCauseCode_aebEngaged	= 5,
-	DangerousSituationSubCauseCode_brakeWarningEngaged	= 6,
-	DangerousSituationSubCauseCode_collisionRiskWarningEngaged	= 7
+    DangerousSituationSubCauseCode_unavailable                     = 0,
+    DangerousSituationSubCauseCode_emergencyElectronicBrakeEngaged = 1,
+    DangerousSituationSubCauseCode_preCrashSystemEngaged           = 2,
+    DangerousSituationSubCauseCode_espEngaged                      = 3,
+    DangerousSituationSubCauseCode_absEngaged                      = 4,
+    DangerousSituationSubCauseCode_aebEngaged                      = 5,
+    DangerousSituationSubCauseCode_brakeWarningEngaged             = 6,
+    DangerousSituationSubCauseCode_collisionRiskWarningEngaged     = 7
 } e_DangerousSituationSubCauseCode;
 
 /* DangerousSituationSubCauseCode */
-typedef long	 DangerousSituationSubCauseCode_t;
+typedef long DangerousSituationSubCauseCode_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_DangerousSituationSubCauseCode;
@@ -49,5 +48,5 @@ per_type_encoder_f DangerousSituationSubCauseCode_encode_uper;
 }
 #endif
 
-#endif	/* _DangerousSituationSubCauseCode_H_ */
+#endif /* _DangerousSituationSubCauseCode_H_ */
 #include <asn_internal.h>

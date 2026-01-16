@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_AltitudeConfidence_H_
-#define	_AltitudeConfidence_H_
-
+#ifndef _AltitudeConfidence_H_
+#define _AltitudeConfidence_H_
 
 #include <asn_application.h>
 
@@ -20,26 +19,26 @@ extern "C" {
 
 /* Dependencies */
 typedef enum AltitudeConfidence {
-	AltitudeConfidence_alt_000_01	= 0,
-	AltitudeConfidence_alt_000_02	= 1,
-	AltitudeConfidence_alt_000_05	= 2,
-	AltitudeConfidence_alt_000_10	= 3,
-	AltitudeConfidence_alt_000_20	= 4,
-	AltitudeConfidence_alt_000_50	= 5,
-	AltitudeConfidence_alt_001_00	= 6,
-	AltitudeConfidence_alt_002_00	= 7,
-	AltitudeConfidence_alt_005_00	= 8,
-	AltitudeConfidence_alt_010_00	= 9,
-	AltitudeConfidence_alt_020_00	= 10,
-	AltitudeConfidence_alt_050_00	= 11,
-	AltitudeConfidence_alt_100_00	= 12,
-	AltitudeConfidence_alt_200_00	= 13,
-	AltitudeConfidence_outOfRange	= 14,
-	AltitudeConfidence_unavailable	= 15
+    AltitudeConfidence_alt_000_01  = 0,
+    AltitudeConfidence_alt_000_02  = 1,
+    AltitudeConfidence_alt_000_05  = 2,
+    AltitudeConfidence_alt_000_10  = 3,
+    AltitudeConfidence_alt_000_20  = 4,
+    AltitudeConfidence_alt_000_50  = 5,
+    AltitudeConfidence_alt_001_00  = 6,
+    AltitudeConfidence_alt_002_00  = 7,
+    AltitudeConfidence_alt_005_00  = 8,
+    AltitudeConfidence_alt_010_00  = 9,
+    AltitudeConfidence_alt_020_00  = 10,
+    AltitudeConfidence_alt_050_00  = 11,
+    AltitudeConfidence_alt_100_00  = 12,
+    AltitudeConfidence_alt_200_00  = 13,
+    AltitudeConfidence_outOfRange  = 14,
+    AltitudeConfidence_unavailable = 15
 } e_AltitudeConfidence;
 
 /* AltitudeConfidence */
-typedef long	 AltitudeConfidence_t;
+typedef long AltitudeConfidence_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_AltitudeConfidence;
@@ -57,5 +56,5 @@ per_type_encoder_f AltitudeConfidence_encode_uper;
 }
 #endif
 
-#endif	/* _AltitudeConfidence_H_ */
+#endif /* _AltitudeConfidence_H_ */
 #include <asn_internal.h>

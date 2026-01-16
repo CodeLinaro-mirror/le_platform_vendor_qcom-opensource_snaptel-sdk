@@ -26,13 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
- */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 #ifndef IMSSETTINGSMENU_HPP
 #define IMSSETTINGSMENU_HPP
@@ -46,7 +45,7 @@
 #include "ImsSettingsListener.hpp"
 
 class ImsSettingsMenu : public ConsoleApp {
-public:
+ public:
     /**
      * Initialize commands and SDK
      */
@@ -62,7 +61,7 @@ public:
     void requestImsVonr(std::vector<std::string> userInput);
     void setImsVonr(std::vector<std::string> userInput);
 
-private:
+ private:
     // Member variable to keep the Listener object alive till application ends.
     std::shared_ptr<telux::tel::IImsSettingsListener> imsSettingsListener_;
     std::shared_ptr<telux::tel::IImsSettingsManager> imsSettingsMgr_;

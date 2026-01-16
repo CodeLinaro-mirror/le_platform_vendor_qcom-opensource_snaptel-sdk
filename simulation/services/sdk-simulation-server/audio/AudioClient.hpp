@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef AUDIOCLIENT_HPP
@@ -29,13 +29,13 @@ class AudioClient {
 
     std::weak_ptr<IAudioMsgDispatcher> getAudioMsgDispatcher(void);
 
-    void associateStream(uint32_t streamId, StreamType type=StreamType::NONE);
+    void associateStream(uint32_t streamId, StreamType type = StreamType::NONE);
 
-    bool disassociateStream(uint32_t streamId, StreamType type=StreamType::NONE);
+    bool disassociateStream(uint32_t streamId, StreamType type = StreamType::NONE);
 
     void disassociateAllStreams(void);
 
-    std::map<StreamType,std::vector<uint32_t>> getAssociatedStreamIdList(void);
+    std::map<StreamType, std::vector<uint32_t>> getAssociatedStreamIdList(void);
 
  private:
     int clientId_ = 0;
@@ -45,7 +45,7 @@ class AudioClient {
     std::map<StreamType, std::vector<uint32_t>> streamIdsList_;
 };
 
-} // end namespace audio
-} // end namespace telux
+}  // end namespace audio
+}  // end namespace telux
 
-#endif // AUDIOCLIENT_HPP
+#endif  // AUDIOCLIENT_HPP

@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_EdcaParameterSet_H_
-#define	_EdcaParameterSet_H_
-
+#ifndef _EdcaParameterSet_H_
+#define _EdcaParameterSet_H_
 
 #include <asn_application.h>
 
@@ -21,13 +20,13 @@ extern "C" {
 
 /* EdcaParameterSet */
 typedef struct EdcaParameterSet {
-	EdcaParameterRecord_t	 acbeRecord;
-	EdcaParameterRecord_t	 acbkRecord;
-	EdcaParameterRecord_t	 acviRecord;
-	EdcaParameterRecord_t	 acvoRecord;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    EdcaParameterRecord_t acbeRecord;
+    EdcaParameterRecord_t acbkRecord;
+    EdcaParameterRecord_t acviRecord;
+    EdcaParameterRecord_t acvoRecord;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } EdcaParameterSet_t;
 
 /* Implementation */
@@ -37,5 +36,5 @@ extern asn_TYPE_descriptor_t asn_DEF_EdcaParameterSet;
 }
 #endif
 
-#endif	/* _EdcaParameterSet_H_ */
+#endif /* _EdcaParameterSet_H_ */
 #include <asn_internal.h>

@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <fstream>
 #include <iostream>
 #include <regex>
@@ -43,30 +49,32 @@ extern "C" {
  * Check if a file exists.
  */
 inline bool fileExists(const std::string &configFile) {
-  std::ifstream f(configFile.c_str());
-  return f.good();
+    std::ifstream f(configFile.c_str());
+    return f.good();
 }
 
 ConfigParser::ConfigParser(std::string configFile, std::string confFilePath) {
-  if (configMap_.size() == 0) {
-    std::string configFilePath = getConfigFilePath() + "/" + configFile;
-    // Check if the file is present in the same directory where the application is running
-    if (fileExists(configFilePath)) {
-      readConfigFile(configFilePath);
-    } else {
-      // Check if the file is present in the provided confFilePath
-      configFilePath = confFilePath + "/" + configFile;
-      if(fileExists(configFilePath)) {
-         readConfigFile(configFilePath);
-      } else {
-         std::cout << "Config file " << configFile << " neither exists in same folder nor at "
-                << configFilePath << std::endl;
-      }
+    if (configMap_.size() == 0) {
+        std::string configFilePath = getConfigFilePath() + "/" + configFile;
+        // Check if the file is present in the same directory where the application is running
+        if (fileExists(configFilePath)) {
+            readConfigFile(configFilePath);
+        } else {
+            // Check if the file is present in the provided confFilePath
+            configFilePath = confFilePath + "/" + configFile;
+            if (fileExists(configFilePath)) {
+                readConfigFile(configFilePath);
+            } else {
+                std::cout << "Config file " << configFile
+                          << " neither exists in same folder nor at " << configFilePath
+                          << std::endl;
+            }
+        }
     }
-  }
 }
 
-ConfigParser::~ConfigParser() {}
+ConfigParser::~ConfigParser() {
+}
 
 /**
  * Order of search for the key value from config file:
@@ -76,13 +84,12 @@ ConfigParser::~ConfigParser() {}
  * current running app path.
  */
 std::string ConfigParser::getValue(std::string key) {
-  auto settingsIterator = configMap_.find(key);
-  if (settingsIterator != configMap_.end()) {
-    return settingsIterator->second;
-  } else {
-    return std::string(
-        ""); // return an empty string when the setting is not configured.
-  }
+    auto settingsIterator = configMap_.find(key);
+    if (settingsIterator != configMap_.end()) {
+        return settingsIterator->second;
+    } else {
+        return std::string("");  // return an empty string when the setting is not configured.
+    }
 }
 
 /**
@@ -90,11 +97,11 @@ std::string ConfigParser::getValue(std::string key) {
  * location from where application is running.
  */
 std::string ConfigParser::getConfigFilePath() {
-  char path[PATH_MAX];
-  ssize_t count = readlink("/proc/self/exe", path, PATH_MAX);
-  std::string fullPath = std::string(path, (count > 0) ? count : 0);
-  auto const pos = fullPath.find_last_of('/');
-  return fullPath.substr(0, pos);
+    char path[PATH_MAX];
+    ssize_t count        = readlink("/proc/self/exe", path, PATH_MAX);
+    std::string fullPath = std::string(path, (count > 0) ? count : 0);
+    auto const pos       = fullPath.find_last_of('/');
+    return fullPath.substr(0, pos);
 }
 
 /**
@@ -105,29 +112,29 @@ std::string ConfigParser::getConfigFilePath() {
  */
 void ConfigParser::readConfigFile(std::string configFile) {
 
-  // Create a file stream from the file name
-  std::ifstream configFileStream(configFile);
+    // Create a file stream from the file name
+    std::ifstream configFileStream(configFile);
 
-  // Iterate through each parameter in the file and read the key value pairs
-  std::string param;
-  while (std::getline(configFileStream >> std::ws, param)) {
-    // trim all carriage return \r from the end of string.
-    param.erase(std::remove(param.begin(), param.end(), '\r'), param.end());
-    std::string key;
-    std::istringstream paramStream(param);
-    if (std::getline(paramStream, key, '=')) {
-      // Ignore lines starting with # character
-      if (key[0] == '#') {
-        continue;
-      }
-      key = std::regex_replace(key, std::regex(" +$"), "");
-      if (key.length() > 0) {
-        std::string value;
-        if (std::getline(paramStream, value)) {
-          value = std::regex_replace(value, std::regex("^ +| +$"), "");
-          configMap_[key] = value;
+    // Iterate through each parameter in the file and read the key value pairs
+    std::string param;
+    while (std::getline(configFileStream >> std::ws, param)) {
+        // trim all carriage return \r from the end of string.
+        param.erase(std::remove(param.begin(), param.end(), '\r'), param.end());
+        std::string key;
+        std::istringstream paramStream(param);
+        if (std::getline(paramStream, key, '=')) {
+            // Ignore lines starting with # character
+            if (key[0] == '#') {
+                continue;
+            }
+            key = std::regex_replace(key, std::regex(" +$"), "");
+            if (key.length() > 0) {
+                std::string value;
+                if (std::getline(paramStream, value)) {
+                    value           = std::regex_replace(value, std::regex("^ +| +$"), "");
+                    configMap_[key] = value;
+                }
+            }
         }
-      }
     }
-  }
 }

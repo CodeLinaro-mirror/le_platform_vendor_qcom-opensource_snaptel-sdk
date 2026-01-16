@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <iostream>
 #include <memory>
 #include <bitset>
@@ -42,43 +48,42 @@ MyProfileListener::MyProfileListener(SlotId slotId)
 }
 
 void MyProfileListener::onServiceStatusChange(telux::common::ServiceStatus status) {
-   std::string stat;
+    std::string stat;
 
-   switch(status) {
-      case telux::common::ServiceStatus::SERVICE_AVAILABLE:
-         stat = " SERVICE_AVAILABLE";
-         break;
-      case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
-         stat =  " SERVICE_UNAVAILABLE";
-         break;
-      default:
-         stat = " Unknown service status";
-         break;
-   }
+    switch (status) {
+        case telux::common::ServiceStatus::SERVICE_AVAILABLE:
+            stat = " SERVICE_AVAILABLE";
+            break;
+        case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
+            stat = " SERVICE_UNAVAILABLE";
+            break;
+        default:
+            stat = " Unknown service status";
+            break;
+    }
 
-   print_notification << " ** Data Profile onServiceStatusChange on Slot-" << slotId_
-                      << " ** " << stat << std::endl;
+    print_notification << " ** Data Profile onServiceStatusChange on Slot-" << slotId_ << " ** "
+                       << stat << std::endl;
 }
 
 void MyProfileListener::onProfileUpdate(int profileId, telux::data::TechPreference techPreference,
-                                        telux::data::ProfileChangeEvent event) {
-   print_notification << "Slot-" << slotId_ << " Profile updated: " << std::endl;
-   print_notification << "Profile Id: " << profileId
-                      << " TechPreference: " << static_cast<int>(techPreference)
-                      << " ProfileChangeEvent: " << getProfileEventString(event) << std::endl;
+    telux::data::ProfileChangeEvent event) {
+    print_notification << "Slot-" << slotId_ << " Profile updated: " << std::endl;
+    print_notification << "Profile Id: " << profileId
+                       << " TechPreference: " << static_cast<int>(techPreference)
+                       << " ProfileChangeEvent: " << getProfileEventString(event) << std::endl;
 }
 
-std::string MyProfileListener::getProfileEventString(
-   telux::data::ProfileChangeEvent event) {
-   switch(event) {
-      case telux::data::ProfileChangeEvent::CREATE_PROFILE_EVENT:
-         return std::string("CREATE PROFILE");
-      case telux::data::ProfileChangeEvent::DELETE_PROFILE_EVENT:
-         return std::string("DELETE PROFILE");
-      case telux::data::ProfileChangeEvent::MODIFY_PROFILE_EVENT:
-         return std::string("MODIFY PROFILE");
-      default:
-         std::cout << "Unexpected Profile Event = " << static_cast<int>(event) << std::endl;
-         return std::string("UNKNOWN");
-   }
+std::string MyProfileListener::getProfileEventString(telux::data::ProfileChangeEvent event) {
+    switch (event) {
+        case telux::data::ProfileChangeEvent::CREATE_PROFILE_EVENT:
+            return std::string("CREATE PROFILE");
+        case telux::data::ProfileChangeEvent::DELETE_PROFILE_EVENT:
+            return std::string("DELETE PROFILE");
+        case telux::data::ProfileChangeEvent::MODIFY_PROFILE_EVENT:
+            return std::string("MODIFY PROFILE");
+        default:
+            std::cout << "Unexpected Profile Event = " << static_cast<int>(event) << std::endl;
+            return std::string("UNKNOWN");
+    }
 }

@@ -26,40 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021,2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /*
@@ -98,13 +69,11 @@ class ModemConfigListener : public std::enable_shared_from_this<ModemConfigListe
         std::promise<telux::common::ServiceStatus> p{};
 
         /* Step - 1 */
-        auto &configFactory = telux::config:: ConfigFactory::getInstance();
+        auto &configFactory = telux::config::ConfigFactory::getInstance();
 
         /* Step - 2 */
         modemConfigMgr_ = configFactory.getModemConfigManager(
-                [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+            [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!modemConfigMgr_) {
             std::cout << "Can't get IModemConfigManager" << std::endl;
@@ -114,8 +83,8 @@ class ModemConfigListener : public std::enable_shared_from_this<ModemConfigListe
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Config service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Config service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
@@ -128,21 +97,19 @@ class ModemConfigListener : public std::enable_shared_from_this<ModemConfigListe
         std::string type;
         telux::common::Status status;
 
-        auto responseCb = std::bind(
-            &ModemConfigListener::onConfigListAvailable, this,
+        auto responseCb = std::bind(&ModemConfigListener::onConfigListAvailable, this,
             std::placeholders::_1, std::placeholders::_2);
 
         /* Step - 4 */
         status = modemConfigMgr_->requestConfigList(responseCb);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't request config list, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't request config list, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
         if (!waitForResponse()) {
-            std::cout << "Failed to request config list, err " <<
-                static_cast<int>(errorCode_) << std::endl;
+            std::cout << "Failed to request config list, err " << static_cast<int>(errorCode_)
+                      << std::endl;
             return -EIO;
         }
 
@@ -151,7 +118,7 @@ class ModemConfigListener : public std::enable_shared_from_this<ModemConfigListe
             std::cout << "Config No  : " << count << std::endl;
             if (config.type == telux::config::ConfigType::HARDWARE) {
                 type = "HARDWARE";
-            } else if(config.type == telux::config::ConfigType::SOFTWARE) {
+            } else if (config.type == telux::config::ConfigType::SOFTWARE) {
                 type = "SOFTWARE";
             } else {
                 type = "";
@@ -169,21 +136,19 @@ class ModemConfigListener : public std::enable_shared_from_this<ModemConfigListe
     int retrieveAutoSelectionMode() {
         telux::common::Status status;
 
-        auto responseCb = std::bind(
-            &ModemConfigListener::onAutoSelectionAvailable, this,
+        auto responseCb = std::bind(&ModemConfigListener::onAutoSelectionAvailable, this,
             std::placeholders::_1, std::placeholders::_2);
 
         /* Step - 5 */
         status = modemConfigMgr_->getAutoSelectionMode(responseCb, DEFAULT_SLOT_ID);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't get selection mode, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't get selection mode, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
         if (!waitForResponse()) {
-            std::cout << "Failed to get selection mode, err " <<
-                static_cast<int>(errorCode_) << std::endl;
+            std::cout << "Failed to get selection mode, err " << static_cast<int>(errorCode_)
+                      << std::endl;
             return -EIO;
         }
 
@@ -200,8 +165,7 @@ class ModemConfigListener : public std::enable_shared_from_this<ModemConfigListe
         std::string type;
         telux::common::Status status;
 
-        auto responseCb = std::bind(
-            &ModemConfigListener::onActiveConfigAvailable, this,
+        auto responseCb = std::bind(&ModemConfigListener::onActiveConfigAvailable, this,
             std::placeholders::_1, std::placeholders::_2);
 
         /* Step - 6 */
@@ -209,24 +173,23 @@ class ModemConfigListener : public std::enable_shared_from_this<ModemConfigListe
         status = modemConfigMgr_->getActiveConfig(
             telux::config::ConfigType::SOFTWARE, responseCb, DEFAULT_SLOT_ID);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't get active config, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't get active config, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
         if (!waitForResponse()) {
-            std::cout << "Failed to get active config, err " <<
-                static_cast<int>(errorCode_) << std::endl;
+            std::cout << "Failed to get active config, err " << static_cast<int>(errorCode_)
+                      << std::endl;
             return -EIO;
         }
 
         std::cout << "Current active configuration:" << std::endl;
         if (configInfo_.type == telux::config::ConfigType::HARDWARE) {
             type = "HARDWARE";
-        } else if(configInfo_.type == telux::config::ConfigType::SOFTWARE) {
-                type = "SOFTWARE";
+        } else if (configInfo_.type == telux::config::ConfigType::SOFTWARE) {
+            type = "SOFTWARE";
         } else {
-                type = "";
+            type = "";
         }
 
         std::cout << "Type        : " << type << std::endl;
@@ -238,34 +201,34 @@ class ModemConfigListener : public std::enable_shared_from_this<ModemConfigListe
     }
 
     /* Receives response of the requestConfigList() request */
-    void onConfigListAvailable(std::vector<telux::config::ConfigInfo> configList,
-            telux::common::ErrorCode error) {
+    void onConfigListAvailable(
+        std::vector<telux::config::ConfigInfo> configList, telux::common::ErrorCode error) {
 
         std::lock_guard<std::mutex> lock(updateMutex_);
         std::cout << "\nonConfigListAvailable()" << std::endl;
-        errorCode_ = error;
+        errorCode_  = error;
         configList_ = configList;
         updateCV_.notify_one();
     }
 
     /* Receives response of the getAutoSelectionMode() request */
-    void onAutoSelectionAvailable(telux::config::AutoSelectionMode selectionMode,
-            telux::common::ErrorCode error) {
+    void onAutoSelectionAvailable(
+        telux::config::AutoSelectionMode selectionMode, telux::common::ErrorCode error) {
 
         std::lock_guard<std::mutex> lock(updateMutex_);
         std::cout << "\nonAutoSelectionAvailable()" << std::endl;
-        errorCode_ = error;
+        errorCode_     = error;
         selectionMode_ = selectionMode;
         updateCV_.notify_one();
     }
 
     /* Receives response of the getActiveConfig() request */
-    void onActiveConfigAvailable(telux::config::ConfigInfo configInfo,
-            telux::common::ErrorCode error) {
+    void onActiveConfigAvailable(
+        telux::config::ConfigInfo configInfo, telux::common::ErrorCode error) {
 
         std::lock_guard<std::mutex> lock(updateMutex_);
         std::cout << "\nonActiveConfigAvailable()" << std::endl;
-        errorCode_ = error;
+        errorCode_  = error;
         configInfo_ = configInfo;
         updateCV_.notify_one();
     }
@@ -274,8 +237,7 @@ class ModemConfigListener : public std::enable_shared_from_this<ModemConfigListe
         int const DEFAULT_TIMEOUT_SECONDS = 5;
         std::unique_lock<std::mutex> lock(updateMutex_);
 
-        auto cvStatus = updateCV_.wait_for(lock,
-            std::chrono::seconds(DEFAULT_TIMEOUT_SECONDS));
+        auto cvStatus = updateCV_.wait_for(lock, std::chrono::seconds(DEFAULT_TIMEOUT_SECONDS));
 
         if (cvStatus == std::cv_status::timeout) {
             std::cout << "Timedout" << std::endl;
@@ -303,7 +265,7 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<ModemConfigListener>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate ModemConfigListener" << std::endl;
         return -ENOMEM;
     }

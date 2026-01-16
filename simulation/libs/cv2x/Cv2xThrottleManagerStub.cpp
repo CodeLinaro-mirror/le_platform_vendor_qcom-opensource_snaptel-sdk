@@ -1,7 +1,8 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 #include <grpcpp/grpcpp.h>
 
 #include "Cv2xRadioHelperStub.hpp"
@@ -23,8 +24,7 @@ namespace cv2x {
 static const std::string CV2X_THROTTLE_FILTER = "throttle_mgr";
 
 Cv2xThrottleEventListener::Cv2xThrottleEventListener(
-    std::shared_ptr<telux::common::ListenerManager<
-                        telux::cv2x::ICv2xThrottleManagerListener>> mgr) {
+    std::shared_ptr<telux::common::ListenerManager<telux::cv2x::ICv2xThrottleManagerListener>> mgr) {
     listenerMgr_ = mgr;
 }
 
@@ -56,13 +56,11 @@ void Cv2xThrottleEventListener::onEventUpdate(google::protobuf::Any event) {
     }
 }
 
-
 Cv2xThrottleManagerStub::Cv2xThrottleManagerStub() {
     LOG(DEBUG, __FUNCTION__);
-    stub_ = CommonUtils::getGrpcStub<::cv2xStub::Cv2xThrottleManagerService>();
-    listenerMgr_ =
-        std::make_shared<telux::common::ListenerManager<
-            telux::cv2x::ICv2xThrottleManagerListener>>();
+    stub_        = CommonUtils::getGrpcStub<::cv2xStub::Cv2xThrottleManagerService>();
+    listenerMgr_ = std::make_shared<
+        telux::common::ListenerManager<telux::cv2x::ICv2xThrottleManagerListener>>();
     throttleEvtListener_ = std::make_shared<Cv2xThrottleEventListener>(listenerMgr_);
 }
 
@@ -124,8 +122,7 @@ telux::common::Status Cv2xThrottleManagerStub::setVerificationLoad(
     int load, setVerificationLoadCallback cb) {
     LOG(DEBUG, __FUNCTION__);
     auto f
-        = std::async(std::launch::async,
-                     [cb]() { cb(telux::common::ErrorCode::SUCCESS); }).share();
+        = std::async(std::launch::async, [cb]() { cb(telux::common::ErrorCode::SUCCESS); }).share();
 
     taskQ_.add(f);
 

@@ -20,11 +20,10 @@ using grpc::Status;
 namespace telux {
 namespace satcom {
 
-NtnManagerStub::NtnManagerStub()
-{
+NtnManagerStub::NtnManagerStub() {
     LOG(DEBUG, __FUNCTION__);
-    taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
-    listenerMgr_ = std::make_shared<telux::common::ListenerManager<INtnListener>>();
+    taskQ_           = std::make_shared<AsyncTaskQueue<void>>();
+    listenerMgr_     = std::make_shared<telux::common::ListenerManager<INtnListener>>();
     subSystemStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
 }
 
@@ -35,12 +34,10 @@ NtnManagerStub::~NtnManagerStub() {
     }
 }
 
-telux::common::Status NtnManagerStub::init(telux::common::InitResponseCb callback)
-{
+telux::common::Status NtnManagerStub::init(telux::common::InitResponseCb callback) {
     initCb_ = callback;
-    auto f =
-        std::async(std::launch::async, [this, callback]() {
-        this->initSync(callback);}).share();
+    auto f
+        = std::async(std::launch::async, [this, callback]() { this->initSync(callback); }).share();
     taskQ_->add(f);
     return telux::common::Status::SUCCESS;
 }
@@ -52,33 +49,30 @@ void NtnManagerStub::initSync(telux::common::InitResponseCb callback) {
     ::satcomStub::GetServiceStatusReply response;
     ClientContext context;
     ::google::protobuf::Empty request{};
-    grpc::Status reqStatus = stub_->InitService(&context, request, &response);
-    telux::common::ServiceStatus cbStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
-    int cbDelay = DEFAULT_DELAY;
+    grpc::Status reqStatus                = stub_->InitService(&context, request, &response);
+    telux::common::ServiceStatus cbStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    int cbDelay                           = DEFAULT_DELAY;
     do {
         if (!reqStatus.ok()) {
             LOG(ERROR, __FUNCTION__, " InitService request failed");
             break;
         }
-        cbStatus =
-            static_cast<telux::common::ServiceStatus>(response.service_status());
-        cbDelay = static_cast<int>(response.delay());
+        cbStatus = static_cast<telux::common::ServiceStatus>(response.service_status());
+        cbDelay  = static_cast<int>(response.delay());
         this->onServiceStatusChange(cbStatus);
         LOG(DEBUG, __FUNCTION__, " ServiceStatus: ", static_cast<int>(cbStatus));
     } while (0);
     setSubSystemStatus(cbStatus);
 
-    if(cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+    if (cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         std::vector<std::string> filters = {NTN_FILTER};
-        auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+        auto &clientEventManager         = telux::common::ClientEventManager::getInstance();
         clientEventManager.registerListener(shared_from_this(), filters);
     }
 
     if (callback && (cbDelay != SKIP_CALLBACK)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay,
-            " cbStatus::", static_cast<int>(cbStatus));
+        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", static_cast<int>(cbStatus));
         invokeInitCallback(cbStatus);
     }
 }
@@ -113,8 +107,8 @@ telux::common::ErrorCode NtnManagerStub::isNtnSupported(bool &isSupported) {
 
     grpc::Status reqStatus = stub_->IsNtnSupported(&context, request, &response);
 
-    telux::common::ErrorCode error =
-        static_cast<telux::common::ErrorCode>(response.reply().error());
+    telux::common::ErrorCode error
+        = static_cast<telux::common::ErrorCode>(response.reply().error());
 
     if (!reqStatus.ok()) {
         LOG(ERROR, __FUNCTION__, " isNtnSupported request failed");
@@ -143,8 +137,7 @@ telux::common::ErrorCode NtnManagerStub::enableNtn(
     request.set_enable(enable);
     grpc::Status reqStatus = stub_->EnableNtn(&context, request, &response);
 
-    telux::common::ErrorCode error =
-        static_cast<telux::common::ErrorCode>(response.error());
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
 
     if (!reqStatus.ok()) {
         LOG(ERROR, __FUNCTION__, " enableNtn request failed");
@@ -155,8 +148,7 @@ telux::common::ErrorCode NtnManagerStub::enableNtn(
 }
 
 telux::common::Status NtnManagerStub::sendData(
-    uint8_t *data, uint32_t size, bool isEmergency, TransactionId &TransactionId)
-{
+    uint8_t *data, uint32_t size, bool isEmergency, TransactionId &TransactionId) {
     LOG(DEBUG, __FUNCTION__);
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, " Ntn manager not ready");
@@ -169,10 +161,9 @@ telux::common::Status NtnManagerStub::sendData(
 
     grpc::Status reqStatus = stub_->SendData(&context, request, &response);
 
-    telux::common::Status status =
-        static_cast<telux::common::Status>(response.reply().status());
-    telux::common::ErrorCode error =
-        static_cast<telux::common::ErrorCode>(response.reply().error());
+    telux::common::Status status = static_cast<telux::common::Status>(response.reply().status());
+    telux::common::ErrorCode error
+        = static_cast<telux::common::ErrorCode>(response.reply().error());
 
     if (!reqStatus.ok()) {
         LOG(ERROR, __FUNCTION__, " SendData request failed");
@@ -182,7 +173,7 @@ telux::common::Status NtnManagerStub::sendData(
 
     if (error == telux::common::ErrorCode::SUCCESS) {
         TransactionId = response.transaction_id();
-        auto task = std::async(std::launch::async, [this, error, TransactionId] {
+        auto task     = std::async(std::launch::async, [this, error, TransactionId] {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             onDataAck(error, TransactionId);
         }).share();
@@ -205,8 +196,7 @@ telux::common::ErrorCode NtnManagerStub::abortData() {
 
     grpc::Status reqStatus = stub_->AbortData(&context, request, &response);
 
-    telux::common::ErrorCode error =
-        static_cast<telux::common::ErrorCode>(response.error());
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
 
     if (!reqStatus.ok()) {
         LOG(ERROR, __FUNCTION__, " abortData request failed");
@@ -229,8 +219,8 @@ telux::common::ErrorCode NtnManagerStub::getNtnCapabilities(NtnCapabilities &cap
 
     grpc::Status reqStatus = stub_->GetNtnCapabilities(&context, request, &response);
 
-    telux::common::ErrorCode error =
-        static_cast<telux::common::ErrorCode>(response.reply().error());
+    telux::common::ErrorCode error
+        = static_cast<telux::common::ErrorCode>(response.reply().error());
 
     if (!reqStatus.ok()) {
         LOG(ERROR, __FUNCTION__, " getNtnCapabilities request failed");
@@ -257,8 +247,8 @@ telux::common::ErrorCode NtnManagerStub::getSignalStrength(SignalStrength &signa
 
     grpc::Status reqStatus = stub_->GetSignalStrength(&context, request, &response);
 
-    telux::common::ErrorCode error =
-        static_cast<telux::common::ErrorCode>(response.reply().error());
+    telux::common::ErrorCode error
+        = static_cast<telux::common::ErrorCode>(response.reply().error());
 
     if (!reqStatus.ok()) {
         LOG(ERROR, __FUNCTION__, " getSignalStrength request failed");
@@ -286,8 +276,7 @@ telux::common::ErrorCode NtnManagerStub::updateSystemSelectionSpecifiers(
 
     grpc::Status reqStatus = stub_->UpdateSystemSelectionSpecifiers(&context, request, &response);
 
-    telux::common::ErrorCode error =
-        static_cast<telux::common::ErrorCode>(response.error());
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
 
     if (!reqStatus.ok()) {
         LOG(ERROR, __FUNCTION__, " updateSystemSelectionSpecifiers request failed");
@@ -336,8 +325,7 @@ telux::common::ErrorCode NtnManagerStub::enableCellularScan(bool enable) {
 
     grpc::Status reqStatus = stub_->EnableCellularScan(&context, request, &response);
 
-    telux::common::ErrorCode error =
-        static_cast<telux::common::ErrorCode>(response.error());
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
 
     if (!reqStatus.ok()) {
         LOG(ERROR, __FUNCTION__, " enableCellularScan request failed");
@@ -360,8 +348,7 @@ telux::common::ErrorCode NtnManagerStub::setLocationFix(const LocationFix &param
 
     grpc::Status reqStatus = stub_->SetLocationFix(&context, request, &response);
 
-    telux::common::ErrorCode error =
-        static_cast<telux::common::ErrorCode>(response.error());
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
 
     if (error == telux::common::ErrorCode::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -373,8 +360,8 @@ telux::common::ErrorCode NtnManagerStub::setLocationFix(const LocationFix &param
     return error;
 }
 
-telux::common::ErrorCode NtnManagerStub::locationFixResponse(LocationStatus status,
-    uint64_t waitTime) {
+telux::common::ErrorCode NtnManagerStub::locationFixResponse(
+    LocationStatus status, uint64_t waitTime) {
     LOG(DEBUG, __FUNCTION__);
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, " Ntn manager not ready");
@@ -390,8 +377,7 @@ telux::common::ErrorCode NtnManagerStub::locationFixResponse(LocationStatus stat
 
     grpc::Status reqStatus = stub_->LocationFixResponse(&context, request, &response);
 
-    telux::common::ErrorCode error =
-        static_cast<telux::common::ErrorCode>(response.error());
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
 
     if (error == telux::common::ErrorCode::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -559,7 +545,7 @@ void NtnManagerStub::onEventUpdate(google::protobuf::Any event) {
         ::satcomStub::CellularCoverageAvailableEvent cellularCoverageAvailableEvent;
         event.UnpackTo(&cellularCoverageAvailableEvent);
         this->handleCellularCoverageAvailableEvent(cellularCoverageAvailableEvent);
-    }  else if (event.Is<::satcomStub::LocationFixRequestEvent>()) {
+    } else if (event.Is<::satcomStub::LocationFixRequestEvent>()) {
         ::satcomStub::LocationFixRequestEvent locationFixRequestEvent;
         event.UnpackTo(&locationFixRequestEvent);
         this->handleLocationFixRequestEvent(locationFixRequestEvent);
@@ -574,9 +560,9 @@ void NtnManagerStub::handleNtnStateChangeEvent(::satcomStub::NtnStateEvent ntnSt
     LOG(DEBUG, __FUNCTION__);
     NtnState state = static_cast<NtnState>(ntnStateEvent.state());
     NtnCapabilities capabilities;
-    capabilities.maxDataSize = ntnStateEvent.capabilities();
+    capabilities.maxDataSize      = ntnStateEvent.capabilities();
     SignalStrength signalStrength = static_cast<SignalStrength>(ntnStateEvent.signal_strength());
-    uint32_t bandValue = ntnStateEvent.band_value();
+    uint32_t bandValue            = ntnStateEvent.band_value();
 
     onNtnStateChange(state);
     onCapabilitiesChange(capabilities);
@@ -594,19 +580,18 @@ void NtnManagerStub::handleCellularCoverageAvailableEvent(
 void NtnManagerStub::handleLocationFixRequestEvent(
     ::satcomStub::LocationFixRequestEvent locationFixRequestEvent) {
     LOG(DEBUG, __FUNCTION__);
-    LocationFixRequestReason reqReason =
-        static_cast<LocationFixRequestReason>(locationFixRequestEvent.req_reason());
+    LocationFixRequestReason reqReason
+        = static_cast<LocationFixRequestReason>(locationFixRequestEvent.req_reason());
     onLocationFixRequest(reqReason);
 }
 
-void NtnManagerStub::handleIncomingDataEvent(
-    ::satcomStub::IncomingDataEvent incomingDataEvent) {
+void NtnManagerStub::handleIncomingDataEvent(::satcomStub::IncomingDataEvent incomingDataEvent) {
     LOG(DEBUG, __FUNCTION__);
     std::vector<uint8_t> data;
     for (int i = 0; i < incomingDataEvent.data_size(); i++) {
         data.push_back(static_cast<uint8_t>(incomingDataEvent.data(i)));
     }
-    uint8_t* dataArray = new uint8_t[data.size()];
+    uint8_t *dataArray = new uint8_t[data.size()];
     std::copy(data.begin(), data.end(), dataArray);
     onIncomingData(std::unique_ptr<uint8_t[]>(dataArray), data.size());
 }

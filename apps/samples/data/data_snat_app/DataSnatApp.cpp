@@ -26,10 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -44,7 +44,7 @@
  *
  * Usage:
  * # ./snat_sample_app <operation-type> <backhaul-type> <profile-id> <ip-address> \
- *      <protocol> <local-ip-port> <global-ip-port> 
+ *      <protocol> <local-ip-port> <global-ip-port>
  *
  * Example - ./snat_sample_app 1 3 5 192.168.225.22 6 500 500
  */
@@ -72,9 +72,7 @@ class NATCreator : public std::enable_shared_from_this<NATCreator> {
 
         /* Step - 2 */
         dataSnatMgr_ = dataFactory.getNatManager(
-                opType, [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+            opType, [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!dataSnatMgr_) {
             std::cout << "Can't get INatManager" << std::endl;
@@ -84,8 +82,8 @@ class NATCreator : public std::enable_shared_from_this<NATCreator> {
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "NAT service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "NAT service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
@@ -94,29 +92,28 @@ class NATCreator : public std::enable_shared_from_this<NATCreator> {
     }
 
     int addNATEntry(int backhaulType, int profileId, std::string ipAddress, int localIpPort,
-            int globalIpPort, int proto) {
+        int globalIpPort, int proto) {
 
         telux::common::Status status;
         telux::data::net::NatConfig natConfig{};
 
-        natConfig.addr = ipAddress;
-        natConfig.port = static_cast<uint16_t>(localIpPort);
+        natConfig.addr       = ipAddress;
+        natConfig.port       = static_cast<uint16_t>(localIpPort);
         natConfig.globalPort = static_cast<uint16_t>(globalIpPort);
-        natConfig.proto = static_cast<uint8_t>(proto);
+        natConfig.proto      = static_cast<uint8_t>(proto);
 
-        auto respCb = std::bind(
-            &NATCreator::onAddNATStatusAvailable, this, std::placeholders::_1);
+        auto respCb = std::bind(&NATCreator::onAddNATStatusAvailable, this, std::placeholders::_1);
 
         telux::data::BackhaulInfo bhInfo{};
-        bhInfo.backhaul = static_cast<telux::data::BackhaulType>(backhaulType);;
-        bhInfo.slotId = DEFAULT_SLOT_ID;
+        bhInfo.backhaul = static_cast<telux::data::BackhaulType>(backhaulType);
+        ;
+        bhInfo.slotId    = DEFAULT_SLOT_ID;
         bhInfo.profileId = profileId;
 
         /* Step - 5 */
         status = dataSnatMgr_->addStaticNatEntry(bhInfo, natConfig, respCb);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't request add nat, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't request add nat, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -129,8 +126,7 @@ class NATCreator : public std::enable_shared_from_this<NATCreator> {
         std::cout << "onAddNATStatusAvailable()" << std::endl;
 
         if (error != telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Failed to add nat, err " <<
-                static_cast<int>(error) << std::endl;
+            std::cout << "Failed to add nat, err " << static_cast<int>(error) << std::endl;
             return;
         }
 
@@ -154,14 +150,13 @@ int main(int argc, char *argv[]) {
     std::string ipAddress;
     telux::data::OperationType opType;
 
-
-    if ((argc != 6 && argc != 8) ||
-        (argc == 6 && (std::atoi(argv[5]) == 6 || std::atoi(argv[5]) == 17))) {
+    if ((argc != 6 && argc != 8)
+        || (argc == 6 && (std::atoi(argv[5]) == 6 || std::atoi(argv[5]) == 17))) {
         /* 6-TCP, 17-UDP */
-        std::cout << "Usage: ./snat_sample_app <operation-type> <backhaul-type> " <<
-        "<profile-id>  <ip-address> <protocol> <local-ip-port> <global-ip-port> \n" <<
-        "Note: local-ip-port and global-ip-port are ignored for protocol type " <<
-        "ICMP, IGMP and ESP, so it can be skipped for these protocols"<< std::endl;
+        std::cout << "Usage: ./snat_sample_app <operation-type> <backhaul-type> "
+                  << "<profile-id>  <ip-address> <protocol> <local-ip-port> <global-ip-port> \n"
+                  << "Note: local-ip-port and global-ip-port are ignored for protocol type "
+                  << "ICMP, IGMP and ESP, so it can be skipped for these protocols" << std::endl;
         return -EINVAL;
     }
 
@@ -177,13 +172,13 @@ int main(int argc, char *argv[]) {
     proto = std::atoi(argv[5]);
 
     if (argc == 8) {
-        localIpPort = std::atoi(argv[6]);
+        localIpPort  = std::atoi(argv[6]);
         globalIpPort = std::atoi(argv[7]);
     }
 
     try {
         app = std::make_shared<NATCreator>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate NATCreator" << std::endl;
         return -ENOMEM;
     }

@@ -26,15 +26,16 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2021-2023,2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#include<iostream>
-#include<chrono>
-#include<getopt.h>
+#include <iostream>
+#include <chrono>
+#include <getopt.h>
 #include <csignal>
 
 #include "../../common/utils/Utils.hpp"
@@ -46,12 +47,11 @@ static std::mutex mutex;
 static std::condition_variable cv;
 
 AudioLoopbackApp::AudioLoopbackApp() {
-    inputDevice_ = DeviceType::DEVICE_TYPE_MIC;
+    inputDevice_  = DeviceType::DEVICE_TYPE_MIC;
     outputDevice_ = DeviceType::DEVICE_TYPE_SPEAKER;
 }
 
 AudioLoopbackApp::~AudioLoopbackApp() {
-
 }
 
 void AudioLoopbackApp::changeInputDevice(int inputDevice) {
@@ -64,7 +64,7 @@ void AudioLoopbackApp::changeOutputDevice(int outputDevice) {
     outputDevice_ = static_cast<DeviceType>(outputDevice);
 }
 
-static void signalHandler( int signum ) {
+static void signalHandler(int signum) {
     std::unique_lock<std::mutex> lock(mutex);
     std::cout << "Interrupt signal (" << signum << ") received.." << std::endl;
     cv.notify_all();
@@ -76,9 +76,8 @@ Status AudioLoopbackApp::init() {
     std::promise<ServiceStatus> prom;
     //  Get the AudioFactory and AudioManager instances.
     auto &audioFactory = telux::audio::AudioFactory::getInstance();
-    audioManager_ = audioFactory.getAudioManager([&prom](telux::common::ServiceStatus status) {
-        prom.set_value(status);
-    });
+    audioManager_      = audioFactory.getAudioManager(
+        [&prom](telux::common::ServiceStatus status) { prom.set_value(status); });
     if (!audioManager_) {
         std::cout << "Failed to get AudioManager object" << std::endl;
         return Status::FAILED;
@@ -94,10 +93,10 @@ Status AudioLoopbackApp::init() {
 
     //  Exit the application, if SDK is unable to initialize audio subsystems
     if (managerStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        endTime = std::chrono::system_clock::now();
+        endTime                                   = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsedTime = endTime - startTime;
         std::cout << "Elapsed Time for Audio Subsystems to ready : " << elapsedTime.count() << "s"
-                << std::endl;
+                  << std::endl;
     } else {
         std::cout << "ERROR - Unable to initialize audio subsystem" << std::endl;
         return Status::FAILED;
@@ -107,17 +106,17 @@ Status AudioLoopbackApp::init() {
 
 Status AudioLoopbackApp::createLoopbackStream() {
     StreamConfig config;
-    config.type = StreamType::LOOPBACK;
-    config.slotId = DEFAULT_SLOT_ID;
+    config.type       = StreamType::LOOPBACK;
+    config.slotId     = DEFAULT_SLOT_ID;
     config.sampleRate = SAMPLE_RATE;
-    config.format = AudioFormat::PCM_16BIT_SIGNED;
+    config.format     = AudioFormat::PCM_16BIT_SIGNED;
     // here both channel selected, this can be selected according to requirement
     config.channelTypeMask = (ChannelType::LEFT | ChannelType::RIGHT);
     config.deviceTypes.emplace_back(outputDevice_);
     config.deviceTypes.emplace_back(inputDevice_);
     std::promise<bool> p;
-    auto status = audioManager_->createStream(config,
-        [&p,this](std::shared_ptr<IAudioStream> &audioStream, ErrorCode error) {
+    auto status = audioManager_->createStream(
+        config, [&p, this](std::shared_ptr<IAudioStream> &audioStream, ErrorCode error) {
             if (error == ErrorCode::SUCCESS) {
                 audioLoopbackStream_ = std::dynamic_pointer_cast<IAudioLoopbackStream>(audioStream);
                 p.set_value(true);
@@ -128,14 +127,14 @@ Status AudioLoopbackApp::createLoopbackStream() {
     if (status == Status::SUCCESS) {
         std::cout << "Request to create stream sent" << std::endl;
     } else {
-        std::cout << "Request to create stream failed"  << std::endl;
+        std::cout << "Request to create stream failed" << std::endl;
         return Status::FAILED;
     }
 
     if (p.get_future().get()) {
-        std::cout<< "Loopback Stream is Created" << std::endl;
+        std::cout << "Loopback Stream is Created" << std::endl;
     } else {
-        std::cout<< "Loopback Stream Creation Failed !!" << std::endl;
+        std::cout << "Loopback Stream Creation Failed !!" << std::endl;
         return Status::FAILED;
     }
     return Status::SUCCESS;
@@ -145,15 +144,14 @@ Status AudioLoopbackApp::startLoopback() {
     createLoopbackStream();
     if (audioLoopbackStream_) {
         std::promise<bool> p;
-        Status status =
-            audioLoopbackStream_->startLoopback( [&p,this](ErrorCode error) {
+        Status status = audioLoopbackStream_->startLoopback([&p, this](ErrorCode error) {
             if (error == ErrorCode::SUCCESS) {
                 p.set_value(true);
             } else {
                 p.set_value(false);
             }
-            });
-        if (status == Status::SUCCESS){
+        });
+        if (status == Status::SUCCESS) {
             std::cout << "Request to start loopback sent" << std::endl;
         } else {
             std::cout << "Request to start loopback Failed" << std::endl;
@@ -174,21 +172,22 @@ Status AudioLoopbackApp::startLoopback() {
 Status AudioLoopbackApp::deleteLoopbackStream() {
     std::promise<bool> p;
     if (audioLoopbackStream_) {
-        Status status = audioManager_-> deleteStream(audioLoopbackStream_,
-            [&p,this](ErrorCode error) {
-            if (error == ErrorCode::SUCCESS) {
-                p.set_value(true);
-            } else {
-                p.set_value(false);
-            }});
+        Status status
+            = audioManager_->deleteStream(audioLoopbackStream_, [&p, this](ErrorCode error) {
+                  if (error == ErrorCode::SUCCESS) {
+                      p.set_value(true);
+                  } else {
+                      p.set_value(false);
+                  }
+              });
         if (status == Status::SUCCESS) {
             std::cout << "request to delete stream sent" << std::endl;
         } else {
-            std::cout << "Request to delete stream failed"  << std::endl;
+            std::cout << "Request to delete stream failed" << std::endl;
             return Status::FAILED;
         }
         if (p.get_future().get()) {
-            audioLoopbackStream_= nullptr;
+            audioLoopbackStream_ = nullptr;
             std::cout << "Audio Stream is Deleted" << std::endl;
         } else {
             std::cout << "Failed to delete stream" << std::endl;
@@ -201,15 +200,14 @@ Status AudioLoopbackApp::deleteLoopbackStream() {
 Status AudioLoopbackApp::stopLoopback() {
     std::promise<bool> p;
     if (audioLoopbackStream_ && loopbackStarted_) {
-        Status status = audioLoopbackStream_->stopLoopback(
-            [&p,this](ErrorCode error) {
-        if (error == ErrorCode::SUCCESS) {
-            p.set_value(true);
-        } else {
-            p.set_value(false);
-        }
+        Status status = audioLoopbackStream_->stopLoopback([&p, this](ErrorCode error) {
+            if (error == ErrorCode::SUCCESS) {
+                p.set_value(true);
+            } else {
+                p.set_value(false);
+            }
         });
-        if (status == Status::SUCCESS){
+        if (status == Status::SUCCESS) {
             std::cout << "Request to stop loopback sent" << std::endl;
         } else {
             std::cout << "Request to stop loopback Failed" << std::endl;
@@ -229,23 +227,21 @@ Status AudioLoopbackApp::stopLoopback() {
 
 void AudioLoopbackApp::printHelp() {
     std::cout << "             Audio Loopback App\n"
-    << "-------------------------------------------------------------\n"
-    << "-i <device>           set input device, '-i 257' for mic.\n"
-    << "-o <device>           set output device '-o 1' for speaker \n"
-    << "-h                    help\n" << std::endl;
+              << "-------------------------------------------------------------\n"
+              << "-i <device>           set input device, '-i 257' for mic.\n"
+              << "-o <device>           set output device '-o 1' for speaker \n"
+              << "-h                    help\n"
+              << std::endl;
 }
 
 Status AudioLoopbackApp::parseArgs(int argc, char **argv) {
     int c;
-    static struct option long_options[] = {
-        {"change input device",        required_argument, 0, 'i'},
-        {"change output device",       required_argument, 0, 'o'},
-        {"help",                       no_argument, 0, 'h'},
-        {0, 0, 0, 0}
-    };
+    static struct option long_options[] = {{"change input device", required_argument, 0, 'i'},
+        {"change output device", required_argument, 0, 'o'}, {"help", no_argument, 0, 'h'},
+        {0, 0, 0, 0}};
 
     int option_index = 0;
-    c = getopt_long(argc, argv, "i:o:h", long_options, &option_index);
+    c                = getopt_long(argc, argv, "i:o:h", long_options, &option_index);
 
     // if no option is entered the loopback starts with default options
     do {
@@ -266,14 +262,13 @@ Status AudioLoopbackApp::parseArgs(int argc, char **argv) {
     return Status::SUCCESS;
 }
 
-int main(int argc, char ** argv)
-{
+int main(int argc, char **argv) {
     signal(SIGINT, signalHandler);
 
     std::shared_ptr<AudioLoopbackApp> app;
     try {
         app = std::make_shared<AudioLoopbackApp>();
-    } catch (std::bad_alloc & e) {
+    } catch (std::bad_alloc &e) {
         std::cout << " Failed to instantiate audio loopback app " << std::endl;
         return 0;
     }
@@ -291,7 +286,7 @@ int main(int argc, char ** argv)
 
     app->startLoopback();
 
-    std::cout <<  " Press CTRL+C to exit" << std::endl;
+    std::cout << " Press CTRL+C to exit" << std::endl;
     std::unique_lock<std::mutex> lock(mutex);
     cv.wait(lock);
 

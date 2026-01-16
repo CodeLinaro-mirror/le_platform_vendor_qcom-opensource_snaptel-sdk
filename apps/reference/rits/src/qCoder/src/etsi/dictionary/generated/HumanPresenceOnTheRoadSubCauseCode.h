@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_HumanPresenceOnTheRoadSubCauseCode_H_
-#define	_HumanPresenceOnTheRoadSubCauseCode_H_
-
+#ifndef _HumanPresenceOnTheRoadSubCauseCode_H_
+#define _HumanPresenceOnTheRoadSubCauseCode_H_
 
 #include <asn_application.h>
 
@@ -20,14 +19,14 @@ extern "C" {
 
 /* Dependencies */
 typedef enum HumanPresenceOnTheRoadSubCauseCode {
-	HumanPresenceOnTheRoadSubCauseCode_unavailable	= 0,
-	HumanPresenceOnTheRoadSubCauseCode_childrenOnRoadway	= 1,
-	HumanPresenceOnTheRoadSubCauseCode_cyclistOnRoadway	= 2,
-	HumanPresenceOnTheRoadSubCauseCode_motorcyclistOnRoadway	= 3
+    HumanPresenceOnTheRoadSubCauseCode_unavailable           = 0,
+    HumanPresenceOnTheRoadSubCauseCode_childrenOnRoadway     = 1,
+    HumanPresenceOnTheRoadSubCauseCode_cyclistOnRoadway      = 2,
+    HumanPresenceOnTheRoadSubCauseCode_motorcyclistOnRoadway = 3
 } e_HumanPresenceOnTheRoadSubCauseCode;
 
 /* HumanPresenceOnTheRoadSubCauseCode */
-typedef long	 HumanPresenceOnTheRoadSubCauseCode_t;
+typedef long HumanPresenceOnTheRoadSubCauseCode_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_HumanPresenceOnTheRoadSubCauseCode;
@@ -45,5 +44,5 @@ per_type_encoder_f HumanPresenceOnTheRoadSubCauseCode_encode_uper;
 }
 #endif
 
-#endif	/* _HumanPresenceOnTheRoadSubCauseCode_H_ */
+#endif /* _HumanPresenceOnTheRoadSubCauseCode_H_ */
 #include <asn_internal.h>

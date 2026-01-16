@@ -26,10 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -75,9 +75,7 @@ class SocksEnabler : public std::enable_shared_from_this<SocksEnabler> {
 
         /* Step - 2 */
         dataSocksMgr_ = dataFactory.getSocksManager(
-                opType, [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+            opType, [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!dataSocksMgr_) {
             std::cout << "Can't get ISocksManager" << std::endl;
@@ -87,8 +85,8 @@ class SocksEnabler : public std::enable_shared_from_this<SocksEnabler> {
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Socks service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Socks service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
@@ -99,15 +97,14 @@ class SocksEnabler : public std::enable_shared_from_this<SocksEnabler> {
     int enableSocks(bool enable) {
         telux::common::Status status;
 
-        auto respCb = std::bind(
-            &SocksEnabler::onSocksStatusAvailable, this, std::placeholders::_1);
+        auto respCb = std::bind(&SocksEnabler::onSocksStatusAvailable, this, std::placeholders::_1);
 
         /* Step - 5 */
         enable_ = enable;
-        status = dataSocksMgr_->enableSocks(enable, respCb);
+        status  = dataSocksMgr_->enableSocks(enable, respCb);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't enable/disable Socks, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't enable/disable Socks, err " << static_cast<int>(status)
+                      << std::endl;
             return -EIO;
         }
 
@@ -121,8 +118,8 @@ class SocksEnabler : public std::enable_shared_from_this<SocksEnabler> {
         bool state;
 
         if (error != telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Failed to enable/disable Socks, err" <<
-                static_cast<int>(error) << std::endl;
+            std::cout << "Failed to enable/disable Socks, err" << static_cast<int>(error)
+                      << std::endl;
             return;
         }
 
@@ -154,7 +151,7 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<SocksEnabler>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate SocksEnabler" << std::endl;
         return -ENOMEM;
     }

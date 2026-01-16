@@ -1,35 +1,6 @@
 /*
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -175,16 +146,16 @@ static const uint32_t CA_RESULT_DATA_LENGTH = 96;
  */
 struct OperationResult {
     /* Unused */
-    uint32_t reserved:4;
+    uint32_t reserved : 4;
     /* Unique identifier of the request that corresponds to these results */
-    uint32_t id:12;
+    uint32_t id : 12;
     /* ECC verification or ECQV calculation result */
-    uint32_t operationType:3;
+    uint32_t operationType : 3;
     /* Indicates if ECC verification failed or passed, or ECQV calculation
      * succeeded or not */
-    uint32_t result:4;
+    uint32_t result : 4;
     /* Provides a more granluar error code specific to the cryptographic hardware */
-    uint32_t errCode:9;
+    uint32_t errCode : 9;
     /* Contains r'prime for verification or ECC point for calculation */
     uint8_t data[CA_RESULT_DATA_LENGTH];
 };
@@ -208,8 +179,9 @@ class ICryptoAcceleratorListener : public telux::common::IServiceStatusListener 
      * @param[in] resultData Contains the r' (computed r-component of the signature)
      *
      */
-    virtual void onVerificationResult(uint32_t uniqueId, telux::common::ErrorCode errorCode,
-        std::vector<uint8_t> resultData) { }
+    virtual void onVerificationResult(
+        uint32_t uniqueId, telux::common::ErrorCode errorCode, std::vector<uint8_t> resultData) {
+    }
 
     /**
      * Invoked to provide an ECQV calculation result.
@@ -228,13 +200,15 @@ class ICryptoAcceleratorListener : public telux::common::IServiceStatusListener 
      *                       y-coordinate.
      *
      */
-    virtual void onCalculationResult(uint32_t uniqueId, telux::common::ErrorCode errorCode,
-        std::vector<uint8_t> resultData) { }
+    virtual void onCalculationResult(
+        uint32_t uniqueId, telux::common::ErrorCode errorCode, std::vector<uint8_t> resultData) {
+    }
 
     /**
      * Destructor for ICryptoAcceleratorListener.
      */
-    virtual ~ICryptoAcceleratorListener() { }
+    virtual ~ICryptoAcceleratorListener() {
+    }
 };
 
 /**
@@ -251,7 +225,6 @@ class ICryptoAcceleratorListener : public telux::common::IServiceStatusListener 
  */
 class ICryptoAcceleratorManager {
  public:
-
     //****** MODE_ASYNC_LISTENER/MODE_ASYNC_POLL - Asynchronous APIs ******//
 
     /**
@@ -283,13 +256,10 @@ class ICryptoAcceleratorManager {
      *          accelerator, otherwise an appropriate error code
      *
      */
-    virtual telux::common::ErrorCode eccPostDigestForVerification(
-                const DataDigest& digest,
-                const ECCPoint& publicKey,
-                const Signature& signature,
-                telux::sec::ECCCurve curve,
-                uint32_t uniqueId,
-                telux::sec::RequestPriority priority) = 0;
+    virtual telux::common::ErrorCode eccPostDigestForVerification(const DataDigest &digest,
+        const ECCPoint &publicKey, const Signature &signature, telux::sec::ECCCurve curve,
+        uint32_t uniqueId, telux::sec::RequestPriority priority)
+        = 0;
 
     /**
      * Sends data to the crypto accelerator to perform a point multiplication and addition
@@ -325,12 +295,9 @@ class ICryptoAcceleratorManager {
      *
      */
     virtual telux::common::ErrorCode ecqvPostDataForMultiplyAndAdd(
-                const ECCPoint& multiplicandPoint,
-                const ECCPoint& addendPoint,
-                const Scalar& scalar,
-                telux::sec::ECCCurve curve,
-                uint32_t uniqueId,
-                telux::sec::RequestPriority priority) = 0;
+        const ECCPoint &multiplicandPoint, const ECCPoint &addendPoint, const Scalar &scalar,
+        telux::sec::ECCCurve curve, uint32_t uniqueId, telux::sec::RequestPriority priority)
+        = 0;
 
     /**
      * When using Mode::MODE_ASYNC_POLL,
@@ -358,8 +325,9 @@ class ICryptoAcceleratorManager {
      *          successfully, otherwise an appropriate error code
      *
      */
-    virtual telux::common::ErrorCode getAsyncResults(std::vector<OperationResult>& results,
-                uint32_t numResultsToRead, int32_t timeout, uint32_t& numResultsRead) = 0;
+    virtual telux::common::ErrorCode getAsyncResults(std::vector<OperationResult> &results,
+        uint32_t numResultsToRead, int32_t timeout, uint32_t &numResultsRead)
+        = 0;
 
     //*********** MODE_SYNC - Synchronous APIs ***********//
 
@@ -390,14 +358,10 @@ class ICryptoAcceleratorManager {
      *          code in all other cases
      *
      */
-    virtual telux::common::ErrorCode eccVerifyDigest(
-                const DataDigest& digest,
-                const ECCPoint& publicKey,
-                const Signature& signature,
-                telux::sec::ECCCurve curve,
-                uint32_t uniqueId,
-                telux::sec::RequestPriority priority,
-                std::vector<uint8_t>& resultData) = 0;
+    virtual telux::common::ErrorCode eccVerifyDigest(const DataDigest &digest,
+        const ECCPoint &publicKey, const Signature &signature, telux::sec::ECCCurve curve,
+        uint32_t uniqueId, telux::sec::RequestPriority priority, std::vector<uint8_t> &resultData)
+        = 0;
 
     /**
      * Performs a point multiplication and addition for 'Short Weierstrass' curves;
@@ -437,19 +401,15 @@ class ICryptoAcceleratorManager {
      *          an appropriate error code
      *
      */
-    virtual telux::common::ErrorCode ecqvPointMultiplyAndAdd(
-                const ECCPoint& multiplicandPoint,
-                const ECCPoint& addendPoint,
-                const Scalar& scalar,
-                telux::sec::ECCCurve curve,
-                uint32_t uniqueId,
-                telux::sec::RequestPriority priority,
-                std::vector<uint8_t>& resultData) = 0;
+    virtual telux::common::ErrorCode ecqvPointMultiplyAndAdd(const ECCPoint &multiplicandPoint,
+        const ECCPoint &addendPoint, const Scalar &scalar, telux::sec::ECCCurve curve,
+        uint32_t uniqueId, telux::sec::RequestPriority priority, std::vector<uint8_t> &resultData)
+        = 0;
 
     /**
      * Destructor of ICryptoAcceleratorManager. Cleans up as applicable.
      */
-    virtual ~ICryptoAcceleratorManager() {};
+    virtual ~ICryptoAcceleratorManager(){};
 };
 
 /**
@@ -466,7 +426,7 @@ class ResultParser {
      *          passed in request
      *
      */
-    static uint32_t getId(const OperationResult& result);
+    static uint32_t getId(const OperationResult &result);
 
     /**
      * Gets the type of operation corresponding to this result; values are
@@ -478,7 +438,7 @@ class ResultParser {
      *                           OperationType::OP_TYPE_CALCULATE for point calculation.
      *
      */
-    static OperationType getOperationType(const OperationResult& result);
+    static OperationType getOperationType(const OperationResult &result);
 
     /**
      * Indicates if the operation passed.
@@ -493,7 +453,7 @@ class ResultParser {
      *          appropriate error code in all other cases
      *
      */
-    static telux::common::ErrorCode getErrorCode(const OperationResult& result);
+    static telux::common::ErrorCode getErrorCode(const OperationResult &result);
 
     /**
      * Provides a crypto accelerator hardware specific error code to further
@@ -505,7 +465,7 @@ class ResultParser {
      * @returns Error code - telux::common::ErrorCode::* as obtained from the accelerator
      *
      */
-    static telux::common::ErrorCode getCAErrorCode(const OperationResult& result);
+    static telux::common::ErrorCode getCAErrorCode(const OperationResult &result);
 
     /**
      * Gets the actual result data. For ECC verification, it contains r-prime and for ECQV
@@ -517,7 +477,7 @@ class ResultParser {
      *          calculatio contains coordinates
      *
      */
-    static uint8_t *getData(OperationResult& result);
+    static uint8_t *getData(OperationResult &result);
 };
 
 /** @} */  // end_addtogroup telematics_sec_mgmt
@@ -525,4 +485,4 @@ class ResultParser {
 }  // End of namespace sec
 }  // End of namespace telux
 
-#endif // TELUX_SEC_CRYPTOACCELERATORMANAGER_HPP
+#endif  // TELUX_SEC_CRYPTOACCELERATORMANAGER_HPP

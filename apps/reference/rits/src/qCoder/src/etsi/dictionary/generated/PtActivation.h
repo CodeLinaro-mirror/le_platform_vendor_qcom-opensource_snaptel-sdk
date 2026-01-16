@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_PtActivation_H_
-#define	_PtActivation_H_
-
+#ifndef _PtActivation_H_
+#define _PtActivation_H_
 
 #include <asn_application.h>
 
@@ -22,11 +21,11 @@ extern "C" {
 
 /* PtActivation */
 typedef struct PtActivation {
-	PtActivationType_t	 ptActivationType;
-	PtActivationData_t	 ptActivationData;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    PtActivationType_t ptActivationType;
+    PtActivationData_t ptActivationData;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } PtActivation_t;
 
 /* Implementation */
@@ -36,5 +35,5 @@ extern asn_TYPE_descriptor_t asn_DEF_PtActivation;
 }
 #endif
 
-#endif	/* _PtActivation_H_ */
+#endif /* _PtActivation_H_ */
 #include <asn_internal.h>

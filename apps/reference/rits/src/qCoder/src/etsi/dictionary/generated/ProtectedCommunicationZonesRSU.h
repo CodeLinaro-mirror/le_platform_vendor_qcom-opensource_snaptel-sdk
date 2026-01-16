@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_ProtectedCommunicationZonesRSU_H_
-#define	_ProtectedCommunicationZonesRSU_H_
-
+#ifndef _ProtectedCommunicationZonesRSU_H_
+#define _ProtectedCommunicationZonesRSU_H_
 
 #include <asn_application.h>
 
@@ -24,10 +23,10 @@ struct ProtectedCommunicationZone;
 
 /* ProtectedCommunicationZonesRSU */
 typedef struct ProtectedCommunicationZonesRSU {
-	A_SEQUENCE_OF(struct ProtectedCommunicationZone) list;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    A_SEQUENCE_OF(struct ProtectedCommunicationZone) list;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } ProtectedCommunicationZonesRSU_t;
 
 /* Implementation */
@@ -40,5 +39,5 @@ extern asn_TYPE_descriptor_t asn_DEF_ProtectedCommunicationZonesRSU;
 /* Referred external types */
 #include "ProtectedCommunicationZone.h"
 
-#endif	/* _ProtectedCommunicationZonesRSU_H_ */
+#endif /* _ProtectedCommunicationZonesRSU_H_ */
 #include <asn_internal.h>

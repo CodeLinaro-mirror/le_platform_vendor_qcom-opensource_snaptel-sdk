@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file    RemoteSimDaemon.hpp
  * @brief   This file contains class and function declarations for the Remote SIM Daemon.
@@ -46,7 +52,7 @@
 #include "SimConnection.hpp"
 
 class RemoteSimDaemon {
-public:
+ public:
     static RemoteSimDaemon &getInstance();
 
     int runDaemon(int argc, char **argv);
@@ -55,14 +61,14 @@ public:
 
     void notifyModemConnUnavailable();
 
-private:
+ private:
     static void signalHandler(int signum);
 
     static void eventCallback(telux::common::ErrorCode errorCode);
 
     void printUsage(char **argv);
 
-    telux::common::Status readArguments(int argc, char **argv, int& slotId);
+    telux::common::Status readArguments(int argc, char **argv, int &slotId);
 
     telux::common::Status initDaemon();
 
@@ -91,12 +97,12 @@ private:
     std::shared_ptr<telux::tel::IRemoteSimManager> remoteSimMgr_;
     std::shared_ptr<telux::tel::IRemoteSimListener> listener_;
     SimConnection &simConnection_ = SimConnection::getInstance();
-    bool modemConnected_ = false;
-    int slotId_ = DEFAULT_SLOT_ID;
+    bool modemConnected_          = false;
+    int slotId_                   = DEFAULT_SLOT_ID;
 };
 
 class RemoteSimListener : public telux::tel::IRemoteSimListener {
-public:
+ public:
     void onApduTransfer(const unsigned int id, const std::vector<uint8_t> &apdu) override;
 
     void onCardConnect() override;
@@ -112,4 +118,4 @@ public:
     void onServiceStatusChange(telux::common::ServiceStatus status) override;
 };
 
-#endif // REMOTESIMDAEMON_HPP
+#endif  // REMOTESIMDAEMON_HPP

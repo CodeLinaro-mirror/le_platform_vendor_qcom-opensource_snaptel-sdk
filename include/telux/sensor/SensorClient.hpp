@@ -1,7 +1,6 @@
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -41,8 +40,8 @@ namespace sensor {
  *                                    @ref telux::sensor::SelfTestResultParams
  *
  */
-using SelfTestExResultCallback = std::function<void (telux::common::ErrorCode result,
-    telux::sensor::SelfTestResultParams selfTestResultParams) >;
+using SelfTestExResultCallback = std::function<void(
+    telux::common::ErrorCode result, telux::sensor::SelfTestResultParams selfTestResultParams)>;
 
 /**
  * This function is invoked when a result for a self-test initiated using
@@ -244,8 +243,8 @@ class ISensorClient {
      *          telux::sensor::SelfTestExResultCallback
      *
      */
-    virtual telux::common::Status selfTest(SelfTestType selfTestType,
-        SelfTestExResultCallback cb) = 0;
+    virtual telux::common::Status selfTest(SelfTestType selfTestType, SelfTestExResultCallback cb)
+        = 0;
 
     /**
      * Register a listener for sensor related events
@@ -253,8 +252,8 @@ class ISensorClient {
      * @returns status of registration request - @ref telux::common::Status
      *
      */
-    virtual telux::common::Status registerListener(
-        std::weak_ptr<ISensorEventListener> listener) = 0;
+    virtual telux::common::Status registerListener(std::weak_ptr<ISensorEventListener> listener)
+        = 0;
 
     /**
      * Deregister a sensor event listener
@@ -262,8 +261,8 @@ class ISensorClient {
      * @returns status of deregistration request - @ref telux::common::Status
      *
      */
-    virtual telux::common::Status deregisterListener(
-        std::weak_ptr<ISensorEventListener> listener) = 0;
+    virtual telux::common::Status deregisterListener(std::weak_ptr<ISensorEventListener> listener)
+        = 0;
 
     /**
      * Destructor for ISensorClient.
@@ -327,8 +326,8 @@ class ISensorClient {
      * Use @ref selfTest(SelfTestType selfTestType, SelfTestExResultCallback cb) API instead.
      *
      */
-    virtual telux::common::Status selfTest(
-        SelfTestType selfTestType, SelfTestResultCallback cb) = 0;
+    virtual telux::common::Status selfTest(SelfTestType selfTestType, SelfTestResultCallback cb)
+        = 0;
 };
 
 // Note that the class ISensor is an alias for ISensorClient and ISensor would deprecated and
@@ -339,4 +338,4 @@ using ISensor = ISensorClient;
 }  // namespace sensor
 }  // namespace telux
 
-#endif // TELUX_SENSOR_SENSORCLIENT_HPP
+#endif  // TELUX_SENSOR_SENSORCLIENT_HPP

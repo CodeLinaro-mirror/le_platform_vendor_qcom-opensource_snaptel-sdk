@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "AudioRequest.hpp"
@@ -10,9 +10,9 @@ namespace audio {
 
 AudioRequest::AudioRequest(int cmdId, uint32_t msgId, int clientId,
     std::weak_ptr<IAudioMsgDispatcher> audioMsgDispatcher) {
-    msgId_ = msgId;
-    cmdId_ = cmdId;
-    clientId_ = clientId;
+    msgId_              = msgId;
+    cmdId_              = cmdId;
+    clientId_           = clientId;
     audioMsgDispatcher_ = audioMsgDispatcher;
 }
 
@@ -32,8 +32,7 @@ int AudioRequest::getClientId(void) {
     return clientId_;
 }
 
-std::weak_ptr<IAudioMsgDispatcher>
-        AudioRequest::getAudioMsgDispatcher() {
+std::weak_ptr<IAudioMsgDispatcher> AudioRequest::getAudioMsgDispatcher() {
 
     return audioMsgDispatcher_;
 }

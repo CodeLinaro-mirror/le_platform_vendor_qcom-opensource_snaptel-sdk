@@ -26,11 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <iostream>
@@ -45,28 +45,48 @@ void MyMultiSimListener::onHighCapabilityChanged(int slotId) {
     PRINT_NOTIFICATION << "High capability changed to slot " << slotId << std::endl;
 }
 
-void MyMultiSimListener::onSlotStatusChanged(std::map<SlotId, telux::tel::SlotStatus> slotStatus) {
+void MyMultiSimListener::onSlotStatusChanged(std::map<PhysicalSlotId,
+    telux::tel::SimSlotStatus> slotStatus) {
     PRINT_NOTIFICATION << "Slot status change notification received" << std::endl;
     for(auto it = slotStatus.begin(); it != slotStatus.end(); ++it) {
         auto slotId = it->first;
         auto slotStatus = it->second;
-        PRINT_NOTIFICATION << " SlotId: " << static_cast<int>(slotId)
-                     << ", SlotState: " << MyMultiSimHelper::slotStateToString(slotStatus.slotState)
-                     << ", CardState: " << MyMultiSimHelper::cardStateToString(slotStatus.cardState)
-                     << ", CardError: " << MyMultiSimHelper::cardErrorToString(slotStatus.cardError)
-                     << std::endl;
+        PRINT_NOTIFICATION << " Physical SlotId: " << static_cast<int>(slotId)
+                << ", SlotState: " << MyMultiSimHelper::slotStateToString(slotStatus.slotState)
+                << ", CardState: " << MyMultiSimHelper::cardStateToString(slotStatus.cardState)
+                << ", CardError: " << MyMultiSimHelper::cardErrorToString(slotStatus.cardError)
+                << ", isMEP: " << (slotStatus.isMep ? "true" : "false")
+                << ", mode: "  << MyMultiSimHelper::mepModeToString(slotStatus.mepSlotInfo.mode)
+                << std::endl;
+        if (slotStatus.isMep) {
+            const auto &ports = slotStatus.mepSlotInfo.port; // adjust if your field name differs
+            if (!ports.empty()) {
+                PRINT_NOTIFICATION << "  MEP Port Details: " << std::endl;
+                for (const telux::tel::PortInfo &p : ports) {
+                    PRINT_NOTIFICATION << " PortState: "
+                        << MyMultiSimHelper::portStateToString(p.state)
+                        << ", ICCID: "    << (p.iccId.empty() ? "<none>" : p.iccId)
+                        << ", LogicalSlotId: " << static_cast<int>(p.slotId)
+                        << std::endl;
+                }
+            } else {
+                PRINT_NOTIFICATION << " MEP Port Details: <no ports reported>" << std::endl;
+            }
+        } else {
+            PRINT_NOTIFICATION << " MEP is not active on this logical slot. " << std::endl;
+        }
     }
 }
 
 // Notify MultiSimManager subsystem status
 void MyMultiSimListener::onServiceStatusChange(telux::common::ServiceStatus status) {
     std::string stat = "";
-    switch(status) {
+    switch (status) {
         case telux::common::ServiceStatus::SERVICE_AVAILABLE:
             stat = " SERVICE_AVAILABLE";
             break;
         case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
-            stat =  " SERVICE_UNAVAILABLE";
+            stat = " SERVICE_UNAVAILABLE";
             break;
         default:
             stat = " Unknown service status";

@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_TrafficRule_H_
-#define	_TrafficRule_H_
-
+#ifndef _TrafficRule_H_
+#define _TrafficRule_H_
 
 #include <asn_application.h>
 
@@ -20,17 +19,17 @@ extern "C" {
 
 /* Dependencies */
 typedef enum TrafficRule {
-	TrafficRule_noPassing	= 0,
-	TrafficRule_noPassingForTrucks	= 1,
-	TrafficRule_passToRight	= 2,
-	TrafficRule_passToLeft	= 3
-	/*
-	 * Enumeration is extensible
-	 */
+    TrafficRule_noPassing          = 0,
+    TrafficRule_noPassingForTrucks = 1,
+    TrafficRule_passToRight        = 2,
+    TrafficRule_passToLeft         = 3
+    /*
+     * Enumeration is extensible
+     */
 } e_TrafficRule;
 
 /* TrafficRule */
-typedef long	 TrafficRule_t;
+typedef long TrafficRule_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_TrafficRule;
@@ -48,5 +47,5 @@ per_type_encoder_f TrafficRule_encode_uper;
 }
 #endif
 
-#endif	/* _TrafficRule_H_ */
+#endif /* _TrafficRule_H_ */
 #include <asn_internal.h>

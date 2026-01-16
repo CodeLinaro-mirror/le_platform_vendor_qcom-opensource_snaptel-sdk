@@ -26,11 +26,13 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
-*/
+ */
+
 /**
  * Data Connection Manager Sample Application using Telematics SDK
  * This is used to demonstrate data connection manager APIs like start/stop data
@@ -111,6 +113,7 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     void dataControlMenu(std::vector<std::string> inputCommand);
     void qosManagementMenu(std::vector<std::string> inputCommand);
     void dataLinkMenu(std::vector<std::string> inputCommand);
+
  private:
     std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
 

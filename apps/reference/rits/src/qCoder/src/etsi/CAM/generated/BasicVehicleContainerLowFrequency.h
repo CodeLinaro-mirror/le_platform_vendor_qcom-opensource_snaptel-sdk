@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_BasicVehicleContainerLowFrequency_H_
-#define	_BasicVehicleContainerLowFrequency_H_
-
+#ifndef _BasicVehicleContainerLowFrequency_H_
+#define _BasicVehicleContainerLowFrequency_H_
 
 #include <asn_application.h>
 
@@ -23,12 +22,12 @@ extern "C" {
 
 /* BasicVehicleContainerLowFrequency */
 typedef struct BasicVehicleContainerLowFrequency {
-	VehicleRole_t	 vehicleRole;
-	ExteriorLights_t	 exteriorLights;
-	PathHistory_t	 pathHistory;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    VehicleRole_t vehicleRole;
+    ExteriorLights_t exteriorLights;
+    PathHistory_t pathHistory;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } BasicVehicleContainerLowFrequency_t;
 
 /* Implementation */
@@ -38,5 +37,5 @@ extern asn_TYPE_descriptor_t asn_DEF_BasicVehicleContainerLowFrequency;
 }
 #endif
 
-#endif	/* _BasicVehicleContainerLowFrequency_H_ */
+#endif /* _BasicVehicleContainerLowFrequency_H_ */
 #include <asn_internal.h>

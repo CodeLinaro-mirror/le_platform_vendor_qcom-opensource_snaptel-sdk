@@ -57,10 +57,8 @@ class OnDemandPDN : public telux::data::IDataConnectionListener,
         auto &dataFactory = telux::data::DataFactory::getInstance();
 
         /* Step - 2 */
-        dataConMgr_  = dataFactory.getDataConnectionManager(slotId,
-                [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+        dataConMgr_ = dataFactory.getDataConnectionManager(
+            slotId, [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!dataConMgr_) {
             std::cout << "Can't get IDataConnectionManager" << std::endl;
@@ -70,16 +68,15 @@ class OnDemandPDN : public telux::data::IDataConnectionListener,
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Data service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Data service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
         /* Step - 4 */
         status = dataConMgr_->registerListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't register listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't register listener, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -93,33 +90,30 @@ class OnDemandPDN : public telux::data::IDataConnectionListener,
         /* Step - 8 */
         status = dataConMgr_->deregisterListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't deregister listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't deregister listener, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
         return 0;
     }
 
-
     int triggerDataCall(int profileId, telux::data::OperationType opType) {
         telux::common::Status status;
 
-        auto responseCb = std::bind(&OnDemandPDN::onDataCallResponseAvailable,
-            this, std::placeholders::_1, std::placeholders::_2);
+        auto responseCb = std::bind(&OnDemandPDN::onDataCallResponseAvailable, this,
+            std::placeholders::_1, std::placeholders::_2);
 
         /* Step - 5 */
         status = dataConMgr_->startDataCall(
             profileId, telux::data::IpFamilyType::IPV4, responseCb, opType);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't make call, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't make call, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
         if (!waitForResponse()) {
-            std::cout << "Failed to start data call, err " <<
-                static_cast<int>(errorCode_) << std::endl;
+            std::cout << "Failed to start data call, err " << static_cast<int>(errorCode_)
+                      << std::endl;
             return -EIO;
         }
 
@@ -156,14 +150,14 @@ class OnDemandPDN : public telux::data::IDataConnectionListener,
             if (inet_pton(AF_INET, address, &sockAddress.sin_addr) == 1) {
                 remoteIPAddress = address;
                 std::cout << remoteIPAddress;
-                remoteIPAddress.erase(std::remove(remoteIPAddress.begin(),
-                    remoteIPAddress.end(), '\n'), remoteIPAddress.end());
+                remoteIPAddress.erase(
+                    std::remove(remoteIPAddress.begin(), remoteIPAddress.end(), '\n'),
+                    remoteIPAddress.end());
                 break;
             }
         }
 
-        std::cout << "\nResolved " << domain <<
-            " using DNS server at " << dnsAddress << std::endl;
+        std::cout << "\nResolved " << domain << " using DNS server at " << dnsAddress << std::endl;
         return 0;
     }
 
@@ -176,7 +170,7 @@ class OnDemandPDN : public telux::data::IDataConnectionListener,
         sockaddr_in serverIpAddress{};
 
         serverIpAddress.sin_family = AF_INET;
-        serverIpAddress.sin_port = htons(stoi(portNumber));
+        serverIpAddress.sin_port   = htons(stoi(portNumber));
 
         /* Convert IP address from text to binary */
         ret = inet_pton(AF_INET, remoteIPAddress.c_str(), &serverIpAddress.sin_addr);
@@ -218,8 +212,7 @@ class OnDemandPDN : public telux::data::IDataConnectionListener,
         int const DEFAULT_TIMEOUT_SECONDS = 5;
         std::unique_lock<std::mutex> lock(updateMutex_);
 
-        auto cvStatus = updateCV_.wait_for(lock,
-            std::chrono::seconds(DEFAULT_TIMEOUT_SECONDS));
+        auto cvStatus = updateCV_.wait_for(lock, std::chrono::seconds(DEFAULT_TIMEOUT_SECONDS));
 
         if (cvStatus == std::cv_status::timeout) {
             std::cout << "Timedout" << std::endl;
@@ -232,20 +225,18 @@ class OnDemandPDN : public telux::data::IDataConnectionListener,
 
     /* Receives response of the startDataCall() request */
     void onDataCallResponseAvailable(
-        const std::shared_ptr<telux::data::IDataCall> &dataCall,
-        telux::common::ErrorCode error) {
+        const std::shared_ptr<telux::data::IDataCall> &dataCall, telux::common::ErrorCode error) {
 
         std::lock_guard<std::mutex> lock(updateMutex_);
-        std::cout << "\nonDataCallResponseAvailable(), err " <<
-            static_cast<int>(error) << std::endl;
+        std::cout << "\nonDataCallResponseAvailable(), err " << static_cast<int>(error)
+                  << std::endl;
         errorCode_ = error;
-        dataCall_ = dataCall;
+        dataCall_  = dataCall;
         updateCV_.notify_one();
     }
 
     /* Receives data call information whenever there is a change */
-    void onDataCallInfoChanged(
-        const std::shared_ptr<telux::data::IDataCall> &dataCall) override {
+    void onDataCallInfoChanged(const std::shared_ptr<telux::data::IDataCall> &dataCall) override {
 
         std::cout << "\nonDataCallInfoChanged()" << std::endl;
         std::list<telux::data::IpAddrInfo> ipAddrList;
@@ -255,23 +246,23 @@ class OnDemandPDN : public telux::data::IDataConnectionListener,
         std::cout << " Profile ID: " << dataCall->getProfileId() << std::endl;
         std::cout << " Interface name: " << dataCall->getInterfaceName() << std::endl;
 
-        std::cout << " Data call status: " <<
-            static_cast<int>(dataCall->getDataCallStatus()) << std::endl;
-        std::cout << " Data call end reason, type : " <<
-            static_cast<int>(dataCall->getDataCallEndReason().type) << std::endl;
+        std::cout << " Data call status: " << static_cast<int>(dataCall->getDataCallStatus())
+                  << std::endl;
+        std::cout << " Data call end reason, type : "
+                  << static_cast<int>(dataCall->getDataCallEndReason().type) << std::endl;
 
         ipAddrList = dataCall->getIpAddressInfo();
-        for(auto &it : ipAddrList) {
+        for (auto &it : ipAddrList) {
             std::cout << "\n ifAddress: " << it.ifAddress
-                << "\n primaryDnsAddress: " << it.primaryDnsAddress
-                << "\n secondaryDnsAddress: " << it.secondaryDnsAddress
-                << "\n mtuValue: " << it.mtu << std::endl;
+                      << "\n primaryDnsAddress: " << it.primaryDnsAddress
+                      << "\n secondaryDnsAddress: " << it.secondaryDnsAddress
+                      << "\n mtuValue: " << it.mtu << std::endl;
         }
 
-        std::cout << " IP family type: " <<
-            static_cast<int>(dataCall->getIpFamilyType()) << std::endl;
-        std::cout << " Tech preference: " <<
-            static_cast<int>(dataCall->getTechPreference()) << std::endl;
+        std::cout << " IP family type: " << static_cast<int>(dataCall->getIpFamilyType())
+                  << std::endl;
+        std::cout << " Tech preference: " << static_cast<int>(dataCall->getTechPreference())
+                  << std::endl;
     }
 
  private:
@@ -295,20 +286,20 @@ int main(int argc, char *argv[]) {
     std::string remoteIPAddress("");
 
     if (argc != 6) {
-        std::cout << "./data_on_demand_pdn_app <slot-id> " <<
-            "<profile-id> <operation-type> <domain> <port-number>" << std::endl;
+        std::cout << "./data_on_demand_pdn_app <slot-id> "
+                  << "<profile-id> <operation-type> <domain> <port-number>" << std::endl;
         return -EINVAL;
     }
 
-    slotId = static_cast<SlotId>(std::atoi(argv[1]));
-    profileId = std::atoi(argv[2]);
-    opType = static_cast<telux::data::OperationType>(std::atoi(argv[3]));
-    domain = argv[4];
+    slotId     = static_cast<SlotId>(std::atoi(argv[1]));
+    profileId  = std::atoi(argv[2]);
+    opType     = static_cast<telux::data::OperationType>(std::atoi(argv[3]));
+    domain     = argv[4];
     portNumber = argv[5];
 
     try {
         app = std::make_shared<OnDemandPDN>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate OnDemandPDN" << std::endl;
         return -ENOMEM;
     }

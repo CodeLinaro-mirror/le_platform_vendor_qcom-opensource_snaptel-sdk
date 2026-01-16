@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_VerticalAccelerationValue_H_
-#define	_VerticalAccelerationValue_H_
-
+#ifndef _VerticalAccelerationValue_H_
+#define _VerticalAccelerationValue_H_
 
 #include <asn_application.h>
 
@@ -20,13 +19,13 @@ extern "C" {
 
 /* Dependencies */
 typedef enum VerticalAccelerationValue {
-	VerticalAccelerationValue_pointOneMeterPerSecSquaredUp	= 1,
-	VerticalAccelerationValue_pointOneMeterPerSecSquaredDown	= -1,
-	VerticalAccelerationValue_unavailable	= 161
+    VerticalAccelerationValue_pointOneMeterPerSecSquaredUp   = 1,
+    VerticalAccelerationValue_pointOneMeterPerSecSquaredDown = -1,
+    VerticalAccelerationValue_unavailable                    = 161
 } e_VerticalAccelerationValue;
 
 /* VerticalAccelerationValue */
-typedef long	 VerticalAccelerationValue_t;
+typedef long VerticalAccelerationValue_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_VerticalAccelerationValue;
@@ -44,5 +43,5 @@ per_type_encoder_f VerticalAccelerationValue_encode_uper;
 }
 #endif
 
-#endif	/* _VerticalAccelerationValue_H_ */
+#endif /* _VerticalAccelerationValue_H_ */
 #include <asn_internal.h>

@@ -51,8 +51,7 @@
 
 using namespace telux::satcom;
 
-class NtnApp : public INtnListener,
-    public std::enable_shared_from_this<NtnApp> {
+class NtnApp : public INtnListener, public std::enable_shared_from_this<NtnApp> {
  public:
     int init() {
         telux::common::ServiceStatus serviceStatus;
@@ -63,9 +62,7 @@ class NtnApp : public INtnListener,
 
         /* Step - 2 */
         ntnMgr_ = satcomFactory.getNtnManager(
-            [&p](telux::common::ServiceStatus srvStatus) {
-            p.set_value(srvStatus);
-        });
+            [&p](telux::common::ServiceStatus srvStatus) { p.set_value(srvStatus); });
 
         if (!ntnMgr_) {
             std::cout << "Can't get INtnManager" << std::endl;
@@ -75,15 +72,14 @@ class NtnApp : public INtnListener,
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "NTN service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "NTN service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
         auto status = ntnMgr_->registerListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't register listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't register listener, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -91,15 +87,13 @@ class NtnApp : public INtnListener,
         return 0;
     }
 
-    int enableNtn(std::string iccid)
-    {
+    int enableNtn(std::string iccid) {
         telux::common::ErrorCode err;
 
         err = ntnMgr_->enableNtn(true, true, iccid);
-        if (err != telux::common::ErrorCode::SUCCESS)
-        {
-            std::cout << __FUNCTION__ << " Failed with error = " << static_cast<int>(err) <<
-                std::endl;
+        if (err != telux::common::ErrorCode::SUCCESS) {
+            std::cout << __FUNCTION__ << " Failed with error = " << static_cast<int>(err)
+                      << std::endl;
             return -EIO;
         }
 
@@ -107,10 +101,8 @@ class NtnApp : public INtnListener,
         return 0;
     }
 
-    void printSignalStrength(SignalStrength ss)
-    {
-        switch (ss)
-        {
+    void printSignalStrength(SignalStrength ss) {
+        switch (ss) {
             case SignalStrength::NONE:
                 std::cout << "No signal\n";
                 break;
@@ -139,15 +131,12 @@ class NtnApp : public INtnListener,
         return "UNKOWN";
     }
 
-    void printNtnCapabilities(NtnCapabilities cap)
-    {
+    void printNtnCapabilities(NtnCapabilities cap) {
         std::cout << __FUNCTION__ << "maxDataSize= " << cap.maxDataSize << "\n";
     }
 
-    void printNtnState(NtnState state)
-    {
-        switch (state)
-        {
+    void printNtnState(NtnState state) {
+        switch (state) {
             case NtnState::DISABLED:
                 break;
                 std::cout << "NtnState: DISABLED\n";
@@ -160,49 +149,43 @@ class NtnApp : public INtnListener,
         }
     }
 
-    int getSignalStrength()
-    {
+    int getSignalStrength() {
         telux::common::ErrorCode err;
         SignalStrength ss;
 
         err = ntnMgr_->getSignalStrength(ss);
-        if (err != telux::common::ErrorCode::SUCCESS)
-        {
+        if (err != telux::common::ErrorCode::SUCCESS) {
             std::cout << __FUNCTION__ << " failed with error = " << static_cast<int>(err)
-                << std::endl;
+                      << std::endl;
             return -EIO;
         }
         printSignalStrength(ss);
         return 0;
     }
 
-    int getNtnCapabilities()
-    {
+    int getNtnCapabilities() {
         telux::common::ErrorCode err;
         NtnCapabilities cap;
 
         err = ntnMgr_->getNtnCapabilities(cap);
 
-        if (err != telux::common::ErrorCode::SUCCESS)
-        {
+        if (err != telux::common::ErrorCode::SUCCESS) {
             std::cout << __FUNCTION__ << " failed with error = " << static_cast<int>(err)
-                << std::endl;
+                      << std::endl;
             return -EIO;
         }
         printNtnCapabilities(cap);
         return 0;
     }
 
-    void getNtnState()
-    {
+    void getNtnState() {
         NtnState state;
 
         state = ntnMgr_->getNtnState();
         printNtnState(state);
     }
 
-    int updateSystemSelectionSpecifiers()
-    {
+    int updateSystemSelectionSpecifiers() {
         telux::common::ErrorCode err;
 
         // Fill params as per vendor specification.
@@ -213,42 +196,37 @@ class NtnApp : public INtnListener,
         params.push_back({"310", "260", {253, 255, 256}, {228786}});
 
         err = ntnMgr_->updateSystemSelectionSpecifiers(params);
-        if (err != telux::common::ErrorCode::SUCCESS)
-        {
+        if (err != telux::common::ErrorCode::SUCCESS) {
             std::cout << __FUNCTION__ << " failed with error = " << static_cast<int>(err)
-                << std::endl;
+                      << std::endl;
             return -EIO;
         }
         return 0;
     }
 
-    int sendData()
-    {
+    int sendData() {
         telux::common::Status status;
-        const char* str = "TEST DATA";
-        uint8_t *data = reinterpret_cast<uint8_t*>(const_cast<char*>(str));
-        uint32_t size = strlen(str);
+        const char *str = "TEST DATA";
+        uint8_t *data   = reinterpret_cast<uint8_t *>(const_cast<char *>(str));
+        uint32_t size   = strlen(str);
         TransactionId tid;
         bool isEmergency = true;
 
-        for (int i = 0; i < 10; ++i)
-        {
+        for (int i = 0; i < 10; ++i) {
             status = ntnMgr_->sendData(data, size, isEmergency, tid);
-            std::unique_lock<std::mutex> lock{ mtx };
+            std::unique_lock<std::mutex> lock{mtx};
             cv.wait_for(lock, std::chrono::seconds(30));
-            std::cout << __FUNCTION__ << " iteration " << i + 1 << " status = "
-                << static_cast<int>(status) << std::endl;
+            std::cout << __FUNCTION__ << " iteration " << i + 1
+                      << " status = " << static_cast<int>(status) << std::endl;
         }
         return 0;
     }
 
-    int abortData()
-    {
+    int abortData() {
         telux::common::ErrorCode err;
         err = ntnMgr_->abortData();
 
-        if (err != telux::common::ErrorCode::SUCCESS)
-        {
+        if (err != telux::common::ErrorCode::SUCCESS) {
             std::cout << "abortData Failed with error = " << static_cast<int>(err) << std::endl;
             return -EIO;
         }
@@ -256,21 +234,19 @@ class NtnApp : public INtnListener,
         return 0;
     }
 
-    int disableNtn()
-    {
+    int disableNtn() {
         telux::common::ErrorCode err;
 
         err = ntnMgr_->enableNtn(false, true, "");
-        if (err != telux::common::ErrorCode::SUCCESS)
-        {
+        if (err != telux::common::ErrorCode::SUCCESS) {
             std::cout << "disableNtn Failed with error = " << static_cast<int>(err) << std::endl;
             return -EIO;
         }
         return 0;
     }
 
-    void updateLocationFixParams(const std::string& filename,
-        telux::satcom::LocationFix& fixParams) {
+    void updateLocationFixParams(
+        const std::string &filename, telux::satcom::LocationFix &fixParams) {
         std::cout << "Updating location fix params.\n";
         std::ifstream file(filename);
         std::string line;
@@ -307,32 +283,32 @@ class NtnApp : public INtnListener,
             fixParams.alt = std::stof(params["alt"]);
 
             fixParams.velInfo.isEnuValueValid = params["isEnuValueValid"] == "true";
-            fixParams.velInfo.enuVel[0] = std::stof(params["enuEastingVel"]);
-            fixParams.velInfo.enuVel[1] = std::stof(params["enuNorthingVel"]);
-            fixParams.velInfo.enuVel[2] = std::stof(params["enuUpwardVel"]);
+            fixParams.velInfo.enuVel[0]       = std::stof(params["enuEastingVel"]);
+            fixParams.velInfo.enuVel[1]       = std::stof(params["enuNorthingVel"]);
+            fixParams.velInfo.enuVel[2]       = std::stof(params["enuUpwardVel"]);
 
             fixParams.velInfo.isEnuUncerValid = params["isEnuUncerValid"] == "true";
-            fixParams.velInfo.enuUncer[0] = std::stof(params["enuEastingUncer"]);
-            fixParams.velInfo.enuUncer[1] = std::stof(params["enuNorthingUncer"]);
-            fixParams.velInfo.enuUncer[2] = std::stof(params["enuUpwardUncer"]);
+            fixParams.velInfo.enuUncer[0]     = std::stof(params["enuEastingUncer"]);
+            fixParams.velInfo.enuUncer[1]     = std::stof(params["enuNorthingUncer"]);
+            fixParams.velInfo.enuUncer[2]     = std::stof(params["enuUpwardUncer"]);
 
-            fixParams.isHeadingValid = params["isHeadingValid"] == "true";
-            fixParams.heading = std::stoul(params["heading"]);
+            fixParams.isHeadingValid      = params["isHeadingValid"] == "true";
+            fixParams.heading             = std::stoul(params["heading"]);
             fixParams.isHeadingUncerValid = params["isHeadingUncerValid"] == "true";
-            fixParams.headingUncer = std::stoul(params["headingUncer"]);
-            fixParams.uncerCircular = std::stoul(params["uncerCircular"]);
-            fixParams.isConfidenceValid = params["isConfidenceValid"] == "true";
-            fixParams.confidence = std::stoul(params["confidence"]);
-        } catch (const std::invalid_argument& e) {
+            fixParams.headingUncer        = std::stoul(params["headingUncer"]);
+            fixParams.uncerCircular       = std::stoul(params["uncerCircular"]);
+            fixParams.isConfidenceValid   = params["isConfidenceValid"] == "true";
+            fixParams.confidence          = std::stoul(params["confidence"]);
+        } catch (const std::invalid_argument &e) {
             std::cerr << "Invalid argument: " << e.what() << '\n';
-        } catch (const std::out_of_range& e) {
+        } catch (const std::out_of_range &e) {
             std::cerr << "Out of range: " << e.what() << '\n';
         }
     }
 
     int setLocationFix() {
-        std::string filename = std::string(DEFAULT_CSV_FILE_PATH) +
-            std::string(DEFAULT_CSV_FILE_NAME);
+        std::string filename
+            = std::string(DEFAULT_CSV_FILE_PATH) + std::string(DEFAULT_CSV_FILE_NAME);
         telux::satcom::LocationFix fixParams;
         telux::common::ErrorCode err;
 
@@ -341,8 +317,8 @@ class NtnApp : public INtnListener,
         err = ntnMgr_->setLocationFix(fixParams);
 
         if (err != telux::common::ErrorCode::SUCCESS) {
-            std::cout << "setLocationFix Failed with error = " <<
-                static_cast<int>(err) << std::endl;
+            std::cout << "setLocationFix Failed with error = " << static_cast<int>(err)
+                      << std::endl;
             return -EIO;
         } else {
             std::cout << "setLocationFix SUCCESS" << std::endl;
@@ -351,8 +327,7 @@ class NtnApp : public INtnListener,
         return 0;
     }
 
-    void onNtnStateChange(NtnState newState)
-    {
+    void onNtnStateChange(NtnState newState) {
         printNtnState(newState);
     }
 
@@ -370,7 +345,7 @@ class NtnApp : public INtnListener,
 
     void onDataAck(telux::common::ErrorCode err, TransactionId id) {
         std::cout << "Data ack for Transaction ID: " << id << "\n";
-        std::unique_lock<std::mutex> lock{ mtx };
+        std::unique_lock<std::mutex> lock{mtx};
         cv.notify_all();
     }
 
@@ -380,8 +355,8 @@ class NtnApp : public INtnListener,
     }
 
     void onLocationFixRequest(LocationFixRequestReason reqReason) {
-        std::cout << "**** onLocationFixRequest Reason = "
-            << printLocationRequest(reqReason) << std::endl;
+        std::cout << "**** onLocationFixRequest Reason = " << printLocationRequest(reqReason)
+                  << std::endl;
 
         std::cout << "Updating location fix response" << std::endl;
         ntnMgr_->locationFixResponse(telux::satcom::LocationStatus::SUCCESS, 0);
@@ -417,7 +392,7 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<NtnApp>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate NtnApp" << std::endl;
         return -ENOMEM;
     }

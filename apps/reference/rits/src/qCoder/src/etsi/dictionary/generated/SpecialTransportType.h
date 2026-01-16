@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_SpecialTransportType_H_
-#define	_SpecialTransportType_H_
-
+#ifndef _SpecialTransportType_H_
+#define _SpecialTransportType_H_
 
 #include <asn_application.h>
 
@@ -20,14 +19,14 @@ extern "C" {
 
 /* Dependencies */
 typedef enum SpecialTransportType {
-	SpecialTransportType_heavyLoad	= 0,
-	SpecialTransportType_excessWidth	= 1,
-	SpecialTransportType_excessLength	= 2,
-	SpecialTransportType_excessHeight	= 3
+    SpecialTransportType_heavyLoad    = 0,
+    SpecialTransportType_excessWidth  = 1,
+    SpecialTransportType_excessLength = 2,
+    SpecialTransportType_excessHeight = 3
 } e_SpecialTransportType;
 
 /* SpecialTransportType */
-typedef BIT_STRING_t	 SpecialTransportType_t;
+typedef BIT_STRING_t SpecialTransportType_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_SpecialTransportType;
@@ -45,5 +44,5 @@ per_type_encoder_f SpecialTransportType_encode_uper;
 }
 #endif
 
-#endif	/* _SpecialTransportType_H_ */
+#endif /* _SpecialTransportType_H_ */
 #include <asn_internal.h>

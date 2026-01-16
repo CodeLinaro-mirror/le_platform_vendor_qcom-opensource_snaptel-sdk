@@ -28,15 +28,13 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef CV2XTXREPORTSAMPLEAPP_HPP
 #define CV2XTXREPORTSAMPLEAPP_HPP
-
 
 #include <string>
 
@@ -45,14 +43,14 @@
 #include <telux/cv2x/Cv2xRadioManager.hpp>
 #include <telux/cv2x/Cv2xTxStatusReportListener.hpp>
 
-using telux::cv2x::ICv2xRadioManager;
 using telux::cv2x::ICv2xRadio;
+using telux::cv2x::ICv2xRadioManager;
 using telux::cv2x::ICv2xTxFlow;
 using telux::cv2x::ICv2xTxStatusReportListener;
 
 class Cv2xTxStatusReportApp {
-public:
-    static Cv2xTxStatusReportApp & getInstance();
+ public:
+    static Cv2xTxStatusReportApp &getInstance();
 
     int init();
 
@@ -60,27 +58,26 @@ public:
 
     void startTxPkts();
 
-private:
-
+ private:
     Cv2xTxStatusReportApp();
 
     int registerTxFlow(std::shared_ptr<ICv2xRadio> &radio);
 
     int deregisterTxFlow(std::shared_ptr<ICv2xRadio> &radio);
 
-    int fillTxBuffer(char* buf, uint16_t length);
+    int fillTxBuffer(char *buf, uint16_t length);
 
-    int sampleTx(int sock, char* buf, uint16_t length);
+    int sampleTx(int sock, char *buf, uint16_t length);
 
     int createTxReportListener(std::shared_ptr<ICv2xRadio> &radio);
 
     int deleteTxReportListener(std::shared_ptr<ICv2xRadio> &radio);
 
-    std::shared_ptr<ICv2xRadio> radio_ = nullptr;
+    std::shared_ptr<ICv2xRadio> radio_                             = nullptr;
     std::shared_ptr<ICv2xTxStatusReportListener> txReportListener_ = nullptr;
-    std::shared_ptr<ICv2xTxFlow> txFlow_ = nullptr;
-    bool txFlowValid_ = false;
-    uint32_t txCount_ = 0;
-    char* buf_ = nullptr;
+    std::shared_ptr<ICv2xTxFlow> txFlow_                           = nullptr;
+    bool txFlowValid_                                              = false;
+    uint32_t txCount_                                              = 0;
+    char *buf_                                                     = nullptr;
 };
 #endif  // CV2XTXREPORTSAMPLEAPP_HPP

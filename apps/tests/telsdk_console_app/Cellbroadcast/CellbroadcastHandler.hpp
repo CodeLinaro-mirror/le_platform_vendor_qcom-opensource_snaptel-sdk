@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef CELLBROADCASTHANDLER_HPP
 #define CELLBROADCASTHANDLER_HPP
 
@@ -35,15 +41,13 @@
 #include <telux/tel/CellBroadcastManager.hpp>
 
 class CellbroadcastCallbackHandler {
-public:
-
-    static void requestMsgFilterResponse(std::vector<telux::tel::CellBroadcastFilter> filters,
-        telux::common::ErrorCode errorCode);
+ public:
+    static void requestMsgFilterResponse(
+        std::vector<telux::tel::CellBroadcastFilter> filters, telux::common::ErrorCode errorCode);
     static void updateMsgFilterResponse(telux::common::ErrorCode error);
     static void setActivationStatusResponse(telux::common::ErrorCode error);
-    static void requestActivationStatusResponse(bool isActivated,
-        telux::common::ErrorCode errorCode);
+    static void requestActivationStatusResponse(
+        bool isActivated, telux::common::ErrorCode errorCode);
 };
 
 #endif  // CELLBROADCASTHANDLER_HPP
-

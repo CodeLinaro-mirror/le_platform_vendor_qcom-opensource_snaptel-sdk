@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_TimestampIts_H_
-#define	_TimestampIts_H_
-
+#ifndef _TimestampIts_H_
+#define _TimestampIts_H_
 
 #include <asn_application.h>
 
@@ -20,12 +19,12 @@ extern "C" {
 
 /* Dependencies */
 typedef enum TimestampIts {
-	TimestampIts_utcStartOf2004	= 0,
-	TimestampIts_oneMillisecAfterUTCStartOf2004	= 1
+    TimestampIts_utcStartOf2004                 = 0,
+    TimestampIts_oneMillisecAfterUTCStartOf2004 = 1
 } e_TimestampIts;
 
 /* TimestampIts */
-typedef INTEGER_t	 TimestampIts_t;
+typedef INTEGER_t TimestampIts_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_TimestampIts;
@@ -43,5 +42,5 @@ per_type_encoder_f TimestampIts_encode_uper;
 }
 #endif
 
-#endif	/* _TimestampIts_H_ */
+#endif /* _TimestampIts_H_ */
 #include <asn_internal.h>

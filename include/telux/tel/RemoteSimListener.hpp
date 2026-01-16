@@ -26,9 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -60,58 +61,58 @@ namespace tel {
  * implementation should be thread safe.
  */
 class IRemoteSimListener : public common::IServiceStatusListener {
-public:
-   /**
-    * This function is called when the modem wants to transmit a command APDU.
-    *
-    * @param    [in] id     Identifier for a command and response APDU pair
-    * @param    [in] apdu   APDU request sent to the control point (max size = 261, per ETSI TS
-    *                                                               102 221, section 10.1.4)
-    */
+ public:
+    /**
+     * This function is called when the modem wants to transmit a command APDU.
+     *
+     * @param    [in] id     Identifier for a command and response APDU pair
+     * @param    [in] apdu   APDU request sent to the control point (max size = 261, per ETSI TS
+     *                                                               102 221, section 10.1.4)
+     */
     virtual void onApduTransfer(const unsigned int id, const std::vector<uint8_t> &apdu) {
     }
 
-   /**
-    * This function is called when the modem wants to establish a connection.
-    */
+    /**
+     * This function is called when the modem wants to establish a connection.
+     */
     virtual void onCardConnect() {
     }
 
-   /**
-    * This function is called when the modem wants to tear down a connection.
-    */
+    /**
+     * This function is called when the modem wants to tear down a connection.
+     */
     virtual void onCardDisconnect() {
     }
 
-   /**
-    * This function is called when the modem wants to power up the card.
-    */
+    /**
+     * This function is called when the modem wants to power up the card.
+     */
     virtual void onCardPowerUp() {
     }
 
-   /**
-    * This function is called when the modem wants to power down the card.
-    */
+    /**
+     * This function is called when the modem wants to power down the card.
+     */
     virtual void onCardPowerDown() {
     }
 
-   /**
-    * This function is called when the modem wants to warm reset the card.
-    */
+    /**
+     * This function is called when the modem wants to warm reset the card.
+     */
     virtual void onCardReset() {
     }
 
-   /**
-    * Destructor of IRemoteSimListener
-    */
+    /**
+     * Destructor of IRemoteSimListener
+     */
     virtual ~IRemoteSimListener() {
     }
 };
 
 /** @} */ /* end_addtogroup telematics_remote_sim */
 
-} // end of namespace tel
+}  // end of namespace tel
 
-} // End of namespace telux
+}  // End of namespace telux
 
-#endif // TELUX_TEL_REMOTESIMLISTENER_HPP
+#endif  // TELUX_TEL_REMOTESIMLISTENER_HPP

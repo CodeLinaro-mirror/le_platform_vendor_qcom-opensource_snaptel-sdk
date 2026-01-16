@@ -28,9 +28,8 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -44,7 +43,7 @@ using namespace telux::tel;
 
 /** TelClientUtils class provides helper functions to convert various parameters to strings */
 class TelClientUtils {
-public:
+ public:
     /*
      * Get the call state in string format
      */

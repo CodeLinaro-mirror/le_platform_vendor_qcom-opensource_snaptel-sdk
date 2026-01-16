@@ -26,10 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -77,8 +77,8 @@ class ThermalTestApp : public ConsoleApp {
 
  private:
     bool initThermalManager(telux::common::ProcType procType);
-    telux::common::Status manageIndication(telux::common::ProcType procType,
-        bool registerInd, telux::therm::ThermalNotificationMask mask = 0xFFFF);
+    telux::common::Status manageIndication(telux::common::ProcType procType, bool registerInd,
+        telux::therm::ThermalNotificationMask mask = 0xFFFF);
     telux::common::ProcType getProcType();
     int readAndValidate(std::string msg, int minRange, int maxRange);
 
@@ -93,7 +93,7 @@ class ThermalTestApp : public ConsoleApp {
     std::map<telux::common::ProcType, std::shared_ptr<ThermalListener>> thermalListenerMap_;
     InitWithProc initWithProc_;
 
-    using memberFun = void (ThermalTestApp::*)(telux::common::ProcType, bool);
+    using memberFun           = void (ThermalTestApp::*)(telux::common::ProcType, bool);
     memberFun memberFunArr[3] = {&ThermalTestApp::handleAllUnSolicitedEvents,
         &ThermalTestApp::handleTripUpdateEvent, &ThermalTestApp::handleCdevLevelUpdateEvent};
 

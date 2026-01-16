@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef AUDIOSESSION_HPP
 #define AUDIOSESSION_HPP
 
@@ -43,7 +49,7 @@ using namespace telux::audio;
  * common functionalities like volume mute and device switch.
  */
 class AudioSession {
-public:
+ public:
     AudioSession();
     ~AudioSession();
 
@@ -56,7 +62,8 @@ public:
     Status getVolume(StreamVolume &volume);
     Status setMute(StreamMute mute);
     Status getMute(StreamMute &muteStatus);
-protected:
+
+ protected:
     std::shared_ptr<IAudioStream> stream_;
 };
 

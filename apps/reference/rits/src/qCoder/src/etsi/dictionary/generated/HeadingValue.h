@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_HeadingValue_H_
-#define	_HeadingValue_H_
-
+#ifndef _HeadingValue_H_
+#define _HeadingValue_H_
 
 #include <asn_application.h>
 
@@ -20,15 +19,15 @@ extern "C" {
 
 /* Dependencies */
 typedef enum HeadingValue {
-	HeadingValue_wgs84North	= 0,
-	HeadingValue_wgs84East	= 900,
-	HeadingValue_wgs84South	= 1800,
-	HeadingValue_wgs84West	= 2700,
-	HeadingValue_unavailable	= 3601
+    HeadingValue_wgs84North  = 0,
+    HeadingValue_wgs84East   = 900,
+    HeadingValue_wgs84South  = 1800,
+    HeadingValue_wgs84West   = 2700,
+    HeadingValue_unavailable = 3601
 } e_HeadingValue;
 
 /* HeadingValue */
-typedef long	 HeadingValue_t;
+typedef long HeadingValue_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_HeadingValue;
@@ -46,5 +45,5 @@ per_type_encoder_f HeadingValue_encode_uper;
 }
 #endif
 
-#endif	/* _HeadingValue_H_ */
+#endif /* _HeadingValue_H_ */
 #include <asn_internal.h>

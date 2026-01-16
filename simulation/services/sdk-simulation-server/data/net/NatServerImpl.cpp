@@ -25,22 +25,20 @@ NatServerImpl::~NatServerImpl() {
     LOG(DEBUG, __FUNCTION__);
 }
 
-grpc::Status NatServerImpl::InitService(ServerContext* context,
-    const dataStub::InitRequest* request, dataStub::GetServiceStatusReply* response) {
+grpc::Status NatServerImpl::InitService(ServerContext *context,
+    const dataStub::InitRequest *request, dataStub::GetServiceStatusReply *response) {
 
     LOG(DEBUG, __FUNCTION__);
     Json::Value rootObj;
-    std::string filePath = NAT_MANAGER_API_LOCAL_JSON;
-    telux::common::ErrorCode error =
-        JsonParser::readFromJsonFile(rootObj, filePath);
+    std::string filePath           = NAT_MANAGER_API_LOCAL_JSON;
+    telux::common::ErrorCode error = JsonParser::readFromJsonFile(rootObj, filePath);
     if (error != ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! ");
         return grpc::Status(grpc::StatusCode::NOT_FOUND, "Json not found");
     }
 
-    int cbDelay = rootObj["INatManager"]["IsSubsystemReadyDelay"].asInt();
-    std::string cbStatus =
-        rootObj["INatManager"]["IsSubsystemReady"].asString();
+    int cbDelay                         = rootObj["INatManager"]["IsSubsystemReadyDelay"].asInt();
+    std::string cbStatus                = rootObj["INatManager"]["IsSubsystemReady"].asString();
     telux::common::ServiceStatus status = CommonUtils::mapServiceStatus(cbStatus);
     LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", cbStatus);
 
@@ -50,18 +48,17 @@ grpc::Status NatServerImpl::InitService(ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status NatServerImpl::AddStaticNatEntry(ServerContext* context,
-    const dataStub::StaticNatRequest* request,
-    dataStub::DefaultReply* response) {
+grpc::Status NatServerImpl::AddStaticNatEntry(ServerContext *context,
+    const dataStub::StaticNatRequest *request, dataStub::DefaultReply *response) {
 
     LOG(DEBUG, __FUNCTION__);
-    std::string apiJsonPath = NAT_MANAGER_API_LOCAL_JSON;
+    std::string apiJsonPath   = NAT_MANAGER_API_LOCAL_JSON;
     std::string stateJsonPath = NAT_MANAGER_STATE_JSON;
-    std::string subsystem = "INatManager";
-    std::string method = "addStaticNatEntry";
+    std::string subsystem     = "INatManager";
+    std::string method        = "addStaticNatEntry";
     JsonData data;
-    telux::common::ErrorCode error =
-        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
 
     if (error != ErrorCode::SUCCESS) {
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
@@ -71,23 +68,22 @@ grpc::Status NatServerImpl::AddStaticNatEntry(ServerContext* context,
         data.error = telux::common::ErrorCode::INVALID_OPERATION;
     }
 
-    if ((!DataUtilsStub::isValidIpv4Address(
-        request->static_nat_entry().nat_config().address()))
+    if ((!DataUtilsStub::isValidIpv4Address(request->static_nat_entry().nat_config().address()))
         && (!DataUtilsStub::isValidIpv6Address(
-        request->static_nat_entry().nat_config().address()))) {
+            request->static_nat_entry().nat_config().address()))) {
 
         LOG(ERROR, __FUNCTION__, " Address provided shall be in either IPv4 or Ipv6 format");
         data.error = telux::common::ErrorCode::INTERNAL;
     }
 
     if (!telux::data::DataHelper::isValidProtocol(DataUtilsStub::stringToProtocol(
-        request->static_nat_entry().nat_config().ip_protocol()))) {
+            request->static_nat_entry().nat_config().ip_protocol()))) {
         LOG(ERROR, __FUNCTION__, " unexpected protocol");
         data.error = telux::common::ErrorCode::INTERNAL;
     }
 
-    if (data.status == telux::common::Status::SUCCESS &&
-        data.error == telux::common::ErrorCode::SUCCESS) {
+    if (data.status == telux::common::Status::SUCCESS
+        && data.error == telux::common::ErrorCode::SUCCESS) {
 
         int entryIdx = -1, currentEntryCount = 0, backhaul = 0;
         auto bh_info = request->static_nat_entry().backhaul_type();
@@ -101,23 +97,22 @@ grpc::Status NatServerImpl::AddStaticNatEntry(ServerContext* context,
         }
 
         currentEntryCount = data.stateRootObj[subsystem][backhaul]["snatEntries"].size();
-        bool entryExists = isNatEntryAvailable(subsystem, data, request, entryIdx);
+        bool entryExists  = isNatEntryAvailable(subsystem, data, request, entryIdx);
 
         Json::Value newSnatEntry;
         if (!entryExists) {
-            LOG(DEBUG,__FUNCTION__,"bh_info::",bh_info);
+            LOG(DEBUG, __FUNCTION__, "bh_info::", bh_info);
             if (bh_info == ::dataStub::BackhaulPreference::PREF_WWAN) {
                 newSnatEntry["profileId"] = request->static_nat_entry().profile_id();
-                newSnatEntry["slotId"] = request->static_nat_entry().slot_id();
+                newSnatEntry["slotId"]    = request->static_nat_entry().slot_id();
             } else if (bh_info == ::dataStub::BackhaulPreference::PREF_ETH) {
                 newSnatEntry["vlanId"] = request->static_nat_entry().vlan_id();
             }
-            newSnatEntry["addr"] = request->static_nat_entry().nat_config().address();
-            newSnatEntry["port"] = request->static_nat_entry().nat_config().port();
+            newSnatEntry["addr"]       = request->static_nat_entry().nat_config().address();
+            newSnatEntry["port"]       = request->static_nat_entry().nat_config().port();
             newSnatEntry["globalPort"] = request->static_nat_entry().nat_config().global_port();
-            newSnatEntry["proto"] = request->static_nat_entry().nat_config().ip_protocol();
-            data.stateRootObj[subsystem][backhaul]["snatEntries"][currentEntryCount] =
-                newSnatEntry;
+            newSnatEntry["proto"]      = request->static_nat_entry().nat_config().ip_protocol();
+            data.stateRootObj[subsystem][backhaul]["snatEntries"][currentEntryCount] = newSnatEntry;
             JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
         } else {
             data.error = telux::common::ErrorCode::NO_EFFECT;
@@ -131,18 +126,17 @@ grpc::Status NatServerImpl::AddStaticNatEntry(ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status NatServerImpl::RemoveStaticNatEntry(ServerContext* context,
-    const dataStub::StaticNatRequest* request,
-    dataStub::DefaultReply* response) {
+grpc::Status NatServerImpl::RemoveStaticNatEntry(ServerContext *context,
+    const dataStub::StaticNatRequest *request, dataStub::DefaultReply *response) {
 
     LOG(DEBUG, __FUNCTION__);
-    std::string apiJsonPath = NAT_MANAGER_API_LOCAL_JSON;
+    std::string apiJsonPath   = NAT_MANAGER_API_LOCAL_JSON;
     std::string stateJsonPath = NAT_MANAGER_STATE_JSON;
-    std::string subsystem = "INatManager";
-    std::string method = "removeStaticNatEntry";
+    std::string subsystem     = "INatManager";
+    std::string method        = "removeStaticNatEntry";
     JsonData data;
-    telux::common::ErrorCode error =
-        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
 
     if (error != ErrorCode::SUCCESS) {
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
@@ -152,23 +146,22 @@ grpc::Status NatServerImpl::RemoveStaticNatEntry(ServerContext* context,
         data.error = telux::common::ErrorCode::INVALID_OPERATION;
     }
 
-    if ((!DataUtilsStub::isValidIpv4Address(
-        request->static_nat_entry().nat_config().address()))
+    if ((!DataUtilsStub::isValidIpv4Address(request->static_nat_entry().nat_config().address()))
         && (!DataUtilsStub::isValidIpv6Address(
-        request->static_nat_entry().nat_config().address()))) {
+            request->static_nat_entry().nat_config().address()))) {
 
         LOG(ERROR, __FUNCTION__, " Address provided shall be in either IPv4 or Ipv6 format");
         data.error = telux::common::ErrorCode::INTERNAL;
     }
 
     if (!telux::data::DataHelper::isValidProtocol(DataUtilsStub::stringToProtocol(
-        request->static_nat_entry().nat_config().ip_protocol()))) {
+            request->static_nat_entry().nat_config().ip_protocol()))) {
         LOG(ERROR, __FUNCTION__, " unexpected protocol");
         data.error = telux::common::ErrorCode::INTERNAL;
     }
 
-    if (data.status == telux::common::Status::SUCCESS &&
-        data.error == telux::common::ErrorCode::SUCCESS) {
+    if (data.status == telux::common::Status::SUCCESS
+        && data.error == telux::common::ErrorCode::SUCCESS) {
 
         int entryIdx = -1, currentEntryCount = 0, backhaul = 0;
         auto bh_info = request->static_nat_entry().backhaul_type();
@@ -181,14 +174,14 @@ grpc::Status NatServerImpl::RemoveStaticNatEntry(ServerContext* context,
         }
 
         currentEntryCount = data.stateRootObj[subsystem][backhaul]["snatEntries"].size();
-        bool entryExists = isNatEntryAvailable(subsystem, data, request, entryIdx);
+        bool entryExists  = isNatEntryAvailable(subsystem, data, request, entryIdx);
         if (entryExists) {
             int newCount = 0;
-            int index = 0;
+            int index    = 0;
             Json::Value newRoot;
             for (; index < currentEntryCount; index++) {
-                //skipping to add entry in new array for the matched index.
-                if (entryIdx == index ) {
+                // skipping to add entry in new array for the matched index.
+                if (entryIdx == index) {
                     continue;
                 }
                 newRoot[subsystem][backhaul]["snatEntries"][newCount]
@@ -210,17 +203,17 @@ grpc::Status NatServerImpl::RemoveStaticNatEntry(ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status NatServerImpl::RequestStaticNatEntries(ServerContext* context,
-    const dataStub::RequestStaticNatEntriesRequest* request,
-    dataStub::RequestStaticNatEntriesReply* response) {
+grpc::Status NatServerImpl::RequestStaticNatEntries(ServerContext *context,
+    const dataStub::RequestStaticNatEntriesRequest *request,
+    dataStub::RequestStaticNatEntriesReply *response) {
     LOG(DEBUG, __FUNCTION__);
-    std::string apiJsonPath = NAT_MANAGER_API_LOCAL_JSON;
+    std::string apiJsonPath   = NAT_MANAGER_API_LOCAL_JSON;
     std::string stateJsonPath = NAT_MANAGER_STATE_JSON;
-    std::string subsystem = "INatManager";
-    std::string method = "requestStaticNatEntries";
+    std::string subsystem     = "INatManager";
+    std::string method        = "requestStaticNatEntries";
     JsonData data;
-    telux::common::ErrorCode error =
-        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
 
     if (error != ErrorCode::SUCCESS) {
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
@@ -230,34 +223,34 @@ grpc::Status NatServerImpl::RequestStaticNatEntries(ServerContext* context,
         data.error = telux::common::ErrorCode::INVALID_OPERATION;
     }
 
-    if (data.status == telux::common::Status::SUCCESS &&
-        data.error == telux::common::ErrorCode::SUCCESS) {
+    if (data.status == telux::common::Status::SUCCESS
+        && data.error == telux::common::ErrorCode::SUCCESS) {
 
         int currentEntryCount = 0, backhaul = 0, profile_id = -1, slot_id = 1, vlan_id = -1;
         auto bh_info = request->backhaul_type();
 
         if (bh_info == ::dataStub::BackhaulPreference::PREF_WWAN) {
-            backhaul = WWAN_BH_IDX;
+            backhaul   = WWAN_BH_IDX;
             profile_id = request->profile_id();
-            slot_id = request->slot_id();
+            slot_id    = request->slot_id();
         } else if (bh_info == ::dataStub::BackhaulPreference::PREF_ETH) {
             backhaul = ETH_BH_IDX;
-            vlan_id = request->vlan_id();
+            vlan_id  = request->vlan_id();
         } else if (bh_info == ::dataStub::BackhaulPreference::PREF_WLAN) {
             backhaul = WLAN_BH_IDX;
         }
 
         currentEntryCount = data.stateRootObj[subsystem][backhaul]["snatEntries"].size();
 
-        int index = 0;
+        int index    = 0;
         bool matched = false;
         for (; index < currentEntryCount; index++) {
-            Json::Value requestedNatEntry =
-                data.stateRootObj[subsystem][backhaul]["snatEntries"][index];
+            Json::Value requestedNatEntry
+                = data.stateRootObj[subsystem][backhaul]["snatEntries"][index];
 
             if (bh_info == ::dataStub::BackhaulPreference::PREF_WWAN) {
-                if ((requestedNatEntry["profileId"] == profile_id) &&
-                        (requestedNatEntry["slotId"] == slot_id)) {
+                if ((requestedNatEntry["profileId"] == profile_id)
+                    && (requestedNatEntry["slotId"] == slot_id)) {
                     matched = true;
                 }
             } else if (bh_info == ::dataStub::BackhaulPreference::PREF_ETH) {
@@ -265,7 +258,7 @@ grpc::Status NatServerImpl::RequestStaticNatEntries(ServerContext* context,
                     matched = true;
                 }
             } else if (bh_info == ::dataStub::BackhaulPreference::PREF_WLAN) {
-                    matched = true;
+                matched = true;
             }
 
             if (matched) {

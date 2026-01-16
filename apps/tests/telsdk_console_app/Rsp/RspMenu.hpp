@@ -26,13 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
- */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * @file      RspMenu.hpp
@@ -61,8 +60,8 @@ class RemoteSimProfileMenu : public ConsoleApp {
 
  private:
     std::shared_ptr<telux::tel::ISimProfileManager> simProfileManager_ = nullptr;
-    std::shared_ptr<RspListener> rspListener_ = nullptr;
-    std::shared_ptr<telux::tel::ICardManager> cardManager_ = nullptr;
+    std::shared_ptr<RspListener> rspListener_                          = nullptr;
+    std::shared_ptr<telux::tel::ICardManager> cardManager_             = nullptr;
     std::vector<std::shared_ptr<telux::tel::ICard>> cards_;
 
     // Wrapper function for request Profile list, add, delete, enable or update profile

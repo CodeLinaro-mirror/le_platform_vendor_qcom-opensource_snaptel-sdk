@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_AccelerationControl_H_
-#define	_AccelerationControl_H_
-
+#ifndef _AccelerationControl_H_
+#define _AccelerationControl_H_
 
 #include <asn_application.h>
 
@@ -20,17 +19,17 @@ extern "C" {
 
 /* Dependencies */
 typedef enum AccelerationControl {
-	AccelerationControl_brakePedalEngaged	= 0,
-	AccelerationControl_gasPedalEngaged	= 1,
-	AccelerationControl_emergencyBrakeEngaged	= 2,
-	AccelerationControl_collisionWarningEngaged	= 3,
-	AccelerationControl_accEngaged	= 4,
-	AccelerationControl_cruiseControlEngaged	= 5,
-	AccelerationControl_speedLimiterEngaged	= 6
+    AccelerationControl_brakePedalEngaged       = 0,
+    AccelerationControl_gasPedalEngaged         = 1,
+    AccelerationControl_emergencyBrakeEngaged   = 2,
+    AccelerationControl_collisionWarningEngaged = 3,
+    AccelerationControl_accEngaged              = 4,
+    AccelerationControl_cruiseControlEngaged    = 5,
+    AccelerationControl_speedLimiterEngaged     = 6
 } e_AccelerationControl;
 
 /* AccelerationControl */
-typedef BIT_STRING_t	 AccelerationControl_t;
+typedef BIT_STRING_t AccelerationControl_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_AccelerationControl;
@@ -48,5 +47,5 @@ per_type_encoder_f AccelerationControl_encode_uper;
 }
 #endif
 
-#endif	/* _AccelerationControl_H_ */
+#endif /* _AccelerationControl_H_ */
 #include <asn_internal.h>

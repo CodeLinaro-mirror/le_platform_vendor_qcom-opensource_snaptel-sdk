@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -49,9 +49,7 @@ class MPSSPowerSaver : public std::enable_shared_from_this<MPSSPowerSaver> {
         config.clientName = "masterClientFoo";
 
         tcuActivityMgr_ = powerFactory.getTcuActivityManager(
-            config, [&p](telux::common::ServiceStatus srvStatus) {
-            p.set_value(srvStatus);
-        });
+            config, [&p](telux::common::ServiceStatus srvStatus) { p.set_value(srvStatus); });
 
         if (!tcuActivityMgr_) {
             std::cout << "Can't get ITcuActivityManager" << std::endl;
@@ -61,8 +59,8 @@ class MPSSPowerSaver : public std::enable_shared_from_this<MPSSPowerSaver> {
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Power service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Power service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
@@ -74,11 +72,10 @@ class MPSSPowerSaver : public std::enable_shared_from_this<MPSSPowerSaver> {
         telux::common::Status status;
 
         /* Step - 4 */
-        status = tcuActivityMgr_->setModemActivityState(
-            telux::power::TcuActivityState::SUSPEND);
+        status = tcuActivityMgr_->setModemActivityState(telux::power::TcuActivityState::SUSPEND);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't enable modem power saving, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't enable modem power saving, err " << static_cast<int>(status)
+                      << std::endl;
             return -EIO;
         }
 
@@ -90,11 +87,10 @@ class MPSSPowerSaver : public std::enable_shared_from_this<MPSSPowerSaver> {
         telux::common::Status status;
 
         /* Step - 6 */
-        status = tcuActivityMgr_->setModemActivityState(
-            telux::power::TcuActivityState::RESUME);
+        status = tcuActivityMgr_->setModemActivityState(telux::power::TcuActivityState::RESUME);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't disable modem power saving, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't disable modem power saving, err " << static_cast<int>(status)
+                      << std::endl;
             return -EIO;
         }
 
@@ -113,7 +109,7 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<MPSSPowerSaver>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate MPSSPowerSaver" << std::endl;
         return -ENOMEM;
     }

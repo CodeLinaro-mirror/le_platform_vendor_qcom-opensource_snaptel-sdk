@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_EventHistory_H_
-#define	_EventHistory_H_
-
+#ifndef _EventHistory_H_
+#define _EventHistory_H_
 
 #include <asn_application.h>
 
@@ -24,10 +23,10 @@ struct EventPoint;
 
 /* EventHistory */
 typedef struct EventHistory {
-	A_SEQUENCE_OF(struct EventPoint) list;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    A_SEQUENCE_OF(struct EventPoint) list;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } EventHistory_t;
 
 /* Implementation */
@@ -40,5 +39,5 @@ extern asn_TYPE_descriptor_t asn_DEF_EventHistory;
 /* Referred external types */
 #include "EventPoint.h"
 
-#endif	/* _EventHistory_H_ */
+#endif /* _EventHistory_H_ */
 #include <asn_internal.h>

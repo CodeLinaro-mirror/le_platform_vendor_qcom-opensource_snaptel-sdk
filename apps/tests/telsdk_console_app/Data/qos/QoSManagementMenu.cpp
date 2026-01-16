@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 extern "C" {
@@ -18,7 +18,7 @@ extern "C" {
 
 QoSManagementMenu::QoSManagementMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
-    menuOptionsAdded_ = false;
+    menuOptionsAdded_       = false;
     subSystemStatusUpdated_ = false;
 }
 
@@ -74,12 +74,12 @@ bool QoSManagementMenu::init() {
 
 bool QoSManagementMenu::initQoSManager() {
     telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
-    subSystemStatusUpdated_ = false;
-    bool retVal = false;
+    subSystemStatusUpdated_                      = false;
+    bool retVal                                  = false;
 
-    auto initCb = std::bind(&QoSManagementMenu::onInitComplete, this, std::placeholders::_1);
+    auto initCb       = std::bind(&QoSManagementMenu::onInitComplete, this, std::placeholders::_1);
     auto &dataFactory = telux::data::DataFactory::getInstance();
-    auto qosMgr = dataFactory.getQoSManager(initCb);
+    auto qosMgr       = dataFactory.getQoSManager(initCb);
     if (qosMgr) {
         qosMgr->registerListener(shared_from_this());
         std::unique_lock<std::mutex> lck(mtx_);
@@ -95,7 +95,7 @@ bool QoSManagementMenu::initQoSManager() {
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << "\n"
                       << " QoS Manager is ready" << std::endl;
-            retVal = true;
+            retVal      = true;
             qosManager_ = qosMgr;
         } else {
             std::cout << "\n"
@@ -230,16 +230,16 @@ void QoSManagementMenu::createTrafficClass(std::vector<std::string> &inputComman
 
     // data path
     telux::data::net::DataPath dataPath;
-    std::cout <<
-        "\nConfigure data path: "
-        "\n0 - TETHERED_TO_WAN_HW: Traffic classes with data path TETHERED_TO_WAN_HW can be"
-        " associated with traffic filters with data path TETHERED_TO_WAN_HW and APPS_TO_WAN\n"
-        "\n1 - TETHERED_TO_APPS_SW: Traffic classes with data path TETHERED_TO_APPS_SW can be"
-        " associated with traffic filters with data path TETHERED_TO_APPS_SW\n"
-        "\n2 - APPS_TO_WAN: Traffic classes with data path APPS_TO_WAN can be associated with"
-        " traffic filters with data path APPS_TO_WAN"
-        "\n    Traffic classes created with APPS_TO_WAN can only be associated with UPLINK data"
-        " path\n";
+    std::cout
+        << "\nConfigure data path: "
+           "\n0 - TETHERED_TO_WAN_HW: Traffic classes with data path TETHERED_TO_WAN_HW can be"
+           " associated with traffic filters with data path TETHERED_TO_WAN_HW and APPS_TO_WAN\n"
+           "\n1 - TETHERED_TO_APPS_SW: Traffic classes with data path TETHERED_TO_APPS_SW can be"
+           " associated with traffic filters with data path TETHERED_TO_APPS_SW\n"
+           "\n2 - APPS_TO_WAN: Traffic classes with data path APPS_TO_WAN can be associated with"
+           " traffic filters with data path APPS_TO_WAN"
+           "\n    Traffic classes created with APPS_TO_WAN can only be associated with UPLINK data"
+           " path\n";
     std::cin >> input;
     Utils::validateInput(input, {0, 1, 2});
     dataPath = static_cast<telux::data::net::DataPath>(input);
@@ -374,13 +374,14 @@ std::shared_ptr<telux::data::ITrafficFilter> QoSManagementMenu::getTrafficFilter
 
     // data path
     telux::data::net::DataPath dataPath;
-    std::cout <<
-        "\nConfigure data path: "
-        "\n0 - Data flow between clients tethered to the NAD over Eth and the WAN interface using"
-        " HW acceleration (Eth <=> IPA <=> Modem <=> WAN)"
-        "\n1 - Data flows between clients tethered to the NAD over Eth and software running on the"
-        " apps processor using a software path (Eth <=> Apps Processor)"
-        "\n2 - Data flow between the apps processor and WAN (Apps Processor <=> WAN)\n";
+    std::cout << "\nConfigure data path: "
+                 "\n0 - Data flow between clients tethered to the NAD over Eth and the WAN "
+                 "interface using"
+                 " HW acceleration (Eth <=> IPA <=> Modem <=> WAN)"
+                 "\n1 - Data flows between clients tethered to the NAD over Eth and software "
+                 "running on the"
+                 " apps processor using a software path (Eth <=> Apps Processor)"
+                 "\n2 - Data flow between the apps processor and WAN (Apps Processor <=> WAN)\n";
     std::cin >> input;
     Utils::validateInput(input, {0, 1, 2});
     dataPath = static_cast<telux::data::net::DataPath>(input);
@@ -459,7 +460,7 @@ std::shared_ptr<telux::data::ITrafficFilter> QoSManagementMenu::getTrafficFilter
 
 void QoSManagementMenu::getVlanInfo(
     telux::data::TrafficFilterBuilder &tfBuilder, telux::data::FieldType fieldType) {
-    char delimiter = '\n';
+    char delimiter       = '\n';
     std::string vlansStr = "";
     std::cout << "Enter VLAN list (For example: enter 10,20,30 ): ";
     std::getline(std::cin, vlansStr, delimiter);
@@ -491,7 +492,7 @@ void QoSManagementMenu::getIPAddressParamsFromUser(
         std::getline(std::cin, ipv4Addr, delimiter);
         tfBuilder.setIPv4Address(ipv4Addr, fieldType);
     } else if (option == 6) {
-        char delimiter = '\n';
+        char delimiter       = '\n';
         std::string ipv6Addr = "";
         std::cout << "Enter IPv6 address: ";
         std::getline(std::cin, ipv6Addr, delimiter);
@@ -520,14 +521,16 @@ void QoSManagementMenu::getPortsFromUser(
         std::cout << "Enter port range: ";
         std::cin >> portRange;
         Utils::validateInput(portRange);
-        if(fieldType == telux::data::FieldType::SOURCE) {
-            std::cout << "Note: If maximum number of active connections is less than the range"
-            " provided above,\n then the range is considered as max active connections.\n"
-            "Enter maximum number of active connections possible at the same time\nor 0 to skip: ";
+        if (fieldType == telux::data::FieldType::SOURCE) {
+            std::cout
+                << "Note: If maximum number of active connections is less than the range"
+                   " provided above,\n then the range is considered as max active connections.\n"
+                   "Enter maximum number of active connections possible at the same time\nor 0 to "
+                   "skip: ";
             std::cin >> maxActiveConnections;
-            telux::data::PortConfig portConfig {};
-            portConfig.port = startPort;
-            portConfig.range = portRange;
+            telux::data::PortConfig portConfig{};
+            portConfig.port                 = startPort;
+            portConfig.range                = portRange;
             portConfig.maxActiveConnections = maxActiveConnections;
             tfBuilder.setPortConfig(portConfig, fieldType);
         } else {
@@ -537,24 +540,24 @@ void QoSManagementMenu::getPortsFromUser(
 }
 
 void QoSManagementMenu::onServiceStatusChange(telux::common::ServiceStatus status) {
-    std::string stat ="";
-    switch(status) {
+    std::string stat = "";
+    switch (status) {
         case telux::common::ServiceStatus::SERVICE_AVAILABLE:
             stat = " SERVICE_AVAILABLE";
             break;
         case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
-            stat =  " SERVICE_UNAVAILABLE";
+            stat = " SERVICE_UNAVAILABLE";
             break;
         default:
             stat = " Unknown service status";
             break;
     }
 
-    PRINT_NOTIFICATION <<
-        " ** QoS Manager onServiceStatusChange **\n" << stat << std::endl;
+    PRINT_NOTIFICATION << " ** QoS Manager onServiceStatusChange **\n" << stat << std::endl;
 }
 
-void QoSManagementMenu::onQoSFilterStatusChange(std::shared_ptr<telux::data::net::IQoSFilter> qosFilter) {
-    PRINT_NOTIFICATION <<
-        " ** QoS Manager onQoSFilterStatusChange **\n" << qosFilter->toString() << std::endl;
+void QoSManagementMenu::onQoSFilterStatusChange(
+    std::shared_ptr<telux::data::net::IQoSFilter> qosFilter) {
+    PRINT_NOTIFICATION << " ** QoS Manager onQoSFilterStatusChange **\n"
+                       << qosFilter->toString() << std::endl;
 }

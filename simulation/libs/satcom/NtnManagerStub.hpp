@@ -17,11 +17,10 @@
 namespace telux {
 namespace satcom {
 
-class NtnManagerStub :
-                    public INtnManager,
-                    public INtnListener,
-                    public telux::common::IEventListener,
-                    public std::enable_shared_from_this<NtnManagerStub>  {
+class NtnManagerStub : public INtnManager,
+                       public INtnListener,
+                       public telux::common::IEventListener,
+                       public std::enable_shared_from_this<NtnManagerStub> {
  public:
     NtnManagerStub();
     ~NtnManagerStub();
@@ -36,10 +35,10 @@ class NtnManagerStub :
     telux::common::Status deregisterListener(std::weak_ptr<INtnListener> listener) override;
 
     telux::common::ErrorCode isNtnSupported(bool &isSupported) override;
-    telux::common::ErrorCode enableNtn(bool enable, bool isEmergency, const std::string &iccid)
-        override;
-    telux::common::Status sendData(uint8_t *data, uint32_t size, bool isEmergency,
-        TransactionId &TransactionId) override;
+    telux::common::ErrorCode enableNtn(
+        bool enable, bool isEmergency, const std::string &iccid) override;
+    telux::common::Status sendData(
+        uint8_t *data, uint32_t size, bool isEmergency, TransactionId &TransactionId) override;
     telux::common::ErrorCode abortData() override;
     telux::common::ErrorCode getNtnCapabilities(NtnCapabilities &capabilities) override;
     telux::common::ErrorCode getSignalStrength(SignalStrength &signalStrength) override;
@@ -48,8 +47,7 @@ class NtnManagerStub :
     NtnState getNtnState() override;
     telux::common::ErrorCode enableCellularScan(bool enable) override;
     telux::common::ErrorCode setLocationFix(const LocationFix &params) override;
-    telux::common::ErrorCode locationFixResponse(LocationStatus status,
-        uint64_t waitTime) override;
+    telux::common::ErrorCode locationFixResponse(LocationStatus status, uint64_t waitTime) override;
 
     void onIncomingData(std::unique_ptr<uint8_t[]> data, uint32_t size) override;
     void onDataAck(telux::common::ErrorCode err, telux::satcom::TransactionId id) override;
@@ -77,8 +75,7 @@ class NtnManagerStub :
         ::satcomStub::CellularCoverageAvailableEvent cellularCoverageAvailableEvent);
     void handleLocationFixRequestEvent(
         ::satcomStub::LocationFixRequestEvent locationFixRequestEvent);
-    void handleIncomingDataEvent(
-        ::satcomStub::IncomingDataEvent incomingDataEvent);
+    void handleIncomingDataEvent(::satcomStub::IncomingDataEvent incomingDataEvent);
 };
 
 }  // namespace satcom

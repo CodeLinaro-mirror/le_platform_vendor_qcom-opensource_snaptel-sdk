@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_ProtectedZoneID_H_
-#define	_ProtectedZoneID_H_
-
+#ifndef _ProtectedZoneID_H_
+#define _ProtectedZoneID_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* ProtectedZoneID */
-typedef long	 ProtectedZoneID_t;
+typedef long ProtectedZoneID_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_ProtectedZoneID;
@@ -37,5 +36,5 @@ per_type_encoder_f ProtectedZoneID_encode_uper;
 }
 #endif
 
-#endif	/* _ProtectedZoneID_H_ */
+#endif /* _ProtectedZoneID_H_ */
 #include <asn_internal.h>

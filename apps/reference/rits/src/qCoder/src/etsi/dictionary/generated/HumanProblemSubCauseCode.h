@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_HumanProblemSubCauseCode_H_
-#define	_HumanProblemSubCauseCode_H_
-
+#ifndef _HumanProblemSubCauseCode_H_
+#define _HumanProblemSubCauseCode_H_
 
 #include <asn_application.h>
 
@@ -20,13 +19,13 @@ extern "C" {
 
 /* Dependencies */
 typedef enum HumanProblemSubCauseCode {
-	HumanProblemSubCauseCode_unavailable	= 0,
-	HumanProblemSubCauseCode_glycemiaProblem	= 1,
-	HumanProblemSubCauseCode_heartProblem	= 2
+    HumanProblemSubCauseCode_unavailable     = 0,
+    HumanProblemSubCauseCode_glycemiaProblem = 1,
+    HumanProblemSubCauseCode_heartProblem    = 2
 } e_HumanProblemSubCauseCode;
 
 /* HumanProblemSubCauseCode */
-typedef long	 HumanProblemSubCauseCode_t;
+typedef long HumanProblemSubCauseCode_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_HumanProblemSubCauseCode;
@@ -44,5 +43,5 @@ per_type_encoder_f HumanProblemSubCauseCode_encode_uper;
 }
 #endif
 
-#endif	/* _HumanProblemSubCauseCode_H_ */
+#endif /* _HumanProblemSubCauseCode_H_ */
 #include <asn_internal.h>

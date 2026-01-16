@@ -26,9 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -50,7 +51,7 @@ namespace telux {
 namespace loc {
 
 /** @addtogroup telematics_location
-* @{ */
+ * @{ */
 
 /**
  * @brief Listener class for getting RTCM injection event notification
@@ -58,23 +59,25 @@ namespace loc {
  *
  */
 class IDgnssStatusListener {
-public:
-/**
- * This function is called asynchronously to report RTCM injection status
- *
- * @param [in] status - the status enum.
- *
- */
-  virtual void onDgnssStatusUpdate(DgnssStatus status) {}
+ public:
+    /**
+     * This function is called asynchronously to report RTCM injection status
+     *
+     * @param [in] status - the status enum.
+     *
+     */
+    virtual void onDgnssStatusUpdate(DgnssStatus status) {
+    }
 
-/**
- * Destructor of IRTCMStatusListener
- */
-  virtual ~IDgnssStatusListener() {}
+    /**
+     * Destructor of IRTCMStatusListener
+     */
+    virtual ~IDgnssStatusListener() {
+    }
 };
 /** @} */ /* end_addtogroup telematics_location */
-}         // end of namespace loc
+}  // end of namespace loc
 
-} // end of namespace telux
+}  // end of namespace telux
 
-#endif // TELUX_LOC_DGNSSLISTENER_HPP
+#endif  // TELUX_LOC_DGNSSLISTENER_HPP

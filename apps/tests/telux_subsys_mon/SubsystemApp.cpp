@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -12,8 +12,8 @@
 
 #include "SubsystemApp.hpp"
 
-SubsystemApp::SubsystemApp(std::string appName,
-    std::string cursor) : ConsoleApp(appName, cursor) {
+SubsystemApp::SubsystemApp(std::string appName, std::string cursor)
+   : ConsoleApp(appName, cursor) {
 }
 
 SubsystemApp::~SubsystemApp() {
@@ -23,7 +23,7 @@ SubsystemApp::~SubsystemApp() {
  *  Listener to receive state change updates.
  */
 void StateChangeListener::onStateChange(telux::common::SubsystemInfo subsystemInfo,
-        telux::common::OperationalStatus newOperationalStatus) {
+    telux::common::OperationalStatus newOperationalStatus) {
 
     std::cout << "\nLocation   : " << static_cast<int>(subsystemInfo.location) << std::endl;
     std::cout << "Subsystem  : " << static_cast<int>(subsystemInfo.subsystems) << std::endl;
@@ -45,7 +45,7 @@ void SubsystemApp::registerListener() {
 
     try {
         stateChangeListener_ = std::make_shared<StateChangeListener>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate StateChangeListener" << std::endl;
         stateChangeListener_ = nullptr;
         return;
@@ -54,7 +54,7 @@ void SubsystemApp::registerListener() {
     getSubsystemsToMonitor(listOfSubsystems);
 
     if (listOfSubsystems.empty()) {
-        std::cout << "Not monitoring as no subsystem specified"<< std::endl;
+        std::cout << "Not monitoring as no subsystem specified" << std::endl;
         stateChangeListener_ = nullptr;
         return;
     }
@@ -73,7 +73,7 @@ void SubsystemApp::registerListener() {
  * Ask user to specify what subsystems to monitor and populate listOfSubsystems accordingly.
  */
 void SubsystemApp::getSubsystemsToMonitor(
-        std::vector<telux::common::SubsystemInfo> &listOfSubsystems) {
+    std::vector<telux::common::SubsystemInfo> &listOfSubsystems) {
 
     bool yes, local;
     telux::common::SubsystemInfo subsysInfo{};
@@ -81,7 +81,7 @@ void SubsystemApp::getSubsystemsToMonitor(
     yes = userUtils_.getYesNoFromUser("Monitor MPSS");
     if (yes) {
         subsysInfo.subsystems = telux::common::Subsystem::MPSS;
-        local = userUtils_.getLocalRemoteFromUser();
+        local                 = userUtils_.getLocalRemoteFromUser();
         if (local) {
             subsysInfo.location = telux::common::ProcType::LOCAL_PROC;
         } else {
@@ -93,7 +93,7 @@ void SubsystemApp::getSubsystemsToMonitor(
     yes = userUtils_.getYesNoFromUser("Monitor APSS");
     if (yes) {
         subsysInfo.subsystems = telux::common::Subsystem::APSS;
-        local = userUtils_.getLocalRemoteFromUser();
+        local                 = userUtils_.getLocalRemoteFromUser();
         if (local) {
             subsysInfo.location = telux::common::ProcType::LOCAL_PROC;
         } else {
@@ -136,9 +136,7 @@ void SubsystemApp::init() {
     auto &subsystemFact = telux::platform::SubsystemFactory::getInstance();
 
     subsystemMgr_ = subsystemFact.getSubsystemManager(
-            [&p](telux::common::ServiceStatus srvStatus) {
-        p.set_value(srvStatus);
-    });
+        [&p](telux::common::ServiceStatus srvStatus) { p.set_value(srvStatus); });
 
     if (!subsystemMgr_) {
         std::cout << "Can't get ISubsystemManager, waiting..." << std::endl;
@@ -151,16 +149,15 @@ void SubsystemApp::init() {
         return;
     }
 
-    std::shared_ptr<ConsoleAppCommand> regListener = std::make_shared<
-        ConsoleAppCommand>(ConsoleAppCommand("1", "Start monitoring subsystems", {},
-        std::bind(&SubsystemApp::registerListener, this)));
+    std::shared_ptr<ConsoleAppCommand> regListener
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "Start monitoring subsystems",
+            {}, std::bind(&SubsystemApp::registerListener, this)));
 
-    std::shared_ptr<ConsoleAppCommand> deregListener = std::make_shared<
-        ConsoleAppCommand>(ConsoleAppCommand("2", "Stop monitoring subsystems", {},
-        std::bind(&SubsystemApp::deRegisterListener, this)));
+    std::shared_ptr<ConsoleAppCommand> deregListener
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "Stop monitoring subsystems",
+            {}, std::bind(&SubsystemApp::deRegisterListener, this)));
 
-    std::vector<std::shared_ptr<ConsoleAppCommand>> mainCmds = {
-        regListener, deregListener };
+    std::vector<std::shared_ptr<ConsoleAppCommand>> mainCmds = {regListener, deregListener};
 
     ConsoleApp::addCommands(mainCmds);
     ConsoleApp::displayMenu();
@@ -172,11 +169,10 @@ int main(int argc, char **argv) {
 
     std::string sdkReleaseName = telux::common::Version::getReleaseName();
 
-    std::string appName = "Subsystem monitor console app - SDK v"
-                            + std::to_string(sdkVersion.major) + "."
-                            + std::to_string(sdkVersion.minor) + "."
-                            + std::to_string(sdkVersion.patch) + "\n"
-                            + "Release name: " + sdkReleaseName;
+    std::string appName = "Subsystem monitor console app - SDK v" + std::to_string(sdkVersion.major)
+                          + "." + std::to_string(sdkVersion.minor) + "."
+                          + std::to_string(sdkVersion.patch) + "\n"
+                          + "Release name: " + sdkReleaseName;
 
     auto sysApp = std::make_shared<SubsystemApp>(appName, "subsys> ");
 

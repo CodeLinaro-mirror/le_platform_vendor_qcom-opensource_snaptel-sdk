@@ -26,11 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -57,7 +57,7 @@ namespace telux {
 namespace tel {
 
 /** @addtogroup telematics_subscription
-* @{ */
+ * @{ */
 
 /*
  * @brief   Subscription Manager class provides APIs to register
@@ -66,81 +66,82 @@ namespace tel {
  *          request by SIM SlotId.
  */
 class ISubscriptionManager {
-public:
-   /**
-    * Checks the status of SubscriptionManager and returns the result.
-    *
-    * @returns If true then SubscriptionManager is ready for service.
-    * @deprecated Use ISubscriptionManager::getServiceStatus() API.
-    *
-    */
-   virtual bool isSubsystemReady() = 0;
+ public:
+    /**
+     * Checks the status of SubscriptionManager and returns the result.
+     *
+     * @returns If true then SubscriptionManager is ready for service.
+     * @deprecated Use ISubscriptionManager::getServiceStatus() API.
+     *
+     */
+    virtual bool isSubsystemReady() = 0;
 
-   /**
-    * Wait for Subscription subsystem to be ready.
-    *
-    * @returns A future that caller can wait on to be notified when
-    *          SubscriptionManager is ready.
-    * @deprecated Use InitResponseCb in PhoneFactory::getSubscriptionManager instead, to
-    *             get notified about subsystem readiness.
-    *
-    */
-   virtual std::future<bool> onSubsystemReady() = 0;
+    /**
+     * Wait for Subscription subsystem to be ready.
+     *
+     * @returns A future that caller can wait on to be notified when
+     *          SubscriptionManager is ready.
+     * @deprecated Use InitResponseCb in PhoneFactory::getSubscriptionManager instead, to
+     *             get notified about subsystem readiness.
+     *
+     */
+    virtual std::future<bool> onSubsystemReady() = 0;
 
-   /**
-    * This status indicates whether the ISubscriptionManager object is in a usable state.
-    *
-    * @returns SERVICE_AVAILABLE    - If Subscription manager is ready for service.
-    *          SERVICE_UNAVAILABLE  - If Subscription manager is temporarily unavailable.
-    *          SERVICE_FAILED       - If Subscription manager encountered an irrecoverable failure.
-    *
-    */
+    /**
+     * This status indicates whether the ISubscriptionManager object is in a usable state.
+     *
+     * @returns SERVICE_AVAILABLE    - If Subscription manager is ready for service.
+     *          SERVICE_UNAVAILABLE  - If Subscription manager is temporarily unavailable.
+     *          SERVICE_FAILED       - If Subscription manager encountered an irrecoverable failure.
+     *
+     */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
-   /**
-    * Get Subscription details of the SIM in the given SIM slot.
-    *
-    * @param [in] slotId   Slot id corresponding to the subscription.
-    * @param [out] status  Status of getSubscription i.e. success or suitable status code.
-    *
-    * @returns Pointer to ISubscription object.
-    */
-   virtual std::shared_ptr<ISubscription> getSubscription(int slotId = DEFAULT_SLOT_ID,
-                                                          telux::common::Status *status = nullptr)
-      = 0;
+    /**
+     * Get Subscription details of the SIM in the given SIM slot.
+     *
+     * @param [in] slotId   Slot id corresponding to the subscription.
+     * @param [out] status  Status of getSubscription i.e. success or suitable status code.
+     *
+     * @returns Pointer to ISubscription object.
+     */
+    virtual std::shared_ptr<ISubscription> getSubscription(
+        int slotId = DEFAULT_SLOT_ID, telux::common::Status *status = nullptr)
+        = 0;
 
-   /**
-    * Get all the subscription details of the device.
-    *
-    * @param [out] status  Status of getAllSubscriptions i.e. success or suitable status code.
-    *
-    * @returns list of ISubscription objects.
-    */
-   virtual std::vector<std::shared_ptr<ISubscription>>
-      getAllSubscriptions(telux::common::Status *status = nullptr) = 0;
+    /**
+     * Get all the subscription details of the device.
+     *
+     * @param [out] status  Status of getAllSubscriptions i.e. success or suitable status code.
+     *
+     * @returns list of ISubscription objects.
+     */
+    virtual std::vector<std::shared_ptr<ISubscription>> getAllSubscriptions(
+        telux::common::Status *status = nullptr)
+        = 0;
 
-   /**
-    * Register a listener for Subscription events.
-    *
-    * @param [in] listener   Pointer to ISubscriptionListener object that
-    *                        processes the notification.
-    *
-    * @returns Status of registerListener i.e. success or suitable status code.
-    */
-   virtual telux::common::Status registerListener(std::weak_ptr<ISubscriptionListener> listener)
-      = 0;
+    /**
+     * Register a listener for Subscription events.
+     *
+     * @param [in] listener   Pointer to ISubscriptionListener object that
+     *                        processes the notification.
+     *
+     * @returns Status of registerListener i.e. success or suitable status code.
+     */
+    virtual telux::common::Status registerListener(std::weak_ptr<ISubscriptionListener> listener)
+        = 0;
 
-   /**
-    * Remove a previously added listener.
-    *
-    * @param [in] listener   Pointer to ISubscriptionListener object that needs
-    *                        to be removed.
-    *
-    * @returns Status of removeListener i.e. success or suitable status code.
-    */
-   virtual telux::common::Status removeListener(std::weak_ptr<ISubscriptionListener> listener) = 0;
+    /**
+     * Remove a previously added listener.
+     *
+     * @param [in] listener   Pointer to ISubscriptionListener object that needs
+     *                        to be removed.
+     *
+     * @returns Status of removeListener i.e. success or suitable status code.
+     */
+    virtual telux::common::Status removeListener(std::weak_ptr<ISubscriptionListener> listener) = 0;
 
-   virtual ~ISubscriptionManager(){};
+    virtual ~ISubscriptionManager(){};
 };
 
 /** @} */ /* end_addtogroup telematics_subscription */
@@ -148,4 +149,4 @@ public:
 }  // end of namespace tel
 }  // end namespace telux
 
-#endif // TELUX_TEL_SUBSCRIPTIONMANAGER_HPP
+#endif  // TELUX_TEL_SUBSCRIPTIONMANAGER_HPP

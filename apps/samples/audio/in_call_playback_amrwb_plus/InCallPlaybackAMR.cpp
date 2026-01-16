@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /*
@@ -50,9 +50,7 @@ int InCallPlaybackAMR::init() {
 
     /* Step - 2 */
     audioManager_ = audioFactory.getAudioManager(
-            [&p](telux::common::ServiceStatus srvStatus) {
-        p.set_value(srvStatus);
-    });
+        [&p](telux::common::ServiceStatus srvStatus) { p.set_value(srvStatus); });
 
     if (!audioManager_) {
         std::cout << "Can't get IAudioManager" << std::endl;
@@ -80,22 +78,22 @@ int InCallPlaybackAMR::createVoiceStream() {
     telux::audio::StreamConfig sc{};
     std::promise<telux::common::ErrorCode> p{};
 
-    sc.type = telux::audio::StreamType::VOICE_CALL;
+    sc.type   = telux::audio::StreamType::VOICE_CALL;
     sc.slotId = DEFAULT_SLOT_ID;
     sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
     sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
     sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_MIC);
     sc.channelTypeMask = telux::audio::ChannelType::LEFT | telux::audio::ChannelType::RIGHT;
 
-    status = audioManager_->createStream(sc, [&p, this] (
-            std::shared_ptr<telux::audio::IAudioStream> &audioStream,
-            telux::common::ErrorCode result) {
-        if (result == telux::common::ErrorCode::SUCCESS) {
-            audioVoiceStream_ = std::dynamic_pointer_cast<
-                telux::audio::IAudioVoiceStream>(audioStream);
-        }
-        p.set_value(result);
-    });
+    status = audioManager_->createStream(
+        sc, [&p, this](std::shared_ptr<telux::audio::IAudioStream> &audioStream,
+                telux::common::ErrorCode result) {
+            if (result == telux::common::ErrorCode::SUCCESS) {
+                audioVoiceStream_
+                    = std::dynamic_pointer_cast<telux::audio::IAudioVoiceStream>(audioStream);
+            }
+            p.set_value(result);
+        });
 
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "can't create voice stream, err " << static_cast<int>(status) << std::endl;
@@ -121,10 +119,8 @@ int InCallPlaybackAMR::deleteVoiceStream() {
     telux::common::ErrorCode ec;
     std::promise<telux::common::ErrorCode> p{};
 
-    status = audioManager_->deleteStream(audioVoiceStream_, [&p, this] (
-            telux::common::ErrorCode result) {
-        p.set_value(result);
-    });
+    status = audioManager_->deleteStream(
+        audioVoiceStream_, [&p, this](telux::common::ErrorCode result) { p.set_value(result); });
 
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "can't delete voice stream, err " << static_cast<int>(status) << std::endl;
@@ -150,9 +146,8 @@ int InCallPlaybackAMR::startVoiceStream() {
     telux::common::ErrorCode ec;
     std::promise<telux::common::ErrorCode> p{};
 
-    status = audioVoiceStream_->startAudio([&p] (telux::common::ErrorCode result) {
-        p.set_value(result);
-    });
+    status = audioVoiceStream_->startAudio(
+        [&p](telux::common::ErrorCode result) { p.set_value(result); });
 
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "can't start voice stream, err " << static_cast<int>(status) << std::endl;
@@ -178,9 +173,8 @@ int InCallPlaybackAMR::stopVoiceStream() {
     telux::common::ErrorCode ec;
     std::promise<telux::common::ErrorCode> p{};
 
-    status = audioVoiceStream_->stopAudio([&p] (telux::common::ErrorCode result) {
-        p.set_value(result);
-    });
+    status = audioVoiceStream_->stopAudio(
+        [&p](telux::common::ErrorCode result) { p.set_value(result); });
 
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "can't stop voice stream, err " << static_cast<int>(status) << std::endl;
@@ -209,27 +203,27 @@ int InCallPlaybackAMR::createIncallPlayStream() {
     telux::audio::AmrwbpParams amrParams{};
     std::promise<telux::common::ErrorCode> p{};
 
-    sc.type = telux::audio::StreamType::PLAY;
-    sc.sampleRate = 16000;
-    sc.format = telux::audio::AudioFormat::AMRWB_PLUS;
+    sc.type            = telux::audio::StreamType::PLAY;
+    sc.sampleRate      = 16000;
+    sc.format          = telux::audio::AudioFormat::AMRWB_PLUS;
     sc.channelTypeMask = telux::audio::ChannelType::LEFT;
     sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
 
     amrParams.frameFormat = telux::audio::AmrwbpFrameFormat::FILE_STORAGE_FORMAT;
-    sc.formatParams = &amrParams;
+    sc.formatParams       = &amrParams;
 
-    status = audioManager_->createStream(sc, [&p, this] (
-            std::shared_ptr<telux::audio::IAudioStream> &audioStream,
-            telux::common::ErrorCode result) {
-        if (result == telux::common::ErrorCode::SUCCESS) {
-            audioPlayStream_ = std::dynamic_pointer_cast<
-                telux::audio::IAudioPlayStream>(audioStream);
-        }
-        p.set_value(result);
-    });
+    status = audioManager_->createStream(
+        sc, [&p, this](std::shared_ptr<telux::audio::IAudioStream> &audioStream,
+                telux::common::ErrorCode result) {
+            if (result == telux::common::ErrorCode::SUCCESS) {
+                audioPlayStream_
+                    = std::dynamic_pointer_cast<telux::audio::IAudioPlayStream>(audioStream);
+            }
+            p.set_value(result);
+        });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request create stream"  << std::endl;
+        std::cout << "can't request create stream" << std::endl;
         return -EIO;
     }
 
@@ -241,7 +235,7 @@ int InCallPlaybackAMR::createIncallPlayStream() {
 
     status = audioPlayStream_->registerListener(shared_from_this());
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't register listener"  << std::endl;
+        std::cout << "can't register listener" << std::endl;
         return -EIO;
     }
 
@@ -260,14 +254,12 @@ int InCallPlaybackAMR::deleteIncallPlayStream() {
 
     status = audioPlayStream_->deRegisterListener(shared_from_this());
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't deregister listener"  << std::endl;
+        std::cout << "can't deregister listener" << std::endl;
         return -EIO;
     }
 
-    status = audioManager_->deleteStream(audioPlayStream_, [&p, this] (
-            telux::common::ErrorCode result) {
-        p.set_value(result);
-    });
+    status = audioManager_->deleteStream(
+        audioPlayStream_, [&p, this](telux::common::ErrorCode result) { p.set_value(result); });
 
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "can't delete playback stream, err " << static_cast<int>(status) << std::endl;
@@ -288,7 +280,7 @@ int InCallPlaybackAMR::deleteIncallPlayStream() {
  *  Gets called to confirm how many bytes were actually written to the playback stream.
  */
 void InCallPlaybackAMR::writeComplete(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
-        uint32_t bytesWritten, telux::common::ErrorCode error) {
+    uint32_t bytesWritten, telux::common::ErrorCode error) {
 
     long offset;
 
@@ -329,7 +321,7 @@ void InCallPlaybackAMR::onPlayStopped() {
  */
 void InCallPlaybackAMR::play() {
 
-    uint32_t size = 0;
+    uint32_t size     = 0;
     uint32_t numBytes = 0;
     telux::common::ErrorCode ec;
     telux::common::Status status;
@@ -338,7 +330,7 @@ void InCallPlaybackAMR::play() {
 
     std::unique_lock<std::mutex> lock(playMutex_);
 
-    errorOccurred_ = false;
+    errorOccurred_              = false;
     frameworkReadyForNextWrite_ = true;
 
     fileToPlay_ = std::fopen(fileToPlayPath_, "rb");
@@ -359,14 +351,14 @@ void InCallPlaybackAMR::play() {
 
         size = streamBuffer->getMinSize();
         if (!size) {
-            size =  streamBuffer->getMaxSize();
+            size = streamBuffer->getMaxSize();
         }
 
         streamBuffer->setDataSize(size);
     }
 
-    auto writeCb = std::bind(&InCallPlaybackAMR::writeComplete, this,
-        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    auto writeCb = std::bind(&InCallPlaybackAMR::writeComplete, this, std::placeholders::_1,
+        std::placeholders::_2, std::placeholders::_3);
 
     std::cout << "playback started" << std::endl;
 
@@ -418,14 +410,12 @@ void InCallPlaybackAMR::play() {
 
     /* wait till the very last buffer is played */
     {
-      std::unique_lock<std::mutex> stopLock(playStopMutex_);
+        std::unique_lock<std::mutex> stopLock(playStopMutex_);
 
-      status = audioPlayStream_->stopAudio(telux::audio::StopType::STOP_AFTER_PLAY,
-              [&p] (telux::common::ErrorCode error) {
-          p.set_value(error);
-      });
+        status = audioPlayStream_->stopAudio(telux::audio::StopType::STOP_AFTER_PLAY,
+            [&p](telux::common::ErrorCode error) { p.set_value(error); });
 
-      if (status == telux::common::Status::SUCCESS){
+        if (status == telux::common::Status::SUCCESS) {
             ec = p.get_future().get();
             if (ec != telux::common::ErrorCode::SUCCESS) {
                 std::cout << "can't finish playback, err " << static_cast<int>(ec) << std::endl;
@@ -452,7 +442,7 @@ int main(int argc, char **argv) {
 
     try {
         app = std::make_shared<InCallPlaybackAMR>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "can't allocate InCallPlaybackAMR" << std::endl;
         return -ENOMEM;
     }

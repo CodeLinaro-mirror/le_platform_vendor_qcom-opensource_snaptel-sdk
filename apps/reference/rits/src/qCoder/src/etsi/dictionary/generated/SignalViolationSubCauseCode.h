@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_SignalViolationSubCauseCode_H_
-#define	_SignalViolationSubCauseCode_H_
-
+#ifndef _SignalViolationSubCauseCode_H_
+#define _SignalViolationSubCauseCode_H_
 
 #include <asn_application.h>
 
@@ -20,14 +19,14 @@ extern "C" {
 
 /* Dependencies */
 typedef enum SignalViolationSubCauseCode {
-	SignalViolationSubCauseCode_unavailable	= 0,
-	SignalViolationSubCauseCode_stopSignViolation	= 1,
-	SignalViolationSubCauseCode_trafficLightViolation	= 2,
-	SignalViolationSubCauseCode_turningRegulationViolation	= 3
+    SignalViolationSubCauseCode_unavailable                = 0,
+    SignalViolationSubCauseCode_stopSignViolation          = 1,
+    SignalViolationSubCauseCode_trafficLightViolation      = 2,
+    SignalViolationSubCauseCode_turningRegulationViolation = 3
 } e_SignalViolationSubCauseCode;
 
 /* SignalViolationSubCauseCode */
-typedef long	 SignalViolationSubCauseCode_t;
+typedef long SignalViolationSubCauseCode_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_SignalViolationSubCauseCode;
@@ -45,5 +44,5 @@ per_type_encoder_f SignalViolationSubCauseCode_encode_uper;
 }
 #endif
 
-#endif	/* _SignalViolationSubCauseCode_H_ */
+#endif /* _SignalViolationSubCauseCode_H_ */
 #include <asn_internal.h>

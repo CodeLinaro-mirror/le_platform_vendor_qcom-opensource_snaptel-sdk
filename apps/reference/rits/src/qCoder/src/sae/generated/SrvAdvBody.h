@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_SrvAdvBody_H_
-#define	_SrvAdvBody_H_
-
+#ifndef _SrvAdvBody_H_
+#define _SrvAdvBody_H_
 
 #include <asn_application.h>
 
@@ -27,14 +26,14 @@ struct RoutingAdvertisement;
 
 /* SrvAdvBody */
 typedef struct SrvAdvBody {
-	SrvAdvChangeCount_t	 changeCount;
-	struct SrvAdvMsgHeaderExts	*extensions	/* OPTIONAL */;
-	struct ServiceInfos	*serviceInfos	/* OPTIONAL */;
-	struct ChannelInfos	*channelInfos	/* OPTIONAL */;
-	struct RoutingAdvertisement	*routingAdvertisement	/* OPTIONAL */;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    SrvAdvChangeCount_t changeCount;
+    struct SrvAdvMsgHeaderExts *extensions /* OPTIONAL */;
+    struct ServiceInfos *serviceInfos /* OPTIONAL */;
+    struct ChannelInfos *channelInfos /* OPTIONAL */;
+    struct RoutingAdvertisement *routingAdvertisement /* OPTIONAL */;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } SrvAdvBody_t;
 
 /* Implementation */
@@ -50,5 +49,5 @@ extern asn_TYPE_descriptor_t asn_DEF_SrvAdvBody;
 #include "ChannelInfos.h"
 #include "RoutingAdvertisement.h"
 
-#endif	/* _SrvAdvBody_H_ */
+#endif /* _SrvAdvBody_H_ */
 #include <asn_internal.h>

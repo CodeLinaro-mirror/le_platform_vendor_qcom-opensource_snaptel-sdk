@@ -2,6 +2,7 @@
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 /*
  * This application demonstrates how to enable IP passthrough for a data call that is running in
  * peer NAD. The steps are as follows:
@@ -54,7 +55,7 @@
 #include <telux/data/DataConnectionManager.hpp>
 #include <telux/data/net/VlanManager.hpp>
 
-#define PROFILE_ID  1
+#define PROFILE_ID 1
 #define LAN_VLAN_ID 1
 #define WAN_VLAN_ID 4
 #define SLOT_ID DEFAULT_SLOT_ID
@@ -70,10 +71,8 @@ class IpPassThrough : public telux::data::IDataConnectionListener,
         auto &dataFactory = telux::data::DataFactory::getInstance();
 
         /* Step - 2 */
-        dataSettingsMgr_  = dataFactory.getDataSettingsManager(opType,
-                [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+        dataSettingsMgr_ = dataFactory.getDataSettingsManager(
+            opType, [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!dataSettingsMgr_) {
             std::cout << "Can't get IDataSettingsManager" << std::endl;
@@ -83,8 +82,8 @@ class IpPassThrough : public telux::data::IDataConnectionListener,
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Data service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Data service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
@@ -101,9 +100,7 @@ class IpPassThrough : public telux::data::IDataConnectionListener,
 
         /* Step - 2 */
         dataVlanMgr_ = dataFactory.getVlanManager(
-                opType, [&p](telux::common::ServiceStatus status) {
-                p.set_value(status);
-                });
+            opType, [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!dataVlanMgr_) {
             std::cout << "Can't get IVlanManager" << std::endl;
@@ -113,8 +110,8 @@ class IpPassThrough : public telux::data::IDataConnectionListener,
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "VLAN service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "VLAN service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
@@ -131,10 +128,8 @@ class IpPassThrough : public telux::data::IDataConnectionListener,
         auto &dataFactory = telux::data::DataFactory::getInstance();
 
         /* Step - 2 */
-        dataConMgr_  = dataFactory.getDataConnectionManager(SLOT_ID,
-                [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+        dataConMgr_ = dataFactory.getDataConnectionManager(
+            SLOT_ID, [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!dataConMgr_) {
             std::cout << "Can't get IDataConnectionManager" << std::endl;
@@ -144,16 +139,15 @@ class IpPassThrough : public telux::data::IDataConnectionListener,
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Data service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Data service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
         /* Step - 4 */
         status = dataConMgr_->registerListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't register listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't register listener, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -163,31 +157,31 @@ class IpPassThrough : public telux::data::IDataConnectionListener,
 
     void userInputForVlan(std::string nad) {
         if (nad == "NAD-1") {
-            wanVlanConfig_.iface = telux::data::InterfaceType::ETH;
-            wanVlanConfig_.vlanId = WAN_VLAN_ID;
-            wanVlanConfig_.priority = false;
+            wanVlanConfig_.iface         = telux::data::InterfaceType::ETH;
+            wanVlanConfig_.vlanId        = WAN_VLAN_ID;
+            wanVlanConfig_.priority      = false;
             wanVlanConfig_.isAccelerated = true;
             wanVlanConfig_.createBridge  = false;
-            wanVlanConfig_.nwType  = telux::data::NetworkType::WAN;
+            wanVlanConfig_.nwType        = telux::data::NetworkType::WAN;
 
-            nad1LanVlanConfig_.iface = telux::data::InterfaceType::ETH;
-            nad1LanVlanConfig_.vlanId = LAN_VLAN_ID;
-            nad1LanVlanConfig_.priority = false;
+            nad1LanVlanConfig_.iface         = telux::data::InterfaceType::ETH;
+            nad1LanVlanConfig_.vlanId        = LAN_VLAN_ID;
+            nad1LanVlanConfig_.priority      = false;
             nad1LanVlanConfig_.isAccelerated = true;
             nad1LanVlanConfig_.createBridge  = true;
-            nad1LanVlanConfig_.nwType  = telux::data::NetworkType::LAN;
+            nad1LanVlanConfig_.nwType        = telux::data::NetworkType::LAN;
         } else if (nad == "NAD-2") {
-            nad2LanVlanConfig_.iface = telux::data::InterfaceType::ETH;
-            nad2LanVlanConfig_.vlanId = LAN_VLAN_ID;
-            nad2LanVlanConfig_.priority = false;
+            nad2LanVlanConfig_.iface         = telux::data::InterfaceType::ETH;
+            nad2LanVlanConfig_.vlanId        = LAN_VLAN_ID;
+            nad2LanVlanConfig_.priority      = false;
             nad2LanVlanConfig_.isAccelerated = true;
             nad2LanVlanConfig_.createBridge  = true;
-            nad2LanVlanConfig_.nwType  = telux::data::NetworkType::LAN;
+            nad2LanVlanConfig_.nwType        = telux::data::NetworkType::LAN;
         }
     }
 
     void userInputForIpConfig() {
-        ipConfigParams_.ifType       = telux::data::InterfaceType::ETH;
+        ipConfigParams_.ifType = telux::data::InterfaceType::ETH;
         // The user can choose IPV6 address for the IPV6 data call
         ipConfigParams_.ipFamilyType = telux::data::IpFamilyType::IPV4;
         // WAN vlan id
@@ -200,22 +194,20 @@ class IpPassThrough : public telux::data::IDataConnectionListener,
     }
 
     void userInputForIpPassThrough() {
-        ipptParams_.profileId                = PROFILE_ID;
-        ipptParams_.vlanId                   = nad2LanVlanConfig_.vlanId;
-        ipptParams_.slotId                   = SLOT_ID;
-        ipptConfig_.ipptOpr                  = telux::data::Operation::ENABLE;
-        ipptConfig_.devConfig.nwInterface    = telux::data::InterfaceType::ETH;
-        ipptConfig_.devConfig.macAddr        = "1a:2b:3c:4d:5e:6f";
+        ipptParams_.profileId             = PROFILE_ID;
+        ipptParams_.vlanId                = nad2LanVlanConfig_.vlanId;
+        ipptParams_.slotId                = SLOT_ID;
+        ipptConfig_.ipptOpr               = telux::data::Operation::ENABLE;
+        ipptConfig_.devConfig.nwInterface = telux::data::InterfaceType::ETH;
+        ipptConfig_.devConfig.macAddr     = "1a:2b:3c:4d:5e:6f";
     }
 
     /* Called as a response to createVlan() request */
-    void onVLANCreateStatusAvailable(
-        bool isAccelerated, telux::common::ErrorCode error) {
+    void onVLANCreateStatusAvailable(bool isAccelerated, telux::common::ErrorCode error) {
         std::cout << "onVLANCreateStatusAvailable()" << std::endl;
 
         if (error != telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Failed to create VLAN, err" <<
-                static_cast<int>(error) << std::endl;
+            std::cout << "Failed to create VLAN, err" << static_cast<int>(error) << std::endl;
             return;
         }
 
@@ -224,8 +216,8 @@ class IpPassThrough : public telux::data::IDataConnectionListener,
 
     int createVlan(const std::string nad) {
 
-        auto respCb = std::bind(&IpPassThrough::onVLANCreateStatusAvailable,
-                this, std::placeholders::_1, std::placeholders::_2);
+        auto respCb = std::bind(&IpPassThrough::onVLANCreateStatusAvailable, this,
+            std::placeholders::_1, std::placeholders::_2);
 
         if (nad == "NAD-1") {
             userInputForVlan(nad);
@@ -233,26 +225,23 @@ class IpPassThrough : public telux::data::IDataConnectionListener,
             /** Create Vlan for LAN network type */
             auto retStatus = dataVlanMgr_->createVlan(nad1LanVlanConfig_, respCb);
             if (retStatus != telux::common::Status::SUCCESS) {
-                std::cout << "Can't create VLAN, err " <<
-                    static_cast<int>(retStatus) << std::endl;
+                std::cout << "Can't create VLAN, err " << static_cast<int>(retStatus) << std::endl;
                 return -EIO;
             }
 
             /** Create Vlan for WAN network type */
             retStatus = dataVlanMgr_->createVlan(wanVlanConfig_, respCb);
             if (retStatus != telux::common::Status::SUCCESS) {
-                std::cout << "Can't create VLAN, err " <<
-                    static_cast<int>(retStatus) << std::endl;
+                std::cout << "Can't create VLAN, err " << static_cast<int>(retStatus) << std::endl;
                 return -EIO;
             }
-        } else if (nad == "NAD-2"){
+        } else if (nad == "NAD-2") {
             userInputForVlan(nad);
 
             /** Create Vlan for LAN network type */
             auto retStatus = dataVlanMgr_->createVlan(nad2LanVlanConfig_, respCb);
             if (retStatus != telux::common::Status::SUCCESS) {
-                std::cout << "Can't create VLAN, err " <<
-                    static_cast<int>(retStatus) << std::endl;
+                std::cout << "Can't create VLAN, err " << static_cast<int>(retStatus) << std::endl;
                 return -EIO;
             }
         }
@@ -264,8 +253,7 @@ class IpPassThrough : public telux::data::IDataConnectionListener,
         std::cout << "onBindStatusAvailable()" << std::endl;
 
         if (error != telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Failed to bind VLAN, err" <<
-                static_cast<int>(error) << std::endl;
+            std::cout << "Failed to bind VLAN, err" << static_cast<int>(error) << std::endl;
             return;
         }
 
@@ -278,18 +266,16 @@ class IpPassThrough : public telux::data::IDataConnectionListener,
         telux::data::net::VlanBindConfig vlanBindConfig;
 
         // Assuming Data call is running in NAD-2
-        vlanBindConfig.bhInfo.backhaul = telux::data::BackhaulType::WWAN;
-        vlanBindConfig.vlanId = nad2LanVlanConfig_.vlanId;
+        vlanBindConfig.bhInfo.backhaul  = telux::data::BackhaulType::WWAN;
+        vlanBindConfig.vlanId           = nad2LanVlanConfig_.vlanId;
         vlanBindConfig.bhInfo.profileId = PROFILE_ID;
-        vlanBindConfig.bhInfo.slotId = SLOT_ID;
+        vlanBindConfig.bhInfo.slotId    = SLOT_ID;
 
-        auto respCb = std::bind(&IpPassThrough::onBindStatusAvailable,
-            this, std::placeholders::_1);
+        auto respCb = std::bind(&IpPassThrough::onBindStatusAvailable, this, std::placeholders::_1);
 
         status = dataVlanMgr_->bindToBackhaul(vlanBindConfig, respCb);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't bind VLAN, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't bind VLAN, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -302,18 +288,15 @@ class IpPassThrough : public telux::data::IDataConnectionListener,
         telux::common::Status status;
         telux::data::net::VlanBindConfig vlanBindConfig;
 
-        vlanBindConfig.vlanId = nad1LanVlanConfig_.vlanId;
+        vlanBindConfig.vlanId          = nad1LanVlanConfig_.vlanId;
         vlanBindConfig.bhInfo.backhaul = telux::data::BackhaulType::ETH;
-        vlanBindConfig.bhInfo.vlanId = wanVlanConfig_.vlanId;
+        vlanBindConfig.bhInfo.vlanId   = wanVlanConfig_.vlanId;
 
-
-        auto respCb = std::bind(&IpPassThrough::onBindStatusAvailable,
-            this, std::placeholders::_1);
+        auto respCb = std::bind(&IpPassThrough::onBindStatusAvailable, this, std::placeholders::_1);
 
         status = dataVlanMgr_->bindToBackhaul(vlanBindConfig, respCb);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't bind VLAN, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't bind VLAN, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -329,8 +312,7 @@ class IpPassThrough : public telux::data::IDataConnectionListener,
 
         errCode = dataSettingsMgr_->setIpConfig(ipConfigParams_, ipConfig_);
         if (errCode != telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Can't assign IP to VLAN, err " <<
-                static_cast<int>(errCode) << std::endl;
+            std::cout << "Can't assign IP to VLAN, err " << static_cast<int>(errCode) << std::endl;
             return -EIO;
         }
 
@@ -346,8 +328,8 @@ class IpPassThrough : public telux::data::IDataConnectionListener,
 
         errCode = dataSettingsMgr_->setIpPassThroughConfig(ipptParams_, ipptConfig_);
         if (errCode != telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Can't set IP Passthrough state, err " <<
-                static_cast<int>(errCode) << std::endl;
+            std::cout << "Can't set IP Passthrough state, err " << static_cast<int>(errCode)
+                      << std::endl;
             return -EIO;
         }
 
@@ -357,21 +339,19 @@ class IpPassThrough : public telux::data::IDataConnectionListener,
 
     /* Receives response of the startDataCall() request */
     void onDataCallResponseAvailable(
-        const std::shared_ptr<telux::data::IDataCall> &dataCall,
-        telux::common::ErrorCode error) {
+        const std::shared_ptr<telux::data::IDataCall> &dataCall, telux::common::ErrorCode error) {
 
         std::lock_guard<std::mutex> lock(updateMutex_);
-        std::cout << "\nonDataCallResponseAvailable(), err " <<
-            static_cast<int>(error) << std::endl;
+        std::cout << "\nonDataCallResponseAvailable(), err " << static_cast<int>(error)
+                  << std::endl;
         errorCode_ = error;
-        dataCall_ = dataCall;
+        dataCall_  = dataCall;
         updateCV_.notify_one();
     }
 
     /** Step - 6 */
     /* Receives data call information whenever there is a change */
-    void onDataCallInfoChanged(
-        const std::shared_ptr<telux::data::IDataCall> &dataCall) override {
+    void onDataCallInfoChanged(const std::shared_ptr<telux::data::IDataCall> &dataCall) override {
 
         std::cout << "\nonDataCallInfoChanged()" << std::endl;
         std::list<telux::data::IpAddrInfo> ipAddrList;
@@ -381,34 +361,31 @@ class IpPassThrough : public telux::data::IDataConnectionListener,
         std::cout << " Profile ID: " << dataCall->getProfileId() << std::endl;
         std::cout << " Interface name: " << dataCall->getInterfaceName() << std::endl;
 
-        std::cout << " Data call status: " <<
-            static_cast<int>(dataCall->getDataCallStatus()) << std::endl;
-        std::cout << " Data call end reason, type : " <<
-            static_cast<int>(dataCall->getDataCallEndReason().type) << std::endl;
+        std::cout << " Data call status: " << static_cast<int>(dataCall->getDataCallStatus())
+                  << std::endl;
+        std::cout << " Data call end reason, type : "
+                  << static_cast<int>(dataCall->getDataCallEndReason().type) << std::endl;
 
         ipAddrList = dataCall->getIpAddressInfo();
-        for(auto &it : ipAddrList) {
-            std::cout << "\n ifAddress: " << it.ifAddress
-                << "\n ifMask: " << it.ifMask
-                << "\n gwAddress: " << it.gwAddress
-                << "\n ifMask: " << it.ifMask
-                << "\n primaryDnsAddress: " << it.primaryDnsAddress
-                << "\n secondaryDnsAddress: " << it.secondaryDnsAddress
-                << "\n mtuValue: " << it.mtu << std::endl;
+        for (auto &it : ipAddrList) {
+            std::cout << "\n ifAddress: " << it.ifAddress << "\n ifMask: " << it.ifMask
+                      << "\n gwAddress: " << it.gwAddress << "\n ifMask: " << it.ifMask
+                      << "\n primaryDnsAddress: " << it.primaryDnsAddress
+                      << "\n secondaryDnsAddress: " << it.secondaryDnsAddress
+                      << "\n mtuValue: " << it.mtu << std::endl;
         }
 
-        std::cout << " IP family type: " <<
-            static_cast<int>(dataCall->getIpFamilyType()) << std::endl;
-        std::cout << " Tech preference: " <<
-            static_cast<int>(dataCall->getTechPreference()) << std::endl;
+        std::cout << " IP family type: " << static_cast<int>(dataCall->getIpFamilyType())
+                  << std::endl;
+        std::cout << " Tech preference: " << static_cast<int>(dataCall->getTechPreference())
+                  << std::endl;
     }
 
     bool waitForResponse() {
         int const DEFAULT_TIMEOUT_SECONDS = 5;
         std::unique_lock<std::mutex> lock(updateMutex_);
 
-        auto cvStatus = updateCV_.wait_for(lock,
-            std::chrono::seconds(DEFAULT_TIMEOUT_SECONDS));
+        auto cvStatus = updateCV_.wait_for(lock, std::chrono::seconds(DEFAULT_TIMEOUT_SECONDS));
 
         if (cvStatus == std::cv_status::timeout) {
             std::cout << "Timedout" << std::endl;
@@ -422,21 +399,20 @@ class IpPassThrough : public telux::data::IDataConnectionListener,
     int triggerDataCall(telux::data::OperationType opType) {
         telux::common::Status status;
 
-        auto responseCb = std::bind(&IpPassThrough::onDataCallResponseAvailable,
-            this, std::placeholders::_1, std::placeholders::_2);
+        auto responseCb = std::bind(&IpPassThrough::onDataCallResponseAvailable, this,
+            std::placeholders::_1, std::placeholders::_2);
 
         /* Step - 5 */
         status = dataConMgr_->startDataCall(
             PROFILE_ID, telux::data::IpFamilyType::IPV4, responseCb, opType);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't make call, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't make call, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
         if (!waitForResponse()) {
-            std::cout << "Failed to start data call, err " <<
-                static_cast<int>(errorCode_) << std::endl;
+            std::cout << "Failed to start data call, err " << static_cast<int>(errorCode_)
+                      << std::endl;
             return -EIO;
         }
 
@@ -450,8 +426,7 @@ class IpPassThrough : public telux::data::IDataConnectionListener,
         /* Step - 8 */
         status = dataConMgr_->deregisterListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't deregister listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't deregister listener, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -496,7 +471,7 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<IpPassThrough>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate IpPassThrough" << std::endl;
         return -ENOMEM;
     }

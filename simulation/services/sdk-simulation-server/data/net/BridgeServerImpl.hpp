@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef BRIDGE_MANAGER_SERVER_HPP
@@ -17,48 +17,43 @@ using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
 
-class BridgeServerImpl final:
-    public dataStub::BridgeManager::Service {
-public:
+class BridgeServerImpl final : public dataStub::BridgeManager::Service {
+ public:
     BridgeServerImpl();
     ~BridgeServerImpl();
 
-    grpc::Status InitService(ServerContext* context,
-        const google::protobuf::Empty* request,
-        dataStub::GetServiceStatusReply* response) override;
+    grpc::Status InitService(ServerContext *context, const google::protobuf::Empty *request,
+        dataStub::GetServiceStatusReply *response) override;
 
-    grpc::Status SetInterfaceBridge(ServerContext* context,
-        const dataStub::SetInterfaceBridgeRequest* request,
-        dataStub::DefaultReply* response) override;
+    grpc::Status SetInterfaceBridge(ServerContext *context,
+        const dataStub::SetInterfaceBridgeRequest *request,
+        dataStub::DefaultReply *response) override;
 
-    grpc::Status GetInterfaceBridge(ServerContext* context,
-        const dataStub::GetInterfaceBridgeRequest* request,
-        dataStub::GetInterfaceBridgeReply* response) override;
+    grpc::Status GetInterfaceBridge(ServerContext *context,
+        const dataStub::GetInterfaceBridgeRequest *request,
+        dataStub::GetInterfaceBridgeReply *response) override;
 
-private:
+ private:
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
 
     template <typename T>
-    bool isBridgeConfigAvailable(std::string subsystem, const JsonData& data,
-        const T* request, int& entryIdx = 0) {
+    bool isBridgeConfigAvailable(
+        std::string subsystem, const JsonData &data, const T *request, int &entryIdx = 0) {
         LOG(DEBUG, __FUNCTION__);
         bool entryExists = false;
 
-        int currentEntryCount =
-            data.stateRootObj[subsystem]["bridgeConfig"].size();
-        auto ifaceType = request->interface_type();
+        int currentEntryCount = data.stateRootObj[subsystem]["bridgeConfig"].size();
+        auto ifaceType        = request->interface_type();
 
         int index = 0;
         for (; index < currentEntryCount; index++) {
-            Json::Value currentEntry =
-                data.stateRootObj[subsystem]
-                ["bridgeConfig"][index];
+            Json::Value currentEntry = data.stateRootObj[subsystem]["bridgeConfig"][index];
 
             if (currentEntry["ifaceType"].asInt() != ifaceType) {
                 continue;
             }
 
-            entryIdx = index;
+            entryIdx    = index;
             entryExists = true;
             break;
         }
@@ -66,4 +61,4 @@ private:
     }
 };
 
-#endif //BRIDGE_MANAGER_SERVER_HPP
+#endif  // BRIDGE_MANAGER_SERVER_HPP

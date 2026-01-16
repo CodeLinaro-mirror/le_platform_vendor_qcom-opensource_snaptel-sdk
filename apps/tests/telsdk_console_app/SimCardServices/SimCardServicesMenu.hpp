@@ -26,11 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef SIMCARDSERVICESMENU_HPP
@@ -39,12 +39,12 @@
 #include "console_app_framework/ConsoleApp.hpp"
 
 class SimCardServicesMenu : public ConsoleApp {
-public:
-   SimCardServicesMenu(std::string appName, std::string cursor);
-   ~SimCardServicesMenu();
-   bool init();
-   void cardServicesMenu(std::vector<std::string> userInput);
-   void sapCardMenu(std::vector<std::string> userInput);
+ public:
+    SimCardServicesMenu(std::string appName, std::string cursor);
+    ~SimCardServicesMenu();
+    bool init();
+    void cardServicesMenu(std::vector<std::string> userInput);
+    void sapCardMenu(std::vector<std::string> userInput);
 };
 
 #endif  // SIMCARDSERVICESMENU_HPP

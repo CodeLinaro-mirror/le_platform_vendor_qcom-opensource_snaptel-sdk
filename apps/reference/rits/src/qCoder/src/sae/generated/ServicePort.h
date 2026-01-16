@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_ServicePort_H_
-#define	_ServicePort_H_
-
+#ifndef _ServicePort_H_
+#define _ServicePort_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* ServicePort */
-typedef long	 ServicePort_t;
+typedef long ServicePort_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_ServicePort;
@@ -37,5 +36,5 @@ per_type_encoder_f ServicePort_encode_uper;
 }
 #endif
 
-#endif	/* _ServicePort_H_ */
+#endif /* _ServicePort_H_ */
 #include <asn_internal.h>

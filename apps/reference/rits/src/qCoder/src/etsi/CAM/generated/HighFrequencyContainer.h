@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_HighFrequencyContainer_H_
-#define	_HighFrequencyContainer_H_
-
+#ifndef _HighFrequencyContainer_H_
+#define _HighFrequencyContainer_H_
 
 #include <asn_application.h>
 
@@ -22,27 +21,27 @@ extern "C" {
 
 /* Dependencies */
 typedef enum HighFrequencyContainer_PR {
-	HighFrequencyContainer_PR_NOTHING,	/* No components present */
-	HighFrequencyContainer_PR_basicVehicleContainerHighFrequency,
-	HighFrequencyContainer_PR_rsuContainerHighFrequency
-	/* Extensions may appear below */
-	
+    HighFrequencyContainer_PR_NOTHING, /* No components present */
+    HighFrequencyContainer_PR_basicVehicleContainerHighFrequency,
+    HighFrequencyContainer_PR_rsuContainerHighFrequency
+    /* Extensions may appear below */
+
 } HighFrequencyContainer_PR;
 
 /* HighFrequencyContainer */
 typedef struct HighFrequencyContainer {
-	HighFrequencyContainer_PR present;
-	union HighFrequencyContainer_u {
-		BasicVehicleContainerHighFrequency_t	 basicVehicleContainerHighFrequency;
-		RSUContainerHighFrequency_t	 rsuContainerHighFrequency;
-		/*
-		 * This type is extensible,
-		 * possible extensions are below.
-		 */
-	} choice;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    HighFrequencyContainer_PR present;
+    union HighFrequencyContainer_u {
+        BasicVehicleContainerHighFrequency_t basicVehicleContainerHighFrequency;
+        RSUContainerHighFrequency_t rsuContainerHighFrequency;
+        /*
+         * This type is extensible,
+         * possible extensions are below.
+         */
+    } choice;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } HighFrequencyContainer_t;
 
 /* Implementation */
@@ -52,5 +51,5 @@ extern asn_TYPE_descriptor_t asn_DEF_HighFrequencyContainer;
 }
 #endif
 
-#endif	/* _HighFrequencyContainer_H_ */
+#endif /* _HighFrequencyContainer_H_ */
 #include <asn_internal.h>

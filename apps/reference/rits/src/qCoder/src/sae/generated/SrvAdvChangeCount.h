@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_SrvAdvChangeCount_H_
-#define	_SrvAdvChangeCount_H_
-
+#ifndef _SrvAdvChangeCount_H_
+#define _SrvAdvChangeCount_H_
 
 #include <asn_application.h>
 
@@ -22,11 +21,11 @@ extern "C" {
 
 /* SrvAdvChangeCount */
 typedef struct SrvAdvChangeCount {
-	SrvAdvID_t	 saID;
-	SrvAdvContentCount_t	 contentCount;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    SrvAdvID_t saID;
+    SrvAdvContentCount_t contentCount;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } SrvAdvChangeCount_t;
 
 /* Implementation */
@@ -36,5 +35,5 @@ extern asn_TYPE_descriptor_t asn_DEF_SrvAdvChangeCount;
 }
 #endif
 
-#endif	/* _SrvAdvChangeCount_H_ */
+#endif /* _SrvAdvChangeCount_H_ */
 #include <asn_internal.h>

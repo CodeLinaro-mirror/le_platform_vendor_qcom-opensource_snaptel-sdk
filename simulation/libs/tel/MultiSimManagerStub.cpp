@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -19,14 +19,12 @@ MultiSimManagerStub::MultiSimManagerStub() {
 telux::common::Status MultiSimManagerStub::init(telux::common::InitResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
     taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
-    if(!taskQ_) {
+    if (!taskQ_) {
         LOG(ERROR, __FUNCTION__, " unable to instantiate AsyncTaskQueue");
         return telux::common::Status::FAILED;
     }
-    auto f = std::async(std::launch::async,
-        [this, callback]() {
-            this->initSync(callback);
-        }).share();
+    auto f
+        = std::async(std::launch::async, [this, callback]() { this->initSync(callback); }).share();
     auto status = taskQ_->add(f);
     return status;
 }
@@ -36,12 +34,12 @@ MultiSimManagerStub::~MultiSimManagerStub() {
 }
 
 void MultiSimManagerStub::cleanup() {
-   LOG(DEBUG, __FUNCTION__);
+    LOG(DEBUG, __FUNCTION__);
 }
 
 void MultiSimManagerStub::initSync(telux::common::InitResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
-    if(callback) {
+    if (callback) {
         auto f = std::async(std::launch::async, [this, callback]() {
             std::this_thread::sleep_for(std::chrono::milliseconds(INIT_DELAY));
             if (callback) {
@@ -55,13 +53,13 @@ void MultiSimManagerStub::initSync(telux::common::InitResponseCb callback) {
 std::future<bool> MultiSimManagerStub::onSubsystemReady() {
     LOG(DEBUG, __FUNCTION__);
     std::future<bool> ready_future;
-    ready_future = std::async(std::launch::async,
-        [this]() {
-            while (!isSubsystemReady()) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(INIT_DELAY));
-            }
-            return(isSubsystemReady());});
-    return((ready_future));
+    ready_future = std::async(std::launch::async, [this]() {
+        while (!isSubsystemReady()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(INIT_DELAY));
+        }
+        return (isSubsystemReady());
+    });
+    return ((ready_future));
 }
 
 telux::common::ServiceStatus MultiSimManagerStub::getServiceStatus() {
@@ -91,13 +89,13 @@ telux::common::Status MultiSimManagerStub::requestHighCapability(HighCapabilityC
     return telux::common::Status::NOTSUPPORTED;
 }
 
-telux::common::Status MultiSimManagerStub::setHighCapability(int slotId,
-    common::ResponseCallback callback) {
+telux::common::Status MultiSimManagerStub::setHighCapability(
+    int slotId, common::ResponseCallback callback) {
     return telux::common::Status::NOTSUPPORTED;
 }
 
-telux::common::Status MultiSimManagerStub::switchActiveSlot(SlotId slotId,
-    common::ResponseCallback callback) {
+telux::common::Status MultiSimManagerStub::switchActiveSlot(
+    SlotId slotId, common::ResponseCallback callback) {
     return telux::common::Status::NOTSUPPORTED;
 }
 
@@ -105,10 +103,25 @@ telux::common::Status MultiSimManagerStub::requestSlotStatus(SlotStatusCallback 
     return telux::common::Status::NOTSUPPORTED;
 }
 
+telux::common::Status MultiSimManagerStub::configureLogicalSlotMapping(
+    std::map <LogicalSlotId, LogicalSlotMapInfo> mapInfo, common::ResponseCallback callback) {
+    return telux::common::Status::NOTSUPPORTED;
+}
+
+telux::common::ErrorCode MultiSimManagerStub::getLogicalSlotMapping(std::map <LogicalSlotId,
+    LogicalSlotMapInfo> &mapInfo) {
+    return telux::common::ErrorCode::INVALID_STATE;
+}
+
+telux::common::ErrorCode MultiSimManagerStub::getPhysicalSlotStatus(std::map<PhysicalSlotId,
+    SimSlotStatus> &slotStatus) {
+    return telux::common::ErrorCode::INVALID_STATE;
+}
+
 void MultiSimManagerStub::onEventUpdate(google::protobuf::Any event) {
     LOG(DEBUG, __FUNCTION__);
 }
 
-} // end of namespace tel
+}  // end of namespace tel
 
-} // end of namespace telux
+}  // end of namespace telux

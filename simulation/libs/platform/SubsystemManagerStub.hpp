@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -48,8 +48,7 @@ class SubsystemManagerStub : public ISubsystemManager,
 
     telux::common::ServiceStatus getServiceStatus(void) override;
 
-    telux::common::Status initSyncComplete(
-            telux::common::ServiceStatus srvcStatus) override;
+    telux::common::Status initSyncComplete(telux::common::ServiceStatus srvcStatus) override;
 
  protected:
     telux::common::Status init() override;
@@ -71,8 +70,8 @@ class SubsystemManagerStub : public ISubsystemManager,
     // Set to store supported combinations
     std::set<Combination> supportedCombinations_;
 
-    void sendNewStatusToClients(telux::common::OperationalStatus newOpStatus,
-        Subsystem subsystem, ProcType procType);
+    void sendNewStatusToClients(
+        telux::common::OperationalStatus newOpStatus, Subsystem subsystem, ProcType procType);
     telux::common::ErrorCode registerForMpss(
         std::weak_ptr<ISubsystemListener> listener, telux::common::ProcType location);
     telux::common::ErrorCode registerForApss(

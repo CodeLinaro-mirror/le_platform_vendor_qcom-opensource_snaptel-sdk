@@ -1,35 +1,6 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /*
@@ -74,9 +45,7 @@ int CapturePCM::init() {
 
     /* Step - 2 */
     audioManager_ = audioFactory.getAudioManager(
-            [&p](telux::common::ServiceStatus srvStatus) {
-        p.set_value(srvStatus);
-    });
+        [&p](telux::common::ServiceStatus srvStatus) { p.set_value(srvStatus); });
 
     if (!audioManager_) {
         std::cout << "Can't get IAudioManager" << std::endl;
@@ -104,24 +73,24 @@ int CapturePCM::createCaptureStream() {
     telux::common::Status status;
     telux::common::ErrorCode ec;
 
-    sc.type = telux::audio::StreamType::CAPTURE;
-    sc.sampleRate = 48000;
-    sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
+    sc.type            = telux::audio::StreamType::CAPTURE;
+    sc.sampleRate      = 48000;
+    sc.format          = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
     sc.channelTypeMask = telux::audio::ChannelType::LEFT | telux::audio::ChannelType::RIGHT;
     sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_MIC);
 
-    status = audioManager_->createStream(sc, [&p, this] (
-            std::shared_ptr<telux::audio::IAudioStream> &audioStream,
-            telux::common::ErrorCode result) {
-        if (result == telux::common::ErrorCode::SUCCESS) {
-            audioCaptureStream_ = std::dynamic_pointer_cast<
-                telux::audio::IAudioCaptureStream>(audioStream);
-        }
-        p.set_value(result);
-    });
+    status = audioManager_->createStream(
+        sc, [&p, this](std::shared_ptr<telux::audio::IAudioStream> &audioStream,
+                telux::common::ErrorCode result) {
+            if (result == telux::common::ErrorCode::SUCCESS) {
+                audioCaptureStream_
+                    = std::dynamic_pointer_cast<telux::audio::IAudioCaptureStream>(audioStream);
+            }
+            p.set_value(result);
+        });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request create stream"  << std::endl;
+        std::cout << "can't request create stream" << std::endl;
         return -EIO;
     }
 
@@ -144,13 +113,11 @@ int CapturePCM::deleteCaptureStream() {
     telux::common::Status status;
     telux::common::ErrorCode ec;
 
-    status = audioManager_->deleteStream(audioCaptureStream_, [&p, this] (
-            telux::common::ErrorCode result) {
-        p.set_value(result);
-    });
+    status = audioManager_->deleteStream(
+        audioCaptureStream_, [&p, this](telux::common::ErrorCode result) { p.set_value(result); });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request delete stream"  << std::endl;
+        std::cout << "can't request delete stream" << std::endl;
         return -EIO;
     }
 
@@ -167,8 +134,8 @@ int CapturePCM::deleteCaptureStream() {
 /*
  *  Gets called whenever audio samples are read from the capture stream.
  */
-void CapturePCM::readComplete(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
-        telux::common::ErrorCode error) {
+void CapturePCM::readComplete(
+    std::shared_ptr<telux::audio::IStreamBuffer> buffer, telux::common::ErrorCode error) {
 
     uint32_t bytesRead, bytesWrittenToFile;
 
@@ -178,11 +145,11 @@ void CapturePCM::readComplete(std::shared_ptr<telux::audio::IStreamBuffer> buffe
         errorOccurred_ = true;
         std::cout << "read failed, err: " << static_cast<int>(error) << std::endl;
     } else {
-        bytesRead = buffer->getDataSize();
+        bytesRead          = buffer->getDataSize();
         bytesWrittenToFile = std::fwrite(buffer->getRawBuffer(), 1, bytesRead, fileToSaveSamples_);
         if (bytesWrittenToFile != bytesRead) {
-            std::cout << "can't write to file, " << "written "
-            << bytesWrittenToFile << ", read " << bytesRead << std::endl;
+            std::cout << "can't write to file, "
+                      << "written " << bytesWrittenToFile << ", read " << bytesRead << std::endl;
         }
     }
 
@@ -196,7 +163,7 @@ void CapturePCM::readComplete(std::shared_ptr<telux::audio::IStreamBuffer> buffe
 void CapturePCM::capture() {
 
     uint32_t bytesToRead = 0;
-    bool waitResult = false;
+    bool waitResult      = false;
     telux::common::Status status;
     std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer;
 
@@ -223,14 +190,14 @@ void CapturePCM::capture() {
 
         bytesToRead = streamBuffer->getMinSize();
         if (!bytesToRead) {
-            bytesToRead =  streamBuffer->getMaxSize();
+            bytesToRead = streamBuffer->getMaxSize();
         }
 
         streamBuffer->setDataSize(bytesToRead);
     }
 
-    auto readCb = std::bind(&CapturePCM::readComplete, this,
-        std::placeholders::_1, std::placeholders::_2);
+    auto readCb
+        = std::bind(&CapturePCM::readComplete, this, std::placeholders::_1, std::placeholders::_2);
 
     std::cout << "capture started" << std::endl;
 
@@ -248,8 +215,7 @@ void CapturePCM::capture() {
         }
 
         waitResult = false;
-        waitResult = cv_.wait_for(lock,
-            std::chrono::seconds(TIME_10_SECONDS),
+        waitResult = cv_.wait_for(lock, std::chrono::seconds(TIME_10_SECONDS),
             [=] { return (!bufferPool_.empty() || errorOccurred_); });
 
         if (!waitResult) {
@@ -261,8 +227,8 @@ void CapturePCM::capture() {
         }
 
         auto currentTime = std::chrono::steady_clock::now();
-        auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
-            currentTime - startTime).count();
+        auto diff
+            = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count();
 
         if (diff >= captureDurationMs_) {
             /* Let all initiated read complete, buffers saved to file */
@@ -295,7 +261,7 @@ int main(int argc, char **argv) {
 
     try {
         app = std::make_shared<CapturePCM>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "can't allocate CapturePCM" << std::endl;
         return -ENOMEM;
     }
@@ -307,7 +273,7 @@ int main(int argc, char **argv) {
 
     try {
         app->captureDurationMs_ = std::stoul(argv[1]) * 1000;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "can't interpret duration from " << argv[1] << std::endl;
         return -ERANGE;
     }

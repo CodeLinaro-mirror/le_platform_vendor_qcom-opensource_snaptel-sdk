@@ -26,10 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "DgnssManagerStub.hpp"
@@ -48,18 +49,16 @@ DgnssManagerStub::DgnssManagerStub(DgnssDataFormat dataFormat) {
 }
 
 std::future<bool> DgnssManagerStub::onSubsystemReady() {
-  LOG(DEBUG, __FUNCTION__);
-  auto f = std::async(std::launch::async, [&] {
-    return waitForInitialization();
-  });
-  return f;
+    LOG(DEBUG, __FUNCTION__);
+    auto f = std::async(std::launch::async, [&] { return waitForInitialization(); });
+    return f;
 }
 
 bool DgnssManagerStub::waitForInitialization() {
-  LOG(DEBUG, __FUNCTION__);
-  std::unique_lock<std::mutex> cvLock(mutex_);
-  cv_.wait(cvLock);
-  return isSubsystemReady();
+    LOG(DEBUG, __FUNCTION__);
+    std::unique_lock<std::mutex> cvLock(mutex_);
+    cv_.wait(cvLock);
+    return isSubsystemReady();
 }
 
 bool DgnssManagerStub::isSubsystemReady() {
@@ -74,24 +73,24 @@ telux::common::ServiceStatus DgnssManagerStub::getServiceStatus() {
 
 telux::common::Status DgnssManagerStub::init(telux::common::InitResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
-    auto f = std::async(std::launch::async,
-    [this, callback]() {
-        this->initSync(callback);
-        }).share();
-        taskQ_.add(f);
+    auto f
+        = std::async(std::launch::async, [this, callback]() { this->initSync(callback); }).share();
+    taskQ_.add(f);
     return telux::common::Status::SUCCESS;
 }
 
 void DgnssManagerStub::initSync(telux::common::InitResponseCb callback) {
-    int cbDelay = 100;
+    int cbDelay                                = 100;
     telux::common::ServiceStatus serviceStatus = telux::common::ServiceStatus::SERVICE_FAILED;
     Json::Value rootNode;
 
     {
         ErrorCode errorCode = JsonParser::readFromJsonFile(rootNode, "api/loc/IDgnssManager.json");
-        if(errorCode == ErrorCode::SUCCESS) {
-            cbDelay = rootNode["IDgnssManager"]["SubSystemReadinessDelay"].asInt();
-            serviceStatus = rootNode["IDgnssManager"]["SubSystemInit"].asBool() == true ? ServiceStatus::SERVICE_AVAILABLE : ServiceStatus::SERVICE_FAILED;
+        if (errorCode == ErrorCode::SUCCESS) {
+            cbDelay       = rootNode["IDgnssManager"]["SubSystemReadinessDelay"].asInt();
+            serviceStatus = rootNode["IDgnssManager"]["SubSystemInit"].asBool() == true
+                                ? ServiceStatus::SERVICE_AVAILABLE
+                                : ServiceStatus::SERVICE_FAILED;
         } else {
             LOG(ERROR, "Unable to read DgnssManager JSON");
         }
@@ -111,7 +110,7 @@ telux::common::Status DgnssManagerStub::registerListener(
         LOG(ERROR, __FUNCTION__, " Listener Already Registered");
         return telux::common::Status::INVALIDSTATE;
     }
-    if (listener.lock()!=nullptr) {
+    if (listener.lock() != nullptr) {
         LOG(INFO, __FUNCTION__, " Listener Registered");
         statusListener_ = listener;
         return telux::common::Status::SUCCESS;
@@ -157,8 +156,8 @@ telux::common::Status DgnssManagerStub::releaseSource(void) {
     return status;
 }
 
-telux::common::Status DgnssManagerStub::injectCorrectionData(const uint8_t* buffer,
-        uint32_t bufferSize) {
+telux::common::Status DgnssManagerStub::injectCorrectionData(
+    const uint8_t *buffer, uint32_t bufferSize) {
     LOG(DEBUG, __FUNCTION__);
     Json::Value rootNode;
     JsonParser::readFromJsonFile(rootNode, "api/loc/IDgnssManager.json");
@@ -170,8 +169,9 @@ telux::common::Status DgnssManagerStub::injectCorrectionData(const uint8_t* buff
     return status;
 }
 
-DgnssManagerStub::~DgnssManagerStub() {}
-
+DgnssManagerStub::~DgnssManagerStub() {
 }
 
-}
+}  // namespace loc
+
+}  // namespace telux

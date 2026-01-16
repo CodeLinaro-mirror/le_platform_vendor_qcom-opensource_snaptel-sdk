@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -14,36 +14,33 @@ using namespace telux::tel;
 PhoneManagerStub::PhoneManagerStub() {
     LOG(DEBUG, __FUNCTION__);
     subSystemStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
-    cbDelay_ = DEFAULT_DELAY;
+    cbDelay_         = DEFAULT_DELAY;
 }
 
 telux::common::Status PhoneManagerStub::init(telux::common::InitResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
     listenerMgr_ = std::make_shared<telux::common::ListenerManager<IPhoneListener>>();
-    if(!listenerMgr_) {
+    if (!listenerMgr_) {
         LOG(ERROR, __FUNCTION__, " unable to instantiate ListenerManager");
         return telux::common::Status::FAILED;
     }
     phoneStub_ = CommonUtils::getGrpcStub<PhoneService>();
-    if(!phoneStub_) {
+    if (!phoneStub_) {
         LOG(ERROR, __FUNCTION__, " unable to instantiate phone service");
         return telux::common::Status::FAILED;
     }
     cardStub_ = CommonUtils::getGrpcStub<CardService>();
-    if(!cardStub_) {
+    if (!cardStub_) {
         LOG(ERROR, __FUNCTION__, " unable to instantiate card service");
         return telux::common::Status::FAILED;
     }
     taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
-    if(!taskQ_) {
+    if (!taskQ_) {
         LOG(ERROR, __FUNCTION__, " unable to instantiate AsyncTaskQueue");
         return telux::common::Status::FAILED;
     }
-    initCb_ = callback;
-    auto f = std::async(std::launch::async,
-        [this]() {
-            this->initSync();
-        }).share();
+    initCb_     = callback;
+    auto f      = std::async(std::launch::async, [this]() { this->initSync(); }).share();
     auto status = taskQ_->add(f);
     return status;
 }
@@ -54,11 +51,10 @@ void PhoneManagerStub::setServiceStatus(telux::common::ServiceStatus status) {
         std::lock_guard<std::mutex> lock(phoneManagerMutex_);
         subSystemStatus_ = status;
     }
-    if(initCb_) {
-        auto f1 = std::async(std::launch::async,
-        [this, status]() {
+    if (initCb_) {
+        auto f1 = std::async(std::launch::async, [this, status]() {
             std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay_));
-                initCb_(status);
+            initCb_(status);
         }).share();
         taskQ_->add(f1);
     } else {
@@ -76,18 +72,17 @@ void PhoneManagerStub::initSync() {
     grpc::Status reqstatus = phoneStub_->InitService(&context, request, &response);
     if (reqstatus.ok()) {
         LOG(DEBUG, __FUNCTION__, " PhoneService init successfully");
-        telux::common::ServiceStatus cbStatus =
-            static_cast<telux::common::ServiceStatus>(response.service_status());
+        telux::common::ServiceStatus cbStatus
+            = static_cast<telux::common::ServiceStatus>(response.service_status());
         cbDelay_ = static_cast<int>(response.delay());
-        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay_,
-            " cbStatus::", static_cast<int>(cbStatus));
+        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay_, " cbStatus::", static_cast<int>(cbStatus));
         if (cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             LOG(INFO, __FUNCTION__, " Phone subsystem is ready");
             ClientContext context;
             grpc::Status reqstatus = cardStub_->InitService(&context, request, &response);
             if (reqstatus.ok()) {
                 LOG(DEBUG, __FUNCTION__, " CardService init successfully");
-                cbStatus =  static_cast<telux::common::ServiceStatus>(response.service_status());
+                cbStatus = static_cast<telux::common::ServiceStatus>(response.service_status());
                 if (cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
                     LOG(INFO, __FUNCTION__, " Card Manager subsystem is ready");
                     if (telux::common::DeviceConfig::isMultiSimSupported()) {
@@ -112,13 +107,13 @@ void PhoneManagerStub::initSync() {
 
                     // Wait till radio state and service state are received
                     // for all phones asynchronously
-                    for(auto it = phoneMap_.begin(); it != phoneMap_.end(); ++it) {
-                        auto phone = it->second;
+                    for (auto it = phoneMap_.begin(); it != phoneMap_.end(); ++it) {
+                        auto phone   = it->second;
                         bool isReady = phone->isReady();
-                        while(!isReady) {
+                        while (!isReady) {
                             // blocking infinite wait for service to be ready
                             std::future<bool> f = phone->onReady();
-                            isReady = f.get();
+                            isReady             = f.get();
                         }
                     }
                 }
@@ -126,8 +121,8 @@ void PhoneManagerStub::initSync() {
         }
 
         LOG(DEBUG, __FUNCTION__, " ServiceStatus: ", static_cast<int>(cbStatus));
-        bool isSubsystemReady = (cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE)?
-            true : false;
+        bool isSubsystemReady
+            = (cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) ? true : false;
         setSubsystemReady(isSubsystemReady);
         setServiceStatus(cbStatus);
     }
@@ -169,7 +164,7 @@ telux::common::Status PhoneManagerStub::registerListener(std::weak_ptr<IPhoneLis
     LOG(DEBUG, __FUNCTION__);
     telux::common::Status status = telux::common::Status::FAILED;
     if (listenerMgr_) {
-        status = listenerMgr_->registerListener(listener);
+        status                           = listenerMgr_->registerListener(listener);
         std::vector<std::string> filters = {TEL_PHONE_FILTER};
         std::vector<std::weak_ptr<IPhoneListener>> applisteners;
         listenerMgr_->getAvailableListeners(applisteners);
@@ -192,7 +187,7 @@ telux::common::Status PhoneManagerStub::removeListener(std::weak_ptr<IPhoneListe
         listenerMgr_->getAvailableListeners(applisteners);
         if (applisteners.size() == 0) {
             std::vector<std::string> filters = {TEL_PHONE_FILTER};
-            auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+            auto &clientEventManager         = telux::common::ClientEventManager::getInstance();
             clientEventManager.deregisterListener(shared_from_this(), filters);
         }
     }
@@ -233,8 +228,8 @@ int PhoneManagerStub::getPhoneIdFromSlotId(int slotId) {
     }
     auto phId = phoneSlotIdsMap_.find(slotId);
     if (phId != phoneSlotIdsMap_.end()) {
-       LOG(DEBUG, __FUNCTION__, " Found phone Id");
-       return phoneSlotIdsMap_[slotId];
+        LOG(DEBUG, __FUNCTION__, " Found phone Id");
+        return phoneSlotIdsMap_[slotId];
     }
     LOG(DEBUG, __FUNCTION__, " Invalid SlotId");
     return INVALID_PHONE_ID;
@@ -256,9 +251,9 @@ int PhoneManagerStub::getSlotIdFromPhoneId(int phoneId) {
             slotId = it.first;
             break;
         }
-   }
-   LOG(DEBUG, __FUNCTION__, " slot id: ", slotId);
-   return slotId;
+    }
+    LOG(DEBUG, __FUNCTION__, " slot id: ", slotId);
+    return slotId;
 }
 
 std::shared_ptr<IPhone> PhoneManagerStub::getPhone(int phoneId) {
@@ -273,8 +268,8 @@ std::shared_ptr<IPhone> PhoneManagerStub::getPhone(int phoneId) {
     }
     std::vector<int> phoneIds;
     getPhoneIds(phoneIds);
-    auto iter = std::find_if(std::begin(phoneIds), std::end(phoneIds),
-                            [=](int id) { return id == phoneId; });
+    auto iter = std::find_if(
+        std::begin(phoneIds), std::end(phoneIds), [=](int id) { return id == phoneId; });
     if (iter != std::end(phoneIds)) {
         LOG(DEBUG, __FUNCTION__, " Found given phoneId: ", phoneId);
     } else {
@@ -313,18 +308,18 @@ telux::common::Status PhoneManagerStub::requestCellularCapabilityInfo(
 
     for (auto &tech : response.capability_info().voice_service_techs()) {
         VoiceServiceTechnology voiceServiceTechnology = static_cast<VoiceServiceTechnology>(tech);
-        switch(voiceServiceTechnology) {
+        switch (voiceServiceTechnology) {
             case VoiceServiceTechnology::VOICE_TECH_GW_CSFB:
-                cellularCapabilityInfo.voiceServiceTechs.set(static_cast<int>
-                    (VoiceServiceTechnology::VOICE_TECH_GW_CSFB));
+                cellularCapabilityInfo.voiceServiceTechs.set(
+                    static_cast<int>(VoiceServiceTechnology::VOICE_TECH_GW_CSFB));
                 break;
             case VoiceServiceTechnology::VOICE_TECH_1x_CSFB:
-                cellularCapabilityInfo.voiceServiceTechs.set(static_cast<int>
-                    (VoiceServiceTechnology::VOICE_TECH_1x_CSFB));
+                cellularCapabilityInfo.voiceServiceTechs.set(
+                    static_cast<int>(VoiceServiceTechnology::VOICE_TECH_1x_CSFB));
                 break;
             case VoiceServiceTechnology::VOICE_TECH_VOLTE:
-                cellularCapabilityInfo.voiceServiceTechs.set(static_cast<int>
-                    (VoiceServiceTechnology::VOICE_TECH_VOLTE));
+                cellularCapabilityInfo.voiceServiceTechs.set(
+                    static_cast<int>(VoiceServiceTechnology::VOICE_TECH_VOLTE));
                 break;
             default:
                 LOG(ERROR, " Invalid voice technology");
@@ -332,11 +327,11 @@ telux::common::Status PhoneManagerStub::requestCellularCapabilityInfo(
         }
     }
 
-    cellularCapabilityInfo.simCount = response.capability_info().sim_count();
+    cellularCapabilityInfo.simCount      = response.capability_info().sim_count();
     cellularCapabilityInfo.maxActiveSims = response.capability_info().max_active_sims();
     std::vector<SimRatCapability> simRatCapList;
-    LOG(DEBUG, __FUNCTION__, " SIM RAT capabilities : ",
-        response.capability_info().sim_rat_capabilities_size());
+    LOG(DEBUG, __FUNCTION__,
+        " SIM RAT capabilities : ", response.capability_info().sim_rat_capabilities_size());
     for (int i = 0; i < response.capability_info().sim_rat_capabilities_size(); i++) {
         SimRatCapability simRatCap;
         simRatCap.slotId = response.capability_info().sim_rat_capabilities(i).phone_id();
@@ -345,7 +340,7 @@ telux::common::Status PhoneManagerStub::requestCellularCapabilityInfo(
             LOG(DEBUG, __FUNCTION__, " RAT Capability : ", static_cast<int>(ratCap));
             switch (ratCap) {
                 case RATCapability::AMPS:
-                     simRatCap.capabilities.set(static_cast<int>(RATCapability::AMPS));
+                    simRatCap.capabilities.set(static_cast<int>(RATCapability::AMPS));
                     break;
                 case RATCapability::CDMA:
                     simRatCap.capabilities.set(static_cast<int>(RATCapability::CDMA));
@@ -384,12 +379,11 @@ telux::common::Status PhoneManagerStub::requestCellularCapabilityInfo(
     }
 
     std::vector<SimRatCapability> deviceRatCapList;
-    LOG(DEBUG, __FUNCTION__, " Device RAT Capabilities : ",
-        response.capability_info().device_rat_capability_size());
+    LOG(DEBUG, __FUNCTION__,
+        " Device RAT Capabilities : ", response.capability_info().device_rat_capability_size());
     for (int i = 0; i < response.capability_info().device_rat_capability_size(); i++) {
         SimRatCapability deviceRatCap;
-        deviceRatCap.slotId =
-            response.capability_info().device_rat_capability(i).phone_id();
+        deviceRatCap.slotId = response.capability_info().device_rat_capability(i).phone_id();
         LOG(DEBUG, __FUNCTION__, " capabilities size:",
             response.capability_info().device_rat_capability(i).capabilities_size());
         for (auto &rat : response.capability_info().device_rat_capability(i).capabilities()) {
@@ -436,13 +430,13 @@ telux::common::Status PhoneManagerStub::requestCellularCapabilityInfo(
     }
 
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
     LOG(DEBUG, __FUNCTION__, " Status is ", static_cast<int>(status));
-    int cbDelay = static_cast<int>(response.delay());
+    int cbDelay           = static_cast<int>(response.delay());
     bool isCallbackNeeded = static_cast<bool>(response.iscallback());
     if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
-        auto fut = std::async(std::launch::async,
-            [this, cbDelay, error, callback, cellularCapabilityInfo]() {
+        auto fut = std::async(
+            std::launch::async, [this, cbDelay, error, callback, cellularCapabilityInfo]() {
                 std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
                 if (callback) {
                     callback->cellularCapabilityResponse(cellularCapabilityInfo, error);
@@ -453,8 +447,8 @@ telux::common::Status PhoneManagerStub::requestCellularCapabilityInfo(
     return status;
 }
 
-telux::common::Status PhoneManagerStub::setOperatingMode(telux::tel::OperatingMode operatingMode,
-    telux::common::ResponseCallback callback) {
+telux::common::Status PhoneManagerStub::setOperatingMode(
+    telux::tel::OperatingMode operatingMode, telux::common::ResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__);
     if (telux::common::ServiceStatus::SERVICE_AVAILABLE != getServiceStatus()) {
         LOG(ERROR, __FUNCTION__, " Phone Manager is not ready");
@@ -470,23 +464,22 @@ telux::common::Status PhoneManagerStub::setOperatingMode(telux::tel::OperatingMo
         return telux::common::Status::FAILED;
     }
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    LOG(DEBUG, __FUNCTION__, " Status: ", static_cast<int>(status), " Errorcode: ",
-        static_cast<int>(error));
-    int cbDelay = static_cast<int>(response.delay());
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
+    LOG(DEBUG, __FUNCTION__, " Status: ", static_cast<int>(status),
+        " Errorcode: ", static_cast<int>(error));
+    int cbDelay           = static_cast<int>(response.delay());
     bool isCallbackNeeded = static_cast<bool>(response.iscallback());
 
     if (error == telux::common::ErrorCode::SUCCESS) {
         updateRadioState(operatingMode);
     }
-    if ((status == telux::common::Status::SUCCESS)&& (isCallbackNeeded)) {
-        auto fut = std::async(std::launch::async,
-            [this, cbDelay, error, callback]() {
-                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-                if (callback) {
-                    callback(error);
-                }
-            }).share();
+    if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+        auto fut = std::async(std::launch::async, [this, cbDelay, error, callback]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+            if (callback) {
+                callback(error);
+            }
+        }).share();
         taskQ_->add(fut);
     }
     return status;
@@ -502,23 +495,23 @@ telux::common::Status PhoneManagerStub::requestOperatingMode(
     if (!reqstatus.ok()) {
         return telux::common::Status::FAILED;
     }
-    telux::tel::OperatingMode operatingMode = static_cast<telux::tel::OperatingMode>(
-        response.operating_mode());
+    telux::tel::OperatingMode operatingMode
+        = static_cast<telux::tel::OperatingMode>(response.operating_mode());
     // update radio state
     updateRadioState(operatingMode);
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    int cbDelay = static_cast<int>(response.delay());
-    bool isCallbackNeeded = static_cast<bool>(response.iscallback());
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
+    int cbDelay                    = static_cast<int>(response.delay());
+    bool isCallbackNeeded          = static_cast<bool>(response.iscallback());
 
-    if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
-        auto fut = std::async(std::launch::async,
-            [this, cbDelay, operatingMode, callback, error]() {
-                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-                if (callback) {
-                    callback->operatingModeResponse(operatingMode, error);
-                }
-            }).share();
+    if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+        auto fut
+            = std::async(std::launch::async, [this, cbDelay, operatingMode, callback, error]() {
+                  std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                  if (callback) {
+                      callback->operatingModeResponse(operatingMode, error);
+                  }
+              }).share();
         taskQ_->add(fut);
     }
     return status;
@@ -539,18 +532,17 @@ telux::common::Status PhoneManagerStub::resetWwan(telux::common::ResponseCallbac
         return telux::common::Status::FAILED;
     }
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    int cbDelay = static_cast<int>(response.delay());
-    bool isCallbackNeeded = static_cast<bool>(response.iscallback());
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
+    int cbDelay                    = static_cast<int>(response.delay());
+    bool isCallbackNeeded          = static_cast<bool>(response.iscallback());
 
-    if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
-        auto fut = std::async(std::launch::async,
-            [this, cbDelay, error, callback]() {
-                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-                if (callback) {
-                    callback(error);
-                }
-            }).share();
+    if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+        auto fut = std::async(std::launch::async, [this, cbDelay, error, callback]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+            if (callback) {
+                callback(error);
+            }
+        }).share();
         taskQ_->add(fut);
     }
     return status;
@@ -563,8 +555,8 @@ bool PhoneManagerStub::isSubsystemReady() {
 
 std::future<bool> PhoneManagerStub::onSubsystemReady() {
     LOG(DEBUG, __FUNCTION__);
-    auto future = std::async(
-        std::launch::async, [&] { return PhoneManagerStub::waitForInitialization(); });
+    auto future
+        = std::async(std::launch::async, [&] { return PhoneManagerStub::waitForInitialization(); });
     return future;
 }
 
@@ -583,31 +575,31 @@ void PhoneManagerStub::onEventUpdate(google::protobuf::Any event) {
         ::telStub::SignalStrengthChangeEvent signalStrengthChangeEvent;
         event.UnpackTo(&signalStrengthChangeEvent);
         handleSignalStrengthChanged(signalStrengthChangeEvent);
-    } else if(event.Is<::telStub::CellInfoListEvent>()) {
+    } else if (event.Is<::telStub::CellInfoListEvent>()) {
         ::telStub::CellInfoListEvent cellInfoListChangeEvent;
         event.UnpackTo(&cellInfoListChangeEvent);
         handleCellInfoListChanged(cellInfoListChangeEvent);
-    } else if(event.Is<::telStub::VoiceServiceStateEvent>()) {
+    } else if (event.Is<::telStub::VoiceServiceStateEvent>()) {
         ::telStub::VoiceServiceStateEvent voiceServiceStateChangeEvent;
         event.UnpackTo(&voiceServiceStateChangeEvent);
         handleVoiceServiceStateChanged(voiceServiceStateChangeEvent);
-    } else if(event.Is<::telStub::OperatingModeEvent>()) {
+    } else if (event.Is<::telStub::OperatingModeEvent>()) {
         ::telStub::OperatingModeEvent operatingModeChangeEvent;
         event.UnpackTo(&operatingModeChangeEvent);
         handleOperatingModeChanged(operatingModeChangeEvent);
-    } else if(event.Is<::telStub::ECallModeInfoChangeEvent>()) {
+    } else if (event.Is<::telStub::ECallModeInfoChangeEvent>()) {
         ::telStub::ECallModeInfoChangeEvent ecallModeInfoChangeEvent;
         event.UnpackTo(&ecallModeInfoChangeEvent);
         handleECallOperatingModeChanged(ecallModeInfoChangeEvent);
-    } else if(event.Is<::telStub::OperatorInfoEvent>()) {
+    } else if (event.Is<::telStub::OperatorInfoEvent>()) {
         ::telStub::OperatorInfoEvent opertorInfoChangeEvent;
         event.UnpackTo(&opertorInfoChangeEvent);
         handleOperatorInfoChanged(opertorInfoChangeEvent);
-    } else if(event.Is<::telStub::VoiceRadioTechnologyChangeEvent>()) {
+    } else if (event.Is<::telStub::VoiceRadioTechnologyChangeEvent>()) {
         ::telStub::VoiceRadioTechnologyChangeEvent voiceRadioTechnologyChangeEvent;
         event.UnpackTo(&voiceRadioTechnologyChangeEvent);
         handleVoiceRadioTechChanged(voiceRadioTechnologyChangeEvent);
-    } else if(event.Is<::telStub::ServiceStateChangeEvent>()) {
+    } else if (event.Is<::telStub::ServiceStateChangeEvent>()) {
         ::telStub::ServiceStateChangeEvent serviceStateChangeEvent;
         event.UnpackTo(&serviceStateChangeEvent);
         handleServiceStateChanged(serviceStateChangeEvent);
@@ -620,8 +612,8 @@ void PhoneManagerStub::handleVoiceRadioTechChanged(
     ::telStub::VoiceRadioTechnologyChangeEvent event) {
     LOG(DEBUG, __FUNCTION__);
     int phoneId = event.phone_id();
-    telux::tel::RadioTechnology rat =
-        static_cast<telux::tel::RadioTechnology>(event.radio_technology());
+    telux::tel::RadioTechnology rat
+        = static_cast<telux::tel::RadioTechnology>(event.radio_technology());
     std::vector<std::weak_ptr<IPhoneListener>> applisteners;
     if (listenerMgr_) {
         listenerMgr_->getAvailableListeners(applisteners);
@@ -639,8 +631,8 @@ void PhoneManagerStub::handleVoiceRadioTechChanged(
 void PhoneManagerStub::handleServiceStateChanged(::telStub::ServiceStateChangeEvent event) {
     LOG(DEBUG, __FUNCTION__);
     int phoneId = event.phone_id();
-    telux::tel::ServiceState serviceState =
-        static_cast<telux::tel::ServiceState>(event.service_state());
+    telux::tel::ServiceState serviceState
+        = static_cast<telux::tel::ServiceState>(event.service_state());
     std::vector<std::weak_ptr<IPhoneListener>> applisteners;
     if (listenerMgr_) {
         listenerMgr_->getAvailableListeners(applisteners);
@@ -655,58 +647,49 @@ void PhoneManagerStub::handleServiceStateChanged(::telStub::ServiceStateChangeEv
     }
 }
 
-
 void PhoneManagerStub::handleSignalStrengthChanged(::telStub::SignalStrengthChangeEvent event) {
     LOG(DEBUG, __FUNCTION__);
-    int phoneId = event.phone_id();
-    std::shared_ptr<SignalStrength> signalStrengthNotify = nullptr;
-    std::shared_ptr<GsmSignalStrengthInfo> gsmSignalStrength =
-         std::make_shared<GsmSignalStrengthInfo>(
-             event.mutable_signal_strength()->mutable_gsm_signal_strength_info()->
-                gsm_signal_strength(),
-             event.mutable_signal_strength()->mutable_gsm_signal_strength_info()->
-                gsm_bit_error_rate(), INVALID_SIGNAL_STRENGTH_VALUE,
-             event.mutable_signal_strength()->mutable_gsm_signal_strength_info()->
-                gsm_rssi());
+    int phoneId                                              = event.phone_id();
+    std::shared_ptr<SignalStrength> signalStrengthNotify     = nullptr;
+    std::shared_ptr<GsmSignalStrengthInfo> gsmSignalStrength = std::make_shared<
+        GsmSignalStrengthInfo>(
+        event.mutable_signal_strength()->mutable_gsm_signal_strength_info()->gsm_signal_strength(),
+        event.mutable_signal_strength()->mutable_gsm_signal_strength_info()->gsm_bit_error_rate(),
+        INVALID_SIGNAL_STRENGTH_VALUE,
+        event.mutable_signal_strength()->mutable_gsm_signal_strength_info()->gsm_rssi());
     std::shared_ptr<LteSignalStrengthInfo> lteSignalStrength
-        = std::make_shared<LteSignalStrengthInfo>(
-            event.mutable_signal_strength()->mutable_lte_signal_strength_info()->
-                lte_signal_strength(),
+        = std::make_shared<LteSignalStrengthInfo>(event.mutable_signal_strength()
+                                                      ->mutable_lte_signal_strength_info()
+                                                      ->lte_signal_strength(),
             event.mutable_signal_strength()->mutable_lte_signal_strength_info()->lte_rsrp(),
             event.mutable_signal_strength()->mutable_lte_signal_strength_info()->lte_rsrq(),
             event.mutable_signal_strength()->mutable_lte_signal_strength_info()->lte_rssnr(),
             event.mutable_signal_strength()->mutable_lte_signal_strength_info()->lte_cqi(),
-            event.mutable_signal_strength()->mutable_lte_signal_strength_info()->
-                timing_advance(),
+            event.mutable_signal_strength()->mutable_lte_signal_strength_info()->timing_advance(),
             event.mutable_signal_strength()->mutable_lte_signal_strength_info()->lte_rssi());
     std::shared_ptr<WcdmaSignalStrengthInfo> wcdmaSignalStrength
         = std::make_shared<WcdmaSignalStrengthInfo>(
-            event.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->
-                signal_strength(), event.mutable_signal_strength()->
-                    mutable_wcdma_signal_strength_info()->bit_error_rate(),
-                event.mutable_signal_strength()->
-                    mutable_wcdma_signal_strength_info()->ecio(),
-                event.mutable_signal_strength()->
-                    mutable_wcdma_signal_strength_info()->rscp(),
-                 event.mutable_signal_strength()->
-                    mutable_wcdma_signal_strength_info()->rssi());
+            event.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->signal_strength(),
+            event.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->bit_error_rate(),
+            event.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->ecio(),
+            event.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->rscp(),
+            event.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->rssi());
     std::shared_ptr<Nr5gSignalStrengthInfo> nr5gSignalStrength
         = std::make_shared<Nr5gSignalStrengthInfo>(
             event.mutable_signal_strength()->mutable_nr5g_signal_strength_info()->rsrp(),
             event.mutable_signal_strength()->mutable_nr5g_signal_strength_info()->rsrq(),
             event.mutable_signal_strength()->mutable_nr5g_signal_strength_info()->rssnr());
     std::shared_ptr<Nb1NtnSignalStrengthInfo> nb1NtnSignalStrength
-        = std::make_shared<Nb1NtnSignalStrengthInfo>(
-            event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->
-                signal_strength(),
+        = std::make_shared<Nb1NtnSignalStrengthInfo>(event.mutable_signal_strength()
+                                                         ->mutable_nb1_ntn_signal_strength_info()
+                                                         ->signal_strength(),
             event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->rsrp(),
             event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->rsrq(),
             event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->rssnr(),
             event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->rssi());
-    signalStrengthNotify
-        = std::make_shared<SignalStrength>(lteSignalStrength, gsmSignalStrength,
-            nullptr/*cdma deprecated*/, wcdmaSignalStrength, nullptr/*tdscdma deprecated*/,
-            nr5gSignalStrength, nb1NtnSignalStrength);
+    signalStrengthNotify = std::make_shared<SignalStrength>(lteSignalStrength, gsmSignalStrength,
+        nullptr /*cdma deprecated*/, wcdmaSignalStrength, nullptr /*tdscdma deprecated*/,
+        nr5gSignalStrength, nb1NtnSignalStrength);
     std::vector<std::weak_ptr<IPhoneListener>> applisteners;
     if (listenerMgr_) {
         listenerMgr_->getAvailableListeners(applisteners);
@@ -726,163 +709,260 @@ void PhoneManagerStub::handleCellInfoListChanged(::telStub::CellInfoListEvent ev
     int phoneId = event.phone_id();
     // update cellInfoList
     std::vector<std::shared_ptr<tel::CellInfo>> cellInfoList = {};
-     for (int i = 0; i < event.cell_info_list_size(); i++) {
-        CellType cellType = static_cast<CellType>
-            (event.mutable_cell_info_list(i)->mutable_cell_type()->cell_type());
-        int registered = event.mutable_cell_info_list(i)-> mutable_cell_type()->registered();
+    for (int i = 0; i < event.cell_info_list_size(); i++) {
+        CellType cellType = static_cast<CellType>(
+            event.mutable_cell_info_list(i)->mutable_cell_type()->cell_type());
+        int registered = event.mutable_cell_info_list(i)->mutable_cell_type()->registered();
         LOG(DEBUG, __FUNCTION__, " Cell registered : ", registered);
-        switch(cellType) {
+        switch (cellType) {
             case CellType::GSM: {
-                string gsmMcc = event.mutable_cell_info_list(i)->mutable_gsm_cell_info()->
-                    mutable_gsm_cell_identity()->mcc();
-                string gsmMnc = event.mutable_cell_info_list(i)->mutable_gsm_cell_info()->
-                    mutable_gsm_cell_identity()->mnc();
-                int gsmLac = event.mutable_cell_info_list(i)->mutable_gsm_cell_info()->
-                    mutable_gsm_cell_identity()->lac();
-                int gsmCid = event.mutable_cell_info_list(i)->mutable_gsm_cell_info()->
-                    mutable_gsm_cell_identity()->cid();
-                int gsmArfcn = event.mutable_cell_info_list(i)->mutable_gsm_cell_info()->
-                    mutable_gsm_cell_identity()->arfcn();
-                int gsmBsic = event.mutable_cell_info_list(i)->mutable_gsm_cell_info()->
-                    mutable_gsm_cell_identity()->bsic();
-                int gsmSignalStrength = event.mutable_cell_info_list(i)->mutable_gsm_cell_info()->
-                    mutable_gsm_signal_strength_info()->gsm_signal_strength();
-                int gsmBitErrorRate = event.mutable_cell_info_list(i)->mutable_gsm_cell_info()->
-                    mutable_gsm_signal_strength_info()->gsm_bit_error_rate();
-                int gsmRssi= event.mutable_cell_info_list(i)->mutable_gsm_cell_info()->
-                    mutable_gsm_signal_strength_info()->gsm_rssi();
-                GsmSignalStrengthInfo gsmCellSS(gsmSignalStrength, gsmBitErrorRate,
-                                               INVALID_SIGNAL_STRENGTH_VALUE, gsmRssi);
+                string gsmMcc = event.mutable_cell_info_list(i)
+                                    ->mutable_gsm_cell_info()
+                                    ->mutable_gsm_cell_identity()
+                                    ->mcc();
+                string gsmMnc = event.mutable_cell_info_list(i)
+                                    ->mutable_gsm_cell_info()
+                                    ->mutable_gsm_cell_identity()
+                                    ->mnc();
+                int gsmLac = event.mutable_cell_info_list(i)
+                                 ->mutable_gsm_cell_info()
+                                 ->mutable_gsm_cell_identity()
+                                 ->lac();
+                int gsmCid = event.mutable_cell_info_list(i)
+                                 ->mutable_gsm_cell_info()
+                                 ->mutable_gsm_cell_identity()
+                                 ->cid();
+                int gsmArfcn = event.mutable_cell_info_list(i)
+                                   ->mutable_gsm_cell_info()
+                                   ->mutable_gsm_cell_identity()
+                                   ->arfcn();
+                int gsmBsic = event.mutable_cell_info_list(i)
+                                  ->mutable_gsm_cell_info()
+                                  ->mutable_gsm_cell_identity()
+                                  ->bsic();
+                int gsmSignalStrength = event.mutable_cell_info_list(i)
+                                            ->mutable_gsm_cell_info()
+                                            ->mutable_gsm_signal_strength_info()
+                                            ->gsm_signal_strength();
+                int gsmBitErrorRate = event.mutable_cell_info_list(i)
+                                          ->mutable_gsm_cell_info()
+                                          ->mutable_gsm_signal_strength_info()
+                                          ->gsm_bit_error_rate();
+                int gsmRssi = event.mutable_cell_info_list(i)
+                                  ->mutable_gsm_cell_info()
+                                  ->mutable_gsm_signal_strength_info()
+                                  ->gsm_rssi();
+                GsmSignalStrengthInfo gsmCellSS(
+                    gsmSignalStrength, gsmBitErrorRate, INVALID_SIGNAL_STRENGTH_VALUE, gsmRssi);
                 GsmCellIdentity gsmCI(gsmMcc, gsmMnc, gsmLac, gsmCid, gsmArfcn, gsmBsic);
                 auto gsmCellInfo = std::make_shared<GsmCellInfo>(registered, gsmCI, gsmCellSS);
                 cellInfoList.emplace_back(gsmCellInfo);
                 break;
             }
             case CellType::WCDMA: {
-                string wcdmaMcc = event.mutable_cell_info_list(i)->mutable_wcdma_cell_info()->
-                    mutable_wcdma_cell_identity()->mcc();
-                string wcdmaMnc = event.mutable_cell_info_list(i)->mutable_wcdma_cell_info()->
-                    mutable_wcdma_cell_identity()->mnc();
-                int wcdmaLac = event.mutable_cell_info_list(i)->mutable_wcdma_cell_info()->
-                    mutable_wcdma_cell_identity()->lac();
-                int wcdmaCid = event.mutable_cell_info_list(i)->mutable_wcdma_cell_info()->
-                    mutable_wcdma_cell_identity()->cid();
-                int wcdmaArfcn = event.mutable_cell_info_list(i)->mutable_wcdma_cell_info()->
-                    mutable_wcdma_cell_identity()->uarfcn();
-                int wcdmaPsc = event.mutable_cell_info_list(i)->mutable_wcdma_cell_info()->
-                    mutable_wcdma_cell_identity()->psc();
-                int wcdmaSignalStrength = event.mutable_cell_info_list(i)->
-                    mutable_wcdma_cell_info()-> mutable_wcdma_signal_strength_info()->
-                    signal_strength();
-                int wcdmaBitErrorRate = event.mutable_cell_info_list(i)->
-                    mutable_wcdma_cell_info()->mutable_wcdma_signal_strength_info()->
-                    bit_error_rate();
-                int wcdmaEcio = event.mutable_cell_info_list(i)->
-                    mutable_wcdma_cell_info()->mutable_wcdma_signal_strength_info()->
-                    ecio();
-                int wcdmaRscp = event.mutable_cell_info_list(i)->
-                    mutable_wcdma_cell_info()->mutable_wcdma_signal_strength_info()->
-                    rscp();
-                int wcdmaRssi = event.mutable_cell_info_list(i)->
-                    mutable_wcdma_cell_info()->mutable_wcdma_signal_strength_info()->
-                    rssi();
-                WcdmaSignalStrengthInfo wcdmaCellSS(wcdmaSignalStrength, wcdmaBitErrorRate,
-                    wcdmaEcio, wcdmaRscp, wcdmaRssi);
-                WcdmaCellIdentity wcdmaCI(wcdmaMcc, wcdmaMnc, wcdmaLac, wcdmaCid, wcdmaPsc,
-                    wcdmaArfcn);
-                auto wcdmaCellInfo = std::make_shared<telux::tel::WcdmaCellInfo>
-                    (registered, wcdmaCI, wcdmaCellSS);
+                string wcdmaMcc = event.mutable_cell_info_list(i)
+                                      ->mutable_wcdma_cell_info()
+                                      ->mutable_wcdma_cell_identity()
+                                      ->mcc();
+                string wcdmaMnc = event.mutable_cell_info_list(i)
+                                      ->mutable_wcdma_cell_info()
+                                      ->mutable_wcdma_cell_identity()
+                                      ->mnc();
+                int wcdmaLac = event.mutable_cell_info_list(i)
+                                   ->mutable_wcdma_cell_info()
+                                   ->mutable_wcdma_cell_identity()
+                                   ->lac();
+                int wcdmaCid = event.mutable_cell_info_list(i)
+                                   ->mutable_wcdma_cell_info()
+                                   ->mutable_wcdma_cell_identity()
+                                   ->cid();
+                int wcdmaArfcn = event.mutable_cell_info_list(i)
+                                     ->mutable_wcdma_cell_info()
+                                     ->mutable_wcdma_cell_identity()
+                                     ->uarfcn();
+                int wcdmaPsc = event.mutable_cell_info_list(i)
+                                   ->mutable_wcdma_cell_info()
+                                   ->mutable_wcdma_cell_identity()
+                                   ->psc();
+                int wcdmaSignalStrength = event.mutable_cell_info_list(i)
+                                              ->mutable_wcdma_cell_info()
+                                              ->mutable_wcdma_signal_strength_info()
+                                              ->signal_strength();
+                int wcdmaBitErrorRate = event.mutable_cell_info_list(i)
+                                            ->mutable_wcdma_cell_info()
+                                            ->mutable_wcdma_signal_strength_info()
+                                            ->bit_error_rate();
+                int wcdmaEcio = event.mutable_cell_info_list(i)
+                                    ->mutable_wcdma_cell_info()
+                                    ->mutable_wcdma_signal_strength_info()
+                                    ->ecio();
+                int wcdmaRscp = event.mutable_cell_info_list(i)
+                                    ->mutable_wcdma_cell_info()
+                                    ->mutable_wcdma_signal_strength_info()
+                                    ->rscp();
+                int wcdmaRssi = event.mutable_cell_info_list(i)
+                                    ->mutable_wcdma_cell_info()
+                                    ->mutable_wcdma_signal_strength_info()
+                                    ->rssi();
+                WcdmaSignalStrengthInfo wcdmaCellSS(
+                    wcdmaSignalStrength, wcdmaBitErrorRate, wcdmaEcio, wcdmaRscp, wcdmaRssi);
+                WcdmaCellIdentity wcdmaCI(
+                    wcdmaMcc, wcdmaMnc, wcdmaLac, wcdmaCid, wcdmaPsc, wcdmaArfcn);
+                auto wcdmaCellInfo
+                    = std::make_shared<telux::tel::WcdmaCellInfo>(registered, wcdmaCI, wcdmaCellSS);
                 cellInfoList.emplace_back(wcdmaCellInfo);
                 break;
             }
             case CellType::LTE: {
-                string lteMcc = event.mutable_cell_info_list(i)->mutable_lte_cell_info()->
-                    mutable_lte_cell_identity()->mcc();
-                string lteMnc = event.mutable_cell_info_list(i)->mutable_lte_cell_info()->
-                    mutable_lte_cell_identity()->mnc();
-                int lteTac = event.mutable_cell_info_list(i)->mutable_lte_cell_info()->
-                    mutable_lte_cell_identity()->tac();
-                int lteCi = event.mutable_cell_info_list(i)->mutable_lte_cell_info()->
-                    mutable_lte_cell_identity()->ci();
-                int lteEarfcn = event.mutable_cell_info_list(i)->mutable_lte_cell_info()->
-                    mutable_lte_cell_identity()->earfcn();
-                int ltePci = event.mutable_cell_info_list(i)->mutable_lte_cell_info()->
-                    mutable_lte_cell_identity()->pci();
-                int lteSignalStrength = event.mutable_cell_info_list(i)->mutable_lte_cell_info()->
-                    mutable_lte_signal_strength_info()->lte_signal_strength();
-                int lteRsrp = event.mutable_cell_info_list(i)->mutable_lte_cell_info()->
-                    mutable_lte_signal_strength_info()->lte_rsrp();
-                int lteRsrq = event.mutable_cell_info_list(i)->mutable_lte_cell_info()->
-                    mutable_lte_signal_strength_info()->lte_rsrq();
-                int lteRssnr = event.mutable_cell_info_list(i)->mutable_lte_cell_info()->
-                    mutable_lte_signal_strength_info()->lte_rssnr();
-                int lteCqi = event.mutable_cell_info_list(i)->mutable_lte_cell_info()->
-                    mutable_lte_signal_strength_info()->lte_cqi();
-                int lteTimingAdvance = event.mutable_cell_info_list(i)->mutable_lte_cell_info()->
-                    mutable_lte_signal_strength_info()->timing_advance();
-                int lteRssi = event.mutable_cell_info_list(i)->mutable_lte_cell_info()->
-                    mutable_lte_signal_strength_info()->lte_rssi();
+                string lteMcc = event.mutable_cell_info_list(i)
+                                    ->mutable_lte_cell_info()
+                                    ->mutable_lte_cell_identity()
+                                    ->mcc();
+                string lteMnc = event.mutable_cell_info_list(i)
+                                    ->mutable_lte_cell_info()
+                                    ->mutable_lte_cell_identity()
+                                    ->mnc();
+                int lteTac = event.mutable_cell_info_list(i)
+                                 ->mutable_lte_cell_info()
+                                 ->mutable_lte_cell_identity()
+                                 ->tac();
+                int lteCi = event.mutable_cell_info_list(i)
+                                ->mutable_lte_cell_info()
+                                ->mutable_lte_cell_identity()
+                                ->ci();
+                int lteEarfcn = event.mutable_cell_info_list(i)
+                                    ->mutable_lte_cell_info()
+                                    ->mutable_lte_cell_identity()
+                                    ->earfcn();
+                int ltePci = event.mutable_cell_info_list(i)
+                                 ->mutable_lte_cell_info()
+                                 ->mutable_lte_cell_identity()
+                                 ->pci();
+                int lteSignalStrength = event.mutable_cell_info_list(i)
+                                            ->mutable_lte_cell_info()
+                                            ->mutable_lte_signal_strength_info()
+                                            ->lte_signal_strength();
+                int lteRsrp = event.mutable_cell_info_list(i)
+                                  ->mutable_lte_cell_info()
+                                  ->mutable_lte_signal_strength_info()
+                                  ->lte_rsrp();
+                int lteRsrq = event.mutable_cell_info_list(i)
+                                  ->mutable_lte_cell_info()
+                                  ->mutable_lte_signal_strength_info()
+                                  ->lte_rsrq();
+                int lteRssnr = event.mutable_cell_info_list(i)
+                                   ->mutable_lte_cell_info()
+                                   ->mutable_lte_signal_strength_info()
+                                   ->lte_rssnr();
+                int lteCqi = event.mutable_cell_info_list(i)
+                                 ->mutable_lte_cell_info()
+                                 ->mutable_lte_signal_strength_info()
+                                 ->lte_cqi();
+                int lteTimingAdvance = event.mutable_cell_info_list(i)
+                                           ->mutable_lte_cell_info()
+                                           ->mutable_lte_signal_strength_info()
+                                           ->timing_advance();
+                int lteRssi = event.mutable_cell_info_list(i)
+                                  ->mutable_lte_cell_info()
+                                  ->mutable_lte_signal_strength_info()
+                                  ->lte_rssi();
                 LteSignalStrengthInfo lteCellSS(lteSignalStrength, lteRsrp, lteRsrq, lteRssnr,
-                     lteCqi, lteTimingAdvance, lteRssi);
+                    lteCqi, lteTimingAdvance, lteRssi);
                 LteCellIdentity lteCI(lteMcc, lteMnc, lteCi, ltePci, lteTac, lteEarfcn);
                 auto lteCellInfo = std::make_shared<LteCellInfo>(registered, lteCI, lteCellSS);
                 cellInfoList.emplace_back(lteCellInfo);
                 break;
             }
             case CellType::NR5G: {
-                string nr5gMcc = event.mutable_cell_info_list(i)->mutable_nr5g_cell_info()->
-                    mutable_nr5g_cell_identity()->mcc();
-                string nr5gMnc = event.mutable_cell_info_list(i)->mutable_nr5g_cell_info()->
-                    mutable_nr5g_cell_identity()->mnc();
-                int nr5gTac = event.mutable_cell_info_list(i)->mutable_nr5g_cell_info()->
-                    mutable_nr5g_cell_identity()->tac();
-                int nr5gCi = event.mutable_cell_info_list(i)->mutable_nr5g_cell_info()->
-                    mutable_nr5g_cell_identity()->ci();
-                int nr5gArfcn = event.mutable_cell_info_list(i)->mutable_nr5g_cell_info()->
-                    mutable_nr5g_cell_identity()->arfcn();
-                int nr5gPci = event.mutable_cell_info_list(i)->mutable_nr5g_cell_info()->
-                    mutable_nr5g_cell_identity()->pci();
-                int nr5gRsrp = event.mutable_cell_info_list(i)->mutable_nr5g_cell_info()->
-                    mutable_nr5g_signal_strength_info()->rsrp();
-                int nr5gRsrq = event.mutable_cell_info_list(i)->mutable_nr5g_cell_info()->
-                    mutable_nr5g_signal_strength_info()->rsrq();
-                int nr5gRssnr = event.mutable_cell_info_list(i)->mutable_nr5g_cell_info()->
-                    mutable_nr5g_signal_strength_info()->rssnr();
+                string nr5gMcc = event.mutable_cell_info_list(i)
+                                     ->mutable_nr5g_cell_info()
+                                     ->mutable_nr5g_cell_identity()
+                                     ->mcc();
+                string nr5gMnc = event.mutable_cell_info_list(i)
+                                     ->mutable_nr5g_cell_info()
+                                     ->mutable_nr5g_cell_identity()
+                                     ->mnc();
+                int nr5gTac = event.mutable_cell_info_list(i)
+                                  ->mutable_nr5g_cell_info()
+                                  ->mutable_nr5g_cell_identity()
+                                  ->tac();
+                int nr5gCi = event.mutable_cell_info_list(i)
+                                 ->mutable_nr5g_cell_info()
+                                 ->mutable_nr5g_cell_identity()
+                                 ->ci();
+                int nr5gArfcn = event.mutable_cell_info_list(i)
+                                    ->mutable_nr5g_cell_info()
+                                    ->mutable_nr5g_cell_identity()
+                                    ->arfcn();
+                int nr5gPci = event.mutable_cell_info_list(i)
+                                  ->mutable_nr5g_cell_info()
+                                  ->mutable_nr5g_cell_identity()
+                                  ->pci();
+                int nr5gRsrp = event.mutable_cell_info_list(i)
+                                   ->mutable_nr5g_cell_info()
+                                   ->mutable_nr5g_signal_strength_info()
+                                   ->rsrp();
+                int nr5gRsrq = event.mutable_cell_info_list(i)
+                                   ->mutable_nr5g_cell_info()
+                                   ->mutable_nr5g_signal_strength_info()
+                                   ->rsrq();
+                int nr5gRssnr = event.mutable_cell_info_list(i)
+                                    ->mutable_nr5g_cell_info()
+                                    ->mutable_nr5g_signal_strength_info()
+                                    ->rssnr();
                 Nr5gSignalStrengthInfo nr5gCellSS(nr5gRsrp, nr5gRsrq, nr5gRssnr);
                 Nr5gCellIdentity nr5gCI(nr5gMcc, nr5gMnc, nr5gCi, nr5gPci, nr5gTac, nr5gArfcn);
-                auto nr5gCellInfo = std::make_shared<Nr5gCellInfo>(registered, nr5gCI,
-                    nr5gCellSS);
+                auto nr5gCellInfo = std::make_shared<Nr5gCellInfo>(registered, nr5gCI, nr5gCellSS);
                 cellInfoList.emplace_back(nr5gCellInfo);
                 break;
             }
             case CellType::NB1_NTN: {
-                string nb1NtnMcc = event.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
-                    mutable_nb1_ntn_cell_identity()->mcc();
-                string nb1NtnMnc = event.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
-                    mutable_nb1_ntn_cell_identity()->mnc();
-                int nb1NtnTac = event.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
-                    mutable_nb1_ntn_cell_identity()->tac();
-                int nb1NtnCi = event.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
-                    mutable_nb1_ntn_cell_identity()->ci();
-                int nb1NtnEarfcn = event.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
-                    mutable_nb1_ntn_cell_identity()->earfcn();
-                int nb1NtnSignalStrength = event.mutable_cell_info_list(i)->
-                    mutable_nb1_ntn_cell_info()->mutable_nb1_ntn_signal_strength_info()->
-                        signal_strength();
-                int nb1NtnRsrp = event.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
-                    mutable_nb1_ntn_signal_strength_info()->rsrp();
-                int nb1NtnRsrq = event.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
-                    mutable_nb1_ntn_signal_strength_info()->rsrq();
-                int nb1NtnRssnr = event.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
-                    mutable_nb1_ntn_signal_strength_info()->rssnr();
-                int nb1NtnRssi = event.mutable_cell_info_list(i)->mutable_nb1_ntn_cell_info()->
-                    mutable_nb1_ntn_signal_strength_info()->rssi();
-                Nb1NtnSignalStrengthInfo nb1NtnCellSS(nb1NtnSignalStrength, nb1NtnRsrp, nb1NtnRsrq,
-                     nb1NtnRssnr, nb1NtnRssi);
-                Nb1NtnCellIdentity nb1NtnCI(nb1NtnMcc, nb1NtnMnc, nb1NtnCi, nb1NtnTac,
-                     nb1NtnEarfcn);
-                auto nb1NtnCellInfo = std::make_shared<Nb1NtnCellInfo>(registered, nb1NtnCI,
-                    nb1NtnCellSS);
+                string nb1NtnMcc = event.mutable_cell_info_list(i)
+                                       ->mutable_nb1_ntn_cell_info()
+                                       ->mutable_nb1_ntn_cell_identity()
+                                       ->mcc();
+                string nb1NtnMnc = event.mutable_cell_info_list(i)
+                                       ->mutable_nb1_ntn_cell_info()
+                                       ->mutable_nb1_ntn_cell_identity()
+                                       ->mnc();
+                int nb1NtnTac = event.mutable_cell_info_list(i)
+                                    ->mutable_nb1_ntn_cell_info()
+                                    ->mutable_nb1_ntn_cell_identity()
+                                    ->tac();
+                int nb1NtnCi = event.mutable_cell_info_list(i)
+                                   ->mutable_nb1_ntn_cell_info()
+                                   ->mutable_nb1_ntn_cell_identity()
+                                   ->ci();
+                int nb1NtnEarfcn = event.mutable_cell_info_list(i)
+                                       ->mutable_nb1_ntn_cell_info()
+                                       ->mutable_nb1_ntn_cell_identity()
+                                       ->earfcn();
+                int nb1NtnSignalStrength = event.mutable_cell_info_list(i)
+                                               ->mutable_nb1_ntn_cell_info()
+                                               ->mutable_nb1_ntn_signal_strength_info()
+                                               ->signal_strength();
+                int nb1NtnRsrp = event.mutable_cell_info_list(i)
+                                     ->mutable_nb1_ntn_cell_info()
+                                     ->mutable_nb1_ntn_signal_strength_info()
+                                     ->rsrp();
+                int nb1NtnRsrq = event.mutable_cell_info_list(i)
+                                     ->mutable_nb1_ntn_cell_info()
+                                     ->mutable_nb1_ntn_signal_strength_info()
+                                     ->rsrq();
+                int nb1NtnRssnr = event.mutable_cell_info_list(i)
+                                      ->mutable_nb1_ntn_cell_info()
+                                      ->mutable_nb1_ntn_signal_strength_info()
+                                      ->rssnr();
+                int nb1NtnRssi = event.mutable_cell_info_list(i)
+                                     ->mutable_nb1_ntn_cell_info()
+                                     ->mutable_nb1_ntn_signal_strength_info()
+                                     ->rssi();
+                Nb1NtnSignalStrengthInfo nb1NtnCellSS(
+                    nb1NtnSignalStrength, nb1NtnRsrp, nb1NtnRsrq, nb1NtnRssnr, nb1NtnRssi);
+                Nb1NtnCellIdentity nb1NtnCI(
+                    nb1NtnMcc, nb1NtnMnc, nb1NtnCi, nb1NtnTac, nb1NtnEarfcn);
+                auto nb1NtnCellInfo
+                    = std::make_shared<Nb1NtnCellInfo>(registered, nb1NtnCI, nb1NtnCellSS);
                 cellInfoList.emplace_back(nb1NtnCellInfo);
                 break;
             }
@@ -909,17 +989,14 @@ void PhoneManagerStub::handleCellInfoListChanged(::telStub::CellInfoListEvent ev
 
 void PhoneManagerStub::handleVoiceServiceStateChanged(::telStub::VoiceServiceStateEvent event) {
     LOG(DEBUG, __FUNCTION__);
-    int phoneId = event.phone_id();
+    int phoneId                                  = event.phone_id();
     std::shared_ptr<VoiceServiceInfo> vocSrvInfo = nullptr;
-    VoiceServiceState voiceServiceState =
-        static_cast<telux::tel::VoiceServiceState>(
-            event.voice_service_state_info().voice_service_state());
-    VoiceServiceDenialCause denialCause =
-        static_cast<telux::tel::VoiceServiceDenialCause>(
-            event.voice_service_state_info().voice_service_denial_cause());
-    RadioTechnology radioTech =
-        static_cast<telux::tel::RadioTechnology>(
-            event.voice_service_state_info().radio_technology());
+    VoiceServiceState voiceServiceState          = static_cast<telux::tel::VoiceServiceState>(
+        event.voice_service_state_info().voice_service_state());
+    VoiceServiceDenialCause denialCause = static_cast<telux::tel::VoiceServiceDenialCause>(
+        event.voice_service_state_info().voice_service_denial_cause());
+    RadioTechnology radioTech = static_cast<telux::tel::RadioTechnology>(
+        event.voice_service_state_info().radio_technology());
     vocSrvInfo = std::make_shared<VoiceServiceInfo>(voiceServiceState, denialCause, radioTech);
     std::vector<std::weak_ptr<IPhoneListener>> applisteners;
     if (listenerMgr_) {
@@ -937,8 +1014,8 @@ void PhoneManagerStub::handleVoiceServiceStateChanged(::telStub::VoiceServiceSta
 
 void PhoneManagerStub::handleOperatingModeChanged(::telStub::OperatingModeEvent event) {
     LOG(DEBUG, __FUNCTION__);
-    telux::tel::OperatingMode opMode =
-        static_cast<telux::tel::OperatingMode>(event.operating_mode());
+    telux::tel::OperatingMode opMode
+        = static_cast<telux::tel::OperatingMode>(event.operating_mode());
     updateRadioState(opMode);
     std::vector<std::weak_ptr<IPhoneListener>> applisteners;
     if (listenerMgr_) {
@@ -956,12 +1033,12 @@ void PhoneManagerStub::handleOperatingModeChanged(::telStub::OperatingModeEvent 
 
 void PhoneManagerStub::handleECallOperatingModeChanged(::telStub::ECallModeInfoChangeEvent event) {
     LOG(DEBUG, __FUNCTION__);
-    int phoneId = event.phone_id();
+    int phoneId                     = event.phone_id();
     telux::tel::ECallMode ecallMode = static_cast<telux::tel::ECallMode>(event.ecall_mode());
-    telux::tel::ECallModeReason ecallModeReason =
-         static_cast<telux::tel::ECallModeReason>(event.ecall_mode_reason());
+    telux::tel::ECallModeReason ecallModeReason
+        = static_cast<telux::tel::ECallModeReason>(event.ecall_mode_reason());
     telux::tel::ECallModeInfo info;
-    info.mode = ecallMode;
+    info.mode   = ecallMode;
     info.reason = ecallModeReason;
     std::vector<std::weak_ptr<IPhoneListener>> applisteners;
     if (listenerMgr_) {
@@ -979,12 +1056,12 @@ void PhoneManagerStub::handleECallOperatingModeChanged(::telStub::ECallModeInfoC
 
 void PhoneManagerStub::handleOperatorInfoChanged(::telStub::OperatorInfoEvent event) {
     LOG(DEBUG, __FUNCTION__);
-    int phoneId = event.phone_id();
+    int phoneId                     = event.phone_id();
     telux::common::BoolValue isHome = BoolValue::STATE_FALSE;
     telux::tel::PlmnInfo plmnInfo;
-    plmnInfo.longName = event.mutable_plmn_info()->long_name();
+    plmnInfo.longName  = event.mutable_plmn_info()->long_name();
     plmnInfo.shortName = event.mutable_plmn_info()->short_name();
-    plmnInfo.plmn = event.mutable_plmn_info()->plmn();
+    plmnInfo.plmn      = event.mutable_plmn_info()->plmn();
 
     if (event.mutable_plmn_info()->ishome()) {
         isHome = BoolValue::STATE_TRUE;
@@ -1006,24 +1083,24 @@ void PhoneManagerStub::handleOperatorInfoChanged(::telStub::OperatorInfoEvent ev
 }
 
 void PhoneManagerStub::updateRadioState(OperatingMode optMode) {
-   LOG(DEBUG, __FUNCTION__, " optMode: ", static_cast<int>(optMode));
-   for (auto &it : phoneMap_) {
-       auto phone = it.second;
-       switch(optMode) {
-           case OperatingMode::ONLINE:
-               phone->updateRadioState(RadioState::RADIO_STATE_ON);
-               break;
-           case OperatingMode::AIRPLANE:
-           case OperatingMode::RESETTING:
-           case OperatingMode::SHUTTING_DOWN:
-           case OperatingMode::PERSISTENT_LOW_POWER:
-           case OperatingMode::OFFLINE:
-               phone->updateRadioState(RadioState::RADIO_STATE_OFF);
-               break;
-           case OperatingMode::FACTORY_TEST:
-           default:
-               phone->updateRadioState(RadioState::RADIO_STATE_UNAVAILABLE);
-               break;
-       }
-   }
+    LOG(DEBUG, __FUNCTION__, " optMode: ", static_cast<int>(optMode));
+    for (auto &it : phoneMap_) {
+        auto phone = it.second;
+        switch (optMode) {
+            case OperatingMode::ONLINE:
+                phone->updateRadioState(RadioState::RADIO_STATE_ON);
+                break;
+            case OperatingMode::AIRPLANE:
+            case OperatingMode::RESETTING:
+            case OperatingMode::SHUTTING_DOWN:
+            case OperatingMode::PERSISTENT_LOW_POWER:
+            case OperatingMode::OFFLINE:
+                phone->updateRadioState(RadioState::RADIO_STATE_OFF);
+                break;
+            case OperatingMode::FACTORY_TEST:
+            default:
+                phone->updateRadioState(RadioState::RADIO_STATE_UNAVAILABLE);
+                break;
+        }
+    }
 }

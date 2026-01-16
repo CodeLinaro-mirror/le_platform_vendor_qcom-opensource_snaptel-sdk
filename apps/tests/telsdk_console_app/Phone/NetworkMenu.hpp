@@ -26,9 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -47,34 +48,34 @@
 #define PRINT_NOTIFICATION std::cout << std::endl << "\033[1;35mNOTIFICATION: \033[0m" << std::endl
 
 class NetworkMenu : public ConsoleApp {
-public:
-   /**
-    * Initialize commands and SDK
-    */
-   bool init();
+ public:
+    /**
+     * Initialize commands and SDK
+     */
+    bool init();
 
-   NetworkMenu(std::string appName, std::string cursor);
+    NetworkMenu(std::string appName, std::string cursor);
 
-   ~NetworkMenu();
+    ~NetworkMenu();
 
-   void getNetworkSelectionMode(std::vector<std::string> userInput);
-   void setNetworkSelectionMode(std::vector<std::string> userInput);
-   void getPreferredNetworks(std::vector<std::string> userInput);
-   void setPreferredNetworks(std::vector<std::string> userInput);
-   void performNetworkScan(std::vector<std::string> userInput);
-   void selectSimSlot(std::vector<std::string> userInput);
-   void setLteDubiousCell(std::vector<std::string> userInput);
-   void setNrDubiousCell(std::vector<std::string> userInput);
-   void removeAllLteDubiousCell(std::vector<std::string> userInput);
-   void removeAllNrDubiousCell(std::vector<std::string> userInput);
+    void getNetworkSelectionMode(std::vector<std::string> userInput);
+    void setNetworkSelectionMode(std::vector<std::string> userInput);
+    void getPreferredNetworks(std::vector<std::string> userInput);
+    void setPreferredNetworks(std::vector<std::string> userInput);
+    void performNetworkScan(std::vector<std::string> userInput);
+    void selectSimSlot(std::vector<std::string> userInput);
+    void setLteDubiousCell(std::vector<std::string> userInput);
+    void setNrDubiousCell(std::vector<std::string> userInput);
+    void removeAllLteDubiousCell(std::vector<std::string> userInput);
+    void removeAllNrDubiousCell(std::vector<std::string> userInput);
 
-private:
-   // Member variable to keep the Listener object alive till application ends.
-   std::shared_ptr<telux::tel::INetworkSelectionListener> networkListener_;
-   int slot_ = DEFAULT_SLOT_ID;
-   std::vector<std::shared_ptr<telux::tel::INetworkSelectionManager>> networkManagers_;
-   int convertToRatType(int input);
-   telux::tel::PreferredNetworkInfo getNetworkInfoFromUser();
+ private:
+    // Member variable to keep the Listener object alive till application ends.
+    std::shared_ptr<telux::tel::INetworkSelectionListener> networkListener_;
+    int slot_ = DEFAULT_SLOT_ID;
+    std::vector<std::shared_ptr<telux::tel::INetworkSelectionManager>> networkManagers_;
+    int convertToRatType(int input);
+    telux::tel::PreferredNetworkInfo getNetworkInfoFromUser();
 };
 
 #endif  // NETWORKMENU_HPP

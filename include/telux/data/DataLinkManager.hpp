@@ -1,4 +1,4 @@
-/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+/*
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -9,10 +9,8 @@
  * @brief      Data Link Manager class provides the interface to data communication links.
  */
 
-
 #ifndef TELUX_DATA_DATALINKMANAGER_HPP
 #define TELUX_DATA_DATALINKMANAGER_HPP
-
 
 #include <memory>
 #include <telux/data/DataDefines.hpp>
@@ -30,26 +28,26 @@ class IDataLinkListener;
  * Specifies the media-independent interface (MII) variant and data rate.
  */
 enum EthModeType {
-   /** Unknown */
-   ETHMODE_UNKNOWN = 0,
-   /** USXGMII 10G data rate */
-   ETHMODE_USXGMII_10G = (1 << 0),
-   /** USXGMII 5G data rate */
-   ETHMODE_USXGMII_5G = (1 << 1),
-   /** USXGMII 2.5G data rate */
-   ETHMODE_USXGMII_2_5G = (1 << 2),
-   /** USXGMII 1G data rate */
-   ETHMODE_USXGMII_1G = (1 << 3),
-   /** USXGMII 100M data rate */
-   ETHMODE_USXGMII_100M = (1 << 4),
-   /** USXGMII 10M data rate */
-   ETHMODE_USXGMII_10M = (1 << 5),
-   /** SGMII 2.5G data rate */
-   ETHMODE_SGMII_2_5G = (1 << 6),
-   /** SGMII 1G data rate */
-   ETHMODE_SGMII_1G = (1 << 7),
-   /** SGMII 100M data rate */
-   ETHMODE_SGMII_100M = (1 << 8),
+    /** Unknown */
+    ETHMODE_UNKNOWN = 0,
+    /** USXGMII 10G data rate */
+    ETHMODE_USXGMII_10G = (1 << 0),
+    /** USXGMII 5G data rate */
+    ETHMODE_USXGMII_5G = (1 << 1),
+    /** USXGMII 2.5G data rate */
+    ETHMODE_USXGMII_2_5G = (1 << 2),
+    /** USXGMII 1G data rate */
+    ETHMODE_USXGMII_1G = (1 << 3),
+    /** USXGMII 100M data rate */
+    ETHMODE_USXGMII_100M = (1 << 4),
+    /** USXGMII 10M data rate */
+    ETHMODE_USXGMII_10M = (1 << 5),
+    /** SGMII 2.5G data rate */
+    ETHMODE_SGMII_2_5G = (1 << 6),
+    /** SGMII 1G data rate */
+    ETHMODE_SGMII_1G = (1 << 7),
+    /** SGMII 100M data rate */
+    ETHMODE_SGMII_100M = (1 << 8),
 };
 
 /**
@@ -62,19 +60,18 @@ using EthModes = uint32_t;
  * Link mode update request status.
  */
 enum class LinkModeChangeStatus {
-    UNKNOWN         = 0,        /**< Unknown status */
-    ACCEPTED        = 1,        /**< Request accepted */
-    COMPLETED       = 2,        /**< Successfully completed */
-    FAILED          = 3,        /**< Request failed */
-    REJECTED        = 4,        /**< Request rejected */
-    TIMEOUT         = 5         /**< Timed-out */
+    UNKNOWN   = 0, /**< Unknown status */
+    ACCEPTED  = 1, /**< Request accepted */
+    COMPLETED = 2, /**< Successfully completed */
+    FAILED    = 3, /**< Request failed */
+    REJECTED  = 4, /**< Request rejected */
+    TIMEOUT   = 5 /**< Timed-out */
 };
 
 /** Provides Ethernet link capability */
 struct EthCapability {
-    EthModes ethModes;       /**< Bitmask containing EthModeType bits */
+    EthModes ethModes; /**< Bitmask containing EthModeType bits */
 };
-
 
 /**
  * @brief The Data Link Manager class provides APIs related to data communication links,
@@ -105,7 +102,7 @@ struct EthCapability {
  * For hypervisor-based platforms, IDataLinkManager is supported only in the primary/host VM.
  */
 class IDataLinkManager {
-public:
+ public:
     /**
      * Checks the status of Data Link manager object and returns the result.
      *
@@ -164,7 +161,8 @@ public:
      * @return Status of setLocalEthOperatingMode, i.e., success or applicable status code
      */
     virtual telux::common::Status setLocalEthOperatingMode(
-        EthModeType ethModeType, telux::common::ResponseCallback callback = nullptr) = 0;
+        EthModeType ethModeType, telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Allows the client to provide the acknowledgement status from the remote end to the NAD that
@@ -269,7 +267,8 @@ class IDataLinkListener : public telux::common::ISDKListener {
      *
      * @param [in] status - @ref ServiceStatus
      */
-    virtual void onServiceStatusChange(telux::common::ServiceStatus status) {}
+    virtual void onServiceStatusChange(telux::common::ServiceStatus status) {
+    }
 
     /**
      * Requests a change in ethernet speed and operating mode (MII variant).
@@ -292,7 +291,8 @@ class IDataLinkListener : public telux::common::ISDKListener {
      * @param [in] ethModeType          Provides the suggested ethernet speed and operating mode
      *                                  (MII variant)
      */
-    virtual void onEthModeChangeRequest(EthModeType ethModeType) {}
+    virtual void onEthModeChangeRequest(EthModeType ethModeType) {
+    }
 
     /**
      * Informs about ethernet speed and operating mode (MII variant) status changes.
@@ -310,8 +310,9 @@ class IDataLinkListener : public telux::common::ISDKListener {
      *                                  (MII variant)
      * @param [in] status               Current status of ETH mode change request
      */
-    virtual void onEthModeChangeTransactionStatus(EthModeType ethModeType,
-        LinkModeChangeStatus status) {}
+    virtual void onEthModeChangeTransactionStatus(
+        EthModeType ethModeType, LinkModeChangeStatus status) {
+    }
 
     /**
      * Notifies clients about ethernet data link state changes.
@@ -321,7 +322,8 @@ class IDataLinkListener : public telux::common::ISDKListener {
      *
      * @param [in] ethLinkState          current ethernet link state
      */
-    virtual void onEthDataLinkStateChange(LinkState ethLinkState) {}
+    virtual void onEthDataLinkStateChange(LinkState ethLinkState) {
+    }
 
     /**
      * Destructor for IDataLinkListener
@@ -330,7 +332,7 @@ class IDataLinkListener : public telux::common::ISDKListener {
 };
 
 /** @} */ /* end_addtogroup telematics_data */
-}
-}
+}  // namespace data
+}  // namespace telux
 
-#endif  //TELUX_DATA_DATALINKMANAGER_HPP
+#endif  // TELUX_DATA_DATALINKMANAGER_HPP

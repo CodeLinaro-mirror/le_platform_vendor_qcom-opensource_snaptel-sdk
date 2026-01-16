@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -120,12 +120,14 @@ class IWakeupListener : public telux::common::IServiceStatusListener {
      *
      * @param[in] wakeupInfo details of the activity that caused the wake up
      */
-    virtual void onWakeup(WakeupInfo wakeupInfo) { }
+    virtual void onWakeup(WakeupInfo wakeupInfo) {
+    }
 
     /**
      * Destructor for IWakeUpListener.
      */
-    virtual ~IWakeupListener() { }
+    virtual ~IWakeupListener() {
+    }
 };
 
 /**
@@ -133,50 +135,49 @@ class IWakeupListener : public telux::common::IServiceStatusListener {
  */
 class IWakeupManager {
  public:
-   /**
-    * Registers the given listener to receive activity details upon system wake up via
-    * @ref IWakeupListener::onWakeup().
-    *
-    * @param[in] listener Receives notifications
-    *
-    * @returns @ref telux::common::ErrorCode::SUCCESS if the listener is registered,
-    *          otherwise, an appropriate error code
-    *
-    * @note Eval: This is a new API and is being evaluated. It is subject
-    *             to change and could break backwards compatibility.
-    */
-   virtual telux::common::ErrorCode registerListener(
-        std::weak_ptr<IWakeupListener> listener) = 0;
+    /**
+     * Registers the given listener to receive activity details upon system wake up via
+     * @ref IWakeupListener::onWakeup().
+     *
+     * @param[in] listener Receives notifications
+     *
+     * @returns @ref telux::common::ErrorCode::SUCCESS if the listener is registered,
+     *          otherwise, an appropriate error code
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject
+     *             to change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode registerListener(std::weak_ptr<IWakeupListener> listener) = 0;
 
-   /**
-    * Deregisters the given listener registered previously with @ref registerListener().
-    *
-    * @param[in] listener Listener to deregister
-    *
-    * @returns @ref telux::common::ErrorCode::SUCCESS if the listener is deregistered,
-    *          otherwise, an appropriate error code
-    *
-    * @note Eval: This is a new API and is being evaluated. It is subject
-    *             to change and could break backwards compatibility.
-    */
-   virtual telux::common::ErrorCode deRegisterListener(
-        std::weak_ptr<IWakeupListener> listener) = 0;
+    /**
+     * Deregisters the given listener registered previously with @ref registerListener().
+     *
+     * @param[in] listener Listener to deregister
+     *
+     * @returns @ref telux::common::ErrorCode::SUCCESS if the listener is deregistered,
+     *          otherwise, an appropriate error code
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject
+     *             to change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode deRegisterListener(std::weak_ptr<IWakeupListener> listener)
+        = 0;
 
-   /**
-    * Gets the wakeup manager's service status.
-    *
-    * @returns @ref telux::common::ServiceStatus::SERVICE_AVAILABLE if the service is ready
-    *          for use, @ref telux::common::ServiceStatus::SERVICE_UNAVAILABLE if the service
-    *          is temporarily unavailable (possibly undergoing initialization),
-    *          @ref telux::common::ServiceStatus::SERVICE_FAILED if the service needs
-    *          re-initialization
-    */
-   virtual telux::common::ServiceStatus getServiceStatus() = 0;
+    /**
+     * Gets the wakeup manager's service status.
+     *
+     * @returns @ref telux::common::ServiceStatus::SERVICE_AVAILABLE if the service is ready
+     *          for use, @ref telux::common::ServiceStatus::SERVICE_UNAVAILABLE if the service
+     *          is temporarily unavailable (possibly undergoing initialization),
+     *          @ref telux::common::ServiceStatus::SERVICE_FAILED if the service needs
+     *          re-initialization
+     */
+    virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
-   /**
-    * Performs cleanup and destroys the IWakeUpManager instance.
-    */
-   virtual ~IWakeupManager() {};
+    /**
+     * Performs cleanup and destroys the IWakeUpManager instance.
+     */
+    virtual ~IWakeupManager(){};
 };
 
 /** @} */ /* end_addtogroup telematics_power_wakeup_manager */
@@ -184,4 +185,4 @@ class IWakeupManager {
 }  // End of namespace power
 }  // End of namespace telux
 
-#endif // TELUX_POWER_WAKEUPMANAGER_HPP
+#endif  // TELUX_POWER_WAKEUPMANAGER_HPP

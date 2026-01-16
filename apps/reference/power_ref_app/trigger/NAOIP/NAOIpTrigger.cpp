@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "NAOIpTrigger.hpp"
@@ -17,29 +17,29 @@ NAOIpTrigger::~NAOIpTrigger() {
 
 bool NAOIpTrigger::init() {
     LOG(DEBUG, __FUNCTION__);
-    config_ = ConfigParser::getInstance();
+    config_          = ConfigParser::getInstance();
     bool returnValue = false;
     do {
         if (!loadConfig()) {
             break;
         }
         weak_ptr<NAOIpTrigger> weakFromThis = shared_from_this();
-        if(!eventManager_) {
+        if (!eventManager_) {
             LOG(ERROR, __FUNCTION__, "  event manager is not available ");
             break;
         }
         // Connection handler initialisation
         connectionHandler_ = ConnectionHandler::getInstance();
-        if(!connectionHandler_){
+        if (!connectionHandler_) {
             return false;
         }
         std::shared_ptr<ISocketConnectionListener> listener = shared_from_this();
         // connectionHandler_->registerListener(listener);
-        std::vector<std::shared_ptr<Connection>> connectionConfigList =
-            RefAppUtils::getConnectionConfigs();
+        std::vector<std::shared_ptr<Connection>> connectionConfigList
+            = RefAppUtils::getConnectionConfigs();
         connectionHandler_->start(connectionConfigList);
         for (const auto &connection : connectionConfigList) {
-            if(connection->socketConnection && connection->dataConnectionManager) {
+            if (connection->socketConnection && connection->dataConnectionManager) {
                 connection->socketConnection->registerListener(shared_from_this());
                 connection->dataConnectionManager->registerListener(shared_from_this());
             } else {
@@ -60,15 +60,15 @@ bool NAOIpTrigger::init() {
         }
 
         dataFilterController_ = std::make_shared<DataFilterController>();
-        if (dataFilterController_ ) {
+        if (dataFilterController_) {
             returnValue = dataFilterController_->initializeSDK();
             dataFilterController_->registerListener(weakFromThis);
             if (returnValue) {
-                //Listen to all triggers to be able to add and remove data filters.
+                // Listen to all triggers to be able to add and remove data filters.
                 eventManager_->registerListener(weakFromThis, TriggerType::UNKNOWN);
                 break;
             } else {
-                //telsdk initialisation failed wait for some time and retry
+                // telsdk initialisation failed wait for some time and retry
                 std::this_thread::sleep_for(std::chrono::milliseconds(2000));
             }
         } else {
@@ -91,7 +91,7 @@ bool NAOIpTrigger::enableFilter() {
         //       through a whitelisted filter, even if it is an unexpected packet.
         //       @ref DataRestrictMode
         // ex. mode.filterAutoExit = DataRestrictModeType::ENABLE;
-        if(RefAppUtils::isAutoExitEnabled()) {
+        if (RefAppUtils::isAutoExitEnabled()) {
             mode.filterAutoExit = DataRestrictModeType::ENABLE;
         } else {
             mode.filterAutoExit = DataRestrictModeType::DISABLE;
@@ -146,12 +146,12 @@ void NAOIpTrigger::onEventProcessed(shared_ptr<Event> event, bool success) {
 
     if (success) {
         if (event->getTriggeredState() == TcuActivityState::SUSPEND) {
-            if(tcpKeepAliveHandler_) {
+            if (tcpKeepAliveHandler_) {
                 tcpKeepAliveHandler_->startKAOffload();
             }
             enableFilter();
         } else if (event->getTriggeredState() == TcuActivityState::RESUME) {
-            if(tcpKeepAliveHandler_) {
+            if (tcpKeepAliveHandler_) {
                 tcpKeepAliveHandler_->stopKAOffload();
             }
             disableFilter();
@@ -162,10 +162,10 @@ void NAOIpTrigger::onEventProcessed(shared_ptr<Event> event, bool success) {
 void NAOIpTrigger::triggerEvent(TcuActivityState eventState, std::string machineName) {
     LOG(DEBUG, __FUNCTION__);
 
-    std::shared_ptr<Event> event = std::make_shared<Event>(eventState, machineName,
-        TriggerType::NAOIP_TRIGGER);
-    if ( event ) {
-        if(eventManager_) {
+    std::shared_ptr<Event> event
+        = std::make_shared<Event>(eventState, machineName, TriggerType::NAOIP_TRIGGER);
+    if (event) {
+        if (eventManager_) {
             eventManager_->pushEvent(event);
         } else {
             LOG(ERROR, __FUNCTION__, "  event manager is not available ");
@@ -173,20 +173,19 @@ void NAOIpTrigger::triggerEvent(TcuActivityState eventState, std::string machine
     } else {
         LOG(ERROR, __FUNCTION__, " unable to create event");
     }
-
 }
 
-bool NAOIpTrigger::validateTrigger(char *buffer, int length,
-    TcuActivityState& tcuActivityState, std::string& machineName) {
+bool NAOIpTrigger::validateTrigger(
+    char *buffer, int length, TcuActivityState &tcuActivityState, std::string &machineName) {
     LOG(DEBUG, __FUNCTION__);
     string text(buffer, length);
     // to avoid \n in a string which might lead to not matching trigger text
     text.erase(std::remove(text.begin(), text.end(), '\n'), text.cend());
     LOG(DEBUG, __FUNCTION__, text);
     size_t deliminatorPosition = 0;
-    if(( deliminatorPosition = text.find(MACHINE_NAME_DELIMINATOR)) != std::string::npos ) {
-        machineName = text.substr(deliminatorPosition + sizeof(MACHINE_NAME_DELIMINATOR),
-            text.length());
+    if ((deliminatorPosition = text.find(MACHINE_NAME_DELIMINATOR)) != std::string::npos) {
+        machineName
+            = text.substr(deliminatorPosition + sizeof(MACHINE_NAME_DELIMINATOR), text.length());
         text = text.substr(0, deliminatorPosition);
     }
     if (triggerText_.find(text) == triggerText_.end()) {
@@ -199,14 +198,14 @@ bool NAOIpTrigger::validateTrigger(char *buffer, int length,
     return false;
 }
 
-void NAOIpTrigger::onDataRestrictModeChange(DataRestrictMode mode){
+void NAOIpTrigger::onDataRestrictModeChange(DataRestrictMode mode) {
     LOG(DEBUG, __FUNCTION__);
-    if(mode.filterMode == DataRestrictModeType::DISABLE) {
+    if (mode.filterMode == DataRestrictModeType::DISABLE) {
         eventManager_->holdWakeLock("DataFilterDisabled");
         std::unique_lock<std::mutex> lock(messageMtx_);
         if (messageCv_.wait_for(lock, std::chrono::seconds(2)) == std::cv_status::timeout) {
-            if(eventManager_->getActivityState() == TcuActivityState::SUSPEND) {
-                if(tcpKeepAliveHandler_) {
+            if (eventManager_->getActivityState() == TcuActivityState::SUSPEND) {
+                if (tcpKeepAliveHandler_) {
                     tcpKeepAliveHandler_->stopKAOffload();
                     tcpKeepAliveHandler_->startKAOffload();
                 }
@@ -217,18 +216,18 @@ void NAOIpTrigger::onDataRestrictModeChange(DataRestrictMode mode){
     }
 }
 
-void NAOIpTrigger::messageReceived(IPMessage msg, int length,
-    std::shared_ptr<Connection> connection) {
+void NAOIpTrigger::messageReceived(
+    IPMessage msg, int length, std::shared_ptr<Connection> connection) {
     LOG(DEBUG, __FUNCTION__);
     eventManager_->holdWakeLock("MessageReceived");
     TcuActivityState triggerState = TcuActivityState::UNKNOWN;
-    std::string machineName = ALL_MACHINES;
+    std::string machineName       = ALL_MACHINES;
     if (validateTrigger(msg.msg, length, triggerState, machineName)) {
         triggerEvent(triggerState, machineName);
     } else {
         LOG(ERROR, __FUNCTION__, " trigger not match ");
-        if(eventManager_->getActivityState() == TcuActivityState::SUSPEND) {
-            if(tcpKeepAliveHandler_) {
+        if (eventManager_->getActivityState() == TcuActivityState::SUSPEND) {
+            if (tcpKeepAliveHandler_) {
                 tcpKeepAliveHandler_->stopKAOffload();
                 tcpKeepAliveHandler_->startKAOffload();
             }
@@ -242,8 +241,7 @@ void NAOIpTrigger::messageReceived(IPMessage msg, int length,
 bool NAOIpTrigger::loadConfig() {
     LOG(DEBUG, __FUNCTION__);
     std::map<std::string, TcuActivityState> expectedTrigger{
-        {TRIGGER_SUSPEND, TcuActivityState::SUSPEND},
-        {TRIGGER_RESUME, TcuActivityState::RESUME},
+        {TRIGGER_SUSPEND, TcuActivityState::SUSPEND}, {TRIGGER_RESUME, TcuActivityState::RESUME},
         {TRIGGER_SHUTDOWN, TcuActivityState::SHUTDOWN}};
     try {
         std::string configTriggerText = "";
@@ -257,7 +255,7 @@ bool NAOIpTrigger::loadConfig() {
                 triggerText_.insert({configTriggerText, itr->second});
             }
         }
-    } catch (const std::invalid_argument& ia) {
+    } catch (const std::invalid_argument &ia) {
         LOG(ERROR, __FUNCTION__, " Error : invalid argument");
         return false;
     }
@@ -266,12 +264,12 @@ bool NAOIpTrigger::loadConfig() {
 
 void NAOIpTrigger::onDataCallInfoChanged(const std::shared_ptr<telux::data::IDataCall> &dataCall) {
     eventManager_->holdWakeLock("DataCallInfoChanged");
-    if((dataCall->getDataCallStatus() == DataCallStatus::NET_CONNECTED) &&
-        (eventManager_->getActivityState() == TcuActivityState::SUSPEND)) {
+    if ((dataCall->getDataCallStatus() == DataCallStatus::NET_CONNECTED)
+        && (eventManager_->getActivityState() == TcuActivityState::SUSPEND)) {
         for (auto connection : connectionHandler_->getConnectionList()) {
-            if (dataCall->getProfileId() == connection->profileId &&
-                dataCall->getSlotId() == connection->slotId) {
-                if(tcpKeepAliveHandler_) {
+            if (dataCall->getProfileId() == connection->profileId
+                && dataCall->getSlotId() == connection->slotId) {
+                if (tcpKeepAliveHandler_) {
                     tcpKeepAliveHandler_->startKAOffload();
                 }
             }

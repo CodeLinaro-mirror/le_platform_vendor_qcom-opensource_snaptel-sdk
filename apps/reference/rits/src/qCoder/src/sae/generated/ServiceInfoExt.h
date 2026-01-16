@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_ServiceInfoExt_H_
-#define	_ServiceInfoExt_H_
-
+#ifndef _ServiceInfoExt_H_
+#define _ServiceInfoExt_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* ServiceInfoExt */
-typedef Extension_22P1_t	 ServiceInfoExt_t;
+typedef Extension_22P1_t ServiceInfoExt_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_ServiceInfoExt;
@@ -37,5 +36,5 @@ per_type_encoder_f ServiceInfoExt_encode_uper;
 }
 #endif
 
-#endif	/* _ServiceInfoExt_H_ */
+#endif /* _ServiceInfoExt_H_ */
 #include <asn_internal.h>

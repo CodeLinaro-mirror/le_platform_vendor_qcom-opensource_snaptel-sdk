@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_VehicleBreakdownSubCauseCode_H_
-#define	_VehicleBreakdownSubCauseCode_H_
-
+#ifndef _VehicleBreakdownSubCauseCode_H_
+#define _VehicleBreakdownSubCauseCode_H_
 
 #include <asn_application.h>
 
@@ -20,19 +19,19 @@ extern "C" {
 
 /* Dependencies */
 typedef enum VehicleBreakdownSubCauseCode {
-	VehicleBreakdownSubCauseCode_unavailable	= 0,
-	VehicleBreakdownSubCauseCode_lackOfFuel	= 1,
-	VehicleBreakdownSubCauseCode_lackOfBatteryPower	= 2,
-	VehicleBreakdownSubCauseCode_engineProblem	= 3,
-	VehicleBreakdownSubCauseCode_transmissionProblem	= 4,
-	VehicleBreakdownSubCauseCode_engineCoolingProblem	= 5,
-	VehicleBreakdownSubCauseCode_brakingSystemProblem	= 6,
-	VehicleBreakdownSubCauseCode_steeringProblem	= 7,
-	VehicleBreakdownSubCauseCode_tyrePuncture	= 8
+    VehicleBreakdownSubCauseCode_unavailable          = 0,
+    VehicleBreakdownSubCauseCode_lackOfFuel           = 1,
+    VehicleBreakdownSubCauseCode_lackOfBatteryPower   = 2,
+    VehicleBreakdownSubCauseCode_engineProblem        = 3,
+    VehicleBreakdownSubCauseCode_transmissionProblem  = 4,
+    VehicleBreakdownSubCauseCode_engineCoolingProblem = 5,
+    VehicleBreakdownSubCauseCode_brakingSystemProblem = 6,
+    VehicleBreakdownSubCauseCode_steeringProblem      = 7,
+    VehicleBreakdownSubCauseCode_tyrePuncture         = 8
 } e_VehicleBreakdownSubCauseCode;
 
 /* VehicleBreakdownSubCauseCode */
-typedef long	 VehicleBreakdownSubCauseCode_t;
+typedef long VehicleBreakdownSubCauseCode_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_VehicleBreakdownSubCauseCode;
@@ -50,5 +49,5 @@ per_type_encoder_f VehicleBreakdownSubCauseCode_encode_uper;
 }
 #endif
 
-#endif	/* _VehicleBreakdownSubCauseCode_H_ */
+#endif /* _VehicleBreakdownSubCauseCode_H_ */
 #include <asn_internal.h>

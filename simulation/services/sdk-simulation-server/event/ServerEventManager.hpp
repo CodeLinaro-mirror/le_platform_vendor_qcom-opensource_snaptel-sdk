@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef SERVER_EVENT_MANAGER_HPP
@@ -17,7 +17,7 @@
 #define MODEM_FILTER "modem_filter"
 
 class IServerEventListener {
-public:
+ public:
     /**
      * @brief This API is to receive the events, broadcasted by ServerEventManager
      * locally to all the managers on server side.
@@ -26,7 +26,8 @@ public:
      *
      * @param event - A string depicting the event.
      */
-    virtual void onEventUpdate(::eventService::UnsolicitedEvent event) {}
+    virtual void onEventUpdate(::eventService::UnsolicitedEvent event) {
+    }
 
     /**
      * @brief This API is to receive the events, broadcasted by ManagerServerImpl
@@ -36,27 +37,27 @@ public:
      *
      * @param event - google::protobuf::Any message depicting the event
      */
-    virtual void onServerEvent(google::protobuf::Any event) {}
+    virtual void onServerEvent(google::protobuf::Any event) {
+    }
 
-    virtual ~IServerEventListener() {}
+    virtual ~IServerEventListener() {
+    }
 };
 
 class ServerEventManager {
     /**
-    * @brief This class acts as the event manager on the server side.
-    * It is responsible for broadcasting the event locally to vertical specific
-    * services.
-    */
-public:
+     * @brief This class acts as the event manager on the server side.
+     * It is responsible for broadcasting the event locally to vertical specific
+     * services.
+     */
+ public:
     static ServerEventManager &getInstance();
 
     telux::common::Status registerListener(
-        std::weak_ptr<IServerEventListener> listener,
-        std::vector<std::string> filter);
+        std::weak_ptr<IServerEventListener> listener, std::vector<std::string> filter);
 
     telux::common::Status deregisterListener(
-        std::weak_ptr<IServerEventListener> listener,
-        std::vector<std::string> filter);
+        std::weak_ptr<IServerEventListener> listener, std::vector<std::string> filter);
 
     telux::common::Status registerListener(
         std::weak_ptr<IServerEventListener> listener, std::string filter);
@@ -67,17 +68,17 @@ public:
     void handleEventNotifications(::eventService::UnsolicitedEvent message);
     void sendServerEvent(::eventService::ServerEvent message);
 
-private:
+ private:
     ServerEventManager();
     ~ServerEventManager();
 
     void updateApiResponse(std::string message);
 
-    std::unordered_map<std::string,
-        std::set<std::weak_ptr<IServerEventListener>,
-        std::owner_less<std::weak_ptr<IServerEventListener>>>> listeners_;
+    std::unordered_map<std::string, std::set<std::weak_ptr<IServerEventListener>,
+                                        std::owner_less<std::weak_ptr<IServerEventListener>>>>
+        listeners_;
 
     std::mutex listenerMutex_;
 };
 
-#endif // SERVER_EVENT_MANAGER_HPP
+#endif  // SERVER_EVENT_MANAGER_HPP

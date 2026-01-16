@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_SpeedConfidence_H_
-#define	_SpeedConfidence_H_
-
+#ifndef _SpeedConfidence_H_
+#define _SpeedConfidence_H_
 
 #include <asn_application.h>
 
@@ -20,14 +19,14 @@ extern "C" {
 
 /* Dependencies */
 typedef enum SpeedConfidence {
-	SpeedConfidence_equalOrWithinOneCentimeterPerSec	= 1,
-	SpeedConfidence_equalOrWithinOneMeterPerSec	= 100,
-	SpeedConfidence_outOfRange	= 126,
-	SpeedConfidence_unavailable	= 127
+    SpeedConfidence_equalOrWithinOneCentimeterPerSec = 1,
+    SpeedConfidence_equalOrWithinOneMeterPerSec      = 100,
+    SpeedConfidence_outOfRange                       = 126,
+    SpeedConfidence_unavailable                      = 127
 } e_SpeedConfidence;
 
 /* SpeedConfidence */
-typedef long	 SpeedConfidence_t;
+typedef long SpeedConfidence_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_SpeedConfidence;
@@ -45,5 +44,5 @@ per_type_encoder_f SpeedConfidence_encode_uper;
 }
 #endif
 
-#endif	/* _SpeedConfidence_H_ */
+#endif /* _SpeedConfidence_H_ */
 #include <asn_internal.h>

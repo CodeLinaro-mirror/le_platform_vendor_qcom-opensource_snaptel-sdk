@@ -98,10 +98,10 @@ enum SignalStrength {
  * Provides the reason for location fix request.
  */
 enum LocationFixRequestReason {
-    UNKOWN                 = 0,
-    NORMAL                 = 1, /** A routine request for a location fix. If a valid
-                                    location fix is available in the cache, it can be
-                                    provided to fulfill this request. */
+    UNKOWN = 0,
+    NORMAL = 1, /** A routine request for a location fix. If a valid
+                    location fix is available in the cache, it can be
+                    provided to fulfill this request. */
     VALIDITY_TIMER_EXPIRED = 2, /** The validity timer has expired, prompting a location
                                     fix request. */
 };
@@ -110,40 +110,41 @@ enum LocationFixRequestReason {
  * Specifies the status of a location fix request.
  */
 enum class LocationStatus {
-    INVALID               = -1,
-    SUCCESS               = 0,  /**< The location fix fetch was successful. */
-    INVALID_ARG           = 1,  /**< The location fix fetch failed due to invalid location request. */
-    INTERNAL_ERR          = 2,  /**< The location fix fetch cannot be started due to an internal error */
-    NOT_SUPPORTED         = 3,  /**< The location fix cannot be provided due to missing external GNSS support or other reasons. */
-    RETRY                 = 4,  /**< The location fix request should be retried after a given hysteresis time. */
-    FAILED                = 5,  /**< The location fix fetch was started but failed. */
+    INVALID       = -1,
+    SUCCESS       = 0, /**< The location fix fetch was successful. */
+    INVALID_ARG   = 1, /**< The location fix fetch failed due to invalid location request. */
+    INTERNAL_ERR  = 2, /**< The location fix fetch cannot be started due to an internal error */
+    NOT_SUPPORTED = 3, /**< The location fix cannot be provided due to missing external GNSS support
+                          or other reasons. */
+    RETRY  = 4, /**< The location fix request should be retried after a given hysteresis time. */
+    FAILED = 5, /**< The location fix fetch was started but failed. */
 };
 
 /**
  * Velocity parameters
  */
 struct VelocityInfo {
-  bool isEnuValueValid;             /**<  Indicates if the ENU velocity values are valid */
-  float enuVel[MAX_DIMENSIONS];     /**<  Velocity in the Easting, Northing, and Upward directions */
-  bool isEnuUncerValid;             /**<  Indicates if the uncertainty in the ENU values is valid */
-  float enuUncer[MAX_DIMENSIONS];   /**<  Uncertainty in ENU values */
+    bool isEnuValueValid; /**<  Indicates if the ENU velocity values are valid */
+    float enuVel[MAX_DIMENSIONS]; /**<  Velocity in the Easting, Northing, and Upward directions */
+    bool isEnuUncerValid; /**<  Indicates if the uncertainty in the ENU values is valid */
+    float enuUncer[MAX_DIMENSIONS]; /**<  Uncertainty in ENU values */
 };
 
 /**
  * Location fix parameters
  */
 struct LocationFix {
-  float lat;   /**< Latitude coordinate in degrees */
-  float lon;   /**< Longitude coordinate in degrees */
-  float alt;   /**< Altitude above sea level */
-  uint32_t uncerCircular;      /**< Radius of the horizontal uncertainty circle in meters */
-  VelocityInfo velInfo;        /**< Velocity parameters */
-  bool isHeadingValid;         /**< Indicates if the heading value is valid */
-  uint32_t heading;            /**< Heading or direction in degrees */
-  bool isHeadingUncerValid;    /**< Indicates if the heading uncertainty value is valid */
-  uint32_t headingUncer;       /**< Uncertainty in the heading value in degrees */
-  bool isConfidenceValid;     /**< Indicates if the confidence value is valid */
-  uint32_t confidence;        /**< Horizontal uncertainty confidence value */
+    float lat; /**< Latitude coordinate in degrees */
+    float lon; /**< Longitude coordinate in degrees */
+    float alt; /**< Altitude above sea level */
+    uint32_t uncerCircular; /**< Radius of the horizontal uncertainty circle in meters */
+    VelocityInfo velInfo; /**< Velocity parameters */
+    bool isHeadingValid; /**< Indicates if the heading value is valid */
+    uint32_t heading; /**< Heading or direction in degrees */
+    bool isHeadingUncerValid; /**< Indicates if the heading uncertainty value is valid */
+    uint32_t headingUncer; /**< Uncertainty in the heading value in degrees */
+    bool isConfidenceValid; /**< Indicates if the confidence value is valid */
+    uint32_t confidence; /**< Horizontal uncertainty confidence value */
 };
 
 /**
@@ -204,7 +205,8 @@ class INtnManager {
      *
      */
     virtual telux::common::ErrorCode enableNtn(
-        bool enable, bool isEmergency, const std::string &iccid) = 0;
+        bool enable, bool isEmergency, const std::string &iccid)
+        = 0;
 
     /**
      * Send non-IP data over NTN network.
@@ -224,7 +226,8 @@ class INtnManager {
      * @param [in]  data Data to be sent over the NTN network.
      * @param [in]  size Number of bytes to be sent.
      * @param [in]  isEmergency indicate if this is emergency data. This parameter can be set to
-     *              true only if @ref telux::satcom::enableNtn is called with isEmergency set to true.
+     *              true only if @ref telux::satcom::enableNtn is called with isEmergency set to
+     * true.
      * @param [out] TransactionId The message ID of the data packet.
      *
      * @returns @ref telux::common::Status::SUCCESS if the modem accepts the data packet to send
@@ -235,7 +238,8 @@ class INtnManager {
      *
      */
     virtual telux::common::Status sendData(
-        uint8_t *data, uint32_t size, bool isEmergency, TransactionId &TransactionId) = 0;
+        uint8_t *data, uint32_t size, bool isEmergency, TransactionId &TransactionId)
+        = 0;
 
     /**
      * Abort all the data packets waiting in the queue for transmission.
@@ -363,18 +367,18 @@ class INtnManager {
      *
      * @param[in] status    The response status to the fetch request.
      * @param[in] waitTime  The time in milli seconds after which the modem should re-request the
-     *                      location fix using @ref telux::satcom::INtnListener::onLocationFixRequest.
-     *                      This is applicable for @ref LocationStatus::RETRY if the location fix
-     *                      cannot be fetched from the external GNSS receiver and the location fix
-     *                      request needs to be re-triggered.
+     *                      location fix using @ref
+     * telux::satcom::INtnListener::onLocationFixRequest. This is applicable for @ref
+     * LocationStatus::RETRY if the location fix cannot be fetched from the external GNSS receiver
+     * and the location fix request needs to be re-triggered.
      *
      * @returns Error code which indicates whether operation succeeded or not.
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to change and
      *             could break backwards compatibility.
      */
-    virtual telux::common::ErrorCode locationFixResponse(LocationStatus status,
-        uint64_t waitTime) = 0;
+    virtual telux::common::ErrorCode locationFixResponse(LocationStatus status, uint64_t waitTime)
+        = 0;
 
     /**
      * Register with NtnManager as listener for receiving service status, NTN state changes

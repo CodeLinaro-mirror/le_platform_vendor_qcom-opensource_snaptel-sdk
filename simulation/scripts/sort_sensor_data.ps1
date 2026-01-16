@@ -1,6 +1,7 @@
-<# Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
-   SPDX-License-Identifier: BSD-3-Clause-Clear
-#>
+<#
+ # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries. 
+ # SPDX-License-Identifier: BSD-3-Clause-Clear
+ #>
 <#
 .SYNOPSIS
 This script sorts a CSV file based on the values in the third column, removes the last line before sorting.

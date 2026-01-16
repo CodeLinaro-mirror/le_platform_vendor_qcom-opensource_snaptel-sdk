@@ -26,11 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /*
@@ -72,9 +72,7 @@ class SubscriptionInfo : public telux::tel::ISubscriptionListener,
 
         /* Step - 2 */
         subscriptionMgr_ = phoneFactory.getSubscriptionManager(
-                [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+            [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!subscriptionMgr_) {
             std::cout << "Can't get ISubscriptionManager" << std::endl;
@@ -84,16 +82,15 @@ class SubscriptionInfo : public telux::tel::ISubscriptionListener,
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Subscription service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Subscription service unavailable, status "
+                      << static_cast<int>(serviceStatus) << std::endl;
             return -EIO;
         }
 
         /* Step - 4 */
         status = subscriptionMgr_->registerListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't register listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't register listener, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -107,8 +104,7 @@ class SubscriptionInfo : public telux::tel::ISubscriptionListener,
         /* Step - 6 */
         status = subscriptionMgr_->removeListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't deregister listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't deregister listener, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -122,8 +118,8 @@ class SubscriptionInfo : public telux::tel::ISubscriptionListener,
         /* Step - 5 */
         subscription = subscriptionMgr_->getSubscription(DEFAULT_SLOT_ID, &status);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't get current subscription, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't get current subscription, err " << static_cast<int>(status)
+                      << std::endl;
             return -EIO;
         }
 
@@ -173,7 +169,7 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<SubscriptionInfo>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate SubscriptionInfo" << std::endl;
         return -ENOMEM;
     }

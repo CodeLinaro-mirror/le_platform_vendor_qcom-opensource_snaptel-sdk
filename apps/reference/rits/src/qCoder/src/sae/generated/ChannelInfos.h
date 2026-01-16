@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_ChannelInfos_H_
-#define	_ChannelInfos_H_
-
+#ifndef _ChannelInfos_H_
+#define _ChannelInfos_H_
 
 #include <asn_application.h>
 
@@ -24,10 +23,10 @@ struct ChannelInfo;
 
 /* ChannelInfos */
 typedef struct ChannelInfos {
-	A_SEQUENCE_OF(struct ChannelInfo) list;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    A_SEQUENCE_OF(struct ChannelInfo) list;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } ChannelInfos_t;
 
 /* Implementation */
@@ -40,5 +39,5 @@ extern asn_TYPE_descriptor_t asn_DEF_ChannelInfos;
 /* Referred external types */
 #include "ChannelInfo.h"
 
-#endif	/* _ChannelInfos_H_ */
+#endif /* _ChannelInfos_H_ */
 #include <asn_internal.h>

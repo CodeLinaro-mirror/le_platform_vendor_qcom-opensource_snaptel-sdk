@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_HeadingConfidence_H_
-#define	_HeadingConfidence_H_
-
+#ifndef _HeadingConfidence_H_
+#define _HeadingConfidence_H_
 
 #include <asn_application.h>
 
@@ -20,14 +19,14 @@ extern "C" {
 
 /* Dependencies */
 typedef enum HeadingConfidence {
-	HeadingConfidence_equalOrWithinZeroPointOneDegree	= 1,
-	HeadingConfidence_equalOrWithinOneDegree	= 10,
-	HeadingConfidence_outOfRange	= 126,
-	HeadingConfidence_unavailable	= 127
+    HeadingConfidence_equalOrWithinZeroPointOneDegree = 1,
+    HeadingConfidence_equalOrWithinOneDegree          = 10,
+    HeadingConfidence_outOfRange                      = 126,
+    HeadingConfidence_unavailable                     = 127
 } e_HeadingConfidence;
 
 /* HeadingConfidence */
-typedef long	 HeadingConfidence_t;
+typedef long HeadingConfidence_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_HeadingConfidence;
@@ -45,5 +44,5 @@ per_type_encoder_f HeadingConfidence_encode_uper;
 }
 #endif
 
-#endif	/* _HeadingConfidence_H_ */
+#endif /* _HeadingConfidence_H_ */
 #include <asn_internal.h>

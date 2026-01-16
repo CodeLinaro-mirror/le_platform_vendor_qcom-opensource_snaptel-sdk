@@ -26,9 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -46,7 +48,6 @@
 #include <string>
 #include <iomanip>
 
-
 #include "console_app_framework/ConsoleApp.hpp"
 
 #include <telux/data/DataDefines.hpp>
@@ -56,7 +57,7 @@ using namespace telux::data;
 using namespace telux::common;
 using namespace telux::data::net;
 
-class BridgeMenu : public ConsoleApp ,
+class BridgeMenu : public ConsoleApp,
                    public IBridgeListener,
                    public std::enable_shared_from_this<BridgeMenu> {
  public:
@@ -69,7 +70,7 @@ class BridgeMenu : public ConsoleApp ,
     void getBridgeInfo(std::vector<std::string> inputCommand);
     void removeBridge(std::vector<std::string> inputCommand);
 
-    //Initialization callback
+    // Initialization callback
     void onInitComplete(telux::common::ServiceStatus status);
 
     void setInterfaceBridge(std::vector<std::string> inputCommand);
@@ -77,6 +78,7 @@ class BridgeMenu : public ConsoleApp ,
 
     BridgeMenu(std::string appName, std::string cursor);
     ~BridgeMenu();
+
  private:
     bool menuOptionsAdded_;
     bool subSystemStatusUpdated_;

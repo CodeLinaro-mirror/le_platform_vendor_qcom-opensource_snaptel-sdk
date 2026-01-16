@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_SequenceNumber_H_
-#define	_SequenceNumber_H_
-
+#ifndef _SequenceNumber_H_
+#define _SequenceNumber_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* SequenceNumber */
-typedef long	 SequenceNumber_t;
+typedef long SequenceNumber_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_SequenceNumber;
@@ -37,5 +36,5 @@ per_type_encoder_f SequenceNumber_encode_uper;
 }
 #endif
 
-#endif	/* _SequenceNumber_H_ */
+#endif /* _SequenceNumber_H_ */
 #include <asn_internal.h>

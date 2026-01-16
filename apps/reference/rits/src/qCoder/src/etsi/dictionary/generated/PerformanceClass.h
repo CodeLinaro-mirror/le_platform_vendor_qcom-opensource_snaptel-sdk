@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_PerformanceClass_H_
-#define	_PerformanceClass_H_
-
+#ifndef _PerformanceClass_H_
+#define _PerformanceClass_H_
 
 #include <asn_application.h>
 
@@ -20,13 +19,13 @@ extern "C" {
 
 /* Dependencies */
 typedef enum PerformanceClass {
-	PerformanceClass_unavailable	= 0,
-	PerformanceClass_performanceClassA	= 1,
-	PerformanceClass_performanceClassB	= 2
+    PerformanceClass_unavailable       = 0,
+    PerformanceClass_performanceClassA = 1,
+    PerformanceClass_performanceClassB = 2
 } e_PerformanceClass;
 
 /* PerformanceClass */
-typedef long	 PerformanceClass_t;
+typedef long PerformanceClass_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_PerformanceClass;
@@ -44,5 +43,5 @@ per_type_encoder_f PerformanceClass_encode_uper;
 }
 #endif
 
-#endif	/* _PerformanceClass_H_ */
+#endif /* _PerformanceClass_H_ */
 #include <asn_internal.h>

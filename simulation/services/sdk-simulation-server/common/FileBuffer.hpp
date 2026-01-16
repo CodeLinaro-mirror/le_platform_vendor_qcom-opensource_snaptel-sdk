@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -27,7 +27,7 @@
 #include "libs/common/AsyncTaskQueue.hpp"
 
 class FileBuffer {
-  public:
+ public:
     /**
      * Constructor to initialize file path and threshold value.
      *
@@ -52,14 +52,14 @@ class FileBuffer {
     /**
      * This API fetches the read buffer for the streaming thread.
      */
-    inline std::vector<std::string>& getReadBuffer() {
+    inline std::vector<std::string> &getReadBuffer() {
         return readBuffer_;
     }
 
     /**
      * This API sets the read buffer for the streaming thread.
      */
-    void setReadBuffer(std::vector<std::string>& readBuffer) {
+    void setReadBuffer(std::vector<std::string> &readBuffer) {
         readBuffer_ = readBuffer;
     }
 
@@ -73,7 +73,7 @@ class FileBuffer {
     /**
      * This API fetches whether the EOF is reached.
      */
-    inline bool& getReachedEOF() {
+    inline bool &getReachedEOF() {
         return reachedEOF_;
     }
 
@@ -87,26 +87,26 @@ class FileBuffer {
     /**
      * This API fetches whether the streaming thread can stream the read buffer.
      */
-    inline bool& getStreamCurrentBuffer() {
+    inline bool &getStreamCurrentBuffer() {
         return streamCurrentBatch_;
     }
 
     /**
      * Mutexes and condition variables to synchronize streaming and buffering.
      */
-    inline std::mutex& getStreamBufferMtx() {
+    inline std::mutex &getStreamBufferMtx() {
         return streamBufferMtx_;
     }
 
-    inline std::condition_variable& getStreamBufferCv() {
+    inline std::condition_variable &getStreamBufferCv() {
         return streamBufferCv_;
     }
 
-    inline std::mutex& getNextBatchBufferMtx() {
+    inline std::mutex &getNextBatchBufferMtx() {
         return nextBatchBufferMtx_;
     }
 
-    inline std::condition_variable& getNextBatchBufferCv() {
+    inline std::condition_variable &getNextBatchBufferCv() {
         return nextBatchBufferCv_;
     }
 
@@ -115,7 +115,7 @@ class FileBuffer {
      */
     bool getNextBuffer(std::vector<std::string> &requestBuffer);
 
-  private:
+ private:
     /**
      * This API starts filling the read buffer line by line until the threshold lines are parsed
      * or if the EOF is reached. After filling the read buffer, it waits for a signal from the
@@ -126,17 +126,16 @@ class FileBuffer {
     std::string fileName_;
     int threshold_ = 0;
     telux::common::AsyncTaskQueue<void> taskQ_;
-    bool readNextBatch_ = false;
+    bool readNextBatch_      = false;
     bool streamCurrentBatch_ = false;
-    bool reachedEOF_ = false;
-    //Synchronization for streaming to be performed ONLY after the buffer data is ready.
+    bool reachedEOF_         = false;
+    // Synchronization for streaming to be performed ONLY after the buffer data is ready.
     std::mutex streamBufferMtx_;
     std::condition_variable streamBufferCv_;
 
-    //Synchronization for next batch of buffering to begin ONLY after the read buffer is swapped.
+    // Synchronization for next batch of buffering to begin ONLY after the read buffer is swapped.
     std::mutex nextBatchBufferMtx_;
     std::condition_variable nextBatchBufferCv_;
 };
 
-
-#endif //FILE_BUFFER_HPP
+#endif  // FILE_BUFFER_HPP

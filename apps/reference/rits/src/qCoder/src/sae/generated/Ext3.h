@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_Ext3_H_
-#define	_Ext3_H_
-
+#ifndef _Ext3_H_
+#define _Ext3_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* Ext3 */
-typedef long	 Ext3_t;
+typedef long Ext3_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_Ext3;
@@ -37,5 +36,5 @@ per_type_encoder_f Ext3_encode_uper;
 }
 #endif
 
-#endif	/* _Ext3_H_ */
+#endif /* _Ext3_H_ */
 #include <asn_internal.h>

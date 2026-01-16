@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -23,38 +23,38 @@ using grpc::Status;
 
 using platformStub::DeviceInfoManagerService;
 
-class DeviceInfoManagerServerImpl final :
-    public IServerEventListener,
-    public platformStub::DeviceInfoManagerService::Service,
-    public std::enable_shared_from_this<DeviceInfoManagerServerImpl> {
+class DeviceInfoManagerServerImpl final
+   : public IServerEventListener,
+     public platformStub::DeviceInfoManagerService::Service,
+     public std::enable_shared_from_this<DeviceInfoManagerServerImpl> {
  public:
     DeviceInfoManagerServerImpl();
     ~DeviceInfoManagerServerImpl();
 
-    grpc::Status InitService(ServerContext* context, const google::protobuf::Empty* request,
-        commonStub::GetServiceStatusReply* response);
+    grpc::Status InitService(ServerContext *context, const google::protobuf::Empty *request,
+        commonStub::GetServiceStatusReply *response);
 
-    grpc::Status GetServiceStatus(ServerContext* context, const google::protobuf::Empty* request,
-        commonStub::GetServiceStatusReply* response) override;
+    grpc::Status GetServiceStatus(ServerContext *context, const google::protobuf::Empty *request,
+        commonStub::GetServiceStatusReply *response) override;
 
-    grpc::Status GetPlatformVersion(ServerContext* context, const google::protobuf::Empty* request,
-        platformStub::PlatformVersionInfo* response);
+    grpc::Status GetPlatformVersion(ServerContext *context, const google::protobuf::Empty *request,
+        platformStub::PlatformVersionInfo *response);
 
-    grpc::Status GetIMEI(ServerContext* context, const google::protobuf::Empty* request,
-        platformStub::PlatformImeiInfo* response);
+    grpc::Status GetIMEI(ServerContext *context, const google::protobuf::Empty *request,
+        platformStub::PlatformImeiInfo *response);
 
  private:
     void onSSREvent(telux::common::ServiceStatus srvStatus);
-    grpc::Status setResponse(telux::common::ServiceStatus srvStatus,
-        commonStub::GetServiceStatusReply* response);
+    grpc::Status setResponse(
+        telux::common::ServiceStatus srvStatus, commonStub::GetServiceStatusReply *response);
     telux::common::Status registerDefaultIndications();
-    void notifyServiceStateChanged(telux::common::ServiceStatus srvStatus,
-        std::string srvStatusStr);
+    void notifyServiceStateChanged(
+        telux::common::ServiceStatus srvStatus, std::string srvStatusStr);
     void setServiceStatus(telux::common::ServiceStatus srvStatus);
     telux::common::ServiceStatus getServiceStatus();
     void onEventUpdate(::eventService::UnsolicitedEvent event);
     void onEventUpdate(std::string event);
-    void handleEvent(std::string token,std::string event);
+    void handleEvent(std::string token, std::string event);
     void handleSSREvent(std::string eventParams);
     void onDeviceInfoEventUpdate(std::string event);
     void onSubsystemEventUpdate(std::string event);
@@ -63,8 +63,7 @@ class DeviceInfoManagerServerImpl final :
     bool isValidProcType(int procType);
     bool isValidSubsystem(int subsystem);
 
-    telux::common::ServiceStatus serviceStatus_ =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    telux::common::ServiceStatus serviceStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
     std::mutex mutex_;
     ServerEventManager &serverEvent_;
     EventService &clientEvent_;

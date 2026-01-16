@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <algorithm>
@@ -30,20 +30,19 @@ ServerEventManager &ServerEventManager::getInstance() {
 }
 
 /**
-* This overloaded method filters the incoming events from event_injector. Based on the
-* filtering results, it either notifies that listener or ignores the notification.
-*/
-void ServerEventManager::handleEventNotifications(
-    ::eventService::UnsolicitedEvent message) {
+ * This overloaded method filters the incoming events from event_injector. Based on the
+ * filtering results, it either notifies that listener or ignores the notification.
+ */
+void ServerEventManager::handleEventNotifications(::eventService::UnsolicitedEvent message) {
     LOG(DEBUG, __FUNCTION__);
 
     std::string filter = message.filter();
     std::lock_guard<std::mutex> lk(listenerMutex_);
     if (filter == UNSOLICITED_COMMON_EVENT) {
         LOG(DEBUG, __FUNCTION__, " passing common event::", message.event());
-        //passing the unsolicited common event to all the listeners
+        // passing the unsolicited common event to all the listeners
         for (auto it = listeners_.begin(); it != listeners_.end(); ++it) {
-            for (auto &listener: it->second) {
+            for (auto &listener : it->second) {
                 auto sp = listener.lock();
                 if (sp) {
                     sp->onEventUpdate(message);
@@ -55,8 +54,8 @@ void ServerEventManager::handleEventNotifications(
         updateApiResponse(message.event());
     } else {
         LOG(DEBUG, __FUNCTION__, " passing unsolicited event::", message.filter());
-        //passing the unsolicited event to the listener who subscribed for it
-        if(listeners_.find(filter) != listeners_.end()) {
+        // passing the unsolicited event to the listener who subscribed for it
+        if (listeners_.find(filter) != listeners_.end()) {
             for (auto it = listeners_[filter].begin(); it != listeners_[filter].end();) {
                 auto sp = (*it).lock();
                 if (sp) {
@@ -75,11 +74,11 @@ void ServerEventManager::handleEventNotifications(
 }
 
 /**
-* This overloaded method forwards the incoming events from server manager implementations.
-* It is mainly to handle the use cases where an action performed on one manager, impacts
-* the other manager. For ex: RAT preference changed by Telephony may impact data as well.
-* Based on the filtering results, message is either forwarded to the listener or ignored.
-*/
+ * This overloaded method forwards the incoming events from server manager implementations.
+ * It is mainly to handle the use cases where an action performed on one manager, impacts
+ * the other manager. For ex: RAT preference changed by Telephony may impact data as well.
+ * Based on the filtering results, message is either forwarded to the listener or ignored.
+ */
 void ServerEventManager::sendServerEvent(::eventService::ServerEvent message) {
     LOG(DEBUG, __FUNCTION__);
 
@@ -87,8 +86,8 @@ void ServerEventManager::sendServerEvent(::eventService::ServerEvent message) {
     std::lock_guard<std::mutex> lk(listenerMutex_);
 
     LOG(DEBUG, __FUNCTION__, " passing unsolicited event::", message.filter());
-    //passing the unsolicited event to the listener who subscribed for it
-    if(listeners_.find(filter) != listeners_.end()) {
+    // passing the unsolicited event to the listener who subscribed for it
+    if (listeners_.find(filter) != listeners_.end()) {
         for (auto it = listeners_[filter].begin(); it != listeners_[filter].end();) {
             auto sp = (*it).lock();
             if (sp) {
@@ -113,8 +112,7 @@ telux::common::Status ServerEventManager::registerListener(
     if (spt != nullptr) {
         listeners_[filter].insert(listener);
         LOG(DEBUG, "Registering Listener");
-    }
-    else {
+    } else {
         LOG(ERROR, "Failed to register");
         return telux::common::Status::FAILED;
     }
@@ -122,7 +120,7 @@ telux::common::Status ServerEventManager::registerListener(
 }
 
 telux::common::Status ServerEventManager::deregisterListener(
-        std::weak_ptr<IServerEventListener> listener, std::string filter) {
+    std::weak_ptr<IServerEventListener> listener, std::string filter) {
     LOG(DEBUG, __FUNCTION__);
     telux::common::Status retVal = telux::common::Status::FAILED;
     std::lock_guard<std::mutex> listenerLock(listenerMutex_);
@@ -149,12 +147,11 @@ telux::common::Status ServerEventManager::deregisterListener(
 }
 
 telux::common::Status ServerEventManager::registerListener(
-    std::weak_ptr<IServerEventListener> listener,
-    std::vector<std::string> filters) {
+    std::weak_ptr<IServerEventListener> listener, std::vector<std::string> filters) {
 
     LOG(DEBUG, __FUNCTION__);
     telux::common::Status status = telux::common::Status::SUCCESS;
-    for (auto &x: filters) {
+    for (auto &x : filters) {
         status = registerListener(listener, x);
 
         if (status != telux::common::Status::SUCCESS)
@@ -165,11 +162,10 @@ telux::common::Status ServerEventManager::registerListener(
 }
 
 telux::common::Status ServerEventManager::deregisterListener(
-    std::weak_ptr<IServerEventListener> listener,
-    std::vector<std::string> filters) {
+    std::weak_ptr<IServerEventListener> listener, std::vector<std::string> filters) {
     LOG(DEBUG, __FUNCTION__);
     telux::common::Status status = telux::common::Status::SUCCESS;
-    for (auto &x: filters) {
+    for (auto &x : filters) {
         status = deregisterListener(listener, x);
 
         if (status != telux::common::Status::SUCCESS)
@@ -180,27 +176,27 @@ telux::common::Status ServerEventManager::deregisterListener(
 }
 
 /**
-* @brief This API is to handle dynamic json updates on server side.
-*/
+ * @brief This API is to handle dynamic json updates on server side.
+ */
 void ServerEventManager::updateApiResponse(std::string message) {
     LOG(DEBUG, __FUNCTION__, message);
     std::stringstream stream(message);
     std::vector<std::string> attributeList;
 
-    //skipping modify action, would be probably used
-    //once we add more features to our json utility.
+    // skipping modify action, would be probably used
+    // once we add more features to our json utility.
     std::string action = "";
     std::getline(stream, action, SPACE_DELIM);
 
-    //reading path
+    // reading path
     std::string path = "";
     std::getline(stream, path, SPACE_DELIM);
 
-    //reading attributes
+    // reading attributes
     std::string attributes = "";
     std::getline(stream, attributes, SPACE_DELIM);
 
-    //reading value
+    // reading value
     std::string value = "";
     std::getline(stream, value, SPACE_DELIM);
     LOG(INFO, __FUNCTION__, " for attribute::", attributes, " value::", value);
@@ -212,16 +208,16 @@ void ServerEventManager::updateApiResponse(std::string message) {
      * - ISmsManager.deleteMessage.error - is to update error value.
      * - ISmsManager.sendSms.0.numberOfSegments - is to update numberOfSegments
      *                                            at 0th index in sendSms array.
-    */
+     */
     std::stringstream ss(attributes);
     std::string currAttribute;
     while (getline(ss, currAttribute, DOT_DELIM)) {
-        currAttribute.erase(remove_if(currAttribute.begin(), currAttribute.end(),
-            ::isspace), currAttribute.end());
+        currAttribute.erase(
+            remove_if(currAttribute.begin(), currAttribute.end(), ::isspace), currAttribute.end());
         attributeList.push_back(currAttribute);
     }
 
-    //updating the attribute value
+    // updating the attribute value
     Json::Value rootObj;
     Json::Value *currObj;
     telux::common::ErrorCode error = JsonParser::readFromJsonFile(rootObj, path);
@@ -231,19 +227,19 @@ void ServerEventManager::updateApiResponse(std::string message) {
         return;
     }
     currObj = &rootObj;
-    for (const auto & key: attributeList) {
+    for (const auto &key : attributeList) {
         if (std::all_of(key.begin(), key.end(), ::isdigit)) {
-            //since for update of array we would be taking index value
+            // since for update of array we would be taking index value
             currObj = &(*currObj)[std::stoi(key)];
             continue;
         }
         currObj = &(*currObj)[key];
     }
 
-    if((*currObj).isInt()) {
+    if ((*currObj).isInt()) {
         *currObj = std::stoi(value);
     } else if ((*currObj).isBool()) {
-        *currObj = (value == "true")? true : false;
+        *currObj = (value == "true") ? true : false;
     } else if ((*currObj).isString()) {
         *currObj = value;
     } else {

@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_Altitude_H_
-#define	_Altitude_H_
-
+#ifndef _Altitude_H_
+#define _Altitude_H_
 
 #include <asn_application.h>
 
@@ -22,11 +21,11 @@ extern "C" {
 
 /* Altitude */
 typedef struct Altitude {
-	AltitudeValue_t	 altitudeValue;
-	AltitudeConfidence_t	 altitudeConfidence;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    AltitudeValue_t altitudeValue;
+    AltitudeConfidence_t altitudeConfidence;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } Altitude_t;
 
 /* Implementation */
@@ -36,5 +35,5 @@ extern asn_TYPE_descriptor_t asn_DEF_Altitude;
 }
 #endif
 
-#endif	/* _Altitude_H_ */
+#endif /* _Altitude_H_ */
 #include <asn_internal.h>

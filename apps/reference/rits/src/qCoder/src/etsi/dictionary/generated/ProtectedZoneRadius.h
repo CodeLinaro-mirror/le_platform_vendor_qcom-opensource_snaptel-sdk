@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_ProtectedZoneRadius_H_
-#define	_ProtectedZoneRadius_H_
-
+#ifndef _ProtectedZoneRadius_H_
+#define _ProtectedZoneRadius_H_
 
 #include <asn_application.h>
 
@@ -20,11 +19,11 @@ extern "C" {
 
 /* Dependencies */
 typedef enum ProtectedZoneRadius {
-	ProtectedZoneRadius_oneMeter	= 1
+    ProtectedZoneRadius_oneMeter = 1
 } e_ProtectedZoneRadius;
 
 /* ProtectedZoneRadius */
-typedef long	 ProtectedZoneRadius_t;
+typedef long ProtectedZoneRadius_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_ProtectedZoneRadius;
@@ -42,5 +41,5 @@ per_type_encoder_f ProtectedZoneRadius_encode_uper;
 }
 #endif
 
-#endif	/* _ProtectedZoneRadius_H_ */
+#endif /* _ProtectedZoneRadius_H_ */
 #include <asn_internal.h>

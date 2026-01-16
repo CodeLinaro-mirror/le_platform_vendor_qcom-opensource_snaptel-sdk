@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_RescueAndRecoveryWorkInProgressSubCauseCode_H_
-#define	_RescueAndRecoveryWorkInProgressSubCauseCode_H_
-
+#ifndef _RescueAndRecoveryWorkInProgressSubCauseCode_H_
+#define _RescueAndRecoveryWorkInProgressSubCauseCode_H_
 
 #include <asn_application.h>
 
@@ -20,16 +19,16 @@ extern "C" {
 
 /* Dependencies */
 typedef enum RescueAndRecoveryWorkInProgressSubCauseCode {
-	RescueAndRecoveryWorkInProgressSubCauseCode_unavailable	= 0,
-	RescueAndRecoveryWorkInProgressSubCauseCode_emergencyVehicles	= 1,
-	RescueAndRecoveryWorkInProgressSubCauseCode_rescueHelicopterLanding	= 2,
-	RescueAndRecoveryWorkInProgressSubCauseCode_policeActivityOngoing	= 3,
-	RescueAndRecoveryWorkInProgressSubCauseCode_medicalEmergencyOngoing	= 4,
-	RescueAndRecoveryWorkInProgressSubCauseCode_childAbductionInProgress	= 5
+    RescueAndRecoveryWorkInProgressSubCauseCode_unavailable              = 0,
+    RescueAndRecoveryWorkInProgressSubCauseCode_emergencyVehicles        = 1,
+    RescueAndRecoveryWorkInProgressSubCauseCode_rescueHelicopterLanding  = 2,
+    RescueAndRecoveryWorkInProgressSubCauseCode_policeActivityOngoing    = 3,
+    RescueAndRecoveryWorkInProgressSubCauseCode_medicalEmergencyOngoing  = 4,
+    RescueAndRecoveryWorkInProgressSubCauseCode_childAbductionInProgress = 5
 } e_RescueAndRecoveryWorkInProgressSubCauseCode;
 
 /* RescueAndRecoveryWorkInProgressSubCauseCode */
-typedef long	 RescueAndRecoveryWorkInProgressSubCauseCode_t;
+typedef long RescueAndRecoveryWorkInProgressSubCauseCode_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_RescueAndRecoveryWorkInProgressSubCauseCode;
@@ -47,5 +46,5 @@ per_type_encoder_f RescueAndRecoveryWorkInProgressSubCauseCode_encode_uper;
 }
 #endif
 
-#endif	/* _RescueAndRecoveryWorkInProgressSubCauseCode_H_ */
+#endif /* _RescueAndRecoveryWorkInProgressSubCauseCode_H_ */
 #include <asn_internal.h>

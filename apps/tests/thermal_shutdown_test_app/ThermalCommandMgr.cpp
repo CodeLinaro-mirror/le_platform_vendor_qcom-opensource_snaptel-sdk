@@ -26,9 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -51,10 +52,8 @@ int ThermalCommandMgr::init() {
     auto &thermalFactory = ThermalFactory::getInstance();
     // Get thermal shutdown manager object
     std::promise<telux::common::ServiceStatus> prom = std::promise<telux::common::ServiceStatus>();
-    thermShutdownMgr_ = thermalFactory.getThermalShutdownManager(
-                            [&](telux::common::ServiceStatus status) {
-                                 prom.set_value(status);
-                            });
+    thermShutdownMgr_                               = thermalFactory.getThermalShutdownManager(
+        [&](telux::common::ServiceStatus status) { prom.set_value(status); });
     if (thermShutdownMgr_ == NULL) {
         std::cout << APP_NAME << " *** ERROR - Failed to get manager instance" << std::endl;
         return -1;
@@ -65,8 +64,10 @@ int ThermalCommandMgr::init() {
     if (serviceStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << APP_NAME << " Thermal-Shutdown management services are ready !" << std::endl;
     } else {
-        std::cout << APP_NAME << " *** ERROR - Unable to initialize Thermal-Shutdown management "
-                                 "services" << std::endl;
+        std::cout << APP_NAME
+                  << " *** ERROR - Unable to initialize Thermal-Shutdown management "
+                     "services"
+                  << std::endl;
         return -1;
     }
     myThermListener_ = std::make_shared<ThermalListener>(shared_from_this());
@@ -77,8 +78,8 @@ int ThermalCommandMgr::init() {
 void ThermalCommandMgr::waitForAsyncTaskToComplete() {
     {
         std::unique_lock<std::mutex> lock(myThermListener_->listenerMtx_);
-        myThermListener_->listenerCv_.wait(lock, [this]() {
-                return myThermListener_->taskCompleted_; });
+        myThermListener_->listenerCv_.wait(
+            lock, [this]() { return myThermListener_->taskCompleted_; });
     }
     std::lock_guard<std::mutex> lock(mgrMtx_);
     taskCompleted_ = true;
@@ -91,7 +92,7 @@ void ThermalCommandMgr::registerForUpdates() {
     telux::common::Status status = thermShutdownMgr_->registerListener(myThermListener_);
     if (status != telux::common::Status::SUCCESS) {
         std::cout << APP_NAME << " *** ERROR - Failed to register for auto-shutdown mode events"
-                << std::endl;
+                  << std::endl;
     } else {
         std::cout << APP_NAME << " Registered Listener for auto-shutdown mode events" << std::endl;
     }
@@ -102,7 +103,7 @@ void ThermalCommandMgr::deregisterForUpdates() {
     telux::common::Status status = thermShutdownMgr_->deregisterListener(myThermListener_);
     if (status != telux::common::Status::SUCCESS) {
         std::cout << APP_NAME << " *** ERROR - Failed to de-register for auto-shutdown mode events"
-                << std::endl;
+                  << std::endl;
     } else {
         std::cout << APP_NAME << " De-registered listener" << std::endl;
     }
@@ -110,7 +111,7 @@ void ThermalCommandMgr::deregisterForUpdates() {
 
 void ThermalCommandMgr::sendAutoShutdownModeCommand(AutoShutdownMode state) {
     std::string cmd, userInput;
-    int timeout = DEFAULT_TIMEOUT;
+    int timeout         = DEFAULT_TIMEOUT;
     bool defaultTimeout = false;
     telux::common::Status status;
     if (state == AutoShutdownMode::ENABLE) {
@@ -123,23 +124,23 @@ void ThermalCommandMgr::sendAutoShutdownModeCommand(AutoShutdownMode state) {
             defaultTimeout = true;
         } else {
             std::cout << "Enter petting timeout (in seconds) or -1 for default timeout( "
-                    << DEFAULT_TIMEOUT <<" seconds) ";
+                      << DEFAULT_TIMEOUT << " seconds) ";
             if (std::getline(std::cin, userInput)) {
                 std::stringstream inputStream(userInput);
                 if (!(inputStream >> timeout)) {
-                   std::cout << "Invalid input!" << std::endl;
-                   return;
+                    std::cout << "Invalid input!" << std::endl;
+                    return;
                 }
             } else {
                 std::cout << "Invalid input!" << std::endl;
             }
         }
-    std::cout << APP_NAME << " Sending DISABLE command" << std::endl;
+        std::cout << APP_NAME << " Sending DISABLE command" << std::endl;
     }
-    defaultTimeout = (timeout < 0) ? true : false ;
-    cmdRspCb_= std::make_shared<ThermalCommandCallback>(cmd);
-    auto RspCb = std::bind(&ThermalCommandCallback::commandResponse, cmdRspCb_,
-            std::placeholders::_1);
+    defaultTimeout = (timeout < 0) ? true : false;
+    cmdRspCb_      = std::make_shared<ThermalCommandCallback>(cmd);
+    auto RspCb
+        = std::bind(&ThermalCommandCallback::commandResponse, cmdRspCb_, std::placeholders::_1);
     if (defaultTimeout) {
         status = thermShutdownMgr_->setAutoShutdownMode(state, RspCb);
     } else {
@@ -148,8 +149,8 @@ void ThermalCommandMgr::sendAutoShutdownModeCommand(AutoShutdownMode state) {
     if (status == telux::common::Status::NOTREADY) {
         std::cout << APP_NAME << "Thermal Shutdown Mangement service is UNAVAILABLE" << std::endl;
     } else if (status != telux::common::Status::SUCCESS) {
-        std::cout << APP_NAME <<
-            " *** ERROR - Failed to send set auto-shutdown mode command" << std::endl;
+        std::cout << APP_NAME << " *** ERROR - Failed to send set auto-shutdown mode command"
+                  << std::endl;
     }
 }
 
@@ -159,24 +160,23 @@ void ThermalCommandMgr::sendRecurringDisableCommand() {
 }
 
 std::future<bool> ThermalCommandMgr::getAutoShutdownModeCommand() {
-    cmdRspCb_= std::make_shared<ThermalCommandCallback>("Get status: ");
-    telux::common::Status status =
-       thermShutdownMgr_->getAutoShutdownMode(
-          std::bind(&ThermalCommandCallback::getCmdResponse, cmdRspCb_, std::placeholders::_1));
+    cmdRspCb_                    = std::make_shared<ThermalCommandCallback>("Get status: ");
+    telux::common::Status status = thermShutdownMgr_->getAutoShutdownMode(
+        std::bind(&ThermalCommandCallback::getCmdResponse, cmdRspCb_, std::placeholders::_1));
 
     if (status == telux::common::Status::NOTREADY) {
         std::cout << APP_NAME << "Thermal Shutdown Mangement service is UNAVAILABLE" << std::endl;
     } else if (status != telux::common::Status::SUCCESS) {
-        std::cout << APP_NAME <<
-            " *** ERROR - Failed to send get auto-shutdown mode command" << std::endl;
+        std::cout << APP_NAME << " *** ERROR - Failed to send get auto-shutdown mode command"
+                  << std::endl;
     }
     return cmdRspCb_->getPromValue();
 }
 
 void ThermalCommandMgr::setAutoDisableFlag(bool disable) {
-   autoDisable_ = disable;
+    autoDisable_ = disable;
 }
 
 bool ThermalCommandMgr::getAutoDisableFlag() {
-  return autoDisable_;
+    return autoDisable_;
 }

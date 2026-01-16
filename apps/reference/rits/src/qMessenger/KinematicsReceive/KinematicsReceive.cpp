@@ -28,17 +28,17 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
- /**
-  * @file: KinematicsReceive.cpp
-  *
-  * @brief: Implementation of the KinematicsReceive.h
-  *
-  */
+/**
+ * @file: KinematicsReceive.cpp
+ *
+ * @brief: Implementation of the KinematicsReceive.h
+ *
+ */
 #include "KinematicsReceive.h"
 #include <chrono>
 #include <ctime>
@@ -52,15 +52,14 @@ mutex KinematicsReceive::sync;
 shared_ptr<ILocationInfoEx> LocListener::getLocation() {
     std::unique_lock<std::mutex> lck(locInfoMtx_);
     /*if no locationInfo, wait at most 1 sec unless locationInfo update or exit occur*/
-    if (locationInfo_ == nullptr && (!exit_) &&
-        !locInfoCv_.wait_for(lck, std::chrono::seconds(1),[this]{
-            return (locationInfo_!= nullptr || exit_ == true);
-        })) {
-            if(locationInfo_ == nullptr){
-                std::cerr << "location info is nullptr even after 1s\n";
-            }
+    if (locationInfo_ == nullptr && (!exit_)
+        && !locInfoCv_.wait_for(lck, std::chrono::seconds(1),
+            [this] { return (locationInfo_ != nullptr || exit_ == true); })) {
+        if (locationInfo_ == nullptr) {
+            std::cerr << "location info is nullptr even after 1s\n";
+        }
         std::cerr << "request for location was too fast. " << +exit_ << std::endl;
-    }else{
+    } else {
         std::cerr << "get location failed\n";
     }
     return locationInfo_;
@@ -72,7 +71,7 @@ void LocListener::close() {
     locInfoCv_.notify_all();
 }
 
-void LocListener::setLocCbFn(void(*locCbFn_)(shared_ptr<ILocationInfoEx> &locationInfo)){
+void LocListener::setLocCbFn(void (*locCbFn_)(shared_ptr<ILocationInfoEx> &locationInfo)) {
     locCbFunction_ = locCbFn_;
 }
 
@@ -80,7 +79,7 @@ void LocListener::onDetailedLocationUpdate(const shared_ptr<ILocationInfoEx> &lo
     static bool locInfoAvailable = false;
     lock_guard<mutex> lk(locInfoMtx_);
     locationInfo_ = locationInfo;
-    if(locCbFunction_){
+    if (locCbFunction_) {
         locCbFunction_(locationInfo_);
         if (not locInfoAvailable) {
             locInfoAvailable = true;
@@ -89,24 +88,25 @@ void LocListener::onDetailedLocationUpdate(const shared_ptr<ILocationInfoEx> &lo
     }
 }
 
-void KinematicsReceive::startDetailsCallback(ErrorCode error){
+void KinematicsReceive::startDetailsCallback(ErrorCode error) {
     if (ErrorCode::SUCCESS != error) {
         cout << "Error starting Details Report on Location.\n";
     }
 }
 
-LocListener::LocListener(){}
-LocListener::~LocListener(){
+LocListener::LocListener() {
+}
+LocListener::~LocListener() {
     close();
 }
 
-
-KinematicsReceive::KinematicsReceive(){}
-KinematicsReceive::~KinematicsReceive(){
+KinematicsReceive::KinematicsReceive() {
+}
+KinematicsReceive::~KinematicsReceive() {
     close();
 }
-shared_ptr<ILocationInfoEx> KinematicsReceive::getLocation(){
-    if(!KinematicsReceive::instance){
+shared_ptr<ILocationInfoEx> KinematicsReceive::getLocation() {
+    if (!KinematicsReceive::instance) {
         KinematicsReceive(this->interval);
     }
 
@@ -116,7 +116,7 @@ shared_ptr<ILocationInfoEx> KinematicsReceive::getLocation(){
     return nullptr;
 }
 
-KinematicsReceive::KinematicsReceive(uint16_t interval){
+KinematicsReceive::KinematicsReceive(uint16_t interval) {
     {
         lock_guard<mutex> lk(sync);
         if (!KinematicsReceive::instance) {
@@ -129,19 +129,18 @@ KinematicsReceive::KinematicsReceive(uint16_t interval){
 
     std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
     locationManager_ = locationFactory.getLocationManager([&prom](ServiceStatus status) {
-          if (status == ServiceStatus::SERVICE_AVAILABLE) {
-                prom.set_value(ServiceStatus::SERVICE_AVAILABLE);
-            } else {
-                prom.set_value(ServiceStatus::SERVICE_FAILED);
-            }
-        });
+        if (status == ServiceStatus::SERVICE_AVAILABLE) {
+            prom.set_value(ServiceStatus::SERVICE_AVAILABLE);
+        } else {
+            prom.set_value(ServiceStatus::SERVICE_FAILED);
+        }
+    });
     if (locationManager_ and prom.get_future().get() == ServiceStatus::SERVICE_AVAILABLE) {
         locListener_ = make_shared<LocListener>();
         // Registering a listener to get location fixes
         locationManager_->registerListenerEx(locListener_);
         // Starting the reports for fixes
-        auto respCallback = [&](ErrorCode error){
-                            startDetailsCallback(error); };
+        auto respCallback = [&](ErrorCode error) { startDetailsCallback(error); };
         locationManager_->startDetailedReports(interval, respCallback);
     } else {
         // release location manager if it's created but service unavailable
@@ -154,7 +153,7 @@ KinematicsReceive::KinematicsReceive(uint16_t interval){
 }
 
 KinematicsReceive::KinematicsReceive(
-    std::vector<std::shared_ptr<ILocationListener>> locListeners, uint16_t interval){
+    std::vector<std::shared_ptr<ILocationListener>> locListeners, uint16_t interval) {
     {
         lock_guard<mutex> lk(sync);
         if (!KinematicsReceive::instance) {
@@ -167,23 +166,22 @@ KinematicsReceive::KinematicsReceive(
 
     std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
     locationManager_ = locationFactory.getLocationManager([&prom](ServiceStatus status) {
-          if (status == ServiceStatus::SERVICE_AVAILABLE) {
-                prom.set_value(ServiceStatus::SERVICE_AVAILABLE);
-            } else {
-                prom.set_value(ServiceStatus::SERVICE_FAILED);
-            }
-        });
+        if (status == ServiceStatus::SERVICE_AVAILABLE) {
+            prom.set_value(ServiceStatus::SERVICE_AVAILABLE);
+        } else {
+            prom.set_value(ServiceStatus::SERVICE_FAILED);
+        }
+    });
     if (locationManager_ and prom.get_future().get() == ServiceStatus::SERVICE_AVAILABLE) {
         for (auto &listener : locListeners) {
             // Registering a listener to get location fixes
-            if(listener != nullptr){
+            if (listener != nullptr) {
                 locationManager_->registerListenerEx(listener);
                 locListeners_.push_back(listener);
             }
         }
         // Starting the reports for fixes
-        auto respCallback = [&](ErrorCode error){
-                            startDetailsCallback(error); };
+        auto respCallback = [&](ErrorCode error) { startDetailsCallback(error); };
         locationManager_->startDetailedReports(interval, respCallback);
     } else {
         // release location manager if it's created but service unavailable
@@ -195,16 +193,15 @@ KinematicsReceive::KinematicsReceive(
     this->interval = interval;
 }
 
-void KinematicsReceive::responseCallback(ErrorCode errorCode){
-    if(errorCode != ErrorCode::SUCCESS){
+void KinematicsReceive::responseCallback(ErrorCode errorCode) {
+    if (errorCode != ErrorCode::SUCCESS) {
         std::cerr << "Error occurred for report stop. " << (int)errorCode << "\n";
     }
 }
 
-void KinematicsReceive::close(){
+void KinematicsReceive::close() {
     if (locationManager_) {
-        auto respCallback = [&](ErrorCode error){
-                            responseCallback(error); };
+        auto respCallback = [&](ErrorCode error) { responseCallback(error); };
         locationManager_->stopReports(respCallback);
         if (locListener_) {
             locationManager_->deRegisterListenerEx(locListener_);
@@ -215,7 +212,7 @@ void KinematicsReceive::close(){
         }
     }
 
-    if(locationManager_){
+    if (locationManager_) {
         locationManager_.reset();
     }
 }

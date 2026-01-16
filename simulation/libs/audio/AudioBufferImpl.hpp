@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef AUDIOBUFFERIMPL_HPP
@@ -20,8 +20,8 @@ namespace audio {
 class AudioBufferImpl : virtual public IAudioBuffer {
 
  public:
-    AudioBufferImpl(uint32_t minBufferSize, uint32_t maxBufferSize,
-        uint32_t actualDataoffset, uint32_t bufferWrapperSize);
+    AudioBufferImpl(uint32_t minBufferSize, uint32_t maxBufferSize, uint32_t actualDataoffset,
+        uint32_t bufferWrapperSize);
 
     ~AudioBufferImpl();
 
@@ -40,15 +40,15 @@ class AudioBufferImpl : virtual public IAudioBuffer {
     uint8_t *getTransportBuffer(void);
 
  private:
-    uint32_t dataSize_ = 0;
-    uint32_t minBufferSize_ = 0;
-    uint32_t maxBufferSize_ = 0;
+    uint32_t dataSize_          = 0;
+    uint32_t minBufferSize_     = 0;
+    uint32_t maxBufferSize_     = 0;
     uint32_t bufferWrapperSize_ = 0;
-    uint32_t actualDataoffset_ = 0;
-    uint8_t *bufferWrapper_ = nullptr;
+    uint32_t actualDataoffset_  = 0;
+    uint8_t *bufferWrapper_     = nullptr;
 };
 
 }  // end of namespace audio
 }  // end of namespace telux
 
-#endif // AUDIOBUFFERIMPL_HPP
+#endif  // AUDIOBUFFERIMPL_HPP

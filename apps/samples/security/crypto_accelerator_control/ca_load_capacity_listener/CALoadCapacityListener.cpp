@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <chrono>
@@ -55,14 +55,13 @@ int main(int argc, char **argv) {
     /* Step - 2 */
     caCtrlMgr = secFact.getCAControlManager(ec);
     if (!caCtrlMgr) {
-        std::cout <<
-         "can't get ICAControlManager, err " << static_cast<int>(ec) << std::endl;
+        std::cout << "can't get ICAControlManager, err " << static_cast<int>(ec) << std::endl;
         return -ENOMEM;
     }
 
     try {
         statsListener = std::make_shared<StatsListener>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "can't create StatsListener" << std::endl;
         return -ENOMEM;
     }
@@ -76,7 +75,7 @@ int main(int argc, char **argv) {
 
     /* Step - 5 */
     loadConfig.calculationInterval = 100; /* 100 milliseconds */
-    ec = caCtrlMgr->startMonitoring(loadConfig);
+    ec                             = caCtrlMgr->startMonitoring(loadConfig);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         std::cout << "can't start monitoring, " << static_cast<int>(ec) << std::endl;
         caCtrlMgr->deRegisterListener(statsListener);

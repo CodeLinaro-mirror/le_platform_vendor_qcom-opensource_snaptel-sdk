@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef CV2X_THROTTLE_MANAGER_STUB_HPP
@@ -28,9 +28,8 @@ class Cv2xThrottleEventListener : public IEventListener {
         std::shared_ptr<telux::common::ListenerManager<telux::cv2x::ICv2xThrottleManagerListener>>);
 
  private:
-    std::shared_ptr<telux::common::ListenerManager<
-                        telux::cv2x::ICv2xThrottleManagerListener>> listenerMgr_;
-
+    std::shared_ptr<telux::common::ListenerManager<telux::cv2x::ICv2xThrottleManagerListener>>
+        listenerMgr_;
 };
 
 class Cv2xThrottleManagerStub : public ICv2xThrottleManager,
@@ -54,8 +53,8 @@ class Cv2xThrottleManagerStub : public ICv2xThrottleManager,
 
     void initSync(telux::common::InitResponseCb callback);
     telux::common::AsyncTaskQueue<void> taskQ_;
-    std::shared_ptr<telux::common::ListenerManager<
-                        telux::cv2x::ICv2xThrottleManagerListener>> listenerMgr_;
+    std::shared_ptr<telux::common::ListenerManager<telux::cv2x::ICv2xThrottleManagerListener>>
+        listenerMgr_;
     std::shared_ptr<Cv2xThrottleEventListener> throttleEvtListener_;
 };
 

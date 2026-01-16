@@ -20,11 +20,11 @@ namespace telux {
 namespace data {
 namespace net {
 
-NatManagerStub::NatManagerStub (telux::data::OperationType oprType)
-: oprType_(oprType) {
+NatManagerStub::NatManagerStub(telux::data::OperationType oprType)
+   : oprType_(oprType) {
     LOG(DEBUG, __FUNCTION__);
-    taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
-    listenerMgr_ = std::make_shared<telux::common::ListenerManager<INatListener>>();
+    taskQ_           = std::make_shared<AsyncTaskQueue<void>>();
+    listenerMgr_     = std::make_shared<telux::common::ListenerManager<INatListener>>();
     subSystemStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
 }
 
@@ -39,9 +39,8 @@ telux::common::Status NatManagerStub::init(telux::common::InitResponseCb callbac
     LOG(DEBUG, __FUNCTION__);
 
     initCb_ = callback;
-    auto f =
-        std::async(std::launch::async, [this, callback]() {
-        this->initSync(callback);}).share();
+    auto f
+        = std::async(std::launch::async, [this, callback]() { this->initSync(callback); }).share();
     taskQ_->add(f);
 
     return telux::common::Status::SUCCESS;
@@ -58,10 +57,9 @@ void NatManagerStub::initSync(telux::common::InitResponseCb callback) {
     ClientContext context;
 
     request.set_operation_type(::dataStub::OperationType(oprType_));
-    grpc::Status reqStatus = stub_->InitService(&context, request, &response);
-    telux::common::ServiceStatus cbStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
-    int cbDelay = DEFAULT_DELAY;
+    grpc::Status reqStatus                = stub_->InitService(&context, request, &response);
+    telux::common::ServiceStatus cbStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    int cbDelay                           = DEFAULT_DELAY;
 
     do {
         if (!reqStatus.ok()) {
@@ -69,23 +67,21 @@ void NatManagerStub::initSync(telux::common::InitResponseCb callback) {
             break;
         }
 
-        cbStatus =
-            static_cast<telux::common::ServiceStatus>(response.service_status());
-        cbDelay = static_cast<int>(response.delay());
+        cbStatus = static_cast<telux::common::ServiceStatus>(response.service_status());
+        cbDelay  = static_cast<int>(response.delay());
 
         this->onServiceStatusChange(cbStatus);
         LOG(DEBUG, __FUNCTION__, " ServiceStatus: ", static_cast<int>(cbStatus));
     } while (0);
 
-    bool isSubsystemReady = (cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE)?
-        true : false;
+    bool isSubsystemReady
+        = (cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) ? true : false;
     setSubSystemStatus(cbStatus);
     setSubsystemReady(isSubsystemReady);
 
     if (callback && (cbDelay != SKIP_CALLBACK)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay,
-            " cbStatus::", static_cast<int>(cbStatus));
+        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", static_cast<int>(cbStatus));
         invokeInitCallback(cbStatus);
     }
 }
@@ -97,15 +93,12 @@ void NatManagerStub::invokeInitCallback(telux::common::ServiceStatus status) {
     }
 }
 
-void NatManagerStub::invokeCallback(telux::common::ResponseCallback callback,
-    telux::common::ErrorCode error, int cbDelay ) {
+void NatManagerStub::invokeCallback(
+    telux::common::ResponseCallback callback, telux::common::ErrorCode error, int cbDelay) {
     LOG(DEBUG, __FUNCTION__);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-    auto f = std::async(std::launch::async,
-        [this, error , callback]() {
-            callback(error);
-        }).share();
+    auto f = std::async(std::launch::async, [this, error, callback]() { callback(error); }).share();
     taskQ_->add(f);
 }
 
@@ -118,8 +111,8 @@ void NatManagerStub::setSubsystemReady(bool status) {
 
 std::future<bool> NatManagerStub::onSubsystemReady() {
     LOG(DEBUG, __FUNCTION__);
-    auto future = std::async(
-        std::launch::async, [&] { return NatManagerStub::waitForInitialization(); });
+    auto future
+        = std::async(std::launch::async, [&] { return NatManagerStub::waitForInitialization(); });
     return future;
 }
 
@@ -148,9 +141,8 @@ bool NatManagerStub::isSubsystemReady() {
     return ready_;
 }
 
-telux::common::Status NatManagerStub::addStaticNatEntry(int profileId,
-    const NatConfig &snatConfig, telux::common::ResponseCallback callback,
-    SlotId slotId) {
+telux::common::Status NatManagerStub::addStaticNatEntry(int profileId, const NatConfig &snatConfig,
+    telux::common::ResponseCallback callback, SlotId slotId) {
     LOG(DEBUG, __FUNCTION__);
 
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
@@ -163,7 +155,7 @@ telux::common::Status NatManagerStub::addStaticNatEntry(int profileId,
     ClientContext context;
     request.mutable_static_nat_entry()->set_operation_type(::dataStub::OperationType(oprType_));
     request.mutable_static_nat_entry()->set_backhaul_type(
-            ::dataStub::BackhaulPreference::PREF_WWAN);
+        ::dataStub::BackhaulPreference::PREF_WWAN);
     request.mutable_static_nat_entry()->set_profile_id(profileId);
     request.mutable_static_nat_entry()->set_slot_id(slotId);
     request.mutable_static_nat_entry()->mutable_nat_config()->set_address(snatConfig.addr);
@@ -176,12 +168,12 @@ telux::common::Status NatManagerStub::addStaticNatEntry(int profileId,
     grpc::Status reqStatus = stub_->AddStaticNatEntry(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
-    error = static_cast<telux::common::ErrorCode>(response.error());
+    error  = static_cast<telux::common::ErrorCode>(response.error());
     status = static_cast<telux::common::Status>(response.status());
-    delay = static_cast<int>(response.delay());
+    delay  = static_cast<int>(response.delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -190,10 +182,9 @@ telux::common::Status NatManagerStub::addStaticNatEntry(int profileId,
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCallback(callback, error, delay);
-                }).share();
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     }
@@ -201,8 +192,8 @@ telux::common::Status NatManagerStub::addStaticNatEntry(int profileId,
     return status;
 }
 
-telux::common::Status NatManagerStub::addStaticNatEntry(const BackhaulInfo &bhInfo, const NatConfig
-        &snatConfig, telux::common::ResponseCallback callback) {
+telux::common::Status NatManagerStub::addStaticNatEntry(const BackhaulInfo &bhInfo,
+    const NatConfig &snatConfig, telux::common::ResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__);
 
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
@@ -217,12 +208,12 @@ telux::common::Status NatManagerStub::addStaticNatEntry(const BackhaulInfo &bhIn
     request.mutable_static_nat_entry()->set_operation_type(::dataStub::OperationType(oprType_));
     if (bhInfo.backhaul == telux::data::BackhaulType::WWAN) {
         request.mutable_static_nat_entry()->set_backhaul_type(
-                ::dataStub::BackhaulPreference::PREF_WWAN);
+            ::dataStub::BackhaulPreference::PREF_WWAN);
         request.mutable_static_nat_entry()->set_profile_id(bhInfo.profileId);
         request.mutable_static_nat_entry()->set_slot_id(bhInfo.slotId);
     } else if (bhInfo.backhaul == telux::data::BackhaulType::ETH) {
         request.mutable_static_nat_entry()->set_backhaul_type(
-                ::dataStub::BackhaulPreference::PREF_ETH);
+            ::dataStub::BackhaulPreference::PREF_ETH);
         request.mutable_static_nat_entry()->set_vlan_id(bhInfo.vlanId);
     } else if (bhInfo.backhaul == telux::data::BackhaulType::WLAN) {
         request.mutable_static_nat_entry()->set_backhaul_type(
@@ -242,12 +233,12 @@ telux::common::Status NatManagerStub::addStaticNatEntry(const BackhaulInfo &bhIn
     grpc::Status reqStatus = stub_->AddStaticNatEntry(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
-    error = static_cast<telux::common::ErrorCode>(response.error());
+    error  = static_cast<telux::common::ErrorCode>(response.error());
     status = static_cast<telux::common::Status>(response.status());
-    delay = static_cast<int>(response.delay());
+    delay  = static_cast<int>(response.delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -256,10 +247,9 @@ telux::common::Status NatManagerStub::addStaticNatEntry(const BackhaulInfo &bhIn
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCallback(callback, error, delay);
-                }).share();
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     }
@@ -268,9 +258,8 @@ telux::common::Status NatManagerStub::addStaticNatEntry(const BackhaulInfo &bhIn
 }
 
 telux::common::Status NatManagerStub::removeStaticNatEntry(int profileId,
-    const NatConfig &snatConfig, telux::common::ResponseCallback callback,
-    SlotId slotId) {
-     LOG(DEBUG, __FUNCTION__);
+    const NatConfig &snatConfig, telux::common::ResponseCallback callback, SlotId slotId) {
+    LOG(DEBUG, __FUNCTION__);
 
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, " Nat manager not ready");
@@ -283,7 +272,7 @@ telux::common::Status NatManagerStub::removeStaticNatEntry(int profileId,
 
     request.mutable_static_nat_entry()->set_operation_type(::dataStub::OperationType(oprType_));
     request.mutable_static_nat_entry()->set_backhaul_type(
-            ::dataStub::BackhaulPreference::PREF_WWAN);
+        ::dataStub::BackhaulPreference::PREF_WWAN);
     request.mutable_static_nat_entry()->set_profile_id(profileId);
     request.mutable_static_nat_entry()->set_slot_id(slotId);
     request.mutable_static_nat_entry()->mutable_nat_config()->set_address(snatConfig.addr);
@@ -296,12 +285,12 @@ telux::common::Status NatManagerStub::removeStaticNatEntry(int profileId,
     grpc::Status reqStatus = stub_->RemoveStaticNatEntry(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
-    error = static_cast<telux::common::ErrorCode>(response.error());
+    error  = static_cast<telux::common::ErrorCode>(response.error());
     status = static_cast<telux::common::Status>(response.status());
-    delay = static_cast<int>(response.delay());
+    delay  = static_cast<int>(response.delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -310,10 +299,9 @@ telux::common::Status NatManagerStub::removeStaticNatEntry(int profileId,
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCallback(callback, error, delay);
-                }).share();
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     }
@@ -321,8 +309,8 @@ telux::common::Status NatManagerStub::removeStaticNatEntry(int profileId,
     return status;
 }
 
-telux::common::Status NatManagerStub::removeStaticNatEntry(const BackhaulInfo &bhInfo, const
-        NatConfig &snatConfig, telux::common::ResponseCallback callback) {
+telux::common::Status NatManagerStub::removeStaticNatEntry(const BackhaulInfo &bhInfo,
+    const NatConfig &snatConfig, telux::common::ResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__);
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, " Nat manager not ready");
@@ -336,16 +324,16 @@ telux::common::Status NatManagerStub::removeStaticNatEntry(const BackhaulInfo &b
     request.mutable_static_nat_entry()->set_operation_type(::dataStub::OperationType(oprType_));
     if (bhInfo.backhaul == telux::data::BackhaulType::WWAN) {
         request.mutable_static_nat_entry()->set_backhaul_type(
-                ::dataStub::BackhaulPreference::PREF_WWAN);
+            ::dataStub::BackhaulPreference::PREF_WWAN);
         request.mutable_static_nat_entry()->set_profile_id(bhInfo.profileId);
         request.mutable_static_nat_entry()->set_slot_id(bhInfo.slotId);
     } else if (bhInfo.backhaul == telux::data::BackhaulType::ETH) {
         request.mutable_static_nat_entry()->set_backhaul_type(
-                ::dataStub::BackhaulPreference::PREF_ETH);
+            ::dataStub::BackhaulPreference::PREF_ETH);
         request.mutable_static_nat_entry()->set_vlan_id(bhInfo.vlanId);
     } else if (bhInfo.backhaul == telux::data::BackhaulType::WLAN) {
         request.mutable_static_nat_entry()->set_backhaul_type(
-                ::dataStub::BackhaulPreference::PREF_WLAN);
+            ::dataStub::BackhaulPreference::PREF_WLAN);
     } else {
         return telux::common::Status::NOTSUPPORTED;
     }
@@ -360,12 +348,12 @@ telux::common::Status NatManagerStub::removeStaticNatEntry(const BackhaulInfo &b
     grpc::Status reqStatus = stub_->RemoveStaticNatEntry(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
-    error = static_cast<telux::common::ErrorCode>(response.error());
+    error  = static_cast<telux::common::ErrorCode>(response.error());
     status = static_cast<telux::common::Status>(response.status());
-    delay = static_cast<int>(response.delay());
+    delay  = static_cast<int>(response.delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -374,10 +362,9 @@ telux::common::Status NatManagerStub::removeStaticNatEntry(const BackhaulInfo &b
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCallback(callback, error, delay);
-                }).share();
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     }
@@ -385,8 +372,8 @@ telux::common::Status NatManagerStub::removeStaticNatEntry(const BackhaulInfo &b
     return status;
 }
 
-telux::common::Status NatManagerStub::requestStaticNatEntries(int profileId,
-    StaticNatEntriesCb snatEntriesCb, SlotId slotId) {
+telux::common::Status NatManagerStub::requestStaticNatEntries(
+    int profileId, StaticNatEntriesCb snatEntriesCb, SlotId slotId) {
     LOG(DEBUG, __FUNCTION__);
 
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
@@ -406,12 +393,12 @@ telux::common::Status NatManagerStub::requestStaticNatEntries(int profileId,
     grpc::Status reqStatus = stub_->RequestStaticNatEntries(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
-    error = static_cast<telux::common::ErrorCode>(response.reply().error());
+    error  = static_cast<telux::common::ErrorCode>(response.reply().error());
     status = static_cast<telux::common::Status>(response.reply().status());
-    delay = static_cast<int>(response.reply().delay());
+    delay  = static_cast<int>(response.reply().delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -421,17 +408,17 @@ telux::common::Status NatManagerStub::requestStaticNatEntries(int profileId,
         std::vector<NatConfig> snatEntries;
         for (int idx = 0; idx < response.nat_config_size(); idx++) {
             NatConfig obj;
-            obj.addr = response.mutable_nat_config(idx)->address();
-            obj.port = response.mutable_nat_config(idx)->port();
+            obj.addr       = response.mutable_nat_config(idx)->address();
+            obj.port       = response.mutable_nat_config(idx)->port();
             obj.globalPort = response.mutable_nat_config(idx)->global_port();
-            obj.proto = DataUtilsStub::stringToProtocol(
-                response.mutable_nat_config(idx)->ip_protocol());
+            obj.proto
+                = DataUtilsStub::stringToProtocol(response.mutable_nat_config(idx)->ip_protocol());
             snatEntries.push_back(obj);
         }
 
         if (snatEntriesCb && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, snatEntries, snatEntriesCb, delay]() {
+            auto f1 = std::async(
+                std::launch::async, [this, error, snatEntries, snatEntriesCb, delay]() {
                     std::this_thread::sleep_for(std::chrono::milliseconds(delay));
                     snatEntriesCb(snatEntries, error);
                 }).share();
@@ -442,8 +429,8 @@ telux::common::Status NatManagerStub::requestStaticNatEntries(int profileId,
     return status;
 }
 
-telux::common::Status NatManagerStub::requestStaticNatEntries(const BackhaulInfo &bhInfo,
-        StaticNatEntriesCb snatEntriesCb) {
+telux::common::Status NatManagerStub::requestStaticNatEntries(
+    const BackhaulInfo &bhInfo, StaticNatEntriesCb snatEntriesCb) {
     LOG(DEBUG, __FUNCTION__);
 
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
@@ -472,12 +459,12 @@ telux::common::Status NatManagerStub::requestStaticNatEntries(const BackhaulInfo
     grpc::Status reqStatus = stub_->RequestStaticNatEntries(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
-    error = static_cast<telux::common::ErrorCode>(response.reply().error());
+    error  = static_cast<telux::common::ErrorCode>(response.reply().error());
     status = static_cast<telux::common::Status>(response.reply().status());
-    delay = static_cast<int>(response.reply().delay());
+    delay  = static_cast<int>(response.reply().delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -487,17 +474,17 @@ telux::common::Status NatManagerStub::requestStaticNatEntries(const BackhaulInfo
         std::vector<NatConfig> snatEntries;
         for (int idx = 0; idx < response.nat_config_size(); idx++) {
             NatConfig obj;
-            obj.addr = response.mutable_nat_config(idx)->address();
-            obj.port = response.mutable_nat_config(idx)->port();
+            obj.addr       = response.mutable_nat_config(idx)->address();
+            obj.port       = response.mutable_nat_config(idx)->port();
             obj.globalPort = response.mutable_nat_config(idx)->global_port();
-            obj.proto = DataUtilsStub::stringToProtocol(
-                response.mutable_nat_config(idx)->ip_protocol());
+            obj.proto
+                = DataUtilsStub::stringToProtocol(response.mutable_nat_config(idx)->ip_protocol());
             snatEntries.push_back(obj);
         }
 
         if (snatEntriesCb && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, snatEntries, snatEntriesCb, delay]() {
+            auto f1 = std::async(
+                std::launch::async, [this, error, snatEntries, snatEntriesCb, delay]() {
                     std::this_thread::sleep_for(std::chrono::milliseconds(delay));
                     snatEntriesCb(snatEntries, error);
                 }).share();
@@ -513,14 +500,12 @@ telux::data::OperationType NatManagerStub::getOperationType() {
     return oprType_;
 }
 
-telux::common::Status NatManagerStub::registerListener(
-    std::weak_ptr<INatListener> listener) {
+telux::common::Status NatManagerStub::registerListener(std::weak_ptr<INatListener> listener) {
     LOG(DEBUG, __FUNCTION__);
     return listenerMgr_->registerListener(listener);
 }
 
-telux::common::Status NatManagerStub::deregisterListener(
-    std::weak_ptr<INatListener> listener) {
+telux::common::Status NatManagerStub::deregisterListener(std::weak_ptr<INatListener> listener) {
     LOG(DEBUG, __FUNCTION__);
     return listenerMgr_->deRegisterListener(listener);
 }
@@ -540,6 +525,6 @@ void NatManagerStub::onServiceStatusChange(ServiceStatus status) {
     }
 }
 
-} // end of namespace net
-} // end of namespace data
-} // end of namespace telux
+}  // end of namespace net
+}  // end of namespace data
+}  // end of namespace telux

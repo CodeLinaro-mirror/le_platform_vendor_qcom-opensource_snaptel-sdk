@@ -26,9 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -46,19 +47,17 @@
 #include <string>
 #include <iomanip>
 
-
 #include "console_app_framework/ConsoleApp.hpp"
 
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
 #include <telux/data/net/NatManager.hpp>
 
-
 using namespace telux::data;
 using namespace telux::common;
 using namespace telux::data::net;
 
-class SnatMenu : public ConsoleApp ,
+class SnatMenu : public ConsoleApp,
                  public INatListener,
                  public std::enable_shared_from_this<SnatMenu> {
  public:
@@ -74,11 +73,12 @@ class SnatMenu : public ConsoleApp ,
     void removeStaticNatEntry_V1(std::vector<std::string> inputCommand);
     void requestStaticNatEntries_V1(std::vector<std::string> inputCommand);
 
-    //Initialization callback
+    // Initialization callback
     void onInitComplete(telux::common::ServiceStatus status);
 
     SnatMenu(std::string appName, std::string cursor);
     ~SnatMenu();
+
  private:
     bool menuOptionsAdded_;
     bool subSystemStatusUpdated_;

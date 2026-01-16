@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef FILEMETHOD_HPP
@@ -12,8 +12,7 @@
 
 #include "CollectionMethod.hpp"
 
-class FileMethod : public CollectionMethod,
-                   public std::enable_shared_from_this<FileMethod> {
+class FileMethod : public CollectionMethod, public std::enable_shared_from_this<FileMethod> {
  public:
     FileMethod(std::string menuTitle, std::string cursor,
         std::shared_ptr<telux::platform::diag::IDiagLogManager> diagMgr);
@@ -22,4 +21,4 @@ class FileMethod : public CollectionMethod,
     void showFileMenu();
 };
 
-#endif // FILEMETHOD_HPP
+#endif  // FILEMETHOD_HPP

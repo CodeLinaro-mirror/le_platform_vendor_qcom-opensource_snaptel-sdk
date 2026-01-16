@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "CellularSecurityManagerImpl.hpp"
@@ -9,7 +9,7 @@ namespace telux {
 namespace sec {
 
 CellularSecurityManagerImpl::CellularSecurityManagerImpl()
-    : clientEventMgr_(ClientEventManager::getInstance()) {
+   : clientEventMgr_(ClientEventManager::getInstance()) {
     exitNow_ = false;
 }
 
@@ -70,8 +70,8 @@ telux::common::ErrorCode CellularSecurityManagerImpl::disconnectCCS(bool isExiti
 
     if (!isExiting_) {
         status = clientEventMgr_.deregisterListener(shared_from_this(), CCS_FILTER);
-        if ((status != telux::common::Status::SUCCESS) &&
-            (status != telux::common::Status::ALREADY)) {
+        if ((status != telux::common::Status::SUCCESS)
+            && (status != telux::common::Status::ALREADY)) {
             LOG(ERROR, __FUNCTION__, " can't deregister with ClientEventManager");
             /* don't treat fatal */
         }
@@ -106,8 +106,7 @@ telux::common::ErrorCode CellularSecurityManagerImpl::reconnectCCS() {
     telux::common::Status status;
 
     status = clientEventMgr_.registerListener(shared_from_this(), CCS_FILTER);
-    if ((status != telux::common::Status::SUCCESS) &&
-        (status != telux::common::Status::ALREADY)) {
+    if ((status != telux::common::Status::SUCCESS) && (status != telux::common::Status::ALREADY)) {
         LOG(ERROR, __FUNCTION__, " can't register with ClientEventManager");
         return telux::common::CommonUtils::toErrorCode(status);
     }
@@ -141,8 +140,8 @@ telux::common::ErrorCode CellularSecurityManagerImpl::registerListener(
     telux::common::Status status;
     std::vector<std::weak_ptr<telux::common::ISDKListener>> listenerList;
 
-    if (serviceStatus_ == ServiceStatus::SERVICE_UNAVAILABLE ||
-        serviceStatus_ == ServiceStatus::SERVICE_FAILED) {
+    if (serviceStatus_ == ServiceStatus::SERVICE_UNAVAILABLE
+        || serviceStatus_ == ServiceStatus::SERVICE_FAILED) {
         LOG(ERROR, __FUNCTION__, " Service is unavailable or failed");
         return telux::common::ErrorCode::SYSTEM_ERR;
     }
@@ -162,8 +161,8 @@ telux::common::ErrorCode CellularSecurityManagerImpl::registerListener(
         }
 
         try {
-            csListenerMgr_ = std::make_shared<
-                telux::common::ListenerManager<ICellularScanReportListener>>();
+            csListenerMgr_
+                = std::make_shared<telux::common::ListenerManager<ICellularScanReportListener>>();
         } catch (const std::exception &e) {
             LOG(ERROR, __FUNCTION__, " can't create listeners manager");
             return telux::common::ErrorCode::NO_MEMORY;
@@ -215,8 +214,8 @@ telux::common::ErrorCode CellularSecurityManagerImpl::deRegisterListener(
     telux::common::Status status;
     std::vector<std::weak_ptr<ICellularScanReportListener>> listenerList;
 
-    if (serviceStatus_ == ServiceStatus::SERVICE_UNAVAILABLE ||
-        serviceStatus_ == ServiceStatus::SERVICE_FAILED) {
+    if (serviceStatus_ == ServiceStatus::SERVICE_UNAVAILABLE
+        || serviceStatus_ == ServiceStatus::SERVICE_FAILED) {
         LOG(ERROR, __FUNCTION__, " Service is unavailable or failed");
         return telux::common::ErrorCode::SYSTEM_ERR;
     }
@@ -254,7 +253,7 @@ telux::common::ErrorCode CellularSecurityManagerImpl::deRegisterListener(
             /* clean up resources as there is no listener */
             reportAndSSRDispatcher_ = nullptr;
             csListenerMgr_          = nullptr;
-            listenerExist_ = false;
+            listenerExist_          = false;
         }
 
         return telux::common::ErrorCode::SUCCESS;
@@ -271,8 +270,8 @@ telux::common::ErrorCode CellularSecurityManagerImpl::getCurrentSessionStats(
     telux::common::ErrorCode ec{};
     ::securityStub::SessionStats response{};
 
-    if (serviceStatus_ == ServiceStatus::SERVICE_UNAVAILABLE ||
-        serviceStatus_ == ServiceStatus::SERVICE_FAILED) {
+    if (serviceStatus_ == ServiceStatus::SERVICE_UNAVAILABLE
+        || serviceStatus_ == ServiceStatus::SERVICE_FAILED) {
         LOG(ERROR, __FUNCTION__, " Service is unavailable or failed");
         return telux::common::ErrorCode::SYSTEM_ERR;
     }
@@ -290,9 +289,9 @@ telux::common::ErrorCode CellularSecurityManagerImpl::getCurrentSessionStats(
             return ec;
         }
 
-        sessionStats.reportsCount = response.indication_count();
+        sessionStats.reportsCount          = response.indication_count();
         sessionStats.thresholdCrossedCount = response.hostile_score_count();
-        sessionStats.averageThreatScore = response.average_score();
+        sessionStats.averageThreatScore    = response.average_score();
         sessionStats.anyActionTaken = static_cast<bool>(response.was_countermeasure_enacted());
 
         if (!(response.most_recent_policy_acted().compare("No Action"))) {
@@ -318,17 +317,17 @@ telux::common::ErrorCode CellularSecurityManagerImpl::getCurrentSessionStats(
     }
 }
 
-int32_t CellularSecurityManagerImpl::rawReportHandler(::securityStub::CCSReport ccsReport,
-    void *cookie) {
+int32_t CellularSecurityManagerImpl::rawReportHandler(
+    ::securityStub::CCSReport ccsReport, void *cookie) {
 
     EnvironmentInfo environmentInfo{};
     CellularSecurityReport finalReport{};
 
     finalReport.threatScore = ccsReport.score();
-    finalReport.cellId = ccsReport.cid();
-    finalReport.pid = ccsReport.pid();
-    finalReport.mcc = std::to_string(ccsReport.mcc());
-    finalReport.mnc = std::to_string(ccsReport.mnc());
+    finalReport.cellId      = ccsReport.cid();
+    finalReport.pid         = ccsReport.pid();
+    finalReport.mcc         = std::to_string(ccsReport.mcc());
+    finalReport.mnc         = std::to_string(ccsReport.mnc());
 
     populateThreatTypes(ccsReport.category(), finalReport.threats);
     populatePolicy(ccsReport.policy_acted(), finalReport.actionType);
@@ -434,8 +433,7 @@ void CellularSecurityManagerImpl::populateRAT(ssgccs_radio_enum_t radio, RATType
     }
 }
 
-void CellularSecurityManagerImpl::populatePolicy(
-    uint32_t policyActed, ActionType &actionType) {
+void CellularSecurityManagerImpl::populatePolicy(uint32_t policyActed, ActionType &actionType) {
 
     switch (policyActed) {
         case POLICY_NO_ACTION:

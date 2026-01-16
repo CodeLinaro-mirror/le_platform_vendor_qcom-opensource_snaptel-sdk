@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_PositionOfOccupants_H_
-#define	_PositionOfOccupants_H_
-
+#ifndef _PositionOfOccupants_H_
+#define _PositionOfOccupants_H_
 
 #include <asn_application.h>
 
@@ -20,30 +19,30 @@ extern "C" {
 
 /* Dependencies */
 typedef enum PositionOfOccupants {
-	PositionOfOccupants_row1LeftOccupied	= 0,
-	PositionOfOccupants_row1RightOccupied	= 1,
-	PositionOfOccupants_row1MidOccupied	= 2,
-	PositionOfOccupants_row1NotDetectable	= 3,
-	PositionOfOccupants_row1NotPresent	= 4,
-	PositionOfOccupants_row2LeftOccupied	= 5,
-	PositionOfOccupants_row2RightOccupied	= 6,
-	PositionOfOccupants_row2MidOccupied	= 7,
-	PositionOfOccupants_row2NotDetectable	= 8,
-	PositionOfOccupants_row2NotPresent	= 9,
-	PositionOfOccupants_row3LeftOccupied	= 10,
-	PositionOfOccupants_row3RightOccupied	= 11,
-	PositionOfOccupants_row3MidOccupied	= 12,
-	PositionOfOccupants_row3NotDetectable	= 13,
-	PositionOfOccupants_row3NotPresent	= 14,
-	PositionOfOccupants_row4LeftOccupied	= 15,
-	PositionOfOccupants_row4RightOccupied	= 16,
-	PositionOfOccupants_row4MidOccupied	= 17,
-	PositionOfOccupants_row4NotDetectable	= 18,
-	PositionOfOccupants_row4NotPresent	= 19
+    PositionOfOccupants_row1LeftOccupied  = 0,
+    PositionOfOccupants_row1RightOccupied = 1,
+    PositionOfOccupants_row1MidOccupied   = 2,
+    PositionOfOccupants_row1NotDetectable = 3,
+    PositionOfOccupants_row1NotPresent    = 4,
+    PositionOfOccupants_row2LeftOccupied  = 5,
+    PositionOfOccupants_row2RightOccupied = 6,
+    PositionOfOccupants_row2MidOccupied   = 7,
+    PositionOfOccupants_row2NotDetectable = 8,
+    PositionOfOccupants_row2NotPresent    = 9,
+    PositionOfOccupants_row3LeftOccupied  = 10,
+    PositionOfOccupants_row3RightOccupied = 11,
+    PositionOfOccupants_row3MidOccupied   = 12,
+    PositionOfOccupants_row3NotDetectable = 13,
+    PositionOfOccupants_row3NotPresent    = 14,
+    PositionOfOccupants_row4LeftOccupied  = 15,
+    PositionOfOccupants_row4RightOccupied = 16,
+    PositionOfOccupants_row4MidOccupied   = 17,
+    PositionOfOccupants_row4NotDetectable = 18,
+    PositionOfOccupants_row4NotPresent    = 19
 } e_PositionOfOccupants;
 
 /* PositionOfOccupants */
-typedef BIT_STRING_t	 PositionOfOccupants_t;
+typedef BIT_STRING_t PositionOfOccupants_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_PositionOfOccupants;
@@ -61,5 +60,5 @@ per_type_encoder_f PositionOfOccupants_encode_uper;
 }
 #endif
 
-#endif	/* _PositionOfOccupants_H_ */
+#endif /* _PositionOfOccupants_H_ */
 #include <asn_internal.h>

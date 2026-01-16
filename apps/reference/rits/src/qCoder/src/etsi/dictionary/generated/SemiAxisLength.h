@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_SemiAxisLength_H_
-#define	_SemiAxisLength_H_
-
+#ifndef _SemiAxisLength_H_
+#define _SemiAxisLength_H_
 
 #include <asn_application.h>
 
@@ -20,13 +19,13 @@ extern "C" {
 
 /* Dependencies */
 typedef enum SemiAxisLength {
-	SemiAxisLength_oneCentimeter	= 1,
-	SemiAxisLength_outOfRange	= 4094,
-	SemiAxisLength_unavailable	= 4095
+    SemiAxisLength_oneCentimeter = 1,
+    SemiAxisLength_outOfRange    = 4094,
+    SemiAxisLength_unavailable   = 4095
 } e_SemiAxisLength;
 
 /* SemiAxisLength */
-typedef long	 SemiAxisLength_t;
+typedef long SemiAxisLength_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_SemiAxisLength;
@@ -44,5 +43,5 @@ per_type_encoder_f SemiAxisLength_encode_uper;
 }
 #endif
 
-#endif	/* _SemiAxisLength_H_ */
+#endif /* _SemiAxisLength_H_ */
 #include <asn_internal.h>

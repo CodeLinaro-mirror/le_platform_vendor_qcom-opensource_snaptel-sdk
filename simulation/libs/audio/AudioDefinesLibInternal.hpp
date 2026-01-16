@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef AUDIODEFINESLIBINTERNAL_HPP
@@ -51,8 +51,8 @@
 #define STREAM_TONE_STOP_RESP 19
 #define DELETE_TRANSCODER_REQ 20
 #define DELETE_TRANSCODER_RESP 20
-#define CREATE_TRANSCODER_REQ  21
-#define CREATE_TRANSCODER_RESP  21
+#define CREATE_TRANSCODER_REQ 21
+#define CREATE_TRANSCODER_RESP 21
 #define STREAM_FLUSH_REQ 22
 #define STREAM_FLUSH_RESP 22
 #define STREAM_DRAIN_REQ 23
@@ -66,7 +66,6 @@
 #define MAX_VOICE_PATH 3
 /*TODO: Update the correct max buffer size based on alsa version supported.*/
 #define MAX_BUFFER_SIZE 4096
-
 
 namespace telux {
 namespace audio {
@@ -102,4 +101,4 @@ struct CreatedTranscoderInfo {
 }  // end of namespace audio
 }  // end of namespace telux
 
-#endif // AUDIODEFINESLIBINTERNAL_HPP
+#endif  // AUDIODEFINESLIBINTERNAL_HPP

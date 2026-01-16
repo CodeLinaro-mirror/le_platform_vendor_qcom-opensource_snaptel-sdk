@@ -28,39 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -96,11 +66,10 @@ class SensorFeatureEventListener : public telux::sensor::ISensorFeatureEventList
     }
 };
 
-void SensorFeatureControlMenu::onTcuActivityStateUpdate(TcuActivityState tcuState,
-    std::string machineName) {
+void SensorFeatureControlMenu::onTcuActivityStateUpdate(
+    TcuActivityState tcuState, std::string machineName) {
 #ifdef TELSDK_FEATURE_POWER_ENABLED
-    std::cout << " TCU Activity state changed for machine "
-        << machineName << std::endl;
+    std::cout << " TCU Activity state changed for machine " << machineName << std::endl;
     SensorUtils::printTcuActivityState(tcuState);
 
     if (tcuState == TcuActivityState::SUSPEND) {
@@ -108,8 +77,8 @@ void SensorFeatureControlMenu::onTcuActivityStateUpdate(TcuActivityState tcuStat
         for (auto it = enabledFeaturesFifo_.begin(); it != enabledFeaturesFifo_.end(); ++it) {
             enableFeature(*it);
         }
-        Status ackStatus = tcuActivityMgr_->sendActivityStateAck(StateChangeResponse::ACK,
-            tcuState);
+        Status ackStatus
+            = tcuActivityMgr_->sendActivityStateAck(StateChangeResponse::ACK, tcuState);
         if (ackStatus == Status::SUCCESS) {
             std::cout << " Sent SUSPEND acknowledgement" << std::endl;
         } else {
@@ -118,7 +87,7 @@ void SensorFeatureControlMenu::onTcuActivityStateUpdate(TcuActivityState tcuStat
     } else if (tcuState == TcuActivityState::RESUME) {
         // disable MLC feature
         for (auto it = enabledFeaturesFifo_.begin(); it != enabledFeaturesFifo_.end(); it++) {
-            if(enabledFeatures_.find(*it) != enabledFeatures_.end()) {
+            if (enabledFeatures_.find(*it) != enabledFeatures_.end()) {
                 disableFeature(*it);
             }
         }
@@ -166,7 +135,7 @@ void SensorFeatureControlMenu::initTcuPowerMgr() {
     }
 #else
     std::cout << " Power manager is not initialized" << std::endl;
-#endif // TELSDK_FEATURE_POWER_ENABLED
+#endif  // TELSDK_FEATURE_POWER_ENABLED
 }
 
 SensorFeatureControlMenu::SensorFeatureControlMenu(
@@ -184,7 +153,7 @@ telux::common::ServiceStatus SensorFeatureControlMenu::initSensorFeatureManager(
     startTime = std::chrono::system_clock::now();
     std::promise<ServiceStatus> prom;
     //  Get the SensorFactory and SensorFeatureManager instances.
-    auto &sensorFactory = telux::sensor::SensorFactory::getInstance();
+    auto &sensorFactory   = telux::sensor::SensorFactory::getInstance();
     sensorFeatureManager_ = sensorFactory.getSensorFeatureManager(
         [&prom](telux::common::ServiceStatus status) { prom.set_value(status); });
     if (!sensorFeatureManager_) {
@@ -200,7 +169,7 @@ telux::common::ServiceStatus SensorFeatureControlMenu::initSensorFeatureManager(
     }
     //  Exit the application, if SDK is unable to initialize sensor subsystems
     if (managerStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        endTime = std::chrono::system_clock::now();
+        endTime                                   = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsedTime = endTime - startTime;
         std::cout << "Elapsed Time for Sensor Subsystems to ready : " << elapsedTime.count() << "s"
                   << std::endl;
@@ -363,16 +332,16 @@ void SensorFeatureControlMenu::enableFeature(std::string name) {
 }
 
 std::set<std::string>::iterator SensorFeatureControlMenu::disableFeature(std::string name) {
-    telux::common::Status status = sensorFeatureManager_->disableFeature(name);
+    telux::common::Status status        = sensorFeatureManager_->disableFeature(name);
     std::set<std::string>::iterator itr = enabledFeatures_.find(name);
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "disableFeature failed: " << std::endl;
         Utils::printStatus(status);
-        if(itr != enabledFeatures_.end()) {
+        if (itr != enabledFeatures_.end()) {
             itr++;
         }
     } else {
-        if(itr != enabledFeatures_.end()) {
+        if (itr != enabledFeatures_.end()) {
             std::cout << "Disable sensor feature request successful for " << name << std::endl;
             itr = enabledFeatures_.erase(itr);
         } else {
@@ -384,9 +353,9 @@ std::set<std::string>::iterator SensorFeatureControlMenu::disableFeature(std::st
 
 void SensorFeatureControlMenu::cleanup() {
     sensorFeatureEventListener_ = nullptr;
-    for (auto it = enabledFeatures_.begin(); it != enabledFeatures_.end(); ) {
+    for (auto it = enabledFeatures_.begin(); it != enabledFeatures_.end();) {
         it = disableFeature(*it);
     }
     sensorFeatureManager_ = nullptr;
-    tcuActivityMgr_ = nullptr;
+    tcuActivityMgr_       = nullptr;
 }

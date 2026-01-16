@@ -1,7 +1,6 @@
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * ​​​​​Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -26,13 +25,12 @@ using std::string;
 using namespace telux::common;
 using namespace telux::platform;
 
-
 int main(int argc, char *argv[]) {
     cout << "Running telux version app" << endl;
     std::vector<std::string> supplementaryGrps{"system", "diag", "logd", "dlt", "firmware"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc < 0) {
-       std::cout << "Adding supplementary groups failed!" << std::endl;
+        std::cout << "Adding supplementary groups failed!" << std::endl;
     }
     auto &platformFactory = PlatformFactory::getInstance();
 
@@ -41,7 +39,8 @@ int main(int argc, char *argv[]) {
         std::cout << "Received service status: " << static_cast<int>(status) << std::endl;
         p.set_value(status);
     };
-    std::shared_ptr<IDeviceInfoManager> deviceInfoManager = platformFactory.getDeviceInfoManager(initCb);
+    std::shared_ptr<IDeviceInfoManager> deviceInfoManager
+        = platformFactory.getDeviceInfoManager(initCb);
     if (deviceInfoManager == nullptr) {
         std::cout << "DeviceInfo manager is nullptr" << std::endl;
         exit(1);
@@ -55,11 +54,13 @@ int main(int argc, char *argv[]) {
     PlatformVersion version;
     if (Status::SUCCESS == deviceInfoManager->getPlatformVersion(version)) {
         auto sdkVersion = telux::common::Version::getSdkVersion();
-        cout << "Request telux version success" << endl << "modem: " << version.modem
-            << endl << "meta: " << version.meta << endl << "externalApp: "
-            << version.externalApp << endl << "integratedApp: " << version.integratedApp
-            << endl << "SDK: " << std::to_string(sdkVersion.major) << "."
-            << std::to_string(sdkVersion.minor) << "." << std::to_string(sdkVersion.patch) << endl;
+        cout << "Request telux version success" << endl
+             << "modem: " << version.modem << endl
+             << "meta: " << version.meta << endl
+             << "externalApp: " << version.externalApp << endl
+             << "integratedApp: " << version.integratedApp << endl
+             << "SDK: " << std::to_string(sdkVersion.major) << "."
+             << std::to_string(sdkVersion.minor) << "." << std::to_string(sdkVersion.patch) << endl;
     } else {
         cout << "Error : request for telux version failed." << endl;
     }

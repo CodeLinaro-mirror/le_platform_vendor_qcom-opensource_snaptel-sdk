@@ -26,9 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -62,7 +63,7 @@
 #include <telux/tel/CallManager.hpp>
 
 class CallMaker : public telux::tel::IMakeCallCallback,
-                public std::enable_shared_from_this<CallMaker> {
+                  public std::enable_shared_from_this<CallMaker> {
  public:
     int init() {
         telux::common::ServiceStatus serviceStatus;
@@ -73,9 +74,7 @@ class CallMaker : public telux::tel::IMakeCallCallback,
 
         /* Step - 2 */
         callMgr_ = phoneFactory.getCallManager(
-                [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+            [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!callMgr_) {
             std::cout << "Can't get ICallManager" << std::endl;
@@ -85,8 +84,8 @@ class CallMaker : public telux::tel::IMakeCallCallback,
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Call manager service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Call manager service unavailable, status "
+                      << static_cast<int>(serviceStatus) << std::endl;
             return -EIO;
         }
 
@@ -96,7 +95,7 @@ class CallMaker : public telux::tel::IMakeCallCallback,
 
     int triggerCall() {
         telux::common::Status status;
-        int phoneId = DEFAULT_PHONE_ID;
+        int phoneId             = DEFAULT_PHONE_ID;
         std::string phoneNumber = "+1xxxxxxxxxx";
 
         /* Step - 4 */
@@ -125,8 +124,8 @@ class CallMaker : public telux::tel::IMakeCallCallback,
     }
 
     /* Step - 5 */
-    void makeCallResponse(telux::common::ErrorCode ec,
-            std::shared_ptr<telux::tel::ICall> call) override {
+    void makeCallResponse(
+        telux::common::ErrorCode ec, std::shared_ptr<telux::tel::ICall> call) override {
         std::cout << "makeCallResponse()" << std::endl;
 
         if (ec != telux::common::ErrorCode::SUCCESS) {
@@ -136,9 +135,9 @@ class CallMaker : public telux::tel::IMakeCallCallback,
 
         dialedCall_ = call;
 
-        std::cout << "Index " << call->getCallIndex() <<
-            " direction " << static_cast<int>(call->getCallDirection()) <<
-            " number " << call->getRemotePartyNumber() << std::endl;
+        std::cout << "Index " << call->getCallIndex() << " direction "
+                  << static_cast<int>(call->getCallDirection()) << " number "
+                  << call->getRemotePartyNumber() << std::endl;
     }
 
  private:
@@ -153,7 +152,7 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<CallMaker>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate CallMaker" << std::endl;
         return -ENOMEM;
     }

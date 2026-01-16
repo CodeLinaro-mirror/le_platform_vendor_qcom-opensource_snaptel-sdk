@@ -27,8 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -72,9 +73,8 @@ void SensorManagerStub::cleanup() {
 }
 
 telux::common::Status SensorManagerStub::init(telux::common::InitResponseCb initCb) {
-   LOG(DEBUG, __FUNCTION__);
-    auto f
-        = std::async(std::launch::async, [this, initCb]() { this->initSync(initCb); }).share();
+    LOG(DEBUG, __FUNCTION__);
+    auto f = std::async(std::launch::async, [this, initCb]() { this->initSync(initCb); }).share();
     taskQ_.add(f);
     return telux::common::Status::SUCCESS;
 }
@@ -85,16 +85,17 @@ void SensorManagerStub::setServiceStatus(telux::common::ServiceStatus status) {
     serviceStatus_ = status;
 }
 
-void SensorManagerStub::initSync(telux::common::InitResponseCb callback){
-    LOG(DEBUG,__FUNCTION__);
+void SensorManagerStub::initSync(telux::common::InitResponseCb callback) {
+    LOG(DEBUG, __FUNCTION__);
     initCb_ = callback;
     ::sensorStub::GetServiceStatusReply response;
     const ::google::protobuf::Empty request;
     ClientContext context;
-    int cbDelay = DEFAULT_CALLBACK_DELAY;
+    int cbDelay              = DEFAULT_CALLBACK_DELAY;
     ::grpc::Status reqstatus = stub_->InitService(&context, request, &response);
-    if(reqstatus.ok()) {
-        telux::common::ServiceStatus status = static_cast<telux::common::ServiceStatus>(response.service_status());
+    if (reqstatus.ok()) {
+        telux::common::ServiceStatus status
+            = static_cast<telux::common::ServiceStatus>(response.service_status());
         setServiceStatus(status);
         cbDelay = static_cast<int>(response.delay());
     } else {
@@ -107,30 +108,29 @@ void SensorManagerStub::initSync(telux::common::InitResponseCb callback){
     }
     if (telux::common::ServiceStatus::SERVICE_AVAILABLE != getServiceStatus()) {
         return;
-    }
-    else {
+    } else {
         LOG(DEBUG, "Sensor sub-system is now available, retrieving sensor list");
         const ::google::protobuf::Empty request;
         ::sensorStub::SensorInfoResponse response;
         ClientContext context;
         ::grpc::Status reqstatus = stub_->GetSensorList(&context, request, &response);
-        if(reqstatus.ok()) {
-            for (const auto& Sensorinfo : response.sensor_info()) {
+        if (reqstatus.ok()) {
+            for (const auto &Sensorinfo : response.sensor_info()) {
                 SensorInfo info;
-                info.id = Sensorinfo.id();
-                info.type = static_cast<SensorType>(Sensorinfo.sensor_type());
-                info.name = Sensorinfo.name();
+                info.id     = Sensorinfo.id();
+                info.type   = static_cast<SensorType>(Sensorinfo.sensor_type());
+                info.name   = Sensorinfo.name();
                 info.vendor = Sensorinfo.vendor();
-                for (const auto& samplingRate : Sensorinfo.sampling_rates()) {
+                for (const auto &samplingRate : Sensorinfo.sampling_rates()) {
                     info.samplingRates.push_back(samplingRate);
                 }
-                info.maxSamplingRate = Sensorinfo.max_sampling_rate();
+                info.maxSamplingRate        = Sensorinfo.max_sampling_rate();
                 info.maxBatchCountSupported = Sensorinfo.max_batch_count_supported();
                 info.minBatchCountSupported = Sensorinfo.min_batch_count_supported();
-                info.range = Sensorinfo.range();
-                info.version = Sensorinfo.version();
-                info.resolution = Sensorinfo.resolution();
-                info.maxRange = Sensorinfo.max_range();
+                info.range                  = Sensorinfo.range();
+                info.version                = Sensorinfo.version();
+                info.resolution             = Sensorinfo.resolution();
+                info.maxRange               = Sensorinfo.max_range();
 
                 sensorInfo_.push_back(info);
             }
@@ -148,13 +148,13 @@ void SensorManagerStub::initSync(telux::common::InitResponseCb callback){
 }
 
 telux::common::ServiceStatus SensorManagerStub::getServiceStatus() {
-    LOG(DEBUG,__FUNCTION__);
+    LOG(DEBUG, __FUNCTION__);
     std::lock_guard<std::mutex> lock(serviceStatusMutex_);
     return serviceStatus_;
 }
 
-telux::common::Status SensorManagerStub::getAvailableSensorInfo(std::vector<SensorInfo> &info){
-    LOG(DEBUG,__FUNCTION__);
+telux::common::Status SensorManagerStub::getAvailableSensorInfo(std::vector<SensorInfo> &info) {
+    LOG(DEBUG, __FUNCTION__);
     CHECK_SUB_SYSTEM_STATUS();
     if (sensorInfo_.empty()) {
         LOG(ERROR, "sensorInfo_ is empty");
@@ -165,16 +165,16 @@ telux::common::Status SensorManagerStub::getAvailableSensorInfo(std::vector<Sens
 }
 
 telux::common::Status SensorManagerStub::getSensor(
-    std::shared_ptr<ISensorClient> &sensor, std::string name){
-    LOG(DEBUG,__FUNCTION__);
-    return getSensorClient(sensor,name);
+    std::shared_ptr<ISensorClient> &sensor, std::string name) {
+    LOG(DEBUG, __FUNCTION__);
+    return getSensorClient(sensor, name);
 }
 
 telux::common::Status SensorManagerStub::getSensorClient(
-    std::shared_ptr<ISensorClient> &sensor, std::string name){
-    LOG(DEBUG,__FUNCTION__);
+    std::shared_ptr<ISensorClient> &sensor, std::string name) {
+    LOG(DEBUG, __FUNCTION__);
     CHECK_SUB_SYSTEM_STATUS();
-    try{
+    try {
         SensorInfo &sensorInfo = getSensorInfo(name);
         LOG(DEBUG, "Creating the sensor client for sensor: ", name);
         sensor = std::make_shared<SensorClientStub>(sensorInfo, stub_);
@@ -225,13 +225,13 @@ telux::common::Status SensorManagerStub::setEulerAngleConfig(EulerAngleConfig eu
     }
 
     if (eulerAngleConfig.roll > 360.0f || eulerAngleConfig.pitch > 360.0f
-        || eulerAngleConfig.yaw > 360.0f){
+        || eulerAngleConfig.yaw > 360.0f) {
         LOG(ERROR, __FUNCTION__, " Input values should be less than 360");
         return telux::common::Status::INVALIDPARAM;
     }
 
     ::grpc::Status reqstatus = stub_->SensorUpdateRotationMatrix(&context, request, &response);
-    if(reqstatus.ok()) {
+    if (reqstatus.ok()) {
         status = static_cast<telux::common::Status>(response.status());
     } else {
         LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
@@ -239,5 +239,5 @@ telux::common::Status SensorManagerStub::setEulerAngleConfig(EulerAngleConfig eu
     return status;
 }
 
-}
-}
+}  // namespace sensor
+}  // namespace telux

@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_Extension_H_
-#define	_Extension_H_
-
+#ifndef _Extension_H_
+#define _Extension_H_
 
 #include <asn_application.h>
 
@@ -22,32 +21,32 @@ extern "C" {
 
 /* Extension */
 typedef struct Extension_22P0 {
-	RefExt_t	 extensionId;
-	ANY_t	 value;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    RefExt_t extensionId;
+    ANY_t value;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } Extension_22P0_t;
 typedef struct Extension_22P1 {
-	RefExt_t	 extensionId;
-	ANY_t	 value;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    RefExt_t extensionId;
+    ANY_t value;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } Extension_22P1_t;
 typedef struct Extension_22P2 {
-	RefExt_t	 extensionId;
-	ANY_t	 value;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    RefExt_t extensionId;
+    ANY_t value;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } Extension_22P2_t;
 typedef struct Extension_22P3 {
-	RefExt_t	 extensionId;
-	ANY_t	 value;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    RefExt_t extensionId;
+    ANY_t value;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } Extension_22P3_t;
 
 /* Implementation */
@@ -60,5 +59,5 @@ extern asn_TYPE_descriptor_t asn_DEF_Extension_22P3;
 }
 #endif
 
-#endif	/* _Extension_H_ */
+#endif /* _Extension_H_ */
 #include <asn_internal.h>

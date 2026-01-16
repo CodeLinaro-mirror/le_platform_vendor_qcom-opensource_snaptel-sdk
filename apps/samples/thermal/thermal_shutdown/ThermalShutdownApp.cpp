@@ -26,40 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021,2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /*
@@ -101,8 +72,7 @@ void ThermalShutdownListener::onShutdownDisabled() {
 
 void ThermalShutdownListener::onImminentShutdownEnablement(uint32_t imminentDuration) {
     std::cout << "onImminentShutdownEnablement()" << std::endl;
-    std::cout << "Auto shutdown will be enabled in " <<
-        imminentDuration << " seconds" << std::endl;
+    std::cout << "Auto shutdown will be enabled in " << imminentDuration << " seconds" << std::endl;
 }
 
 int Application::init() {
@@ -115,9 +85,7 @@ int Application::init() {
 
     /* Step - 2 */
     thermShutdownMgr_ = thermalFactory.getThermalShutdownManager(
-        [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-    });
+        [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
     if (!thermShutdownMgr_) {
         std::cout << "Can't get IThermalManager" << std::endl;
@@ -127,23 +95,22 @@ int Application::init() {
     /* Step - 3 */
     serviceStatus = p.get_future().get();
     if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "Thermal service unavailable, status " <<
-            static_cast<int>(serviceStatus) << std::endl;
+        std::cout << "Thermal service unavailable, status " << static_cast<int>(serviceStatus)
+                  << std::endl;
         return -EIO;
     }
 
     /* Step - 4 */
     try {
         thermShutdownListener_ = std::make_shared<ThermalShutdownListener>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate ThermalShutdownListener" << std::endl;
         return -ENOMEM;
     }
 
     status = thermShutdownMgr_->registerListener(thermShutdownListener_);
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "Can't register listener, err " <<
-            static_cast<int>(status) << std::endl;
+        std::cout << "Can't register listener, err " << static_cast<int>(status) << std::endl;
         return -EIO;
     }
 
@@ -157,8 +124,7 @@ int Application::deinit() {
     /* Step - 6 */
     status = thermShutdownMgr_->deregisterListener(thermShutdownListener_);
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "Can't deregister listener, err " <<
-            static_cast<int>(status) << std::endl;
+        std::cout << "Can't deregister listener, err " << static_cast<int>(status) << std::endl;
         return -EIO;
     }
 
@@ -172,13 +138,10 @@ int Application::getAutoShutdownMode() {
 
     /* Step - 5 */
     status = thermShutdownMgr_->getAutoShutdownMode(
-        [&p](telux::therm::AutoShutdownMode mode) {
-        p.set_value(mode);
-    });
+        [&p](telux::therm::AutoShutdownMode mode) { p.set_value(mode); });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "Can't get shutdown mode, err " <<
-            static_cast<int>(status) << std::endl;
+        std::cout << "Can't get shutdown mode, err " << static_cast<int>(status) << std::endl;
         return -EIO;
     }
 
@@ -204,7 +167,7 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<Application>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate Application" << std::endl;
         return -ENOMEM;
     }

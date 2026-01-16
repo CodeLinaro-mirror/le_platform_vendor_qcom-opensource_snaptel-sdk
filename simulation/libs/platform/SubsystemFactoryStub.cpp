@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -44,10 +44,8 @@ std::shared_ptr<ISubsystemManager> SubsystemFactoryStub::getSubsystemManager(
     LOG(DEBUG, __FUNCTION__);
 
     std::function<std::shared_ptr<ISubsystemManager>(InitResponseCb)> createAndInit
-        = [this](telux::common::InitResponseCb initCb) ->
-        std::shared_ptr<ISubsystemManager> {
-        std::shared_ptr<SubsystemManagerStub> manager =
-        std::make_shared<SubsystemManagerStub>();
+        = [this](telux::common::InitResponseCb initCb) -> std::shared_ptr<ISubsystemManager> {
+        std::shared_ptr<SubsystemManagerStub> manager = std::make_shared<SubsystemManagerStub>();
         if (telux::common::Status::SUCCESS != manager->init(initCb)) {
             return nullptr;
         }
@@ -57,8 +55,8 @@ std::shared_ptr<ISubsystemManager> SubsystemFactoryStub::getSubsystemManager(
     auto type = std::string("Subsystem manager");
     LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str(),
         " , callback = ", &initCompleteCallbacks_);
-    auto manager = getManager<ISubsystemManager>(type, subsysMgr_,
-        initCompleteCallbacks_, initCallback, createAndInit);
+    auto manager = getManager<ISubsystemManager>(
+        type, subsysMgr_, initCompleteCallbacks_, initCallback, createAndInit);
     return manager;
 }
 

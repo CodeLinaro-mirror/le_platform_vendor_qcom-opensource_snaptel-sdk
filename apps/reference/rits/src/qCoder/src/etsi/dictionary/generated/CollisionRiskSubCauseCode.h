@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_CollisionRiskSubCauseCode_H_
-#define	_CollisionRiskSubCauseCode_H_
-
+#ifndef _CollisionRiskSubCauseCode_H_
+#define _CollisionRiskSubCauseCode_H_
 
 #include <asn_application.h>
 
@@ -20,15 +19,15 @@ extern "C" {
 
 /* Dependencies */
 typedef enum CollisionRiskSubCauseCode {
-	CollisionRiskSubCauseCode_unavailable	= 0,
-	CollisionRiskSubCauseCode_longitudinalCollisionRisk	= 1,
-	CollisionRiskSubCauseCode_crossingCollisionRisk	= 2,
-	CollisionRiskSubCauseCode_lateralCollisionRisk	= 3,
-	CollisionRiskSubCauseCode_vulnerableRoadUser	= 4
+    CollisionRiskSubCauseCode_unavailable               = 0,
+    CollisionRiskSubCauseCode_longitudinalCollisionRisk = 1,
+    CollisionRiskSubCauseCode_crossingCollisionRisk     = 2,
+    CollisionRiskSubCauseCode_lateralCollisionRisk      = 3,
+    CollisionRiskSubCauseCode_vulnerableRoadUser        = 4
 } e_CollisionRiskSubCauseCode;
 
 /* CollisionRiskSubCauseCode */
-typedef long	 CollisionRiskSubCauseCode_t;
+typedef long CollisionRiskSubCauseCode_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_CollisionRiskSubCauseCode;
@@ -46,5 +45,5 @@ per_type_encoder_f CollisionRiskSubCauseCode_encode_uper;
 }
 #endif
 
-#endif	/* _CollisionRiskSubCauseCode_H_ */
+#endif /* _CollisionRiskSubCauseCode_H_ */
 #include <asn_internal.h>

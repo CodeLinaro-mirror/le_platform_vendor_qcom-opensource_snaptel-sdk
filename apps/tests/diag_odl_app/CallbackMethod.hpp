@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef CALLBACKMETHOD_HPP
@@ -31,4 +31,4 @@ class CallbackMethod : public CollectionMethod,
     std::shared_ptr<LogsReceiver> logsReceiver_;
 };
 
-#endif // CALLBACKMETHOD_HPP
+#endif  // CALLBACKMETHOD_HPP

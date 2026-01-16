@@ -28,10 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021-2023,2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -57,15 +56,16 @@
 #define DEFAULT_ECNR_MODE 0
 
 AudioClient::AudioClient()
-    : audioMgr_(nullptr), ready_(false) {
+   : audioMgr_(nullptr)
+   , ready_(false) {
 }
 
 AudioClient::~AudioClient() {
 }
 
 std::shared_ptr<AudioClient> AudioClient::getInstance() {
-   static std::shared_ptr<AudioClient> instance(new AudioClient);
-   return instance;
+    static std::shared_ptr<AudioClient> instance(new AudioClient);
+    return instance;
 }
 
 bool AudioClient::isReady() {
@@ -77,14 +77,13 @@ Status AudioClient::init() {
 #ifdef TELSDK_FEATURE_AUDIO_ENABLED
     // Get the AudioFactory and AudioManager instances.
     std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-    startTime = std::chrono::system_clock::now();
+    startTime                        = std::chrono::system_clock::now();
     std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
 
     //  Get the AudioFactory and AudioManager instances.
     auto &audioFactory = AudioFactory::getInstance();
 
-    audioMgr_ = audioFactory.getAudioManager([&prom](
-            telux::common::ServiceStatus status) {
+    audioMgr_ = audioFactory.getAudioManager([&prom](telux::common::ServiceStatus status) {
         if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             prom.set_value(telux::common::ServiceStatus::SERVICE_AVAILABLE);
         } else {
@@ -109,11 +108,11 @@ Status AudioClient::init() {
 
     //  Exit the application, if SDK is unable to initialize audio subsystems
     if (managerStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        ready_ = true;
-        endTime = std::chrono::system_clock::now();
+        ready_                                    = true;
+        endTime                                   = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsedTime = endTime - startTime;
         std::cout << "Elapsed Time for Audio Subsystems to ready : " << elapsedTime.count() << "s"
-                << std::endl;
+                  << std::endl;
         setActiveSession(DEFAULT_SLOT_ID);
         loadConfFileData();
     } else {
@@ -123,7 +122,7 @@ Status AudioClient::init() {
     }
     auto status = audioMgr_->registerListener(shared_from_this());
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "Audio Listener Registeration failed" <<std::endl;
+        std::cout << "Audio Listener Registeration failed" << std::endl;
     }
 
     return Status::SUCCESS;
@@ -154,7 +153,7 @@ void AudioClient::startVoiceSession(SlotId slotId) {
     setActiveSession(slotId);
     queryInputType();
     config_.slotId = slotId;
-    config_.type = StreamType::VOICE_CALL;
+    config_.type   = StreamType::VOICE_CALL;
     config_.format = AudioFormat::PCM_16BIT_SIGNED;
 
     auto status = activeSession_->createStream(config_);
@@ -203,10 +202,10 @@ void AudioClient::stopVoiceSession(SlotId slotId) {
     if (status == Status::SUCCESS) {
         std::cout << "Audio is disabled for call on slotId : " << slotId << std::endl;
         if (hasConcurrentVoiceCall_) {
-            if (slotId == SLOT_ID_1){
+            if (slotId == SLOT_ID_1) {
                 audioStartedOnSim1_ = false;
             }
-            if (slotId == SLOT_ID_2){
+            if (slotId == SLOT_ID_2) {
                 audioStartedOnSim2_ = false;
             }
             currentSlotId_ = INVALID_SLOT_ID;
@@ -238,23 +237,23 @@ void AudioClient::setActiveSession(SlotId slotId) {
 
 void AudioClient::loadConfFileData() {
     std::string input = "";
-    int command = -1;
+    int command       = -1;
     ConfigParser parser(FILE_NAME, FILE_PATH);
     std::cout << "----- Default Parameters -----" << std::endl;
     config_.format = static_cast<AudioFormat>(DEFAULT_AUDIO_FORMAT);
     try {
-        input = parser.getValue("SAMPLE_RATE");
+        input              = parser.getValue("SAMPLE_RATE");
         config_.sampleRate = static_cast<uint32_t>(std::stoi(input));
-        input = parser.getValue("DEVICE_TYPE_SPEAKER");
-        DeviceType device = static_cast<DeviceType>(std::stoi(input));
+        input              = parser.getValue("DEVICE_TYPE_SPEAKER");
+        DeviceType device  = static_cast<DeviceType>(std::stoi(input));
         config_.deviceTypes.clear();
         config_.deviceTypes.emplace_back(device);
-        input = parser.getValue("DEVICE_TYPE_MIC");
+        input  = parser.getValue("DEVICE_TYPE_MIC");
         device = static_cast<DeviceType>(std::stoi(input));
         config_.deviceTypes.emplace_back(device);
-        input = parser.getValue("CHANNEL_MASK");
+        input   = parser.getValue("CHANNEL_MASK");
         command = std::stoi(input);
-        if (command == 1 || command == 2 || command == 3){
+        if (command == 1 || command == 2 || command == 3) {
             if (command == 1) {
                 config_.channelTypeMask = ChannelType::LEFT;
             } else if (command == 2) {
@@ -266,7 +265,7 @@ void AudioClient::loadConfFileData() {
             std::cout << "Invalid channel mask using default value" << std::endl;
             config_.channelTypeMask = static_cast<ChannelTypeMask>(DEFAULT_CHANNEL_MASK);
         }
-        input = parser.getValue("ECNR_MODE");
+        input   = parser.getValue("ECNR_MODE");
         command = std::stoi(input);
         if (command == 0) {
             config_.ecnrMode = EcnrMode::DISABLE;
@@ -276,22 +275,23 @@ void AudioClient::loadConfFileData() {
             std::cout << "Invalid ecnr mode using default value" << std::endl;
             config_.ecnrMode = EcnrMode::DISABLE;
         }
-        input = parser.getValue("MULTISIM_VOICE_CONCURRENCY");
-        command = std::stoi(input);
+        input                   = parser.getValue("MULTISIM_VOICE_CONCURRENCY");
+        command                 = std::stoi(input);
         hasConcurrentVoiceCall_ = (command == 1) ? true : false;
     } catch (const std::exception &e) {
-        std::cout << "ERROR: "<< "Unable to read from file" << std::endl;
+        std::cout << "ERROR: "
+                  << "Unable to read from file" << std::endl;
         std::cout << "Using default parameters" << std::endl;
         config_.sampleRate = DEFAULT_SAMPLE_RATE;
         config_.deviceTypes.clear();
         config_.deviceTypes.emplace_back(static_cast<DeviceType>(DEFAULT_DEVICE_SPEAKER));
         config_.deviceTypes.emplace_back(static_cast<DeviceType>(DEFAULT_DEVICE_MIC));
         config_.channelTypeMask = static_cast<ChannelTypeMask>(DEFAULT_CHANNEL_MASK);
-        config_.ecnrMode = static_cast<EcnrMode>(DEFAULT_ECNR_MODE);
+        config_.ecnrMode        = static_cast<EcnrMode>(DEFAULT_ECNR_MODE);
     }
     std::cout << "The sample rate is " << config_.sampleRate << std::endl;
-    std::cout << "The devices are " << static_cast<int>(config_.deviceTypes[0]) << " and " <<
-    static_cast<int>(config_.deviceTypes[1])<< std::endl;
+    std::cout << "The devices are " << static_cast<int>(config_.deviceTypes[0]) << " and "
+              << static_cast<int>(config_.deviceTypes[1]) << std::endl;
     std::cout << "Channel mask is " << static_cast<int>(config_.channelTypeMask) << std::endl;
     std::cout << "ECNR Mode is " << static_cast<int>(config_.ecnrMode) << std::endl;
     return;
@@ -311,7 +311,7 @@ void AudioClient::muteStream(SlotId slotId) {
     setActiveSession(slotId);
     StreamMute mute{};
     mute.enable = true;
-    mute.dir = StreamDirection::RX;
+    mute.dir    = StreamDirection::RX;
     auto status = activeSession_->setMute(mute);
     if (status == Status::SUCCESS) {
         std::cout << " Muted stream on slotId " << slotId << std::endl;
@@ -328,9 +328,9 @@ void AudioClient::unmuteStream(SlotId slotId) {
 #ifdef TELSDK_FEATURE_AUDIO_ENABLED
     if (hasConcurrentVoiceCall_) {
         SlotId tmpSlotId{};
-        tmpSlotId = previousSlotId_;
+        tmpSlotId       = previousSlotId_;
         previousSlotId_ = currentSlotId_;
-        currentSlotId_ = previousSlotId_;
+        currentSlotId_  = previousSlotId_;
         if (activeSession_->getSlotId() != slotId) {
             return startVoiceSession(slotId);
         }
@@ -339,7 +339,7 @@ void AudioClient::unmuteStream(SlotId slotId) {
     setActiveSession(slotId);
     StreamMute mute{};
     mute.enable = false;
-    mute.dir = StreamDirection::RX;
+    mute.dir    = StreamDirection::RX;
     auto status = activeSession_->setMute(mute);
     if (status == Status::SUCCESS) {
         std::cout << " Unmuted stream on slotId " << slotId << std::endl;
@@ -352,7 +352,7 @@ void AudioClient::unmuteStream(SlotId slotId) {
 void AudioClient::queryInputType() {
 #ifdef TELSDK_FEATURE_AUDIO_ENABLED
     std::string inputSelection;
-    char delimiter = '\n';
+    char delimiter  = '\n';
     int consoleFlag = 0;
     std::cout << "Enter 0 to specify audio parameters, press 1 to use default: ";
     std::getline(std::cin, inputSelection, delimiter);
@@ -364,7 +364,7 @@ void AudioClient::queryInputType() {
                 return;
             }
         } catch (const std::exception &e) {
-            std::cout << "ERROR: "<< e.what() << std::endl;
+            std::cout << "ERROR: " << e.what() << std::endl;
             return;
         }
     } else {

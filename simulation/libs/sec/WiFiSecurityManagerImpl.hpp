@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef WIFISECURITYMANAGERIMPL_HPP
@@ -96,15 +96,14 @@ class WiFiSecurityManagerImpl : public IWiFiSecurityManager,
     telux::common::AsyncTaskQueue<void> asyncTaskQueue_;
     ServiceStatus serviceStatus_{ServiceStatus::SERVICE_UNAVAILABLE};
 
-    std::shared_ptr<telux::common::ListenerManager<
-        IServiceStatusListener>> serviceStatusListenerMgr_;
-    std::shared_ptr<telux::common::ListenerManager<
-        IWiFiReportListener>> secReportListenerMgr_;
+    std::shared_ptr<telux::common::ListenerManager<IServiceStatusListener>>
+        serviceStatusListenerMgr_;
+    std::shared_ptr<telux::common::ListenerManager<IWiFiReportListener>> secReportListenerMgr_;
 
     uint32_t ss_ready_delay_ = 0;
     ServiceStatus ss_service_status_;
-    const char * const WCS_FILTER = "wcs";
-    const char * const WCS_API_JSON_FILE = "api/sec/IWiFiSecurityManager.json";
+    const char *const WCS_FILTER        = "wcs";
+    const char *const WCS_API_JSON_FILE = "api/sec/IWiFiSecurityManager.json";
     ClientEventManager &clientEventMgr_;
     std::unique_ptr<::securityStub::SecurityWCSService::Stub> stub_;
 

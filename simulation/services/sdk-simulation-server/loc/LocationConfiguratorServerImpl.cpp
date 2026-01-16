@@ -28,116 +28,113 @@ LocationConfiguratorServerImpl::~LocationConfiguratorServerImpl() {
     LOG(DEBUG, __FUNCTION__, " Destructing");
 }
 
-grpc::Status LocationConfiguratorServerImpl::InitService(ServerContext* context,
-    const google::protobuf::Empty* request, locStub::GetServiceStatusReply* response) {
+grpc::Status LocationConfiguratorServerImpl::InitService(ServerContext *context,
+    const google::protobuf::Empty *request, locStub::GetServiceStatusReply *response) {
     LOG(DEBUG, __FUNCTION__);
-    int cbDelay = 100;
+    int cbDelay                                = 100;
     telux::common::ServiceStatus serviceStatus = telux::common::ServiceStatus::SERVICE_FAILED;
     Json::Value rootNode;
     telux::common::ErrorCode errorCode
         = JsonParser::readFromJsonFile(rootNode, LOC_CONFIG_API_JSON);
     if (errorCode == ErrorCode::SUCCESS) {
-        cbDelay = rootNode["ILocationConfigurator"]["IsSubsystemReadyDelay"].asInt();
+        cbDelay              = rootNode["ILocationConfigurator"]["IsSubsystemReadyDelay"].asInt();
         std::string cbStatus = rootNode["ILocationConfigurator"]["IsSubsystemReady"].asString();
-        serviceStatus = CommonUtils::mapServiceStatus(cbStatus);
+        serviceStatus        = CommonUtils::mapServiceStatus(cbStatus);
     } else {
         LOG(ERROR, "Unable to read LocationConfigurator JSON");
     }
     response->set_service_status(static_cast<::commonStub::ServiceStatus>(serviceStatus));
-    if(serviceStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+    if (serviceStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         std::vector<std::string> filters = {"loc_config"};
-        auto &serverEventManager = ServerEventManager::getInstance();
+        auto &serverEventManager         = ServerEventManager::getInstance();
         serverEventManager.registerListener(shared_from_this(), filters);
         taskQ_ = std::make_shared<telux::common::AsyncTaskQueue<void>>();
     }
     response->set_delay(cbDelay);
-    xtraEnabled_ = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "1",
-        {"ILocationConfigurator", "XtraEnablement", "enable"}));
-    xtraConsent_ = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "1",
-        {"ILocationConfigurator", "XtraEnablement", "consent"}));
-    xtraSet_ = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "1",
-        {"ILocationConfigurator", "XtraEnablement", "set"}));
+    xtraEnabled_ = std::stoi(CommonUtils::readSystemDataValue(
+        "loc/ILocationConfigurator", "1", {"ILocationConfigurator", "XtraEnablement", "enable"}));
+    xtraConsent_ = std::stoi(CommonUtils::readSystemDataValue(
+        "loc/ILocationConfigurator", "1", {"ILocationConfigurator", "XtraEnablement", "consent"}));
+    xtraSet_     = std::stoi(CommonUtils::readSystemDataValue(
+        "loc/ILocationConfigurator", "1", {"ILocationConfigurator", "XtraEnablement", "set"}));
     return grpc::Status::OK;
 }
 
-void LocationConfiguratorServerImpl::onEventUpdate(::eventService::UnsolicitedEvent event){
+void LocationConfiguratorServerImpl::onEventUpdate(::eventService::UnsolicitedEvent event) {
     LOG(DEBUG, __FUNCTION__);
     if (event.filter() == "loc_config") {
         onEventUpdate(event.event());
     }
 }
 
-void LocationConfiguratorServerImpl::onEventUpdate(std::string event){
-    LOG(DEBUG, __FUNCTION__,event);
+void LocationConfiguratorServerImpl::onEventUpdate(std::string event) {
+    LOG(DEBUG, __FUNCTION__, event);
     std::string token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
     if (token == "") {
         LOG(ERROR, __FUNCTION__, "The event flag is not set!");
         return;
     }
-    handleEvent(token,event);
-
+    handleEvent(token, event);
 }
 
-void LocationConfiguratorServerImpl::handleEvent(std::string token, std::string event){
+void LocationConfiguratorServerImpl::handleEvent(std::string token, std::string event) {
     LOG(DEBUG, __FUNCTION__, "The data event type is: ", token);
     LOG(DEBUG, __FUNCTION__, "The leftover string is: ", event);
     if (token == "xtra_status") {
         handleXtraUpdateEvent(event);
-    } else if (token == "constellation_update"){
+    } else if (token == "constellation_update") {
         handleGnssConstellationUpdateEvent(event);
     }
 }
 
-void LocationConfiguratorServerImpl::handleXtraUpdateEvent(std::string event){
+void LocationConfiguratorServerImpl::handleXtraUpdateEvent(std::string event) {
     LOG(DEBUG, __FUNCTION__);
-    int validity=0;
-    int dataStatus=0;
+    int validity      = 0;
+    int dataStatus    = 0;
     std::string token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
-    if(token == "") {
+    if (token == "") {
         LOG(INFO, __FUNCTION__, "The validity is not passed");
     } else {
         try {
             validity = std::stoi(token);
-        } catch (std::exception& ex) {
+        } catch (std::exception &ex) {
             LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
         }
     }
     token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
-    if(token == "") {
+    if (token == "") {
         LOG(INFO, __FUNCTION__, "The dataStatus is not passed");
     } else {
         try {
             dataStatus = std::stoi(token);
-        } catch (std::exception& ex) {
+        } catch (std::exception &ex) {
             LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
         }
     }
     CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator", std::to_string(validity),
-                {"ILocationConfigurator", "XtraParams", "xtraValidForHours"});
-    CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",std::to_string(dataStatus),
-                {"ILocationConfigurator","XtraParams", "xtraDataStatus"});
-    auto f = std::async(std::launch::async, [this](){
-        this->triggerXtraStatusEvent();
-    }).share();
+        {"ILocationConfigurator", "XtraParams", "xtraValidForHours"});
+    CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+        std::to_string(dataStatus), {"ILocationConfigurator", "XtraParams", "xtraDataStatus"});
+    auto f = std::async(std::launch::async, [this]() { this->triggerXtraStatusEvent(); }).share();
     taskQ_->add(f);
 }
 
 void LocationConfiguratorServerImpl::handleGnssConstellationUpdateEvent(std::string event) {
     std::string enabledMask = " ";
-    std::string token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
-    if(token == "") {
+    std::string token       = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
+    if (token == "") {
         LOG(INFO, __FUNCTION__, "The Mask is not passed");
         enabledMask = "0X1FFFFF";
     } else {
         try {
             enabledMask = token;
-        } catch (std::exception& ex) {
+        } catch (std::exception &ex) {
             LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
         }
     }
-    CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator", enabledMask,
-        {"ILocationConfigurator", "GnssSignalType"});
-    auto f = std::async(std::launch::async, [this](){
+    CommonUtils::writeSystemDataValue<string>(
+        "loc/ILocationConfigurator", enabledMask, {"ILocationConfigurator", "GnssSignalType"});
+    auto f = std::async(std::launch::async, [this]() {
         this->triggerGnssConstellationUpdateEvent();
     }).share();
     taskQ_->add(f);
@@ -146,15 +143,15 @@ void LocationConfiguratorServerImpl::handleGnssConstellationUpdateEvent(std::str
 void LocationConfiguratorServerImpl::triggerXtraStatusEvent() {
     LOG(DEBUG, __FUNCTION__);
     uint32_t dataStatus;
-    if(xtraConsent_) {
+    if (xtraConsent_) {
         dataStatus = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
             {"ILocationConfigurator", "XtraParams", "xtraDataStatus"}));
     } else {
-        //If Xtra consent is false, Data status is Unknown.
+        // If Xtra consent is false, Data status is Unknown.
         dataStatus = 0;
     }
-    uint32_t validHours = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
-        {"ILocationConfigurator", "XtraParams", "xtraValidForHours"}));
+    uint32_t validHours = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator",
+        "0", {"ILocationConfigurator", "XtraParams", "xtraValidForHours"}));
     LOG(DEBUG, __FUNCTION__, xtraEnabled_, dataStatus, validHours);
     std::lock_guard<std::mutex> lck(mtx_);
     ::locStub::XtraStatusEvent xtraEvent;
@@ -165,55 +162,53 @@ void LocationConfiguratorServerImpl::triggerXtraStatusEvent() {
     xtraEvent.set_consent(xtraConsent_);
     anyResponse.set_filter("loc_config");
     anyResponse.mutable_any()->PackFrom(xtraEvent);
-    //posting the event to EventService event queue
-    auto& eventImpl = EventService::getInstance();
+    // posting the event to EventService event queue
+    auto &eventImpl = EventService::getInstance();
     eventImpl.updateEventQueue(anyResponse);
 }
 
 void LocationConfiguratorServerImpl::triggerGnssConstellationUpdateEvent() {
     LOG(DEBUG, __FUNCTION__);
-    std::string enabledMask = CommonUtils::readSystemDataValue("loc/ILocationConfigurator",
-        "0x1FFFFFF", {"ILocationConfigurator","GnssSignalType"});
+    std::string enabledMask = CommonUtils::readSystemDataValue(
+        "loc/ILocationConfigurator", "0x1FFFFFF", {"ILocationConfigurator", "GnssSignalType"});
     std::lock_guard<std::mutex> lck(mtx_);
     ::locStub::GnssUpdateEvent GnssEvent;
     ::eventService::EventResponse anyResponse;
-    GnssEvent.set_enabledmask(std::stoul(enabledMask,nullptr,16));
+    GnssEvent.set_enabledmask(std::stoul(enabledMask, nullptr, 16));
     anyResponse.set_filter("loc_config");
     anyResponse.mutable_any()->PackFrom(GnssEvent);
-    //posting the event to EventService event queue
-    auto& eventImpl = EventService::getInstance();
+    // posting the event to EventService event queue
+    auto &eventImpl = EventService::getInstance();
     eventImpl.updateEventQueue(anyResponse);
-
 }
 
-grpc::Status LocationConfiguratorServerImpl::RegisterListener (ServerContext* context,
-    const locStub::RegisterListenerRequest* request, locStub::LocManagerCommandReply* response) {
+grpc::Status LocationConfiguratorServerImpl::RegisterListener(ServerContext *context,
+    const locStub::RegisterListenerRequest *request, locStub::LocManagerCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
-    if(request->xtra_indication() == true){
-        auto f = std::async(std::launch::async, [this](){
-            this->triggerXtraStatusEvent();
-        }).share();
-     taskQ_->add(f);
+    if (request->xtra_indication() == true) {
+        auto f
+            = std::async(std::launch::async, [this]() { this->triggerXtraStatusEvent(); }).share();
+        taskQ_->add(f);
     }
-    if(request->gnss_indication() == true){
-        auto f = std::async(std::launch::async, [this](){
+    if (request->gnss_indication() == true) {
+        auto f = std::async(std::launch::async, [this]() {
             this->triggerGnssConstellationUpdateEvent();
         }).share();
-    taskQ_->add(f);
+        taskQ_->add(f);
     }
     return grpc::Status::OK;
 }
 
-grpc::Status LocationConfiguratorServerImpl::ConfigureCTUNC (ServerContext* context,
-    const locStub::ConfigureCTUNCRequest* request, locStub::LocManagerCommandReply* response) {
+grpc::Status LocationConfiguratorServerImpl::ConfigureCTUNC(ServerContext *context,
+    const locStub::ConfigureCTUNCRequest *request, locStub::LocManagerCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
-    bool enable = request->enable();
+    bool enable           = request->enable();
     float timeUncertainty = request->time_uncertainty();
     uint32_t energyBudget = request->energy_budget();
     apiJsonReader("configureCTunc", response);
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
-        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator", std::to_string(enable),
-            {"ILocationConfigurator", "CTunc", "enable"});
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+            std::to_string(enable), {"ILocationConfigurator", "CTunc", "enable"});
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(timeUncertainty), {"ILocationConfigurator", "CTunc", "timeUncertainty"});
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
@@ -222,8 +217,8 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureCTUNC (ServerContext* cont
     return grpc::Status::OK;
 }
 
-grpc::Status LocationConfiguratorServerImpl::ConfigurePACE (ServerContext* context,
-    const locStub::ConfigurePACERequest* request, locStub::LocManagerCommandReply* response) {
+grpc::Status LocationConfiguratorServerImpl::ConfigurePACE(ServerContext *context,
+    const locStub::ConfigurePACERequest *request, locStub::LocManagerCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
     bool enable = request->enable();
     apiJsonReader("configurePACE", response);
@@ -234,72 +229,72 @@ grpc::Status LocationConfiguratorServerImpl::ConfigurePACE (ServerContext* conte
     return grpc::Status::OK;
 }
 
-grpc::Status LocationConfiguratorServerImpl::DeleteAllAidingData (ServerContext* context,
-    const google::protobuf::Empty* request, locStub::LocManagerCommandReply* response) {
+grpc::Status LocationConfiguratorServerImpl::DeleteAllAidingData(ServerContext *context,
+    const google::protobuf::Empty *request, locStub::LocManagerCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
     apiJsonReader("deleteAllAidingData", response);
     return grpc::Status::OK;
 }
 
-grpc::Status LocationConfiguratorServerImpl::ConfigureLeverArm (ServerContext* context,
-    const locStub::ConfigureLeverArmRequest* request, locStub::LocManagerCommandReply* response) {
+grpc::Status LocationConfiguratorServerImpl::ConfigureLeverArm(ServerContext *context,
+    const locStub::ConfigureLeverArmRequest *request, locStub::LocManagerCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
     apiJsonReader("configureLeverArm", response);
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
-        for(auto itr: request->lever_arm_config_info()) {
-            if(itr.first == 1) {
+        for (auto itr : request->lever_arm_config_info()) {
+            if (itr.first == 1) {
                 CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
                     std::to_string(itr.second.forward_offset()),
-                        {"ILocationConfigurator", "LeverArm", "GNSSTOVRPforwardOffset"});
+                    {"ILocationConfigurator", "LeverArm", "GNSSTOVRPforwardOffset"});
                 CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
                     std::to_string(itr.second.sideways_offset()),
-                        {"ILocationConfigurator", "LeverArm", "GNSSTOVRPsidewaysOffset"});
+                    {"ILocationConfigurator", "LeverArm", "GNSSTOVRPsidewaysOffset"});
                 CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
                     std::to_string(itr.second.up_offset()),
-                        {"ILocationConfigurator", "LeverArm", "GNSSTOVRPupOffset"});
+                    {"ILocationConfigurator", "LeverArm", "GNSSTOVRPupOffset"});
             }
-            if(itr.first == 2) {
+            if (itr.first == 2) {
                 CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
                     std::to_string(itr.second.forward_offset()),
-                        {"ILocationConfigurator", "LeverArm", "DRIMUTOGNSSforwardOffset"});
+                    {"ILocationConfigurator", "LeverArm", "DRIMUTOGNSSforwardOffset"});
                 CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
                     std::to_string(itr.second.sideways_offset()),
-                        {"ILocationConfigurator", "LeverArm", "DRIMUTOGNSSsidewaysOffset"});
+                    {"ILocationConfigurator", "LeverArm", "DRIMUTOGNSSsidewaysOffset"});
                 CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
                     std::to_string(itr.second.up_offset()),
-                        {"ILocationConfigurator", "LeverArm", "DRIMUTOGNSSupOffset"});
+                    {"ILocationConfigurator", "LeverArm", "DRIMUTOGNSSupOffset"});
             }
-            if(itr.first == 3) {
+            if (itr.first == 3) {
                 CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
                     std::to_string(itr.second.forward_offset()),
-                        {"ILocationConfigurator", "LeverArm", "VEPPIMUTOGNSSforwardOffset"});
+                    {"ILocationConfigurator", "LeverArm", "VEPPIMUTOGNSSforwardOffset"});
                 CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
                     std::to_string(itr.second.sideways_offset()),
-                        {"ILocationConfigurator", "LeverArm", "VEPPIMUTOGNSSsidewaysOffset"});
+                    {"ILocationConfigurator", "LeverArm", "VEPPIMUTOGNSSsidewaysOffset"});
                 CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
                     std::to_string(itr.second.up_offset()),
-                        {"ILocationConfigurator", "LeverArm", "VEPPIMUTOGNSSupOffset"});
+                    {"ILocationConfigurator", "LeverArm", "VEPPIMUTOGNSSupOffset"});
             }
         }
     }
     return grpc::Status::OK;
 }
 
-grpc::Status LocationConfiguratorServerImpl::ConfigureConstellations (ServerContext* context,
-    const locStub::ConfigureConstellationsRequest* request,
-        locStub::LocManagerCommandReply* response) {
+grpc::Status LocationConfiguratorServerImpl::ConfigureConstellations(ServerContext *context,
+    const locStub::ConfigureConstellationsRequest *request,
+    locStub::LocManagerCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
     apiJsonReader("configureConstellations", response);
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
         std::string blacklist = "";
-        for(int ind = 0; ind < request->sv_black_list_info_size(); ind++) {
+        for (int ind = 0; ind < request->sv_black_list_info_size(); ind++) {
             blacklist += std::to_string(
                 static_cast<int>(request->sv_black_list_info(ind).constellation()));
             blacklist += " : ";
             blacklist += std::to_string(request->sv_black_list_info(ind).sv_id());
             blacklist += ", ";
         }
-        if(!blacklist.empty()) {
+        if (!blacklist.empty()) {
             blacklist.pop_back();
             blacklist.pop_back();
         }
@@ -309,9 +304,8 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureConstellations (ServerCont
     return grpc::Status::OK;
 }
 
-grpc::Status LocationConfiguratorServerImpl::ConfigureMinGpsWeek (ServerContext* context,
-    const locStub::ConfigureMinGpsWeekRequest* request,
-        locStub::LocManagerCommandReply* response) {
+grpc::Status LocationConfiguratorServerImpl::ConfigureMinGpsWeek(ServerContext *context,
+    const locStub::ConfigureMinGpsWeekRequest *request, locStub::LocManagerCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
     uint16_t minGpsWeek = request->min_gps_week();
     apiJsonReader("configureMinGpsWeek", response);
@@ -322,16 +316,16 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureMinGpsWeek (ServerContext*
     return grpc::Status::OK;
 }
 
-grpc::Status LocationConfiguratorServerImpl::RequestMinGpsWeek(ServerContext* context,
-    const google::protobuf::Empty* request, locStub::RequestMinGpsWeekReply* response) {
+grpc::Status LocationConfiguratorServerImpl::RequestMinGpsWeek(ServerContext *context,
+    const google::protobuf::Empty *request, locStub::RequestMinGpsWeekReply *response) {
     LOG(DEBUG, __FUNCTION__);
     Json::Value rootNode;
     JsonParser::readFromJsonFile(rootNode, LOC_CONFIG_API_JSON);
     telux::common::Status status;
     telux::common::ErrorCode errorCode;
     int cbDelay;
-    CommonUtils::getValues(rootNode, "ILocationConfigurator", "requestMinGpsWeek", status, errorCode,
-        cbDelay);
+    CommonUtils::getValues(
+        rootNode, "ILocationConfigurator", "requestMinGpsWeek", status, errorCode, cbDelay);
     response->set_status(static_cast<::commonStub::Status>(status));
     response->set_error(static_cast<::commonStub::ErrorCode>(errorCode));
     response->set_delay(cbDelay);
@@ -344,30 +338,30 @@ grpc::Status LocationConfiguratorServerImpl::RequestMinGpsWeek(ServerContext* co
     return grpc::Status::OK;
 }
 
-grpc::Status LocationConfiguratorServerImpl::ConfigureMinSVElevation (ServerContext* context,
-    const locStub::ConfigureMinSVElevationRequest* request,
-        locStub::LocManagerCommandReply* response) {
+grpc::Status LocationConfiguratorServerImpl::ConfigureMinSVElevation(ServerContext *context,
+    const locStub::ConfigureMinSVElevationRequest *request,
+    locStub::LocManagerCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
     uint16_t minSVElevation = request->min_sv_elevation();
     apiJsonReader("configureMinSVElevation", response);
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(minSVElevation),
-                {"ILocationConfigurator", "MinSvElevation", "minSVElevation"});
+            {"ILocationConfigurator", "MinSvElevation", "minSVElevation"});
     }
     return grpc::Status::OK;
 }
 
-grpc::Status LocationConfiguratorServerImpl::RequestMinSVElevation (ServerContext* context,
-        const google::protobuf::Empty* request, locStub::RequestMinSVElevationReply* response) {
+grpc::Status LocationConfiguratorServerImpl::RequestMinSVElevation(ServerContext *context,
+    const google::protobuf::Empty *request, locStub::RequestMinSVElevationReply *response) {
     LOG(DEBUG, __FUNCTION__);
     Json::Value rootNode;
     JsonParser::readFromJsonFile(rootNode, LOC_CONFIG_API_JSON);
     telux::common::Status status;
     telux::common::ErrorCode errorCode;
     int cbDelay;
-    CommonUtils::getValues(rootNode, "ILocationConfigurator", "requestMinSVElevation", status,
-        errorCode, cbDelay);
+    CommonUtils::getValues(
+        rootNode, "ILocationConfigurator", "requestMinSVElevation", status, errorCode, cbDelay);
     response->set_status(static_cast<::commonStub::Status>(status));
     response->set_error(static_cast<::commonStub::ErrorCode>(errorCode));
     response->set_delay(cbDelay);
@@ -380,33 +374,33 @@ grpc::Status LocationConfiguratorServerImpl::RequestMinSVElevation (ServerContex
     return grpc::Status::OK;
 }
 
-grpc::Status LocationConfiguratorServerImpl::ConfigureRobustLocation (ServerContext* context,
-    const locStub::ConfigureRobustLocationRequest* request,
-        locStub::LocManagerCommandReply* response) {
+grpc::Status LocationConfiguratorServerImpl::ConfigureRobustLocation(ServerContext *context,
+    const locStub::ConfigureRobustLocationRequest *request,
+    locStub::LocManagerCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
-    bool enable = request->enable();
+    bool enable        = request->enable();
     bool enableForE911 = request->enable_for_e911();
     apiJsonReader("configureRobustLocation", response);
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
-        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator", std::to_string(enable),
-            {"ILocationConfigurator", "RobustLocation", "enable"});
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+            std::to_string(enable), {"ILocationConfigurator", "RobustLocation", "enable"});
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(enableForE911),
-                {"ILocationConfigurator", "RobustLocation", "enableForE911"});
+            {"ILocationConfigurator", "RobustLocation", "enableForE911"});
     }
     return grpc::Status::OK;
 }
 
-grpc::Status LocationConfiguratorServerImpl::RequestRobustLocation (ServerContext* context,
-        const google::protobuf::Empty* request, locStub::RequestRobustLocationReply* response) {
+grpc::Status LocationConfiguratorServerImpl::RequestRobustLocation(ServerContext *context,
+    const google::protobuf::Empty *request, locStub::RequestRobustLocationReply *response) {
     LOG(DEBUG, __FUNCTION__);
     Json::Value rootNode;
     JsonParser::readFromJsonFile(rootNode, LOC_CONFIG_API_JSON);
     telux::common::Status status;
     telux::common::ErrorCode errorCode;
     int cbDelay;
-    CommonUtils::getValues(rootNode, "ILocationConfigurator", "requestRobustLocation", status,
-        errorCode, cbDelay);
+    CommonUtils::getValues(
+        rootNode, "ILocationConfigurator", "requestRobustLocation", status, errorCode, cbDelay);
     response->set_status(static_cast<::commonStub::Status>(status));
     response->set_error(static_cast<::commonStub::ErrorCode>(errorCode));
     response->set_delay(cbDelay);
@@ -429,51 +423,51 @@ grpc::Status LocationConfiguratorServerImpl::RequestRobustLocation (ServerContex
     return grpc::Status::OK;
 }
 
-grpc::Status LocationConfiguratorServerImpl::ConfigureSecondaryBand (ServerContext* context,
-    const locStub::ConfigureSecondaryBandRequest* request,
-        locStub::LocManagerCommandReply* response) {
+grpc::Status LocationConfiguratorServerImpl::ConfigureSecondaryBand(ServerContext *context,
+    const locStub::ConfigureSecondaryBandRequest *request,
+    locStub::LocManagerCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
     apiJsonReader("configureSecondaryBand", response);
     std::bitset<25> disabledSignal;
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
         std::string secBandSet = "";
-        for(int ind = 0; ind < request->constellation_set_size(); ind++) {
+        for (int ind = 0; ind < request->constellation_set_size(); ind++) {
             int id = static_cast<int>(request->constellation_set(ind));
             secBandSet += std::to_string(id);
             secBandSet += ", ";
             switch (request->constellation_set(ind)) {
-            case ::locStub::GnssConstellationType::GPS:
-                disabledSignal |= telux::loc::GPS_L2;
-                disabledSignal |= telux::loc::GPS_L5;
-                break;
-            case ::locStub::GnssConstellationType::GALILEO:
-                disabledSignal |= telux::loc::GALILEO_E5A;
-                disabledSignal |= telux::loc::GALILIEO_E5B;
-                break;
-            case ::locStub::GnssConstellationType::GLONASS:
-                disabledSignal |= telux::loc::GLONASS_G2;
-                break;
-            case ::locStub::GnssConstellationType::BDS:
-                disabledSignal |= telux::loc::BEIDOU_B2I;
-                disabledSignal |= telux::loc::BEIDOU_B2AI;
-                disabledSignal |= telux::loc::BEIDOU_B2AQ;
-                disabledSignal |= telux::loc::BEIDOU_B2BQ;
-                disabledSignal |= telux::loc::BEIDOU_B2BI;
-                break;
-            case ::locStub::GnssConstellationType::QZSS:
-                disabledSignal |= telux::loc::QZSS_L2;
-                disabledSignal |= telux::loc::QZSS_L5;
-                break;
-            case ::locStub::GnssConstellationType::NAVIC:
-                disabledSignal |= telux::loc::NAVIC_L5;
-                break;
-            case ::locStub::GnssConstellationType::SBAS:
-            case ::locStub::GnssConstellationType::COMPASS:
-            default:
-                break;
+                case ::locStub::GnssConstellationType::GPS:
+                    disabledSignal |= telux::loc::GPS_L2;
+                    disabledSignal |= telux::loc::GPS_L5;
+                    break;
+                case ::locStub::GnssConstellationType::GALILEO:
+                    disabledSignal |= telux::loc::GALILEO_E5A;
+                    disabledSignal |= telux::loc::GALILIEO_E5B;
+                    break;
+                case ::locStub::GnssConstellationType::GLONASS:
+                    disabledSignal |= telux::loc::GLONASS_G2;
+                    break;
+                case ::locStub::GnssConstellationType::BDS:
+                    disabledSignal |= telux::loc::BEIDOU_B2I;
+                    disabledSignal |= telux::loc::BEIDOU_B2AI;
+                    disabledSignal |= telux::loc::BEIDOU_B2AQ;
+                    disabledSignal |= telux::loc::BEIDOU_B2BQ;
+                    disabledSignal |= telux::loc::BEIDOU_B2BI;
+                    break;
+                case ::locStub::GnssConstellationType::QZSS:
+                    disabledSignal |= telux::loc::QZSS_L2;
+                    disabledSignal |= telux::loc::QZSS_L5;
+                    break;
+                case ::locStub::GnssConstellationType::NAVIC:
+                    disabledSignal |= telux::loc::NAVIC_L5;
+                    break;
+                case ::locStub::GnssConstellationType::SBAS:
+                case ::locStub::GnssConstellationType::COMPASS:
+                default:
+                    break;
             }
         }
-        if(!secBandSet.empty()) {
+        if (!secBandSet.empty()) {
             secBandSet.pop_back();
             secBandSet.pop_back();
         }
@@ -482,13 +476,13 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureSecondaryBand (ServerConte
         unsigned long val = disabledSignal.flip().to_ulong();
         std::stringstream ss;
         ss << std::hex << std::uppercase << std::setw(4) << std::setfill('0') << val;
-        std::string enabledMask = "0X" + ss.str();
-        std::string currentEnabledMask = CommonUtils::readSystemDataValue("loc/ILocationConfigurator",
-            "0x1FFFFFF", {"ILocationConfigurator","GnssSignalType"});
+        std::string enabledMask        = "0X" + ss.str();
+        std::string currentEnabledMask = CommonUtils::readSystemDataValue(
+            "loc/ILocationConfigurator", "0x1FFFFFF", {"ILocationConfigurator", "GnssSignalType"});
         if (enabledMask != currentEnabledMask) {
             CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator", enabledMask,
                 {"ILocationConfigurator", "GnssSignalType"});
-            auto f = std::async(std::launch::async, [this](){
+            auto f = std::async(std::launch::async, [this]() {
                 this->triggerGnssConstellationUpdateEvent();
             }).share();
             taskQ_->add(f);
@@ -497,8 +491,8 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureSecondaryBand (ServerConte
     return grpc::Status::OK;
 }
 
-grpc::Status LocationConfiguratorServerImpl::RequestSecondaryBandConfig (ServerContext* context,
-    const google::protobuf::Empty* request, locStub::RequestSecondaryBandConfigReply* response) {
+grpc::Status LocationConfiguratorServerImpl::RequestSecondaryBandConfig(ServerContext *context,
+    const google::protobuf::Empty *request, locStub::RequestSecondaryBandConfigReply *response) {
     LOG(DEBUG, __FUNCTION__);
     Json::Value rootNode;
     JsonParser::readFromJsonFile(rootNode, LOC_CONFIG_API_JSON);
@@ -510,10 +504,10 @@ grpc::Status LocationConfiguratorServerImpl::RequestSecondaryBandConfig (ServerC
     response->set_status(static_cast<::commonStub::Status>(status));
     response->set_error(static_cast<::commonStub::ErrorCode>(errorCode));
     response->set_delay(cbDelay);
-    std::string str = CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "8",
-        {"ILocationConfigurator", "SecondaryBand", "Set"});
-    for(size_t itr = 0; itr < str.size(); itr++) {
-        if(str[itr] >= '0' && str[itr] <= '8') {
+    std::string str = CommonUtils::readSystemDataValue(
+        "loc/ILocationConfigurator", "8", {"ILocationConfigurator", "SecondaryBand", "Set"});
+    for (size_t itr = 0; itr < str.size(); itr++) {
+        if (str[itr] >= '0' && str[itr] <= '8') {
             int constel = (str[itr] - 48);
             response->add_constellation_set(static_cast<::locStub::GnssConstellationType>(constel));
         }
@@ -521,89 +515,89 @@ grpc::Status LocationConfiguratorServerImpl::RequestSecondaryBandConfig (ServerC
     return grpc::Status::OK;
 }
 
-grpc::Status LocationConfiguratorServerImpl::DeleteAidingData (ServerContext* context,
-    const locStub::DeleteAidingDataRequest* request, locStub::LocManagerCommandReply* response) {
+grpc::Status LocationConfiguratorServerImpl::DeleteAidingData(ServerContext *context,
+    const locStub::DeleteAidingDataRequest *request, locStub::LocManagerCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
     uint16_t aidingDataMask = request->aiding_data_mask();
     apiJsonReader("deleteAidingData", response);
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(aidingDataMask),
-                {"ILocationConfigurator", "DeleteAidingData", "aidingDataMask"});
+            {"ILocationConfigurator", "DeleteAidingData", "aidingDataMask"});
     }
     return grpc::Status::OK;
 }
 
-grpc::Status LocationConfiguratorServerImpl::ConfigureDR (ServerContext* context,
-    const locStub::ConfigureDRRequest* request, locStub::LocManagerCommandReply* response) {
+grpc::Status LocationConfiguratorServerImpl::ConfigureDR(ServerContext *context,
+    const locStub::ConfigureDRRequest *request, locStub::LocManagerCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
     apiJsonReader("configureDR", response);
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<float>(request->config().speed_factor())),
-                {"ILocationConfigurator", "configureDR", "speedFactor"});
+            {"ILocationConfigurator", "configureDR", "speedFactor"});
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<float>(request->config().speed_factor_unc())),
-                {"ILocationConfigurator", "configureDR", "speedFactorUnc"});
+            {"ILocationConfigurator", "configureDR", "speedFactorUnc"});
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<float>(request->config().gyro_factor())),
-                {"ILocationConfigurator", "configureDR", "gyroFactor"});
+            {"ILocationConfigurator", "configureDR", "gyroFactor"});
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<float>(request->config().gyro_factor_unc())),
-                {"ILocationConfigurator", "configureDR", "gyroFactorUnc"});
+            {"ILocationConfigurator", "configureDR", "gyroFactorUnc"});
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<float>(request->config().mount_param().roll_offset())),
-                {"ILocationConfigurator", "configureDR", "rollOffset"});
+            {"ILocationConfigurator", "configureDR", "rollOffset"});
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<float>(request->config().mount_param().yaw_offset())),
-                {"ILocationConfigurator", "configureDR", "yawOffset"});
+            {"ILocationConfigurator", "configureDR", "yawOffset"});
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<float>(request->config().mount_param().pitch_offset())),
-                {"ILocationConfigurator", "configureDR", "pitchOffset"});
+            {"ILocationConfigurator", "configureDR", "pitchOffset"});
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<float>(request->config().mount_param().offset_unc())),
-                {"ILocationConfigurator", "configureDR", "offsetUnc"});
+            {"ILocationConfigurator", "configureDR", "offsetUnc"});
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(request->config().valid_mask())),
-                {"ILocationConfigurator", "configureDR", "validity"});
+            {"ILocationConfigurator", "configureDR", "validity"});
     }
     return grpc::Status::OK;
 }
 
-grpc::Status LocationConfiguratorServerImpl::ConfigureEngineState (ServerContext* context,
-    const locStub::ConfigureEngineStateRequest* request,
-        locStub::LocManagerCommandReply* response) {
+grpc::Status LocationConfiguratorServerImpl::ConfigureEngineState(ServerContext *context,
+    const locStub::ConfigureEngineStateRequest *request,
+    locStub::LocManagerCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
-    uint16_t engineType = request->engine_type();
+    uint16_t engineType  = request->engine_type();
     uint16_t engineState = request->engine_state();
     apiJsonReader("configureEngineState", response);
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(engineType)),
-                {"ILocationConfigurator", "EngineState", "engineType"});
+            {"ILocationConfigurator", "EngineState", "engineType"});
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(engineState)),
-                {"ILocationConfigurator", "EngineState", "engineState"});
+            {"ILocationConfigurator", "EngineState", "engineState"});
     }
     return grpc::Status::OK;
 }
 
-grpc::Status LocationConfiguratorServerImpl::ProvideConsentForTerrestrialPositioning (
-    ServerContext* context, const locStub::ProvideConsentForTerrestrialPositioningRequest* request,
-        locStub::LocManagerCommandReply* response) {
+grpc::Status LocationConfiguratorServerImpl::ProvideConsentForTerrestrialPositioning(
+    ServerContext *context, const locStub::ProvideConsentForTerrestrialPositioningRequest *request,
+    locStub::LocManagerCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
     bool consent = request->user_consent();
     apiJsonReader("provideConsentForTerrestrialPositioning", response);
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(consent),
-                {"ILocationConfigurator", "ConsentForTerrestrialPositioning", "Consent"});
+            {"ILocationConfigurator", "ConsentForTerrestrialPositioning", "Consent"});
     }
     return grpc::Status::OK;
 }
 
-grpc::Status LocationConfiguratorServerImpl::ConfigureNmeaTypes (ServerContext* context,
-    const locStub::ConfigureNmeaTypesRequest* request, locStub::LocManagerCommandReply* response) {
+grpc::Status LocationConfiguratorServerImpl::ConfigureNmeaTypes(ServerContext *context,
+    const locStub::ConfigureNmeaTypesRequest *request, locStub::LocManagerCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
     uint16_t nmeaType = request->nmea_type();
     apiJsonReader("configureNmeaTypes", response);
@@ -615,15 +609,15 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureNmeaTypes (ServerContext* 
     return grpc::Status::OK;
 }
 
-grpc::Status LocationConfiguratorServerImpl::ConfigureNmea(ServerContext* context,
-    const locStub::ConfigureNmeaRequest* request, locStub::LocManagerCommandReply* response) {
+grpc::Status LocationConfiguratorServerImpl::ConfigureNmea(ServerContext *context,
+    const locStub::ConfigureNmeaRequest *request, locStub::LocManagerCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
-    uint16_t nmeaType = request->nmea_type();
+    uint16_t nmeaType   = request->nmea_type();
     uint16_t engineType = request->engine_type();
     uint16_t datumType;
-    if(request->datum_type() == ::locStub::DatumType::WGS_84) {
+    if (request->datum_type() == ::locStub::DatumType::WGS_84) {
         datumType = 0;
-    } else if(request->datum_type() == ::locStub::DatumType::PZ_90) {
+    } else if (request->datum_type() == ::locStub::DatumType::PZ_90) {
         datumType = 1;
     }
     apiJsonReader("configureNmea", response);
@@ -638,11 +632,11 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureNmea(ServerContext* contex
     return grpc::Status::OK;
 }
 
-grpc::Status LocationConfiguratorServerImpl::ConfigureEngineIntegrityRisk (ServerContext* context,
-    const locStub::ConfigureEngineIntegrityRiskRequest* request,
-        locStub::LocManagerCommandReply* response) {
+grpc::Status LocationConfiguratorServerImpl::ConfigureEngineIntegrityRisk(ServerContext *context,
+    const locStub::ConfigureEngineIntegrityRiskRequest *request,
+    locStub::LocManagerCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
-    uint16_t integRisk = request->integrity_risk();
+    uint16_t integRisk  = request->integrity_risk();
     uint16_t engineType = request->engine_type();
     apiJsonReader("configureEngineIntegrityRisk", response);
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
@@ -656,80 +650,77 @@ grpc::Status LocationConfiguratorServerImpl::ConfigureEngineIntegrityRisk (Serve
     return grpc::Status::OK;
 }
 
-grpc::Status LocationConfiguratorServerImpl::ConfigureXtraParams (ServerContext* context,
-    const locStub::ConfigureXtraParamsRequest* request,
-        locStub::LocManagerCommandReply* response) {
+grpc::Status LocationConfiguratorServerImpl::ConfigureXtraParams(ServerContext *context,
+    const locStub::ConfigureXtraParamsRequest *request, locStub::LocManagerCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
     apiJsonReader("configureXtraParams", response);
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
-        if(xtraConsent_ == false) {
+        if (xtraConsent_ == false) {
             CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
                 std::to_string(static_cast<int>(false)),
-                    {"ILocationConfigurator", "XtraEnablement", "enable"});
+                {"ILocationConfigurator", "XtraEnablement", "enable"});
             xtraEnabled_ = false;
         } else {
             CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
                 std::to_string(static_cast<int>(request->enable())),
-                    {"ILocationConfigurator", "XtraEnablement", "enable"});
+                {"ILocationConfigurator", "XtraEnablement", "enable"});
             xtraEnabled_ = request->enable();
         }
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(request->download_interval_minute())),
-                {"ILocationConfigurator", "XtraParams", "downloadIntervalMinute"});
+            {"ILocationConfigurator", "XtraParams", "downloadIntervalMinute"});
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(request->download_timeout_sec())),
-                {"ILocationConfigurator", "XtraParams", "downloadTimeoutSec"});
+            {"ILocationConfigurator", "XtraParams", "downloadTimeoutSec"});
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(request->download_retry_interval_minute())),
-                {"ILocationConfigurator", "XtraParams", "downloadRetryIntervalMinute"});
+            {"ILocationConfigurator", "XtraParams", "downloadRetryIntervalMinute"});
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(request->download_retry_attempts())),
-                {"ILocationConfigurator", "XtraParams", "downloadRetryAttempts"});
-        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
-            request->ca_path(), {"ILocationConfigurator", "XtraParams", "caPath"});
+            {"ILocationConfigurator", "XtraParams", "downloadRetryAttempts"});
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator", request->ca_path(),
+            {"ILocationConfigurator", "XtraParams", "caPath"});
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(request->integrity_download_enabled())),
-                {"ILocationConfigurator", "XtraParams", "isIntegrityDownloadEnabled"});
+            {"ILocationConfigurator", "XtraParams", "isIntegrityDownloadEnabled"});
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(request->integrity_download_interval_minute())),
-                {"ILocationConfigurator", "XtraParams", "integrityDownloadIntervalMinute"});
+            {"ILocationConfigurator", "XtraParams", "integrityDownloadIntervalMinute"});
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(request->daemon_debug_log_level())),
-                {"ILocationConfigurator", "XtraParams", "daemonDebugLogLevel"});
-        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator", request->server_urls(),
-            {"ILocationConfigurator", "XtraParams", "serverURLs"});
-        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator", request->ntp_server_urls(),
-            {"ILocationConfigurator", "XtraParams", "ntpServerURLs"});
-        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator", request->nts_server_url(),
-            {"ILocationConfigurator", "XtraParams", "ntsServerURL"});
+            {"ILocationConfigurator", "XtraParams", "daemonDebugLogLevel"});
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+            request->server_urls(), {"ILocationConfigurator", "XtraParams", "serverURLs"});
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+            request->ntp_server_urls(), {"ILocationConfigurator", "XtraParams", "ntpServerURLs"});
+        CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+            request->nts_server_url(), {"ILocationConfigurator", "XtraParams", "ntsServerURL"});
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(request->diag_logging_enabled())),
-                {"ILocationConfigurator", "XtraParams", "diagLoggingEnabled"});
+            {"ILocationConfigurator", "XtraParams", "diagLoggingEnabled"});
     }
-    if(xtraSet_ != request->enable()) {
-        auto f = std::async(std::launch::async, [this](){
-            this->triggerXtraStatusEvent();
-        }).share();
+    if (xtraSet_ != request->enable()) {
+        auto f
+            = std::async(std::launch::async, [this]() { this->triggerXtraStatusEvent(); }).share();
         taskQ_->add(f);
         xtraSet_ = request->enable();
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(xtraSet_)),
-                {"ILocationConfigurator", "XtraEnablement", "set"});
+            {"ILocationConfigurator", "XtraEnablement", "set"});
     }
     return grpc::Status::OK;
 }
 
-grpc::Status LocationConfiguratorServerImpl::RequestXtraStatus (ServerContext* context,
-    const google::protobuf::Empty* request,
-        locStub::RequestXtraStatusReply* response) {
+grpc::Status LocationConfiguratorServerImpl::RequestXtraStatus(ServerContext *context,
+    const google::protobuf::Empty *request, locStub::RequestXtraStatusReply *response) {
     LOG(DEBUG, __FUNCTION__);
     Json::Value rootNode;
     JsonParser::readFromJsonFile(rootNode, LOC_CONFIG_API_JSON);
     telux::common::Status status;
     telux::common::ErrorCode errorCode;
     int cbDelay;
-    CommonUtils::getValues(rootNode, "ILocationConfigurator", "requestXtraStatus", status,
-        errorCode, cbDelay);
+    CommonUtils::getValues(
+        rootNode, "ILocationConfigurator", "requestXtraStatus", status, errorCode, cbDelay);
     response->set_status(static_cast<::commonStub::Status>(status));
     response->set_error(static_cast<::commonStub::ErrorCode>(errorCode));
     response->set_delay(cbDelay);
@@ -737,7 +728,7 @@ grpc::Status LocationConfiguratorServerImpl::RequestXtraStatus (ServerContext* c
     response->mutable_xtra_status()->set_xtra_valid_for_hours(
         std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
             {"ILocationConfigurator", "XtraParams", "xtraValidForHours"})));
-    if(xtraConsent_) {
+    if (xtraConsent_) {
         response->mutable_xtra_status()->set_xtra_data_status(
             std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
                 {"ILocationConfigurator", "XtraParams", "xtraDataStatus"})));
@@ -748,59 +739,57 @@ grpc::Status LocationConfiguratorServerImpl::RequestXtraStatus (ServerContext* c
     return grpc::Status::OK;
 }
 
-grpc::Status LocationConfiguratorServerImpl::InjectMerkleTree (ServerContext* context,
-    const google::protobuf::Empty* request, locStub::LocManagerCommandReply* response) {
+grpc::Status LocationConfiguratorServerImpl::InjectMerkleTree(ServerContext *context,
+    const google::protobuf::Empty *request, locStub::LocManagerCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
     apiJsonReader("injectMerkleTreeInformation", response);
     return grpc::Status::OK;
 }
 
-grpc::Status LocationConfiguratorServerImpl::ConfigureOsnma (ServerContext* context,
-    const locStub::ConfigureOsnmaRequest* request, locStub::LocManagerCommandReply* response) {
+grpc::Status LocationConfiguratorServerImpl::ConfigureOsnma(ServerContext *context,
+    const locStub::ConfigureOsnmaRequest *request, locStub::LocManagerCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
     apiJsonReader("configureOsnma", response);
     bool enable = request->enable();
     if (response->error() == ::commonStub::ErrorCode::ERROR_CODE_SUCCESS) {
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
-            std::to_string(enable),
-            {"ILocationConfigurator", "configureOsnma", "enable"});
+            std::to_string(enable), {"ILocationConfigurator", "configureOsnma", "enable"});
     }
     return grpc::Status::OK;
 }
 
-grpc::Status LocationConfiguratorServerImpl::ProvideXtraConsent (ServerContext* context,
-    const locStub::XtraConsentRequest* request, locStub::LocManagerCommandReply* response) {
+grpc::Status LocationConfiguratorServerImpl::ProvideXtraConsent(ServerContext *context,
+    const locStub::XtraConsentRequest *request, locStub::LocManagerCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
     apiJsonReader("provideConsentForXtra", response);
     bool consent = request->consent();
-    if(consent != xtraConsent_) {
-        if(consent == false) {
+    if (consent != xtraConsent_) {
+        if (consent == false) {
             xtraEnabled_ = false;
             CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
                 std::to_string(static_cast<int>(false)),
-                    {"ILocationConfigurator", "XtraEnablement", "enable"});
+                {"ILocationConfigurator", "XtraEnablement", "enable"});
         } else {
-            if(xtraSet_) {
+            if (xtraSet_) {
                 xtraEnabled_ = true;
                 CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
                     std::to_string(static_cast<int>(true)),
-                        {"ILocationConfigurator", "XtraEnablement", "enable"});
+                    {"ILocationConfigurator", "XtraEnablement", "enable"});
             }
         }
         xtraConsent_ = consent;
         CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
             std::to_string(static_cast<int>(consent)),
             {"ILocationConfigurator", "XtraEnablement", "consent"});
-        auto f = std::async(std::launch::async, [this](){
-            this->triggerXtraStatusEvent();
-        }).share();
+        auto f
+            = std::async(std::launch::async, [this]() { this->triggerXtraStatusEvent(); }).share();
         taskQ_->add(f);
     }
     return grpc::Status::OK;
 }
 
 void LocationConfiguratorServerImpl::apiJsonReader(
-    std::string apiName, locStub::LocManagerCommandReply* response) {
+    std::string apiName, locStub::LocManagerCommandReply *response) {
     LOG(DEBUG, __FUNCTION__);
     Json::Value rootNode;
     JsonParser::readFromJsonFile(rootNode, LOC_CONFIG_API_JSON);

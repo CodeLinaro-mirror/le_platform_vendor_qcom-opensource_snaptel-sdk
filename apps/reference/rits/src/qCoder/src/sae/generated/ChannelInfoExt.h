@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_ChannelInfoExt_H_
-#define	_ChannelInfoExt_H_
-
+#ifndef _ChannelInfoExt_H_
+#define _ChannelInfoExt_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* ChannelInfoExt */
-typedef Extension_22P2_t	 ChannelInfoExt_t;
+typedef Extension_22P2_t ChannelInfoExt_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_ChannelInfoExt;
@@ -37,5 +36,5 @@ per_type_encoder_f ChannelInfoExt_encode_uper;
 }
 #endif
 
-#endif	/* _ChannelInfoExt_H_ */
+#endif /* _ChannelInfoExt_H_ */
 #include <asn_internal.h>

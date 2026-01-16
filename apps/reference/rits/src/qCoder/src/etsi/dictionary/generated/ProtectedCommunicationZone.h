@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_ProtectedCommunicationZone_H_
-#define	_ProtectedCommunicationZone_H_
-
+#ifndef _ProtectedCommunicationZone_H_
+#define _ProtectedCommunicationZone_H_
 
 #include <asn_application.h>
 
@@ -26,15 +25,15 @@ extern "C" {
 
 /* ProtectedCommunicationZone */
 typedef struct ProtectedCommunicationZone {
-	ProtectedZoneType_t	 protectedZoneType;
-	TimestampIts_t	*expiryTime	/* OPTIONAL */;
-	Latitude_t	 protectedZoneLatitude;
-	Longitude_t	 protectedZoneLongitude;
-	ProtectedZoneRadius_t	*protectedZoneRadius	/* OPTIONAL */;
-	ProtectedZoneID_t	*protectedZoneID	/* OPTIONAL */;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    ProtectedZoneType_t protectedZoneType;
+    TimestampIts_t *expiryTime /* OPTIONAL */;
+    Latitude_t protectedZoneLatitude;
+    Longitude_t protectedZoneLongitude;
+    ProtectedZoneRadius_t *protectedZoneRadius /* OPTIONAL */;
+    ProtectedZoneID_t *protectedZoneID /* OPTIONAL */;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } ProtectedCommunicationZone_t;
 
 /* Implementation */
@@ -44,5 +43,5 @@ extern asn_TYPE_descriptor_t asn_DEF_ProtectedCommunicationZone;
 }
 #endif
 
-#endif	/* _ProtectedCommunicationZone_H_ */
+#endif /* _ProtectedCommunicationZone_H_ */
 #include <asn_internal.h>

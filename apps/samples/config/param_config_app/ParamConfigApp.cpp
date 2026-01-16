@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /*
@@ -41,13 +41,11 @@ class ParamConfigListener : public telux::config::IConfigListener,
         std::promise<telux::common::ServiceStatus> p{};
 
         /* Step - 1 */
-        auto &configFactory = telux::config:: ConfigFactory::getInstance();
+        auto &configFactory = telux::config::ConfigFactory::getInstance();
 
         /* Step - 2 */
         configMgr_ = configFactory.getConfigManager(
-                [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+            [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!configMgr_) {
             std::cout << "Can't get IConfigManager" << std::endl;
@@ -57,16 +55,15 @@ class ParamConfigListener : public telux::config::IConfigListener,
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Config service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Config service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
         /* Step - 4 */
         status = configMgr_->registerListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't register, status " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't register, status " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -80,8 +77,7 @@ class ParamConfigListener : public telux::config::IConfigListener,
         /* Step - 9 */
         status = configMgr_->deregisterListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't deregister, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't deregister, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -95,7 +91,7 @@ class ParamConfigListener : public telux::config::IConfigListener,
         allConfigs = configMgr_->getAllConfigs();
 
         std::cout << "\nCurrent configs are:" << std::endl;
-        for(auto &config: allConfigs) {
+        for (auto &config : allConfigs) {
             std::cout << config.first << " : " << config.second << "\n";
         }
 
@@ -111,8 +107,7 @@ class ParamConfigListener : public telux::config::IConfigListener,
         /* Step - 6 */
         status = configMgr_->setConfig(key, value);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't set config, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't set config, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -144,7 +139,7 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<ParamConfigListener>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate ParamConfigListener" << std::endl;
         return -ENOMEM;
     }

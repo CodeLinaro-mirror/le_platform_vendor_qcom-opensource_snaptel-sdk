@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_BasicVehicleContainerHighFrequency_H_
-#define	_BasicVehicleContainerHighFrequency_H_
-
+#ifndef _BasicVehicleContainerHighFrequency_H_
+#define _BasicVehicleContainerHighFrequency_H_
 
 #include <asn_application.h>
 
@@ -38,25 +37,25 @@ struct CenDsrcTollingZone;
 
 /* BasicVehicleContainerHighFrequency */
 typedef struct BasicVehicleContainerHighFrequency {
-	Heading_t	 heading;
-	Speed_t	 speed;
-	DriveDirection_t	 driveDirection;
-	VehicleLength_t	 vehicleLength;
-	VehicleWidth_t	 vehicleWidth;
-	LongitudinalAcceleration_t	 longitudinalAcceleration;
-	Curvature_t	 curvature;
-	CurvatureCalculationMode_t	 curvatureCalculationMode;
-	YawRate_t	 yawRate;
-	AccelerationControl_t	*accelerationControl	/* OPTIONAL */;
-	LanePosition_t	*lanePosition	/* OPTIONAL */;
-	struct SteeringWheelAngle	*steeringWheelAngle	/* OPTIONAL */;
-	struct LateralAcceleration	*lateralAcceleration	/* OPTIONAL */;
-	struct VerticalAcceleration	*verticalAcceleration	/* OPTIONAL */;
-	PerformanceClass_t	*performanceClass	/* OPTIONAL */;
-	struct CenDsrcTollingZone	*cenDsrcTollingZone	/* OPTIONAL */;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    Heading_t heading;
+    Speed_t speed;
+    DriveDirection_t driveDirection;
+    VehicleLength_t vehicleLength;
+    VehicleWidth_t vehicleWidth;
+    LongitudinalAcceleration_t longitudinalAcceleration;
+    Curvature_t curvature;
+    CurvatureCalculationMode_t curvatureCalculationMode;
+    YawRate_t yawRate;
+    AccelerationControl_t *accelerationControl /* OPTIONAL */;
+    LanePosition_t *lanePosition /* OPTIONAL */;
+    struct SteeringWheelAngle *steeringWheelAngle /* OPTIONAL */;
+    struct LateralAcceleration *lateralAcceleration /* OPTIONAL */;
+    struct VerticalAcceleration *verticalAcceleration /* OPTIONAL */;
+    PerformanceClass_t *performanceClass /* OPTIONAL */;
+    struct CenDsrcTollingZone *cenDsrcTollingZone /* OPTIONAL */;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } BasicVehicleContainerHighFrequency_t;
 
 /* Implementation */
@@ -72,5 +71,5 @@ extern asn_TYPE_descriptor_t asn_DEF_BasicVehicleContainerHighFrequency;
 #include "VerticalAcceleration.h"
 #include "CenDsrcTollingZone.h"
 
-#endif	/* _BasicVehicleContainerHighFrequency_H_ */
+#endif /* _BasicVehicleContainerHighFrequency_H_ */
 #include <asn_internal.h>

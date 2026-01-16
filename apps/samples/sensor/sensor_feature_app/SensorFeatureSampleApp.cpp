@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <future>
 #include <getopt.h>
 #include <iostream>
@@ -74,10 +80,10 @@ void printHelp(std::string programName, std::vector<telux::sensor::SensorFeature
 
 void parseArgs(int argc, char **argv, std::string &name,
     std::vector<telux::sensor::SensorFeature> &sensorFeatures) {
-    int c = -1;
+    int c                                     = -1;
     static const struct option long_options[] = {{"sensor feature name", required_argument, 0, 'f'},
         {"help", no_argument, 0, 'h'}, {0, 0, 0, 0}};
-    int option_index = 0;
+    int option_index                          = 0;
     c = getopt_long(argc, argv, "f:h", long_options, &option_index);
     if (c == -1) {
         if (sensorFeatures.size() > 0) {

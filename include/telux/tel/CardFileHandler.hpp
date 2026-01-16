@@ -1,35 +1,6 @@
 /*
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -58,18 +29,20 @@ namespace tel {
  * Defines supported elementary file(EF) types.
  */
 enum class EfType {
-    UNKNOWN = 0,               /**< Unknown EF type */
-    TRANSPARENT,               /**< Transparent EF */
-    LINEAR_FIXED,              /**< Linear Fixed EF */
+    UNKNOWN = 0, /**< Unknown EF type */
+    TRANSPARENT, /**< Transparent EF */
+    LINEAR_FIXED, /**< Linear Fixed EF */
 };
 
 /**
  * SIM Elementary file attributes.
  */
 struct FileAttributes {
-    uint16_t fileSize;     /**< File size of transparent or linear fixed file.*/
-    uint16_t recordSize;   /**< Size of the file record. Applicable only for telux::tel::EfType::LINEAR_FIXED.*/
-    uint16_t recordCount;  /**< The number of records in a file. Applicable only for telux::tel::EfType::LINEAR_FIXED.*/
+    uint16_t fileSize; /**< File size of transparent or linear fixed file.*/
+    uint16_t recordSize; /**< Size of the file record. Applicable only for
+                            telux::tel::EfType::LINEAR_FIXED.*/
+    uint16_t recordCount; /**< The number of records in a file. Applicable only for
+                             telux::tel::EfType::LINEAR_FIXED.*/
 };
 
 /**
@@ -97,8 +70,8 @@ using EfOperationCallback = std::function<void(telux::common::ErrorCode error, I
  *                                 fails then the records returned will be empty.
  *
  */
-using EfReadAllRecordsCallback = std::function<void(telux::common::ErrorCode error,
-    std::vector<IccResult> records)>;
+using EfReadAllRecordsCallback
+    = std::function<void(telux::common::ErrorCode error, std::vector<IccResult> records)>;
 
 /**
  * This function is called when an elementary file operation like getting file attributes is
@@ -111,8 +84,8 @@ using EfReadAllRecordsCallback = std::function<void(telux::common::ErrorCode err
  *                          type and file size etc.
  *
  */
-using EfGetFileAttributesCallback = std::function<void(telux::common::ErrorCode error,
-    IccResult result, FileAttributes attributes)>;
+using EfGetFileAttributesCallback = std::function<void(
+    telux::common::ErrorCode error, IccResult result, FileAttributes attributes)>;
 
 /**
  *@brief ICardFileHandler provides APIs for reading from an elementary file(EF) on SIM and writing
@@ -122,7 +95,6 @@ using EfGetFileAttributesCallback = std::function<void(telux::common::ErrorCode 
  */
 class ICardFileHandler {
  public:
-
     /**
      * Read a record from a SIM linear fixed elementary file (EF).
      *
@@ -142,7 +114,8 @@ class ICardFileHandler {
      */
 
     virtual telux::common::Status readEFLinearFixed(std::string filePath, uint16_t fileId,
-        int recordNum, std::string aid, EfOperationCallback callback) = 0;
+        int recordNum, std::string aid, EfOperationCallback callback)
+        = 0;
 
     /**
      * Read all records from a SIM linear fixed elementary file (EF).
@@ -161,8 +134,9 @@ class ICardFileHandler {
      *
      */
 
-    virtual telux::common::Status readEFLinearFixedAll(std::string filePath, uint16_t fileId,
-        std::string aid, EfReadAllRecordsCallback callback) = 0;
+    virtual telux::common::Status readEFLinearFixedAll(
+        std::string filePath, uint16_t fileId, std::string aid, EfReadAllRecordsCallback callback)
+        = 0;
 
     /**
      * Read from a SIM transparent elementary file (EF).
@@ -184,7 +158,8 @@ class ICardFileHandler {
      */
 
     virtual telux::common::Status readEFTransparent(std::string filePath, uint16_t fileId, int size,
-        std::string aid, EfOperationCallback callback) = 0;
+        std::string aid, EfOperationCallback callback)
+        = 0;
 
     /**
      * Write a record in a SIM linear fixed elementary file (EF).
@@ -209,7 +184,8 @@ class ICardFileHandler {
 
     virtual telux::common::Status writeEFLinearFixed(std::string filePath, uint16_t fileId,
         int recordNum, std::vector<uint8_t> data, std::string pin2, std::string aid,
-        EfOperationCallback callback) = 0;
+        EfOperationCallback callback)
+        = 0;
 
     /**
      * Write in a SIM transparent elementary file (EF).
@@ -230,7 +206,8 @@ class ICardFileHandler {
      */
 
     virtual telux::common::Status writeEFTransparent(std::string filePath, uint16_t fileId,
-        std::vector<uint8_t> data, std::string aid, EfOperationCallback callback) = 0;
+        std::vector<uint8_t> data, std::string aid, EfOperationCallback callback)
+        = 0;
 
     /**
      * Get file attributes for SIM elementary file(EF).
@@ -251,7 +228,8 @@ class ICardFileHandler {
      */
 
     virtual telux::common::Status requestEFAttributes(EfType efType, std::string filePath,
-        uint16_t fileId, std::string aid, EfGetFileAttributesCallback callback) = 0;
+        uint16_t fileId, std::string aid, EfGetFileAttributesCallback callback)
+        = 0;
 
     /**
      * Get associated slot identifier for ICardFileHandler
@@ -263,7 +241,6 @@ class ICardFileHandler {
 
     virtual ~ICardFileHandler() {
     }
-
 };
 
 /** @} */ /* end_addtogroup telematics_card */
@@ -271,4 +248,4 @@ class ICardFileHandler {
 }  // End of namespace tel
 }  // End of namespace telux
 
-#endif // TELUX_TEL_CARDFILEHANDLER_HPP
+#endif  // TELUX_TEL_CARDFILEHANDLER_HPP

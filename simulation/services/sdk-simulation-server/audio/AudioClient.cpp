@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "AudioClient.hpp"
@@ -9,11 +9,9 @@
 namespace telux {
 namespace audio {
 
-AudioClient::AudioClient(
-    int clientId,
-    std::weak_ptr<IAudioMsgDispatcher> audioMsgDispatcher) {
+AudioClient::AudioClient(int clientId, std::weak_ptr<IAudioMsgDispatcher> audioMsgDispatcher) {
 
-    clientId_ = clientId;
+    clientId_           = clientId;
     audioMsgDispatcher_ = audioMsgDispatcher;
 }
 
@@ -53,7 +51,7 @@ bool AudioClient::disassociateStream(uint32_t streamId, StreamType type) {
 
     if (type != StreamType::NONE) {
         auto itr = std::find_if(streamIdsList_[type].begin(), streamIdsList_[type].end(),
-                [streamId](uint32_t id) {return (streamId == id);});
+            [streamId](uint32_t id) { return (streamId == id); });
         if (itr != streamIdsList_[type].end()) {
             streamIdsList_[type].erase(itr);
             return true;
@@ -61,7 +59,7 @@ bool AudioClient::disassociateStream(uint32_t streamId, StreamType type) {
     } else {
         for (auto stream : streamIdsList_) {
             auto itr = std::find_if(stream.second.begin(), stream.second.end(),
-                    [streamId](uint32_t id) { return (streamId == id); });
+                [streamId](uint32_t id) { return (streamId == id); });
             if (itr != stream.second.end()) {
                 stream.second.erase(itr);
                 return true;
@@ -86,5 +84,5 @@ std::map<StreamType, std::vector<uint32_t>> AudioClient::getAssociatedStreamIdLi
     return streamIdsList_;
 }
 
-} // end namespace audio
-} // end namespace telux
+}  // end namespace audio
+}  // end namespace telux

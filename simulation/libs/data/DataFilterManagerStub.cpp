@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "DataFilterManagerStub.hpp"
@@ -21,10 +21,9 @@ namespace data {
 
 DataFilterManagerStub::DataFilterManagerStub(SlotId slotId) {
     LOG(DEBUG, __FUNCTION__);
-    taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
-    listenerMgr_ =
-        std::make_shared<telux::common::ListenerManager<IDataFilterListener>>();
-    slotId_ = slotId;
+    taskQ_       = std::make_shared<AsyncTaskQueue<void>>();
+    listenerMgr_ = std::make_shared<telux::common::ListenerManager<IDataFilterListener>>();
+    slotId_      = slotId;
 }
 
 DataFilterManagerStub::~DataFilterManagerStub() {
@@ -38,9 +37,8 @@ telux::common::Status DataFilterManagerStub::init(telux::common::InitResponseCb 
     LOG(DEBUG, __FUNCTION__);
 
     initCb_ = callback;
-    auto f =
-        std::async(std::launch::async, [this, callback]() {
-        this->initSync(callback);}).share();
+    auto f
+        = std::async(std::launch::async, [this, callback]() { this->initSync(callback); }).share();
     taskQ_->add(f);
 
     return telux::common::Status::SUCCESS;
@@ -48,14 +46,12 @@ telux::common::Status DataFilterManagerStub::init(telux::common::InitResponseCb 
 
 bool DataFilterManagerStub::isReady() {
     std::lock_guard<std::mutex> lock(mutex_);
-    return (subSystemStatus_ == telux::common::ServiceStatus::SERVICE_AVAILABLE)
-        ? true : false;
+    return (subSystemStatus_ == telux::common::ServiceStatus::SERVICE_AVAILABLE) ? true : false;
 }
 
 std::future<bool> DataFilterManagerStub::onReady() {
     std::future<bool> f;
-    f = std::async(std::launch::async, [&] {
-        return waitForInitialization(); });
+    f = std::async(std::launch::async, [&] { return waitForInitialization(); });
     return f;
 }
 
@@ -81,10 +77,9 @@ void DataFilterManagerStub::initSync(telux::common::InitResponseCb callback) {
     ClientContext context;
 
     request.set_slot_id(slotId_);
-    grpc::Status reqStatus = stub_->InitService(&context, request, &response);
-    telux::common::ServiceStatus cbStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
-    int cbDelay = DEFAULT_DELAY;
+    grpc::Status reqStatus                = stub_->InitService(&context, request, &response);
+    telux::common::ServiceStatus cbStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    int cbDelay                           = DEFAULT_DELAY;
 
     do {
         if (!reqStatus.ok()) {
@@ -92,9 +87,8 @@ void DataFilterManagerStub::initSync(telux::common::InitResponseCb callback) {
             break;
         }
 
-        cbStatus =
-            static_cast<telux::common::ServiceStatus>(response.service_status());
-        cbDelay = static_cast<int>(response.delay());
+        cbStatus = static_cast<telux::common::ServiceStatus>(response.service_status());
+        cbDelay  = static_cast<int>(response.delay());
 
         this->onServiceStatusChange(cbStatus);
         LOG(DEBUG, __FUNCTION__, " ServiceStatus: ", static_cast<int>(cbStatus));
@@ -104,13 +98,12 @@ void DataFilterManagerStub::initSync(telux::common::InitResponseCb callback) {
 
     if (callback && (cbDelay != SKIP_CALLBACK)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay,
-            " cbStatus::", static_cast<int>(cbStatus));
+        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", static_cast<int>(cbStatus));
         invokeInitCallback(cbStatus);
     }
 
     std::vector<std::string> filters = {DATA_FILTER};
-    auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+    auto &clientEventManager         = telux::common::ClientEventManager::getInstance();
     clientEventManager.registerListener(shared_from_this(), filters);
 }
 
@@ -121,15 +114,12 @@ void DataFilterManagerStub::invokeInitCallback(telux::common::ServiceStatus stat
     }
 }
 
-void DataFilterManagerStub::invokeCallback(telux::common::ResponseCallback callback,
-    telux::common::ErrorCode error, int cbDelay ) {
+void DataFilterManagerStub::invokeCallback(
+    telux::common::ResponseCallback callback, telux::common::ErrorCode error, int cbDelay) {
     LOG(DEBUG, __FUNCTION__);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-    auto f = std::async(std::launch::async,
-        [this, error , callback]() {
-            callback(error);
-        }).share();
+    auto f = std::async(std::launch::async, [this, error, callback]() { callback(error); }).share();
     taskQ_->add(f);
 }
 
@@ -143,8 +133,8 @@ telux::common::ServiceStatus DataFilterManagerStub::getServiceStatus() {
     return subSystemStatus_;
 }
 
-telux::common::Status DataFilterManagerStub::setDataRestrictMode(DataRestrictMode mode,
-    telux::common::ResponseCallback callback) {
+telux::common::Status DataFilterManagerStub::setDataRestrictMode(
+    DataRestrictMode mode, telux::common::ResponseCallback callback) {
     LOG(INFO, __FUNCTION__);
 
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
@@ -153,7 +143,7 @@ telux::common::Status DataFilterManagerStub::setDataRestrictMode(DataRestrictMod
     }
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
     ::dataStub::SetDataRestrictModeRequest request;
@@ -167,9 +157,9 @@ telux::common::Status DataFilterManagerStub::setDataRestrictMode(DataRestrictMod
         static_cast<::dataStub::DataRestrictMode::DataRestrictModeType>(mode.filterAutoExit));
     grpc::Status reqStatus = stub_->SetDataRestrictMode(&context, request, &response);
 
-    error = static_cast<telux::common::ErrorCode>(response.error());
+    error  = static_cast<telux::common::ErrorCode>(response.error());
     status = static_cast<telux::common::Status>(response.status());
-    delay = static_cast<int>(response.delay());
+    delay  = static_cast<int>(response.delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -178,10 +168,9 @@ telux::common::Status DataFilterManagerStub::setDataRestrictMode(DataRestrictMod
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCallback(callback, error, delay);
-                }).share();
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     }
@@ -189,8 +178,7 @@ telux::common::Status DataFilterManagerStub::setDataRestrictMode(DataRestrictMod
     return status;
 }
 
-telux::common::Status DataFilterManagerStub::requestDataRestrictMode(
-    DataRestrictModeCb callback) {
+telux::common::Status DataFilterManagerStub::requestDataRestrictMode(DataRestrictModeCb callback) {
     LOG(DEBUG, __FUNCTION__);
 
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
@@ -199,7 +187,7 @@ telux::common::Status DataFilterManagerStub::requestDataRestrictMode(
     }
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
     ::dataStub::GetDataRestrictModeRequest request;
@@ -209,17 +197,15 @@ telux::common::Status DataFilterManagerStub::requestDataRestrictMode(
     request.set_slot_id(slotId_);
     grpc::Status reqStatus = stub_->GetDataRestrictMode(&context, request, &response);
 
-    error = static_cast<telux::common::ErrorCode>(response.reply().error());
+    error  = static_cast<telux::common::ErrorCode>(response.reply().error());
     status = static_cast<telux::common::Status>(response.reply().status());
-    delay = static_cast<int>(response.reply().delay());
+    delay  = static_cast<int>(response.reply().delay());
 
     DataRestrictMode mode;
-    mode.filterMode =
-        static_cast<telux::data::DataRestrictModeType>(
-            response.filter_mode().filter_mode());
-    mode.filterAutoExit =
-        static_cast<telux::data::DataRestrictModeType>(
-            response.filter_mode().filter_auto_exit());
+    mode.filterMode
+        = static_cast<telux::data::DataRestrictModeType>(response.filter_mode().filter_mode());
+    mode.filterAutoExit
+        = static_cast<telux::data::DataRestrictModeType>(response.filter_mode().filter_auto_exit());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -228,11 +214,10 @@ telux::common::Status DataFilterManagerStub::requestDataRestrictMode(
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f = std::async(std::launch::async,
-                [this, error, mode, callback, delay]() {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-                    callback(mode, error);
-                }).share();
+            auto f = std::async(std::launch::async, [this, error, mode, callback, delay]() {
+                std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                callback(mode, error);
+            }).share();
             taskQ_->add(f);
         }
     }
@@ -241,8 +226,7 @@ telux::common::Status DataFilterManagerStub::requestDataRestrictMode(
 }
 
 telux::common::Status DataFilterManagerStub::addDataRestrictFilter(
-    std::shared_ptr<IIpFilter> &filter,
-    telux::common::ResponseCallback callback) {
+    std::shared_ptr<IIpFilter> &filter, telux::common::ResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__);
 
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
@@ -251,7 +235,7 @@ telux::common::Status DataFilterManagerStub::addDataRestrictFilter(
     }
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
     if (filter == nullptr) {
@@ -265,9 +249,9 @@ telux::common::Status DataFilterManagerStub::addDataRestrictFilter(
     request.set_slot_id(slotId_);
     grpc::Status reqStatus = stub_->AddDataRestrictFilter(&context, request, &response);
 
-    error = static_cast<telux::common::ErrorCode>(response.error());
+    error  = static_cast<telux::common::ErrorCode>(response.error());
     status = static_cast<telux::common::Status>(response.status());
-    delay = static_cast<int>(response.delay());
+    delay  = static_cast<int>(response.delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -276,10 +260,9 @@ telux::common::Status DataFilterManagerStub::addDataRestrictFilter(
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCallback(callback, error, delay);
-                }).share();
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     }
@@ -297,7 +280,7 @@ telux::common::Status DataFilterManagerStub::removeAllDataRestrictFilters(
     }
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
     ::dataStub::RemoveDataRestrictFilterRequest request;
@@ -307,9 +290,9 @@ telux::common::Status DataFilterManagerStub::removeAllDataRestrictFilters(
     request.set_slot_id(slotId_);
     grpc::Status reqStatus = stub_->RemoveAllDataRestrictFilter(&context, request, &response);
 
-    error = static_cast<telux::common::ErrorCode>(response.error());
+    error  = static_cast<telux::common::ErrorCode>(response.error());
     status = static_cast<telux::common::Status>(response.status());
-    delay = static_cast<int>(response.delay());
+    delay  = static_cast<int>(response.delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -318,10 +301,9 @@ telux::common::Status DataFilterManagerStub::removeAllDataRestrictFilters(
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCallback(callback, error, delay);
-                }).share();
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     }
@@ -346,24 +328,21 @@ telux::common::Status DataFilterManagerStub::deregisterListener(
     return listenerMgr_->deRegisterListener(listener);
 }
 
-void DataFilterManagerStub::onDataRestrictModeChange(
-    DataRestrictMode mode) {
+void DataFilterManagerStub::onDataRestrictModeChange(DataRestrictMode mode) {
     if (listenerMgr_) {
         std::vector<std::weak_ptr<IDataFilterListener>> listeners;
         listenerMgr_->getAvailableListeners(listeners);
         LOG(DEBUG, __FUNCTION__, " listeners size : ", listeners.size());
         for (auto &wp : listeners) {
             if (auto sp = wp.lock()) {
-                LOG(DEBUG,
-                    "DataFilter Manager: invoking onDataRestrictModeChange");
+                LOG(DEBUG, "DataFilter Manager: invoking onDataRestrictModeChange");
                 sp->onDataRestrictModeChange(mode);
             }
         }
     }
 }
 
-void DataFilterManagerStub::onServiceStatusChange(
-    telux::common::ServiceStatus status) {
+void DataFilterManagerStub::onServiceStatusChange(telux::common::ServiceStatus status) {
     LOG(DEBUG, __FUNCTION__);
     if (listenerMgr_) {
         std::vector<std::weak_ptr<IDataFilterListener>> listeners;
@@ -379,8 +358,7 @@ void DataFilterManagerStub::onServiceStatusChange(
 }
 
 telux::common::Status DataFilterManagerStub::setDataRestrictMode(DataRestrictMode mode,
-    telux::common::ResponseCallback callback, int profileId,
-    IpFamilyType ipFamilyType) {
+    telux::common::ResponseCallback callback, int profileId, IpFamilyType ipFamilyType) {
     return telux::common::Status::NOTSUPPORTED;
 }
 
@@ -390,15 +368,13 @@ telux::common::Status DataFilterManagerStub::requestDataRestrictMode(
 }
 
 telux::common::Status DataFilterManagerStub::addDataRestrictFilter(
-    std::shared_ptr<IIpFilter> &filter,
-    telux::common::ResponseCallback callback, int profileId,
+    std::shared_ptr<IIpFilter> &filter, telux::common::ResponseCallback callback, int profileId,
     IpFamilyType ipFamilyType) {
     return telux::common::Status::NOTSUPPORTED;
 }
 
 telux::common::Status DataFilterManagerStub::removeAllDataRestrictFilters(
-    telux::common::ResponseCallback callback, int profileId,
-    IpFamilyType ipFamilyType) {
+    telux::common::ResponseCallback callback, int profileId, IpFamilyType ipFamilyType) {
     return telux::common::Status::NOTSUPPORTED;
 }
 
@@ -417,5 +393,5 @@ void DataFilterManagerStub::onEventUpdate(google::protobuf::Any event) {
     }
 }
 
-} // end of namespace data
-} // end of namespace telux
+}  // end of namespace data
+}  // end of namespace telux

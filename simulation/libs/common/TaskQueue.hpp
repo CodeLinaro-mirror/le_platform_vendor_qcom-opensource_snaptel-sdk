@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -36,7 +36,7 @@ class TaskQueue {
      */
 
     template <typename F, typename... Args>
-    auto push(F task, Args &&... args) -> std::future<decltype(task(args...))> {
+    auto push(F task, Args &&...args) -> std::future<decltype(task(args...))> {
         return pushTo(std::forward<F>(task), std::forward<Args>(args)...);
     }
 
@@ -69,17 +69,17 @@ class TaskQueue {
     std::atomic_bool shutdown_;
 
     template <typename F, typename... Args>
-    auto pushTo(F task, Args &&... args) -> std::future<decltype(task(args...))>;
+    auto pushTo(F task, Args &&...args) -> std::future<decltype(task(args...))>;
 };
 
 template <typename F, typename... Args>
-auto TaskQueue::pushTo(F task, Args &&... args) -> std::future<decltype(task(args...))> {
+auto TaskQueue::pushTo(F task, Args &&...args) -> std::future<decltype(task(args...))> {
     LOG(DEBUG, " pushTo ");
     using returnType = decltype(task(args...));
     auto boundedTask = std::bind(std::forward<F>(task), std::forward<Args>(args)...);
 
     auto pkgedTask = std::packaged_task<returnType()>(boundedTask);
-    auto future = pkgedTask.get_future();
+    auto future    = pkgedTask.get_future();
     {
         std::lock_guard<std::mutex> lock(mtx_);
         queue_.emplace_back(std::move(pkgedTask));

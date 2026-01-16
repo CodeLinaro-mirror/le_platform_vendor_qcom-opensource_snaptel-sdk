@@ -24,27 +24,28 @@
 
 #include "../../common/utils/Utils.hpp"
 #include "../../common/utils/SignalHandler.hpp"
+#include "../../common/utils/ThreadSafeOStreamBuf.hpp"
 
-using std::cout;
 using std::cerr;
+using std::cout;
 using std::endl;
-using std::string;
 using std::make_shared;
 using std::shared_ptr;
+using std::string;
 using telux::common::Status;
 using telux::cv2x::Cv2xFactory;
-using telux::cv2x::ICv2xRadioManager;
 using telux::cv2x::ICv2xRadio;
 using telux::cv2x::ICv2xRadioListener;
+using telux::cv2x::ICv2xRadioManager;
 
 static bool gExit = false;
 static std::mutex mtx;
 static std::condition_variable cv;
-static shared_ptr<ICv2xRadio> gCv2xRadio = nullptr;
+static shared_ptr<ICv2xRadio> gCv2xRadio            = nullptr;
 static shared_ptr<ICv2xRadioListener> gCv2xListener = nullptr;
 
 class MacCloneAttackListener : public ICv2xRadioListener {
-public:
+ public:
     void onMacAddressCloneAttack(const bool detected) override {
         cout << "------sys time:" << Utils::getCurrentTimeString();
         cout << "------" << endl;
@@ -68,17 +69,16 @@ static void installSignalHandler() {
 }
 
 static int initCv2x() {
-    bool statusUpdate = false;
-    telux::common::ServiceStatus cv2xStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
-    auto statusCb = [&](telux::common::ServiceStatus status) {
+    bool statusUpdate                       = false;
+    telux::common::ServiceStatus cv2xStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    auto statusCb                           = [&](telux::common::ServiceStatus status) {
         std::lock_guard<std::mutex> lock(mtx);
         statusUpdate = true;
-        cv2xStatus = status;
+        cv2xStatus   = status;
         cv.notify_all();
     };
 
-    auto & cv2xFactory = Cv2xFactory::getInstance();
+    auto &cv2xFactory = Cv2xFactory::getInstance();
     auto cv2xRadioMgr = cv2xFactory.getCv2xRadioManager(statusCb);
     if (!cv2xRadioMgr) {
         cerr << "Failed to get cv2x radio manager" << endl;
@@ -94,14 +94,15 @@ static int initCv2x() {
         }
     }
     if (gExit) {
-         cerr << "gExit==true, aborting" << endl;
-         return EXIT_FAILURE;;
+        cerr << "gExit==true, aborting" << endl;
+        return EXIT_FAILURE;
+        ;
     }
 
     // init cv2x radio
     statusUpdate = false;
-    cv2xStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
-    gCv2xRadio = cv2xRadioMgr->getCv2xRadio(telux::cv2x::TrafficCategory::SAFETY_TYPE, statusCb);
+    cv2xStatus   = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    gCv2xRadio   = cv2xRadioMgr->getCv2xRadio(telux::cv2x::TrafficCategory::SAFETY_TYPE, statusCb);
     if (!gCv2xRadio) {
         cerr << "Failed to get cv2x radio" << endl;
         return EXIT_FAILURE;
@@ -116,14 +117,15 @@ static int initCv2x() {
         }
     }
     if (gExit) {
-         cerr << "Exiting, abort" << endl;
-         return EXIT_FAILURE;;
+        cerr << "Exiting, abort" << endl;
+        return EXIT_FAILURE;
+        ;
     }
 
     // register listener for mac cloning attack indications
     try {
         gCv2xListener = std::make_shared<MacCloneAttackListener>();
-    } catch (std::bad_alloc& e) {
+    } catch (std::bad_alloc &e) {
         cerr << "Error cv2x listener allocation" << endl;
         return EXIT_FAILURE;
     }
@@ -139,10 +141,15 @@ static int initCv2x() {
 
 int main(int argc, char *argv[]) {
     std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    if (isatty(fileno(stdout))) {
+        std::cout << std::unitbuf;
+    }
+    static ThreadSafeOStreamBuf safeCout;
     cout << "Running CV2X Mac Clone Attack Test APP" << endl;
 
     std::vector<std::string> groups{"system", "diag", "radio", "logd", "dlt"};
-    if (-1 == Utils::setSupplementaryGroups(groups)){
+    if (-1 == Utils::setSupplementaryGroups(groups)) {
         cout << "Adding supplementary group failed!" << endl;
     }
 

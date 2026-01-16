@@ -26,40 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021,2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /*
@@ -97,8 +68,7 @@
 
 class ThermalUtils {
  public:
-    void printThermalZonesInfo(
-        std::vector<std::shared_ptr<telux::therm::IThermalZone>> zonesInfo) {
+    void printThermalZonesInfo(std::vector<std::shared_ptr<telux::therm::IThermalZone>> zonesInfo) {
         printThermalZoneHeader();
         for (size_t index = 0; index < zonesInfo.size(); index++) {
             printZoneInfo(zonesInfo[index]);
@@ -140,8 +110,8 @@ class ThermalUtils {
                   << "+---------------------------------------------------------------------------"
                      "--------------------+"
                   << std::endl;
-        std::cout << std::setw(3) << "| Tzone Id | " << std::setw(10) << "Trip Id | " << std::setw(15)
-                  << "  Threshold Temp  |"
+        std::cout << std::setw(3) << "| Tzone Id | " << std::setw(10) << "Trip Id | "
+                  << std::setw(15) << "  Threshold Temp  |"
                   << " " << std::setw(8) << "  Hysteresis Temp  |"
                   << " " << std::setw(8) << "  Trip Event  |"
                   << " " << std::setw(10) << "  Trip Point  |" << std::endl;
@@ -156,9 +126,9 @@ class ThermalUtils {
         std::cout << std::setw(2)
                   << "+--------------------------------------------------------------------------+"
                   << std::endl;
-        std::cout << std::setw(3) << " | CDev Id " << std::setw(20) << " | CDev Type " << std::setw(5)
-                  << " | Max Cooling State |" << std::setw(5) << " Current Cooling State |"
-                  << std::endl;
+        std::cout << std::setw(3) << " | CDev Id " << std::setw(20) << " | CDev Type "
+                  << std::setw(5) << " | Max Cooling State |" << std::setw(5)
+                  << " Current Cooling State |" << std::endl;
         std::cout << std::setw(2)
                   << "+--------------------------------------------------------------------------+"
                   << std::endl;
@@ -177,31 +147,33 @@ class ThermalUtils {
         if (tripInfo.size() > 0) {
             for (size_t i = 0; i < tripInfo.size(); ++i) {
                 tripPoints = tripPointToString(tripInfo[i], tripPoints);
-                if (!tripPoints.size()) { return; }
+                if (!tripPoints.size()) {
+                    return;
+                }
             }
         }
 
         std::cout << std::left << std::setw(4) << " " << std::setw(3) << tzInfo->getId()
-                  << std::setw(10) << " " << std::setw(25) << tzInfo->getDescription() << std::setw(7)
-                  << " " << std::setw(5) << tzInfo->getCurrentTemp() << std::setw(12) << " "
-                  << std::setw(5) << tzInfo->getPassiveTemp() << std::setw(5) << " " << std::setw(30)
-                  << tripPoints << std::setw(20);
+                  << std::setw(10) << " " << std::setw(25) << tzInfo->getDescription()
+                  << std::setw(7) << " " << std::setw(5) << tzInfo->getCurrentTemp()
+                  << std::setw(12) << " " << std::setw(5) << tzInfo->getPassiveTemp()
+                  << std::setw(5) << " " << std::setw(30) << tripPoints << std::setw(20);
         std::cout << std::endl;
     }
 
-    void printTripPointInfo(std::shared_ptr<telux::therm::ITripPoint> &tripPointInfo,
-            telux::therm::TripEvent event) {
+    void printTripPointInfo(
+        std::shared_ptr<telux::therm::ITripPoint> &tripPointInfo, telux::therm::TripEvent event) {
         std::string tripPoints;
         std::string trip = convertTripTypeToStr(tripPointInfo->getType());
         tripPoints += tripPointToString(tripPointInfo, trip);
-        std::cout
-            << std::left << std::setw(3) << " " << std::setw(2) << tripPointInfo->getTZoneId()
-            << std::setw(10) << " " << std::setw(2) << tripPointInfo->getTripId() << std::setw(10)
-            << " " << std::setw(6) << tripPointInfo->getThresholdTemp() << std::setw(13) << " "
-            << std::setw(10) << tripPointInfo->getHysteresis() << std::setw(9) << " " << std::setw(2)
-            << ((event == telux::therm::TripEvent::CROSSED_UNDER) ?
-            "CROSSED_UNDER" : "CROSSED_OVER ") << std::setw(5)
-            << " " << std::setw(2) << tripPoints << std::endl;
+        std::cout << std::left << std::setw(3) << " " << std::setw(2) << tripPointInfo->getTZoneId()
+                  << std::setw(10) << " " << std::setw(2) << tripPointInfo->getTripId()
+                  << std::setw(10) << " " << std::setw(6) << tripPointInfo->getThresholdTemp()
+                  << std::setw(13) << " " << std::setw(10) << tripPointInfo->getHysteresis()
+                  << std::setw(9) << " " << std::setw(2)
+                  << ((event == telux::therm::TripEvent::CROSSED_UNDER) ? "CROSSED_UNDER"
+                                                                        : "CROSSED_OVER ")
+                  << std::setw(5) << " " << std::setw(2) << tripPoints << std::endl;
     }
 
     void printBindingInfo(std::shared_ptr<telux::therm::IThermalZone> &tzInfo) {
@@ -224,7 +196,9 @@ class ThermalUtils {
                     for (auto k = 0; k < noOfBoundTripPoints; k++) {
                         thresholdPoints = tripPointToString(
                             boundCoolingDeviceList[j].bindingInfo[k], thresholdPoints);
-                        if (!thresholdPoints.size()) { return; }
+                        if (!thresholdPoints.size()) {
+                            return;
+                        }
                     }
                     std::cout << std::left << std::setw(7) << " " << std::setw(3)
                               << boundCoolingDeviceList[j].coolingDeviceId << std::setw(15) << " "
@@ -244,9 +218,10 @@ class ThermalUtils {
             return;
         }
         std::cout << std::left << std::setw(5) << " " << std::setw(3) << cdevInfo->getId()
-                  << std::setw(7) << " " << std::setw(20) << cdevInfo->getDescription() << std::setw(7)
-                  << " " << std::setw(5) << cdevInfo->getMaxCoolingLevel() << std::setw(15) << " "
-                  << std::setw(5) << cdevInfo->getCurrentCoolingLevel() << std::endl;
+                  << std::setw(7) << " " << std::setw(20) << cdevInfo->getDescription()
+                  << std::setw(7) << " " << std::setw(5) << cdevInfo->getMaxCoolingLevel()
+                  << std::setw(15) << " " << std::setw(5) << cdevInfo->getCurrentCoolingLevel()
+                  << std::endl;
     }
 
     std::string convertTripTypeToStr(telux::therm::TripType type) {
@@ -316,7 +291,7 @@ class ThermalInfoListener : public telux::therm::IThermalListener {
     }
 
     void onTripEvent(std::shared_ptr<telux::therm::ITripPoint> tripPoint,
-            telux::therm::TripEvent tripEvent) override {
+        telux::therm::TripEvent tripEvent) override {
         if (tripPoint) {
             std::cout << "\nonTripEvent()" << std::endl;
             thermalUtils_->printTripPointHeader();
@@ -327,7 +302,7 @@ class ThermalInfoListener : public telux::therm::IThermalListener {
     }
 
     void onCoolingDeviceLevelChange(
-            std::shared_ptr<telux::therm::ICoolingDevice> coolingDevice) override {
+        std::shared_ptr<telux::therm::ICoolingDevice> coolingDevice) override {
         if (coolingDevice) {
             std::cout << "\nonCoolingDeviceLevelChange()" << std::endl;
             thermalUtils_->printCoolingDeviceHeader();
@@ -353,9 +328,7 @@ class Application {
 
         /* Step - 2 */
         thermalMgr_ = thermalFactory.getThermalManager(
-                [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+            [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!thermalMgr_) {
             std::cout << "Can't get IThermalManager" << std::endl;
@@ -365,14 +338,14 @@ class Application {
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Thermal service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Thermal service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
         try {
             thermalUtils_ = std::make_shared<ThermalUtils>();
-        } catch (const std::exception& e) {
+        } catch (const std::exception &e) {
             std::cout << "Can't allocate ThermalUtils" << std::endl;
             return -ENOMEM;
         }
@@ -380,7 +353,7 @@ class Application {
         /* Step - 4 */
         try {
             thermalInfoListener_ = std::make_shared<ThermalInfoListener>(thermalUtils_);
-        } catch (const std::exception& e) {
+        } catch (const std::exception &e) {
             std::cout << "Can't allocate ThermalInfoListener" << std::endl;
             return -ENOMEM;
         }
@@ -388,8 +361,7 @@ class Application {
         status = thermalMgr_->registerListener(
             thermalInfoListener_, 1 << telux::therm::TNT_TRIP_UPDATE);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't register listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't register listener, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -404,8 +376,7 @@ class Application {
         status = thermalMgr_->deregisterListener(
             thermalInfoListener_, 1 << telux::therm::TNT_TRIP_UPDATE);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't deregister listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't deregister listener, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -465,7 +436,7 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<Application>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate Application" << std::endl;
         return -ENOMEM;
     }

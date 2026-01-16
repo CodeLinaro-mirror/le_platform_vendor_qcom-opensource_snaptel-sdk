@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <queue>
@@ -10,7 +10,7 @@
 #include <telux/audio/AudioListener.hpp>
 
 class InCallPlaybackAMR : public telux::audio::IPlayListener,
-                        public std::enable_shared_from_this<InCallPlaybackAMR> {
+                          public std::enable_shared_from_this<InCallPlaybackAMR> {
 
  public:
     int init();
@@ -21,8 +21,8 @@ class InCallPlaybackAMR : public telux::audio::IPlayListener,
     int createIncallPlayStream();
     int deleteIncallPlayStream();
     void play();
-    void writeComplete(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
-        uint32_t bytesWritten, telux::common::ErrorCode error);
+    void writeComplete(std::shared_ptr<telux::audio::IStreamBuffer> buffer, uint32_t bytesWritten,
+        telux::common::ErrorCode error);
 
     void onReadyForWrite() override;
     void onPlayStopped() override;
@@ -30,7 +30,7 @@ class InCallPlaybackAMR : public telux::audio::IPlayListener,
     char *fileToPlayPath_;
 
  private:
-    const int32_t TIME_10_SECONDS = 10;
+    const int32_t TIME_10_SECONDS  = 10;
     const int32_t BUFFER_POOL_SIZE = 2;
     bool errorOccurred_;
     bool frameworkReadyForNextWrite_;

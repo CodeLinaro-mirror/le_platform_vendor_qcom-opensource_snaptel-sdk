@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef PARAMCONFIGMENU_HPP
@@ -24,7 +24,7 @@ using namespace telux::config;
 using namespace telux::common;
 
 class ConfigMenu : public ConsoleApp {
-  public:
+ public:
     ConfigMenu(std::string appName, std::string cursor);
     ~ConfigMenu();
 
@@ -36,8 +36,8 @@ class ConfigMenu : public ConsoleApp {
 
     telux::common::Status initConfigManager(std::shared_ptr<IConfigManager> &ConfigManager);
 
-  private:
-    std::shared_ptr<IConfigManager> configManager_ = nullptr;
+ private:
+    std::shared_ptr<IConfigManager> configManager_  = nullptr;
     std::shared_ptr<ConfigListener> configListener_ = nullptr;
 };
 

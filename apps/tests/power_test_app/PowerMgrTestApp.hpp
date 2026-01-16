@@ -26,10 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2021, 2023, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef POWERTESTAPP_HPP
@@ -53,26 +54,25 @@ using namespace telux::common;
 
 class WakeupReasonListener : public telux::power::IWakeupListener {
  public:
-   void onWakeup(telux::power::WakeupInfo wakeupInfo) override;
-   void onServiceStatusChange(telux::common::ServiceStatus newStatus) override;
+    void onWakeup(telux::power::WakeupInfo wakeupInfo) override;
+    void onServiceStatusChange(telux::common::ServiceStatus newStatus) override;
 };
 
 class PowerMgmtTestApp : public ITcuActivityListener,
                          public IServiceStatusListener,
                          public ConsoleApp,
                          public std::enable_shared_from_this<PowerMgmtTestApp> {
-public:
-
+ public:
     PowerMgmtTestApp();
     ~PowerMgmtTestApp();
 
     int start(ClientInstanceConfig config);
     void onTcuActivityStateUpdate(TcuActivityState state, std::string machineName) override;
-    void onSlaveAckStatusUpdate(const telux::common::Status status,
-        const std::string machineName, const std::vector<ClientInfo> unresponsiveClients,
+    void onSlaveAckStatusUpdate(const telux::common::Status status, const std::string machineName,
+        const std::vector<ClientInfo> unresponsiveClients,
         const std::vector<ClientInfo> nackResponseClients) override;
     void onServiceStatusChange(ServiceStatus status) override;
-    void onMachineUpdate(const std::string machineName, const MachineEvent machineEvent)  override;
+    void onMachineUpdate(const std::string machineName, const MachineEvent machineEvent) override;
 
     void registerForUpdates();
     void deregisterForUpdates();
@@ -88,7 +88,8 @@ public:
     void consoleinit();
     void regForWakeupReason();
     void deregForWakeupReason();
-private:
+
+ private:
     // Member variable to keep the manager object alive till application ends.
     std::shared_ptr<telux::power::ITcuActivityManager> tcuActivityMgr_;
 

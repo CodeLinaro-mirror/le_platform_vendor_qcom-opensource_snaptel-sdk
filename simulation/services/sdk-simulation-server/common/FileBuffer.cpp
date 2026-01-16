@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -16,26 +16,23 @@ FileBuffer::~FileBuffer() {
 }
 
 FileBuffer::FileBuffer(std::string filePath, int thresholdValue) {
-    fileName_ = filePath;
+    fileName_  = filePath;
     threshold_ = thresholdValue;
 }
 
 void FileBuffer::startBuffering() {
     LOG(DEBUG, __FUNCTION__);
-    readNextBatch_ = false;
+    readNextBatch_      = false;
     streamCurrentBatch_ = false;
-    reachedEOF_ = false;
-    auto f = std::async(std::launch::async,
-        [=]() {
-            this->startBufferingSync();
-        }).share();
+    reachedEOF_         = false;
+    auto f = std::async(std::launch::async, [=]() { this->startBufferingSync(); }).share();
     taskQ_.add(f);
 }
 
 void FileBuffer::startBufferingSync() {
     LOG(DEBUG, __FUNCTION__);
     std::ifstream ifs(fileName_);
-    if(!ifs.is_open()) {
+    if (!ifs.is_open()) {
         LOG(ERROR, __FUNCTION__, "Could not open the file: ", fileName_);
         return;
     }
@@ -65,7 +62,7 @@ void FileBuffer::startBufferingSync() {
             }
             std::getline(ifs, line);
         } while (lineCount < threshold_);
-        if(ifs.peek() == EOF) {
+        if (ifs.peek() == EOF) {
             LOG(DEBUG, " Reached EOF ", fileName_);
             ifs.close();
             reachedEOF_ = true;
@@ -77,28 +74,28 @@ void FileBuffer::startBufferingSync() {
             streamCurrentBatch_ = true;
             break;
         }
-        //Current batch is available for streaming.
+        // Current batch is available for streaming.
         {
             std::unique_lock<std::mutex> lck(streamBufferMtx_);
             streamCurrentBatch_ = true;
             streamBufferCv_.notify_all();
         }
-        //Wait until the signal for reading the next batch is received.
+        // Wait until the signal for reading the next batch is received.
         std::unique_lock<std::mutex> lck(nextBatchBufferMtx_);
         readNextBatch_ = false;
-        nextBatchBufferCv_.wait(lck, [this]{ return readNextBatch_; });
+        nextBatchBufferCv_.wait(lck, [this] { return readNextBatch_; });
         streamCurrentBatch_ = false;
     }
 }
 
-//Will be invoked by the streaming thread.
+// Will be invoked by the streaming thread.
 bool FileBuffer::getNextBuffer(std::vector<std::string> &requestBuffer) {
     LOG(DEBUG, __FUNCTION__);
-    if(requestBuffer.empty()) {
-        //Wait for read buffer readiness.
+    if (requestBuffer.empty()) {
+        // Wait for read buffer readiness.
         {
             std::unique_lock<std::mutex> lck(streamBufferMtx_);
-            streamBufferCv_.wait(lck, [this]{ return streamCurrentBatch_; });
+            streamBufferCv_.wait(lck, [this] { return streamCurrentBatch_; });
         }
         // Swap read buffer and signal buffering thread.
         std::unique_lock<std::mutex> lck(nextBatchBufferMtx_);
@@ -106,7 +103,7 @@ bool FileBuffer::getNextBuffer(std::vector<std::string> &requestBuffer) {
         readNextBatch_ = true;
         nextBatchBufferCv_.notify_all();
     }
-    if(reachedEOF_ && requestBuffer.empty()) {
+    if (reachedEOF_ && requestBuffer.empty()) {
         return false;
     }
     return true;

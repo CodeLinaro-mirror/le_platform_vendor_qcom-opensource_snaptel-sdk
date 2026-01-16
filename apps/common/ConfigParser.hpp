@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @brief ConfigParser class reads config file and caches the app config
  * settings. It provides utility functions to read the config values.
@@ -46,22 +52,22 @@
  * It provides utility methods to get value of a configured settings
  */
 class ConfigParser {
-public:
-  ConfigParser(std::string configFile = DEFAULT_CONFIG_FILE_NAME,
-                    std::string configFilePath = DEFAULT_CONFIG_FILE_PATH);
-  ~ConfigParser();
-  // Get the user defined value for configured key
-  std::string getValue(std::string key);
+ public:
+    ConfigParser(std::string configFile = DEFAULT_CONFIG_FILE_NAME,
+        std::string configFilePath      = DEFAULT_CONFIG_FILE_PATH);
+    ~ConfigParser();
+    // Get the user defined value for configured key
+    std::string getValue(std::string key);
 
-private:
-  // Function to read config file containing key value pairs
-  void readConfigFile(std::string configFile);
+ private:
+    // Function to read config file containing key value pairs
+    void readConfigFile(std::string configFile);
 
-  // Get the path where config file is located
-  std::string getConfigFilePath();
+    // Get the path where config file is located
+    std::string getConfigFilePath();
 
-  // Hashmap to store all settings as key-value pairs
-  std::map<std::string, std::string> configMap_;
+    // Hashmap to store all settings as key-value pairs
+    std::map<std::string, std::string> configMap_;
 };
 
-#endif // CONFIGPARSER_HPP
+#endif  // CONFIGPARSER_HPP

@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "DataHelper.hpp"
@@ -15,26 +15,26 @@ namespace data {
 
 std::string DataHelper::callEndReasonTypeToString(EndReasonType type) {
     switch (type) {
-    case EndReasonType::CE_MOBILE_IP:
-        return " CE_MOBILE_IP ";
-    case EndReasonType::CE_INTERNAL:
-        return " CE_INTERNAL ";
-    case EndReasonType::CE_CALL_MANAGER_DEFINED:
-        return " CE_CALL_MANAGER_DEFINED ";
-    case EndReasonType::CE_3GPP_SPEC_DEFINED:
-        return " CE_3GPP_SPEC_DEFINED ";
-    case EndReasonType::CE_PPP:
-        return " CE_PPP ";
-    case EndReasonType::CE_EHRPD:
-        return " CE_EHRPD ";
-    case EndReasonType::CE_IPV6:
-        return " CE_IPV6 ";
-    case EndReasonType::CE_UNKNOWN:
-        return " CE_UNKNOWN ";
-    default: {
-        LOG(ERROR, __FUNCTION__, " not a valid DataCallFailType");
-        return " unable to map DataCallFailType ";
-    }
+        case EndReasonType::CE_MOBILE_IP:
+            return " CE_MOBILE_IP ";
+        case EndReasonType::CE_INTERNAL:
+            return " CE_INTERNAL ";
+        case EndReasonType::CE_CALL_MANAGER_DEFINED:
+            return " CE_CALL_MANAGER_DEFINED ";
+        case EndReasonType::CE_3GPP_SPEC_DEFINED:
+            return " CE_3GPP_SPEC_DEFINED ";
+        case EndReasonType::CE_PPP:
+            return " CE_PPP ";
+        case EndReasonType::CE_EHRPD:
+            return " CE_EHRPD ";
+        case EndReasonType::CE_IPV6:
+            return " CE_IPV6 ";
+        case EndReasonType::CE_UNKNOWN:
+            return " CE_UNKNOWN ";
+        default: {
+            LOG(ERROR, __FUNCTION__, " not a valid DataCallFailType");
+            return " unable to map DataCallFailType ";
+        }
     }
     return {};
 }
@@ -68,5 +68,5 @@ int DataHelper::converAddrToString(int af, uint32_t *addr, char *str) {
     return 0;
 }
 
-}
-}
+}  // namespace data
+}  // namespace telux

@@ -1,7 +1,5 @@
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -15,23 +13,22 @@
 #include "CryptoConsoleApp.hpp"
 
 CryptoConsoleApp::CryptoConsoleApp(std::string appName, std::string cursor)
-    : ConsoleApp(appName, cursor) {
+   : ConsoleApp(appName, cursor) {
 }
 
 CryptoConsoleApp::~CryptoConsoleApp() {
 }
 
 void CryptoConsoleApp::getHexStringAsByteArrayFromUsr(
-        const std::string choiceToDisplay, std::vector<uint8_t>& usrEntry,
-        const uint32_t length) {
+    const std::string choiceToDisplay, std::vector<uint8_t> &usrEntry, const uint32_t length) {
 
-    std::size_t x = 0;
-    std::size_t idx = 0;
+    std::size_t x             = 0;
+    std::size_t idx           = 0;
     std::size_t byteArraySize = 0;
-    std::string usrInput = "";
-    uint8_t byteFromUsr = 0;
+    std::string usrInput      = "";
+    uint8_t byteFromUsr       = 0;
 
-    while(1) {
+    while (1) {
         std::cout << choiceToDisplay;
 
         if ((!std::getline(std::cin, usrInput)) || usrInput.empty()
@@ -51,7 +48,7 @@ void CryptoConsoleApp::getHexStringAsByteArrayFromUsr(
             try {
                 byteFromUsr = std::stoul(usrInput.substr(idx, 2), nullptr, 16);
                 usrEntry.push_back(byteFromUsr);
-            } catch (const std::exception& e) {
+            } catch (const std::exception &e) {
                 usrEntry.resize(0);
                 std::cout << "invalid characters " << usrInput.substr(idx, 2) << std::endl;
                 break;
@@ -64,14 +61,13 @@ void CryptoConsoleApp::getHexStringAsByteArrayFromUsr(
     }
 }
 
-void CryptoConsoleApp::getChoiceNumberFromUsr(
-        const std::string choicesToDisplay, const uint32_t minVal,
-        const uint32_t maxVal, uint32_t& selection, bool multipleOfEigth) {
+void CryptoConsoleApp::getChoiceNumberFromUsr(const std::string choicesToDisplay,
+    const uint32_t minVal, const uint32_t maxVal, uint32_t &selection, bool multipleOfEigth) {
 
     uint32_t numFromUsr;
     std::string usrInput = "";
 
-    while(1) {
+    while (1) {
         std::cout << choicesToDisplay;
 
         if ((!std::getline(std::cin, usrInput)) || usrInput.empty()) {
@@ -81,7 +77,7 @@ void CryptoConsoleApp::getChoiceNumberFromUsr(
 
         try {
             numFromUsr = (std::stoul(usrInput) & 0xFFFFFFFF);
-        } catch (const std::exception& e) {
+        } catch (const std::exception &e) {
             std::cout << "invalid input " << usrInput << std::endl;
             continue;
         }
@@ -101,10 +97,10 @@ void CryptoConsoleApp::getChoiceNumberFromUsr(
     }
 }
 
-void CryptoConsoleApp::getFileFromUser(std::shared_ptr<std::string>& absoluteFilePath) {
+void CryptoConsoleApp::getFileFromUser(std::shared_ptr<std::string> &absoluteFilePath) {
     std::string usrInput = "";
 
-    while(1) {
+    while (1) {
         std::cout << "Enter absolute file path : ";
 
         if ((!std::getline(std::cin, usrInput)) || usrInput.empty()) {
@@ -114,7 +110,7 @@ void CryptoConsoleApp::getFileFromUser(std::shared_ptr<std::string>& absoluteFil
 
         try {
             absoluteFilePath = std::make_shared<std::string>(usrInput);
-        } catch (const std::exception& e) {
+        } catch (const std::exception &e) {
             std::cout << "can't allocate string" << std::endl;
             absoluteFilePath = nullptr;
         }
@@ -122,13 +118,13 @@ void CryptoConsoleApp::getFileFromUser(std::shared_ptr<std::string>& absoluteFil
     }
 }
 
-void CryptoConsoleApp::getAbsoluteFilePathFromUser(const std::string choicesToDisplay,
-        std::shared_ptr<std::string>& absoluteFilePath) {
+void CryptoConsoleApp::getAbsoluteFilePathFromUser(
+    const std::string choicesToDisplay, std::shared_ptr<std::string> &absoluteFilePath) {
 
     std::string usrInput = "";
     size_t choiceLength;
 
-    while(1) {
+    while (1) {
         std::cout << choicesToDisplay;
 
         if ((!std::getline(std::cin, usrInput)) || usrInput.empty()) {
@@ -154,14 +150,13 @@ void CryptoConsoleApp::getAbsoluteFilePathFromUser(const std::string choicesToDi
     }
 }
 
-void CryptoConsoleApp::getMultipleChoiceNumberFromUsr(
-        const std::string choicesToDisplay, const uint32_t minVal,
-        const uint32_t maxVal, std::vector<uint32_t>& selection) {
+void CryptoConsoleApp::getMultipleChoiceNumberFromUsr(const std::string choicesToDisplay,
+    const uint32_t minVal, const uint32_t maxVal, std::vector<uint32_t> &selection) {
 
     uint32_t numFromUsr;
     std::string usrInput = "";
 
-    while(1) {
+    while (1) {
         std::cout << choicesToDisplay;
 
         if ((!std::getline(std::cin, usrInput)) || usrInput.empty()) {
@@ -210,8 +205,7 @@ void CryptoConsoleApp::getMultipleChoiceNumberFromUsr(
     }
 }
 
-void CryptoConsoleApp::getAlgorithmFromUser(telux::sec::Algorithm& algo,
-        uint32_t restriction) {
+void CryptoConsoleApp::getAlgorithmFromUser(telux::sec::Algorithm &algo, uint32_t restriction) {
 
     uint32_t usrEntry;
 
@@ -233,8 +227,7 @@ void CryptoConsoleApp::getAlgorithmFromUser(telux::sec::Algorithm& algo,
                 std::cout << "invalid algorithm " << usrEntry << std::endl;
         }
     } else if (restriction == 2) {
-        getChoiceNumberFromUsr(
-            "Enter algorithm (1 - RSA, 2 - AES): ", 1, 2, usrEntry, false);
+        getChoiceNumberFromUsr("Enter algorithm (1 - RSA, 2 - AES): ", 1, 2, usrEntry, false);
 
         switch (usrEntry) {
             case 1:
@@ -269,53 +262,50 @@ void CryptoConsoleApp::getAlgorithmFromUser(telux::sec::Algorithm& algo,
     }
 }
 
-void CryptoConsoleApp::getOperationFromUser(telux::sec::CryptoOperationTypes& operation,
-        uint32_t restriction) {
+void CryptoConsoleApp::getOperationFromUser(
+    telux::sec::CryptoOperationTypes &operation, uint32_t restriction) {
 
     uint32_t usrEntry;
 
     if (restriction == 1) {
-        getChoiceNumberFromUsr(
-            "Enter key usage (1 - Sign and verify): ",
-            1, 1, usrEntry, false);
+        getChoiceNumberFromUsr("Enter key usage (1 - Sign and verify): ", 1, 1, usrEntry, false);
         switch (usrEntry) {
             case 1:
-                operation = telux::sec::CryptoOperation::CRYPTO_OP_SIGN |
-                    telux::sec::CryptoOperation::CRYPTO_OP_VERIFY;
+                operation = telux::sec::CryptoOperation::CRYPTO_OP_SIGN
+                            | telux::sec::CryptoOperation::CRYPTO_OP_VERIFY;
                 break;
             default:
                 std::cout << "invalid crypto operation " << usrEntry << std::endl;
         }
     } else if (restriction == 2) {
         getChoiceNumberFromUsr(
-            "Enter key usage (1 - Encrypt and decrypt): ",
-            1, 1, usrEntry, false);
+            "Enter key usage (1 - Encrypt and decrypt): ", 1, 1, usrEntry, false);
         switch (usrEntry) {
             case 1:
-                operation = telux::sec::CryptoOperation::CRYPTO_OP_ENCRYPT |
-                    telux::sec::CryptoOperation::CRYPTO_OP_DECRYPT;
+                operation = telux::sec::CryptoOperation::CRYPTO_OP_ENCRYPT
+                            | telux::sec::CryptoOperation::CRYPTO_OP_DECRYPT;
                 break;
             default:
                 std::cout << "invalid crypto operation " << usrEntry << std::endl;
         }
     } else {
         getChoiceNumberFromUsr(
-            "Enter key usage (1 - Sign & verify, 2 - Encrypt & decrypt, 3 - All): ",
-            1, 3, usrEntry, false);
+            "Enter key usage (1 - Sign & verify, 2 - Encrypt & decrypt, 3 - All): ", 1, 3, usrEntry,
+            false);
         switch (usrEntry) {
             case 1:
-                operation = telux::sec::CryptoOperation::CRYPTO_OP_SIGN |
-                    telux::sec::CryptoOperation::CRYPTO_OP_VERIFY;
+                operation = telux::sec::CryptoOperation::CRYPTO_OP_SIGN
+                            | telux::sec::CryptoOperation::CRYPTO_OP_VERIFY;
                 break;
             case 2:
-                operation = telux::sec::CryptoOperation::CRYPTO_OP_ENCRYPT |
-                    telux::sec::CryptoOperation::CRYPTO_OP_DECRYPT;
+                operation = telux::sec::CryptoOperation::CRYPTO_OP_ENCRYPT
+                            | telux::sec::CryptoOperation::CRYPTO_OP_DECRYPT;
                 break;
             case 3:
-                operation = (telux::sec::CryptoOperation::CRYPTO_OP_SIGN |
-                    telux::sec::CryptoOperation::CRYPTO_OP_VERIFY |
-                    telux::sec::CryptoOperation::CRYPTO_OP_ENCRYPT |
-                    telux::sec::CryptoOperation::CRYPTO_OP_DECRYPT);
+                operation = (telux::sec::CryptoOperation::CRYPTO_OP_SIGN
+                             | telux::sec::CryptoOperation::CRYPTO_OP_VERIFY
+                             | telux::sec::CryptoOperation::CRYPTO_OP_ENCRYPT
+                             | telux::sec::CryptoOperation::CRYPTO_OP_DECRYPT);
                 break;
             default:
                 std::cout << "invalid crypto operation " << usrEntry << std::endl;
@@ -323,15 +313,13 @@ void CryptoConsoleApp::getOperationFromUser(telux::sec::CryptoOperationTypes& op
     }
 }
 
-void CryptoConsoleApp::getDigestFromUser(telux::sec::DigestTypes& digest,
-        uint32_t restriction) {
+void CryptoConsoleApp::getDigestFromUser(telux::sec::DigestTypes &digest, uint32_t restriction) {
 
     uint32_t usrEntry;
     std::vector<uint32_t> selection;
 
     if (restriction == 1) {
-        getChoiceNumberFromUsr(
-            "Enter digest (1 - SHA2-256): ", 1, 1, usrEntry, false);
+        getChoiceNumberFromUsr("Enter digest (1 - SHA2-256): ", 1, 1, usrEntry, false);
 
         switch (usrEntry) {
             case 1:
@@ -376,15 +364,13 @@ void CryptoConsoleApp::getDigestFromUser(telux::sec::DigestTypes& digest,
     }
 }
 
-void CryptoConsoleApp::getPaddingFromUser(telux::sec::PaddingTypes& padding,
-        uint32_t restriction) {
+void CryptoConsoleApp::getPaddingFromUser(telux::sec::PaddingTypes &padding, uint32_t restriction) {
 
     uint32_t usrEntry;
     std::vector<uint32_t> selection;
 
     if (restriction == 1) {
-        getChoiceNumberFromUsr(
-            "Enter padding (1 - None): ", 1, 1, usrEntry, false);
+        getChoiceNumberFromUsr("Enter padding (1 - None): ", 1, 1, usrEntry, false);
 
         switch (usrEntry) {
             case 1:
@@ -411,8 +397,8 @@ void CryptoConsoleApp::getPaddingFromUser(telux::sec::PaddingTypes& padding,
         }
     } else if (restriction == 3) {
         getMultipleChoiceNumberFromUsr(
-            "Enter padding, comma separated (1 - None, 2- RSA-PSS, 3 - RSA-PKCS1-1-5-SIGN): ",
-            1, 3, selection);
+            "Enter padding, comma separated (1 - None, 2- RSA-PSS, 3 - RSA-PKCS1-1-5-SIGN): ", 1, 3,
+            selection);
 
         for (uint32_t x = 0; x < selection.size(); x++) {
             switch (selection.at(x)) {
@@ -431,8 +417,8 @@ void CryptoConsoleApp::getPaddingFromUser(telux::sec::PaddingTypes& padding,
         }
     } else if (restriction == 4) {
         getMultipleChoiceNumberFromUsr(
-            "Enter padding, comma separated (1 - None, 2- RSA-OAEP, 3 - RSA-PKCS1-1-5-ENC): ",
-            1, 3, selection);
+            "Enter padding, comma separated (1 - None, 2- RSA-OAEP, 3 - RSA-PKCS1-1-5-ENC): ", 1, 3,
+            selection);
 
         for (uint32_t x = 0; x < selection.size(); x++) {
             switch (selection.at(x)) {
@@ -482,13 +468,13 @@ void CryptoConsoleApp::getPaddingFromUser(telux::sec::PaddingTypes& padding,
     }
 }
 
-void CryptoConsoleApp::getBlockModeFromUser(telux::sec::BlockModeTypes& blockMode) {
+void CryptoConsoleApp::getBlockModeFromUser(telux::sec::BlockModeTypes &blockMode) {
 
     std::vector<uint32_t> selection;
 
     getMultipleChoiceNumberFromUsr(
-        "Enter block mode, comma separated (1 - ECB, 2 - CBC, 3 - CTR, 4 - GCM): ",
-        1, 4, selection);
+        "Enter block mode, comma separated (1 - ECB, 2 - CBC, 3 - CTR, 4 - GCM): ", 1, 4,
+        selection);
 
     for (uint32_t x = 0; x < selection.size(); x++) {
         switch (selection.at(x)) {
@@ -510,12 +496,12 @@ void CryptoConsoleApp::getBlockModeFromUser(telux::sec::BlockModeTypes& blockMod
     }
 }
 
-void CryptoConsoleApp::getCallerNoncePresentFromUser(bool& callerNoncePresent) {
+void CryptoConsoleApp::getCallerNoncePresentFromUser(bool &callerNoncePresent) {
 
     std::string usrInput = "";
     size_t choiceLength;
 
-    while(1) {
+    while (1) {
         std::cout << "Caller nonce will be given (yes/no): ";
         if ((!std::getline(std::cin, usrInput)) || usrInput.empty()) {
             std::cout << "invalid input" << std::endl;
@@ -540,7 +526,7 @@ void CryptoConsoleApp::getCallerNoncePresentFromUser(bool& callerNoncePresent) {
     }
 }
 
-void CryptoConsoleApp::getKeyFormatFromUser(telux::sec::KeyFormat& keyFmt) {
+void CryptoConsoleApp::getKeyFormatFromUser(telux::sec::KeyFormat &keyFmt) {
 
     uint32_t usrEntry;
 
@@ -562,12 +548,12 @@ void CryptoConsoleApp::getKeyFormatFromUser(telux::sec::KeyFormat& keyFmt) {
     }
 }
 
-void CryptoConsoleApp::getInitVectorFromUser(std::vector<uint8_t>& iv, uint32_t length) {
+void CryptoConsoleApp::getInitVectorFromUser(std::vector<uint8_t> &iv, uint32_t length) {
 
     std::string usrInput = "";
     size_t choiceLength;
 
-    while(1) {
+    while (1) {
         std::cout << "supply init vector (yes/no): ";
         if ((!std::getline(std::cin, usrInput)) || usrInput.empty()) {
             std::cout << "invalid input" << std::endl;
@@ -592,12 +578,12 @@ void CryptoConsoleApp::getInitVectorFromUser(std::vector<uint8_t>& iv, uint32_t 
     }
 }
 
-void CryptoConsoleApp::getAssociatedDataFromUser(std::vector<uint8_t>& associatedData) {
+void CryptoConsoleApp::getAssociatedDataFromUser(std::vector<uint8_t> &associatedData) {
 
     std::string usrInput = "";
     size_t choiceLength;
 
-    while(1) {
+    while (1) {
         std::cout << "supply associated data (yes/no): ";
         if ((!std::getline(std::cin, usrInput)) || usrInput.empty()) {
             std::cout << "invalid input" << std::endl;
@@ -613,7 +599,8 @@ void CryptoConsoleApp::getAssociatedDataFromUser(std::vector<uint8_t>& associate
             associatedData.resize(0);
             return;
         } else if (!usrInput.compare("yes")) {
-            getHexStringAsByteArrayFromUsr("Enter associated data (as hex string): ", associatedData, 0);
+            getHexStringAsByteArrayFromUsr(
+                "Enter associated data (as hex string): ", associatedData, 0);
             return;
         } else {
             std::cout << "invalid input " << usrInput << std::endl;
@@ -622,12 +609,12 @@ void CryptoConsoleApp::getAssociatedDataFromUser(std::vector<uint8_t>& associate
     }
 }
 
-void CryptoConsoleApp::getUniqueDataFromUser(std::vector<uint8_t>& uniqueData) {
+void CryptoConsoleApp::getUniqueDataFromUser(std::vector<uint8_t> &uniqueData) {
 
     std::string usrInput = "";
     size_t choiceLength;
 
-    while(1) {
+    while (1) {
         std::cout << "set unique data (yes/no): ";
         if ((!std::getline(std::cin, usrInput)) || usrInput.empty()) {
             std::cout << "invalid input" << std::endl;
@@ -652,48 +639,47 @@ void CryptoConsoleApp::getUniqueDataFromUser(std::vector<uint8_t>& uniqueData) {
     }
 }
 
-void CryptoConsoleApp::getKeySizeFromUser(uint32_t& keySize) {
+void CryptoConsoleApp::getKeySizeFromUser(uint32_t &keySize) {
 
     getChoiceNumberFromUsr("Enter key size: ", 64, 2048, keySize, false);
 }
 
-void CryptoConsoleApp::getPublicExponentFromUser(uint32_t& publicExponent) {
+void CryptoConsoleApp::getPublicExponentFromUser(uint32_t &publicExponent) {
 
-    getChoiceNumberFromUsr("Enter public exponent (3 or 65537): ",
-        3, 65537, publicExponent, false);
+    getChoiceNumberFromUsr("Enter public exponent (3 or 65537): ", 3, 65537, publicExponent, false);
 }
 
-void CryptoConsoleApp::getMinMacLengthFromUser(uint32_t& minMacLength, uint32_t maxVal) {
+void CryptoConsoleApp::getMinMacLengthFromUser(uint32_t &minMacLength, uint32_t maxVal) {
 
     getChoiceNumberFromUsr("Enter minimum MAC length: ", 64, maxVal, minMacLength, true);
 }
 
-void CryptoConsoleApp::getMacLengthFromUser(uint32_t& macLength, uint32_t maxVal) {
+void CryptoConsoleApp::getMacLengthFromUser(uint32_t &macLength, uint32_t maxVal) {
 
     getChoiceNumberFromUsr("Enter MAC length: ", 64, maxVal, macLength, true);
 }
 
-void CryptoConsoleApp::getKeyDataFromUser(std::vector<uint8_t>& keyData) {
+void CryptoConsoleApp::getKeyDataFromUser(std::vector<uint8_t> &keyData) {
 
     getHexStringAsByteArrayFromUsr("Enter key data (as hex string): ", keyData, 0);
 }
 
-void CryptoConsoleApp::getKeyBlobFromUser(std::vector<uint8_t>& keyBlob) {
+void CryptoConsoleApp::getKeyBlobFromUser(std::vector<uint8_t> &keyBlob) {
 
     getHexStringAsByteArrayFromUsr("Enter key blob (as hex string): ", keyBlob, 0);
 }
 
-void CryptoConsoleApp::getPlainTextFromUser(std::vector<uint8_t>& plainText) {
+void CryptoConsoleApp::getPlainTextFromUser(std::vector<uint8_t> &plainText) {
 
     getHexStringAsByteArrayFromUsr("Enter plain text (as hex string): ", plainText, 0);
 }
 
-void CryptoConsoleApp::getSignatureFromUser(std::vector<uint8_t>& signature) {
+void CryptoConsoleApp::getSignatureFromUser(std::vector<uint8_t> &signature) {
 
     getHexStringAsByteArrayFromUsr("Enter signature (as hex string): ", signature, 0);
 }
 
-void CryptoConsoleApp::getEncryptedTextFromUser(std::vector<uint8_t>& encText) {
+void CryptoConsoleApp::getEncryptedTextFromUser(std::vector<uint8_t> &encText) {
 
     getHexStringAsByteArrayFromUsr("Enter encrypted text: ", encText, 0);
 }
@@ -712,15 +698,15 @@ void CryptoConsoleApp::generateKey() {
             getPublicExponentFromUser(request.publicExponent);
             getDigestFromUser(request.digest, 2);
             if (((request.operation & telux::sec::CryptoOperation::CRYPTO_OP_SIGN)
-                    == telux::sec::CryptoOperation::CRYPTO_OP_SIGN) &&
-                ((request.operation & telux::sec::CryptoOperation::CRYPTO_OP_ENCRYPT)
+                    == telux::sec::CryptoOperation::CRYPTO_OP_SIGN)
+                && ((request.operation & telux::sec::CryptoOperation::CRYPTO_OP_ENCRYPT)
                     == telux::sec::CryptoOperation::CRYPTO_OP_ENCRYPT)) {
                 getPaddingFromUser(request.padding, 5);
             } else if ((request.operation & telux::sec::CryptoOperation::CRYPTO_OP_SIGN)
-                    == telux::sec::CryptoOperation::CRYPTO_OP_SIGN) {
+                       == telux::sec::CryptoOperation::CRYPTO_OP_SIGN) {
                 getPaddingFromUser(request.padding, 3);
             } else if ((request.operation & telux::sec::CryptoOperation::CRYPTO_OP_ENCRYPT)
-                    == telux::sec::CryptoOperation::CRYPTO_OP_ENCRYPT) {
+                       == telux::sec::CryptoOperation::CRYPTO_OP_ENCRYPT) {
                 getPaddingFromUser(request.padding, 4);
             } else {
             }
@@ -735,18 +721,18 @@ void CryptoConsoleApp::generateKey() {
             getKeySizeFromUser(request.keySize);
             getBlockModeFromUser(request.blockMode);
             if ((request.blockMode & telux::sec::BlockMode::BLOCK_MODE_GCM)
-                    == telux::sec::BlockMode::BLOCK_MODE_GCM) {
+                == telux::sec::BlockMode::BLOCK_MODE_GCM) {
                 getMinMacLengthFromUser(request.minMacLength, 128);
             }
             if (((request.blockMode & telux::sec::BlockMode::BLOCK_MODE_ECB)
-                    == telux::sec::BlockMode::BLOCK_MODE_ECB) ||
-                ((request.blockMode & telux::sec::BlockMode::BLOCK_MODE_CBC)
+                    == telux::sec::BlockMode::BLOCK_MODE_ECB)
+                || ((request.blockMode & telux::sec::BlockMode::BLOCK_MODE_CBC)
                     == telux::sec::BlockMode::BLOCK_MODE_CBC)) {
                 getPaddingFromUser(request.padding, 2);
             } else if (((request.blockMode & telux::sec::BlockMode::BLOCK_MODE_GCM)
-                    == telux::sec::BlockMode::BLOCK_MODE_GCM) ||
-                ((request.blockMode & telux::sec::BlockMode::BLOCK_MODE_CTR)
-                    == telux::sec::BlockMode::BLOCK_MODE_CTR)) {
+                           == telux::sec::BlockMode::BLOCK_MODE_GCM)
+                       || ((request.blockMode & telux::sec::BlockMode::BLOCK_MODE_CTR)
+                           == telux::sec::BlockMode::BLOCK_MODE_CTR)) {
                 getPaddingFromUser(request.padding, 1);
             } else {
             }
@@ -890,21 +876,21 @@ void CryptoConsoleApp::encryptData() {
         case telux::sec::Algorithm::ALGORITHM_AES:
             getBlockModeFromUser(request.blockMode);
             if ((request.blockMode & telux::sec::BlockMode::BLOCK_MODE_ECB)
-                    == telux::sec::BlockMode::BLOCK_MODE_ECB) {
+                == telux::sec::BlockMode::BLOCK_MODE_ECB) {
                 getPaddingFromUser(request.padding, 2);
             }
             if ((request.blockMode & telux::sec::BlockMode::BLOCK_MODE_CBC)
-                    == telux::sec::BlockMode::BLOCK_MODE_CBC) {
+                == telux::sec::BlockMode::BLOCK_MODE_CBC) {
                 getPaddingFromUser(request.padding, 2);
                 getInitVectorFromUser(request.initVector, 16);
             }
             if ((request.blockMode & telux::sec::BlockMode::BLOCK_MODE_CTR)
-                    == telux::sec::BlockMode::BLOCK_MODE_CTR) {
+                == telux::sec::BlockMode::BLOCK_MODE_CTR) {
                 getPaddingFromUser(request.padding, 1);
                 getInitVectorFromUser(request.initVector, 16);
             }
             if ((request.blockMode & telux::sec::BlockMode::BLOCK_MODE_GCM)
-                    == telux::sec::BlockMode::BLOCK_MODE_GCM) {
+                == telux::sec::BlockMode::BLOCK_MODE_GCM) {
                 getPaddingFromUser(request.padding, 1);
                 getInitVectorFromUser(request.initVector, 12);
                 getMacLengthFromUser(request.macLength, 128);
@@ -950,21 +936,21 @@ void CryptoConsoleApp::decryptData() {
         case telux::sec::Algorithm::ALGORITHM_AES:
             getBlockModeFromUser(request.blockMode);
             if ((request.blockMode & telux::sec::BlockMode::BLOCK_MODE_ECB)
-                    == telux::sec::BlockMode::BLOCK_MODE_ECB) {
+                == telux::sec::BlockMode::BLOCK_MODE_ECB) {
                 getPaddingFromUser(request.padding, 2);
             }
             if ((request.blockMode & telux::sec::BlockMode::BLOCK_MODE_CBC)
-                    == telux::sec::BlockMode::BLOCK_MODE_CBC) {
+                == telux::sec::BlockMode::BLOCK_MODE_CBC) {
                 getPaddingFromUser(request.padding, 2);
                 getInitVectorFromUser(request.initVector, 16);
             }
             if ((request.blockMode & telux::sec::BlockMode::BLOCK_MODE_CTR)
-                    == telux::sec::BlockMode::BLOCK_MODE_CTR) {
+                == telux::sec::BlockMode::BLOCK_MODE_CTR) {
                 getPaddingFromUser(request.padding, 1);
                 getInitVectorFromUser(request.initVector, 16);
             }
             if ((request.blockMode & telux::sec::BlockMode::BLOCK_MODE_GCM)
-                    == telux::sec::BlockMode::BLOCK_MODE_GCM) {
+                == telux::sec::BlockMode::BLOCK_MODE_GCM) {
                 getPaddingFromUser(request.padding, 1);
                 getInitVectorFromUser(request.initVector, 12);
                 getMacLengthFromUser(request.macLength, 128);
@@ -994,16 +980,16 @@ void CryptoConsoleApp::importKey() {
             getOperationFromUser(request.operation, 3);
             getDigestFromUser(request.digest, 2);
             if ((request.operation & telux::sec::CryptoOperation::CRYPTO_OP_SIGN)
-                    == telux::sec::CryptoOperation::CRYPTO_OP_SIGN) {
+                == telux::sec::CryptoOperation::CRYPTO_OP_SIGN) {
                 getPaddingFromUser(request.padding, 3);
             }
             if ((request.operation & telux::sec::CryptoOperation::CRYPTO_OP_ENCRYPT)
-                    == telux::sec::CryptoOperation::CRYPTO_OP_ENCRYPT) {
+                == telux::sec::CryptoOperation::CRYPTO_OP_ENCRYPT) {
                 getPaddingFromUser(request.padding, 4);
             }
             if (((request.operation & telux::sec::CryptoOperation::CRYPTO_OP_SIGN)
-                    == telux::sec::CryptoOperation::CRYPTO_OP_SIGN) &&
-                ((request.operation & telux::sec::CryptoOperation::CRYPTO_OP_ENCRYPT)
+                    == telux::sec::CryptoOperation::CRYPTO_OP_SIGN)
+                && ((request.operation & telux::sec::CryptoOperation::CRYPTO_OP_ENCRYPT)
                     == telux::sec::CryptoOperation::CRYPTO_OP_ENCRYPT)) {
                 getPaddingFromUser(request.padding, 5);
             }
@@ -1017,19 +1003,19 @@ void CryptoConsoleApp::importKey() {
             getOperationFromUser(request.operation, 2);
             getBlockModeFromUser(request.blockMode);
             if (((request.blockMode & telux::sec::BlockMode::BLOCK_MODE_ECB)
-                    == telux::sec::BlockMode::BLOCK_MODE_ECB) ||
-                ((request.blockMode & telux::sec::BlockMode::BLOCK_MODE_CBC)
+                    == telux::sec::BlockMode::BLOCK_MODE_ECB)
+                || ((request.blockMode & telux::sec::BlockMode::BLOCK_MODE_CBC)
                     == telux::sec::BlockMode::BLOCK_MODE_CBC)) {
                 getPaddingFromUser(request.padding, 2);
             } else if (((request.blockMode & telux::sec::BlockMode::BLOCK_MODE_GCM)
-                    == telux::sec::BlockMode::BLOCK_MODE_GCM) ||
-                ((request.blockMode & telux::sec::BlockMode::BLOCK_MODE_CTR)
-                    == telux::sec::BlockMode::BLOCK_MODE_CTR)) {
+                           == telux::sec::BlockMode::BLOCK_MODE_GCM)
+                       || ((request.blockMode & telux::sec::BlockMode::BLOCK_MODE_CTR)
+                           == telux::sec::BlockMode::BLOCK_MODE_CTR)) {
                 getPaddingFromUser(request.padding, 1);
             } else {
             }
             if ((request.blockMode & telux::sec::BlockMode::BLOCK_MODE_GCM)
-                    == telux::sec::BlockMode::BLOCK_MODE_GCM) {
+                == telux::sec::BlockMode::BLOCK_MODE_GCM) {
                 getMinMacLengthFromUser(request.minMacLength, 128);
             }
             if (request.blockMode != telux::sec::BlockMode::BLOCK_MODE_ECB) {
@@ -1108,8 +1094,8 @@ void CryptoConsoleApp::init() {
 
     try {
         cmdProcessor_ = std::make_shared<CommandProcessor>();
-    } catch (const std::exception& e) {
-         std::cout << "can't create CommandProcessor" << std::endl;
+    } catch (const std::exception &e) {
+        std::cout << "can't create CommandProcessor" << std::endl;
         return;
     }
 
@@ -1118,41 +1104,36 @@ void CryptoConsoleApp::init() {
         return;
     }
 
-    std::shared_ptr<ConsoleAppCommand> keyGenCmd = std::make_shared<
-        ConsoleAppCommand>(ConsoleAppCommand("1", "Generate key", {},
-        std::bind(&CryptoConsoleApp::generateKey, this)));
+    std::shared_ptr<ConsoleAppCommand> keyGenCmd
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "1", "Generate key", {}, std::bind(&CryptoConsoleApp::generateKey, this)));
 
-    std::shared_ptr<ConsoleAppCommand> signCmd = std::make_shared<
-        ConsoleAppCommand>(ConsoleAppCommand("2", "Sign data", {},
-        std::bind(&CryptoConsoleApp::signData, this)));
+    std::shared_ptr<ConsoleAppCommand> signCmd = std::make_shared<ConsoleAppCommand>(
+        ConsoleAppCommand("2", "Sign data", {}, std::bind(&CryptoConsoleApp::signData, this)));
 
-    std::shared_ptr<ConsoleAppCommand> verifyCmd = std::make_shared<
-        ConsoleAppCommand>(ConsoleAppCommand("3", "Verify signature", {},
-        std::bind(&CryptoConsoleApp::verifySignature, this)));
+    std::shared_ptr<ConsoleAppCommand> verifyCmd
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "3", "Verify signature", {}, std::bind(&CryptoConsoleApp::verifySignature, this)));
 
-    std::shared_ptr<ConsoleAppCommand> encryptCmd = std::make_shared<
-        ConsoleAppCommand>(ConsoleAppCommand("4", "Encrypt data", {},
-        std::bind(&CryptoConsoleApp::encryptData, this)));
+    std::shared_ptr<ConsoleAppCommand> encryptCmd
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "4", "Encrypt data", {}, std::bind(&CryptoConsoleApp::encryptData, this)));
 
-    std::shared_ptr<ConsoleAppCommand> decryptCmd = std::make_shared<
-        ConsoleAppCommand>(ConsoleAppCommand("5", "Decrypt data", {},
-        std::bind(&CryptoConsoleApp::decryptData, this)));
+    std::shared_ptr<ConsoleAppCommand> decryptCmd
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "5", "Decrypt data", {}, std::bind(&CryptoConsoleApp::decryptData, this)));
 
-    std::shared_ptr<ConsoleAppCommand> importCmd = std::make_shared<
-        ConsoleAppCommand>(ConsoleAppCommand("6", "Import key", {},
-        std::bind(&CryptoConsoleApp::importKey, this)));
+    std::shared_ptr<ConsoleAppCommand> importCmd = std::make_shared<ConsoleAppCommand>(
+        ConsoleAppCommand("6", "Import key", {}, std::bind(&CryptoConsoleApp::importKey, this)));
 
-    std::shared_ptr<ConsoleAppCommand> exportCmd = std::make_shared<
-        ConsoleAppCommand>(ConsoleAppCommand("7", "Export key", {},
-        std::bind(&CryptoConsoleApp::exportKey, this)));
+    std::shared_ptr<ConsoleAppCommand> exportCmd = std::make_shared<ConsoleAppCommand>(
+        ConsoleAppCommand("7", "Export key", {}, std::bind(&CryptoConsoleApp::exportKey, this)));
 
-    std::shared_ptr<ConsoleAppCommand> upgradeCmd = std::make_shared<
-        ConsoleAppCommand>(ConsoleAppCommand("8", "Upgrade key", {},
-        std::bind(&CryptoConsoleApp::upgradeKey, this)));
+    std::shared_ptr<ConsoleAppCommand> upgradeCmd = std::make_shared<ConsoleAppCommand>(
+        ConsoleAppCommand("8", "Upgrade key", {}, std::bind(&CryptoConsoleApp::upgradeKey, this)));
 
-    std::vector<std::shared_ptr<ConsoleAppCommand>> mainCmds = {
-        keyGenCmd, signCmd, verifyCmd, encryptCmd, decryptCmd,
-        importCmd, exportCmd, upgradeCmd };
+    std::vector<std::shared_ptr<ConsoleAppCommand>> mainCmds
+        = {keyGenCmd, signCmd, verifyCmd, encryptCmd, decryptCmd, importCmd, exportCmd, upgradeCmd};
 
     ConsoleApp::addCommands(mainCmds);
     ConsoleApp::displayMenu();
@@ -1164,8 +1145,7 @@ int main(int argc, char **argv) {
 
     std::string sdkReleaseName = telux::common::Version::getReleaseName();
 
-    std::string appName = "Crypto console app - SDK v"
-                          + std::to_string(sdkVersion.major) + "."
+    std::string appName = "Crypto console app - SDK v" + std::to_string(sdkVersion.major) + "."
                           + std::to_string(sdkVersion.minor) + "."
                           + std::to_string(sdkVersion.patch) + "\n"
                           + "Release name: " + sdkReleaseName;

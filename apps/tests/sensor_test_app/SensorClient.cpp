@@ -28,39 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021-2022, 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -184,8 +154,8 @@ void SensorClient::onEvent(std::shared_ptr<std::vector<SensorEvent>> events) {
             lastBatchReceivedAt_ = receivedTimeStamp;
         }
 
-        uint64_t eventTimeStamp = 0;
-        uint32_t count = 0;
+        uint64_t eventTimeStamp     = 0;
+        uint32_t count              = 0;
         float samplingRateAggregate = 0.0;
         for (SensorEvent s : *(events.get())) {
             float samplingRate = 0.0;
@@ -199,14 +169,14 @@ void SensorClient::onEvent(std::shared_ptr<std::vector<SensorEvent>> events) {
             }
             samplingRateAggregate += samplingRate;
             eventTimeStamp = s.timestamp;
-            if(isRecordingEnabled_) {
-                //Recording Data.
+            if (isRecordingEnabled_) {
+                // Recording Data.
                 std::ostringstream recordStream;
                 recordStream << static_cast<uint32_t>(sensor_->getSensorInfo().type) << ","
-                << sensor_->getConfiguration().isRotated << "," << s.timestamp << ","
-                << s.uncalibrated.data.x << "," << s.uncalibrated.data.y << ","
-                << s.uncalibrated.data.z << "," << s.uncalibrated.bias.x << ","
-                << s.uncalibrated.bias.y << "," << s.uncalibrated.bias.z << std::endl;
+                             << sensor_->getConfiguration().isRotated << "," << s.timestamp << ","
+                             << s.uncalibrated.data.x << "," << s.uncalibrated.data.y << ","
+                             << s.uncalibrated.data.z << "," << s.uncalibrated.bias.x << ","
+                             << s.uncalibrated.bias.y << "," << s.uncalibrated.bias.z << std::endl;
                 {
                     std::lock_guard<std::mutex> lock(mtx_);
                     SENSOR_DATA_RECORDING << recordStream.str() << std::endl;
@@ -292,19 +262,19 @@ void SensorClient::disableLowPowerMode() {
 telux::common::Status SensorClient::selfTest(SelfTestType selfTestType) {
     static uint64_t requestID = 0;
     ++requestID;
-    uint64_t thisRequestID = requestID;
-    uint64_t requestTimeStamp = Utils::getNanosecondsSinceBoot();
+    uint64_t thisRequestID       = requestID;
+    uint64_t requestTimeStamp    = Utils::getNanosecondsSinceBoot();
     telux::common::Status status = sensor_->selfTest(selfTestType, [thisRequestID, requestTimeStamp,
                                                                        this](ErrorCode result) {
-        if(result != telux::common::ErrorCode::INFO_UNAVAILABLE) {
+        if (result != telux::common::ErrorCode::INFO_UNAVAILABLE) {
             uint64_t responseTimeStamp = Utils::getNanosecondsSinceBoot();
-            PRINT_CB << tag_ << "Received self test response: "
-                    << Utils::getErrorCodeAsString(result)
-                    << " for requestID = " << thisRequestID << " after "
-                    << (responseTimeStamp - requestTimeStamp) * 1.0 / 1000000 << "ms" << std::endl;
+            PRINT_CB << tag_
+                     << "Received self test response: " << Utils::getErrorCodeAsString(result)
+                     << " for requestID = " << thisRequestID << " after "
+                     << (responseTimeStamp - requestTimeStamp) * 1.0 / 1000000 << "ms" << std::endl;
         } else {
-            PRINT_CB << tag_ << " Received self test response: " <<
-                Utils::getErrorCodeAsString(result);
+            PRINT_CB << tag_
+                     << " Received self test response: " << Utils::getErrorCodeAsString(result);
         }
     });
     if (status != telux::common::Status::SUCCESS) {
@@ -312,25 +282,26 @@ telux::common::Status SensorClient::selfTest(SelfTestType selfTestType) {
         Utils::printStatus(status);
     } else {
         std::cout << tag_ << "Self test request with requestID " << requestID
-            << " successful, waiting for callback" << std::endl;
+                  << " successful, waiting for callback" << std::endl;
     }
     return status;
 }
 
 telux::common::Status SensorClient::selfTestEx(SelfTestType selfTestType) {
-    telux::common::Status status = sensor_->selfTest(selfTestType,
-    [this](ErrorCode result, SelfTestResultParams selfTestResultParams) {
-        if(result != telux::common::ErrorCode::INFO_UNAVAILABLE) {
-            PRINT_CB << tag_ << " Received self test response: " <<
-                Utils::getErrorCodeAsString(result)
-                << " for Sensor result type: "
-                << SensorUtils::sensorResultTypeToString(selfTestResultParams.sensorResultType_)
-                << " performed at: " << selfTestResultParams.timestamp_ << " ns\n";
-        } else {
-            PRINT_CB << tag_ << " Received self test response: " <<
-                Utils::getErrorCodeAsString(result);
-        }
-    });
+    telux::common::Status status = sensor_->selfTest(
+        selfTestType, [this](ErrorCode result, SelfTestResultParams selfTestResultParams) {
+            if (result != telux::common::ErrorCode::INFO_UNAVAILABLE) {
+                PRINT_CB
+                    << tag_
+                    << " Received self test response: " << Utils::getErrorCodeAsString(result)
+                    << " for Sensor result type: "
+                    << SensorUtils::sensorResultTypeToString(selfTestResultParams.sensorResultType_)
+                    << " performed at: " << selfTestResultParams.timestamp_ << " ns\n";
+            } else {
+                PRINT_CB << tag_
+                         << " Received self test response: " << Utils::getErrorCodeAsString(result);
+            }
+        });
     if (status != telux::common::Status::SUCCESS) {
         std::cout << tag_ << "self test request failed: ";
         Utils::printStatus(status);
@@ -342,9 +313,9 @@ telux::common::Status SensorClient::selfTestEx(SelfTestType selfTestType) {
 
 void SensorClient::onSelfTestFailed() {
     PRINT_CB << tag_ << " Self Test triggered by Sensor service Failed at "
-        << Utils::getNanosecondsSinceBoot() << " ns\n";
+             << Utils::getNanosecondsSinceBoot() << " ns\n";
 }
 
 void SensorClient::setRecordingFlag(bool enable) {
-   isRecordingEnabled_ = enable;
+    isRecordingEnabled_ = enable;
 }

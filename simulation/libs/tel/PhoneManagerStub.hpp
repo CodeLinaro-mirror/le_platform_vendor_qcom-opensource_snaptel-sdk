@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -22,8 +22,8 @@
 #include "PhoneStub.hpp"
 #include "TelDefinesStub.hpp"
 
-using telStub::PhoneService;
 using telStub::CardService;
+using telStub::PhoneService;
 
 namespace telux {
 namespace tel {
@@ -31,8 +31,7 @@ namespace tel {
 class PhoneManagerStub : public IPhoneManager,
                          public IEventListener,
                          public std::enable_shared_from_this<PhoneManagerStub> {
-public:
-
+ public:
     PhoneManagerStub();
     telux::common::Status init(telux::common::InitResponseCb callback);
     ~PhoneManagerStub();
@@ -49,13 +48,12 @@ public:
         std::shared_ptr<ICellularCapabilityCallback> callback = nullptr) override;
     telux::common::Status setOperatingMode(telux::tel::OperatingMode operatingMode,
         telux::common::ResponseCallback callback = nullptr) override;
-    telux::common::Status requestOperatingMode(std::shared_ptr<IOperatingModeCallback> callback
-        = nullptr) override;
-    telux::common::Status resetWwan(telux::common::ResponseCallback callback
-        = nullptr) override;
-    void onEventUpdate(google::protobuf::Any event)  override;
+    telux::common::Status requestOperatingMode(
+        std::shared_ptr<IOperatingModeCallback> callback = nullptr) override;
+    telux::common::Status resetWwan(telux::common::ResponseCallback callback = nullptr) override;
+    void onEventUpdate(google::protobuf::Any event) override;
 
-private:
+ private:
     int noOfSlots_;
     bool ready_ = false;
     std::condition_variable cv_;
@@ -86,7 +84,7 @@ private:
     void updateRadioState(OperatingMode optMode);
 };
 
-} // end of namespace tel
-} // end of namespace telux
+}  // end of namespace tel
+}  // end of namespace telux
 
-#endif // TELUX_TEL_PHONEMANAGERSTUB_HPP
+#endif  // TELUX_TEL_PHONEMANAGERSTUB_HPP

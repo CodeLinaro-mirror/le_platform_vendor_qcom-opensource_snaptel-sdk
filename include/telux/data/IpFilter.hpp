@@ -28,39 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -86,7 +56,7 @@ namespace data {
  * @{ */
 
 using TypeOfService = uint8_t;
-using FlowLabel = uint32_t;
+using FlowLabel     = uint32_t;
 
 /**
  * IPv4 header info
@@ -96,8 +66,8 @@ struct IPv4Info {
     std::string srcSubnetMask;
     std::string destAddr; /**< address of receiving end */
     std::string destSubnetMask;
-    TypeOfService value = 0; /**< level of throughput, reliability, and delay */
-    TypeOfService mask = 0;
+    TypeOfService value    = 0; /**< level of throughput, reliability, and delay */
+    TypeOfService mask     = 0;
     IpProtocol nextProtoId = 0; /**< Protocol ID (i.e TCP, UDP or ICMP ) */
 };
 
@@ -105,15 +75,19 @@ struct IPv4Info {
  * IPv6 header info
  */
 struct IPv6Info {
-    std::string srcAddr;        /**< address of the device that sends the packet. */
-    uint8_t srcPrefixLen;       /**< source prefix length used to create subnet */
-    std::string destAddr;       /**< address of receiving end */
-    uint8_t dstPrefixLen;       /**< destination prefix length used to create subnet */
+    std::string srcAddr; /**< address of the device that sends the packet. */
+    uint8_t srcPrefixLen; /**< source prefix length used to create subnet */
+    std::string destAddr; /**< address of receiving end */
+    uint8_t dstPrefixLen; /**< destination prefix length used to create subnet */
     IpProtocol nextProtoId = 0; /**< Protocol ID (i.e TCP, UDP or ICMP ) */
-    TrafficClass val = 0;       /**< indicates the class or priority of the IPv6 packet, enables the ability to track specific traffic flows at the network layer. */
+    TrafficClass val       = 0; /**< indicates the class or priority of the IPv6 packet, enables the
+                                   ability to track specific traffic flows at the network layer. */
 
     TrafficClass mask = 0;
-    FlowLabel flowLabel = 0; /**< Indicates that this packet belongs to a specific sequence of packets between a source and destination, requiring special handling by intermediate IPv6 router. Note: FlowLabel is currently ignored in the firewall configuration */
+    FlowLabel flowLabel
+        = 0; /**< Indicates that this packet belongs to a specific sequence of packets between a
+                source and destination, requiring special handling by intermediate IPv6 router.
+                Note: FlowLabel is currently ignored in the firewall configuration */
     uint8_t natEnabled = 0;
 };
 
@@ -121,7 +95,7 @@ struct IPv6Info {
  * UDP header info
  */
 struct UdpInfo {
-    PortInfo src;  /**< Source port and range */
+    PortInfo src; /**< Source port and range */
     PortInfo dest; /**< Destination port and range */
 };
 
@@ -129,7 +103,7 @@ struct UdpInfo {
  * TCP header info
  */
 struct TcpInfo {
-    PortInfo src;  /**< Source port and range */
+    PortInfo src; /**< Source port and range */
     PortInfo dest; /**< Destination port and range */
 };
 
@@ -346,4 +320,4 @@ class IEspFilter : virtual public IIpFilter {
 /** @} */ /* end_addtogroup telematics_data */
 }  // namespace data
 }  // namespace telux
-#endif // TELUX_DATA_IPFILTER_HPP
+#endif  // TELUX_DATA_IPFILTER_HPP

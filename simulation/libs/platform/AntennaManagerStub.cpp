@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -69,11 +69,12 @@ void AntennaManagerStub::onEventUpdate(google::protobuf::Any event) {
     LOG(DEBUG, __FUNCTION__);
     // Execute all events in separate thread
     auto f = std::async(std::launch::deferred, [this, event]() {
-            if (event.Is<commonStub::GetServiceStatusReply>()) {
-                handleSSREvent(event);
-            } else {
-                LOG(ERROR, __FUNCTION__, ":: Invalid event");
-    }}).share();
+        if (event.Is<commonStub::GetServiceStatusReply>()) {
+            handleSSREvent(event);
+        } else {
+            LOG(ERROR, __FUNCTION__, ":: Invalid event");
+        }
+    }).share();
 
     taskQ_.add(f);
 }
@@ -100,8 +101,7 @@ void AntennaManagerStub::handleSSREvent(google::protobuf::Any event) {
     onAntennaManagerServiceStatusChange(srvcStatus);
 }
 
-void AntennaManagerStub::onAntennaManagerServiceStatusChange(
-        ServiceStatus srvcStatus) {
+void AntennaManagerStub::onAntennaManagerServiceStatusChange(ServiceStatus srvcStatus) {
     LOG(DEBUG, __FUNCTION__, ":: Service Status: ", static_cast<int>(srvcStatus));
 
     if (srvcStatus == getServiceStatus()) {
@@ -129,8 +129,9 @@ void AntennaManagerStub::notifyServiceStatus(ServiceStatus srvcStatus) {
     }
     std::vector<std::weak_ptr<IAntennaListener>> applisteners;
     listenerMgr_->getAvailableListeners(applisteners);
-    LOG(DEBUG, __FUNCTION__, ":: Notifying antenna manager service status: ",
-            static_cast<int>(srvcStatus), " to listeners: ", applisteners.size());
+    LOG(DEBUG, __FUNCTION__,
+        ":: Notifying antenna manager service status: ", static_cast<int>(srvcStatus),
+        " to listeners: ", applisteners.size());
     for (auto &wp : applisteners) {
         if (auto sp = wp.lock()) {
             sp->onServiceStatusChange(srvcStatus);
@@ -147,22 +148,19 @@ Status AntennaManagerStub::registerDefaultIndications() {
     LOG(INFO, __FUNCTION__, ":: Registering default SSR indications");
 
     status = clientEventMgr_.registerListener(shared_from_this(), ANTENNA_MANAGER_FILTER);
-    if ((status != Status::SUCCESS) &&
-        (status != Status::ALREADY)) {
+    if ((status != Status::SUCCESS) && (status != Status::ALREADY)) {
         LOG(ERROR, __FUNCTION__, ":: Registering default SSR indications failed");
         return status;
     }
     return status;
 }
 
-Status AntennaManagerStub::initSyncComplete(
-        ServiceStatus srvcStatus) {
+Status AntennaManagerStub::initSyncComplete(ServiceStatus srvcStatus) {
     LOG(DEBUG, __FUNCTION__);
 
     registerDefaultIndications();
 
-    if (srvcStatus != ServiceStatus::SERVICE_AVAILABLE)
-    {
+    if (srvcStatus != ServiceStatus::SERVICE_AVAILABLE) {
         return Status::FAILED;
     }
 
@@ -196,7 +194,6 @@ Status AntennaManagerStub::deregisterListener(std::weak_ptr<IAntennaListener> li
     return status;
 }
 
-
 void AntennaManagerStub::onActiveAntennaChange(int antIndex) {
     LOG(DEBUG, __FUNCTION__);
 
@@ -209,14 +206,14 @@ void AntennaManagerStub::onActiveAntennaChange(int antIndex) {
     }
 }
 
-void AntennaManagerStub::onSetAntConfigResponse(int antIndex, ResponseCallback callback,
-    ErrorCode errorCode){
+void AntennaManagerStub::onSetAntConfigResponse(
+    int antIndex, ResponseCallback callback, ErrorCode errorCode) {
     LOG(DEBUG, __FUNCTION__);
 
     do {
         // The antenna status before executing this set request
         bool isAntSwitchPreEnabled = false;
-        isAntSwitchPreEnabled = isAntSwitchEnabled_;
+        isAntSwitchPreEnabled      = isAntSwitchEnabled_;
         if (!isAntSwitchPreEnabled) {
             isAntSwitchEnabled_ = true;
         }
@@ -242,8 +239,8 @@ void AntennaManagerStub::onSetAntConfigResponse(int antIndex, ResponseCallback c
     } while (0);
 }
 
-telux::common::Status AntennaManagerStub::setActiveAntenna(int antIndex,
-    telux::common::ResponseCallback callback) {
+telux::common::Status AntennaManagerStub::setActiveAntenna(
+    int antIndex, telux::common::ResponseCallback callback) {
     LOG(DEBUG, "AntennaManagerStub::", __FUNCTION__);
 
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
@@ -251,7 +248,7 @@ telux::common::Status AntennaManagerStub::setActiveAntenna(int antIndex,
         return telux::common::Status::NOTREADY;
     }
 
-    Status status = Status::FAILED;
+    Status status       = Status::FAILED;
     ErrorCode errorCode = ErrorCode::GENERIC_FAILURE;
     ::platformStub::DefaultReply response;
     const ::google::protobuf::Empty request;
@@ -259,12 +256,12 @@ telux::common::Status AntennaManagerStub::setActiveAntenna(int antIndex,
 
     ::grpc::Status reqstatus = stub_->SetActiveAntenna(&context, request, &response);
 
-    if(!reqstatus.ok()) {
+    if (!reqstatus.ok()) {
         LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
         return status;
     }
 
-    status = static_cast<telux::common::Status>(response.status());
+    status    = static_cast<telux::common::Status>(response.status());
     errorCode = static_cast<telux::common::ErrorCode>(response.error());
     LOG(DEBUG, __FUNCTION__, " set ANT config req status: ", static_cast<int>(status));
     auto f = std::async(std::launch::async, [this, antIndex, callback, errorCode]() {
@@ -309,7 +306,7 @@ telux::common::Status AntennaManagerStub::getActiveAntenna(GetActiveAntCb callba
         LOG(DEBUG, __FUNCTION__, " Callback is null");
     }
 
-    Status status = Status::FAILED;
+    Status status       = Status::FAILED;
     ErrorCode errorCode = ErrorCode::GENERIC_FAILURE;
     ::platformStub::DefaultReply response;
     const ::google::protobuf::Empty request;
@@ -317,12 +314,12 @@ telux::common::Status AntennaManagerStub::getActiveAntenna(GetActiveAntCb callba
 
     ::grpc::Status reqstatus = stub_->GetActiveAntenna(&context, request, &response);
 
-    if(!reqstatus.ok()) {
+    if (!reqstatus.ok()) {
         LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
         return status;
     }
 
-    status = static_cast<telux::common::Status>(response.status());
+    status    = static_cast<telux::common::Status>(response.status());
     errorCode = static_cast<telux::common::ErrorCode>(response.error());
     LOG(DEBUG, __FUNCTION__, " get ANT config req status: ", static_cast<int>(status));
     auto f = std::async(std::launch::async, [this, callback, errorCode]() {

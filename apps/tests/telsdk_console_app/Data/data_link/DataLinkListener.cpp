@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -10,43 +10,40 @@
 
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
-DataLinkListener::DataLinkListener(){
+DataLinkListener::DataLinkListener() {
     std::cout << "DataLinkListener constructed" << std::endl;
 }
 
-DataLinkListener::~DataLinkListener(){
+DataLinkListener::~DataLinkListener() {
     std::cout << "DataLinkListener destructed" << std::endl;
 }
 
-void DataLinkListener::onServiceStatusChange(
-    telux::common::ServiceStatus status) {
+void DataLinkListener::onServiceStatusChange(telux::common::ServiceStatus status) {
 
-    std::string stat ="";
-    switch(status) {
+    std::string stat = "";
+    switch (status) {
         case telux::common::ServiceStatus::SERVICE_AVAILABLE:
             stat = " SERVICE_AVAILABLE";
             break;
         case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
-            stat =  " SERVICE_UNAVAILABLE";
+            stat = " SERVICE_UNAVAILABLE";
             break;
         default:
             stat = " Unknown service status";
             break;
     }
 
-    PRINT_NOTIFICATION <<
-        " ** Data Link onServiceStatusChange **\n" << stat << std::endl;
+    PRINT_NOTIFICATION << " ** Data Link onServiceStatusChange **\n" << stat << std::endl;
 }
 
 void DataLinkListener::onEthDataLinkStateChange(telux::data::LinkState linkState) {
-    PRINT_NOTIFICATION <<
-        " ** Data Link State Change to  **\n" << (linkState == telux::data::LinkState::UP ? "UP"
-                : "DOWN") << std::endl;
+    PRINT_NOTIFICATION << " ** Data Link State Change to  **\n"
+                       << (linkState == telux::data::LinkState::UP ? "UP" : "DOWN") << std::endl;
 }
 
 std::string DataLinkListener::ethModeTypeToString(telux::data::EthModeType ethModeType) {
-    std::string mode ="";
-    switch(ethModeType) {
+    std::string mode = "";
+    switch (ethModeType) {
         case telux::data::EthModeType::ETHMODE_USXGMII_10G:
             mode = " USXGMII_10G";
             break;
@@ -81,11 +78,10 @@ std::string DataLinkListener::ethModeTypeToString(telux::data::EthModeType ethMo
     return mode;
 }
 
-
-
-std::string DataLinkListener::linkModeChangeStatusToString(telux::data::LinkModeChangeStatus status) {
-    std::string stat ="";
-    switch(status) {
+std::string DataLinkListener::linkModeChangeStatusToString(
+    telux::data::LinkModeChangeStatus status) {
+    std::string stat = "";
+    switch (status) {
         case telux::data::LinkModeChangeStatus::ACCEPTED:
             stat = " ACCEPTED";
             break;
@@ -110,17 +106,15 @@ std::string DataLinkListener::linkModeChangeStatusToString(telux::data::LinkMode
 }
 
 void DataLinkListener::onEthModeChangeRequest(telux::data::EthModeType ethModeType) {
-    PRINT_NOTIFICATION <<
-        " ** Data Link onEthModeChangeRequest **\n" <<
-        ethModeTypeToString(ethModeType) << std::endl;
+    PRINT_NOTIFICATION << " ** Data Link onEthModeChangeRequest **\n"
+                       << ethModeTypeToString(ethModeType) << std::endl;
 }
 
-void DataLinkListener::onEthModeChangeTransactionStatus(telux::data::EthModeType ethModeType,
-    telux::data::LinkModeChangeStatus status) {
+void DataLinkListener::onEthModeChangeTransactionStatus(
+    telux::data::EthModeType ethModeType, telux::data::LinkModeChangeStatus status) {
     std::string stat = linkModeChangeStatusToString(status);
 
     PRINT_NOTIFICATION << " ** Data Link onEthModeChangeTransactionStatus **\n"
                        << ethModeTypeToString(ethModeType)
-                       << " ,status : " << static_cast<int>(status) << " "
-                       << stat << std::endl;
+                       << " ,status : " << static_cast<int>(status) << " " << stat << std::endl;
 }

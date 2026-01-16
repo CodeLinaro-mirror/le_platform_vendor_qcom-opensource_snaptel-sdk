@@ -26,47 +26,18 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
  * Changes from Qualcomm Technologies, Inc. are provided under the following license:
- *
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
- /**
-  * @file: Application.cpp
-  *
-  * @brief: Base class for ITS stack application
-  */
+/**
+ * @file: Application.cpp
+ *
+ * @brief: Base class for ITS stack application
+ */
 
 #include <ifaddrs.h>
 #include <sys/time.h>
@@ -75,16 +46,16 @@
 #include "ApplicationBase.hpp"
 #include "VehicleReceive.h"
 using std::cout;
-using std::string;
 using std::map;
 using std::pair;
+using std::string;
 using namespace telux::cv2x::prop;
-using telux::cv2x::prop::V2xPropFactory;
 using telux::cv2x::prop::CongestionControlUtility;
+using telux::cv2x::prop::V2xPropFactory;
 using telux::sec::ICAControlManager;
-using telux::sec::SecurityFactory;
 using telux::sec::ICAControlManagerListener;
 using telux::sec::LoadConfig;
+using telux::sec::SecurityFactory;
 // Congestion Control related variables
 CongestionControlData ApplicationBase::congestionControlOut;
 sem_t ApplicationBase::congCtrlCbSem;
@@ -93,8 +64,8 @@ CongestionControlCalculations ApplicationBase::congCtrlCbData;
 v2x_diag_qits_general_data ApplicationBase::generalInfo;
 bool ApplicationBase::cbSuccess;
 shared_ptr<telux::cv2x::prop::ICongestionControlManager> ApplicationBase::congestionControlManager;
-RadioTransmit* QitsCongCtrlListener::spsTransmit_;
-FILE* ApplicationBase::csvfp;
+RadioTransmit *QitsCongCtrlListener::spsTransmit_;
+FILE *ApplicationBase::csvfp;
 std::mutex ApplicationBase::csvMutex;
 std::mutex ApplicationBase::hvLocUpdateMtx;
 bool ApplicationBase::securityEnabled;
@@ -114,22 +85,20 @@ unsigned int ApplicationBase::idChangeDistance;
 uint64_t ApplicationBase::scheduledIdChangeTime;
 int ApplicationBase::signFail;
 int ApplicationBase::signSuccess;
-bool init_loc = false;
-static int idChangeTriggercounter = 0 ;
-#define EventBitsShift(bits, shift) \
-    (unsigned short)(1 & bits) << static_cast<uint8_t>(shift)
+bool init_loc                     = false;
+static int idChangeTriggercounter = 0;
+#define EventBitsShift(bits, shift) (unsigned short)(1 & bits) << static_cast<uint8_t>(shift)
 
-std::string getCurrentTimestamp()
-{
+std::string getCurrentTimestamp() {
     using std::chrono::system_clock;
-    auto currentTime = std::chrono::system_clock::now();
+    auto currentTime                       = std::chrono::system_clock::now();
     char buffer[MAX_TIMESTAMP_BUFFER_SIZE] = {0};
-    auto sinceEpoch = currentTime.time_since_epoch().count() / 1000000;
-    auto millis = sinceEpoch % 1000;
-    std::time_t tt = system_clock::to_time_t ( currentTime );
-    auto timeinfo = localtime (&tt);
+    auto sinceEpoch                        = currentTime.time_since_epoch().count() / 1000000;
+    auto millis                            = sinceEpoch % 1000;
+    std::time_t tt                         = system_clock::to_time_t(currentTime);
+    auto timeinfo                          = localtime(&tt);
     if (timeinfo) {
-        int ret = strftime(buffer, MAX_TIMESTAMP_BUFFER_SIZE, "%F-%H:%M:%S.",timeinfo);
+        int ret = strftime(buffer, MAX_TIMESTAMP_BUFFER_SIZE, "%F-%H:%M:%S.", timeinfo);
         if (0 == ret) {
             return "";
         }
@@ -138,63 +107,58 @@ std::string getCurrentTimestamp()
     return std::string(buffer);
 }
 
-void locCbFn (shared_ptr<ILocationInfoEx> &locationInfo)
-{
+void locCbFn(shared_ptr<ILocationInfoEx> &locationInfo) {
     ApplicationBase::setHvLocation(locationInfo);
-    // callback will pass data to corresponding other components
-    #ifdef AEROLINK
-    if(ApplicationBase::securityEnabled){
+// callback will pass data to corresponding other components
+#ifdef AEROLINK
+    if (ApplicationBase::securityEnabled) {
         Kinematics kine;
-        kine.latitude = locationInfo->getLatitude() * 10000000;
+        kine.latitude  = locationInfo->getLatitude() * 10000000;
         kine.longitude = locationInfo->getLongitude() * 10000000;
         kine.elevation = locationInfo->getAltitude() * 10;
-        kine.speed = locationInfo->getSpeed() * (250/18);
+        kine.speed     = locationInfo->getSpeed() * (250 / 18);
         // make sure that aerolink knows most recent ego position and leap seconds
-        if(ApplicationBase::securityInitialized){
-            int result = AerolinkSecurity::setSecCurrLocation(&kine);
-            telux::common::Status status =
-                locationInfo->getLeapSeconds(kine.leapSeconds);
-            if(status == Status::SUCCESS && kine.leapSeconds != 0){
+        if (ApplicationBase::securityInitialized) {
+            int result                   = AerolinkSecurity::setSecCurrLocation(&kine);
+            telux::common::Status status = locationInfo->getLeapSeconds(kine.leapSeconds);
+            if (status == Status::SUCCESS && kine.leapSeconds != 0) {
                 result = AerolinkSecurity::setLeapSeconds(kine.leapSeconds);
             }
         }
     }
-    #endif
-    if(ApplicationBase::congCtrlEnabled){
+#endif
+    if (ApplicationBase::congCtrlEnabled) {
         Position pos = {0};
         double speed = 0.0;
-        if(ApplicationBase::positionOverride){
-            pos.posLat = ApplicationBase::overrideLat;
+        if (ApplicationBase::positionOverride) {
+            pos.posLat  = ApplicationBase::overrideLat;
             pos.posLong = ApplicationBase::overrideLong;
             pos.heading = ApplicationBase::overrideHead;
-            pos.elev = ApplicationBase::overrideElev;
-            speed = ApplicationBase::overrideSpeed;
-        }else{
-            pos.posLat = (locationInfo->getLatitude());
+            pos.elev    = ApplicationBase::overrideElev;
+            speed       = ApplicationBase::overrideSpeed;
+        } else {
+            pos.posLat  = (locationInfo->getLatitude());
             pos.posLong = (locationInfo->getLongitude());
             pos.heading = (locationInfo->getHeading());
-            pos.elev = (locationInfo->getAltitude());
-            speed = locationInfo->getSpeed();
+            pos.elev    = (locationInfo->getAltitude());
+            speed       = locationInfo->getSpeed();
         }
-        if(ApplicationBase::congestionControlManager){
-            CCErrorCode res =
-                ApplicationBase::congestionControlManager->updateHostVehicleData(
-                pos, speed);
+        if (ApplicationBase::congestionControlManager) {
+            CCErrorCode res
+                = ApplicationBase::congestionControlManager->updateHostVehicleData(pos, speed);
         }
     }
-
 }
 
-void QitsCongCtrlListener::onCongestionControlDataReady (
-    std::shared_ptr<CongestionControlUserData> congestionControlUserData,
-        bool critEvent) {
+void QitsCongCtrlListener::onCongestionControlDataReady(
+    std::shared_ptr<CongestionControlUserData> congestionControlUserData, bool critEvent) {
 
-    if(congestionControlUserData){
+    if (congestionControlUserData) {
         QitsCongCtrlListener::updateSpsTransmitFlow(congestionControlUserData);
         memcpy(&ApplicationBase::congCtrlCbData,
-                congestionControlUserData->congestionControlCalculations.get(),
-                sizeof(CongestionControlCalculations));
-        if(!critEvent){
+            congestionControlUserData->congestionControlCalculations.get(),
+            sizeof(CongestionControlCalculations));
+        if (!critEvent) {
             sem_post(congestionControlUserData->congestionControlSem);
         }
     }
@@ -206,48 +170,47 @@ unsigned short ApplicationBase::getEventsData(const vehicleeventflags_ut *events
         events->bits.eventAirBagDeployment, event_bits_shift_et::SHIFT_AIRBAGDEPLOYMENT);
     eventsData |= EventBitsShift(
         events->bits.eventDisabledVehicle, event_bits_shift_et::SHIFT_DISABLEDVEHICLE);
-    eventsData |= EventBitsShift(
-        events->bits.eventFlatTire, event_bits_shift_et::SHIFT_FLATTIRE);
+    eventsData |= EventBitsShift(events->bits.eventFlatTire, event_bits_shift_et::SHIFT_FLATTIRE);
     eventsData |= EventBitsShift(
         events->bits.eventWipersChanged, event_bits_shift_et::SHIFT_WIPERSCHANGED);
     eventsData |= EventBitsShift(
         events->bits.eventLightsChanged, event_bits_shift_et::SHIFT_LIGHTSCHANGED);
-    eventsData |= EventBitsShift(
-        events->bits.eventHardBraking, event_bits_shift_et::SHIFT_HARDBRAKING);
+    eventsData
+        |= EventBitsShift(events->bits.eventHardBraking, event_bits_shift_et::SHIFT_HARDBRAKING);
     eventsData |= EventBitsShift(
         events->bits.eventHazardousMaterials, event_bits_shift_et::SHIFT_HAZARDOUSMATERIALS);
     eventsData |= EventBitsShift(events->bits.eventStabilityControlactivated,
         event_bits_shift_et::SHIFT_STABILITYCONTROLACTIVATED);
     eventsData |= EventBitsShift(
         events->bits.eventTractionControlLoss, event_bits_shift_et::SHIFT_TRACTIONCONTROLLOSS);
-    eventsData |= EventBitsShift(
-        events->bits.eventABSactivated, event_bits_shift_et::SHIFT_ABSACTIVATED);
+    eventsData
+        |= EventBitsShift(events->bits.eventABSactivated, event_bits_shift_et::SHIFT_ABSACTIVATED);
     eventsData |= EventBitsShift(
         events->bits.eventStopLineViolation, event_bits_shift_et::SHIFT_STOPLINEVIOLATION);
-    eventsData |= EventBitsShift(
-        events->bits.eventHazardLights, event_bits_shift_et::SHIFT_HAZARDLIGHTS);
+    eventsData
+        |= EventBitsShift(events->bits.eventHazardLights, event_bits_shift_et::SHIFT_HAZARDLIGHTS);
     return eventsData;
 }
 
-void ApplicationBase::fillEventsData(v2x_diag_event_bit_t *eventBit,
-    const vehicleeventflags_ut *events) {
-    eventBit->eventAirBagDeployment = events->bits.eventAirBagDeployment;
-    eventBit->eventDisabledVehicle = events->bits.eventDisabledVehicle;
-    eventBit->eventFlatTire = events->bits.eventFlatTire;
-    eventBit->eventWipersChanged = events->bits.eventWipersChanged;
-    eventBit->eventLightsChanged = events->bits.eventLightsChanged;
-    eventBit->eventHardBraking = events->bits.eventHardBraking;
-    eventBit->eventHazardousMaterials = events->bits.eventHazardousMaterials;
+void ApplicationBase::fillEventsData(
+    v2x_diag_event_bit_t *eventBit, const vehicleeventflags_ut *events) {
+    eventBit->eventAirBagDeployment          = events->bits.eventAirBagDeployment;
+    eventBit->eventDisabledVehicle           = events->bits.eventDisabledVehicle;
+    eventBit->eventFlatTire                  = events->bits.eventFlatTire;
+    eventBit->eventWipersChanged             = events->bits.eventWipersChanged;
+    eventBit->eventLightsChanged             = events->bits.eventLightsChanged;
+    eventBit->eventHardBraking               = events->bits.eventHardBraking;
+    eventBit->eventHazardousMaterials        = events->bits.eventHazardousMaterials;
     eventBit->eventStabilityControlactivated = events->bits.eventStabilityControlactivated;
-    eventBit->eventTractionControlLoss = events->bits.eventTractionControlLoss;
-    eventBit->eventABSactivated = events->bits.eventABSactivated;
-    eventBit->eventStopLineViolation = events->bits.eventStopLineViolation;
-    eventBit->eventHazardLights = events->bits.eventHazardLights;
-    eventBit->unused = events->bits.unused;
+    eventBit->eventTractionControlLoss       = events->bits.eventTractionControlLoss;
+    eventBit->eventABSactivated              = events->bits.eventABSactivated;
+    eventBit->eventStopLineViolation         = events->bits.eventStopLineViolation;
+    eventBit->eventHazardLights              = events->bits.eventHazardLights;
+    eventBit->unused                         = events->bits.unused;
 }
 
-void ApplicationBase::diagLogPktTxRx(bool isTx, TransmitType txType,
-    const DiagLogData *logData, const bsm_data *bs) {
+void ApplicationBase::diagLogPktTxRx(
+    bool isTx, TransmitType txType, const DiagLogData *logData, const bsm_data *bs) {
     if (!logData) {
         std::cout << "logData is null" << std::endl;
         return;
@@ -260,63 +223,65 @@ void ApplicationBase::diagLogPktTxRx(bool isTx, TransmitType txType,
 
     // fill location and athletic info
     v2x_diag_bsm_data bsm_info = {0};
-    bsm_info.msg_count = bs->MsgCount;
-    bsm_info.temp_id = bs->id;
-    bsm_info.secmark_ms = bs->secMark_ms;
-    bsm_info.latitude = bs->Latitude;
-    bsm_info.longitude = bs->Longitude;
-    bsm_info.semi_major_dev = bs->SemiMajorAxisAccuracy;
-    bsm_info.speed = bs->Speed;
-    bsm_info.heading = bs->Heading_degrees;
-    bsm_info.long_accel = bs->AccelLon_cm_per_sec_squared;
-    bsm_info.lat_accel = bs->AccelLat_cm_per_sec_squared;
+    bsm_info.msg_count         = bs->MsgCount;
+    bsm_info.temp_id           = bs->id;
+    bsm_info.secmark_ms        = bs->secMark_ms;
+    bsm_info.latitude          = bs->Latitude;
+    bsm_info.longitude         = bs->Longitude;
+    bsm_info.semi_major_dev    = bs->SemiMajorAxisAccuracy;
+    bsm_info.speed             = bs->Speed;
+    bsm_info.heading           = bs->Heading_degrees;
+    bsm_info.long_accel        = bs->AccelLon_cm_per_sec_squared;
+    bsm_info.lat_accel         = bs->AccelLat_cm_per_sec_squared;
 
     // fill other general
     generalInfo.time_stamp_log = timestamp_now();
     generalInfo.time_stamp_msg = logData->currTime;
-    generalInfo.gnss_time = 0;
-    generalInfo.CPU_Util = (uint32_t)(get_CPU_percentage(logData->monotonicTime) * 100.0);
-    generalInfo.GPS_mode = 0;
-    generalInfo.msg_valid = logData->validPkt;
+    generalInfo.gnss_time      = 0;
+    generalInfo.CPU_Util       = (uint32_t)(get_CPU_percentage(logData->monotonicTime) * 100.0);
+    generalInfo.GPS_mode       = 0;
+    generalInfo.msg_valid      = logData->validPkt;
     fillEventsData(&(generalInfo.events), &(bs->events));
     generalInfo.hysterisis = 5;
-    generalInfo.L2_ID = logData->cbr;
+    generalInfo.L2_ID      = logData->cbr;
 
     v2x_diag_transmit_type_et msg_type = txType == TransmitType::SPS ? DIAG_SPS : DIAG_EVENT;
-    bool congCtrlPrepared = logData->enableCongCtrl && logData->congCtrlInitialized;
+    bool congCtrlPrepared              = logData->enableCongCtrl && logData->congCtrlInitialized;
     if (isTx) {
         // tx
         v2x_qits_general_tx_info info = {0};
-        V2X_QITS_GENERAL_TX_PKG *msg = (V2X_QITS_GENERAL_TX_PKG *)((uint32_t *)(&info) + 1);
+        V2X_QITS_GENERAL_TX_PKG *msg  = (V2X_QITS_GENERAL_TX_PKG *)((uint32_t *)(&info) + 1);
         if (congCtrlPrepared) {
-            generalInfo.tracking_error = congCtrlCbData.trackingError ?
-                (uint32_t)(congCtrlCbData.trackingError * 100) : 0;
+            generalInfo.tracking_error
+                = congCtrlCbData.trackingError ? (uint32_t)(congCtrlCbData.trackingError * 100) : 0;
             generalInfo.vehicle_density_in_range = (uint32_t)(congCtrlCbData.smoothDens * 100.0);
-            msg->channel_quality_indication = congCtrlCbData.channData ?
-                (uint32_t)(congCtrlCbData.channData->channQualInd * 100.0) : 0;
+            msg->channel_quality_indication
+                = congCtrlCbData.channData
+                      ? (uint32_t)(congCtrlCbData.channData->channQualInd * 100.0)
+                      : 0;
             generalInfo.max_ITT = congCtrlCbData.maxITT;
         }
-        msg->bsm_data = bsm_info;
-        msg->general_data = generalInfo;
-        msg->tx_interval = logData->txInterval;
+        msg->bsm_data        = bsm_info;
+        msg->general_data    = generalInfo;
+        msg->tx_interval     = logData->txInterval;
         msg->DCC_random_time = (long unsigned int)0;
-        msg->msg_type = msg_type;
+        msg->msg_type        = msg_type;
         utility_->sendLogPacket(&info, PKT_ID_QITS_TX_FLOW);
     } else {
         // rx
         v2x_qits_general_rx_info info = {0};
-        V2X_QITS_GENERAL_RX_PKG *msg = (V2X_QITS_GENERAL_RX_PKG *)((uint32_t *)(&info) + 1);
+        V2X_QITS_GENERAL_RX_PKG *msg  = (V2X_QITS_GENERAL_RX_PKG *)((uint32_t *)(&info) + 1);
         if (congCtrlPrepared) {
-            generalInfo.tracking_error = congCtrlCbData.trackingError ?
-                (uint32_t)(congCtrlCbData.trackingError * 100) : 0;
+            generalInfo.tracking_error
+                = congCtrlCbData.trackingError ? (uint32_t)(congCtrlCbData.trackingError * 100) : 0;
             generalInfo.vehicle_density_in_range = (uint32_t)(congCtrlCbData.smoothDens * 100.0);
-            generalInfo.max_ITT = congCtrlCbData.maxITT;
-            msg->total_RVs = congCtrlCbData.totalRvsInRange;
-            msg->distance_from_RV = bs->distFromRV;
+            generalInfo.max_ITT                  = congCtrlCbData.maxITT;
+            msg->total_RVs                       = congCtrlCbData.totalRvsInRange;
+            msg->distance_from_RV                = bs->distFromRV;
         }
-        msg->bsm_data = bsm_info;
+        msg->bsm_data     = bsm_info;
         msg->general_data = generalInfo;
-        msg->msg_type = msg_type;
+        msg->msg_type     = msg_type;
         utility_->sendLogPacket(&info, PKT_ID_QITS_RX_FLOW);
     }
 }
@@ -324,35 +289,34 @@ void ApplicationBase::diagLogPktTxRx(bool isTx, TransmitType txType,
 void ApplicationBase::diagLogPktGenericInfo() {
     v2x_qits_general_periodic_info info = {0};
     V2X_QITS_GENERAL_PERIODIC_PKG *msg = (V2X_QITS_GENERAL_PERIODIC_PKG *)((uint32_t *)(&info) + 1);
-    bool congCtrlPrepared = this->configuration.enableCongCtrl && congCtrlInitialized;
+    bool congCtrlPrepared              = this->configuration.enableCongCtrl && congCtrlInitialized;
     if (congCtrlPrepared) {
-        msg->max_ITT = congCtrlCbData.maxITT;
+        msg->max_ITT                  = congCtrlCbData.maxITT;
         msg->vehicle_density_in_range = (uint32_t)(congCtrlCbData.smoothDens * 100.0);
-        msg->total_RVs = congCtrlCbData.totalRvsInRange;
-        msg->tracking_error = congCtrlCbData.trackingError;
+        msg->total_RVs                = congCtrlCbData.totalRvsInRange;
+        msg->tracking_error           = congCtrlCbData.trackingError;
     }
 
     msg->CPU_Util = generalInfo.CPU_Util;
-    msg->L2_ID = generalInfo.L2_ID;
-    msg->events = generalInfo.events;
+    msg->L2_ID    = generalInfo.L2_ID;
+    msg->events   = generalInfo.events;
 
     utility_->sendLogPacket(&info, PKT_ID_QITS_GENERIC_INFO);
 }
 
-void ApplicationBase::setHvLocation(shared_ptr<ILocationInfoEx>& hvLocationInfoIn){
+void ApplicationBase::setHvLocation(shared_ptr<ILocationInfoEx> &hvLocationInfoIn) {
     // need a lock here
     lock_guard<mutex> lk(hvLocUpdateMtx);
     ApplicationBase::hvLocationInfo = hvLocationInfoIn;
 #if AEROLINK
-    if(!init_loc){
+    if (!init_loc) {
         lastLocationInfoIdChange = hvLocationInfo;
-        init_loc = true;
+        init_loc                 = true;
     }
 #endif
 }
 
-
-void ApplicationBase::writeSecurityLog(char* tmpLogStr, uint32_t maxBufSize, FILE *myfp){
+void ApplicationBase::writeSecurityLog(char *tmpLogStr, uint32_t maxBufSize, FILE *myfp) {
     // can pass mbd, signing, and verif stats here and other settings in future
 }
 
@@ -365,86 +329,76 @@ void ApplicationBase::writeSecurityLog(char* tmpLogStr, uint32_t maxBufSize, FIL
  * vehicleDensityInRange    ChannelQualityIndication
  * BSMValid max_ITT GPS-Time    Events  DCC random time Hysterisis
  */
-void ApplicationBase::writeCongCtrlLog(char* tmpLogStr, uint32_t maxBufSize, FILE *myfp,
-    CongestionControlCalculations* congestionControlCalculations, bool validPkt,
+void ApplicationBase::writeCongCtrlLog(char *tmpLogStr, uint32_t maxBufSize, FILE *myfp,
+    CongestionControlCalculations *congestionControlCalculations, bool validPkt,
     uint16_t eventsData) {
     if (!congestionControlCalculations) {
         std::cerr << "Invalid congestionControl output struct provided\n";
         return;
     }
 
-    if(tmpLogStr == nullptr){
+    if (tmpLogStr == nullptr) {
         std::cerr << "Invalid input buffer\n";
         return;
     }
 
-    char* tmpPtr = tmpLogStr;
-    char* const endBuf = tmpPtr + maxBufSize;
+    char *tmpPtr       = tmpLogStr;
+    char *const endBuf = tmpPtr + maxBufSize;
 
     if (congestionControlCalculations->trackingError) {
-        tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%f,",
-            congestionControlCalculations->trackingError);
+        tmpPtr += snprintf(
+            tmpPtr, endBuf - tmpPtr, "%f,", congestionControlCalculations->trackingError);
+    } else {
+        tmpPtr += snprintf(tmpPtr, endBuf - tmpPtr, "0.0,");
     }
-    else {
-        tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "0.0,");
-    }
-    tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%f,",
-        congestionControlCalculations->smoothDens);
-
+    tmpPtr += snprintf(tmpPtr, endBuf - tmpPtr, "%f,", congestionControlCalculations->smoothDens);
 
     if (congestionControlCalculations->channData) {
-        tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%f,",
-            congestionControlCalculations->channData->channQualInd);
+        tmpPtr += snprintf(
+            tmpPtr, endBuf - tmpPtr, "%f,", congestionControlCalculations->channData->channQualInd);
+    } else {
+        tmpPtr += snprintf(tmpPtr, endBuf - tmpPtr, "0.0,");
     }
-    else {
-        tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "0.0,");
-    }
-    tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%d,",
-        validPkt  ? 1: 0);
-    tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%" PRIu64 ",",
-        congestionControlCalculations->maxITT);
+    tmpPtr += snprintf(tmpPtr, endBuf - tmpPtr, "%d,", validPkt ? 1 : 0);
+    tmpPtr
+        += snprintf(tmpPtr, endBuf - tmpPtr, "%" PRIu64 ",", congestionControlCalculations->maxITT);
 
     // gps time, event, random time
-    tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%f,",
-        0.0);
+    tmpPtr += snprintf(tmpPtr, endBuf - tmpPtr, "%f,", 0.0);
 
-    tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%u,", eventsData);
+    tmpPtr += snprintf(tmpPtr, endBuf - tmpPtr, "%u,", eventsData);
 
-    //sps enhancement data
+    // sps enhancement data
     if (congestionControlCalculations->spsEnhanceData) {
         // random time - todo
-        tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%lu,%d",
-            (long unsigned int)0, 5);
-    }
-    else {
-       tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr,  "%lu,%d",
-            (long unsigned int)0, 5);
+        tmpPtr += snprintf(tmpPtr, endBuf - tmpPtr, "%lu,%d", (long unsigned int)0, 5);
+    } else {
+        tmpPtr += snprintf(tmpPtr, endBuf - tmpPtr, "%lu,%d", (long unsigned int)0, 5);
     }
 }
 
 // first need to call setup function to initialize the lcm id change
 // then periodically call "idChange" and check return value and updates in idChangeData
-void ApplicationBase::changeIdentity(sem_t* idChangeCbSem){
+void ApplicationBase::changeIdentity(sem_t *idChangeCbSem) {
     // pseudonym cert change
     exitApp = false;
     uint64_t currTime, timeSinceLastIdChange;
     double hvLatNew, hvLonNew, hvLatOld, hvLonOld;
     unsigned int distSinceLastIdChange;
-    if(lastIdChangeTime == 0){
+    if (lastIdChangeTime == 0) {
         lastIdChangeTime = timestamp_now();
     }
-    if(!exitApp)
-    {
+    if (!exitApp) {
         // wait for distance requirement
         // if an event is happening, cert change must not happen
         sem_wait(&idChangeData.idSem);
-        if(!criticalState){
+        if (!criticalState) {
             // here we need to check for two things:
             // interval has passed and distance has been covered since last id change
             currTime = timestamp_now();
-            if(currTime > lastIdChangeTime) {
+            if (currTime > lastIdChangeTime) {
                 timeSinceLastIdChange = currTime - lastIdChangeTime;
-            }else{
+            } else {
                 timeSinceLastIdChange = 0;
             }
             {
@@ -455,53 +409,52 @@ void ApplicationBase::changeIdentity(sem_t* idChangeCbSem){
             hvLatOld = lastLocationInfoIdChange->getLatitude();
             hvLonOld = lastLocationInfoIdChange->getLongitude();
             // check if there have been any fixes yet
-            if(init_loc){
-                distSinceLastIdChange =
-                     bsmCompute2dDistance(hvLatOld, hvLonOld, hvLatNew, hvLonNew);
-            }else{
+            if (init_loc) {
+                distSinceLastIdChange
+                    = bsmCompute2dDistance(hvLatOld, hvLonOld, hvLatNew, hvLonNew);
+            } else {
                 distSinceLastIdChange = 0;
             }
             // check if both conditions satisfied
-            if(timeSinceLastIdChange >= configuration.idChangeInterval &&
-                distSinceLastIdChange >= ApplicationBase::idChangeDistance){
+            if (timeSinceLastIdChange >= configuration.idChangeInterval
+                && distSinceLastIdChange >= ApplicationBase::idChangeDistance) {
                 // perform id change and record current position and time
                 int ret = SecService->idChange();
 
-                if( ret < 0 ){
-                    if(appVerbosity > 1) {
-                        fprintf(stderr,"Id Change Failure\n");
+                if (ret < 0) {
+                    if (appVerbosity > 1) {
+                        fprintf(stderr, "Id Change Failure\n");
                     }
-                }
-                else{
-                    if(appVerbosity > 7 ){
+                } else {
+                    if (appVerbosity > 7) {
                         printf("Id Change Init Call Success\n");
                         std::cout << "Time is: " << lastIdChangeTime << "\n";
-                        std::cout << "Position is, lat: " << hvLatNew << ", lon: "
-                            << hvLonNew << "\n";
+                        std::cout << "Position is, lat: " << hvLatNew << ", lon: " << hvLonNew
+                                  << "\n";
                         std::cout << "Current time: " << currTime << "\n";
                         std::cout << "Last id change time: " << lastIdChangeTime << "\n";
-                        std::cout << "Time since last id change: "
-                            << timeSinceLastIdChange << "\n";
-                        std::cout << "Config id change interval: " <<
-                            configuration.idChangeInterval <<"\n";
-                        std::cout << "Distance since last id change " <<
-                            distSinceLastIdChange << "\n";
-                        std::cout << "Config id change distance: " <<
-                            ApplicationBase::idChangeDistance << "\n";
+                        std::cout << "Time since last id change: " << timeSinceLastIdChange << "\n";
+                        std::cout << "Config id change interval: " << configuration.idChangeInterval
+                                  << "\n";
+                        std::cout << "Distance since last id change " << distSinceLastIdChange
+                                  << "\n";
+                        std::cout
+                            << "Config id change distance: " << ApplicationBase::idChangeDistance
+                            << "\n";
                     }
                     // wait for the callback to complete
-                    if(idChangeCbSem != nullptr){
+                    if (idChangeCbSem != nullptr) {
                         sem_wait(idChangeCbSem);
                     }
                     // if not simulation, perform l2 src randomization
-                    if (!this->isTxSim) { // radio
-                        for(int index = 0 ; index < spsTransmits.size(); index++){
+                    if (!this->isTxSim) {  // radio
+                        for (int index = 0; index < spsTransmits.size(); index++) {
                             this->spsTransmits[index].updateSrcL2();
                         }
                     }
                 }
 
-                lastIdChangeTime = timestamp_now();
+                lastIdChangeTime         = timestamp_now();
                 lastLocationInfoIdChange = hvLocationInfo;
             }
         }
@@ -509,7 +462,7 @@ void ApplicationBase::changeIdentity(sem_t* idChangeCbSem){
     }
 }
 
-void ApplicationBase::updateL2RvMap(uint32_t l2SrcId, rv_specs* rvSpec) {
+void ApplicationBase::updateL2RvMap(uint32_t l2SrcId, rv_specs *rvSpec) {
 
     lock_guard<mutex> lk(l2MapMtx);
     this->l2RvMap[l2SrcId] = *rvSpec;
@@ -524,8 +477,8 @@ void ApplicationBase::setL2RvFilteringList(int rate) {
     if (appVerbosity > 5) {
         std::cout << "L2 list filtering rate is" << rate << std::endl;
     }
-    //Assuming RV are sending at 10 HZ, find the no. of vehicles to filter
-    //Should we make this divisor dynamic?
+    // Assuming RV are sending at 10 HZ, find the no. of vehicles to filter
+    // Should we make this divisor dynamic?
     int vehsToFilter = rate / 10;
     int vehsFiltered = 0;
     lock_guard<mutex> lk(l2MapMtx);
@@ -533,46 +486,46 @@ void ApplicationBase::setL2RvFilteringList(int rate) {
 
     for (pair<uint32_t, rv_specs> element : this->l2RvMap) {
         L2FilterInfo rvSrc = {0};
-        rvSrc.srcL2Id = element.first;
-        rvSrc.pppp = 0;
-        rvSrc.durationMs = this->configuration.l2FilteringTime;
-        const auto now = timestamp_now();
-        const auto diff = now - element.second.hv_timestamp_ms;
-        //Remove the L2 id entery for Rv that has not sent a message in a long time.
+        rvSrc.srcL2Id      = element.first;
+        rvSrc.pppp         = 0;
+        rvSrc.durationMs   = this->configuration.l2FilteringTime;
+        const auto now     = timestamp_now();
+        const auto diff    = now - element.second.hv_timestamp_ms;
+        // Remove the L2 id entery for Rv that has not sent a message in a long time.
         if (this->configuration.l2IdTimeThreshold * 10000 < diff) {
             if (appVerbosity > 5)
                 cout << "Removing L2 id:" << element.first << endl;
             this->l2RvMap.erase(element.first);
         } else {
-            //RV is out of HV zone
+            // RV is out of HV zone
             if (element.second.out_of_zone == true) {
                 rvListToFilter.push_back(rvSrc);
                 vehsFiltered++;
 
             }
-            //RV ttc is greater than max ttc and it's not deacclerating. If a car ahead of us
-            //start deacc chances are it might crash with us.
+            // RV ttc is greater than max ttc and it's not deacclerating. If a car ahead of us
+            // start deacc chances are it might crash with us.
             else if ((element.second.ttc >= 10000) && (element.second.rapid_decl == false)) {
                 rvListToFilter.push_back(rvSrc);
                 vehsFiltered++;
             }
 
-            //RV behind us are deacc then we can filter it
-            else if ((element.second.ttc >= 10000) && (element.second.rapid_decl == true) &&
-                    (element.second.lt == SAME_LANE_BACK_SAMEDIR || element.second.lt ==
-                    ADJLEFT_LANE_BACK_SAMEDIR ||
-                    element.second.lt == ADJRIGHT_LANE_BACK_SAMEDIR)) {
+            // RV behind us are deacc then we can filter it
+            else if ((element.second.ttc >= 10000) && (element.second.rapid_decl == true)
+                     && (element.second.lt == SAME_LANE_BACK_SAMEDIR
+                         || element.second.lt == ADJLEFT_LANE_BACK_SAMEDIR
+                         || element.second.lt == ADJRIGHT_LANE_BACK_SAMEDIR)) {
                 rvListToFilter.push_back(rvSrc);
                 vehsFiltered++;
             }
 
-            //RV is stopped and not in the same lane ahead
+            // RV is stopped and not in the same lane ahead
             else if (element.second.stopped == true && element.second.lt != 1) {
                 rvListToFilter.push_back(rvSrc);
                 vehsFiltered++;
             }
 
-            //After checking the cases, check if the no of RV to filter is met.
+            // After checking the cases, check if the no of RV to filter is met.
             if (vehsFiltered == vehsToFilter) {
                 radioReceives[0].setL2Filters(rvListToFilter);
                 break;
@@ -581,8 +534,8 @@ void ApplicationBase::setL2RvFilteringList(int rate) {
     }
 }
 
-ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
-    bool enableCsvLog, bool enableDiagLog){
+ApplicationBase::ApplicationBase(
+    char *fileConfiguration, MessageType msgType, bool enableCsvLog, bool enableDiagLog) {
     generalInfo = {0};
     if (!utility_) {
         utility_ = std::make_shared<QUtils>();
@@ -592,18 +545,17 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
         utility_->initDiagLog();
     }
     enableCsvLog_ = enableCsvLog;
-    exitApp = false;
-    MsgType = msgType;
-    currVehState = nullptr;
-    signSuccess = 0;
-    signFail = 0;
+    exitApp       = false;
+    MsgType       = msgType;
+    currVehState  = nullptr;
+    signSuccess   = 0;
+    signFail      = 0;
     // set parameters according to config file
     loadConfiguration(fileConfiguration);
 }
 
-ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
-            const string rxIpv4, const uint16_t rxPort,
-            char* fileConfiguration, bool enableCsvLog, bool enableDiagLog) {
+ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort, const string rxIpv4,
+    const uint16_t rxPort, char *fileConfiguration, bool enableCsvLog, bool enableDiagLog) {
     generalInfo = {0};
     if (!utility_) {
         utility_ = std::make_shared<QUtils>();
@@ -613,16 +565,15 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
         utility_->initDiagLog();
     }
     enableCsvLog_ = enableCsvLog;
-    exitApp = false;
-    currVehState = nullptr;
-    signSuccess = 0;
-    signFail = 0;
+    exitApp       = false;
+    currVehState  = nullptr;
+    signSuccess   = 0;
+    signFail      = 0;
     if (this->loadConfiguration(fileConfiguration)) {
         return;
     }
 
-    if (txPort)
-    {
+    if (txPort) {
         this->simTxSetup(txIpv4, txPort);
         this->isTxSim = true;
     }
@@ -630,14 +581,12 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
         this->simRxSetup(rxIpv4, rxPort);
         this->isRxSim = true;
         // check if we want to also send packets while we receive over Ethernet
-        if(this->configuration.enableTxAlways){
-            if(this->configuration.tx_port &&
-                    !this->configuration.ipv4_dest.empty()){
+        if (this->configuration.enableTxAlways) {
+            if (this->configuration.tx_port && !this->configuration.ipv4_dest.empty()) {
                 printf("Attempting RX and TX over Ethernet at same time\n");
-                this->simTxSetup(this->configuration.ipv4_dest,
-                        this->configuration.tx_port);
+                this->simTxSetup(this->configuration.ipv4_dest, this->configuration.tx_port);
                 this->isTxSim = true;
-            }else{
+            } else {
                 // turn the flag off so that driver program knows
                 printf("Please provide TX Port and Dest IP in config file\n");
                 printf("Entering only RX mode\n");
@@ -650,19 +599,19 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
 bool ApplicationBase::init() {
     sem_init(&this->rx_sem, 0, 1);
     sem_init(&this->log_sem, 0, 1);
-    if(configuration.enableL2Filtering) {
+    if (configuration.enableL2Filtering) {
         cv2xTmListener = std::make_shared<Cv2xTmListener>(appVerbosity);
     }
     // set up kinematics listener
-    if(configuration.enableLocationFixes){
-        if (appVerbosity > 5){
+    if (configuration.enableLocationFixes) {
+        if (appVerbosity > 5) {
             std::cout << "Enabling location fixes\n";
         }
         appLocListener_ = make_shared<LocListener>();
         appLocListener_->setLocCbFn(&locCbFn);
         locListeners.push_back(appLocListener_);
-        kinematicsReceive = std::make_shared<KinematicsReceive>
-                (locListeners, this->configuration.locationInterval);
+        kinematicsReceive = std::make_shared<KinematicsReceive>(
+            locListeners, this->configuration.locationInterval);
     }
 
     if (!(isTxSim || isRxSim)) {
@@ -675,87 +624,77 @@ bool ApplicationBase::init() {
         }
         // one-time initialization for security ; if any
         if (this->configuration.enableSecurity == true) {
-        #ifdef AEROLINK
-            try{
+#ifdef AEROLINK
+            try {
                 // LCM Constructor for Aerolink
                 sem_init(&idChangeData.idSem, 0, 1);
                 idChangeData.idChangeCbSem = &idChangeCbSem;
                 sem_init(idChangeData.idChangeCbSem, 0, 1);
                 idChangeData.rngUtils = utility_.get();
-                if(!this->configuration.lcmName.empty() && this->configuration.idChangeInterval){
+                if (!this->configuration.lcmName.empty() && this->configuration.idChangeInterval) {
                     SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
-                            configuration.securityContextName,
-                            configuration.securityCountryCode,
-                            configuration.lcmName.c_str(),
-                            &idChangeData
-                            ));
-                }else{
+                        configuration.securityContextName, configuration.securityCountryCode,
+                        configuration.lcmName.c_str(), &idChangeData));
+                } else {
                     // Non-LCM Constructor for Aerolink
                     SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
-                            configuration.securityContextName,
-                            configuration.securityCountryCode));
+                        configuration.securityContextName, configuration.securityCountryCode));
                 }
                 ApplicationBase::securityInitialized = true;
                 // set the verbosity of aerolink
                 SecService->setSecVerbosity(this->configuration.secVerbosity);
-            }catch(const std::runtime_error& error){
+            } catch (const std::runtime_error &error) {
                 fprintf(stderr, "Aerolink init failed: Please check config params \n");
                 fprintf(stderr, "Attempting to close all radio flows\n");
                 prepareForExit();
                 closeAllRadio();
                 exit(0);
             }
-        #else
+#else
             // If no Aerolink security library is specified
             SecService = unique_ptr<NullSecurity>(NullSecurity::Instance(
-                        configuration.securityContextName,
-                        configuration.securityCountryCode));
-        #endif
+                configuration.securityContextName, configuration.securityCountryCode));
+#endif
         }
 
         if (configuration.enableL2FloodingDetect) {
             // if flooding mitigation enabled
             // if configuration.floodingMitigationEnabled
             // setup telux security service to get the mvm stats
-            auto& secFactory = SecurityFactory::getInstance();
-            telux::common::ErrorCode ec = telux::common::ErrorCode::SUCCESS;
-            caControlMgr = secFactory.getCAControlManager(ec);
-            cacMgrListr = std::make_shared<CaControlManagerListener>();
-            LoadConfig loadConfig = {0};
-            loadConfig.calculationInterval = configuration.loadUpdateInterval; // 1000 ms
-            ec = caControlMgr->registerListener(cacMgrListr);
-            ec = caControlMgr->startMonitoring(loadConfig);
+            auto &secFactory               = SecurityFactory::getInstance();
+            telux::common::ErrorCode ec    = telux::common::ErrorCode::SUCCESS;
+            caControlMgr                   = secFactory.getCAControlManager(ec);
+            cacMgrListr                    = std::make_shared<CaControlManagerListener>();
+            LoadConfig loadConfig          = {0};
+            loadConfig.calculationInterval = configuration.loadUpdateInterval;  // 1000 ms
+            ec                             = caControlMgr->registerListener(cacMgrListr);
+            ec                             = caControlMgr->startMonitoring(loadConfig);
         }
     } else {
         if (this->configuration.enableSecurity == true) {
 #ifdef AEROLINK
             SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
-                         configuration.securityContextName,
-                         configuration.securityCountryCode));
+                configuration.securityContextName, configuration.securityCountryCode));
 #else
             SecService = unique_ptr<NullSecurity>(NullSecurity::Instance(
-                         configuration.securityContextName,
-                         configuration.securityCountryCode));
+                configuration.securityContextName, configuration.securityCountryCode));
 #endif
         }
     }
 
-    cb =
-        [this](bool emergent,
-               const current_dynamic_vehicle_state_t* const vehicle_state = nullptr) {
-            vehicleEventReport(emergent, vehicle_state);
-    };
+    cb = [this](bool emergent, const current_dynamic_vehicle_state_t *const vehicle_state
+                               = nullptr) { vehicleEventReport(emergent, vehicle_state); };
 
     if (configuration.enableVehicleDataCallbacks) {
         VehRec.enableVehicleReceive(cb);
     }
 
-    if (configuration.qMonEnabled && qMonConfig) // Add to config
+    if (configuration.qMonEnabled && qMonConfig)  // Add to config
     {
         qMon = std::make_shared<QMonitor>(*qMonConfig);
     }
 
-    //init messages for sending.
+    // init messages for sending.
     if (isTxSim) {
         if (!initMsg(txSimMsg)) {
             return false;
@@ -788,19 +727,19 @@ bool ApplicationBase::init() {
 }
 
 ApplicationBase::~ApplicationBase() {
-    if(appVerbosity){
+    if (appVerbosity) {
         std::cout << "ApplicationBase destructing" << std::endl;
     }
-    if(badRadioSetup){
-        if(appVerbosity){
+    if (badRadioSetup) {
+        if (appVerbosity) {
             std::cerr << "radio flows were not set up properly\n";
             exitApp = true;
         }
-    }else{
+    } else {
         // call prepare for exit here again in case it wasn't called previously
         prepareForExit();
 
-        if(SecService){
+        if (SecService) {
             SecService->lockIdChange();
             SecService->deinit();
             SecService.reset();
@@ -817,7 +756,7 @@ ApplicationBase::~ApplicationBase() {
             std::unique_lock<std::mutex> loc(stateMtx);
             exitApp = true;
             stateCv.notify_all();
-            if(nullptr != this->currVehState){
+            if (nullptr != this->currVehState) {
                 free(currVehState);
             }
         }
@@ -825,7 +764,7 @@ ApplicationBase::~ApplicationBase() {
         {
             std::unique_lock<std::mutex> lock(csvMutex);
             if (nullptr != csvfp && !configuration.enableAsync) {
-                writeMutexCv.wait(lock, []{ return writeLogFinish; });
+                writeMutexCv.wait(lock, [] { return writeLogFinish; });
                 fclose(csvfp);
                 csvfp = nullptr;
             }
@@ -833,10 +772,10 @@ ApplicationBase::~ApplicationBase() {
     }
 }
 
-void ApplicationBase::detectFloodAndMitigate(bool& stateOn,
-    std::vector<L2FilterInfo>* rvListToFilter){
+void ApplicationBase::detectFloodAndMitigate(
+    bool &stateOn, std::vector<L2FilterInfo> *rvListToFilter) {
 
-    if(rvListToFilter == NULL){
+    if (rvListToFilter == NULL) {
         std::cout << "NULL struct for l2 filter info list passed\n";
         return;
     }
@@ -847,29 +786,29 @@ void ApplicationBase::detectFloodAndMitigate(bool& stateOn,
     // cacMgrListr
     telux::common::ErrorCode ec = caControlMgr->getCapacity(currCapacity);
 
-    if(ec != telux::common::ErrorCode::SUCCESS){
+    if (ec != telux::common::ErrorCode::SUCCESS) {
         std::cerr << "Error attempting to get mvm capacity \n";
         return;
     }
 
-    rv_specs* rvsp;
-    uint32_t filteringTime = 0; // util is less than the threshold
-    L2FilterInfo rvSrc = {0};
+    rv_specs *rvsp;
+    uint32_t filteringTime = 0;  // util is less than the threshold
+    L2FilterInfo rvSrc     = {0};
 
-    if(configuration.mvmCapacityOverride){
+    if (configuration.mvmCapacityOverride) {
         currCapacity.nist256 = this->configuration.mvmCapacity;
-        if(configuration.floodDetectVerbosity > 3){
+        if (configuration.floodDetectVerbosity > 3) {
             std::cout << "Using provided mvm capacity " << currCapacity.nist256 << "\n";
         }
-    }else{
+    } else {
         telux::common::ErrorCode ec = caControlMgr->getCapacity(currCapacity);
-        if(configuration.floodDetectVerbosity > 3){
+        if (configuration.floodDetectVerbosity > 3) {
             std::cout << "Using the actual mvm capacity " << currCapacity.nist256 << "\n";
         }
     }
 
     currUtil = (double)(cacMgrListr->currLoad.nist256) / (double)(currCapacity.nist256);
-    if(configuration.floodDetectVerbosity > 0){
+    if (configuration.floodDetectVerbosity > 0) {
         std::cout << "Load for NIST is: " << cacMgrListr->currLoad.nist256 << "\n";
         std::cout << "Capacity for NIST is: " << currCapacity.nist256 << "\n";
         std::cout << "Curr Utilization for NIST is: " << currUtil << "\n";
@@ -877,91 +816,94 @@ void ApplicationBase::detectFloodAndMitigate(bool& stateOn,
     struct timeval currTime;
     gettimeofday(&currTime, NULL);
     uint64_t currTime_ms = (currTime.tv_sec * 1000) + (currTime.tv_usec / 1000);
-    for(pair<uint32_t, rv_specs> l2RvElement : this->l2RvMap){
+    for (pair<uint32_t, rv_specs> l2RvElement : this->l2RvMap) {
         // determine the incoming rate per l2 src addr
         rvsp = &l2RvElement.second;
-        if(rvsp->totalCnt > 1 && rvsp->lastTotalCnt < rvsp->totalCnt){
-            if(configuration.floodDetectVerbosity > 7){
+        if (rvsp->totalCnt > 1 && rvsp->lastTotalCnt < rvsp->totalCnt) {
+            if (configuration.floodDetectVerbosity > 7) {
                 std::cout << "This rv is: " << l2RvElement.first << "\n";
                 std::cout << "Last msg count field for this RV is: " << rvsp->lastCnt << "\n";
-                std::cout << "Last rx time for this RV is: " << rvsp->lastTime <<"\n";
-                std::cout << "Total number of rxed packets from this RV is " << rvsp->totalCnt << "\n";
+                std::cout << "Last rx time for this RV is: " << rvsp->lastTime << "\n";
+                std::cout << "Total number of rxed packets from this RV is " << rvsp->totalCnt
+                          << "\n";
                 std::cout << "The last count for this rv is: " << rvsp->lastTotalCnt << "\n";
-                std::cout << "Flooding nist msg rate threshold is: " <<
-                    (configuration.mvmUtilThreshold *  currCapacity.nist256) << "\n";
-                std::cout << " Threshold for flood attack single " <<
-                    configuration.floodAttackThreshSingle << " \n";
-                std::cout << " Threshold for mvm util to be attack is " <<
-                    (configuration.mvmUtilThreshold)  << "\n";
+                std::cout << "Flooding nist msg rate threshold is: "
+                          << (configuration.mvmUtilThreshold * currCapacity.nist256) << "\n";
+                std::cout << " Threshold for flood attack single "
+                          << configuration.floodAttackThreshSingle << " \n";
+                std::cout << " Threshold for mvm util to be attack is "
+                          << (configuration.mvmUtilThreshold) << "\n";
             }
 
             // calculate the rate every 1000 ms?
-            if(rvsp->totalCnt > 1 && rvsp->lastTotalCnt < rvsp->totalCnt){
+            if (rvsp->totalCnt > 1 && rvsp->lastTotalCnt < rvsp->totalCnt) {
                 // number of packets sent within last period is current rate for single l2 addr
-                l2RvMap[l2RvElement.first].msgRate =
-                    1000.0 * ((double)(rvsp->totalCnt - rvsp->lastTotalCnt) /
-                    (double)(currTime_ms - rvsp->lastTime)) ;
-                if(configuration.floodDetectVerbosity > 7){
+                l2RvMap[l2RvElement.first].msgRate
+                    = 1000.0
+                      * ((double)(rvsp->totalCnt - rvsp->lastTotalCnt)
+                          / (double)(currTime_ms - rvsp->lastTime));
+                if (configuration.floodDetectVerbosity > 7) {
                     std::cout << "The total count for this rv is: " << rvsp->totalCnt << "\n";
-                    std::cout << "The last total count for this rv is: " << rvsp->lastTotalCnt << "\n";
-                    std::cout << "The current msg rate for this rv is: " <<
-                        l2RvMap[l2RvElement.first].msgRate << "\n";
-                    std::cout << "Last time is: " << rvsp->lastTime << " and curr time is: " <<
-                            currTime_ms<< "\n";
-                    std::cout << "Time difference is: "  << (currTime_ms - rvsp->lastTime) << "ms \n";
+                    std::cout << "The last total count for this rv is: " << rvsp->lastTotalCnt
+                              << "\n";
+                    std::cout << "The current msg rate for this rv is: "
+                              << l2RvMap[l2RvElement.first].msgRate << "\n";
+                    std::cout << "Last time is: " << rvsp->lastTime
+                              << " and curr time is: " << currTime_ms << "\n";
+                    std::cout << "Time difference is: " << (currTime_ms - rvsp->lastTime)
+                              << "ms \n";
                 }
             }
 
-            if( (l2RvMap[l2RvElement.first].msgRate > configuration.floodAttackThreshSingle)
-                    && (currUtil >= (configuration.mvmUtilThreshold))){
+            if ((l2RvMap[l2RvElement.first].msgRate > configuration.floodAttackThreshSingle)
+                && (currUtil >= (configuration.mvmUtilThreshold))) {
                 // calculate expected filtering time
-                if( currUtil < 1.0 ){ // < 1 and >= threshold
-                    filteringTime = (uint32_t)((100.0 * currUtil) - 25.0); // ms
-                }else{ // >= 1
-                    filteringTime = 75; // ms
+                if (currUtil < 1.0) {  // < 1 and >= threshold
+                    filteringTime = (uint32_t)((100.0 * currUtil) - 25.0);  // ms
+                } else {  // >= 1
+                    filteringTime = 75;  // ms
                 }
 
                 // add this l2 address to the list of addr to filter
                 // somehow need to identify portion from a single vehicle is a high value.
                 // via the l2 address
-                rvSrc.srcL2Id = l2RvElement.first;
-                rvSrc.pppp = 0;
+                rvSrc.srcL2Id    = l2RvElement.first;
+                rvSrc.pppp       = 0;
                 rvSrc.durationMs = filteringTime;
-                if(configuration.floodDetectVerbosity > 1){
+                if (configuration.floodDetectVerbosity > 1) {
                     std::cout << "Detected flooding attack\n";
                     std::cout << "Current utilization is: " << currUtil << "\n";
                     std::cout << "Adding " << rvSrc.srcL2Id << " to rv list to filter\n";
                     std::cout << "Filtering time should be " << rvSrc.durationMs << "\n";
                     std::cout << " (100.0 * currUtil) " << (100.0 * currUtil) << "\n";
                     std::cout << " Calculated filter time is " << filteringTime << "\n";
-                    std::cout << "new utilization should be around: " <<
-                        (((100.0 - filteringTime)/100.0)) << "\n";
+                    std::cout << "new utilization should be around: "
+                              << (((100.0 - filteringTime) / 100.0)) << "\n";
                 }
                 rvListToFilter->push_back(rvSrc);
-            }else{
-                if(configuration.floodDetectVerbosity > 3){
-                    std::cout << "There is no flooding attack from l2 " <<
-                        l2RvElement.first << " happening\n";
+            } else {
+                if (configuration.floodDetectVerbosity > 3) {
+                    std::cout << "There is no flooding attack from l2 " << l2RvElement.first
+                              << " happening\n";
                 }
                 stateOn = false;
             }
-            l2RvMap[l2RvElement.first].lastTime = currTime_ms;
+            l2RvMap[l2RvElement.first].lastTime     = currTime_ms;
             l2RvMap[l2RvElement.first].lastTotalCnt = rvsp->totalCnt;
         }
     }
 
     // evaluation instance logic
-    if(rvListToFilter->size()){
+    if (rvListToFilter->size()) {
         // move to state 1 - flooding attack happening
         stateOn = true;
-    }else{
+    } else {
         stateOn = false;
     }
- }
+}
 
-
-void ApplicationBase::vehicleEventReport(bool emergent,
-    const current_dynamic_vehicle_state_t* const vehicle_state) {
+void ApplicationBase::vehicleEventReport(
+    bool emergent, const current_dynamic_vehicle_state_t *const vehicle_state) {
     bool notify = false;
 
     // need to check for the critical event before moving to emergent state.
@@ -974,17 +916,17 @@ void ApplicationBase::vehicleEventReport(bool emergent,
         {
             std::unique_lock<std::mutex> loc(stateMtx);
             criticalState = true;
-            newEvent = true;
+            newEvent      = true;
         }
-        //TODO: use vehicle_state to construct critical BSM messages
-        if(this->currVehState == NULL){
-            this->currVehState = (current_dynamic_vehicle_state_t*)
-                calloc(sizeof(current_dynamic_vehicle_state_t), 1);
-                // probably need to free it later
+        // TODO: use vehicle_state to construct critical BSM messages
+        if (this->currVehState == NULL) {
+            this->currVehState = (current_dynamic_vehicle_state_t *)calloc(
+                sizeof(current_dynamic_vehicle_state_t), 1);
+            // probably need to free it later
         }
         // we'd need to fill local can data for non critical events too
         // so that we can fill the bsm
-        if(this->currVehState != NULL && vehicle_state != NULL){
+        if (this->currVehState != NULL && vehicle_state != NULL) {
             memcpy(this->currVehState, vehicle_state, sizeof(current_dynamic_vehicle_state_t));
         }
         // also get static vehicle state; need to provide pointer to the callback function
@@ -992,12 +934,12 @@ void ApplicationBase::vehicleEventReport(bool emergent,
         if (criticalState) {
             notify = true;
             std::unique_lock<std::mutex> loc(stateMtx);
-            criticalState = false;
-            newEvent = false;
+            criticalState             = false;
+            newEvent                  = false;
             currVehState->events.data = 0;
             // if congestion control enabled, notify the congestion control library
-            if(this->configuration.enableCongCtrl && congestionControlManager != NULL){
-               congestionControlManager->disableCriticalEvent();
+            if (this->configuration.enableCongCtrl && congestionControlManager != NULL) {
+                congestionControlManager->disableCriticalEvent();
             }
         }
     }
@@ -1009,45 +951,43 @@ void ApplicationBase::vehicleEventReport(bool emergent,
         stateCv.notify_all();
         if (criticalState) {
 #if AEROLINK
-           if (this->configuration.enableSecurity == true) {
-               if (SecService->lockIdChange()) {
-                   printf("Fail to lock ID change\n");
-               }
-           }
+            if (this->configuration.enableSecurity == true) {
+                if (SecService->lockIdChange()) {
+                    printf("Fail to lock ID change\n");
+                }
+            }
 
         } else {
-           // unblock id change
-           if (this->configuration.enableSecurity == true) {
-               if (SecService->unlockIdChange()) {
-                   printf("Fail to lock ID change\n");
-               }
-           }
+            // unblock id change
+            if (this->configuration.enableSecurity == true) {
+                if (SecService->unlockIdChange()) {
+                    printf("Fail to lock ID change\n");
+                }
+            }
 #endif
         }
     }
 }
 void ApplicationBase::prepareForExit() {
-    exitApp = true; 
-    if(badRadioSetup){
-        if(appVerbosity){
+    exitApp = true;
+    if (badRadioSetup) {
+        if (appVerbosity) {
             exitApp = true;
         }
-    }else{
+    } else {
         sem_post(&this->rx_sem);
         sem_post(&this->log_sem);
         if (this->configuration.enableSecurity == true) {
-        #ifdef AEROLINK
+#ifdef AEROLINK
             sem_post(&idChangeData.idSem);
             sem_post(idChangeData.idChangeCbSem);
-        #endif
+#endif
         }
 
-        if(configuration.enableCongCtrl &&
-                    congestionControlManager && congCtrlInitialized){
-            if(congestionControlManager->
-                        getCongestionControlUserData()->congestionControlSem){
-                sem_post(congestionControlManager->
-                            getCongestionControlUserData()->congestionControlSem);
+        if (configuration.enableCongCtrl && congestionControlManager && congCtrlInitialized) {
+            if (congestionControlManager->getCongestionControlUserData()->congestionControlSem) {
+                sem_post(
+                    congestionControlManager->getCongestionControlUserData()->congestionControlSem);
             }
             congestionControlManager->stopCongestionControl();
             congCtrlInitialized = false;
@@ -1063,7 +1003,7 @@ void ApplicationBase::prepareForExit() {
             writeMutexCv.notify_all();
         }
         // notify all radio interface to prepare for exit
-        for (uint8_t i = 0; i<this->eventTransmits.size(); i++) {
+        for (uint8_t i = 0; i < this->eventTransmits.size(); i++) {
             this->eventTransmits[i].prepareForExit();
         }
         for (uint8_t i = 0; i < this->spsTransmits.size(); i++) {
@@ -1082,23 +1022,22 @@ bool ApplicationBase::pendingTillEmergency() {
     bool ret = true;
     std::unique_lock<std::mutex> loc(stateMtx);
     if (!criticalState) {
-        stateCv.wait(loc,
-                     [this, &ret] {
-                         if (true == newEvent) {
-                             ret = true;
-                             // reset the event flag
-                             newEvent = false;
-                             return true;
-                         }
-                         if (exitApp) {
-                             ret = false;
-                             return true;
-                         }
-                         return false;
-                     });
+        stateCv.wait(loc, [this, &ret] {
+            if (true == newEvent) {
+                ret = true;
+                // reset the event flag
+                newEvent = false;
+                return true;
+            }
+            if (exitApp) {
+                ret = false;
+                return true;
+            }
+            return false;
+        });
         // if congestion control enabled, notify the congestion control library
-        if(this->configuration.enableCongCtrl && congestionControlManager != NULL){
-           congestionControlManager->notifyCriticalEvent();
+        if (this->configuration.enableCongCtrl && congestionControlManager != NULL) {
+            congestionControlManager->notifyCriticalEvent();
         }
     }
     return ret;
@@ -1108,50 +1047,48 @@ bool ApplicationBase::pendingTillNoEmergency() {
     bool ret = true;
     if (criticalState) {
         std::unique_lock<std::mutex> loc(stateMtx);
-        stateCv.wait(loc,
-                     [this, &ret] {
-                         if (false == criticalState) {
-                             ret = true;
-                             return true;
-                         }
+        stateCv.wait(loc, [this, &ret] {
+            if (false == criticalState) {
+                ret = true;
+                return true;
+            }
 
-                         if (exitApp) {
-                             ret = false;
-                             return true;
-                         }
+            if (exitApp) {
+                ret = false;
+                return true;
+            }
 
-                         return false;
-                     });
+            return false;
+        });
     }
 
     return true;
 }
 
-//Calculates received packets per second for Throttle Manager
+// Calculates received packets per second for Throttle Manager
 void ApplicationBase::tmCommunication() {
     int load = 0;
     sem_wait(&this->log_sem);
     if (appVerbosity > 3) {
         printf("Arrival rate is: %d\n", this->totalRxSuccessPerSecond);
     }
-    load = this->totalRxSuccessPerSecond;
+    load                          = this->totalRxSuccessPerSecond;
     this->totalRxSuccessPerSecond = 0;
     sem_post(&this->log_sem);
 
     if (load != 0) {
         this->prevFilterRate = this->filterRate;
-        if (abs((load)-(this->prevArrivalRate)) >= this->configuration.deltaInRxRate) {
-            //set load to throttle manager
+        if (abs((load) - (this->prevArrivalRate)) >= this->configuration.deltaInRxRate) {
+            // set load to throttle manager
             cv2xTmListener->setLoad(load);
-            this->prevArrivalRate=load;
+            this->prevArrivalRate = load;
         }
     }
 }
 
-uint16_t ApplicationBase::delimiterPos(string line, vector<string> delimiters){
-    uint16_t pos = 65535; //Largest possible value of 16 bits.
-    for (int i = 0; i < delimiters.size(); i++)
-    {
+uint16_t ApplicationBase::delimiterPos(string line, vector<string> delimiters) {
+    uint16_t pos = 65535;  // Largest possible value of 16 bits.
+    for (int i = 0; i < delimiters.size(); i++) {
         uint16_t delimiterPos = line.find(delimiters[i]);
         if (pos > delimiterPos) {
             pos = delimiterPos;
@@ -1160,58 +1097,51 @@ uint16_t ApplicationBase::delimiterPos(string line, vector<string> delimiters){
     return pos;
 }
 
-int ApplicationBase::loadConfiguration(char* file) {
-    map <string, string> configs;
+int ApplicationBase::loadConfiguration(char *file) {
+    map<string, string> configs;
     string line;
-    vector<string> delimiters = { " ", "\t", "#", "="};
+    vector<string> delimiters = {" ", "\t", "#", "="};
     ifstream configFile(file);
-    if (configFile.is_open())
-    {
-        while (getline(configFile, line))
-        {
-            if (line[0] != '#' && !line.empty())
-            {
+    if (configFile.is_open()) {
+        while (getline(configFile, line)) {
+            if (line[0] != '#' && !line.empty()) {
                 uint8_t pos = 0;
                 uint8_t end = ApplicationBase::delimiterPos(line, delimiters);
-                string key = line.substr(pos, end);
+                string key  = line.substr(pos, end);
                 line.erase(0, end);
                 while (line[0] == ' ' || line[0] == '=' || line[0] == '\t') {
                     line.erase(0, 1);
                 }
-                end = ApplicationBase::delimiterPos(line, delimiters);
+                end          = ApplicationBase::delimiterPos(line, delimiters);
                 string value = line.substr(pos, end);
                 configs.insert(pair<string, string>(key, value));
             }
         }
         this->saveConfiguration(configs);
         int nice = getpriority(PRIO_PROCESS, 0);
-        if(configuration.appVerbosity){
+        if (configuration.appVerbosity) {
             fprintf(stdout, "Current process priority value is %d\n", nice);
         }
         return 0;
     }
 
-    cout<<"Error opening config file.\n";
+    cout << "Error opening config file.\n";
     return -1;
 }
-
 
 void ApplicationBase::saveConfiguration(map<string, string> configs) {
 
     // by default the ITS process priority should be set to highest (-20)
     // however, for testing purposes, qits priority can be altered
     if (configs.end() != configs.find("procPriority")) {
-        this->configuration.procPriority =
-            stoi(configs["procPriority"], nullptr, 10);
+        this->configuration.procPriority = stoi(configs["procPriority"], nullptr, 10);
     }
-    if(this->configuration.procPriority < MIN_NICE ||
-        this->configuration.procPriority > MAX_NICE){
+    if (this->configuration.procPriority < MIN_NICE
+        || this->configuration.procPriority > MAX_NICE) {
         this->configuration.procPriority = DEFAULT_PROCESS_PRIORITY;
     }
-    if(setpriority(PRIO_PROCESS, 0,
-            this->configuration.procPriority) < 0) {
-        fprintf(stderr, "Setting priority to %d failed\n",
-            this->configuration.procPriority);
+    if (setpriority(PRIO_PROCESS, 0, this->configuration.procPriority) < 0) {
+        fprintf(stderr, "Setting priority to %d failed\n", this->configuration.procPriority);
         int nice = getpriority(PRIO_PROCESS, 0);
         fprintf(stderr, "Current priority of process will be: %d\n", nice);
     }
@@ -1257,8 +1187,7 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
 
         if (configs.end() != configs.find("SpsDestAddrs")) {
             stream.str(configs["SpsDestAddrs"]);
-            for (uint32_t i = 0; i < num; i++)
-            {
+            for (uint32_t i = 0; i < num; i++) {
                 string spsDestAddrs;
                 getline(stream, spsDestAddrs, ',');
                 if (spsDestAddrs.empty()) {
@@ -1272,8 +1201,7 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
 
         if (configs.end() != configs.find("SpsDestPorts")) {
             stream.str(configs["SpsDestPorts"]);
-            for (uint32_t i = 0; i < num; i++)
-            {
+            for (uint32_t i = 0; i < num; i++) {
                 string port;
                 getline(stream, port, ',');
                 if (port.empty()) {
@@ -1287,8 +1215,7 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
 
         if (configs.end() != configs.find("SpsServiceIDs")) {
             stream.str(configs["SpsServiceIDs"]);
-            for (uint32_t i = 0; i < num; i++)
-            {
+            for (uint32_t i = 0; i < num; i++) {
                 string spsServiceIDs;
                 getline(stream, spsServiceIDs, ',');
                 if (spsServiceIDs.empty()) {
@@ -1305,8 +1232,7 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         auto num = stoi(configs["EventFlows"], nullptr, 10);
         if (configs.end() != configs.find("EventPorts")) {
             stream.str(configs["EventPorts"]);
-            for (uint32_t i = 0; i < num; i++)
-            {
+            for (uint32_t i = 0; i < num; i++) {
                 string port;
                 getline(stream, port, ',');
                 if (port.empty()) {
@@ -1320,8 +1246,7 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
 
         if (configs.end() != configs.find("EventDestAddrs")) {
             stream.str(configs["EventDestAddrs"]);
-            for (uint32_t i = 0; i < num; i++)
-            {
+            for (uint32_t i = 0; i < num; i++) {
                 string EventDestAddrs;
                 getline(stream, EventDestAddrs, ',');
                 if (EventDestAddrs.empty()) {
@@ -1335,8 +1260,7 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
 
         if (configs.end() != configs.find("EventDestPorts")) {
             stream.str(configs["EventDestPorts"]);
-            for (uint32_t i = 0; i < num; i++)
-            {
+            for (uint32_t i = 0; i < num; i++) {
                 string port;
                 getline(stream, port, ',');
                 if (port.empty()) {
@@ -1350,15 +1274,13 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
 
         if (configs.end() != configs.find("EventServiceIDs")) {
             stream.str(configs["EventServiceIDs"]);
-            for (uint32_t i = 0; i < num; i++)
-            {
+            for (uint32_t i = 0; i < num; i++) {
                 string eventServiceIDs;
                 getline(stream, eventServiceIDs, ',');
                 if (eventServiceIDs.empty()) {
                     break;
                 }
-                this->configuration.eventServiceIDs.push_back(
-                    stoi(eventServiceIDs, nullptr, 10));
+                this->configuration.eventServiceIDs.push_back(stoi(eventServiceIDs, nullptr, 10));
             }
             stream.str("");
             stream.clear();
@@ -1368,8 +1290,7 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     if (configs.end() != configs.find("ReceiveFlows")
         and configs.end() != configs.find("ReceivePorts")) {
         stream.str(configs["ReceivePorts"]);
-        for (uint32_t i = 0; i < stoi(configs["ReceiveFlows"], nullptr, 10); i++)
-        {
+        for (uint32_t i = 0; i < stoi(configs["ReceiveFlows"], nullptr, 10); i++) {
             string port;
             getline(stream, port, ',');
             if (port.empty()) {
@@ -1381,11 +1302,9 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         stream.clear();
     }
 
-
-    if (configs.end() != configs.find("ReceiveSubIds")){
+    if (configs.end() != configs.find("ReceiveSubIds")) {
         stream.str(configs["ReceiveSubIds"]);
-        for (uint32_t i = 0; i < stoi(configs["ReceiveSubIds"], nullptr, 10); i++)
-        {
+        for (uint32_t i = 0; i < stoi(configs["ReceiveSubIds"], nullptr, 10); i++) {
             string rxSubId;
             getline(stream, rxSubId, ',');
             if (rxSubId.empty()) {
@@ -1398,7 +1317,7 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     }
 
     // if empty, add rx sub id
-    if(this->configuration.receiveSubIds.empty()){
+    if (this->configuration.receiveSubIds.empty()) {
         this->configuration.receiveSubIds.push_back(DEFAULT_BSM_PSID);
     }
 
@@ -1471,8 +1390,8 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     }
 
     if (configs.end() != configs.find("SpecialVehicleTypeEvent")) {
-        this->configuration.specialVehicleTypeEvent = stoi(configs["SpecialVehicleTypeEvent"],
-                nullptr, 10);
+        this->configuration.specialVehicleTypeEvent
+            = stoi(configs["SpecialVehicleTypeEvent"], nullptr, 10);
     }
 
     if (configs.end() != configs.find("VehicleType")) {
@@ -1488,8 +1407,7 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     }
 
     if (configs.end() != configs.find("LdmGbTimeThreshold")) {
-        this->configuration.ldmGbTimeThreshold =
-            stoi(configs["LdmGbTimeThreshold"], nullptr, 10);
+        this->configuration.ldmGbTimeThreshold = stoi(configs["LdmGbTimeThreshold"], nullptr, 10);
     }
 
     if (configs.end() != configs.find("TTunc")) {
@@ -1538,22 +1456,21 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
 
     /* ETSI config items */
     if (configs.find("MacAddr") != configs.end()) {
-        int i = 0;
+        int i    = 0;
         auto pos = 0, prev = 0;
         do {
             pos = configs["MacAddr"].find(":", prev);
             if (pos != std::string::npos) {
-                this->configuration.MacAddr[i] =
-                    stoi(configs["MacAddr"].substr(prev, pos), 0, 16);
+                this->configuration.MacAddr[i] = stoi(configs["MacAddr"].substr(prev, pos), 0, 16);
             }
             prev = pos + 1;
             i++;
-        } while(pos != std::string::npos);
+        } while (pos != std::string::npos);
         pos = configs["MacAddr"].rfind(" ");
-        this->configuration.MacAddr[5] =
-            stoi(configs["MacAddr"].substr(pos + 1, std::string::npos), 0, 16);
+        this->configuration.MacAddr[5]
+            = stoi(configs["MacAddr"].substr(pos + 1, std::string::npos), 0, 16);
     }
-    if(configs.find("StationType") != configs.end()) {
+    if (configs.find("StationType") != configs.end()) {
         this->configuration.StationType = stoi(configs["StationType"]);
     }
     if (configs.find("CAMDestinationPort") != configs.end()) {
@@ -1561,22 +1478,21 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     }
     // security-only psid value. this can differ from the sps service id value for testing.
     if (configs.find("psidValue") != configs.end()) {
-        configuration.psid = stoi(configs["psidValue"],0,16);
+        configuration.psid = stoi(configs["psidValue"], 0, 16);
     }
     if (configs.find("fakeRVTempIds") != configs.end()) {
-        if (configs["fakeRVTempIds"].find("true") != std::string::npos){
+        if (configs["fakeRVTempIds"].find("true") != std::string::npos) {
             this->configuration.fakeRVTempIds = true;
             if (configs.find("totalFakeRVTempIds") != configs.end()) {
                 this->configuration.totalFakeRVTempIds = stoi(configs["totalFakeRVTempIds"]);
             }
-        }else{
+        } else {
             this->configuration.fakeRVTempIds = false;
         }
     }
 
     if (configs.find("RVTransmitLossSimulation") != configs.end()) {
-        configuration.RVTransmitLossSimulation =
-            stoi(configs["RVTransmitLossSimulation"]);
+        configuration.RVTransmitLossSimulation = stoi(configs["RVTransmitLossSimulation"]);
     }
 
     /* Security service */
@@ -1595,351 +1511,331 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         if (configs.find("SecurityCountryCode") != configs.end()) {
             configuration.securityCountryCode = stoi(configs["SecurityCountryCode"], 0, 16);
         }
-        if(configs.find("enableSsp") != configs.end()){
-            if (configs["enableSsp"].find("true") != std::string::npos){
+        if (configs.find("enableSsp") != configs.end()) {
+            if (configs["enableSsp"].find("true") != std::string::npos) {
                 this->configuration.enableSsp = true;
                 if (configs.find("sspValue") != configs.end()) {
-                    char* end;
-                    uint8_t num = (uint8_t)std::count(configs["sspValue"].begin(),
-                                    configs["sspValue"].end(), ':');
-                    if(configs["sspValue"].back() != ':'){
+                    char *end;
+                    uint8_t num = (uint8_t)std::count(
+                        configs["sspValue"].begin(), configs["sspValue"].end(), ':');
+                    if (configs["sspValue"].back() != ':') {
                         num++;
                     }
                     this->configuration.sspLength = num;
                     stream.str(configs["sspValue"]);
-                    for (uint32_t i = 0; i < num; i++)
-                    {
+                    for (uint32_t i = 0; i < num; i++) {
                         string s;
                         getline(stream, s, ':');
                         if (s.empty()) {
                             break;
                         }
                         this->configuration.sspValueVect.push_back(s);
-                        this->configuration.ssp[i] =
-                                (uint8_t)strtol(
-                                    this->configuration.sspValueVect.at(i).c_str(), &end,16);
+                        this->configuration.ssp[i] = (uint8_t)strtol(
+                            this->configuration.sspValueVect.at(i).c_str(), &end, 16);
                     }
                     stream.str("");
                     stream.clear();
                 }
-            }else{
+            } else {
                 this->configuration.enableSsp = false;
                 this->configuration.sspLength = 0;
             }
         }
 
-        if(configs.find("enableSspMask") != configs.end()){
-            if (configs["enableSspMask"].find("true") != std::string::npos){
+        if (configs.find("enableSspMask") != configs.end()) {
+            if (configs["enableSspMask"].find("true") != std::string::npos) {
                 this->configuration.enableSspMask = true;
-                if(configs.find("sspMask") != configs.end() &&
-                        this->configuration.enableSsp == true &&
-                        this->configuration.enableSspMask == true){
-                    char* end;
-                    uint8_t num = (uint8_t)std::count(configs["sspMask"].begin(),
-                                    configs["sspMask"].end(), ':');
-                    if(configs["sspMask"].back() != ':'){
+                if (configs.find("sspMask") != configs.end()
+                    && this->configuration.enableSsp == true
+                    && this->configuration.enableSspMask == true) {
+                    char *end;
+                    uint8_t num = (uint8_t)std::count(
+                        configs["sspMask"].begin(), configs["sspMask"].end(), ':');
+                    if (configs["sspMask"].back() != ':') {
                         num++;
                     }
                     this->configuration.sspMaskLength = num;
                     stream.str(configs["sspMask"]);
-                    for (uint32_t i = 0; i < num; i++)
-                    {
+                    for (uint32_t i = 0; i < num; i++) {
                         string s;
                         getline(stream, s, ':');
                         if (s.empty()) {
                             break;
                         }
                         this->configuration.sspMaskVect.push_back(s);
-                        this->configuration.sspMask[i] =
-                                (uint8_t)strtol(
-                                    this->configuration.sspMaskVect.at(i).c_str(), &end,16);
+                        this->configuration.sspMask[i] = (uint8_t)strtol(
+                            this->configuration.sspMaskVect.at(i).c_str(), &end, 16);
                     }
                     stream.str("");
                     stream.clear();
                 }
-            }else{
+            } else {
                 this->configuration.enableSspMask = false;
                 this->configuration.sspMaskLength = 0;
             }
         }
 
-
         /*For ssp check */
         if (configs.find("expectedSspValue") != configs.end()) {
-            char* end;
-            uint8_t num = (uint8_t)std::count(configs["expectedSspValue"].begin(),
-                    configs["expectedSspValue"].end(), ':');
-            if(configs["expectedSspValue"].back() != ':'){
+            char *end;
+            uint8_t num = (uint8_t)std::count(
+                configs["expectedSspValue"].begin(), configs["expectedSspValue"].end(), ':');
+            if (configs["expectedSspValue"].back() != ':') {
                 num++;
             }
             this->configuration.expectedSspLength = num;
             stream.str(configs["expectedSspValue"]);
-            for (uint32_t i = 0; i < num; i++)
-            {
+            for (uint32_t i = 0; i < num; i++) {
                 string s;
                 getline(stream, s, ':');
                 if (s.empty()) {
                     break;
                 }
                 this->configuration.expectedSspValueVect.push_back(s);
-                this->configuration.expectedSsp[i] =
-                        (uint8_t)strtol(
-                                this->configuration.expectedSspValueVect.at(i).c_str(), &end,16);
+                this->configuration.expectedSsp[i] = (uint8_t)strtol(
+                    this->configuration.expectedSspValueVect.at(i).c_str(), &end, 16);
             }
             stream.str("");
             stream.clear();
-        }
-        else{
+        } else {
             this->configuration.expectedSspLength = 0;
         }
 
-        if(configs.find("setGenLocation") != configs.end()) {
+        if (configs.find("setGenLocation") != configs.end()) {
             istringstream is4(configs["setGenLocation"]);
             is4 >> boolalpha >> configuration.setGenLocation;
         }
 
-        if(configs.find("enableAsync") != configs.end()) {
+        if (configs.find("enableAsync") != configs.end()) {
             istringstream is4(configs["enableAsync"]);
             is4 >> boolalpha >> configuration.enableAsync;
         }
 
-        if(configs.find("enableConsistency") != configs.end()) {
+        if (configs.find("enableConsistency") != configs.end()) {
             istringstream is4(configs["enableConsistency"]);
             is4 >> boolalpha >> configuration.enableConsistency;
         }
 
-        if(configs.find("enableRelevance") != configs.end()) {
+        if (configs.find("enableRelevance") != configs.end()) {
             istringstream is4(configs["enableRelevance"]);
             is4 >> boolalpha >> configuration.enableRelevance;
         }
 
-        if(configs.find("overridePsidCheck") != configs.end()) {
+        if (configs.find("overridePsidCheck") != configs.end()) {
             istringstream is4(configs["overridePsidCheck"]);
             is4 >> boolalpha >> configuration.overridePsidCheck;
         }
 
-        if(configs.find("emergencyVehicleEventTX") != configs.end()) {
+        if (configs.find("emergencyVehicleEventTX") != configs.end()) {
             istringstream is4(configs["emergencyVehicleEventTX"]);
             is4 >> boolalpha >> configuration.emergencyVehicleEventTX;
         }
 
         /* Signing-related statistics */
-        if(configs.find("enableSignStatLog") != configs.end()){
-           istringstream is7(configs["enableSignStatLog"]);
-           is7 >> boolalpha >> configuration.enableSignStatLog;
+        if (configs.find("enableSignStatLog") != configs.end()) {
+            istringstream is7(configs["enableSignStatLog"]);
+            is7 >> boolalpha >> configuration.enableSignStatLog;
         }
 
-        if(configs.find("signStatLogListSize") != configs.end()){
-            this->configuration.signStatsSize =
-            (uint32_t)stoi(configs["signStatLogListSize"]);
+        if (configs.find("signStatLogListSize") != configs.end()) {
+            this->configuration.signStatsSize = (uint32_t)stoi(configs["signStatLogListSize"]);
         }
 
-        if(configs.find("signStatLogFile") != configs.end()){
+        if (configs.find("signStatLogFile") != configs.end()) {
             this->configuration.signStatLogFile = configs["signStatLogFile"];
         }
 
-        if((configuration.enableSignStatLog) && (configuration.appVerbosity > 1)){
+        if ((configuration.enableSignStatLog) && (configuration.appVerbosity > 1)) {
             std::cout << "Signing statistic logging is ON" << std::endl;
-            std::cout << "Statistics for last " << configuration.signStatsSize <<
-                " signs will be reported by each thread" << std::endl;
-            std::cout << "Upon closure, statistics will be dumped to logfile: " <<
-                configuration.signStatLogFile << std::endl;
+            std::cout << "Statistics for last " << configuration.signStatsSize
+                      << " signs will be reported by each thread" << std::endl;
+            std::cout << "Upon closure, statistics will be dumped to logfile: "
+                      << configuration.signStatLogFile << std::endl;
         }
 
         /* Verification Latency-related statistics */
-        if(configs.find("enableVerifStatLog") != configs.end()){
-           istringstream is8(configs["enableVerifStatLog"]);
-           is8 >> boolalpha >> configuration.enableVerifStatLog;
+        if (configs.find("enableVerifStatLog") != configs.end()) {
+            istringstream is8(configs["enableVerifStatLog"]);
+            is8 >> boolalpha >> configuration.enableVerifStatLog;
         }
 
-        if(configs.find("verifStatLogListSize") != configs.end()){
-            this->configuration.verifStatsSize =
-                (uint32_t)stoi(configs["verifStatLogListSize"]);
+        if (configs.find("verifStatLogListSize") != configs.end()) {
+            this->configuration.verifStatsSize = (uint32_t)stoi(configs["verifStatLogListSize"]);
         }
 
-        if(configs.find("verifStatLogFile") != configs.end()){
+        if (configs.find("verifStatLogFile") != configs.end()) {
             this->configuration.verifStatLogFile = configs["verifStatLogFile"];
         }
 
-        if((configuration.enableVerifStatLog) && (configuration.appVerbosity > 1)){
+        if ((configuration.enableVerifStatLog) && (configuration.appVerbosity > 1)) {
             std::cout << "Verification statistic logging is ON" << std::endl;
-            std::cout << "Statistics for last " << configuration.verifStatsSize <<
-                " verifications will be reported by each thread" << std::endl;
-            std::cout << "Upon closure, statistics will be dumped to logfile: " <<
-                configuration.verifStatLogFile << std::endl;
+            std::cout << "Statistics for last " << configuration.verifStatsSize
+                      << " verifications will be reported by each thread" << std::endl;
+            std::cout << "Upon closure, statistics will be dumped to logfile: "
+                      << configuration.verifStatLogFile << std::endl;
         }
 
         /* Verification Results-related statistics */
-        if(configs.find("enableVerifResLog") != configs.end()){
-           istringstream is8(configs["enableVerifResLog"]);
-           is8 >> boolalpha >> configuration.enableVerifResLog;
+        if (configs.find("enableVerifResLog") != configs.end()) {
+            istringstream is8(configs["enableVerifResLog"]);
+            is8 >> boolalpha >> configuration.enableVerifResLog;
         }
 
-        if(configs.find("verifResLogSize") != configs.end()){
-            this->configuration.verifResLogSize =
-                (uint32_t)stoi(configs["verifResLogSize"]);
+        if (configs.find("verifResLogSize") != configs.end()) {
+            this->configuration.verifResLogSize = (uint32_t)stoi(configs["verifResLogSize"]);
         }
 
-        if(configs.find("verifResLogFile") != configs.end()){
+        if (configs.find("verifResLogFile") != configs.end()) {
             this->configuration.verifResLogFile = configs["verifResLogFile"];
         }
 
-        if((configuration.enableVerifResLog) && (configuration.appVerbosity > 1)){
+        if ((configuration.enableVerifResLog) && (configuration.appVerbosity > 1)) {
             std::cout << "Verification Results logging is ON" << std::endl;
             std::cout << "Verification Results will not be logged on Console" << std::endl;
-            std::cout << "Results for last " << configuration.verifResLogSize <<
-                " verifications will be reported by each thread" << std::endl;
-            std::cout << "Upon closure, statistics will be dumped to logfile: " <<
-                configuration.verifResLogFile << std::endl;
+            std::cout << "Results for last " << configuration.verifResLogSize
+                      << " verifications will be reported by each thread" << std::endl;
+            std::cout << "Upon closure, statistics will be dumped to logfile: "
+                      << configuration.verifResLogFile << std::endl;
         }
 
         /** Pseudonym/ID Change */
-        if(configs.find("lcmName") != configs.end()){
+        if (configs.find("lcmName") != configs.end()) {
             this->configuration.lcmName = configs["lcmName"];
-        }else{
+        } else {
             this->configuration.lcmName = "";
         }
 
-        if(configs.find("idChangeInterval") != configs.end()) {
-            this->configuration.idChangeInterval =
-                (unsigned int)stoi(configs["idChangeInterval"]);
+        if (configs.find("idChangeInterval") != configs.end()) {
+            this->configuration.idChangeInterval = (unsigned int)stoi(configs["idChangeInterval"]);
         }
 
-        if(configs.find("idChangeDistance") != configs.end()) {
-            ApplicationBase::idChangeDistance =
-                (unsigned int)stoi(configs["idChangeDistance"]);
+        if (configs.find("idChangeDistance") != configs.end()) {
+            ApplicationBase::idChangeDistance = (unsigned int)stoi(configs["idChangeDistance"]);
         }
 
         /** Process both signed and unsigned packets */
-        if(configs.find("acceptAll") != configs.end()){
+        if (configs.find("acceptAll") != configs.end()) {
             istringstream is9(configs["acceptAll"]);
             is9 >> boolalpha >> configuration.acceptAll;
-            if(configuration.acceptAll){
+            if (configuration.acceptAll) {
                 printf("Accepting both signed and unsigned messages\n");
-            }else{
+            } else {
                 printf("Only accepting signed messages\n");
             }
         }
         /* Misbehavior-related statistics */
-        if(configs.find("enableMbd") != configs.end()){
+        if (configs.find("enableMbd") != configs.end()) {
             istringstream is1(configs["enableMbd"]);
             is1 >> boolalpha >> configuration.enableMbd;
             std::cout << "Misbehavior checks enabled\n";
-            if(configuration.enableMbd) {
-                if(configs.find("enableMbdStatLog") != configs.end()){
+            if (configuration.enableMbd) {
+                if (configs.find("enableMbdStatLog") != configs.end()) {
                     istringstream is8(configs["enableMbdStatLog"]);
                     is8 >> boolalpha >> configuration.enableMbdStatLog;
-                    if(configuration.enableMbdStatLog){
-                        if(configs.find("mbdStatLogListSize") != configs.end()){
-                            this->configuration.mbdStatLogListSize =
-                                (uint32_t)stoi(configs["mbdStatLogListSize"]);
+                    if (configuration.enableMbdStatLog) {
+                        if (configs.find("mbdStatLogListSize") != configs.end()) {
+                            this->configuration.mbdStatLogListSize
+                                = (uint32_t)stoi(configs["mbdStatLogListSize"]);
                         }
-                        if(configs.find("mbdStatLogFile") != configs.end()){
+                        if (configs.find("mbdStatLogFile") != configs.end()) {
                             this->configuration.mbdStatLogFile = configs["mbdStatLogFile"];
                         }
-                        if(configuration.appVerbosity > 1){
+                        if (configuration.appVerbosity > 1) {
                             std::cout << "Misbehavior statistic logging is ON" << std::endl;
-                            std::cout << "Statistics for last " <<
-                                configuration.mbdStatLogListSize <<
-                                " misbehavior will be reported by each thread" << std::endl;
-                            std::cout << "Upon closure, statistics will be dumped to logfile: " <<
-                                configuration.mbdStatLogFile << std::endl;
+                            std::cout << "Statistics for last " << configuration.mbdStatLogListSize
+                                      << " misbehavior will be reported by each thread"
+                                      << std::endl;
+                            std::cout << "Upon closure, statistics will be dumped to logfile: "
+                                      << configuration.mbdStatLogFile << std::endl;
                         }
-                    } else{
+                    } else {
                         std::cout << "Misbehavior statistic logging is off" << std::endl;
                     }
                 }
             }
         }
 
-        if (configs.find("overrideVerifResult") != configs.end())
-        {
+        if (configs.find("overrideVerifResult") != configs.end()) {
             istringstream is(configs["overrideVerifResult"]);
             is >> boolalpha >> this->configuration.overrideVerifResult;
         }
-        if(this->configuration.overrideVerifResult){
+        if (this->configuration.overrideVerifResult) {
             this->configuration.overrideVerifValue = stoi(configs["overrideVerifValue"]);
         }
 
         /* Flooding attack detection and mitigation config items */
-        if (configs.find("enableL2FloodingDetect") != configs.end())
-        {
+        if (configs.find("enableL2FloodingDetect") != configs.end()) {
             istringstream is(configs["enableL2FloodingDetect"]);
             is >> boolalpha >> this->configuration.enableL2FloodingDetect;
         }
-        if(configs.find("floodDetectVerbosity") != configs.end()){
+        if (configs.find("floodDetectVerbosity") != configs.end()) {
             this->configuration.floodDetectVerbosity = stoi(configs["floodDetectVerbosity"]);
         }
-        if(configs.find("commandInterval") != configs.end()) {
+        if (configs.find("commandInterval") != configs.end()) {
             this->configuration.commandInterval = stoi(configs["commandInterval"]);
         }
-        if(configs.find("tShiftInterval") != configs.end()) {
+        if (configs.find("tShiftInterval") != configs.end()) {
             this->configuration.tShiftInterval = stoi(configs["tShiftInterval"]);
         }
-        if(configs.find("nCommandInterval_0") != configs.end()) {
+        if (configs.find("nCommandInterval_0") != configs.end()) {
             this->configuration.nCommandInterval_0 = stoi(configs["nCommandInterval_0"]);
         }
-        if(configs.find("nCommandInterval_1") != configs.end()) {
+        if (configs.find("nCommandInterval_1") != configs.end()) {
             this->configuration.nCommandInterval_1 = stoi(configs["nCommandInterval_1"]);
         }
-        if(configs.find("floodAttackThreshTotal") != configs.end()) {
+        if (configs.find("floodAttackThreshTotal") != configs.end()) {
             this->configuration.floodAttackThreshTotal = stoi(configs["floodAttackThreshTotal"]);
         }
-        if(configs.find("floodAttackThreshSingle") != configs.end()) {
+        if (configs.find("floodAttackThreshSingle") != configs.end()) {
             this->configuration.floodAttackThreshSingle = stoi(configs["floodAttackThreshSingle"]);
         }
-        if(configs.find("loadUpdateInterval") != configs.end()) {
+        if (configs.find("loadUpdateInterval") != configs.end()) {
             this->configuration.loadUpdateInterval = stoi(configs["loadUpdateInterval"]);
         }
-        if(configs.find("mvmUtilThreshold") != configs.end()) {
+        if (configs.find("mvmUtilThreshold") != configs.end()) {
             this->configuration.mvmUtilThreshold = stod(configs["mvmUtilThreshold"]);
         }
 
-        if (configs.find("mvmCapacityOverride") != configs.end())
-        {
+        if (configs.find("mvmCapacityOverride") != configs.end()) {
             istringstream is(configs["mvmCapacityOverride"]);
             is >> boolalpha >> this->configuration.mvmCapacityOverride;
         }
-        if(configs.find("mvmCapacity") != configs.end()) {
+        if (configs.find("mvmCapacity") != configs.end()) {
             this->configuration.mvmCapacity = stoi(configs["mvmCapacity"]);
         }
     }
 
     /* codec debug */
     if (configs.find("codecVerbosity") != configs.end()) {
-        this->configuration.codecVerbosity =
-            (uint8_t)stoi(configs["codecVerbosity"]);
+        this->configuration.codecVerbosity = (uint8_t)stoi(configs["codecVerbosity"]);
         set_codec_verbosity(stoi(configs["codecVerbosity"]));
     }
 
     /*app debug */
     if (configs.find("appVerbosity") != configs.end()) {
         setAppVerbosity(stoi(configs["appVerbosity"]));
-        //qMon
+        // qMon
     }
 
     /* ldm debug */
     if (configs.find("ldmVerbosity") != configs.end()) {
-        this->configuration.ldmVerbosity =
-            (uint8_t)stoi(configs["ldmVerbosity"]);
+        this->configuration.ldmVerbosity = (uint8_t)stoi(configs["ldmVerbosity"]);
     }
 
     /* driver debug */
     if (configs.find("driverVerbosity") != configs.end()) {
-        this->configuration.driverVerbosity =
-            (uint8_t)stoi(configs["driverVerbosity"]);
+        this->configuration.driverVerbosity = (uint8_t)stoi(configs["driverVerbosity"]);
     }
     /* security debug */
     if (configs.find("secVerbosity") != configs.end()) {
-        this->configuration.secVerbosity =
-            (uint8_t)stoi(configs["secVerbosity"]);
+        this->configuration.secVerbosity = (uint8_t)stoi(configs["secVerbosity"]);
     }
 
     /* Multi-parallelism */
-    if(configs.find("numRxThreadsEth") != configs.end()) {
+    if (configs.find("numRxThreadsEth") != configs.end()) {
         this->configuration.numRxThreadsEth = (uint8_t)stoi(configs["numRxThreadsEth"]);
     }
-    if(configs.find("numRxThreadsRadio") != configs.end()) {
+    if (configs.find("numRxThreadsRadio") != configs.end()) {
         this->configuration.numRxThreadsRadio = (uint8_t)stoi(configs["numRxThreadsRadio"]);
     }
 
@@ -1972,7 +1868,7 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     /* WSA */
     configuration.routerLifetime = 0;
     configuration.ipPrefixLength = 0;
-    if(configs.find("routerLifetime") != configs.end()){
+    if (configs.find("routerLifetime") != configs.end()) {
         configuration.routerLifetime = stoi(configs["routerLifetime"]);
     }
     if (configs.find("ipPrefix") != configs.end()) {
@@ -1998,42 +1894,42 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         }
     }
 
-    if(configs.find("wildcardRx") != configs.end()){
-       istringstream is8(configs["wildcardRx"]);
-       is8 >> boolalpha >> configuration.wildcardRx;
+    if (configs.find("wildcardRx") != configs.end()) {
+        istringstream is8(configs["wildcardRx"]);
+        is8 >> boolalpha >> configuration.wildcardRx;
     }
 
     if (configs.end() != configs.find("Padding")) {
         this->configuration.padding = stoi(configs["Padding"], nullptr, 10);
-        this->configuration.padding = (this->configuration.padding > MAX_PADDING_LEN) ?
-                                       MAX_PADDING_LEN : this->configuration.padding;
+        this->configuration.padding = (this->configuration.padding > MAX_PADDING_LEN)
+                                          ? MAX_PADDING_LEN
+                                          : this->configuration.padding;
     }
 
     if (configs.end() != configs.find("UnsignedBsmResSize")) {
-        this->configuration.spsReservationSize =
-                    (this->configuration.enableSecurity) ?
-                                    stoi(configs["SignedBsmResSize"], nullptr, 10)
-                                    : stoi(configs["UnsignedBsmResSize"], nullptr, 10);
-        if(this->configuration.padding >= 0) {
+        this->configuration.spsReservationSize
+            = (this->configuration.enableSecurity)
+                  ? stoi(configs["SignedBsmResSize"], nullptr, 10)
+                  : stoi(configs["UnsignedBsmResSize"], nullptr, 10);
+        if (this->configuration.padding >= 0) {
             this->configuration.spsReservationSize += this->configuration.padding;
         }
     }
 
     if (configs.end() != configs.find("SpsPriority")) {
-        this->configuration.spsPriority = static_cast<Priority>(
-            stoi(configs["SpsPriority"], nullptr, 10));
+        this->configuration.spsPriority
+            = static_cast<Priority>(stoi(configs["SpsPriority"], nullptr, 10));
     }
 
     if (configs.end() != configs.find("EventPriority")) {
-        this->configuration.eventPriority = static_cast<Priority>(
-            stoi(configs["EventPriority"], nullptr, 10));
+        this->configuration.eventPriority
+            = static_cast<Priority>(stoi(configs["EventPriority"], nullptr, 10));
     }
 
     this->configuration.isValid = true;
 
     // qMonitor Configuration
-    if (configs.find("qMonEnabled") != configs.end())
-    {
+    if (configs.find("qMonEnabled") != configs.end()) {
         istringstream is(configs["qMonEnabled"]);
         is >> boolalpha >> this->configuration.qMonEnabled;
         qMonConfig = std::make_shared<QMonitor::Configuration>();
@@ -2051,27 +1947,27 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     if (configs.end() != configs.find("positionOverride")) {
         istringstream is(configs["positionOverride"]);
         is >> boolalpha >> this->configuration.positionOverride;
-        if(this->configuration.positionOverride == true){
+        if (this->configuration.positionOverride == true) {
             ApplicationBase::positionOverride = true;
-            if(configs.find("overrideLat") != configs.end()){
+            if (configs.find("overrideLat") != configs.end()) {
                 this->configuration.overrideLat = stod(configs["overrideLat"]);
-                ApplicationBase::overrideLat = this->configuration.overrideLat;
+                ApplicationBase::overrideLat    = this->configuration.overrideLat;
             }
-            if(configs.find("overrideLong") != configs.end()){
+            if (configs.find("overrideLong") != configs.end()) {
                 this->configuration.overrideLong = stod(configs["overrideLong"]);
-                ApplicationBase::overrideLong = this->configuration.overrideLong;
+                ApplicationBase::overrideLong    = this->configuration.overrideLong;
             }
-            if(configs.find("overrideHead") != configs.end()){
+            if (configs.find("overrideHead") != configs.end()) {
                 this->configuration.overrideHead = stod(configs["overrideHead"]);
-                ApplicationBase::overrideHead = this->configuration.overrideHead;
+                ApplicationBase::overrideHead    = this->configuration.overrideHead;
             }
-            if(configs.find("overrideElev") != configs.end()){
+            if (configs.find("overrideElev") != configs.end()) {
                 this->configuration.overrideElev = stod(configs["overrideElev"]);
-                ApplicationBase::overrideElev = this->configuration.overrideElev;
+                ApplicationBase::overrideElev    = this->configuration.overrideElev;
             }
-            if(configs.find("overrideSpeed") != configs.end()){
+            if (configs.find("overrideSpeed") != configs.end()) {
                 this->configuration.overrideSpeed = stod(configs["overrideSpeed"]);
-                ApplicationBase::overrideSpeed = this->configuration.overrideSpeed;
+                ApplicationBase::overrideSpeed    = this->configuration.overrideSpeed;
             }
             std::cout << "OVERRIDING POSITION FIXES WITH CONFIG ITEMS: ";
             std::cout << "\nLAT: " << this->configuration.overrideLat << ", ";
@@ -2088,110 +1984,110 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     if (configs.end() != configs.find("enableCongCtrl")) {
         istringstream is(configs["enableCongCtrl"]);
         is >> boolalpha >> this->configuration.enableCongCtrl;
-        if(this->configuration.enableCongCtrl == true){
+        if (this->configuration.enableCongCtrl == true) {
             ApplicationBase::congCtrlEnabled = true;
             saveCongCtrlConfig(configs);
         }
     }
 }
 
-void ApplicationBase::saveCongCtrlConfig(map<string, string> configs){
+void ApplicationBase::saveCongCtrlConfig(map<string, string> configs) {
     std::cout << "Proceeding to find and save cong ctrl config parameters\n";
 
-    if(configs.find("congCtrlType") != configs.end()){
+    if (configs.find("congCtrlType") != configs.end()) {
         congCtrlConfig.congCtrlType = stoi(configs["congCtrlType"]);
     }
-    if(configs.find("enableCongCtrlLogging") != configs.end()){
+    if (configs.find("enableCongCtrlLogging") != configs.end()) {
         congCtrlConfig.enableCongCtrlLogging = stoi(configs["enableCongCtrlLogging"]);
     }
-    if(configs.find("cbpMeasInterval") != configs.end()){
+    if (configs.find("cbpMeasInterval") != configs.end()) {
         congCtrlConfig.cbpMeasInterval = stoi(configs["cbpMeasInterval"]);
     }
-    if(configs.find("cbpWeightFactor") != configs.end()){
+    if (configs.find("cbpWeightFactor") != configs.end()) {
         congCtrlConfig.cbpWeightFactor = stod(configs["cbpWeightFactor"]);
     }
-    if(configs.find("perInterval") != configs.end()){
+    if (configs.find("perInterval") != configs.end()) {
         congCtrlConfig.perInterval = stoi(configs["perInterval"]);
     }
-    if(configs.find("perSubInterval") != configs.end()){
+    if (configs.find("perSubInterval") != configs.end()) {
         congCtrlConfig.perSubInterval = stoi(configs["perSubInterval"]);
     }
-    if(configs.find("perMax") != configs.end()){
+    if (configs.find("perMax") != configs.end()) {
         congCtrlConfig.perMax = stod(configs["perMax"]);
     }
-    if(configs.find("minChanQualInd") != configs.end()){
+    if (configs.find("minChanQualInd") != configs.end()) {
         congCtrlConfig.minChanQualInd = stod(configs["minChanQualInd"]);
     }
-    if(configs.find("maxChanQualInd") != configs.end()){
+    if (configs.find("maxChanQualInd") != configs.end()) {
         congCtrlConfig.maxChanQualInd = stod(configs["maxChanQualInd"]);
     }
-    if(configs.find("vDensityWeightFactor") != configs.end()){
+    if (configs.find("vDensityWeightFactor") != configs.end()) {
         congCtrlConfig.vDensityWeightFactor = stod(configs["vDensityWeightFactor"]);
     }
-    if(configs.find("vDensityCoefficient") != configs.end()){
+    if (configs.find("vDensityCoefficient") != configs.end()) {
         congCtrlConfig.vDensityCoefficient = stod(configs["vDensityCoefficient"]);
     }
-    if(configs.find("vDensityMinPerRange") != configs.end()){
+    if (configs.find("vDensityMinPerRange") != configs.end()) {
         congCtrlConfig.vDensityMinPerRange = stoi(configs["vDensityMinPerRange"]);
     }
-    if(configs.find("UseStaticVDensity") != configs.end()){
+    if (configs.find("UseStaticVDensity") != configs.end()) {
         congCtrlConfig.UseStaticVDensity = stoi(configs["UseStaticVDensity"]);
     }
-    if(configs.find("vDensity") != configs.end()){
+    if (configs.find("vDensity") != configs.end()) {
         congCtrlConfig.vDensity = stoi(configs["vDensity"]);
     }
-    if(configs.find("txCtrlInterval") != configs.end()){
+    if (configs.find("txCtrlInterval") != configs.end()) {
         congCtrlConfig.txCtrlInterval = stoi(configs["txCtrlInterval"]);
     }
-    if(configs.find("hvTEMinTimeDiff") != configs.end()){
+    if (configs.find("hvTEMinTimeDiff") != configs.end()) {
         congCtrlConfig.hvTEMinTimeDiff = stoi(configs["hvTEMinTimeDiff"]);
     }
-    if(configs.find("hvTEMaxTimeDiff") != configs.end()){
+    if (configs.find("hvTEMaxTimeDiff") != configs.end()) {
         congCtrlConfig.hvTEMaxTimeDiff = stoi(configs["hvTEMaxTimeDiff"]);
     }
-    if(configs.find("rvTEMinTimeDiff") != configs.end()){
+    if (configs.find("rvTEMinTimeDiff") != configs.end()) {
         congCtrlConfig.rvTEMinTimeDiff = stoi(configs["rvTEMinTimeDiff"]);
     }
-    if(configs.find("rvTEMaxTimeDiff") != configs.end()){
+    if (configs.find("rvTEMaxTimeDiff") != configs.end()) {
         congCtrlConfig.rvTEMaxTimeDiff = stoi(configs["rvTEMaxTimeDiff"]);
     }
-    if(configs.find("teErrSensitivity") != configs.end()){
+    if (configs.find("teErrSensitivity") != configs.end()) {
         congCtrlConfig.teErrSensitivity = stoi(configs["teErrSensitivity"]);
     }
-    if(configs.find("teMinThresh") != configs.end()){
+    if (configs.find("teMinThresh") != configs.end()) {
         congCtrlConfig.teMinThresh = stod(configs["teMinThresh"]);
     }
-    if(configs.find("teMaxThresh") != configs.end()){
+    if (configs.find("teMaxThresh") != configs.end()) {
         congCtrlConfig.teMaxThresh = stod(configs["teMaxThresh"]);
     }
-    if(configs.find("minItt") != configs.end()){
+    if (configs.find("minItt") != configs.end()) {
         congCtrlConfig.minItt = stoi(configs["minItt"]);
     }
-    if(configs.find("txRand") != configs.end()){
+    if (configs.find("txRand") != configs.end()) {
         congCtrlConfig.txRand = stoi(configs["txRand"]);
     }
-    if(configs.find("timeAccuracy") != configs.end()){
+    if (configs.find("timeAccuracy") != configs.end()) {
         congCtrlConfig.timeAccuracy = stoi(configs["timeAccuracy"]);
     }
-    if(configs.find("vMax_ITT") != configs.end()){
+    if (configs.find("vMax_ITT") != configs.end()) {
         congCtrlConfig.maxItt = stoi(configs["vMax_ITT"]);
     }
-    if(configs.find("vRescheduleTh") != configs.end()){
+    if (configs.find("vRescheduleTh") != configs.end()) {
         congCtrlConfig.reschedThresh = stoi(configs["vRescheduleTh"]);
     }
-    if(configs.find("supraGain") != configs.end()){
+    if (configs.find("supraGain") != configs.end()) {
         congCtrlConfig.supraGain = stod(configs["supraGain"]);
     }
-    if(configs.find("minChanUtil") != configs.end()){
+    if (configs.find("minChanUtil") != configs.end()) {
         congCtrlConfig.minChanUtil = stoi(configs["minChanUtil"]);
     }
-    if(configs.find("maxChanUtil") != configs.end()){
+    if (configs.find("maxChanUtil") != configs.end()) {
         congCtrlConfig.maxChanUtil = stoi(configs["maxChanUtil"]);
     }
-    if(configs.find("minRadiPwr") != configs.end()){
+    if (configs.find("minRadiPwr") != configs.end()) {
         congCtrlConfig.minRadiPwr = stoi(configs["minRadiPwr"]);
     }
-    if(configs.find("maxRadiPwr") != configs.end()){
+    if (configs.find("maxRadiPwr") != configs.end()) {
         congCtrlConfig.maxRadiPwr = stoi(configs["maxRadiPwr"]);
     }
 
@@ -2201,7 +2097,7 @@ void ApplicationBase::saveCongCtrlConfig(map<string, string> configs){
         if (congCtrlConfig.enableSpsEnhancements) {
             std::cout << "SPS Enhancements Enabled\n";
         }
-        if(configs.find("cv2xMaxITTRounding") != configs.end()){
+        if (configs.find("cv2xMaxITTRounding") != configs.end()) {
             congCtrlConfig.cv2xMaxITTRounding = stoi(configs["cv2xMaxITTRounding"]);
         }
 
@@ -2214,15 +2110,13 @@ void ApplicationBase::saveCongCtrlConfig(map<string, string> configs){
         if (configs.find("spsEnhDelayPerc") != configs.end()) {
             congCtrlConfig.spsEnhDelayPerc = stoi(configs["spsEnhDelayPerc"]);
         }
-
     }
 }
 
 void ApplicationBase::simTxSetup(const string ipv4, const uint16_t port) {
     RadioOpt radioOpt;
     radioOpt.ipv4_src = configuration.ipv4_src;
-    simTransmit = std::unique_ptr<RadioTransmit>
-            (new RadioTransmit(radioOpt, ipv4, port));
+    simTransmit       = std::unique_ptr<RadioTransmit>(new RadioTransmit(radioOpt, ipv4, port));
     simTransmit->set_radio_verbosity(this->configuration.codecVerbosity);
     txSimMsg = std::make_shared<msg_contents>(msg_contents{0});
     abuf_alloc(&txSimMsg->abuf, ABUF_LEN, ABUF_HEADROOM);
@@ -2234,8 +2128,7 @@ void ApplicationBase::simRxSetup(const string ipv4, const uint16_t port) {
     }
     RadioOpt radioOpt;
     radioOpt.ipv4_src = configuration.ipv4_src;
-    simReceive = std::unique_ptr<RadioReceive>
-            (new RadioReceive(radioOpt, ipv4, port));
+    simReceive        = std::unique_ptr<RadioReceive>(new RadioReceive(radioOpt, ipv4, port));
     simReceive->set_radio_verbosity(this->configuration.codecVerbosity);
     rxSimMsg = std::make_shared<msg_contents>(msg_contents{0});
     abuf_alloc(&rxSimMsg->abuf, ABUF_LEN, ABUF_HEADROOM);
@@ -2255,13 +2148,13 @@ int ApplicationBase::adjustSpsPeriodicity(int intervalMs) {
     return (ret * 100);
 }
 
-int ApplicationBase::restartTxFlows(){
+int ApplicationBase::restartTxFlows() {
     uint8_t i = 0;
     EventFlowInfo eventInfo;
     SpsFlowInfo spsInfo;
     // close all flows before re-setup
     std::cout << "Closing and restarting all tx flows\n";
-    for (uint8_t i = 0; i<this->eventTransmits.size(); i++) {
+    for (uint8_t i = 0; i < this->eventTransmits.size(); i++) {
         this->eventTransmits[i].closeFlow();
     }
     eventTransmits.clear();
@@ -2273,57 +2166,51 @@ int ApplicationBase::restartTxFlows(){
     spsInfo.periodicityMs = this->configuration.spsPeriodicity;
     spsInfo.periodicityMs = adjustSpsPeriodicity(spsInfo.periodicityMs);
     // set sps priority to user specified value
-    spsInfo.priority = this->configuration.spsPriority;
+    spsInfo.priority       = this->configuration.spsPriority;
     spsInfo.nbytesReserved = this->configuration.spsReservationSize;
-    if(appVerbosity > 3) {
+    if (appVerbosity > 3) {
         cout << "SPS period set to " << spsInfo.periodicityMs << "ms" << endl;
         cout << "SPS priority set to " << static_cast<uint32_t>(spsInfo.priority) << endl;
         cout << "SPS reservation size set to " << spsInfo.nbytesReserved << endl;
     }
     // restart tx sps flows
-    for (auto port : this->configuration.spsPorts)
-    {
-        RadioTransmit tx(spsInfo, TrafficCategory::SAFETY_TYPE, TrafficIpType::TRAFFIC_NON_IP,
-                         port, this->configuration.spsServiceIDs[i]);
+    for (auto port : this->configuration.spsPorts) {
+        RadioTransmit tx(spsInfo, TrafficCategory::SAFETY_TYPE, TrafficIpType::TRAFFIC_NON_IP, port,
+            this->configuration.spsServiceIDs[i]);
         // save Tx instance only if create Tx flow succeeded
         if (tx.flow) {
             this->spsTransmits.push_back(std::move(tx));
         } else {
-            cerr << "ApplicationBase::setup error in creating Tx SPS flow!" <<
-                    " with spsServiceId: " << this->configuration.spsServiceIDs[i]
-                    << endl;
+            cerr << "ApplicationBase::setup error in creating Tx SPS flow!"
+                 << " with spsServiceId: " << this->configuration.spsServiceIDs[i] << endl;
             return -1;
         }
 
-        this->spsTransmits[i].configureIpv6(this->configuration.spsDestPorts[i],
-                this->configuration.spsDestAddrs[i].c_str());
+        this->spsTransmits[i].configureIpv6(
+            this->configuration.spsDestPorts[i], this->configuration.spsDestAddrs[i].c_str());
         /* radio debug */
         if (this->configuration.codecVerbosity) {
-            this->spsTransmits[i].
-                set_radio_verbosity(this->configuration.codecVerbosity);
+            this->spsTransmits[i].set_radio_verbosity(this->configuration.codecVerbosity);
         }
         i += 1;
     }
     // restart tx event flows
     i = 0;
-    for (auto port : this->configuration.eventPorts)
-    {
+    for (auto port : this->configuration.eventPorts) {
         RadioTransmit tx(eventInfo, TrafficCategory::SAFETY_TYPE, TrafficIpType::TRAFFIC_NON_IP,
-                         port, this->configuration.eventServiceIDs[i]);
+            port, this->configuration.eventServiceIDs[i]);
         // save Tx instance only if create Tx flow succeeded
         if (tx.flow) {
             this->eventTransmits.push_back(std::move(tx));
         } else {
-            cerr << "ApplicationBase::setup error in creating Tx event flow!"
-                    << endl;
+            cerr << "ApplicationBase::setup error in creating Tx event flow!" << endl;
             return -1;
         }
-        this->eventTransmits[i].configureIpv6(this->configuration.eventDestPorts[i],
-                this->configuration.eventDestAddrs[i].c_str());
+        this->eventTransmits[i].configureIpv6(
+            this->configuration.eventDestPorts[i], this->configuration.eventDestAddrs[i].c_str());
         /* radio debug */
         if (this->configuration.codecVerbosity) {
-            this->eventTransmits[i].
-                set_radio_verbosity(this->configuration.codecVerbosity);
+            this->eventTransmits[i].set_radio_verbosity(this->configuration.codecVerbosity);
         }
         i += 1;
     }
@@ -2331,7 +2218,7 @@ int ApplicationBase::restartTxFlows(){
     return 0;
 }
 
-int ApplicationBase::restartRxSubs(){
+int ApplicationBase::restartRxSubs() {
     uint8_t i = 0;
     // restart rx subscriptions
     std::cout << "Closing and restarting all rx subscriptions\n";
@@ -2340,8 +2227,7 @@ int ApplicationBase::restartRxSubs(){
         this->radioReceives[i].closeFlow();
     }
     radioReceives.clear();
-    for (auto port : this->configuration.receivePorts)
-    {
+    for (auto port : this->configuration.receivePorts) {
         std::shared_ptr<std::vector<uint32_t>> ids = nullptr;
         if (configuration.wildcardRx == false) {
             ids = std::make_shared<std::vector<uint32_t>>(this->configuration.receiveSubIds);
@@ -2354,8 +2240,8 @@ int ApplicationBase::restartRxSubs(){
             cerr << "ApplicationBase::setup error in creating Rx subscription!";
             if (configuration.wildcardRx == false) {
                 cerr << " with receiveSubIds: ";
-                for(int j = 0; j < configuration.receiveSubIds.size(); j++){
-                    cerr << "" << this->configuration.receiveSubIds[i]<< ", ";
+                for (int j = 0; j < configuration.receiveSubIds.size(); j++) {
+                    cerr << "" << this->configuration.receiveSubIds[i] << ", ";
                 }
             }
             cerr << "" << endl;
@@ -2364,8 +2250,7 @@ int ApplicationBase::restartRxSubs(){
 
         /* radio debug */
         if (this->configuration.codecVerbosity && radioReceives.size()) {
-            this->radioReceives[i].
-                set_radio_verbosity(this->configuration.codecVerbosity);
+            this->radioReceives[i].set_radio_verbosity(this->configuration.codecVerbosity);
         }
         i += 1;
     }
@@ -2391,35 +2276,32 @@ int ApplicationBase::setup(MessageType msgType, bool reSetup) {
     spsInfo.periodicityMs = adjustSpsPeriodicity(spsInfo.periodicityMs);
 
     // set sps priority to user specified value
-    spsInfo.priority = this->configuration.spsPriority;
+    spsInfo.priority       = this->configuration.spsPriority;
     spsInfo.nbytesReserved = this->configuration.spsReservationSize;
-    if(appVerbosity > 3) {
+    if (appVerbosity > 3) {
         cout << "SPS period set to " << spsInfo.periodicityMs << "ms" << endl;
         cout << "SPS priority set to " << static_cast<uint32_t>(spsInfo.priority) << endl;
         cout << "SPS reservation size set to " << spsInfo.nbytesReserved << endl;
     }
 
-    for (auto port : this->configuration.spsPorts)
-    {
+    for (auto port : this->configuration.spsPorts) {
 
-        RadioTransmit tx(spsInfo, TrafficCategory::SAFETY_TYPE, TrafficIpType::TRAFFIC_NON_IP,
-                         port, this->configuration.spsServiceIDs[i]);
+        RadioTransmit tx(spsInfo, TrafficCategory::SAFETY_TYPE, TrafficIpType::TRAFFIC_NON_IP, port,
+            this->configuration.spsServiceIDs[i]);
         // save Tx instance only if create Tx flow succeeded
         if (tx.flow) {
             this->spsTransmits.push_back(std::move(tx));
         } else {
-            cerr << "ApplicationBase::setup error in creating Tx SPS flow!" <<
-                    " with spsServiceId: " << this->configuration.spsServiceIDs[i]
-                    << endl;
+            cerr << "ApplicationBase::setup error in creating Tx SPS flow!"
+                 << " with spsServiceId: " << this->configuration.spsServiceIDs[i] << endl;
             return -1;
         }
 
-        this->spsTransmits[i].configureIpv6(this->configuration.spsDestPorts[i],
-                this->configuration.spsDestAddrs[i].c_str());
+        this->spsTransmits[i].configureIpv6(
+            this->configuration.spsDestPorts[i], this->configuration.spsDestAddrs[i].c_str());
         /* radio debug */
         if (this->configuration.codecVerbosity) {
-            this->spsTransmits[i].
-                set_radio_verbosity(this->configuration.codecVerbosity);
+            this->spsTransmits[i].set_radio_verbosity(this->configuration.codecVerbosity);
         }
 
         // use previous content if re-setup
@@ -2432,8 +2314,7 @@ int ApplicationBase::setup(MessageType msgType, bool reSetup) {
         i += 1;
     }
     i = 0;
-    for (auto port : this->configuration.receivePorts)
-    {
+    for (auto port : this->configuration.receivePorts) {
         printf("Creating new rx subscription with port : %d\n", port);
         std::shared_ptr<std::vector<uint32_t>> ids = nullptr;
         if (configuration.wildcardRx == false) {
@@ -2447,8 +2328,8 @@ int ApplicationBase::setup(MessageType msgType, bool reSetup) {
             cerr << "ApplicationBase::setup error in creating Rx subscription!";
             if (configuration.wildcardRx == false) {
                 cerr << " with receiveSubIds: ";
-                for(int j = 0; j < configuration.receiveSubIds.size(); j++){
-                    cerr << "" << this->configuration.receiveSubIds[i]<< ", ";
+                for (int j = 0; j < configuration.receiveSubIds.size(); j++) {
+                    cerr << "" << this->configuration.receiveSubIds[i] << ", ";
                 }
             }
             cerr << "" << endl;
@@ -2457,8 +2338,7 @@ int ApplicationBase::setup(MessageType msgType, bool reSetup) {
 
         /* radio debug */
         if (this->configuration.codecVerbosity && radioReceives.size()) {
-            this->radioReceives[i].
-                set_radio_verbosity(this->configuration.codecVerbosity);
+            this->radioReceives[i].set_radio_verbosity(this->configuration.codecVerbosity);
         }
 
         // use previous content if re-setup
@@ -2470,24 +2350,21 @@ int ApplicationBase::setup(MessageType msgType, bool reSetup) {
         i += 1;
     }
     i = 0;
-    for (auto port : this->configuration.eventPorts)
-    {
+    for (auto port : this->configuration.eventPorts) {
         RadioTransmit tx(eventInfo, TrafficCategory::SAFETY_TYPE, TrafficIpType::TRAFFIC_NON_IP,
-                         port, this->configuration.eventServiceIDs[i]);
+            port, this->configuration.eventServiceIDs[i]);
         // save Tx instance only if create Tx flow succeeded
         if (tx.flow) {
             this->eventTransmits.push_back(std::move(tx));
         } else {
-            cerr << "ApplicationBase::setup error in creating Tx event flow!"
-                    << endl;
+            cerr << "ApplicationBase::setup error in creating Tx event flow!" << endl;
             return -1;
         }
-        this->eventTransmits[i].configureIpv6(this->configuration.eventDestPorts[i],
-                this->configuration.eventDestAddrs[i].c_str());
+        this->eventTransmits[i].configureIpv6(
+            this->configuration.eventDestPorts[i], this->configuration.eventDestAddrs[i].c_str());
         /* radio debug */
         if (this->configuration.codecVerbosity) {
-            this->eventTransmits[i].
-                set_radio_verbosity(this->configuration.codecVerbosity);
+            this->eventTransmits[i].set_radio_verbosity(this->configuration.codecVerbosity);
         }
 
         // use previous content if re-setup
@@ -2500,20 +2377,19 @@ int ApplicationBase::setup(MessageType msgType, bool reSetup) {
     }
 
     // setup ldm
-    if(this->configuration.ldmSize and this->radioReceives.size() > 0 and !this->ldm){
+    if (this->configuration.ldmSize and this->radioReceives.size() > 0 and !this->ldm) {
         this->ldm = new Ldm(this->configuration.ldmSize, this->radioReceives[0].getCv2xRadio());
     }
     return 0;
 }
 
-void ApplicationBase::setupLdm(){
-    this->ldm->startGb(this->configuration.ldmGbTime,
-            this->configuration.ldmGbTimeThreshold);
-    this->ldm->packeLossThresh = this->configuration.packetError;
-    this->ldm->distanceThresh = this->configuration.distance3D;
+void ApplicationBase::setupLdm() {
+    this->ldm->startGb(this->configuration.ldmGbTime, this->configuration.ldmGbTimeThreshold);
+    this->ldm->packeLossThresh         = this->configuration.packetError;
+    this->ldm->distanceThresh          = this->configuration.distance3D;
     this->ldm->positionCertaintyThresh = this->configuration.uncertainty3D;
-    this->ldm->tuncThresh = this->configuration.tunc;
-    this->ldm->ageThresh = this->configuration.age;
+    this->ldm->tuncThresh              = this->configuration.tunc;
+    this->ldm->ageThresh               = this->configuration.age;
     this->ldm->setLdmVerbosity(this->configuration.ldmVerbosity);
 }
 
@@ -2528,10 +2404,10 @@ void ApplicationBase::fillSecurity(ieee1609_2_data *secData) {
 
 // This function maybe overloaded to perform additonal operation before calling
 // radio tx function.
-int ApplicationBase::transmit(uint8_t index, std::shared_ptr<msg_contents> mc,
-    int16_t bufLen, TransmitType txType) {
+int ApplicationBase::transmit(
+    uint8_t index, std::shared_ptr<msg_contents> mc, int16_t bufLen, TransmitType txType) {
     std::thread::id tid = std::this_thread::get_id();
-    if(MsgType ==  MessageType::BSM) {
+    if (MsgType == MessageType::BSM) {
         qMon->tData[tid].txBSMs++;
     }
     // If positive, should be the # of bytes sent
@@ -2540,35 +2416,33 @@ int ApplicationBase::transmit(uint8_t index, std::shared_ptr<msg_contents> mc,
 
     // ethernet
     if (this->isTxSim) {
-        ret = simTransmit->transmit(mc->abuf.data, bufLen,
-                                    this->configuration.eventPriority);
-    }else{ // radio
+        ret = simTransmit->transmit(mc->abuf.data, bufLen, this->configuration.eventPriority);
+    } else {  // radio
         if (txType == TransmitType::SPS) {
             // SPS priority is set when creating the flow
-            ret =  this->spsTransmits[index].transmit(mc->abuf.data, bufLen,
-                                                      Priority::PRIORITY_UNKNOWN);
+            ret = this->spsTransmits[index].transmit(
+                mc->abuf.data, bufLen, Priority::PRIORITY_UNKNOWN);
         } else if (txType == TransmitType::EVENT) {
             // event priority is set per packet using traffic class
-            ret =this->eventTransmits[index].transmit(mc->abuf.data, bufLen,
-                                                      this->configuration.eventPriority);
+            ret = this->eventTransmits[index].transmit(
+                mc->abuf.data, bufLen, this->configuration.eventPriority);
         }
     }
     return ret;
 }
 
 int ApplicationBase::send(uint8_t index, TransmitType txType) {
-    const auto i = index;
-    auto encLength = 0;
+    const auto i                     = index;
+    auto encLength                   = 0;
     std::shared_ptr<msg_contents> mc = nullptr;
-    bool validMessage = false;
-    uint64_t currTime = 0;
+    bool validMessage                = false;
+    uint64_t currTime                = 0;
     // if congestion control enabled, only send when congestionControl tells us to:
-    if(this->configuration.enableCongCtrl && congCtrlInitialized
-        && !(criticalState && txType == TransmitType::EVENT) && !exitApp){
-        sem_wait (congestionControlManager->
-                    getCongestionControlUserData()->congestionControlSem);
+    if (this->configuration.enableCongCtrl && congCtrlInitialized
+        && !(criticalState && txType == TransmitType::EVENT) && !exitApp) {
+        sem_wait(congestionControlManager->getCongestionControlUserData()->congestionControlSem);
     }
-    if(exitApp){
+    if (exitApp) {
         return -1;
     }
 
@@ -2584,9 +2458,9 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
 
 #if AEROLINK
     // check if identiy and cert change needs to be performed
-    if(configuration.enableSecurity && !this->configuration.lcmName.empty()
-            && this->configuration.idChangeInterval && kinematicsReceive &&
-            appLocListener_ && hvLocationInfo) {
+    if (configuration.enableSecurity && !this->configuration.lcmName.empty()
+        && this->configuration.idChangeInterval && kinematicsReceive && appLocListener_
+        && hvLocationInfo) {
         changeIdentity(idChangeData.idChangeCbSem);
     }
 #endif
@@ -2595,66 +2469,60 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
     fillMsg(mc);
     encLength = encode_msg(mc.get());
     if (this->configuration.enableSecurity) {
-        encLength =
-            encodeAndSignMsg(mc,
-                             txType == TransmitType::EVENT ?
-                             SecurityService::SignType::ST_CERTIFICATE :
-                             SecurityService::SignType::ST_AUTO);
+        encLength = encodeAndSignMsg(mc, txType == TransmitType::EVENT
+                                             ? SecurityService::SignType::ST_CERTIFICATE
+                                             : SecurityService::SignType::ST_AUTO);
     }
     // this will avoid any log writing if the log file was never opened
     // save timestamp before sendto
     currTime = timestamp_now();
-    if(this->configuration.enableCongCtrl && txType != TransmitType::EVENT && !exitApp){
+    if (this->configuration.enableCongCtrl && txType != TransmitType::EVENT && !exitApp) {
         /* Will start it here because to prevent desynchronization
             between the transmit thread and congestion control startup */
         /* Start congestion control threads */
-        if(!congCtrlInitialized){
-            auto &v2xPropFactory = V2xPropFactory::getInstance();
+        if (!congCtrlInitialized) {
+            auto &v2xPropFactory     = V2xPropFactory::getInstance();
             congestionControlManager = v2xPropFactory.getCongestionControlManager();
-            congCtrlListener = std::make_shared<QitsCongCtrlListener>();
+            congCtrlListener         = std::make_shared<QitsCongCtrlListener>();
             congestionControlManager->registerListener(congCtrlListener);
             congCtrlInitialized = true;
-            congestionControlManager->updateCongestionControlType
-                ((CongestionControlType)congCtrlConfig.congCtrlType);
+            congestionControlManager->updateCongestionControlType(
+                (CongestionControlType)congCtrlConfig.congCtrlType);
             CongestionControlUtility::setLoggingLevel(congCtrlConfig.enableCongCtrlLogging);
-            congestionControlManager->updateCbpConfig(congCtrlConfig.cbpWeightFactor,
-                congCtrlConfig.cbpMeasInterval);
-            congestionControlManager->enableSpsEnhancements
-                (congCtrlConfig.enableSpsEnhancements);
-            congestionControlManager->updatePERConfig(congCtrlConfig.perMax,
-                congCtrlConfig.perInterval, congCtrlConfig.perSubInterval);
-            congestionControlManager->updateDensConfig
-                (congCtrlConfig.vDensityCoefficient, congCtrlConfig.vDensityWeightFactor,
-                congCtrlConfig.vDensityMinPerRange);
-            congestionControlManager->updateTeConfig
-                (congCtrlConfig.txCtrlInterval, congCtrlConfig.hvTEMinTimeDiff,
-                congCtrlConfig.hvTEMaxTimeDiff, congCtrlConfig.rvTEMinTimeDiff,
-                congCtrlConfig.rvTEMaxTimeDiff, congCtrlConfig.teMinThresh,
-                congCtrlConfig.teMaxThresh, congCtrlConfig.teErrSensitivity);
+            congestionControlManager->updateCbpConfig(
+                congCtrlConfig.cbpWeightFactor, congCtrlConfig.cbpMeasInterval);
+            congestionControlManager->enableSpsEnhancements(congCtrlConfig.enableSpsEnhancements);
+            congestionControlManager->updatePERConfig(
+                congCtrlConfig.perMax, congCtrlConfig.perInterval, congCtrlConfig.perSubInterval);
+            congestionControlManager->updateDensConfig(congCtrlConfig.vDensityCoefficient,
+                congCtrlConfig.vDensityWeightFactor, congCtrlConfig.vDensityMinPerRange);
+            congestionControlManager->updateTeConfig(congCtrlConfig.txCtrlInterval,
+                congCtrlConfig.hvTEMinTimeDiff, congCtrlConfig.hvTEMaxTimeDiff,
+                congCtrlConfig.rvTEMinTimeDiff, congCtrlConfig.rvTEMaxTimeDiff,
+                congCtrlConfig.teMinThresh, congCtrlConfig.teMaxThresh,
+                congCtrlConfig.teErrSensitivity);
             congestionControlManager->updateIttConfig(congCtrlConfig.reschedThresh,
-            congCtrlConfig.timeAccuracy,
-                congCtrlConfig.minItt, congCtrlConfig.maxItt, congCtrlConfig.txRand);
-            if(congCtrlConfig.enableSpsEnhancements && !this->isTxSim){
-                congestionControlManager->updateSpsEnhanceConfig
-                    (congCtrlConfig.spsEnhIntervalRound, congCtrlConfig.spsEnhDelayPerc,
-                    congCtrlConfig.spsEnhHysterPerc);
+                congCtrlConfig.timeAccuracy, congCtrlConfig.minItt, congCtrlConfig.maxItt,
+                congCtrlConfig.txRand);
+            if (congCtrlConfig.enableSpsEnhancements && !this->isTxSim) {
+                congestionControlManager->updateSpsEnhanceConfig(congCtrlConfig.spsEnhIntervalRound,
+                    congCtrlConfig.spsEnhDelayPerc, congCtrlConfig.spsEnhHysterPerc);
                 // need to use squish api for this in future
                 QitsCongCtrlListener::spsTransmit_ = &this->spsTransmits[index];
             }
-            if(CCErrorCode::SUCCESS !=
-                    congestionControlManager->startCongestionControl()){
+            if (CCErrorCode::SUCCESS != congestionControlManager->startCongestionControl()) {
                 std::cerr << "Congestion control manager failed start up\n";
             }
             congCtrlCbDataPtr = std::make_shared<CongestionControlUserData>();
-            sem_wait (congestionControlManager->
-                    getCongestionControlUserData()->congestionControlSem);
-            currTime = timestamp_now();
+            sem_wait(
+                congestionControlManager->getCongestionControlUserData()->congestionControlSem);
+            currTime   = timestamp_now();
             lastTxTime = currTime;
         }
     }
     int ret = 0;
-    if((criticalState && txType == TransmitType::EVENT) ||
-       (!criticalState && txType == TransmitType::SPS)) {
+    if ((criticalState && txType == TransmitType::EVENT)
+        || (!criticalState && txType == TransmitType::SPS)) {
         ret = this->transmit(index, mc, encLength, txType);
         if (encLength > 0 && ret > 0) {
             validMessage = true;
@@ -2662,7 +2530,7 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
                 currTime = timestamp_now();
 
                 txInterval = currTime - lastTxTime;
-                if(lastTxTime == 0){
+                if (lastTxTime == 0) {
                     txInterval = 0;
                 }
                 lastTxTime = currTime;
@@ -2670,42 +2538,42 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
                 // check if valid msg contents pointer
                 if (mc) {
                     int psid = 0;
-                    if(mc->wsmp){
+                    if (mc->wsmp) {
                         psid = ((wsmp_data_t *)mc->wsmp)->psid;
                     }
-                    if(psid == PSID_BSM && mc.get()->j2735_msg ){
+                    if (psid == PSID_BSM && mc.get()->j2735_msg) {
                         // we do not care about non bsms for now
-                        bsm_value_t *bsm = (bsm_value_t*)(mc.get()->j2735_msg);
-                        bsm_data bs = {0};
-                        bs.id = bsm->id;
-                        bs.timestamp_ms = bsm->timestamp_ms;
-                        bs.secMark_ms = bsm->secMark_ms;
-                        bs.MsgCount = bsm->MsgCount;
-                        bs.Latitude = bsm->Latitude;
-                        bs.Longitude = bsm->Longitude;
-                        bs.Elevation = bsm->Elevation;
-                        bs.SemiMajorAxisAccuracy = bsm->SemiMajorAxisAccuracy;
-                        bs.SemiMinorAxisAccuracy = bsm->SemiMinorAxisAccuracy;
-                        bs.SemiMajorAxisOrientation = bsm->SemiMajorAxisOrientation;
-                        bs.TransmissionState = bsm->TransmissionState;
-                        bs.Speed = bsm->Speed;
-                        bs.Heading_degrees = bsm->Heading_degrees;
-                        bs.SteeringWheelAngle = bsm->SteeringWheelAngle;
-                        bs.AccelLon_cm_per_sec_squared = bsm->AccelLon_cm_per_sec_squared;
-                        bs.AccelLat_cm_per_sec_squared = bsm->AccelLat_cm_per_sec_squared;
-                        bs.AccelVert_two_centi_gs = bsm->AccelVert_two_centi_gs;
+                        bsm_value_t *bsm                  = (bsm_value_t *)(mc.get()->j2735_msg);
+                        bsm_data bs                       = {0};
+                        bs.id                             = bsm->id;
+                        bs.timestamp_ms                   = bsm->timestamp_ms;
+                        bs.secMark_ms                     = bsm->secMark_ms;
+                        bs.MsgCount                       = bsm->MsgCount;
+                        bs.Latitude                       = bsm->Latitude;
+                        bs.Longitude                      = bsm->Longitude;
+                        bs.Elevation                      = bsm->Elevation;
+                        bs.SemiMajorAxisAccuracy          = bsm->SemiMajorAxisAccuracy;
+                        bs.SemiMinorAxisAccuracy          = bsm->SemiMinorAxisAccuracy;
+                        bs.SemiMajorAxisOrientation       = bsm->SemiMajorAxisOrientation;
+                        bs.TransmissionState              = bsm->TransmissionState;
+                        bs.Speed                          = bsm->Speed;
+                        bs.Heading_degrees                = bsm->Heading_degrees;
+                        bs.SteeringWheelAngle             = bsm->SteeringWheelAngle;
+                        bs.AccelLon_cm_per_sec_squared    = bsm->AccelLon_cm_per_sec_squared;
+                        bs.AccelLat_cm_per_sec_squared    = bsm->AccelLat_cm_per_sec_squared;
+                        bs.AccelVert_two_centi_gs         = bsm->AccelVert_two_centi_gs;
                         bs.AccelYaw_centi_degrees_per_sec = bsm->AccelYaw_centi_degrees_per_sec;
-                        bs.brakes = bsm->brakes;
-                        bs.VehicleWidth_cm = bsm->VehicleWidth_cm;
-                        bs.VehicleLength_cm = bsm->VehicleLength_cm;
-                        bs.events = bsm->events;
+                        bs.brakes                         = bsm->brakes;
+                        bs.VehicleWidth_cm                = bsm->VehicleWidth_cm;
+                        bs.VehicleLength_cm               = bsm->VehicleLength_cm;
+                        bs.events                         = bsm->events;
                         uint8_t cbr;
                         uint64_t monotonicTime;
                         if (txType == TransmitType::SPS) {
-                            cbr = spsTransmits[index].getCBRValue();
+                            cbr           = spsTransmits[index].getCBRValue();
                             monotonicTime = spsTransmits[index].latestTxRxTimeMonotonic();
                         } else {
-                            cbr = eventTransmits[index].getCBRValue();
+                            cbr           = eventTransmits[index].getCBRValue();
                             monotonicTime = eventTransmits[index].latestTxRxTimeMonotonic();
                         }
                         if (csvfp) {
@@ -2716,57 +2584,56 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
                                 configuration.enableCongCtrl, congCtrlInitialized, &writeMutexCv);
                         }
                         if (enableDiagLog_) {
-                            DiagLogData logData = {0};
-                            logData.validPkt = validMessage;
-                            logData.currTime = currTime;
-                            logData.cbr = cbr;
-                            logData.monotonicTime = monotonicTime;
-                            logData.txInterval = txInterval;
+                            DiagLogData logData    = {0};
+                            logData.validPkt       = validMessage;
+                            logData.currTime       = currTime;
+                            logData.cbr            = cbr;
+                            logData.monotonicTime  = monotonicTime;
+                            logData.txInterval     = txInterval;
                             logData.enableCongCtrl = configuration.enableCongCtrl;
-                            logData.monotonicTime = congCtrlInitialized;
+                            logData.monotonicTime  = congCtrlInitialized;
                             diagLogPktTxRx(true, txType, &logData, &bs);
                         }
                     }
                 }
             }
         }
-        if(kinematicsReceive && appLocListener_ && hvLocationInfo){
+        if (kinematicsReceive && appLocListener_ && hvLocationInfo) {
             {
                 lock_guard<mutex> lk(hvLocUpdateMtx);
-                locTimeMs_ = hvLocationInfo->getTimeStamp();
+                locTimeMs_      = hvLocationInfo->getTimeStamp();
                 locPositionDop_ = hvLocationInfo->getPositionDop();
-                locNumSvUsed_ = hvLocationInfo->getNumSvUsed();
+                locNumSvUsed_   = hvLocationInfo->getNumSvUsed();
             }
         }
     }
     return (validMessage ? encLength : 0);
 }
 
-int ApplicationBase::encodeAndSignMsg(std::shared_ptr<msg_contents> mc,
-                                      SecurityService::SignType type) {
+int ApplicationBase::encodeAndSignMsg(
+    std::shared_ptr<msg_contents> mc, SecurityService::SignType type) {
     // The message need to be signed/encrypted after layer 3
     SecurityOpt sopt = {};
     uint8_t signedSpdu[512];
     uint32_t signedSpduLen = 512;
-    sopt.psidValue = this->configuration.psid;
-    if (this->configuration.sspLength){
-         memcpy(sopt.sspValue, this->configuration.ssp,
-            this->configuration.sspLength);
-         if(this->configuration.enableSspMask && this->configuration.sspMaskLength){
-            memcpy(sopt.sspMaskValue, this->configuration.sspMask,
-                this->configuration.sspMaskLength);
-         }
-        sopt.sspLength = this->configuration.sspLength;
+    sopt.psidValue         = this->configuration.psid;
+    if (this->configuration.sspLength) {
+        memcpy(sopt.sspValue, this->configuration.ssp, this->configuration.sspLength);
+        if (this->configuration.enableSspMask && this->configuration.sspMaskLength) {
+            memcpy(
+                sopt.sspMaskValue, this->configuration.sspMask, this->configuration.sspMaskLength);
+        }
+        sopt.sspLength     = this->configuration.sspLength;
         sopt.sspMaskLength = this->configuration.sspMaskLength;
     }
-    sopt.secVerbosity = this->configuration.secVerbosity;
+    sopt.secVerbosity   = this->configuration.secVerbosity;
     std::thread::id tid = std::this_thread::get_id();
-    if(configuration.enableSignStatLog){
+    if (configuration.enableSignStatLog) {
         if (thrSignLatencies[tid].size() > signStatIdx[tid]) {
             sopt.signStat = &thrSignLatencies[tid].at(signStatIdx[tid]);
-        }else{
+        } else {
             signStatIdx[tid] = 0;
-            sopt.signStat = &thrSignLatencies[tid].at(signStatIdx[tid]);
+            sopt.signStat    = &thrSignLatencies[tid].at(signStatIdx[tid]);
         }
     }
     auto encLength = 0;
@@ -2777,17 +2644,18 @@ int ApplicationBase::encodeAndSignMsg(std::shared_ptr<msg_contents> mc,
 
     // Aerolink handles IEEE1609.2 header insertion, but this requires us to
     // make buffer copy of the header and the payload.
-    if (SecService->SignMsg(sopt, (uint8_t*)mc->abuf.data,
-                            encLength, signedSpdu, signedSpduLen, type) < 0) {
+    if (SecService->SignMsg(
+            sopt, (uint8_t *)mc->abuf.data, encLength, signedSpdu, signedSpduLen, type)
+        < 0) {
         signFail++;
         return -1;
-    }else{
+    } else {
         signSuccess++;
     }
-    if(configuration.enableSignStatLog){
+    if (configuration.enableSignStatLog) {
         // successful signing, increment the sign stat idx
         signStatIdx[tid]++;
-        signStatIdx[tid]%=thrSignLatencies[tid].size();
+        signStatIdx[tid] %= thrSignLatencies[tid].size();
     }
     abuf_reset(&mc->abuf, ABUF_HEADROOM + this->configuration.padding);
     asn_ncat(&mc->abuf, (char *)signedSpdu, signedSpduLen);
@@ -2799,17 +2667,16 @@ int ApplicationBase::receive(const uint8_t index, const uint16_t bufLen) {
     return -1;
 }
 
-int ApplicationBase::receive(const uint8_t index, const uint16_t bufLen,
-        const uint32_t ldmIndex) {
+int ApplicationBase::receive(const uint8_t index, const uint16_t bufLen, const uint32_t ldmIndex) {
     return -1;
 }
 
 void ApplicationBase::closeAllRadio() {
-    if(appVerbosity){
+    if (appVerbosity) {
         std::cout << "Attempting to close all flows\n";
     }
 
-    for (uint8_t i = 0; i<this->eventTransmits.size(); i++) {
+    for (uint8_t i = 0; i < this->eventTransmits.size(); i++) {
         this->eventTransmits[i].closeFlow();
     }
     eventTransmits.clear();
@@ -2824,7 +2691,7 @@ void ApplicationBase::closeAllRadio() {
     }
     radioReceives.clear();
 
-    if(appVerbosity){
+    if (appVerbosity) {
         std::cout << "Finished closing all flows\n";
     }
 }
@@ -2836,11 +2703,11 @@ void ApplicationBase::closeAllRadio() {
 void ApplicationBase::initVerifLogging() {
     std::vector<VerifStats> stats;
     sem_wait(&this->log_sem);
-    for(int i = 0 ; i < configuration.verifStatsSize; i++)
+    for (int i = 0; i < configuration.verifStatsSize; i++)
         stats.push_back(VerifStats());
     thrVerifLatencies[std::this_thread::get_id()] = stats;
-    if(remove(configuration.verifStatLogFile.c_str()) != 0){
-        if(appVerbosity > 4)
+    if (remove(configuration.verifStatLogFile.c_str()) != 0) {
+        if (appVerbosity > 4)
             cerr << "Error deleting log file" << endl;
     }
     sem_post(&this->log_sem);
@@ -2855,25 +2722,22 @@ void ApplicationBase::writeVerifLogging() {
     sem_wait(&this->log_sem);
     std::stringstream ss;
     ss << std::this_thread::get_id();
-    file.open(configuration.verifStatLogFile.c_str(),
-                std::ofstream::out | std::ofstream::app);
+    file.open(configuration.verifStatLogFile.c_str(), std::ofstream::out | std::ofstream::app);
     std::vector<VerifStats> stats;
     auto itr = thrVerifLatencies.find(std::this_thread::get_id());
-    if (itr != thrVerifLatencies.end()){
+    if (itr != thrVerifLatencies.end()) {
         stats = itr->second;
     }
     for (auto it = stats.begin(); it != stats.end(); ++it) {
         if (it->timestamp != 0.0 && it->verifLatency != 0.0) {
-            file << it->timestamp << ", " <<
-                        it->verifLatency << std::endl;
+            file << it->timestamp << ", " << it->verifLatency << std::endl;
         }
     }
     file.close();
     sem_post(&this->log_sem);
 }
 
-bool compareByVHz(const ResultLoggingStats &a, const ResultLoggingStats &b)
-{
+bool compareByVHz(const ResultLoggingStats &a, const ResultLoggingStats &b) {
     return a.asyncVerifSuccess < b.asyncVerifSuccess;
 }
 /**
@@ -2883,11 +2747,11 @@ bool compareByVHz(const ResultLoggingStats &a, const ResultLoggingStats &b)
 void ApplicationBase::initResultsLogging() {
     std::vector<ResultLoggingStats> stats;
     sem_wait(&this->log_sem);
-    for(int i = 0 ; i < configuration.verifResLogSize; i++)
+    for (int i = 0; i < configuration.verifResLogSize; i++)
         stats.push_back(ResultLoggingStats());
     thrResLoggingValues[std::this_thread::get_id()] = stats;
-    if(remove(configuration.verifResLogFile.c_str()) != 0){
-        if(appVerbosity > 4)
+    if (remove(configuration.verifResLogFile.c_str()) != 0) {
+        if (appVerbosity > 4)
             cerr << "Error deleting log file" << endl;
     }
     sem_post(&this->log_sem);
@@ -2902,20 +2766,21 @@ void ApplicationBase::writeResultsLogging() {
     sem_wait(&this->log_sem);
     std::stringstream ss;
     ss << std::this_thread::get_id();
-    file.open(configuration.verifResLogFile.c_str(),
-                std::ofstream::out | std::ofstream::app);
+    file.open(configuration.verifResLogFile.c_str(), std::ofstream::out | std::ofstream::app);
     std::vector<ResultLoggingStats> stats;
     auto itr = thrResLoggingValues.find(std::this_thread::get_id());
-    if (itr != thrResLoggingValues.end()){
+    if (itr != thrResLoggingValues.end()) {
         stats = itr->second;
     }
     std::sort(stats.begin(), stats.end(), compareByVHz);
-    file<<"ThreadID,"<<"TotalSuccessfulVerifs,"<<"BatchVerifRate (kVhz),"
-        <<"BatchTimeStep (ms)"<<std::endl;
+    file << "ThreadID,"
+         << "TotalSuccessfulVerifs,"
+         << "BatchVerifRate (kVhz),"
+         << "BatchTimeStep (ms)" << std::endl;
     for (auto it = stats.begin(); it != stats.end(); ++it) {
         if (it->currTimeStamp != 0.0 && it->asyncVerifSuccess != 0.0) {
-            file  <<std::hex << it->tid << std::dec << ", " <<it->asyncVerifSuccess
-                << ", " << it->rate << " , " << it->dur <<std::endl;
+            file << std::hex << it->tid << std::dec << ", " << it->asyncVerifSuccess << ", "
+                 << it->rate << " , " << it->dur << std::endl;
         }
     }
     file.close();
@@ -2929,11 +2794,11 @@ void ApplicationBase::writeResultsLogging() {
 void ApplicationBase::initSignLogging() {
     std::vector<SignStats> stats;
     sem_wait(&this->log_sem);
-    for(int i = 0 ; i < configuration.signStatsSize; i++)
+    for (int i = 0; i < configuration.signStatsSize; i++)
         stats.push_back(SignStats());
     thrSignLatencies[std::this_thread::get_id()] = stats;
-    if(remove(configuration.signStatLogFile.c_str()) != 0){
-        if(appVerbosity > 4)
+    if (remove(configuration.signStatLogFile.c_str()) != 0) {
+        if (appVerbosity > 4)
             cerr << "Error deleting log file" << endl;
     }
     sem_post(&this->log_sem);
@@ -2948,17 +2813,15 @@ void ApplicationBase::writeSignLogging() {
     sem_wait(&this->log_sem);
     std::stringstream ss;
     ss << std::this_thread::get_id();
-    file.open(configuration.signStatLogFile.c_str(),
-                std::ofstream::out | std::ofstream::app);
+    file.open(configuration.signStatLogFile.c_str(), std::ofstream::out | std::ofstream::app);
     std::vector<SignStats> stats;
     if (auto itr = thrSignLatencies.find(std::this_thread::get_id());
-            itr != thrSignLatencies.end()){
+        itr != thrSignLatencies.end()) {
         stats = itr->second;
     }
     for (auto it = stats.begin(); it != stats.end(); ++it) {
         if (it->timestamp != 0.0 && it->signLatency != 0.0) {
-            file << it->timestamp << ", " <<
-                        it->signLatency << std::endl;
+            file << it->timestamp << ", " << it->signLatency << std::endl;
         }
     }
     file.close();
@@ -2972,11 +2835,11 @@ void ApplicationBase::writeSignLogging() {
 void ApplicationBase::initMisbehaviorLogging() {
     std::vector<MisbehaviorStats> stats;
     sem_wait(&this->log_sem);
-    for(int i = 0 ; i < configuration.mbdStatLogListSize; i++)
+    for (int i = 0; i < configuration.mbdStatLogListSize; i++)
         stats.push_back(MisbehaviorStats());
     thrMisbehaviorLatencies[std::this_thread::get_id()] = stats;
-    if(remove(configuration.mbdStatLogFile.c_str()) != 0){
-        if(appVerbosity > 4)
+    if (remove(configuration.mbdStatLogFile.c_str()) != 0) {
+        if (appVerbosity > 4)
             cerr << "Error deleting log file" << endl;
     }
     sem_post(&this->log_sem);
@@ -2991,27 +2854,25 @@ void ApplicationBase::writeMisbehaviorLogging() {
     sem_wait(&this->log_sem);
     std::stringstream ss;
     ss << std::this_thread::get_id();
-    file.open(configuration.mbdStatLogFile.c_str(),
-                std::ofstream::out | std::ofstream::app);
+    file.open(configuration.mbdStatLogFile.c_str(), std::ofstream::out | std::ofstream::app);
     std::vector<MisbehaviorStats> stats = thrMisbehaviorLatencies[std::this_thread::get_id()];
     for (auto it = stats.begin(); it != stats.end(); ++it) {
         if (it->timestamp != 0.0 && it->misbehaviorLatency != 0.0) {
-            file << it->timestamp << ", " <<
-                        it->misbehaviorLatency << std::endl;
+            file << it->timestamp << ", " << it->misbehaviorLatency << std::endl;
         }
     }
     file.close();
     sem_post(&this->log_sem);
 }
 
-int ApplicationBase::getSysV2xIpIfaceAddr(string& ipAddr) {
+int ApplicationBase::getSysV2xIpIfaceAddr(string &ipAddr) {
     int result = -1;
     struct ifaddrs *ifap;
     struct ifaddrs *ifa;
     char addr[INET6_ADDRSTRLEN];
     string v2xIfName;
 
-    //get V2X-IP iface name from the radio instance used for Tx WSA
+    // get V2X-IP iface name from the radio instance used for Tx WSA
     if (this->spsTransmits.empty()
         or this->spsTransmits[0].getV2xIfaceName(TrafficIpType::TRAFFIC_IP, v2xIfName)
         or v2xIfName.empty()) {
@@ -3029,10 +2890,10 @@ int ApplicationBase::getSysV2xIpIfaceAddr(string& ipAddr) {
         if (ifa->ifa_addr && ifa->ifa_addr->sa_family == AF_INET6) {
             string ifaName(ifa->ifa_name);
             if (ifaName == v2xIfName) {
-                getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in6), addr, sizeof(addr),
-                            NULL, 0, NI_NUMERICHOST);
+                getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in6), addr, sizeof(addr), NULL, 0,
+                    NI_NUMERICHOST);
                 ipAddr = string(addr);
-                if(appVerbosity > 3) {
+                if (appVerbosity > 3) {
                     cout << "Found V2X ifaceName:" << ifaName << " addr:" << ipAddr << endl;
                 }
                 result = 0;
@@ -3077,7 +2938,7 @@ int ApplicationBase::updateCachedV2xIpIfaceAddr() {
     return -1;
 }
 
-int ApplicationBase::getV2xIpIfaceAddr(string& addr) {
+int ApplicationBase::getV2xIpIfaceAddr(string &addr) {
     {
         std::unique_lock<std::mutex> lock(v2xIpAddrMtx_);
         addr = v2xIpAddr_;
@@ -3094,7 +2955,7 @@ int ApplicationBase::getV2xIpIfaceAddr(string& addr) {
     return 0;
 }
 
-bool ApplicationBase::openBsmLogFile(const std::string& fullPathName) {
+bool ApplicationBase::openBsmLogFile(const std::string &fullPathName) {
     bool res = false;
     if (not enableCsvLog_) {
         return res;
@@ -3106,9 +2967,8 @@ bool ApplicationBase::openBsmLogFile(const std::string& fullPathName) {
             if (!csvfp) {
                 cerr << "Failed to open log file " << fullPathName << std::endl;
             } else {
-                if(configuration.appVerbosity){
-                    std::cout << "Open log " << fullPathName
-                        << " success!" << std::endl;
+                if (configuration.appVerbosity) {
+                    std::cout << "Open log " << fullPathName << " success!" << std::endl;
                 }
                 res = true;
                 write_bsm_header(csvfp);
@@ -3116,13 +2976,13 @@ bool ApplicationBase::openBsmLogFile(const std::string& fullPathName) {
         }
     }
     if (res) {
-        for(int index = 0 ; index < spsTransmits.size(); index++) {
+        for (int index = 0; index < spsTransmits.size(); index++) {
             this->spsTransmits[index].enableCsvLog(enableCsvLog_);
         }
-        for(int index = 0 ; index < eventTransmits.size(); index++) {
+        for (int index = 0; index < eventTransmits.size(); index++) {
             this->eventTransmits[index].enableCsvLog(enableCsvLog_);
         }
-        for(int index = 0 ; index < radioReceives.size(); index++) {
+        for (int index = 0; index < radioReceives.size(); index++) {
             this->radioReceives[index].enableCsvLog(enableCsvLog_);
         }
     }
@@ -3146,7 +3006,7 @@ void ApplicationBase::writeLogHeader(FILE *fp) {
     fprintf(fp, "\n");
 }
 
-bool ApplicationBase::openLogFile(const std::string& fullPathName) {
+bool ApplicationBase::openLogFile(const std::string &fullPathName) {
     bool res = false;
     if (not enableCsvLog_) {
         return res;
@@ -3165,13 +3025,13 @@ bool ApplicationBase::openLogFile(const std::string& fullPathName) {
         }
     }
     if (res) {
-        for(int index = 0 ; index < spsTransmits.size(); index++) {
+        for (int index = 0; index < spsTransmits.size(); index++) {
             this->spsTransmits[index].enableCsvLog(enableCsvLog_);
         }
-        for(int index = 0 ; index < eventTransmits.size(); index++) {
+        for (int index = 0; index < eventTransmits.size(); index++) {
             this->eventTransmits[index].enableCsvLog(enableCsvLog_);
         }
-        for(int index = 0 ; index < radioReceives.size(); index++) {
+        for (int index = 0; index < radioReceives.size(); index++) {
             this->radioReceives[index].enableCsvLog(enableCsvLog_);
         }
     }
@@ -3179,16 +3039,13 @@ bool ApplicationBase::openLogFile(const std::string& fullPathName) {
     return res;
 }
 
-
-void ApplicationBase::writeLog(const uint8_t index,
-    uint32_t l2SrcAddr, bool isTx, TransmitType txType, bool validPkt,
-    uint64_t timestamp, uint32_t psid, uint64_t monotonicTime,
-    float locPositionDop, uint16_t locNumSvUsed, uint64_t locTimeMs, uint8_t cbr,
-    bsm_data* bs, double distFromRV, uint32_t RVsInRange,
-    uint64_t txInterval, bool enableCongCtrl, bool congCtrlInitialized,
-    std::condition_variable* writeMutexCv) {
+void ApplicationBase::writeLog(const uint8_t index, uint32_t l2SrcAddr, bool isTx,
+    TransmitType txType, bool validPkt, uint64_t timestamp, uint32_t psid, uint64_t monotonicTime,
+    float locPositionDop, uint16_t locNumSvUsed, uint64_t locTimeMs, uint8_t cbr, bsm_data *bs,
+    double distFromRV, uint32_t RVsInRange, uint64_t txInterval, bool enableCongCtrl,
+    bool congCtrlInitialized, std::condition_variable *writeMutexCv) {
     uint64_t periodicityMs = 0;
-    int res = -1;
+    int res                = -1;
     struct timespec ts;
     uint64_t timestamp_now_ms = 0;
 
@@ -3197,10 +3054,10 @@ void ApplicationBase::writeLog(const uint8_t index,
     }
     // build a string and then only lock for just that part in writing to the file
     char tmpLogBuf[650] = "";
-    char* curChar = tmpLogBuf;
-    char* const endChar = tmpLogBuf + sizeof tmpLogBuf - 1;
+    char *curChar       = tmpLogBuf;
+    char *const endChar = tmpLogBuf + sizeof tmpLogBuf - 1;
     char tmpLogStr[200] = "";
-    timestamp_now_ms = timestamp_now();
+    timestamp_now_ms    = timestamp_now();
 
     /* Log Format:
      * TimeStamp    TimeStamp_ms    Time_monotonic
@@ -3211,54 +3068,49 @@ void ApplicationBase::writeLog(const uint8_t index,
      * vehicleDensityInRange    ChannelQualityIndication
      * BSMValid max_ITT GPS-Time    Events  DCC random time Hysterisis
      */
-    if(exitApp){
+    if (exitApp) {
         return;
     }
     // write general data to log
     // build the string in this function instead of immediately writing
     int ret = 0;
-    if(writeMutexCv && !exitApp){
+    if (writeMutexCv && !exitApp) {
         lock_guard<std::mutex> lock(csvMutex);
         writeLogFinish = false;
     }
-    ret  = writeGeneralLog(tmpLogStr, 200, bs, csvfp, isTx, periodicityMs, validPkt,
-                RVsInRange, getCurrentTimestamp().c_str(), monotonicTime, timestamp,
-                locPositionDop, locNumSvUsed, locTimeMs, cbr, txInterval, l2SrcAddr);
+    ret = writeGeneralLog(tmpLogStr, 200, bs, csvfp, isTx, periodicityMs, validPkt, RVsInRange,
+        getCurrentTimestamp().c_str(), monotonicTime, timestamp, locPositionDop, locNumSvUsed,
+        locTimeMs, cbr, txInterval, l2SrcAddr);
 
     // check if error in writing general data
-    if(ret == -1){
+    if (ret == -1) {
         return;
     }
-    curChar += snprintf(curChar, endChar-curChar, "%s", tmpLogStr);
+    curChar += snprintf(curChar, endChar - curChar, "%s", tmpLogStr);
     // if congestion control enabled, write cong ctrl data to log
     unsigned short eventsData = getEventsData(&(bs->events));
 
     if (enableCongCtrl && congCtrlInitialized && isTx) {
         // get a snapshot of the current cong control calculation
-        writeCongCtrlLog(tmpLogStr, 200, csvfp,
-            &congCtrlCbData,
-            validPkt, eventsData);
-    }else{
+        writeCongCtrlLog(tmpLogStr, 200, csvfp, &congCtrlCbData, validPkt, eventsData);
+    } else {
         // make sure to write commas for the empty fields
-        snprintf(tmpLogStr, 200, "0.0,0.0,0.0,%d,%lu,0.0,%u,0,%d",
-            validPkt ? 1 : 0,
-            (enableCongCtrl && congCtrlInitialized) ?
-              congCtrlCbData.maxITT : 0,
-            eventsData, 5);
+        snprintf(tmpLogStr, 200, "0.0,0.0,0.0,%d,%lu,0.0,%u,0,%d", validPkt ? 1 : 0,
+            (enableCongCtrl && congCtrlInitialized) ? congCtrlCbData.maxITT : 0, eventsData, 5);
     }
-    curChar += snprintf(curChar, endChar-curChar, "%s", tmpLogStr);
+    curChar += snprintf(curChar, endChar - curChar, "%s", tmpLogStr);
     memset(tmpLogStr, 0, sizeof(tmpLogStr));
-    if(enableCongCtrl && congCtrlInitialized && !isTx){
-        char* tmpPtr = tmpLogStr;
-        char* const endBuf = tmpPtr + 50;
-        snprintf(tmpLogStr, endBuf-tmpPtr, ",%d,%f", congCtrlCbData.totalRvsInRange,
-            bs->distFromRV);
-        curChar += snprintf(curChar, endChar-curChar, "%s", tmpLogStr);
+    if (enableCongCtrl && congCtrlInitialized && !isTx) {
+        char *tmpPtr       = tmpLogStr;
+        char *const endBuf = tmpPtr + 50;
+        snprintf(
+            tmpLogStr, endBuf - tmpPtr, ",%d,%f", congCtrlCbData.totalRvsInRange, bs->distFromRV);
+        curChar += snprintf(curChar, endChar - curChar, "%s", tmpLogStr);
     }
 
     {
 
-        if(writeMutexCv && !exitApp){
+        if (writeMutexCv && !exitApp) {
             lock_guard<std::mutex> lock(csvMutex);
 
             // lock here to prevent race conditions when writing to file

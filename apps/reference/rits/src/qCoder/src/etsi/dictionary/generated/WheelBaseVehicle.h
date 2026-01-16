@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_WheelBaseVehicle_H_
-#define	_WheelBaseVehicle_H_
-
+#ifndef _WheelBaseVehicle_H_
+#define _WheelBaseVehicle_H_
 
 #include <asn_application.h>
 
@@ -20,12 +19,12 @@ extern "C" {
 
 /* Dependencies */
 typedef enum WheelBaseVehicle {
-	WheelBaseVehicle_tenCentimeters	= 1,
-	WheelBaseVehicle_unavailable	= 127
+    WheelBaseVehicle_tenCentimeters = 1,
+    WheelBaseVehicle_unavailable    = 127
 } e_WheelBaseVehicle;
 
 /* WheelBaseVehicle */
-typedef long	 WheelBaseVehicle_t;
+typedef long WheelBaseVehicle_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_WheelBaseVehicle;
@@ -43,5 +42,5 @@ per_type_encoder_f WheelBaseVehicle_encode_uper;
 }
 #endif
 
-#endif	/* _WheelBaseVehicle_H_ */
+#endif /* _WheelBaseVehicle_H_ */
 #include <asn_internal.h>

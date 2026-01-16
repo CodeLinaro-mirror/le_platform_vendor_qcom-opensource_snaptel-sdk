@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef DGNSSMENU_HPP
 #define DGNSSMENU_HPP
 
@@ -46,52 +52,52 @@
 using namespace telux::loc;
 
 enum class DgnssSourceType {
-    FILE_SOURCE = 0,
+    FILE_SOURCE   = 0,
     SERVER_SOURCE = 1
 };
 
 class NmeaInfoListener : public ILocationListener {
-public:
+ public:
     void onGnssNmeaInfo(uint64_t timestamp, const std::string &nmea) override;
     void getNmeaStr(std::string &nmeaGGA);
-private:
+
+ private:
     std::string lastNmeaGGA_;
     std::mutex m_;
 };
 
-class DgnssMenu : public ConsoleApp, public IDgnssStatusListener,
-    public std::enable_shared_from_this<DgnssMenu> {
-public:
-   /**
-    * Initialize commands and SDK
-    */
-   int init(std::shared_ptr<ILocationManager>);
+class DgnssMenu : public ConsoleApp,
+                  public IDgnssStatusListener,
+                  public std::enable_shared_from_this<DgnssMenu> {
+ public:
+    /**
+     * Initialize commands and SDK
+     */
+    int init(std::shared_ptr<ILocationManager>);
 
-   DgnssMenu(std::string appName, std::string cursor);
+    DgnssMenu(std::string appName, std::string cursor);
 
-   ~DgnssMenu();
+    ~DgnssMenu();
 
-   void injectFromFile(std::vector<std::string> userInput);
-   void injectFromServer(std::vector<std::string> userInput);
-   void onDgnssStatusUpdate(DgnssStatus status) override;
+    void injectFromFile(std::vector<std::string> userInput);
+    void injectFromServer(std::vector<std::string> userInput);
+    void onDgnssStatusUpdate(DgnssStatus status) override;
 
-private:
-   telux::common::Status initDgnssManager(std::shared_ptr<IDgnssManager> &dgnssManager);
-   int waitforSock(int fd);
-   int processRtcmFromServer(void);
-   int processRtcmFromFile(void);
-   int startNmeaReport(uint32_t interval);
-   int sendGGAString(void);
+ private:
+    telux::common::Status initDgnssManager(std::shared_ptr<IDgnssManager> &dgnssManager);
+    int waitforSock(int fd);
+    int processRtcmFromServer(void);
+    int processRtcmFromFile(void);
+    int startNmeaReport(uint32_t interval);
+    int sendGGAString(void);
 
-   std::shared_ptr<IDgnssManager> dgnssManager_ = nullptr;
-   std::shared_ptr<ILocationManager> locationManager_ = nullptr;
-   std::shared_ptr<NmeaInfoListener> nmeaInfoListener_ = nullptr;
-   int ntcSocketFd_ = -1;
-   int dgnssSourceFd_ = -1;
-   bool stop_ = false;
-   bool reconnect_ = false;
-   DgnssSourceType dgnssSourceType_;
-
-
+    std::shared_ptr<IDgnssManager> dgnssManager_        = nullptr;
+    std::shared_ptr<ILocationManager> locationManager_  = nullptr;
+    std::shared_ptr<NmeaInfoListener> nmeaInfoListener_ = nullptr;
+    int ntcSocketFd_                                    = -1;
+    int dgnssSourceFd_                                  = -1;
+    bool stop_                                          = false;
+    bool reconnect_                                     = false;
+    DgnssSourceType dgnssSourceType_;
 };
 #endif  // DGNSMENU_HPP

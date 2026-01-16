@@ -16,7 +16,6 @@
 #define REMOTE 1
 #define BACKHAUL_WWAN "WWAN"
 
-
 VlanServerImpl::VlanServerImpl() {
     LOG(DEBUG, __FUNCTION__);
     taskQ_ = std::make_shared<telux::common::AsyncTaskQueue<void>>();
@@ -26,22 +25,20 @@ VlanServerImpl::~VlanServerImpl() {
     LOG(DEBUG, __FUNCTION__);
 }
 
-grpc::Status VlanServerImpl::InitService(ServerContext* context,
-    const dataStub::InitRequest* request, dataStub::GetServiceStatusReply* response) {
+grpc::Status VlanServerImpl::InitService(ServerContext *context,
+    const dataStub::InitRequest *request, dataStub::GetServiceStatusReply *response) {
 
     LOG(DEBUG, __FUNCTION__);
     Json::Value rootObj;
-    std::string filePath = VLAN_MANAGER_API_LOCAL_JSON;
-    telux::common::ErrorCode error =
-        JsonParser::readFromJsonFile(rootObj, filePath);
+    std::string filePath           = VLAN_MANAGER_API_LOCAL_JSON;
+    telux::common::ErrorCode error = JsonParser::readFromJsonFile(rootObj, filePath);
     if (error != ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! ");
         return grpc::Status(grpc::StatusCode::NOT_FOUND, "Json not found");
     }
 
-    int cbDelay = rootObj["IVlanManager"]["IsSubsystemReadyDelay"].asInt();
-    std::string cbStatus =
-        rootObj["IVlanManager"]["IsSubsystemReady"].asString();
+    int cbDelay                         = rootObj["IVlanManager"]["IsSubsystemReadyDelay"].asInt();
+    std::string cbStatus                = rootObj["IVlanManager"]["IsSubsystemReady"].asString();
     telux::common::ServiceStatus status = CommonUtils::mapServiceStatus(cbStatus);
     LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", cbStatus);
 
@@ -51,17 +48,17 @@ grpc::Status VlanServerImpl::InitService(ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status VlanServerImpl::CreateVlan(ServerContext* context,
-    const dataStub::CreateVlanRequest* request, dataStub::CreateVlanReply* response) {
+grpc::Status VlanServerImpl::CreateVlan(ServerContext *context,
+    const dataStub::CreateVlanRequest *request, dataStub::CreateVlanReply *response) {
 
     LOG(DEBUG, __FUNCTION__);
-    std::string apiJsonPath = VLAN_MANAGER_API_LOCAL_JSON;
+    std::string apiJsonPath   = VLAN_MANAGER_API_LOCAL_JSON;
     std::string stateJsonPath = VLAN_MANAGER_STATE_JSON;
-    std::string subsystem = "IVlanManager";
-    std::string method = "createVlan";
-    JsonData data = {0};
-    telux::common::ErrorCode error =
-        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+    std::string subsystem     = "IVlanManager";
+    std::string method        = "createVlan";
+    JsonData data             = {0};
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
 
     if (error != ErrorCode::SUCCESS) {
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
@@ -72,12 +69,11 @@ grpc::Status VlanServerImpl::CreateVlan(ServerContext* context,
     }
 
     std::string nwType = DataUtilsStub::convertNetworkTypeToString(request->nw_type());
-    bool createBridge = request->create_bridge();
-    auto ifType = request->interface_type();
+    bool createBridge  = request->create_bridge();
+    auto ifType        = request->interface_type();
 
-    if ( (ifType == ::dataStub::InterfaceType::WLAN)  ||
-         (ifType == ::dataStub::InterfaceType::RNDIS) ||
-         (ifType == ::dataStub::InterfaceType::MHI)) {
+    if ((ifType == ::dataStub::InterfaceType::WLAN) || (ifType == ::dataStub::InterfaceType::RNDIS)
+        || (ifType == ::dataStub::InterfaceType::MHI)) {
         data.error = telux::common::ErrorCode::NOT_SUPPORTED;
     }
 
@@ -85,24 +81,24 @@ grpc::Status VlanServerImpl::CreateVlan(ServerContext* context,
         data.error = telux::common::ErrorCode::INVALID_ARG;
     }
 
-    if (data.status == telux::common::Status::SUCCESS &&
-        data.error == telux::common::ErrorCode::SUCCESS) {
+    if (data.status == telux::common::Status::SUCCESS
+        && data.error == telux::common::ErrorCode::SUCCESS) {
 
-        int idx = 0;
+        int idx      = 0;
         bool isFound = isConfigAvailable(subsystem, "vlanConfig", data, request, idx);
 
         if (isFound) {
             data.error = telux::common::ErrorCode::NO_EFFECT;
         } else {
-            const Json::Value& config = data.stateRootObj[subsystem]["vlanConfig"];
-            int count = config.size();
+            const Json::Value &config = data.stateRootObj[subsystem]["vlanConfig"];
+            int count                 = config.size();
             Json::Value newConfig;
-            newConfig["ifaceType"] = request->interface_type();
-            newConfig["vlanId"] = request->vlan_id();
-            newConfig["isAccelerated"] = request->is_accelerated();
-            newConfig["priority"] = request->priority();
-            newConfig["createBridge"] = createBridge;
-            newConfig["networkType"] = nwType;
+            newConfig["ifaceType"]                            = request->interface_type();
+            newConfig["vlanId"]                               = request->vlan_id();
+            newConfig["isAccelerated"]                        = request->is_accelerated();
+            newConfig["priority"]                             = request->priority();
+            newConfig["createBridge"]                         = createBridge;
+            newConfig["networkType"]                          = nwType;
             data.stateRootObj[subsystem]["vlanConfig"][count] = newConfig;
             JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
         }
@@ -116,17 +112,17 @@ grpc::Status VlanServerImpl::CreateVlan(ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status VlanServerImpl::RemoveVlan(ServerContext* context,
-    const dataStub::RemoveVlanRequest* request, dataStub::DefaultReply* response) {
+grpc::Status VlanServerImpl::RemoveVlan(ServerContext *context,
+    const dataStub::RemoveVlanRequest *request, dataStub::DefaultReply *response) {
 
     LOG(DEBUG, __FUNCTION__);
-    std::string apiJsonPath = VLAN_MANAGER_API_LOCAL_JSON;
+    std::string apiJsonPath   = VLAN_MANAGER_API_LOCAL_JSON;
     std::string stateJsonPath = VLAN_MANAGER_STATE_JSON;
-    std::string subsystem = "IVlanManager";
-    std::string method = "removeVlan";
-    JsonData data = {0};
-    telux::common::ErrorCode error =
-        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+    std::string subsystem     = "IVlanManager";
+    std::string method        = "removeVlan";
+    JsonData data             = {0};
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
 
     if (error != ErrorCode::SUCCESS) {
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
@@ -136,29 +132,27 @@ grpc::Status VlanServerImpl::RemoveVlan(ServerContext* context,
         data.error = telux::common::ErrorCode::INVALID_OPERATION;
     }
 
-    if (data.status == telux::common::Status::SUCCESS &&
-        data.error == telux::common::ErrorCode::SUCCESS) {
+    if (data.status == telux::common::Status::SUCCESS
+        && data.error == telux::common::ErrorCode::SUCCESS) {
 
-        int idx = 0;
+        int idx      = 0;
         bool isFound = isConfigAvailable(subsystem, "vlanConfig", data, request, idx);
 
         if (isFound) {
-            int currentCount =
-                data.stateRootObj[subsystem]["vlanConfig"].size();
-            int newCount = 0;
-            int index = 0;
+            int currentCount = data.stateRootObj[subsystem]["vlanConfig"].size();
+            int newCount     = 0;
+            int index        = 0;
             Json::Value newRoot;
             for (; index < currentCount; ++index) {
-                //skipping to add entry in new array for the matched index.
-                if (idx == index ) {
+                // skipping to add entry in new array for the matched index.
+                if (idx == index) {
                     continue;
                 }
                 newRoot[subsystem]["vlanConfig"][newCount]
                     = data.stateRootObj[subsystem]["vlanConfig"][index];
                 newCount++;
             }
-            data.stateRootObj[subsystem]["vlanConfig"]
-                = newRoot[subsystem]["vlanConfig"];
+            data.stateRootObj[subsystem]["vlanConfig"] = newRoot[subsystem]["vlanConfig"];
             JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
         } else {
             data.error = telux::common::ErrorCode::NO_EFFECT;
@@ -172,18 +166,17 @@ grpc::Status VlanServerImpl::RemoveVlan(ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status VlanServerImpl::QueryVlanInfo(ServerContext* context,
-    const dataStub::QueryVlanInfoRequest* request,
-    dataStub::QueryVlanInfoReply* response) {
+grpc::Status VlanServerImpl::QueryVlanInfo(ServerContext *context,
+    const dataStub::QueryVlanInfoRequest *request, dataStub::QueryVlanInfoReply *response) {
 
     LOG(DEBUG, __FUNCTION__);
-    std::string apiJsonPath = VLAN_MANAGER_API_LOCAL_JSON;
+    std::string apiJsonPath   = VLAN_MANAGER_API_LOCAL_JSON;
     std::string stateJsonPath = VLAN_MANAGER_STATE_JSON;
-    std::string subsystem = "IVlanManager";
-    std::string method = "queryVlanInfo";
-    JsonData data = {0};
-    telux::common::ErrorCode error =
-        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+    std::string subsystem     = "IVlanManager";
+    std::string method        = "queryVlanInfo";
+    JsonData data             = {0};
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
 
     if (error != ErrorCode::SUCCESS) {
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
@@ -193,15 +186,13 @@ grpc::Status VlanServerImpl::QueryVlanInfo(ServerContext* context,
         data.error = telux::common::ErrorCode::INVALID_OPERATION;
     }
 
-    if (data.status == telux::common::Status::SUCCESS &&
-        data.error == telux::common::ErrorCode::SUCCESS) {
+    if (data.status == telux::common::Status::SUCCESS
+        && data.error == telux::common::ErrorCode::SUCCESS) {
 
-        int currentCount =
-            data.stateRootObj[subsystem]["vlanConfig"].size();
-        int configIdx = 0;
+        int currentCount = data.stateRootObj[subsystem]["vlanConfig"].size();
+        int configIdx    = 0;
         for (; configIdx < currentCount; ++configIdx) {
-            Json::Value requestedConfig =
-                data.stateRootObj[subsystem]["vlanConfig"][configIdx];
+            Json::Value requestedConfig  = data.stateRootObj[subsystem]["vlanConfig"][configIdx];
             dataStub::VlanConfig *config = response->add_vlan_config();
             config->set_interface_type(
                 (::dataStub::InterfaceType)requestedConfig["ifaceType"].asInt());
@@ -209,8 +200,8 @@ grpc::Status VlanServerImpl::QueryVlanInfo(ServerContext* context,
             config->set_is_accelerated(requestedConfig["isAccelerated"].asBool());
             config->set_priority(requestedConfig["priority"].asInt());
             config->set_create_bridge(requestedConfig["createBridge"].asBool());
-            config->mutable_nw_type()->set_nw_type(DataUtilsStub::convertNetworkTypeToGrpc(
-                        requestedConfig["networkType"].asString()));
+            config->mutable_nw_type()->set_nw_type(
+                DataUtilsStub::convertNetworkTypeToGrpc(requestedConfig["networkType"].asString()));
         }
     }
 
@@ -221,17 +212,17 @@ grpc::Status VlanServerImpl::QueryVlanInfo(ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status VlanServerImpl::BindToBackhaul(ServerContext* context,
-    const dataStub::BindToBackhaulConfig* request, dataStub::DefaultReply* response) {
+grpc::Status VlanServerImpl::BindToBackhaul(ServerContext *context,
+    const dataStub::BindToBackhaulConfig *request, dataStub::DefaultReply *response) {
 
     LOG(DEBUG, __FUNCTION__);
-    std::string apiJsonPath = VLAN_MANAGER_API_LOCAL_JSON;
+    std::string apiJsonPath   = VLAN_MANAGER_API_LOCAL_JSON;
     std::string stateJsonPath = VLAN_MANAGER_STATE_JSON;
-    std::string subsystem = "IVlanManager";
-    std::string method = "bindToBackhaul";
-    JsonData data = {0};
-    telux::common::ErrorCode error =
-        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+    std::string subsystem     = "IVlanManager";
+    std::string method        = "bindToBackhaul";
+    JsonData data             = {0};
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
 
     if (error != ErrorCode::SUCCESS) {
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
@@ -248,32 +239,31 @@ grpc::Status VlanServerImpl::BindToBackhaul(ServerContext* context,
     bool isFound = isConfigAvailable(subsystem, "vlanConfig", data, &req, idx);
 
     if (isFound) {
-        bool isWanNwType =
-            (data.stateRootObj[subsystem]["vlanConfig"][idx]["networkType"] == "WAN");
+        bool isWanNwType
+            = (data.stateRootObj[subsystem]["vlanConfig"][idx]["networkType"] == "WAN");
         if (isWanNwType) {
             data.error = telux::common::ErrorCode::INVALID_ARG;
         }
     }
 
-    if (data.status == telux::common::Status::SUCCESS &&
-        data.error == telux::common::ErrorCode::SUCCESS) {
+    if (data.status == telux::common::Status::SUCCESS
+        && data.error == telux::common::ErrorCode::SUCCESS) {
 
-        int idx = 0;
-        bool isFound = isBindingConfigAvailable(
-            subsystem, "vlanBindConfig", data, request, idx);
+        int idx      = 0;
+        bool isFound = isBindingConfigAvailable(subsystem, "vlanBindConfig", data, request, idx);
 
         if (isFound) {
             data.error = telux::common::ErrorCode::NO_EFFECT;
         } else {
-            const Json::Value& config = data.stateRootObj[subsystem]["vlanBindConfig"];
-            int count = config.size();
+            const Json::Value &config = data.stateRootObj[subsystem]["vlanBindConfig"];
+            int count                 = config.size();
             Json::Value newConfig;
             newConfig["backhaul"] = DataUtilsStub::convertEnumToBackhaulPrefString(
-                    static_cast<::dataStub::BackhaulPreference>(request->backhaul_type()));
-            newConfig["vlanId"] = request->vlan_id();
-            newConfig["slotId"] = request->slot_id();
-            newConfig["profileId"] = request->profile_id();
-            newConfig["backhaul_vlanId"] = request->backhaul_vlan_id();
+                static_cast<::dataStub::BackhaulPreference>(request->backhaul_type()));
+            newConfig["vlanId"]                                   = request->vlan_id();
+            newConfig["slotId"]                                   = request->slot_id();
+            newConfig["profileId"]                                = request->profile_id();
+            newConfig["backhaul_vlanId"]                          = request->backhaul_vlan_id();
             data.stateRootObj[subsystem]["vlanBindConfig"][count] = newConfig;
             JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
         }
@@ -286,18 +276,17 @@ grpc::Status VlanServerImpl::BindToBackhaul(ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status VlanServerImpl::UnbindFromBackhaul(ServerContext* context,
-    const dataStub::BindToBackhaulConfig* request,
-    dataStub::DefaultReply* response) {
+grpc::Status VlanServerImpl::UnbindFromBackhaul(ServerContext *context,
+    const dataStub::BindToBackhaulConfig *request, dataStub::DefaultReply *response) {
 
     LOG(DEBUG, __FUNCTION__);
-    std::string apiJsonPath = VLAN_MANAGER_API_LOCAL_JSON;
+    std::string apiJsonPath   = VLAN_MANAGER_API_LOCAL_JSON;
     std::string stateJsonPath = VLAN_MANAGER_STATE_JSON;
-    std::string subsystem = "IVlanManager";
-    std::string method = "unbindFromBackhaul";
-    JsonData data = {0};
-    telux::common::ErrorCode error =
-        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+    std::string subsystem     = "IVlanManager";
+    std::string method        = "unbindFromBackhaul";
+    JsonData data             = {0};
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
 
     if (error != ErrorCode::SUCCESS) {
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
@@ -307,30 +296,27 @@ grpc::Status VlanServerImpl::UnbindFromBackhaul(ServerContext* context,
         data.error = telux::common::ErrorCode::INVALID_OPERATION;
     }
 
-    if (data.status == telux::common::Status::SUCCESS &&
-        data.error == telux::common::ErrorCode::SUCCESS) {
+    if (data.status == telux::common::Status::SUCCESS
+        && data.error == telux::common::ErrorCode::SUCCESS) {
 
-        int idx = 0;
-        bool isFound = isBindingConfigAvailable(
-            subsystem, "vlanBindConfig", data, request, idx);
+        int idx      = 0;
+        bool isFound = isBindingConfigAvailable(subsystem, "vlanBindConfig", data, request, idx);
 
         if (isFound) {
-            int currentCount =
-                data.stateRootObj[subsystem]["vlanBindConfig"].size();
-            int newCount = 0;
-            int index = 0;
+            int currentCount = data.stateRootObj[subsystem]["vlanBindConfig"].size();
+            int newCount     = 0;
+            int index        = 0;
             Json::Value newRoot;
             for (; index < currentCount; ++index) {
-                //skipping to add entry in new array for the matched index.
-                if (idx == index ) {
+                // skipping to add entry in new array for the matched index.
+                if (idx == index) {
                     continue;
                 }
                 newRoot[subsystem]["vlanBindConfig"][newCount]
                     = data.stateRootObj[subsystem]["vlanBindConfig"][index];
                 newCount++;
             }
-            data.stateRootObj[subsystem]["vlanBindConfig"]
-                = newRoot[subsystem]["vlanBindConfig"];
+            data.stateRootObj[subsystem]["vlanBindConfig"] = newRoot[subsystem]["vlanBindConfig"];
             JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
         } else {
             data.error = telux::common::ErrorCode::NO_EFFECT;
@@ -344,18 +330,18 @@ grpc::Status VlanServerImpl::UnbindFromBackhaul(ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status VlanServerImpl::QueryVlanMappingList(ServerContext* context,
-    const dataStub::QueryVlanMappingListRequest* request,
-    dataStub::QueryVlanMappingListReply* response) {
+grpc::Status VlanServerImpl::QueryVlanMappingList(ServerContext *context,
+    const dataStub::QueryVlanMappingListRequest *request,
+    dataStub::QueryVlanMappingListReply *response) {
 
     LOG(DEBUG, __FUNCTION__);
-    std::string apiJsonPath = VLAN_MANAGER_API_LOCAL_JSON;
+    std::string apiJsonPath   = VLAN_MANAGER_API_LOCAL_JSON;
     std::string stateJsonPath = VLAN_MANAGER_STATE_JSON;
-    std::string subsystem = "IVlanManager";
-    std::string method = "queryVlanToBackhaulBindings";
-    JsonData data = {0};
-    telux::common::ErrorCode error =
-        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+    std::string subsystem     = "IVlanManager";
+    std::string method        = "queryVlanToBackhaulBindings";
+    JsonData data             = {0};
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
 
     if (error != ErrorCode::SUCCESS) {
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
@@ -365,21 +351,19 @@ grpc::Status VlanServerImpl::QueryVlanMappingList(ServerContext* context,
         data.error = telux::common::ErrorCode::INVALID_OPERATION;
     }
 
-    if (data.status == telux::common::Status::SUCCESS &&
-        data.error == telux::common::ErrorCode::SUCCESS) {
+    if (data.status == telux::common::Status::SUCCESS
+        && data.error == telux::common::ErrorCode::SUCCESS) {
 
-        int currentCount =
-            data.stateRootObj[subsystem]["vlanBindConfig"].size();
-        int bindIdx = 0;
+        int currentCount = data.stateRootObj[subsystem]["vlanBindConfig"].size();
+        int bindIdx      = 0;
         for (; bindIdx < currentCount; ++bindIdx) {
-            Json::Value requestedBinding =
-                data.stateRootObj[subsystem]["vlanBindConfig"][bindIdx];
-            auto slotId = requestedBinding["slotId"].asInt();
-            std::string reqBackhaul = DataUtilsStub::convertEnumToBackhaulPrefString(
+            Json::Value requestedBinding = data.stateRootObj[subsystem]["vlanBindConfig"][bindIdx];
+            auto slotId                  = requestedBinding["slotId"].asInt();
+            std::string reqBackhaul      = DataUtilsStub::convertEnumToBackhaulPrefString(
                 static_cast<::dataStub::BackhaulPreference>(request->backhaul_type()));
             auto backhaul = requestedBinding["backhaul"].asString();
 
-            if ( reqBackhaul == backhaul) {
+            if (reqBackhaul == backhaul) {
                 if ((reqBackhaul == BACKHAUL_WWAN) && (slotId != request->slot_id())) {
                     continue;
                 }
@@ -387,7 +371,7 @@ grpc::Status VlanServerImpl::QueryVlanMappingList(ServerContext* context,
                 if (!config) {
                     LOG(ERROR, __FUNCTION__, "Failed to add vlan_mapping");
                     data.error = telux::common::ErrorCode::INTERNAL;
-                    break; // Exit the loop on allocation failure
+                    break;  // Exit the loop on allocation failure
                 }
                 config->set_vlan_id(requestedBinding["vlanId"].asInt());
                 config->set_profile_id(requestedBinding["profileId"].asInt());

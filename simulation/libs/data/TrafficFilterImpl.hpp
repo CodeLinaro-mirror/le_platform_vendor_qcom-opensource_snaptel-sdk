@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef TRAFFIC_FILTER_IMPL_HPP
@@ -25,7 +25,7 @@ class TrafficFilterImpl : public ITrafficFilter {
     void getPortRange(FieldType fieldType, uint16_t &startPort, uint16_t &range) override;
     void setPortRange(uint16_t startPort, uint16_t range, FieldType fieldType);
 
-    PortConfig& getPortConfig(FieldType fieldType) override;
+    PortConfig &getPortConfig(FieldType fieldType) override;
     void setPortConfig(PortConfig portConfig, FieldType fieldType);
 
     std::vector<int> getVlanList(FieldType fieldType) override;
@@ -52,15 +52,14 @@ class TrafficFilterImpl : public ITrafficFilter {
      */
     ~TrafficFilterImpl();
 
-
- static std::string dataPathToString(DataPath dataPath);
- static std::string directionToString(Direction direction);
+    static std::string dataPathToString(DataPath dataPath);
+    static std::string directionToString(Direction direction);
 
  private:
     std::string sourceIPv4Address_ = "";
     std::string sourceIPv6Address_ = "";
     uint16_t sourcePort_;
-    std::string sourceMacAddress_ = "";
+    std::string sourceMacAddress_    = "";
     std::string sourceInterfaceName_ = "";
     std::vector<int> sourceVlanList_;
     uint16_t sourceStartPort_ = 0;
@@ -70,21 +69,18 @@ class TrafficFilterImpl : public ITrafficFilter {
     std::string destIPv4Address_ = "";
     std::string destIPv6Address_ = "";
     uint16_t destPort_;
-    std::string destMacAddress_ = "";
+    std::string destMacAddress_    = "";
     std::string destInterfaceName_ = "";
     std::vector<int> destVlanList_;
     uint16_t destStartPort_ = 0;
     uint16_t destPortRange_ = 0;
     PortConfig destPortConfig_{};
 
-    IpProtocol ipProtocol_ = 0;
-    Direction direction_ = Direction::UPLINK;
-    int8_t pcp_ = 0;
+    IpProtocol ipProtocol_                 = 0;
+    Direction direction_                   = Direction::UPLINK;
+    int8_t pcp_                            = 0;
     TrafficFilterValidFields validityMask_ = 0;
-    DataPath dataPath_ = DataPath::TETHERED_TO_WAN_HW;
-
-
-
+    DataPath dataPath_                     = DataPath::TETHERED_TO_WAN_HW;
 };
 }  // namespace data
 }  // namespace telux

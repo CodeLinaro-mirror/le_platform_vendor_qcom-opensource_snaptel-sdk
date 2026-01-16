@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -30,7 +30,8 @@ std::map<telux::common::ErrorCode, std::string> RefAppUtils::errorCodeToStringMa
     {telux::common::ErrorCode::SIM_PUK2, "SIM_PUK2"},
     {telux::common::ErrorCode::REQUEST_NOT_SUPPORTED, "REQUEST_NOT_SUPPORTED"},
     {telux::common::ErrorCode::CANCELLED, "CANCELLED"},
-    {telux::common::ErrorCode::OP_NOT_ALLOWED_DURING_VOICE_CALL, "OP_NOT_ALLOWED_DURING_VOICE_CALL"},
+    {telux::common::ErrorCode::OP_NOT_ALLOWED_DURING_VOICE_CALL,
+        "OP_NOT_ALLOWED_DURING_VOICE_CALL"},
     {telux::common::ErrorCode::OP_NOT_ALLOWED_BEFORE_REG_TO_NW, "OP_NOT_ALLOWED_BEFORE_REG_TO_NW"},
     {telux::common::ErrorCode::SMS_SEND_FAIL_RETRY, "SMS_SEND_FAIL_RETRY"},
     {telux::common::ErrorCode::SIM_ABSENT, "SIM_ABSENT"},
@@ -120,8 +121,7 @@ std::map<telux::common::ErrorCode, std::string> RefAppUtils::errorCodeToStringMa
     {telux::common::ErrorCode::INTERFACE_NOT_FOUND, "INTERFACE_NOT_FOUND"},
     {telux::common::ErrorCode::FLOW_SUSPENDED, "FLOW_SUSPENDED"},
     {telux::common::ErrorCode::INVALID_DATA_FORMAT, "INVALID_DATA_FORMAT"},
-    {telux::common::ErrorCode::GENERAL, "GENERAL"},
-    {telux::common::ErrorCode::UNKNOWN, "UNKNOWN"},
+    {telux::common::ErrorCode::GENERAL, "GENERAL"}, {telux::common::ErrorCode::UNKNOWN, "UNKNOWN"},
     {telux::common::ErrorCode::INVALID_ARG, "INVALID_ARG"},
     {telux::common::ErrorCode::INVALID_INDEX, "INVALID_INDEX"},
     {telux::common::ErrorCode::NO_ENTRY, "NO_ENTRY"},
@@ -200,630 +200,635 @@ std::map<telux::common::ErrorCode, std::string> RefAppUtils::errorCodeToStringMa
     {telux::common::ErrorCode::TRANSPORT_BUSY_ERROR, "TRANSPORT_BUSY_ERROR"},
     {telux::common::ErrorCode::DS_PROFILE_REG_RESULT_FAIL, "DS_PROFILE_REG_RESULT_FAIL"},
     {telux::common::ErrorCode::DS_PROFILE_REG_RESULT_ERR_INVAL_HNDL,
-     "DS_PROFILE_REG_RESULT_ERR_INVAL_HNDL"},
+        "DS_PROFILE_REG_RESULT_ERR_INVAL_HNDL"},
     {telux::common::ErrorCode::DS_PROFILE_REG_RESULT_ERR_INVAL_OP,
-     "DS_PROFILE_REG_RESULT_ERR_INVAL_OP"},
+        "DS_PROFILE_REG_RESULT_ERR_INVAL_OP"},
     {telux::common::ErrorCode::DS_PROFILE_REG_RESULT_ERR_INVAL_PROFILE_TYPE,
-     "DS_PROFILE_REG_RESULT_ERR_INVAL_PROFILE_TYPE"},
+        "DS_PROFILE_REG_RESULT_ERR_INVAL_PROFILE_TYPE"},
     {telux::common::ErrorCode::DS_PROFILE_REG_RESULT_ERR_INVAL_PROFILE_NUM,
-     "DS_PROFILE_REG_RESULT_ERR_INVAL_PROFILE_NUM"},
+        "DS_PROFILE_REG_RESULT_ERR_INVAL_PROFILE_NUM"},
     {telux::common::ErrorCode::DS_PROFILE_REG_RESULT_ERR_INVAL_IDENT,
-     "DS_PROFILE_REG_RESULT_ERR_INVAL_IDENT"},
+        "DS_PROFILE_REG_RESULT_ERR_INVAL_IDENT"},
     {telux::common::ErrorCode::DS_PROFILE_REG_RESULT_ERR_INVAL, "DS_PROFILE_REG_RESULT_ERR_INVAL"},
     {telux::common::ErrorCode::DS_PROFILE_REG_RESULT_ERR_LIB_NOT_INITED,
-     "DS_PROFILE_REG_RESULT_ERR_LIB_NOT_INITED"},
+        "DS_PROFILE_REG_RESULT_ERR_LIB_NOT_INITED"},
     {telux::common::ErrorCode::DS_PROFILE_REG_RESULT_ERR_LEN_INVALID,
-     "DS_PROFILE_REG_RESULT_ERR_LEN_INVALID"},
+        "DS_PROFILE_REG_RESULT_ERR_LEN_INVALID"},
     {telux::common::ErrorCode::DS_PROFILE_REG_RESULT_LIST_END, "DS_PROFILE_REG_RESULT_LIST_END"},
     {telux::common::ErrorCode::DS_PROFILE_REG_RESULT_ERR_INVAL_SUBS_ID,
-     "DS_PROFILE_REG_RESULT_ERR_INVAL_SUBS_ID"},
+        "DS_PROFILE_REG_RESULT_ERR_INVAL_SUBS_ID"},
     {telux::common::ErrorCode::DS_PROFILE_REG_INVAL_PROFILE_FAMILY,
-     "DS_PROFILE_REG_INVAL_PROFILE_FAMILY"},
+        "DS_PROFILE_REG_INVAL_PROFILE_FAMILY"},
     {telux::common::ErrorCode::DS_PROFILE_REG_PROFILE_VERSION_MISMATCH,
-     "DS_PROFILE_REG_PROFILE_VERSION_MISMATCH"},
+        "DS_PROFILE_REG_PROFILE_VERSION_MISMATCH"},
     {telux::common::ErrorCode::REG_RESULT_ERR_OUT_OF_MEMORY, "REG_RESULT_ERR_OUT_OF_MEMORY"},
     {telux::common::ErrorCode::DS_PROFILE_REG_RESULT_ERR_FILE_ACCESS,
-     "DS_PROFILE_REG_RESULT_ERR_FILE_ACCESS"},
+        "DS_PROFILE_REG_RESULT_ERR_FILE_ACCESS"},
     {telux::common::ErrorCode::DS_PROFILE_REG_RESULT_ERR_EOF, "DS_PROFILE_REG_RESULT_ERR_EOF"},
     {telux::common::ErrorCode::REG_RESULT_ERR_VALID_FLAG_NOT_SET,
-     "REG_RESULT_ERR_VALID_FLAG_NOT_SET"},
+        "REG_RESULT_ERR_VALID_FLAG_NOT_SET"},
     {telux::common::ErrorCode::REG_RESULT_ERR_OUT_OF_PROFILES, "REG_RESULT_ERR_OUT_OF_PROFILES"},
     {telux::common::ErrorCode::REG_RESULT_NO_EMERGENCY_PDN_SUPPORT,
-     "REG_RESULT_NO_EMERGENCY_PDN_SUPPORT"},
+        "REG_RESULT_NO_EMERGENCY_PDN_SUPPORT"},
     {telux::common::ErrorCode::DS_PROFILE_3GPP_INVAL_PROFILE_FAMILY,
-     "DS_PROFILE_3GPP_INVAL_PROFILE_FAMILY"},
+        "DS_PROFILE_3GPP_INVAL_PROFILE_FAMILY"},
     {telux::common::ErrorCode::DS_PROFILE_3GPP_ACCESS_ERR, "DS_PROFILE_3GPP_ACCESS_ERR"},
     {telux::common::ErrorCode::DS_PROFILE_3GPP_CONTEXT_NOT_DEFINED,
-     "DS_PROFILE_3GPP_CONTEXT_NOT_DEFINED"},
+        "DS_PROFILE_3GPP_CONTEXT_NOT_DEFINED"},
     {telux::common::ErrorCode::DS_PROFILE_3GPP_VALID_FLAG_NOT_SET,
-     "DS_PROFILE_3GPP_VALID_FLAG_NOT_SET"},
+        "DS_PROFILE_3GPP_VALID_FLAG_NOT_SET"},
     {telux::common::ErrorCode::DS_PROFILE_3GPP_READ_ONLY_FLAG_SET,
-     "DS_PROFILE_3GPP_READ_ONLY_FLAG_SET"},
+        "DS_PROFILE_3GPP_READ_ONLY_FLAG_SET"},
     {telux::common::ErrorCode::DS_PROFILE_3GPP_ERR_OUT_OF_PROFILES,
-     "DS_PROFILE_3GPP_ERR_OUT_OF_PROFILES"},
+        "DS_PROFILE_3GPP_ERR_OUT_OF_PROFILES"},
     {telux::common::ErrorCode::DS_PROFILE_3GPP2_ERR_INVALID_IDENT_FOR_PROFILE,
-     "DS_PROFILE_3GPP2_ERR_INVALID_IDENT_FOR_PROFILE"},
+        "DS_PROFILE_3GPP2_ERR_INVALID_IDENT_FOR_PROFILE"},
     {telux::common::ErrorCode::DS_PROFILE_3GPP2_ERR_OUT_OF_PROFILE,
-     "DS_PROFILE_3GPP2_ERR_OUT_OF_PROFILE"}};
+        "DS_PROFILE_3GPP2_ERR_OUT_OF_PROFILE"}};
 
 /**
  * Error descripton
  */
 std::string RefAppUtils::getErrorCodeAsString(telux::common::ErrorCode error) {
 
-   if (errorCodeToStringMap_.find(error) != std::end(errorCodeToStringMap_)) {
-      return errorCodeToStringMap_[error];
-   }
-   return "UNKNOWN_ERROR";
+    if (errorCodeToStringMap_.find(error) != std::end(errorCodeToStringMap_)) {
+        return errorCodeToStringMap_[error];
+    }
+    return "UNKNOWN_ERROR";
 }
 
 std::string RefAppUtils::techPreferenceToString(telux::data::TechPreference techPref) {
-   switch (techPref) {
-      case telux::data::TechPreference::TP_3GPP:
-         return "3gpp";
-      case telux::data::TechPreference::TP_3GPP2:
-         return "3gpp2";
-      case telux::data::TechPreference::TP_ANY:
-      default:
-         return "Any";
-   }
+    switch (techPref) {
+        case telux::data::TechPreference::TP_3GPP:
+            return "3gpp";
+        case telux::data::TechPreference::TP_3GPP2:
+            return "3gpp2";
+        case telux::data::TechPreference::TP_ANY:
+        default:
+            return "Any";
+    }
 }
 
 std::string RefAppUtils::ipFamilyTypeToString(telux::data::IpFamilyType ipType) {
-   switch (ipType) {
-      case telux::data::IpFamilyType::IPV4:
-         return "IPv4";
-      case telux::data::IpFamilyType::IPV6:
-         return "IPv6";
-      case telux::data::IpFamilyType::IPV4V6:
-         return "IPv4v6";
-      case telux::data::IpFamilyType::UNKNOWN:
-      default:
-         return "NA";
-   }
+    switch (ipType) {
+        case telux::data::IpFamilyType::IPV4:
+            return "IPv4";
+        case telux::data::IpFamilyType::IPV6:
+            return "IPv6";
+        case telux::data::IpFamilyType::IPV4V6:
+            return "IPv4v6";
+        case telux::data::IpFamilyType::UNKNOWN:
+        default:
+            return "NA";
+    }
 }
 
 std::string RefAppUtils::operationTypeToString(telux::data::OperationType oprType) {
-   switch (oprType) {
-   case telux::data::OperationType::DATA_LOCAL:
-      return "LOCAL";
-   case telux::data::OperationType::DATA_REMOTE:
-      return "REMOTE";
-   default:
-      return "NA";
-   }
+    switch (oprType) {
+        case telux::data::OperationType::DATA_LOCAL:
+            return "LOCAL";
+        case telux::data::OperationType::DATA_REMOTE:
+            return "REMOTE";
+        default:
+            return "NA";
+    }
 }
 
 std::string RefAppUtils::callEndReasonTypeToString(telux::data::EndReasonType type) {
-   switch (type) {
-      case telux::data::EndReasonType::CE_MOBILE_IP:
-         return "CE_MOBILE_IP";
-      case telux::data::EndReasonType::CE_INTERNAL:
-         return "CE_INTERNAL";
-      case telux::data::EndReasonType::CE_CALL_MANAGER_DEFINED:
-         return "CE_CALL_MANAGER_DEFINED";
-      case telux::data::EndReasonType::CE_3GPP_SPEC_DEFINED:
-         return "CE_3GPP_SPEC_DEFINED";
-      case telux::data::EndReasonType::CE_PPP:
-         return "CE_PPP";
-      case telux::data::EndReasonType::CE_EHRPD:
-         return "CE_EHRPD";
-      case telux::data::EndReasonType::CE_IPV6:
-         return "CE_IPV6";
-      case telux::data::EndReasonType::CE_UNKNOWN:
-         return "CE_UNKNOWN";
-      default:
-      {
-         return "CE_UNKNOWN";
-      }
-   }
+    switch (type) {
+        case telux::data::EndReasonType::CE_MOBILE_IP:
+            return "CE_MOBILE_IP";
+        case telux::data::EndReasonType::CE_INTERNAL:
+            return "CE_INTERNAL";
+        case telux::data::EndReasonType::CE_CALL_MANAGER_DEFINED:
+            return "CE_CALL_MANAGER_DEFINED";
+        case telux::data::EndReasonType::CE_3GPP_SPEC_DEFINED:
+            return "CE_3GPP_SPEC_DEFINED";
+        case telux::data::EndReasonType::CE_PPP:
+            return "CE_PPP";
+        case telux::data::EndReasonType::CE_EHRPD:
+            return "CE_EHRPD";
+        case telux::data::EndReasonType::CE_IPV6:
+            return "CE_IPV6";
+        case telux::data::EndReasonType::CE_UNKNOWN:
+            return "CE_UNKNOWN";
+        default: {
+            return "CE_UNKNOWN";
+        }
+    }
 }
 
 int RefAppUtils::callEndReasonCode(telux::data::DataCallEndReason ceReason) {
-   switch (ceReason.type) {
-      case telux::data::EndReasonType::CE_MOBILE_IP:
-         return static_cast<int>(ceReason.IpCode);
-      case telux::data::EndReasonType::CE_INTERNAL:
-         return static_cast<int>(ceReason.internalCode);
-      case telux::data::EndReasonType::CE_CALL_MANAGER_DEFINED:
-         return static_cast<int>(ceReason.cmCode);
-      case telux::data::EndReasonType::CE_3GPP_SPEC_DEFINED:
-         return static_cast<int>(ceReason.specCode);
-      case telux::data::EndReasonType::CE_PPP:
-         return static_cast<int>(ceReason.pppCode);
-      case telux::data::EndReasonType::CE_EHRPD:
-         return static_cast<int>(ceReason.ehrpdCode);
-      case telux::data::EndReasonType::CE_IPV6:
-         return static_cast<int>(ceReason.ipv6Code);
-      case telux::data::EndReasonType::CE_UNKNOWN:
-         return -1;
-      default:
-      {
-         return -1;
-      }
-   }
+    switch (ceReason.type) {
+        case telux::data::EndReasonType::CE_MOBILE_IP:
+            return static_cast<int>(ceReason.IpCode);
+        case telux::data::EndReasonType::CE_INTERNAL:
+            return static_cast<int>(ceReason.internalCode);
+        case telux::data::EndReasonType::CE_CALL_MANAGER_DEFINED:
+            return static_cast<int>(ceReason.cmCode);
+        case telux::data::EndReasonType::CE_3GPP_SPEC_DEFINED:
+            return static_cast<int>(ceReason.specCode);
+        case telux::data::EndReasonType::CE_PPP:
+            return static_cast<int>(ceReason.pppCode);
+        case telux::data::EndReasonType::CE_EHRPD:
+            return static_cast<int>(ceReason.ehrpdCode);
+        case telux::data::EndReasonType::CE_IPV6:
+            return static_cast<int>(ceReason.ipv6Code);
+        case telux::data::EndReasonType::CE_UNKNOWN:
+            return -1;
+        default: {
+            return -1;
+        }
+    }
 }
 
 std::string RefAppUtils::dataCallStatusToString(telux::data::DataCallStatus dcStatus) {
-   switch (dcStatus) {
-      case telux::data::DataCallStatus::NET_CONNECTED:
-         return "CONNECTED";
-      case telux::data::DataCallStatus::NET_NO_NET:
-         return "NO_NET";
-      case telux::data::DataCallStatus::NET_IDLE:
-         return "IDLE";
-      case telux::data::DataCallStatus::NET_CONNECTING:
-         return "CONNECTING";
-      case telux::data::DataCallStatus::NET_DISCONNECTING:
-         return "DISCONNECTING";
-      case telux::data::DataCallStatus::NET_RECONFIGURED:
-         return "RECONFIGURED";
-      case telux::data::DataCallStatus::NET_NEWADDR:
-         return "NEWADDR";
-      case telux::data::DataCallStatus::NET_DELADDR:
-         return "DELADDR";
-      default:
-      {
-         return "UNKNOWN";
-      }
-   }
+    switch (dcStatus) {
+        case telux::data::DataCallStatus::NET_CONNECTED:
+            return "CONNECTED";
+        case telux::data::DataCallStatus::NET_NO_NET:
+            return "NO_NET";
+        case telux::data::DataCallStatus::NET_IDLE:
+            return "IDLE";
+        case telux::data::DataCallStatus::NET_CONNECTING:
+            return "CONNECTING";
+        case telux::data::DataCallStatus::NET_DISCONNECTING:
+            return "DISCONNECTING";
+        case telux::data::DataCallStatus::NET_RECONFIGURED:
+            return "RECONFIGURED";
+        case telux::data::DataCallStatus::NET_NEWADDR:
+            return "NEWADDR";
+        case telux::data::DataCallStatus::NET_DELADDR:
+            return "DELADDR";
+        default: {
+            return "UNKNOWN";
+        }
+    }
 }
 
 std::string RefAppUtils::bearerTechToString(telux::data::DataBearerTechnology bearerTech) {
-   switch (bearerTech) {
-      case telux::data::DataBearerTechnology::CDMA_1X:
-         return "1X technology";
-      case telux::data::DataBearerTechnology::EVDO_REV0:
-         return "CDMA Rev 0";
-      case telux::data::DataBearerTechnology::EVDO_REVA:
-         return "CDMA Rev A";
-      case telux::data::DataBearerTechnology::EVDO_REVB:
-         return "CDMA Rev B";
-      case telux::data::DataBearerTechnology::EHRPD:
-         return "EHRPD";
-      case telux::data::DataBearerTechnology::FMC:
-         return "Fixed mobile convergence";
-      case telux::data::DataBearerTechnology::HRPD:
-         return "HRPD";
-      case telux::data::DataBearerTechnology::BEARER_TECH_3GPP2_WLAN:
-         return "3GPP2 IWLAN";
-      case telux::data::DataBearerTechnology::WCDMA:
-         return "WCDMA";
-      case telux::data::DataBearerTechnology::GPRS:
-         return "GPRS";
-      case telux::data::DataBearerTechnology::HSDPA:
-         return "HSDPA";
-      case telux::data::DataBearerTechnology::HSUPA:
-         return "HSUPA";
-      case telux::data::DataBearerTechnology::EDGE:
-         return "EDGE";
-      case telux::data::DataBearerTechnology::LTE:
-         return "LTE";
-      case telux::data::DataBearerTechnology::HSDPA_PLUS:
-         return "HSDPA+";
-      case telux::data::DataBearerTechnology::DC_HSDPA_PLUS:
-         return "DC HSDPA+.";
-      case telux::data::DataBearerTechnology::HSPA:
-         return "HSPA";
-      case telux::data::DataBearerTechnology::BEARER_TECH_64_QAM:
-         return "64 QAM";
-      case telux::data::DataBearerTechnology::TDSCDMA:
-         return "TDSCDMA";
-      case telux::data::DataBearerTechnology::GSM:
-         return "GSM";
-      case telux::data::DataBearerTechnology::BEARER_TECH_3GPP_WLAN:
-         return "3GPP WLAN";
-      case telux::data::DataBearerTechnology::BEARER_TECH_5G:
-         return "5G";
-      default:
-      {
-         return "UNKNOWN";
-      }
-   }
+    switch (bearerTech) {
+        case telux::data::DataBearerTechnology::CDMA_1X:
+            return "1X technology";
+        case telux::data::DataBearerTechnology::EVDO_REV0:
+            return "CDMA Rev 0";
+        case telux::data::DataBearerTechnology::EVDO_REVA:
+            return "CDMA Rev A";
+        case telux::data::DataBearerTechnology::EVDO_REVB:
+            return "CDMA Rev B";
+        case telux::data::DataBearerTechnology::EHRPD:
+            return "EHRPD";
+        case telux::data::DataBearerTechnology::FMC:
+            return "Fixed mobile convergence";
+        case telux::data::DataBearerTechnology::HRPD:
+            return "HRPD";
+        case telux::data::DataBearerTechnology::BEARER_TECH_3GPP2_WLAN:
+            return "3GPP2 IWLAN";
+        case telux::data::DataBearerTechnology::WCDMA:
+            return "WCDMA";
+        case telux::data::DataBearerTechnology::GPRS:
+            return "GPRS";
+        case telux::data::DataBearerTechnology::HSDPA:
+            return "HSDPA";
+        case telux::data::DataBearerTechnology::HSUPA:
+            return "HSUPA";
+        case telux::data::DataBearerTechnology::EDGE:
+            return "EDGE";
+        case telux::data::DataBearerTechnology::LTE:
+            return "LTE";
+        case telux::data::DataBearerTechnology::HSDPA_PLUS:
+            return "HSDPA+";
+        case telux::data::DataBearerTechnology::DC_HSDPA_PLUS:
+            return "DC HSDPA+.";
+        case telux::data::DataBearerTechnology::HSPA:
+            return "HSPA";
+        case telux::data::DataBearerTechnology::BEARER_TECH_64_QAM:
+            return "64 QAM";
+        case telux::data::DataBearerTechnology::TDSCDMA:
+            return "TDSCDMA";
+        case telux::data::DataBearerTechnology::GSM:
+            return "GSM";
+        case telux::data::DataBearerTechnology::BEARER_TECH_3GPP_WLAN:
+            return "3GPP WLAN";
+        case telux::data::DataBearerTechnology::BEARER_TECH_5G:
+            return "5G";
+        default: {
+            return "UNKNOWN";
+        }
+    }
 }
 
 std::string RefAppUtils::protocolToString(telux::data::IpProtocol proto) {
-   switch (proto) {
-      case 1:
-         return "ICMP";
-      case 2:
-         return "IGMP";
-      case 6:
-         return "TCP";
-      case 17:
-         return "UDP";
-      case 50:
-         return "ESP";
-      default:
-      {
-         return "Unknown";
-      }
-   }
+    switch (proto) {
+        case 1:
+            return "ICMP";
+        case 2:
+            return "IGMP";
+        case 6:
+            return "TCP";
+        case 17:
+            return "UDP";
+        case 50:
+            return "ESP";
+        default: {
+            return "Unknown";
+        }
+    }
 }
 
 telux::data::IpProtocol RefAppUtils::getProtcol(std::string protoStr) {
-   std::string protoStrToCompare = protoStr;
-   std::transform(protoStrToCompare.begin(), protoStrToCompare.end(), protoStrToCompare.begin(),
-                  [](unsigned char ch)
-                  { return std::tolower(ch); });
+    std::string protoStrToCompare = protoStr;
+    std::transform(protoStrToCompare.begin(), protoStrToCompare.end(), protoStrToCompare.begin(),
+        [](unsigned char ch) { return std::tolower(ch); });
 
-   telux::data::IpProtocol prot = 0;
-   if (protoStrToCompare.compare("udp") == 0) {
-      prot = 17;
-   } else if (protoStrToCompare.compare("tcp") == 0) {
-      prot = 6;
-   } else if (protoStrToCompare.compare("igmp") == 0) {
-      prot = 2;
-   } else if (protoStrToCompare.compare("icmp") == 0) {
-      prot = 1;
-   } else if (protoStrToCompare.compare("esp") == 0) {
-      prot = 50;
-   } else if (protoStrToCompare.compare("tcp_udp") == 0) {
-      prot = 253;
-   } else if (protoStrToCompare.compare("icmp6") == 0) {
-      prot = 58;
-   } else {
-      std::cout << "Error: invalid protocol \n ";
-   }
-   return prot;
+    telux::data::IpProtocol prot = 0;
+    if (protoStrToCompare.compare("udp") == 0) {
+        prot = 17;
+    } else if (protoStrToCompare.compare("tcp") == 0) {
+        prot = 6;
+    } else if (protoStrToCompare.compare("igmp") == 0) {
+        prot = 2;
+    } else if (protoStrToCompare.compare("icmp") == 0) {
+        prot = 1;
+    } else if (protoStrToCompare.compare("esp") == 0) {
+        prot = 50;
+    } else if (protoStrToCompare.compare("tcp_udp") == 0) {
+        prot = 253;
+    } else if (protoStrToCompare.compare("icmp6") == 0) {
+        prot = 58;
+    } else {
+        std::cout << "Error: invalid protocol \n ";
+    }
+    return prot;
 }
 
 std::string RefAppUtils::drbStatusToString(telux::data::DrbStatus stat) {
-   std::string statusStr = "UNKNOWN";
-   switch (stat) {
-      case telux::data::DrbStatus::DORMANT:
-         statusStr = "DORMANT";
-         break;
-      case telux::data::DrbStatus::ACTIVE:
-         statusStr = "ACTIVE";
-         break;
-      case telux::data::DrbStatus::UNKNOWN:
-      default:
-         break;
-   }
-   return statusStr;
+    std::string statusStr = "UNKNOWN";
+    switch (stat) {
+        case telux::data::DrbStatus::DORMANT:
+            statusStr = "DORMANT";
+            break;
+        case telux::data::DrbStatus::ACTIVE:
+            statusStr = "ACTIVE";
+            break;
+        case telux::data::DrbStatus::UNKNOWN:
+        default:
+            break;
+    }
+    return statusStr;
 }
 
 std::string RefAppUtils::serviceRatToString(telux::data::NetworkRat rat) {
-   std::string returnStingValue = "UNKNOWN";
-   switch (rat) {
-      case telux::data::NetworkRat::CDMA_1X:
-         returnStingValue = "CDMA 1X";
-         break;
-      case telux::data::NetworkRat::CDMA_EVDO:
-         returnStingValue = "CDMA EVDO";
-         break;
-      case telux::data::NetworkRat::GSM:
-         returnStingValue = "GSM";
-         break;
-      case telux::data::NetworkRat::WCDMA:
-         returnStingValue = "WCDMA";
-         break;
-      case telux::data::NetworkRat::LTE:
-         returnStingValue = "LTE";
-         break;
-      case telux::data::NetworkRat::TDSCDMA:
-         returnStingValue = "TDSCDMA";
-         break;
-      default:
-         break;
-   }
-   return returnStingValue;
+    std::string returnStingValue = "UNKNOWN";
+    switch (rat) {
+        case telux::data::NetworkRat::CDMA_1X:
+            returnStingValue = "CDMA 1X";
+            break;
+        case telux::data::NetworkRat::CDMA_EVDO:
+            returnStingValue = "CDMA EVDO";
+            break;
+        case telux::data::NetworkRat::GSM:
+            returnStingValue = "GSM";
+            break;
+        case telux::data::NetworkRat::WCDMA:
+            returnStingValue = "WCDMA";
+            break;
+        case telux::data::NetworkRat::LTE:
+            returnStingValue = "LTE";
+            break;
+        case telux::data::NetworkRat::TDSCDMA:
+            returnStingValue = "TDSCDMA";
+            break;
+        default:
+            break;
+    }
+    return returnStingValue;
 }
 
 std::string RefAppUtils::eventStatusToString(EventStatus status) {
-   std::string returnStingValue = "UNKNOWN";
-   switch (status) {
-      case EventStatus::INITIALIZED:
-         returnStingValue = "INITIALIZED";
-         break;
-      case EventStatus::IN_QUEUE:
-         returnStingValue = "IN_QUEUE";
-         break;
-      case EventStatus::IN_PROGRESS_TCU_ACTIVITY:
-         returnStingValue = "IN_PROGRESS_TCU_ACTIVITY";
-         break;
-      case EventStatus::REJECTED_INVALID_STATE_TRANSITION:
-         returnStingValue = "REJECTED_INVALID_STATE_TRANSITION";
-         break;
-      case EventStatus::REJECTED_EVENT_OVERRIDDEN:
-         returnStingValue = "REJECTED_EVENT_OVERRIDDEN";
-         break;
-      case EventStatus::FAILED_TCU_ACTIVITY:
-         returnStingValue = "FAILED_TCU_ACTIVITY";
-         break;
-      case EventStatus::FAILED_TCU_ACTIVITY_TIMEOUT:
-         returnStingValue = "FAILED_TCU_ACTIVITY_TIMEOUT";
-         break;
-      case EventStatus::SUCCEED:
-         returnStingValue = "SUCCEED";
-         break;
-      default:
-         break;
-   }
-   return returnStingValue;
+    std::string returnStingValue = "UNKNOWN";
+    switch (status) {
+        case EventStatus::INITIALIZED:
+            returnStingValue = "INITIALIZED";
+            break;
+        case EventStatus::IN_QUEUE:
+            returnStingValue = "IN_QUEUE";
+            break;
+        case EventStatus::IN_PROGRESS_TCU_ACTIVITY:
+            returnStingValue = "IN_PROGRESS_TCU_ACTIVITY";
+            break;
+        case EventStatus::REJECTED_INVALID_STATE_TRANSITION:
+            returnStingValue = "REJECTED_INVALID_STATE_TRANSITION";
+            break;
+        case EventStatus::REJECTED_EVENT_OVERRIDDEN:
+            returnStingValue = "REJECTED_EVENT_OVERRIDDEN";
+            break;
+        case EventStatus::FAILED_TCU_ACTIVITY:
+            returnStingValue = "FAILED_TCU_ACTIVITY";
+            break;
+        case EventStatus::FAILED_TCU_ACTIVITY_TIMEOUT:
+            returnStingValue = "FAILED_TCU_ACTIVITY_TIMEOUT";
+            break;
+        case EventStatus::SUCCEED:
+            returnStingValue = "SUCCEED";
+            break;
+        default:
+            break;
+    }
+    return returnStingValue;
 }
 
 std::string RefAppUtils::tcuActivityStateToString(telux::power::TcuActivityState state) {
-   std::string returnStingValue = "UNKNOWN";
-   switch (state) {
-      case telux::power::TcuActivityState::SUSPEND:
-         returnStingValue = "TcuActivityState::SUSPEND";
-         break;
-      case telux::power::TcuActivityState::RESUME:
-         returnStingValue = "TcuActivityState::RESUME";
-         break;
-      case telux::power::TcuActivityState::SHUTDOWN:
-         returnStingValue = "TcuActivityState::SHUTDOWN";
-         break;
-      case telux::power::TcuActivityState::UNKNOWN:
-         returnStingValue = "TcuActivityState::UNKNOWN";
-         break;
-      default:
-         break;
-   }
-   return returnStingValue;
+    std::string returnStingValue = "UNKNOWN";
+    switch (state) {
+        case telux::power::TcuActivityState::SUSPEND:
+            returnStingValue = "TcuActivityState::SUSPEND";
+            break;
+        case telux::power::TcuActivityState::RESUME:
+            returnStingValue = "TcuActivityState::RESUME";
+            break;
+        case telux::power::TcuActivityState::SHUTDOWN:
+            returnStingValue = "TcuActivityState::SHUTDOWN";
+            break;
+        case telux::power::TcuActivityState::UNKNOWN:
+            returnStingValue = "TcuActivityState::UNKNOWN";
+            break;
+        default:
+            break;
+    }
+    return returnStingValue;
 }
 
 std::string RefAppUtils::teluxStatusToString(telux::common::Status status) {
-   std::string returnStingValue = "UNKNOWN";
+    std::string returnStingValue = "UNKNOWN";
 
-   switch (status) {
-      case telux::common::Status::SUCCESS:
-         returnStingValue = "Operation processed successfully";
-         break;
-      case telux::common::Status::FAILED:
-         returnStingValue = "Operation processing failed";
-         break;
-      case telux::common::Status::NOCONNECTION:
-         returnStingValue = "Connection to Socket server has not been established";
-         break;
-      case telux::common::Status::NOSUBSCRIPTION:
-         returnStingValue = "Subscription not available";
-         break;
-      case telux::common::Status::INVALIDPARAM:
-         returnStingValue = "Input parameters are invalid";
-         break;
-      case telux::common::Status::INVALIDSTATE:
-         returnStingValue = "Invalid State detected";
-         break;
-      case telux::common::Status::NOTREADY:
-         returnStingValue = "Subsystem is not ready";
-         break;
-      case telux::common::Status::NOTALLOWED:
-         returnStingValue = "Operation not allowed";
-         break;
-      case telux::common::Status::NOTIMPLEMENTED:
-         returnStingValue = "Feature not supported";
-         break;
-      case telux::common::Status::CONNECTIONLOST:
-         returnStingValue = "Connection to Socket server lost";
-         break;
-      case telux::common::Status::EXPIRED:
-         returnStingValue = "Operation has expired";
-         break;
-      case telux::common::Status::ALREADY:
-         returnStingValue = "Already registered handler";
-         break;
-      case telux::common::Status::NOSUCH:
-         returnStingValue = "No such object";
-         break;
-      case telux::common::Status::NOTSUPPORTED:
-         returnStingValue = "Not supported on target platform";
-         break;
-      default:
-         break;
-   }
+    switch (status) {
+        case telux::common::Status::SUCCESS:
+            returnStingValue = "Operation processed successfully";
+            break;
+        case telux::common::Status::FAILED:
+            returnStingValue = "Operation processing failed";
+            break;
+        case telux::common::Status::NOCONNECTION:
+            returnStingValue = "Connection to Socket server has not been established";
+            break;
+        case telux::common::Status::NOSUBSCRIPTION:
+            returnStingValue = "Subscription not available";
+            break;
+        case telux::common::Status::INVALIDPARAM:
+            returnStingValue = "Input parameters are invalid";
+            break;
+        case telux::common::Status::INVALIDSTATE:
+            returnStingValue = "Invalid State detected";
+            break;
+        case telux::common::Status::NOTREADY:
+            returnStingValue = "Subsystem is not ready";
+            break;
+        case telux::common::Status::NOTALLOWED:
+            returnStingValue = "Operation not allowed";
+            break;
+        case telux::common::Status::NOTIMPLEMENTED:
+            returnStingValue = "Feature not supported";
+            break;
+        case telux::common::Status::CONNECTIONLOST:
+            returnStingValue = "Connection to Socket server lost";
+            break;
+        case telux::common::Status::EXPIRED:
+            returnStingValue = "Operation has expired";
+            break;
+        case telux::common::Status::ALREADY:
+            returnStingValue = "Already registered handler";
+            break;
+        case telux::common::Status::NOSUCH:
+            returnStingValue = "No such object";
+            break;
+        case telux::common::Status::NOTSUPPORTED:
+            returnStingValue = "Not supported on target platform";
+            break;
+        default:
+            break;
+    }
 
-   return returnStingValue;
+    return returnStingValue;
 }
 
 std::string RefAppUtils::triggerTypeToString(TriggerType triggeredBy) {
-   std::string returnStingValue = "UNKNOWN";
+    std::string returnStingValue = "UNKNOWN";
 
-   switch (triggeredBy) {
-      case TriggerType::NAOIP_TRIGGER:
-         returnStingValue = "NAOIP_TRIGGER";
-         break;
-      case TriggerType::SMS_TRIGGER:
-         returnStingValue = "SMS_TRIGGER";
-         break;
-      case TriggerType::GPIO_TRIGGER:
-         returnStingValue = "GPIO_TRIGGER";
-         break;
-      case TriggerType::CAN_TRIGGER:
-         returnStingValue = "CAN_TRIGGER";
-         break;
-      default:
-         break;
-   }
-   return returnStingValue;
+    switch (triggeredBy) {
+        case TriggerType::NAOIP_TRIGGER:
+            returnStingValue = "NAOIP_TRIGGER";
+            break;
+        case TriggerType::SMS_TRIGGER:
+            returnStingValue = "SMS_TRIGGER";
+            break;
+        case TriggerType::GPIO_TRIGGER:
+            returnStingValue = "GPIO_TRIGGER";
+            break;
+        case TriggerType::CAN_TRIGGER:
+            returnStingValue = "CAN_TRIGGER";
+            break;
+        default:
+            break;
+    }
+    return returnStingValue;
 }
 
 std::string RefAppUtils::serviceStatusToString(telux::common::ServiceStatus status) {
-   std::string returnStingValue = "UNKNOWN";
+    std::string returnStingValue = "UNKNOWN";
 
-   switch (status) {
-      case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
-         returnStingValue = "SERVICE_UNAVAILABLE";
-         break;
-      case telux::common::ServiceStatus::SERVICE_AVAILABLE:
-         returnStingValue = "SERVICE_AVAILABLE";
-         break;
-      case telux::common::ServiceStatus::SERVICE_FAILED:
-         returnStingValue = "SERVICE_FAILED";
-         break;
-      default:
-         break;
-   }
-   return returnStingValue;
+    switch (status) {
+        case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
+            returnStingValue = "SERVICE_UNAVAILABLE";
+            break;
+        case telux::common::ServiceStatus::SERVICE_AVAILABLE:
+            returnStingValue = "SERVICE_AVAILABLE";
+            break;
+        case telux::common::ServiceStatus::SERVICE_FAILED:
+            returnStingValue = "SERVICE_FAILED";
+            break;
+        default:
+            break;
+    }
+    return returnStingValue;
 }
 
+std::string RefAppUtils::dataRestrictModeTypeToString(
+    telux::data::DataRestrictModeType filterMode) {
+    std::string returnStingValue = "UNKNOWN";
+    switch (filterMode) {
+        case telux::data::DataRestrictModeType::DISABLE:
+            returnStingValue = "Disabled";
+            break;
+        case telux::data::DataRestrictModeType::ENABLE:
+            returnStingValue = "Enabled";
+            break;
+        default:
+            break;
+    }
 
-std::string RefAppUtils::dataRestrictModeTypeToString(telux::data::DataRestrictModeType filterMode) {
-   std::string returnStingValue = "UNKNOWN";
-   switch (filterMode) {
-      case telux::data::DataRestrictModeType::DISABLE:
-         returnStingValue = "Disabled";
-         break;
-      case telux::data::DataRestrictModeType::ENABLE:
-         returnStingValue = "Enabled";
-         break;
-      default:
-         break;
-   }
-
-   return returnStingValue;
+    return returnStingValue;
 }
 
 bool RefAppUtils::isUDP() {
-   std::string proto = ConfigParser::getInstance()->getValue("communication", "TRANSPORT_PROTOCOL");
-   if (!proto.compare("UDP")) {
-      LOG(DEBUG, __FUNCTION__, "Using UDP communication");
-      return true;
-   }
-   LOG(DEBUG, __FUNCTION__, "Using TCP communication");
-   return false;
+    std::string proto
+        = ConfigParser::getInstance()->getValue("communication", "TRANSPORT_PROTOCOL");
+    if (!proto.compare("UDP")) {
+        LOG(DEBUG, __FUNCTION__, "Using UDP communication");
+        return true;
+    }
+    LOG(DEBUG, __FUNCTION__, "Using TCP communication");
+    return false;
 }
 
 bool RefAppUtils::isClient() {
-   std::string value = ConfigParser::getInstance()->getValue("communication", "ROLE");
-   if (!value.compare("SERVER")) {
-      LOG(DEBUG, __FUNCTION__, " configured as server");
-      return false;
-   }
-   LOG(DEBUG, __FUNCTION__, " not server default config as client ", value);
-   return true;
+    std::string value = ConfigParser::getInstance()->getValue("communication", "ROLE");
+    if (!value.compare("SERVER")) {
+        LOG(DEBUG, __FUNCTION__, " configured as server");
+        return false;
+    }
+    LOG(DEBUG, __FUNCTION__, " not server default config as client ", value);
+    return true;
 }
 
 bool RefAppUtils::isKeepAliveEnabled() {
-   std::string value = ConfigParser::getInstance()->getValue("communication", "TCP_KEEP_ALIVE");
-   LOG(DEBUG, __FUNCTION__, " value: ", value);
-   return RefAppUtils::stringToBool(value);
+    std::string value = ConfigParser::getInstance()->getValue("communication", "TCP_KEEP_ALIVE");
+    LOG(DEBUG, __FUNCTION__, " value: ", value);
+    return RefAppUtils::stringToBool(value);
 }
 
 bool RefAppUtils::isAutoExitEnabled() {
-   std::string value =
-      ConfigParser::getInstance()->getValue("communication", "DATA_FILTER_AUTO_EXIT");
-   LOG(DEBUG, __FUNCTION__, " value: ", value);
-   return RefAppUtils::stringToBool(value);
+    std::string value
+        = ConfigParser::getInstance()->getValue("communication", "DATA_FILTER_AUTO_EXIT");
+    LOG(DEBUG, __FUNCTION__, " value: ", value);
+    return RefAppUtils::stringToBool(value);
 }
 
 uint32_t RefAppUtils::getKeepAliveInterval() {
-   std::string interval = ConfigParser::getInstance()->getValue(
-      "communication", "TCP_KEEP_ALIVE_PACKET_INTERVAL");
-   return interval.empty() ? std::stoul(DEFAULT_TCP_KEEP_ALIVE_PACKET_INTERVAL) :
-      std::stoul(interval);
+    std::string interval
+        = ConfigParser::getInstance()->getValue("communication", "TCP_KEEP_ALIVE_PACKET_INTERVAL");
+    return interval.empty() ? std::stoul(DEFAULT_TCP_KEEP_ALIVE_PACKET_INTERVAL)
+                            : std::stoul(interval);
 }
 
 std::vector<std::shared_ptr<Connection>> RefAppUtils::getConnectionConfigs() {
-   std::vector<std::shared_ptr<Connection>> connectionList;
-   std::shared_ptr<Connection> commonConnection = std::make_shared<Connection>();
-   auto config = ConfigParser::getInstance();
+    std::vector<std::shared_ptr<Connection>> connectionList;
+    std::shared_ptr<Connection> commonConnection;
+    try {
+        commonConnection = std::make_shared<Connection>();
+    } catch (const std::exception &e) {
+        LOG(ERROR, __FUNCTION__, "Exception creating Connection: ", e.what());
+        return {};
+    }
+    if (!commonConnection) {
+        LOG(ERROR, __FUNCTION__, "Failed to create Connection object");
+        return {};
+    }
+    auto config = ConfigParser::getInstance();
 
-   std::string value = config->getValue("communication", "ROLE");
-   commonConnection->connectionRole = (!value.compare("SERVER")) ? ConnectionRole::SERVER :
-      ConnectionRole::CLIENT;
+    std::string value = config->getValue("communication", "ROLE");
+    commonConnection->connectionRole
+        = (!value.compare("SERVER")) ? ConnectionRole::SERVER : ConnectionRole::CLIENT;
 
-   value = config->getValue("communication", "IP_FAMILY");
-   commonConnection->ipFamily = (!value.compare("6")) ? telux::data::IpFamilyType::IPV6 :
-      telux::data::IpFamilyType::IPV4;
+    value = config->getValue("communication", "IP_FAMILY");
+    commonConnection->ipFamily
+        = (!value.compare("6")) ? telux::data::IpFamilyType::IPV6 : telux::data::IpFamilyType::IPV4;
 
-   value = config->getValue("communication", "TRANSPORT_PROTOCOL");
-   commonConnection->protocol = (!value.compare("UDP")) ? Protocol::UDP : Protocol::TCP;
+    value                      = config->getValue("communication", "TRANSPORT_PROTOCOL");
+    commonConnection->protocol = (!value.compare("UDP")) ? Protocol::UDP : Protocol::TCP;
 
-   value = config->getValue("communication", "CLIENT_ADDRESS");
-   commonConnection->clientIpAddr = (!value.empty()) ? value : "";
+    value                          = config->getValue("communication", "CLIENT_ADDRESS");
+    commonConnection->clientIpAddr = (!value.empty()) ? value : "";
 
-   value = config->getValue("communication", "SERVER_PORT");
-   commonConnection->serverPort = (!value.empty()) ? std::stoi(value) : 0;
+    value                        = config->getValue("communication", "SERVER_PORT");
+    commonConnection->serverPort = (!value.empty()) ? std::stoi(value) : 0;
 
-   value = config->getValue("communication", "CLIENT_PORT");
-   commonConnection->clientPort = (!value.empty()) ? std::stoi(value) : 0;
+    value                        = config->getValue("communication", "CLIENT_PORT");
+    commonConnection->clientPort = (!value.empty()) ? std::stoi(value) : 0;
 
-   try {
-      std::string ipValue = config->getValue("communication", "SERVER_ADDRESS");
-      std::string portValue = config->getValue("communication", "SERVER_PORT");
-      std::string profileIdValue = config->getValue(
-         "communication", "START_DATA_CALL_ON_PROFILE_ID");
+    try {
+        std::string ipValue   = config->getValue("communication", "SERVER_ADDRESS");
+        std::string portValue = config->getValue("communication", "SERVER_PORT");
+        std::string profileIdValue
+            = config->getValue("communication", "START_DATA_CALL_ON_PROFILE_ID");
 
-      std::vector<std::string> ipList;
-      std::vector<std::string> portList;
-      std::vector<std::string> profileIdList;
+        std::vector<std::string> ipList;
+        std::vector<std::string> portList;
+        std::vector<std::string> profileIdList;
 
-      // Split and clean IP addresses
-      if (!ipValue.empty()) {
-         std::stringstream ss(ipValue);
-         std::string ip;
-         while (std::getline(ss, ip, ',')) {
-               ip.erase(std::remove_if(ip.begin(), ip.end(), ::isspace), ip.end());
-               ipList.push_back(ip);
-         }
-      }
-
-      // Split and clean ports
-      if (!portValue.empty()) {
-         std::stringstream ss(portValue);
-         std::string port;
-         while (std::getline(ss, port, ',')) {
-               port.erase(std::remove_if(port.begin(), port.end(), ::isspace), port.end());
-               portList.push_back(port);
-         }
-      }
-
-      // Split and clean ports
-      if (!profileIdValue.empty()) {
-         std::stringstream ss(profileIdValue);
-         std::string profileId;
-         while (std::getline(ss, profileId, ',')) {
-               profileId.erase(
-                  std::remove_if(profileId.begin(), profileId.end(), ::isspace), profileId.end());
-               profileIdList.push_back(profileId);
-         }
-      }
-
-      // Match IPs and ports by index
-      size_t count = std::max(ipList.size(), portList.size());
-      for (size_t i = 0; i < count; ++i) {
-         std::shared_ptr<Connection> connection = std::make_shared<Connection>(*commonConnection);
-
-
-         if (i < ipList.size()) {
-            connection->serverIpAddr = ipList[i];
-         }
-
-         if (i < portList.size()) {
-            try {
-               connection->serverPort = std::stoi(portList[i]);
-            } catch (const std::exception &e) {
-               LOG(WARNING, __FUNCTION__, "Invalid port format: ", portList[i]);
-               connection->serverPort = 0;
+        // Split and clean IP addresses
+        if (!ipValue.empty()) {
+            std::stringstream ss(ipValue);
+            std::string ip;
+            while (std::getline(ss, ip, ',')) {
+                ip.erase(std::remove_if(ip.begin(), ip.end(), ::isspace), ip.end());
+                ipList.push_back(ip);
             }
-         }
+        }
 
-         if (i < profileIdList.size()) {
-            try {
-               connection->profileId = std::stoi(profileIdList[i]);
-            } catch (const std::exception &e) {
-               LOG(WARNING, __FUNCTION__, "Invalid profile id format: ", profileIdList[i]);
-               connection->profileId = 0;
+        // Split and clean ports
+        if (!portValue.empty()) {
+            std::stringstream ss(portValue);
+            std::string port;
+            while (std::getline(ss, port, ',')) {
+                port.erase(std::remove_if(port.begin(), port.end(), ::isspace), port.end());
+                portList.push_back(port);
             }
-         }
-         connection->slotId = static_cast<SlotId>(i+1);
-         connectionList.push_back(connection);
-      }
+        }
 
-   } catch (const std::exception &e) {
-      LOG(ERROR, __FUNCTION__, e.what());
-   }
-   return connectionList;
+        // Split and clean ports
+        if (!profileIdValue.empty()) {
+            std::stringstream ss(profileIdValue);
+            std::string profileId;
+            while (std::getline(ss, profileId, ',')) {
+                profileId.erase(
+                    std::remove_if(profileId.begin(), profileId.end(), ::isspace), profileId.end());
+                profileIdList.push_back(profileId);
+            }
+        }
+
+        // Match IPs and ports by index
+        size_t count = std::max(ipList.size(), portList.size());
+        for (size_t i = 0; i < count; ++i) {
+            std::shared_ptr<Connection> connection
+                = std::make_shared<Connection>(*commonConnection);
+
+            if (i < ipList.size()) {
+                connection->serverIpAddr = ipList[i];
+            }
+
+            if (i < portList.size()) {
+                try {
+                    connection->serverPort = std::stoi(portList[i]);
+                } catch (const std::exception &e) {
+                    LOG(WARNING, __FUNCTION__, "Invalid port format: ", portList[i]);
+                    connection->serverPort = 0;
+                }
+            }
+
+            if (i < profileIdList.size()) {
+                try {
+                    connection->profileId = std::stoi(profileIdList[i]);
+                } catch (const std::exception &e) {
+                    LOG(WARNING, __FUNCTION__, "Invalid profile id format: ", profileIdList[i]);
+                    connection->profileId = 0;
+                }
+            }
+            connection->slotId = static_cast<SlotId>(i + 1);
+            connectionList.push_back(connection);
+        }
+
+    } catch (const std::exception &e) {
+        LOG(ERROR, __FUNCTION__, e.what());
+    }
+    return connectionList;
 }
 
 bool RefAppUtils::isDataFilterInstallationEnabled() {
-   std::string value =
-      ConfigParser::getInstance()->getValue("communication", "INSTALL_DATA_FILTER");
-   LOG(DEBUG, __FUNCTION__, " value: ", value);
-   return RefAppUtils::stringToBool(value);
+    std::string value
+        = ConfigParser::getInstance()->getValue("communication", "INSTALL_DATA_FILTER");
+    LOG(DEBUG, __FUNCTION__, " value: ", value);
+    return RefAppUtils::stringToBool(value);
 }
 
 bool RefAppUtils::stringToBool(std::string enable) {

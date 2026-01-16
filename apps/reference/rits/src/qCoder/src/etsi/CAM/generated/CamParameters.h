@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_CamParameters_H_
-#define	_CamParameters_H_
-
+#ifndef _CamParameters_H_
+#define _CamParameters_H_
 
 #include <asn_application.h>
 
@@ -26,17 +25,17 @@ struct SpecialVehicleContainer;
 
 /* CamParameters */
 typedef struct CamParameters {
-	BasicContainer_t	 basicContainer;
-	HighFrequencyContainer_t	 highFrequencyContainer;
-	struct LowFrequencyContainer	*lowFrequencyContainer	/* OPTIONAL */;
-	struct SpecialVehicleContainer	*specialVehicleContainer	/* OPTIONAL */;
-	/*
-	 * This type is extensible,
-	 * possible extensions are below.
-	 */
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    BasicContainer_t basicContainer;
+    HighFrequencyContainer_t highFrequencyContainer;
+    struct LowFrequencyContainer *lowFrequencyContainer /* OPTIONAL */;
+    struct SpecialVehicleContainer *specialVehicleContainer /* OPTIONAL */;
+    /*
+     * This type is extensible,
+     * possible extensions are below.
+     */
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } CamParameters_t;
 
 /* Implementation */
@@ -50,5 +49,5 @@ extern asn_TYPE_descriptor_t asn_DEF_CamParameters;
 #include "LowFrequencyContainer.h"
 #include "SpecialVehicleContainer.h"
 
-#endif	/* _CamParameters_H_ */
+#endif /* _CamParameters_H_ */
 #include <asn_internal.h>

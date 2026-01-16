@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_PathPoint_H_
-#define	_PathPoint_H_
-
+#ifndef _PathPoint_H_
+#define _PathPoint_H_
 
 #include <asn_application.h>
 
@@ -22,11 +21,11 @@ extern "C" {
 
 /* PathPoint */
 typedef struct PathPoint {
-	DeltaReferencePosition_t	 pathPosition;
-	PathDeltaTime_t	*pathDeltaTime	/* OPTIONAL */;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    DeltaReferencePosition_t pathPosition;
+    PathDeltaTime_t *pathDeltaTime /* OPTIONAL */;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } PathPoint_t;
 
 /* Implementation */
@@ -36,5 +35,5 @@ extern asn_TYPE_descriptor_t asn_DEF_PathPoint;
 }
 #endif
 
-#endif	/* _PathPoint_H_ */
+#endif /* _PathPoint_H_ */
 #include <asn_internal.h>

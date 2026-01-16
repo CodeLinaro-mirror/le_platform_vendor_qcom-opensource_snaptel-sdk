@@ -327,13 +327,15 @@ class ICellularScanReportListener : public telux::common::IServiceStatusListener
      * @param[in] environmentInfo @ref EnvironmentInfo overall environment information
      *
      */
-    virtual void onScanReportAvailable(CellularSecurityReport report,
-        EnvironmentInfo environmentInfo) { }
+    virtual void onScanReportAvailable(
+        CellularSecurityReport report, EnvironmentInfo environmentInfo) {
+    }
 
     /**
      * Destructor for ICellularScanReportListener.
      */
-    virtual ~ICellularScanReportListener() { }
+    virtual ~ICellularScanReportListener() {
+    }
 };
 
 /**
@@ -351,68 +353,69 @@ class ICellularScanReportListener : public telux::common::IServiceStatusListener
 class ICellularSecurityManager {
 
  public:
+    /**
+     * Registers given listener to receive cellular security scan report.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_SEC_CCS_REPORT
+     * permission to invoke this API successfully.
+     *
+     * @param [in] reportListener Receives security scan reports via
+     *             @ref ICellularScanReportListener::onScanReportAvailable()
+     *
+     * @returns @ref telux::common::ErrorCode::SUCCESS, if the listener is registered,
+     *          otherwise, an appropriate error code
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject
+     *             to change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode registerListener(
+        std::weak_ptr<ICellularScanReportListener> reportListener)
+        = 0;
 
-   /**
-    * Registers given listener to receive cellular security scan report.
-    *
-    * On platforms with access control enabled, caller needs to have TELUX_SEC_CCS_REPORT
-    * permission to invoke this API successfully.
-    *
-    * @param [in] reportListener Receives security scan reports via
-    *             @ref ICellularScanReportListener::onScanReportAvailable()
-    *
-    * @returns @ref telux::common::ErrorCode::SUCCESS, if the listener is registered,
-    *          otherwise, an appropriate error code
-    *
-    * @note Eval: This is a new API and is being evaluated. It is subject
-    *             to change and could break backwards compatibility.
-    */
-   virtual telux::common::ErrorCode registerListener(
-        std::weak_ptr<ICellularScanReportListener> reportListener) = 0;
+    /**
+     * Unregisters the given listener registered previously with @ref registerListener().
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_SEC_CCS_REPORT
+     * permission to invoke this API successfully.
+     *
+     * @param [in] reportListener Listener to unregister
+     *
+     * @returns @ref telux::common::ErrorCode::SUCCESS, if the listener is deregistered,
+     *          otherwise, an appropriate error code
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject
+     *             to change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode deRegisterListener(
+        std::weak_ptr<ICellularScanReportListener> reportListener)
+        = 0;
 
-   /**
-    * Unregisters the given listener registered previously with @ref registerListener().
-    *
-    * On platforms with access control enabled, caller needs to have TELUX_SEC_CCS_REPORT
-    * permission to invoke this API successfully.
-    *
-    * @param [in] reportListener Listener to unregister
-    *
-    * @returns @ref telux::common::ErrorCode::SUCCESS, if the listener is deregistered,
-    *          otherwise, an appropriate error code
-    *
-    * @note Eval: This is a new API and is being evaluated. It is subject
-    *             to change and could break backwards compatibility.
-    */
-   virtual telux::common::ErrorCode deRegisterListener(
-        std::weak_ptr<ICellularScanReportListener> reportListener) = 0;
+    /**
+     * Gets current session statistics such as average score, number of reports generated,
+     * and threat types detected etc.
+     *
+     * A session starts when a listener is registered using
+     * @ref ICellularSecurityManager::registerListener and ends when it is
+     * deregistered using @ref ICellularSecurityManager::deRegisterListener.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_SEC_CCS_REPORT
+     * permission to invoke this API successfully.
+     *
+     * @param [out] sessionStats @ref SessionStats will contain current session's stats upon
+     *                           method return
+     *
+     * @returns Status @ref telux::common::ErrorCode::SUCCESS, if the stats are fetched
+     *                 successfully, otherwise, an appropriate error code
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject
+     *             to change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode getCurrentSessionStats(SessionStats &sessionStats) = 0;
 
-   /**
-    * Gets current session statistics such as average score, number of reports generated,
-    * and threat types detected etc.
-    *
-    * A session starts when a listener is registered using
-    * @ref ICellularSecurityManager::registerListener and ends when it is
-    * deregistered using @ref ICellularSecurityManager::deRegisterListener.
-    *
-    * On platforms with access control enabled, caller needs to have TELUX_SEC_CCS_REPORT
-    * permission to invoke this API successfully.
-    *
-    * @param [out] sessionStats @ref SessionStats will contain current session's stats upon
-    *                           method return
-    *
-    * @returns Status @ref telux::common::ErrorCode::SUCCESS, if the stats are fetched
-    *                 successfully, otherwise, an appropriate error code
-    *
-    * @note Eval: This is a new API and is being evaluated. It is subject
-    *             to change and could break backwards compatibility.
-    */
-   virtual telux::common::ErrorCode getCurrentSessionStats(SessionStats& sessionStats) = 0;
-
-   /**
-    * Destructor of ICellularSecurityManager. Cleans up as applicable.
-    */
-   virtual ~ICellularSecurityManager() {};
+    /**
+     * Destructor of ICellularSecurityManager. Cleans up as applicable.
+     */
+    virtual ~ICellularSecurityManager(){};
 };
 
 /** @} */  // end_addtogroup telematics_sec_mgmt
@@ -420,4 +423,4 @@ class ICellularSecurityManager {
 }  // End of namespace sec
 }  // End of namespace telux
 
-#endif // TELUX_SEC_CELLULARSECURITYMANAGER_HPP
+#endif  // TELUX_SEC_CELLULARSECURITYMANAGER_HPP

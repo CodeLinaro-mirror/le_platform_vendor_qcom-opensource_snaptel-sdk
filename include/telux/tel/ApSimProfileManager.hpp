@@ -1,6 +1,6 @@
 /*
- *    Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *    SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -35,8 +35,8 @@ class IApSimProfileListener;
  * Indicates Application Protocol Data Unit (APDU) exchange status.
  */
 enum class ApduExchangeStatus {
-    SUCCESS = 0,      /**< APDU exchange is success */
-    FAILURE,          /**< APDU exchange is failed */
+    SUCCESS = 0, /**< APDU exchange is success */
+    FAILURE, /**< APDU exchange is failed */
 };
 
 /**
@@ -54,7 +54,6 @@ enum class ApduExchangeStatus {
  */
 class IApSimProfileManager {
  public:
-
     /**
      * This status indicates whether the IApSimProfileManager object is in a usable state.
      *
@@ -99,7 +98,8 @@ class IApSimProfileManager {
      */
     virtual telux::common::Status sendRetrieveProfileListResponse(SlotId slotId,
         ApduExchangeStatus result, uint32_t referenceId, std::vector<std::string> profileIccIds,
-        common::ResponseCallback callback = nullptr) = 0;
+        common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Sends a response to the modem request received for enabling or disabling the profile.
@@ -128,8 +128,9 @@ class IApSimProfileManager {
      *         could break backwards compatibility.
      */
     virtual telux::common::Status sendProfileOperationResponse(SlotId slotId,
-        ApduExchangeStatus result, uint32_t referenceId, common::ResponseCallback callback
-        = nullptr) = 0;
+        ApduExchangeStatus result, uint32_t referenceId,
+        common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Register a listener to listen for requests to retrieve profile list, enable or disable
@@ -181,8 +182,7 @@ class IApSimProfileManager {
  *        Client needs to make sure that implementation is thread-safe.
  */
 class IApSimProfileListener : public telux::common::IServiceStatusListener {
-public:
-
+ public:
     /**
      * This function is called when available profiles information is requested by the modem.
      * @note  AP has to respond within the timer(30 seconds) expires for the profile switch.
@@ -258,8 +258,8 @@ public:
      * @note   Eval: This is a new API and is being evaluated. It is subject to change and
      *         could break backwards compatibility.
      */
-    virtual void onProfileOperationRequest(SlotId slotId, uint32_t referenceId,
-        std::string iccid, bool isEnable) {
+    virtual void onProfileOperationRequest(
+        SlotId slotId, uint32_t referenceId, std::string iccid, bool isEnable) {
     }
 
     /**
@@ -270,7 +270,7 @@ public:
 };
 
 /** @} */ /* end_addtogroup telematics_rsp */
-} // End of namespace tel
-} // End of namespace telux
+}  // End of namespace tel
+}  // End of namespace telux
 
-#endif // TELUX_TEL_APSIMPROFILEMANAGER_HPP
+#endif  // TELUX_TEL_APSIMPROFILEMANAGER_HPP

@@ -26,6 +26,13 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef AUDIOHELPER_HPP
 #define AUDIOHELPER_HPP
 
@@ -36,10 +43,10 @@ using namespace telux::audio;
 using namespace telux::common;
 
 enum Freq {
-    Freq_697 = 697,
-    Freq_770 = 770,
-    Freq_852 = 852,
-    Freq_941 = 941,
+    Freq_697  = 697,
+    Freq_770  = 770,
+    Freq_852  = 852,
+    Freq_941  = 941,
     Freq_1209 = 1209,
     Freq_1336 = 1336,
     Freq_1477 = 1477,
@@ -48,7 +55,7 @@ enum Freq {
 
 /** AudioHelper class provides methods to get user inputs */
 class AudioHelper {
-public:
+ public:
     static void getUserSlotIdInput(SlotId &slotId);
     static void getAudioFormatInput(AudioFormat &audioFormat);
     static void getUserSampleRateInput(uint32_t &sampleRate);
@@ -63,7 +70,7 @@ public:
     static Status getUserDtmfInput(DtmfTone &tone, uint32_t &duration, uint16_t &gain);
     static void getUserEcnrModeInput(EcnrMode &ecnrMode);
 
-private:
+ private:
     static Status lowFrequencyHelper(uint32_t lowFreq, DtmfLowFreq &lowFrequency);
     static Status highFrequencyHelper(uint32_t highFreq, DtmfHighFreq &highFrequency);
 };

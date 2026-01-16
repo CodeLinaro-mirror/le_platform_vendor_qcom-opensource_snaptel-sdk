@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef DATA_SETTINGS_MANAGER_STUB_HPP
@@ -20,9 +20,8 @@
 namespace telux {
 namespace data {
 
-class DataSettingsManagerStub : public IDataSettingsManager,
-                                public IDataSettingsListener {
-public:
+class DataSettingsManagerStub : public IDataSettingsManager, public IDataSettingsListener {
+ public:
     DataSettingsManagerStub(OperationType oprType);
     ~DataSettingsManagerStub();
 
@@ -44,44 +43,43 @@ public:
     telux::common::Status requestBandInterferenceConfig(
         RequestBandInterferenceConfigResponseCb callback) override;
 
-    telux::common::Status requestDdsSwitch(DdsInfo info,
-        telux::common::ResponseCallback callback = nullptr) override;
+    telux::common::Status requestDdsSwitch(
+        DdsInfo info, telux::common::ResponseCallback callback = nullptr) override;
 
     telux::common::Status requestCurrentDds(RequestCurrentDdsResponseCb callback) override;
 
-    telux::common::Status setWwanConnectivityConfig (SlotId slotId, bool allow,
-        telux::common::ResponseCallback callback = nullptr) override;
+    telux::common::Status setWwanConnectivityConfig(
+        SlotId slotId, bool allow, telux::common::ResponseCallback callback = nullptr) override;
 
-    telux::common::Status requestWwanConnectivityConfig(SlotId slotId,
-        requestWwanConnectivityConfigResponseCb callback) override;
+    telux::common::Status requestWwanConnectivityConfig(
+        SlotId slotId, requestWwanConnectivityConfigResponseCb callback) override;
 
-    telux::common::Status setMacSecState(bool enable,
-        telux::common::ResponseCallback callback = nullptr) override;
+    telux::common::Status setMacSecState(
+        bool enable, telux::common::ResponseCallback callback = nullptr) override;
 
     telux::common::Status requestMacSecState(RequestMacSecSateResponseCb callback) override;
 
     telux::common::Status switchBackHaul(BackhaulInfo source, BackhaulInfo dest,
         bool applyToAll = false, telux::common::ResponseCallback callback = nullptr) override;
 
-    telux::common::ErrorCode getIpPassThroughConfig( const IpptParams &ipptParms,
-            IpptConfig &config) override;
+    telux::common::ErrorCode getIpPassThroughConfig(
+        const IpptParams &ipptParms, IpptConfig &config) override;
 
-    telux::common::ErrorCode setIpPassThroughConfig(const IpptParams &ipptParms,
-            const IpptConfig &config) override;
+    telux::common::ErrorCode setIpPassThroughConfig(
+        const IpptParams &ipptParms, const IpptConfig &config) override;
 
     telux::common::ErrorCode setIpPassThroughNatConfig(bool enableNat = true);
     telux::common::ErrorCode getIpPassThroughNatConfig(bool &isNatEnabled);
 
-    telux::common::ErrorCode getIpConfig(const IpConfigParams &ipConfigParams,
-            IpConfig &ipConfig) override;
+    telux::common::ErrorCode getIpConfig(
+        const IpConfigParams &ipConfigParams, IpConfig &ipConfig) override;
 
-    telux::common::ErrorCode setIpConfig(const IpConfigParams &ipConfigParams,
-            const IpConfig &ipConfig) override;
+    telux::common::ErrorCode setIpConfig(
+        const IpConfigParams &ipConfigParams, const IpConfig &ipConfig) override;
 
     bool isDeviceDataUsageMonitoringEnabled() override;
 
-    telux::common::Status registerListener(
-        std::weak_ptr<IDataSettingsListener> listener) override;
+    telux::common::Status registerListener(std::weak_ptr<IDataSettingsListener> listener) override;
 
     telux::common::Status deregisterListener(
         std::weak_ptr<IDataSettingsListener> listener) override;
@@ -92,7 +90,7 @@ public:
     void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) override;
     void onDdsChange(DdsInfo currentState) override;
 
-private:
+ private:
     std::mutex mtx_;
     std::mutex initMtx_;
     std::mutex mutex_;
@@ -107,13 +105,12 @@ private:
     void initSync(telux::common::InitResponseCb callback);
     void setSubSystemStatus(telux::common::ServiceStatus status);
     void invokeInitCallback(telux::common::ServiceStatus status);
-    void invokeCallback(telux::common::ResponseCallback callback,
-        telux::common::ErrorCode error, int cbDelay );
-    void getAvailableListeners(
-        std::vector<std::shared_ptr<IDataSettingsListener>> &listeners);
+    void invokeCallback(
+        telux::common::ResponseCallback callback, telux::common::ErrorCode error, int cbDelay);
+    void getAvailableListeners(std::vector<std::shared_ptr<IDataSettingsListener>> &listeners);
 };
 
-} // end of namespace data
-} // end of namespace telux
+}  // end of namespace data
+}  // end of namespace telux
 
-#endif //DATA_SETTINGS_MANAGER_STUB_HPP
+#endif  // DATA_SETTINGS_MANAGER_STUB_HPP

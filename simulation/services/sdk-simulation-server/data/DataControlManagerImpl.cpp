@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <telux/common/DeviceConfig.hpp>
@@ -16,7 +16,7 @@
 #define DATA_CONTROL_MANAGER_API_JSON2 "api/data/IDataControlManagerSlot2.json"
 
 #define DATA_CONTROL_FILTER "dual_data"
-//#define RECOMMENDATION_CHANGE_EVENT "recommendationChange"
+// #define RECOMMENDATION_CHANGE_EVENT "recommendationChange"
 #define DEFAULT_DELIMITER " "
 
 DataControlServerImpl::DataControlServerImpl() {
@@ -28,28 +28,26 @@ DataControlServerImpl::~DataControlServerImpl() {
     LOG(DEBUG, __FUNCTION__);
 }
 
-grpc::Status DataControlServerImpl::InitService(ServerContext* context,
-    const dataStub::InitRequest* request, dataStub::GetServiceStatusReply* response) {
+grpc::Status DataControlServerImpl::InitService(ServerContext *context,
+    const dataStub::InitRequest *request, dataStub::GetServiceStatusReply *response) {
 
     LOG(DEBUG, __FUNCTION__);
     Json::Value rootObj;
-    std::string filePath = DATA_CONTROL_MANAGER_API_JSON;
-    telux::common::ErrorCode error =
-        JsonParser::readFromJsonFile(rootObj, filePath);
+    std::string filePath           = DATA_CONTROL_MANAGER_API_JSON;
+    telux::common::ErrorCode error = JsonParser::readFromJsonFile(rootObj, filePath);
     if (error != ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! ");
         return grpc::Status(grpc::StatusCode::NOT_FOUND, "Json not found");
     }
 
-    int cbDelay = rootObj["IDataControlManager"]["IsSubsystemReadyDelay"].asInt();
-    std::string cbStatus =
-        rootObj["IDataControlManager"]["IsSubsystemReady"].asString();
+    int cbDelay          = rootObj["IDataControlManager"]["IsSubsystemReadyDelay"].asInt();
+    std::string cbStatus = rootObj["IDataControlManager"]["IsSubsystemReady"].asString();
     telux::common::ServiceStatus status = CommonUtils::mapServiceStatus(cbStatus);
     LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", cbStatus);
 
-    if(status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+    if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         std::vector<std::string> filters = {DATA_CONTROL_FILTER};
-        auto &serverEventManager = ServerEventManager::getInstance();
+        auto &serverEventManager         = ServerEventManager::getInstance();
         serverEventManager.registerListener(shared_from_this(), filters);
     }
 
@@ -59,8 +57,8 @@ grpc::Status DataControlServerImpl::InitService(ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status DataControlServerImpl::SetDataStallParams(ServerContext* context,
-    dataStub::SetDataStallParamsReply request, dataStub::SetDataStallParamsReply* response) {
+grpc::Status DataControlServerImpl::SetDataStallParams(ServerContext *context,
+    dataStub::SetDataStallParamsReply request, dataStub::SetDataStallParamsReply *response) {
 
     LOG(DEBUG, __FUNCTION__);
 
@@ -72,11 +70,11 @@ grpc::Status DataControlServerImpl::SetDataStallParams(ServerContext* context,
     }
 
     std::string subsystem = "IDataControlManager";
-    std::string method = "setDataStallParams";
+    std::string method    = "setDataStallParams";
 
     JsonData data;
-    telux::common::ErrorCode error =
-        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
 
     if (error != ErrorCode::SUCCESS) {
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");

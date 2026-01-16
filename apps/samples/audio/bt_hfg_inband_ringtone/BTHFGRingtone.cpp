@@ -1,35 +1,6 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /*
@@ -73,9 +44,7 @@ int BTHFGRingtone::init() {
 
     /* Step - 2 */
     audioManager_ = audioFactory.getAudioManager(
-            [&p](telux::common::ServiceStatus srvStatus) {
-        p.set_value(srvStatus);
-    });
+        [&p](telux::common::ServiceStatus srvStatus) { p.set_value(srvStatus); });
 
     if (!audioManager_) {
         std::cout << "Can't get IAudioManager" << std::endl;
@@ -103,21 +72,21 @@ int BTHFGRingtone::createPlayStream() {
     telux::common::Status status;
     telux::common::ErrorCode ec;
 
-    sc.type = telux::audio::StreamType::PLAY;
-    sc.sampleRate = 8000;
-    sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
+    sc.type            = telux::audio::StreamType::PLAY;
+    sc.sampleRate      = 8000;
+    sc.format          = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
     sc.channelTypeMask = telux::audio::ChannelType::LEFT;
     sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_BT_SCO_SPEAKER);
 
-    status = audioManager_->createStream(sc, [&p, this] (
-            std::shared_ptr<telux::audio::IAudioStream> &audioStream,
-            telux::common::ErrorCode result) {
-        if (result == telux::common::ErrorCode::SUCCESS) {
-            audioPlayStream_ = std::dynamic_pointer_cast<
-                telux::audio::IAudioPlayStream>(audioStream);
-        }
-        p.set_value(result);
-    });
+    status = audioManager_->createStream(
+        sc, [&p, this](std::shared_ptr<telux::audio::IAudioStream> &audioStream,
+                telux::common::ErrorCode result) {
+            if (result == telux::common::ErrorCode::SUCCESS) {
+                audioPlayStream_
+                    = std::dynamic_pointer_cast<telux::audio::IAudioPlayStream>(audioStream);
+            }
+            p.set_value(result);
+        });
 
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "can't create playback stream, err " << static_cast<int>(status) << std::endl;
@@ -143,10 +112,8 @@ int BTHFGRingtone::deletePlayStream() {
     telux::common::Status status;
     telux::common::ErrorCode ec;
 
-    status = audioManager_->deleteStream(audioPlayStream_, [&p, this] (
-            telux::common::ErrorCode result) {
-        p.set_value(result);
-    });
+    status = audioManager_->deleteStream(
+        audioPlayStream_, [&p, this](telux::common::ErrorCode result) { p.set_value(result); });
 
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "can't delete play stream, err " << static_cast<int>(status) << std::endl;
@@ -167,7 +134,7 @@ int BTHFGRingtone::deletePlayStream() {
  *  Gets called to confirm how many bytes were actually written to the playback stream.
  */
 void BTHFGRingtone::writeComplete(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
-        uint32_t bytesWritten, telux::common::ErrorCode error) {
+    uint32_t bytesWritten, telux::common::ErrorCode error) {
 
     long offset;
 
@@ -194,9 +161,9 @@ void BTHFGRingtone::writeComplete(std::shared_ptr<telux::audio::IStreamBuffer> b
  */
 void BTHFGRingtone::play() {
 
-    uint32_t size = 0;
+    uint32_t size     = 0;
     uint32_t numBytes = 0;
-    bool waitResult = false;
+    bool waitResult   = false;
     telux::common::Status status;
     std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer;
 
@@ -223,14 +190,14 @@ void BTHFGRingtone::play() {
 
         size = streamBuffer->getMinSize();
         if (!size) {
-            size =  streamBuffer->getMaxSize();
+            size = streamBuffer->getMaxSize();
         }
 
         streamBuffer->setDataSize(size);
     }
 
-    auto writeCb = std::bind(&BTHFGRingtone::writeComplete, this,
-        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    auto writeCb = std::bind(&BTHFGRingtone::writeComplete, this, std::placeholders::_1,
+        std::placeholders::_2, std::placeholders::_3);
 
     std::cout << "playback started" << std::endl;
 
@@ -258,8 +225,7 @@ void BTHFGRingtone::play() {
         }
 
         waitResult = false;
-        waitResult = cv_.wait_for(lock,
-            std::chrono::seconds(TIME_10_SECONDS),
+        waitResult = cv_.wait_for(lock, std::chrono::seconds(TIME_10_SECONDS),
             [=] { return (!bufferPool_.empty() || errorOccurred_); });
 
         if (!waitResult) {
@@ -297,7 +263,7 @@ int main(int argc, char **argv) {
 
     try {
         app = std::make_shared<BTHFGRingtone>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "can't allocate BTHFGRingtone" << std::endl;
         return -ENOMEM;
     }

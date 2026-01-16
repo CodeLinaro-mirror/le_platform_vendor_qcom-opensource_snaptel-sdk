@@ -1,12 +1,12 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef AUDIOREQUEST_HPP
 #define AUDIOREQUEST_HPP
 
-#include<memory>
+#include <memory>
 
 namespace telux {
 namespace audio {
@@ -34,13 +34,12 @@ class AudioRequest {
 
  private:
     uint32_t msgId_ = 0;
-    int cmdId_ = 0;
-    int clientId_ = 0;
+    int cmdId_      = 0;
+    int clientId_   = 0;
     std::weak_ptr<IAudioMsgDispatcher> audioMsgDispatcher_;
-
 };
 
 }  // end of namespace audio
 }  // end of namespace telux
 
-#endif // AUDIOREQUEST_HPP
+#endif  // AUDIOREQUEST_HPP

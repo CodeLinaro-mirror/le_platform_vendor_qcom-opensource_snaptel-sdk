@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "ConfiguratorListener.hpp"
@@ -14,12 +14,15 @@ void ConfigListener::onConfigUpdate(std::string key, std::string value) {
 
 void ConfigListener::onServiceStatusChange(ServiceStatus status) {
     PRINT_NOTIFICATION << "\n*********** SERVICE STATUS UPDATE *********************\n";
-    switch(status) {
-        case ServiceStatus::SERVICE_UNAVAILABLE : std::cout << "Service Unavailable \n";
-                                                  break;
-        case ServiceStatus::SERVICE_AVAILABLE   : std::cout << "Service Available \n";
-                                                  break;
-        case ServiceStatus::SERVICE_FAILED      : std::cout << "Service Failed \n";
-                                                  break;
+    switch (status) {
+        case ServiceStatus::SERVICE_UNAVAILABLE:
+            std::cout << "Service Unavailable \n";
+            break;
+        case ServiceStatus::SERVICE_AVAILABLE:
+            std::cout << "Service Available \n";
+            break;
+        case ServiceStatus::SERVICE_FAILED:
+            std::cout << "Service Failed \n";
+            break;
     }
 }

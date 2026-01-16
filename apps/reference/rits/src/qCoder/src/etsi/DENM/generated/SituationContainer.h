@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_SituationContainer_H_
-#define	_SituationContainer_H_
-
+#ifndef _SituationContainer_H_
+#define _SituationContainer_H_
 
 #include <asn_application.h>
 
@@ -26,17 +25,17 @@ struct EventHistory;
 
 /* SituationContainer */
 typedef struct SituationContainer {
-	InformationQuality_t	 informationQuality;
-	CauseCode_t	 eventType;
-	struct CauseCode	*linkedCause	/* OPTIONAL */;
-	struct EventHistory	*eventHistory	/* OPTIONAL */;
-	/*
-	 * This type is extensible,
-	 * possible extensions are below.
-	 */
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    InformationQuality_t informationQuality;
+    CauseCode_t eventType;
+    struct CauseCode *linkedCause /* OPTIONAL */;
+    struct EventHistory *eventHistory /* OPTIONAL */;
+    /*
+     * This type is extensible,
+     * possible extensions are below.
+     */
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } SituationContainer_t;
 
 /* Implementation */
@@ -50,5 +49,5 @@ extern asn_TYPE_descriptor_t asn_DEF_SituationContainer;
 #include "CauseCode.h"
 #include "EventHistory.h"
 
-#endif	/* _SituationContainer_H_ */
+#endif /* _SituationContainer_H_ */
 #include <asn_internal.h>

@@ -26,12 +26,13 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 /**
  * @file    CardControl.hpp
  * @brief   This file contains declarations for the CardControl class, as well
@@ -48,58 +49,58 @@
 #include <telux/tel/PhoneFactory.hpp>
 
 class CardListener : public telux::tel::ICardListener {
-public:
+ public:
     void onServiceStatusChange(telux::common::ServiceStatus status) override;
     void onCardInfoChanged(int slotId) override;
 };
 
 class ApduResponseCallback : public telux::tel::ISapCardCommandCallback {
-public:
+ public:
     ApduResponseCallback(uint8_t apduId);
 
     void onResponse(telux::tel::IccResult result, telux::common::ErrorCode error) override;
 
-private:
+ private:
     uint8_t apduId_;
 };
 
 class OpenConnectionCallback : public telux::common::ICommandResponseCallback {
-public:
+ public:
     void commandResponse(telux::common::ErrorCode errorCode) override;
 };
 
 class CloseConnectionCallback : public telux::common::ICommandResponseCallback {
-public:
+ public:
     void commandResponse(telux::common::ErrorCode errorCode) override;
 };
 
 class PowerOnCallback : public telux::common::ICommandResponseCallback {
-public:
+ public:
     void commandResponse(telux::common::ErrorCode errorCode) override;
 };
 
 class PowerOffCallback : public telux::common::ICommandResponseCallback {
-public:
+ public:
     void commandResponse(telux::common::ErrorCode errorCode) override;
 };
 
 class ResetCallback : public telux::common::ICommandResponseCallback {
-public:
+ public:
     void commandResponse(telux::common::ErrorCode errorCode) override;
 };
 
 class AtrResponseCallback : public telux::tel::IAtrResponseCallback {
-public:
+ public:
     AtrResponseCallback(uint8_t msgType);
 
     void atrResponse(std::vector<int> responseAtr, telux::common::ErrorCode error) override;
 
-private:
+ private:
     uint8_t msgType_;
 };
 
 class CardControl {
-public:
+ public:
     static CardControl &getInstance();
 
     telux::common::Status init();
@@ -132,7 +133,7 @@ public:
 
     std::shared_ptr<telux::tel::ICard> getSimCard(int slotId, telux::common::Status *status);
 
-private:
+ private:
     telux::common::Status openSapConn();
 
     telux::common::Status requestPowerOn();
@@ -140,7 +141,7 @@ private:
     std::shared_ptr<telux::tel::ISapCardManager> sapCardMgr_;
     std::shared_ptr<telux::tel::ICardManager> cardMgr_;
     std::shared_ptr<telux::tel::ICardListener> listener_;
-    bool cardPresent_ = false;
+    bool cardPresent_   = false;
     bool cardConnected_ = false;
     std::unordered_map<uint8_t, std::shared_ptr<ApduResponseCallback>> apduRespCbMap_;
     std::promise<bool> openConnPromise_;
@@ -154,4 +155,4 @@ private:
     std::shared_ptr<AtrResponseCallback> atrInsertedRespCb_;
 };
 
-#endif // CARDCONTROL_HPP
+#endif  // CARDCONTROL_HPP

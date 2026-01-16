@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "TrafficFilterImpl.hpp"
@@ -20,7 +20,7 @@ std::string TrafficFilterImpl::getIPv4Address(FieldType fieldType) {
 
 void TrafficFilterImpl::setIPv4Address(std::string ipv4Addr, FieldType fieldType) {
     if (fieldType == FieldType::SOURCE) {
-        validityMask_ = validityMask_ | TrafficFilterValidField::TF_SOURCE_IPV4_ADDRESS_VALID;
+        validityMask_      = validityMask_ | TrafficFilterValidField::TF_SOURCE_IPV4_ADDRESS_VALID;
         sourceIPv4Address_ = ipv4Addr;
     } else {
         validityMask_ = validityMask_ | TrafficFilterValidField::TF_DESTINATION_IPV4_ADDRESS_VALID;
@@ -37,7 +37,7 @@ std::string TrafficFilterImpl::getIPv6Address(FieldType fieldType) {
 }
 void TrafficFilterImpl::setIPv6Address(std::string ipv6Addr, FieldType fieldType) {
     if (fieldType == FieldType::SOURCE) {
-        validityMask_ = validityMask_ | TrafficFilterValidField::TF_SOURCE_IPV6_ADDRESS_VALID;
+        validityMask_      = validityMask_ | TrafficFilterValidField::TF_SOURCE_IPV6_ADDRESS_VALID;
         sourceIPv6Address_ = ipv6Addr;
     } else {
         validityMask_ = validityMask_ | TrafficFilterValidField::TF_DESTINATION_IPV6_ADDRESS_VALID;
@@ -55,10 +55,10 @@ uint16_t TrafficFilterImpl::getPort(FieldType fieldType) {
 void TrafficFilterImpl::setPort(uint16_t port, FieldType fieldType) {
     if (fieldType == FieldType::SOURCE) {
         validityMask_ = validityMask_ | TrafficFilterValidField::TF_SOURCE_PORT_VALID;
-        sourcePort_ = port;
+        sourcePort_   = port;
     } else {
         validityMask_ = validityMask_ | TrafficFilterValidField::TF_DESTINATION_PORT_VALID;
-        destPort_ = port;
+        destPort_     = port;
     }
 }
 
@@ -86,8 +86,8 @@ void TrafficFilterImpl::setPortRange(uint16_t startPort, uint16_t range, FieldTy
     }
 }
 
-PortConfig& TrafficFilterImpl::getPortConfig(FieldType fieldType) {
-   if (fieldType == FieldType::SOURCE) {
+PortConfig &TrafficFilterImpl::getPortConfig(FieldType fieldType) {
+    if (fieldType == FieldType::SOURCE) {
         return sourcePortConfig_;
     } else {
         return destPortConfig_;
@@ -96,10 +96,10 @@ PortConfig& TrafficFilterImpl::getPortConfig(FieldType fieldType) {
 
 void TrafficFilterImpl::setPortConfig(PortConfig portConfig, FieldType fieldType) {
     if (fieldType == FieldType::SOURCE) {
-        validityMask_    = validityMask_ | TrafficFilterValidField::TF_SOURCE_PORT_CONFIG_VALID;
+        validityMask_     = validityMask_ | TrafficFilterValidField::TF_SOURCE_PORT_CONFIG_VALID;
         sourcePortConfig_ = portConfig;
     } else {
-        validityMask_  = validityMask_ | TrafficFilterValidField::TF_DESTINATION_PORT_CONFIG_VALID;
+        validityMask_   = validityMask_ | TrafficFilterValidField::TF_DESTINATION_PORT_CONFIG_VALID;
         destPortConfig_ = portConfig;
     }
 }
@@ -113,7 +113,7 @@ std::vector<int> TrafficFilterImpl::getVlanList(FieldType fieldType) {
 }
 void TrafficFilterImpl::setVlanList(std::vector<int> vlanList, FieldType fieldType) {
     if (fieldType == FieldType::SOURCE) {
-        validityMask_ = validityMask_ | TrafficFilterValidField::TF_SOURCE_VLAN_LIST_VALID;
+        validityMask_   = validityMask_ | TrafficFilterValidField::TF_SOURCE_VLAN_LIST_VALID;
         sourceVlanList_ = vlanList;
     } else {
         validityMask_ = validityMask_ | TrafficFilterValidField::TF_DESTINATION_VLAN_LIST_VALID;
@@ -126,7 +126,7 @@ IpProtocol TrafficFilterImpl::getIPProtocol() {
 }
 void TrafficFilterImpl::setIPProtocol(IpProtocol ipProtocol) {
     validityMask_ = validityMask_ | TrafficFilterValidField::TF_IP_PROTOCOL_VALID;
-    ipProtocol_ = ipProtocol;
+    ipProtocol_   = ipProtocol;
 }
 
 Direction TrafficFilterImpl::getDirection() {
@@ -134,7 +134,7 @@ Direction TrafficFilterImpl::getDirection() {
 }
 void TrafficFilterImpl::setDirection(Direction direction) {
     validityMask_ = validityMask_ | TrafficFilterValidField::TF_DIRECTION_VALID;
-    direction_ = direction;
+    direction_    = direction;
 }
 
 int8_t TrafficFilterImpl::getPCP() {
@@ -142,16 +142,15 @@ int8_t TrafficFilterImpl::getPCP() {
 }
 void TrafficFilterImpl::setPCP(int8_t pcp) {
     validityMask_ = validityMask_ | TrafficFilterValidField::TF_PCP_VALID;
-    pcp_ = pcp;
+    pcp_          = pcp;
 }
-
 
 DataPath TrafficFilterImpl::getDataPath() {
     return dataPath_;
 }
 void TrafficFilterImpl::setDataPath(DataPath dataPath) {
     validityMask_ = validityMask_ | TrafficFilterValidField::TF_DATA_PATH_VALID;
-    dataPath_ = dataPath;
+    dataPath_     = dataPath;
 }
 
 TrafficFilterValidFields TrafficFilterImpl::getTrafficFilterValidFields() {
@@ -224,7 +223,6 @@ std::string TrafficFilterImpl::dataPathToString(DataPath dataPath) {
         case DataPath::APPS_TO_WAN:
             dataPathStr = "APPS_TO_WAN";
             break;
-
     }
     return dataPathStr;
 }
@@ -316,7 +314,6 @@ TrafficFilterBuilder &TrafficFilterBuilder::setDirection(Direction direction) {
     return *this;
 }
 
-
 TrafficFilterBuilder &TrafficFilterBuilder::setDataPath(DataPath dataPath) {
     if (trafficFilter_ == nullptr) {
         trafficFilter_ = std::make_shared<TrafficFilterImpl>();
@@ -335,7 +332,7 @@ TrafficFilterBuilder &TrafficFilterBuilder::setPCP(int8_t pcp) {
 
 std::shared_ptr<ITrafficFilter> TrafficFilterBuilder::build() {
     std::shared_ptr<ITrafficFilter> trafficFilter = trafficFilter_;
-    trafficFilter_ = nullptr;
+    trafficFilter_                                = nullptr;
     return trafficFilter;
 }
 

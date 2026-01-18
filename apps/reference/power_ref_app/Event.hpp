@@ -14,7 +14,6 @@
 #include <functional>
 #include <telux/power/TcuActivityDefines.hpp>
 #include <telux/common/Log.hpp>
-#include "common/RefAppUtils.hpp"
 
 using namespace telux::power;
 using namespace telux::common;

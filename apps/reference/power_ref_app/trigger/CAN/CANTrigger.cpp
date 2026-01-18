@@ -4,6 +4,7 @@
  */
 
 #include "CANTrigger.hpp"
+#include "common/RefAppUtils.hpp"
 
 std::shared_ptr<CANTrigger> CANTrigger::canTrigger_ = nullptr;
 
@@ -106,6 +107,7 @@ void CANTrigger::triggerEvent(CwFrame *pf, void *userData, int ifNo) {
 
     if (eventPtr) {
         if (canTriggerPtr->eventManager_) {
+            RefAppUtils::logKpiFile(eventPtr);
             canTriggerPtr->eventManager_->pushEvent(eventPtr);
         } else {
             LOG(ERROR, __FUNCTION__, "  event manager is not available ");

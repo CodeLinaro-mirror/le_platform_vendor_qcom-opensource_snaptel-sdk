@@ -27,6 +27,11 @@
 #include "ISocketConnectionListener.hpp"
 #include "define.hpp"
 
+#include <fstream>
+#include <cerrno>
+#include <cstring>
+#include "../Event.hpp"
+
 class RefAppUtils {
  public:
     /**
@@ -56,15 +61,48 @@ class RefAppUtils {
     static std::string dataRestrictModeTypeToString(telux::data::DataRestrictModeType filterMode);
     static std::vector<std::shared_ptr<Connection>> getConnectionConfigs();
     static uint32_t getKeepAliveInterval();
+    static std::bitset<32> getTriggerResumeOnWakeupConfig();
 
     static bool isUDP();
     static bool isClient();
-    static bool isKeepAliveEnabled();
     static bool isAutoExitEnabled();
     static bool isDataFilterInstallationEnabled();
+    static bool isWakeupListenerEnabled();
+
+    /**
+     * Log KPI information to the KPI file
+     * @param event The event to log KPI information for
+     */
+    static void logKpiFile(std::shared_ptr<Event> event);
+
+    /**
+     * Log KPI information to the KPI file
+     * @param message The custom message to log to the KPI file
+     */
+    static void logKpiFile(const std::string &message);
+
+    /**
+     * Log KPI information to the KPI file
+     * @param message Pointer to the message buffer
+     * @param length Length of the message buffer
+     */
+    static void logKpiFile(const char *message, size_t length);
+
+    /**
+     * Set KPI logging enable/disable flag
+     * @param enable True to enable KPI logging, false to disable
+     */
+    static void setKpiLoggingEnabled(bool enable);
+
+    /**
+     * Check if KPI logging is enabled
+     * @return True if KPI logging is enabled, false otherwise
+     */
+    static bool isKpiLoggingEnabled();
 
  private:
     static bool stringToBool(std::string enable);
+    static bool kpiLoggingEnabled_;
 };
 
 #endif

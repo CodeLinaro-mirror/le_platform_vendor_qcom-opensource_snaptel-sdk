@@ -5,6 +5,7 @@
 
 #include "./TCPKeepAliveHandler.hpp"
 #include <future>
+#include "common/RefAppUtils.hpp"
 
 std::shared_ptr<TCPKeepAliveHandler> TCPKeepAliveHandler::getInstance(
     std::shared_ptr<EventManager> eventManager) {
@@ -106,8 +107,9 @@ bool TCPKeepAliveHandler::startKAOffload() {
             continue;
         }
         if (!(connectionKaInfo->connection && connectionKaInfo->connection->socketConnection
+                && connectionKaInfo->connection->isKeepAliveEnabled
                 && connectionKaInfo->connection->socketConnection->isConnected())) {
-            LOG(DEBUG, __FUNCTION__, " connection not connected");
+            LOG(DEBUG, __FUNCTION__, " not starting keep alive ");
             continue;
         }
         LOG(DEBUG, __FUNCTION__, connectionKaInfo->connection->toString());
@@ -129,29 +131,44 @@ bool TCPKeepAliveHandler::startKAOffload() {
             if (connectionKaInfo->keepAliveManager->enableTCPMonitor(
                     kaPram, connectionKaInfo->monitorHandle)
                 == telux::common::ErrorCode::SUCCESS) {
-                IPMessage msg;
-                memset(&msg, 0, sizeof(msg));
-                const char *message = "Hello\n";
-                std::copy(message, message + strlen(message) + 1, msg.msg);
+                IPMessage msg{};
+                std::string messageStr = "Enabled TCP Monitor with: "
+                                         + connectionKaInfo->connection->toString() + "\n";
+                std::snprintf(msg.msg, sizeof(msg.msg), "%s", messageStr.c_str());
+
                 connectionKaInfo->connection->socketConnection->sendMessage(msg);
                 connectionKaInfo->connection->socketConnection->ensureAllPacketsAcknowledged();
-                // std::this_thread::sleep_for(std::chrono::milliseconds(200));
                 if (connectionKaInfo->keepAliveManager->startTCPKeepAliveOffload(
-                        connectionKaInfo->monitorHandle, RefAppUtils::getKeepAliveInterval(),
+                        connectionKaInfo->monitorHandle,
+                        connectionKaInfo->connection->keepAliveInterval,
                         connectionKaInfo->offloadHandle)
                     == telux::common::ErrorCode::SUCCESS) {
-                    continue;
+                    LOG(DEBUG, __FUNCTION__, " SUCCESS startTCPKeepAliveOffload");
                 } else {
                     LOG(ERROR, __FUNCTION__, " issue in startTCPKeepAliveOffload");
                 }
-            } else {
-                LOG(ERROR, __FUNCTION__, " issue in enableTCPMonitor");
             }
-        } else {
-            LOG(ERROR, __FUNCTION__, " issue in connection");
         }
     }
     return false;
+}
+
+bool TCPKeepAliveHandler::sendMessageToAll(std::string string) {
+    for (auto connectionKaInfo : connectionKaInfoList_) {
+        if (!(connectionKaInfo->connection && connectionKaInfo->connection->socketConnection
+                && connectionKaInfo->connection->socketConnection->isConnected())) {
+            LOG(DEBUG, __FUNCTION__, " connection not connected");
+            continue;
+        }
+        IPMessage msg{};
+        std::string messageStr = string + " :" + connectionKaInfo->connection->toString() + "\n";
+        std::snprintf(msg.msg, sizeof(msg.msg), "%s", messageStr.c_str());
+        if (!connectionKaInfo->connection->socketConnection->sendMessage(msg)) {
+            return false;
+        }
+        LOG(DEBUG, __FUNCTION__, connectionKaInfo->connection->toString());
+    }
+    return true;
 }
 
 void TCPKeepAliveHandler::stopKAOffload() {

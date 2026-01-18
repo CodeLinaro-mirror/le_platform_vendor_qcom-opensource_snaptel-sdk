@@ -2,6 +2,7 @@
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 #ifndef TCPSERVER_HPP
 #define TCPSERVER_HPP
 
@@ -132,44 +133,111 @@ class TCPServer : public IServer {
         socklen_t sockSize        = 0;
         int reuse                 = 1;
 
-        if (!bindToDevice(serverSocket_, connectionConfig_->dataCall->getInterfaceName())) {
-            return false;
+        // Call bindToDevice after accept
+        if (!connectionConfig_->configuredInterfaceName.empty()) {
+            if (!bindToDevice(clientSocket_, connectionConfig_->configuredInterfaceName)) {
+                LOG(ERROR, __FUNCTION__, " bind : ", connectionConfig_->configuredInterfaceName,
+                    " ", std::string(strerror(errno)));
+            }
+        } else {
+            if (!bindToDevice(
+                    this->clientSocket_, connectionConfig_->dataCall->getInterfaceName())) {
+                LOG(ERROR, __FUNCTION__, " Failed to bind to device");
+            }
         }
+
         // Set socket options BEFORE bind
         setsockopt(this->serverSocket_, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
         setsockopt(this->serverSocket_, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse));
-
         if (this->connectionConfig_->ipFamily == telux::data::IpFamilyType::IPV4) {
-            struct sockaddr_in v4ServerAddr = {};
-            if (!this->connectionConfig_->dataCall->getIpv4Info().addr.ifAddress.empty()) {
-                inet_pton(AF_INET,
+            struct sockaddr_in v4ServerAddr {};
+            memset(&v4ServerAddr, 0, sizeof(v4ServerAddr));
+            if (!this->connectionConfig_->serverIpAddr.empty()) {
+                LOG(DEBUG, __FUNCTION__,
+                    " IPv4 address format: ", this->connectionConfig_->serverIpAddr);
+
+                int ret = inet_pton(AF_INET, this->connectionConfig_->serverIpAddr.c_str(),
+                    &(v4ServerAddr.sin_addr));
+                if (ret <= 0) {
+                    if (ret == 0) {
+                        LOG(ERROR, __FUNCTION__, " Invalid IPv4 address format: ",
+                            this->connectionConfig_->serverIpAddr);
+                    } else {
+                        LOG(ERROR, __FUNCTION__,
+                            " inet_pton failed: ", std::string(strerror(errno)));
+                    }
+                    return false;
+                }
+
+            } else if (!this->connectionConfig_->dataCall->getIpv4Info().addr.ifAddress.empty()) {
+                LOG(DEBUG, __FUNCTION__, " IPv4 address format: ",
+                    this->connectionConfig_->dataCall->getIpv4Info().addr.ifAddress);
+                int ret = inet_pton(AF_INET,
                     this->connectionConfig_->dataCall->getIpv4Info().addr.ifAddress.c_str(),
                     &(v4ServerAddr.sin_addr));
+                if (ret <= 0) {
+                    if (ret == 0) {
+                        LOG(ERROR, __FUNCTION__, " Invalid IPv4 address format: ",
+                            this->connectionConfig_->dataCall->getIpv4Info().addr.ifAddress);
+                    } else {
+                        LOG(ERROR, __FUNCTION__,
+                            " inet_pton failed: ", std::string(strerror(errno)));
+                    }
+                    return false;
+                }
             }
             v4ServerAddr.sin_family = AF_INET;
             v4ServerAddr.sin_port   = htons(this->connectionConfig_->serverPort);
             sockAddr                = reinterpret_cast<struct sockaddr *>(&v4ServerAddr);
             sockSize                = sizeof(sockaddr_in);
+
+            if (bind(this->serverSocket_, sockAddr, sockSize) < 0) {
+                LOG(ERROR, __FUNCTION__, " bind : ", std::string(strerror(errno)));
+                this->isConnected_ = false;
+                if (this->serverSocket_ != -1) {
+                    close(this->serverSocket_);
+                    this->serverSocket_ = -1;
+                }
+                return false;
+            }
+
+            return true;
         } else {
             struct sockaddr_in6 v6ServerAddr = {};
+            memset(&v6ServerAddr, 0, sizeof(v6ServerAddr));
             if (!this->connectionConfig_->dataCall->getIpv6Info().addr.ifAddress.empty()) {
-                inet_pton(AF_INET6,
+                LOG(ERROR, __FUNCTION__, " IPv6 address format: ",
+                    this->connectionConfig_->dataCall->getIpv6Info().addr.ifAddress);
+                int ret = inet_pton(AF_INET6,
                     this->connectionConfig_->dataCall->getIpv6Info().addr.ifAddress.c_str(),
                     &(v6ServerAddr.sin6_addr));
+                if (ret <= 0) {
+                    if (ret == 0) {
+                        LOG(ERROR, __FUNCTION__, " Invalid IPv6 address format: ",
+                            this->connectionConfig_->dataCall->getIpv6Info().addr.ifAddress);
+                    } else {
+                        LOG(ERROR, __FUNCTION__,
+                            " inet_pton failed: ", std::string(strerror(errno)));
+                    }
+                    return false;
+                }
             }
             v6ServerAddr.sin6_family = AF_INET6;
             v6ServerAddr.sin6_port   = htons(this->connectionConfig_->serverPort);
             sockAddr                 = reinterpret_cast<struct sockaddr *>(&v6ServerAddr);
             sockSize                 = sizeof(sockaddr_in6);
-        }
 
-        if (bind(this->serverSocket_, sockAddr, sockSize) < 0) {
-            LOG(ERROR, __FUNCTION__, " bind : ", std::string(strerror(errno)));
-            this->isConnected_ = false;
-            return false;
+            if (bind(this->serverSocket_, sockAddr, sockSize) < 0) {
+                LOG(ERROR, __FUNCTION__, " bind : ", std::string(strerror(errno)));
+                this->isConnected_ = false;
+                if (this->serverSocket_ != -1) {
+                    close(this->serverSocket_);
+                    this->serverSocket_ = -1;
+                }
+                return false;
+            }
+            return true;
         }
-
-        return true;
     }
 
     void listenTCPSync() {
@@ -192,11 +260,16 @@ class TCPServer : public IServer {
             }
 
             // Call bindToDevice after accept
-            if (!bindToDevice(
-                    this->clientSocket_, connectionConfig_->dataCall->getInterfaceName())) {
-                LOG(ERROR, __FUNCTION__, " Failed to bind to device");
-                close(this->clientSocket_);
-                continue;
+            if (!connectionConfig_->configuredInterfaceName.empty()) {
+                if (!bindToDevice(clientSocket_, connectionConfig_->configuredInterfaceName)) {
+                    LOG(ERROR, __FUNCTION__, " bind : ", connectionConfig_->configuredInterfaceName,
+                        " ", std::string(strerror(errno)));
+                }
+            } else {
+                if (!bindToDevice(
+                        this->clientSocket_, connectionConfig_->dataCall->getInterfaceName())) {
+                    LOG(ERROR, __FUNCTION__, " Failed to bind to device");
+                }
             }
 
             char clientIp[INET6_ADDRSTRLEN] = {};
@@ -216,15 +289,15 @@ class TCPServer : public IServer {
             if (!this->connectionConfig_->clientIpAddr.empty()
                 && strcmp(clientIp, this->connectionConfig_->clientIpAddr.c_str()) != 0) {
                 LOG(WARNING, __FUNCTION__, " rejected client IP: ", clientIp);
-                close(this->clientSocket_);
-                continue;
+                // close(this->clientSocket_);
+                // continue;
             }
 
             if (this->connectionConfig_->clientPort != 0
                 && this->connectionConfig_->clientPort != clientPort) {
                 LOG(WARNING, __FUNCTION__, " rejected client port: ", clientPort);
-                close(this->clientSocket_);
-                continue;
+                // close(this->clientSocket_);
+                // continue;
             }
 
             this->isConnected_ = true;

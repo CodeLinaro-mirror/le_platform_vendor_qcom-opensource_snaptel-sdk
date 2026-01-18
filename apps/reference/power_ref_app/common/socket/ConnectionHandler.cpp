@@ -9,7 +9,6 @@
 #include "UDPServer.cpp"
 #include "TCPClient.cpp"
 #include "UDPClient.cpp"
-#include <algorithm>
 
 std::shared_ptr<ConnectionHandler> ConnectionHandler::instance = nullptr;
 std::once_flag ConnectionHandler::initInstanceFlag;
@@ -227,6 +226,9 @@ bool ConnectionHandler::startDataCall(std::shared_ptr<Connection> connection) {
     telux::data::DataCallParams params;
     params.profileId    = connection->profileId;
     params.ipFamilyType = connection->ipFamily;
+#ifdef TELUX_POWER_REFD_EAP
+    params.operationType = telux::data::OperationType::DATA_REMOTE;
+#endif
 
     // Create promise and future to wait for callback
     std::promise<void> dataCallPromise;

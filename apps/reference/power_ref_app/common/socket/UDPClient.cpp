@@ -139,7 +139,7 @@ class UDPClient : public IIPConnection {
                 // client
                 IPMessage sampleMsg;
                 memset(&sampleMsg, 0, sizeof(sampleMsg));
-                const char *message = (std::string("\n")).c_str();
+                const char *message = "\n";
                 std::copy(message, message + strlen(message) + 1, sampleMsg.msg);
                 sendMessage(sampleMsg);
 

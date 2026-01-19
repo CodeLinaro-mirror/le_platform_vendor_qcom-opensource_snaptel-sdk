@@ -45,29 +45,29 @@ void MyMultiSimListener::onHighCapabilityChanged(int slotId) {
     PRINT_NOTIFICATION << "High capability changed to slot " << slotId << std::endl;
 }
 
-void MyMultiSimListener::onSlotStatusChanged(std::map<PhysicalSlotId,
-    telux::tel::SimSlotStatus> slotStatus) {
+void MyMultiSimListener::onSlotStatusChanged(
+    std::map<PhysicalSlotId, telux::tel::SimSlotStatus> slotStatus) {
     PRINT_NOTIFICATION << "Slot status change notification received" << std::endl;
-    for(auto it = slotStatus.begin(); it != slotStatus.end(); ++it) {
-        auto slotId = it->first;
+    for (auto it = slotStatus.begin(); it != slotStatus.end(); ++it) {
+        auto slotId     = it->first;
         auto slotStatus = it->second;
-        PRINT_NOTIFICATION << " Physical SlotId: " << static_cast<int>(slotId)
-                << ", SlotState: " << MyMultiSimHelper::slotStateToString(slotStatus.slotState)
-                << ", CardState: " << MyMultiSimHelper::cardStateToString(slotStatus.cardState)
-                << ", CardError: " << MyMultiSimHelper::cardErrorToString(slotStatus.cardError)
-                << ", isMEP: " << (slotStatus.isMep ? "true" : "false")
-                << ", mode: "  << MyMultiSimHelper::mepModeToString(slotStatus.mepSlotInfo.mode)
-                << std::endl;
+        PRINT_NOTIFICATION
+            << " Physical SlotId: " << static_cast<int>(slotId)
+            << ", SlotState: " << MyMultiSimHelper::slotStateToString(slotStatus.slotState)
+            << ", CardState: " << MyMultiSimHelper::cardStateToString(slotStatus.cardState)
+            << ", CardError: " << MyMultiSimHelper::cardErrorToString(slotStatus.cardError)
+            << ", isMEP: " << (slotStatus.isMep ? "true" : "false")
+            << ", mode: " << MyMultiSimHelper::mepModeToString(slotStatus.mepSlotInfo.mode)
+            << std::endl;
         if (slotStatus.isMep) {
-            const auto &ports = slotStatus.mepSlotInfo.port; // adjust if your field name differs
+            const auto &ports = slotStatus.mepSlotInfo.port;  // adjust if your field name differs
             if (!ports.empty()) {
                 PRINT_NOTIFICATION << "  MEP Port Details: " << std::endl;
                 for (const telux::tel::PortInfo &p : ports) {
-                    PRINT_NOTIFICATION << " PortState: "
-                        << MyMultiSimHelper::portStateToString(p.state)
-                        << ", ICCID: "    << (p.iccId.empty() ? "<none>" : p.iccId)
-                        << ", LogicalSlotId: " << static_cast<int>(p.slotId)
-                        << std::endl;
+                    PRINT_NOTIFICATION
+                        << " PortState: " << MyMultiSimHelper::portStateToString(p.state)
+                        << ", ICCID: " << (p.iccId.empty() ? "<none>" : p.iccId)
+                        << ", LogicalSlotId: " << static_cast<int>(p.slotId) << std::endl;
                 }
             } else {
                 PRINT_NOTIFICATION << " MEP Port Details: <no ports reported>" << std::endl;

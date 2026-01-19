@@ -42,12 +42,12 @@ class MultiSimManagerStub : public IMultiSimManager,
         SlotId slotId, common::ResponseCallback callback) override;
     telux::common::Status requestSlotStatus(SlotStatusCallback callback) override;
     telux::common::Status configureLogicalSlotMapping(
-        std::map <LogicalSlotId, LogicalSlotMapInfo> mapInfo,
+        std::map<LogicalSlotId, LogicalSlotMapInfo> mapInfo,
         common::ResponseCallback callback) override;
-    telux::common::ErrorCode getLogicalSlotMapping(std::map <LogicalSlotId,
-        LogicalSlotMapInfo> &mapInfo) override;
-    telux::common::ErrorCode getPhysicalSlotStatus(std::map<PhysicalSlotId,
-        SimSlotStatus> &slotStatus) override;
+    telux::common::ErrorCode getLogicalSlotMapping(
+        std::map<LogicalSlotId, LogicalSlotMapInfo> &mapInfo) override;
+    telux::common::ErrorCode getPhysicalSlotStatus(
+        std::map<PhysicalSlotId, SimSlotStatus> &slotStatus) override;
     void onEventUpdate(google::protobuf::Any event);
     void cleanup();
 

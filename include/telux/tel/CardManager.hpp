@@ -459,7 +459,8 @@ class ICard {
      * @returns Status of openLogicalChannel i.e. success or suitable status code.
      */
     virtual telux::common::Status openLogicalChannel(
-        std::string applicationId, std::shared_ptr<ICardChannelCallback> callback = nullptr) = 0;
+        std::string applicationId, std::shared_ptr<ICardChannelCallback> callback = nullptr)
+        = 0;
 
     /**
      * Close a previously opened logical channel to the SIM.
@@ -475,10 +476,9 @@ class ICard {
      *
      * @returns Status of closeLogicalChannel i.e. success or suitable status code.
      */
-    virtual telux::common::Status closeLogicalChannel(
-        int channelId,
+    virtual telux::common::Status closeLogicalChannel(int channelId,
         std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr,
-        bool isEs10 = false)
+        bool isEs10                                                       = false)
         = 0;
 
     /**
@@ -590,30 +590,30 @@ class ICard {
      */
     virtual std::shared_ptr<ICardFileHandler> getFileHandler() = 0;
 
-   /**
-    * Checks whether the NTN profile is activated on a given logical slot.
-    *
-    * @returns If true NTN profile is activated or else not-activated.
-    *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to
-    *         change and could break backwards compatibility.
-    */
-   virtual bool isNtnProfileActive() = 0;
+    /**
+     * Checks whether the NTN profile is activated on a given logical slot.
+     *
+     * @returns If true NTN profile is activated or else not-activated.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual bool isNtnProfileActive() = 0;
 
-   /**
-    * Provides Multiple Enabled Profiles (MEP) information on the logical slot.
-    *
-    * On platforms with access control enabled, caller needs to have TELUX_TEL_PRIVATE_INFO_READ
-    * permission to invoke this API successfully.
-    *
-    * @param [out] info  MEP info.
-    *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to
-    *         change and could break backwards compatibility.
-    */
-   virtual void getMepInfo(MepInfo &info) = 0;
+    /**
+     * Provides Multiple Enabled Profiles (MEP) information on the logical slot.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_TEL_PRIVATE_INFO_READ
+     * permission to invoke this API successfully.
+     *
+     * @param [out] info  MEP info.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual void getMepInfo(MepInfo &info) = 0;
 
-   virtual ~ICard() {};
+    virtual ~ICard(){};
 };
 
 /**

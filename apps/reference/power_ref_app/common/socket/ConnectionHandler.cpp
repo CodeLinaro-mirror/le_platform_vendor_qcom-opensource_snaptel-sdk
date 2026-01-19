@@ -131,7 +131,7 @@ void ConnectionHandler::cleanup() {
     isCleanupTriggered_ = true;
     cvStatusUpdate_.notify_all();
     for (const auto &entry : connectionConfigList_) {
-        if(entry->socketConnection)
+        if (entry->socketConnection)
             entry->socketConnection->cleanup();
         entry->dataConnectionManager = nullptr;
     }

@@ -107,22 +107,21 @@ bool MultiSimMenu::init() {
                 std::bind(&MultiSimMenu::setHighCapability, this, std::placeholders::_1)));
         std::shared_ptr<ConsoleAppCommand> setActiveSlotCommand
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "Switch_Active_slot", {},
-        std::bind(&MultiSimMenu::switchActiveSlot, this, std::placeholders::_1)));
+                std::bind(&MultiSimMenu::switchActiveSlot, this, std::placeholders::_1)));
         std::shared_ptr<ConsoleAppCommand> configureLogicalSlotMappingCommand
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5",
-                "Configure_Logical_slot_mapping", {},
-        std::bind(&MultiSimMenu::configureLogicalSlotMapping, this, std::placeholders::_1)));
+            = std::make_shared<ConsoleAppCommand>(
+                ConsoleAppCommand("5", "Configure_Logical_slot_mapping", {},
+                    std::bind(
+                        &MultiSimMenu::configureLogicalSlotMapping, this, std::placeholders::_1)));
         std::shared_ptr<ConsoleAppCommand> getLogicalSlotMappingCommand
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6",
-                "Get_Logical_slot_mapping", {},
-        std::bind(&MultiSimMenu::getLogicalSlotMapping, this, std::placeholders::_1)));
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6", "Get_Logical_slot_mapping",
+                {}, std::bind(&MultiSimMenu::getLogicalSlotMapping, this, std::placeholders::_1)));
         std::shared_ptr<ConsoleAppCommand> getPhysicalSlotCommand
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7",
-                "Get_Physical_slot_status", {},
-        std::bind(&MultiSimMenu::getPhysicalSlotStatus, this, std::placeholders::_1)));
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "Get_Physical_slot_status",
+                {}, std::bind(&MultiSimMenu::getPhysicalSlotStatus, this, std::placeholders::_1)));
 
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListMultiSimMenu
-            = { getSlotCountCommand, requestHighCapabilityCommand, setHighCapabilityCommand,
+            = {getSlotCountCommand, requestHighCapabilityCommand, setHighCapabilityCommand,
                 setActiveSlotCommand, configureLogicalSlotMappingCommand,
                 getLogicalSlotMappingCommand, getPhysicalSlotCommand};
 
@@ -237,7 +236,6 @@ void MultiSimMenu::switchActiveSlot(std::vector<std::string> userInput) {
     }
 }
 
-
 void MultiSimMenu::configureLogicalSlotMapping(std::vector<std::string> userInput) {
     if (!multiSimMgr_) {
         std::cout << "ERROR - MultiSimManger is null" << std::endl;
@@ -245,11 +243,12 @@ void MultiSimMenu::configureLogicalSlotMapping(std::vector<std::string> userInpu
     }
 
     // Get slot count to guide the user
-    int slotCount = -1;
+    int slotCount       = -1;
     auto getCountStatus = multiSimMgr_->getSlotCount(slotCount);
     if (getCountStatus != telux::common::Status::SUCCESS || slotCount <= 0) {
-        std::cout << "ERROR - Unable to retrieve slot count; status: "
-                  << static_cast<int>(getCountStatus) << std::endl;
+        std::cout
+            << "ERROR - Unable to retrieve slot count; status: " << static_cast<int>(getCountStatus)
+            << std::endl;
         return;
     }
 
@@ -285,8 +284,8 @@ void MultiSimMenu::configureLogicalSlotMapping(std::vector<std::string> userInpu
         std::string portIdStr;
 
         std::cout << "Enter the port identifier for the LogicalSlotId:\n"
-          << "- For MEP B, the port identifiers start from 0 (e.g., 0, 1...)\n"
-          << "- For MEP A1, the port identifiers start from 1 (e.g., 1, 2...)";
+                  << "- For MEP B, the port identifiers start from 0 (e.g., 0, 1...)\n"
+                  << "- For MEP A1, the port identifiers start from 1 (e.g., 1, 2...)";
         std::getline(std::cin, portIdStr, delimiter);
         try {
             portId = std::stoi(portIdStr);
@@ -302,23 +301,26 @@ void MultiSimMenu::configureLogicalSlotMapping(std::vector<std::string> userInpu
         }
 
         info.physicalSlot = static_cast<PhysicalSlotId>(physSlot);
-        info.portId = portId;
+        info.portId       = portId;
         mapInfo.emplace(logicalId, info);
     }
     auto ret = multiSimMgr_->configureLogicalSlotMapping(
         mapInfo, MyMultiSimCallback::configureLogicalSlotMappingResponse);
 
     std::cout << (ret == telux::common::Status::SUCCESS
-            ? "Configure logical slot mapping request is successful"
-            : "Configure logical slot mapping request failed")
-            << " with status: " << static_cast<int>(ret);
+                      ? "Configure logical slot mapping request is successful"
+                      : "Configure logical slot mapping request failed")
+              << " with status: " << static_cast<int>(ret);
 }
 
 LogicalSlotId MultiSimMenu::logicalIdFromIndex(int idx) {
     switch (idx) {
-        case 1: return LogicalSlotId::SLOT_ID_1;
-        case 2: return LogicalSlotId::SLOT_ID_2;
-        default: return LogicalSlotId::INVALID_SLOT_ID;
+        case 1:
+            return LogicalSlotId::SLOT_ID_1;
+        case 2:
+            return LogicalSlotId::SLOT_ID_2;
+        default:
+            return LogicalSlotId::INVALID_SLOT_ID;
     }
 }
 
@@ -329,21 +331,21 @@ void MultiSimMenu::getPhysicalSlotStatus(std::vector<std::string> userInput) {
     }
     std::map<PhysicalSlotId, telux::tel::SimSlotStatus> slotStatus;
     auto ret = multiSimMgr_->getPhysicalSlotStatus(slotStatus);
-    if(ret == telux::common::ErrorCode::SUCCESS) {
+    if (ret == telux::common::ErrorCode::SUCCESS) {
         if (slotStatus.empty()) {
             std::cout << "No slot status entries.\n";
             return;
         }
-        for(auto it = slotStatus.begin(); it != slotStatus.end(); ++it) {
+        for (auto it = slotStatus.begin(); it != slotStatus.end(); ++it) {
             auto slotId = it->first;
             auto status = it->second;
             std::cout << " Physical SlotId: " << static_cast<int>(slotId)
-                << ", SlotState: " << MyMultiSimHelper::slotStateToString(status.slotState)
-                << ", CardState: " << MyMultiSimHelper::cardStateToString(status.cardState)
-                << ", CardError: " << MyMultiSimHelper::cardErrorToString(status.cardError)
-                << ", IsMEP: " << (status.isMep ? "true" : "false")
-                << ", mode = "  << MyMultiSimHelper::mepModeToString(status.mepSlotInfo.mode)
-                << std::endl;
+                      << ", SlotState: " << MyMultiSimHelper::slotStateToString(status.slotState)
+                      << ", CardState: " << MyMultiSimHelper::cardStateToString(status.cardState)
+                      << ", CardError: " << MyMultiSimHelper::cardErrorToString(status.cardError)
+                      << ", IsMEP: " << (status.isMep ? "true" : "false")
+                      << ", mode = " << MyMultiSimHelper::mepModeToString(status.mepSlotInfo.mode)
+                      << std::endl;
 
             if (status.isMep) {
                 const auto &ports = status.mepSlotInfo.port;
@@ -351,9 +353,9 @@ void MultiSimMenu::getPhysicalSlotStatus(std::vector<std::string> userInput) {
                     std::cout << " MEP Port Details: " << std::endl;
                     for (const telux::tel::PortInfo &p : ports) {
                         std::cout << " LogicalSlotId: " << static_cast<int>(p.slotId)
-                            << ", ICCID: "    << (p.iccId.empty() ? "<none>" : p.iccId)
-                            << ", PortState: " << MyMultiSimHelper::portStateToString(p.state)
-                            << std::endl;
+                                  << ", ICCID: " << (p.iccId.empty() ? "<none>" : p.iccId)
+                                  << ", PortState: " << MyMultiSimHelper::portStateToString(p.state)
+                                  << std::endl;
                     }
                 } else {
                     std::cout << " MEP Port details not found " << std::endl;
@@ -364,7 +366,7 @@ void MultiSimMenu::getPhysicalSlotStatus(std::vector<std::string> userInput) {
         }
     } else {
         std::cout << " Configure logical slot mapping request failed with status code: "
-            << static_cast<int>(ret) << std::endl;
+                  << static_cast<int>(ret) << std::endl;
     }
 }
 
@@ -375,23 +377,23 @@ void MultiSimMenu::getLogicalSlotMapping(std::vector<std::string> userInput) {
     }
     std::map<LogicalSlotId, telux::tel::LogicalSlotMapInfo> mapInfo;
     auto ret = multiSimMgr_->getLogicalSlotMapping(mapInfo);
-    if(ret == telux::common::ErrorCode::SUCCESS) {
+    if (ret == telux::common::ErrorCode::SUCCESS) {
         if (mapInfo.empty()) {
             std::cout << "Logical slot mapping: <empty>" << std::endl;
             return;
         }
 
         for (auto it = mapInfo.begin(); it != mapInfo.end(); ++it) {
-            LogicalSlotId logicalId = it->first;
+            LogicalSlotId logicalId                    = it->first;
             const telux::tel::LogicalSlotMapInfo &info = it->second;
 
             std::cout << "LogicalSlotId: " << static_cast<int>(logicalId)
-                    << ", PhysicalSlotId: " << static_cast<int>(info.physicalSlot)
-                    << ", PortId: " << info.portId
-                    << std::endl;
+                      << ", PhysicalSlotId: " << static_cast<int>(info.physicalSlot)
+                      << ", PortId: " << info.portId << std::endl;
         }
     } else {
-        std::cout << "getLogicalSlotMapping request failed with status code: "
-            << static_cast<int>(ret) << std::endl;
+        std::cout
+            << "getLogicalSlotMapping request failed with status code: " << static_cast<int>(ret)
+            << std::endl;
     }
 }

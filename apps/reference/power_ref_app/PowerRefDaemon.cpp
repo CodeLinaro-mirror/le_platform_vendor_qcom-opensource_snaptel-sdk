@@ -44,7 +44,7 @@ telux::common::Status PowerRefDaemon::init() {
         bool allowNaoIp = true;
 
 #ifdef TELSDK_FEATURE_SATCOM_ENABLED
-        //By default, the app runs in TN mode.
+        // By default, the app runs in TN mode.
         if (config_->getValue("NTN_CONFIGS", "ENABLE_NTN") == "TRUE") {
             ntnEnabled_ = true;
         }
@@ -69,7 +69,7 @@ telux::common::Status PowerRefDaemon::init() {
                 config_->getValue("TRIGGER", "NAOIP_TRIGGER"));
         }
 
-        //Register for SMS trigger regardless of NTN enabled/disabled.
+        // Register for SMS trigger regardless of NTN enabled/disabled.
         if (config_->getValue("TRIGGER", "SMS_TRIGGER") == "ENABLE") {
             smsTrigger_ = make_shared<SMSTrigger>(eventManager);
             if (smsTrigger_ && smsTrigger_->init()) {
@@ -85,35 +85,35 @@ telux::common::Status PowerRefDaemon::init() {
 
         if (config_->getValue("TRIGGER", "CAN_TRIGGER") == "ENABLE") {
 #ifdef CAN_TRIGGER_SUPPORTED
-                canTrigger_ = CANTrigger::getInstance(eventManager);
-                if (canTrigger_ && canTrigger_->init()) {
-                    LOG(DEBUG, __FUNCTION__, " canTrigger init succeeded");
-                } else {
-                    LOG(ERROR, __FUNCTION__, " canTrigger init failed");
-                    initStatus = telux::common::Status::FAILED;
-                    break;
-                }
-#else // CAN_TRIGGER_SUPPORTED
-                LOG(ERROR, " CAN trigger is not supported");
-#endif // CAN_TRIGGER_SUPPORTED
+            canTrigger_ = CANTrigger::getInstance(eventManager);
+            if (canTrigger_ && canTrigger_->init()) {
+                LOG(DEBUG, __FUNCTION__, " canTrigger init succeeded");
+            } else {
+                LOG(ERROR, __FUNCTION__, " canTrigger init failed");
+                initStatus = telux::common::Status::FAILED;
+                break;
+            }
+#else  // CAN_TRIGGER_SUPPORTED
+            LOG(ERROR, " CAN trigger is not supported");
+#endif  // CAN_TRIGGER_SUPPORTED
 
         } else {
             LOG(DEBUG, __FUNCTION__, " CAN trigger ", config_->getValue("TRIGGER", "CAN_TRIGGER"));
         }
 
 #ifdef TELSDK_FEATURE_SATCOM_ENABLED
-        //Perform ntn enablement.
-        if(ntnEnabled_) {
-            ntnClient_ = std::make_shared<NtnClient>();
+        // Perform ntn enablement.
+        if (ntnEnabled_) {
+            ntnClient_                      = std::make_shared<NtnClient>();
             telux::common::Status retStatus = ntnClient_->init();
-            if(retStatus == telux::common::Status::SUCCESS) {
+            if (retStatus == telux::common::Status::SUCCESS) {
                 ntnClient_->registerForUpdates();
-                //Enable NTN
+                // Enable NTN
                 telux::common::ErrorCode err = ntnClient_->enableNtn();
-                if(err == telux::common::ErrorCode::SUCCESS) {
+                if (err == telux::common::ErrorCode::SUCCESS) {
                     LOG(DEBUG, __FUNCTION__, " ntn enable success");
-                    if(smsTrigger_) {
-                        //Needed for SMS trigger
+                    if (smsTrigger_) {
+                        // Needed for SMS trigger
                         smsTrigger_->setNtnClientInstance(ntnClient_);
                     }
                 } else {
@@ -138,10 +138,9 @@ int PowerRefDaemon::startDaemon(int argc, char **argv) {
     }
 
     struct sigaction sigAction = {};
-    sigAction.sa_handler = signalHandler;
+    sigAction.sa_handler       = signalHandler;
     sigemptyset(&sigAction.sa_mask);
     sigAction.sa_flags = 0;
-
 
     sigaction(SIGHUP, &sigAction, NULL);
     sigaction(SIGINT, &sigAction, NULL);
@@ -160,7 +159,7 @@ int PowerRefDaemon::startDaemon(int argc, char **argv) {
             smsTrigger_ = nullptr;
         }
 #ifdef TELSDK_FEATURE_SATCOM_ENABLED
-        if(ntnClient_) {
+        if (ntnClient_) {
             ntnClient_->cleanup();
             ntnClient_ = nullptr;
         }
@@ -171,8 +170,7 @@ int PowerRefDaemon::startDaemon(int argc, char **argv) {
     {
         // block current thread, till we get signal
         std::unique_lock<std::mutex> lock(mtx_);
-        cv_.wait(lock, [this]
-                 { return exiting_.load(); });
+        cv_.wait(lock, [this] { return exiting_.load(); });
     }
     return EXIT_SUCCESS;
 }
@@ -180,17 +178,17 @@ int PowerRefDaemon::startDaemon(int argc, char **argv) {
 void PowerRefDaemon::stopDaemon() {
     LOG(DEBUG, __FUNCTION__);
     exiting_ = true;
-    if(naoIpTrigger_)
+    if (naoIpTrigger_)
         naoIpTrigger_.reset();
     if (smsTrigger_)
         smsTrigger_.reset();
-    if(eventManager_) {
+    if (eventManager_) {
         eventManager_->cleanup();
         eventManager_.reset();
     }
 #ifdef TELSDK_FEATURE_SATCOM_ENABLED
-    if(ntnClient_) {
-      ntnClient_.reset();
+    if (ntnClient_) {
+        ntnClient_.reset();
     }
 #endif
     fflush(stdout);

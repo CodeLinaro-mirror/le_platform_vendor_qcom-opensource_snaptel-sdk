@@ -109,6 +109,9 @@ class DataConnectionServerImpl final
         const dataStub::CachedDataCallsRequest *request,
         dataStub::CachedDataCalls *response) override;
 
+    grpc::Status IsAnyDataCallActive(ServerContext *context, const google::protobuf::Empty *request,
+        ::dataStub::IsAnyDataCallActiveReply *response) override;
+
     /* Could be used if all the datacalls need to be teared down.
      * For ex: if WWAN connectivity is disabled via DataSettingsManager, then
      * all the datacalls need to be teared down.

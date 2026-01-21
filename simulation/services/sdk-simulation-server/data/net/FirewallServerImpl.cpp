@@ -176,7 +176,7 @@ grpc::Status FirewallServerImpl::AddFirewallEntry(ServerContext *context,
                 newConfig["slotId"]    = request->slot_id();
                 newConfig["profileId"] = request->profile_id();
 
-                newConfig["fw_direction"]    = request->fw_direction().fw_direction();
+                newConfig["fw_direction"]    = request->fw_direction();
                 newConfig["isHwAccelerated"] = request->is_hw_accelerated();
                 newConfig["protocol"]        = protocol;
                 std::string ipFamily         = DataUtilsStub::convertIpFamilyEnumToString(
@@ -336,9 +336,8 @@ grpc::Status FirewallServerImpl::RequestFirewallEntries(ServerContext *context,
                     && (requestedFirewallEntry["isHwAccelerated"].asBool() == isHwAccelerated)) {
 
                     dataStub::FirewallEntry *fw_entry = response->add_firewall_entries();
-                    fw_entry->mutable_fw_direction()->set_fw_direction(
-                        (dataStub::Direction::Fw_Direction)requestedFirewallEntry["fw_direction"]
-                            .asInt());
+                    fw_entry->set_fw_direction(
+                        (dataStub::Direction)requestedFirewallEntry["fw_direction"].asInt());
                     fw_entry->set_protocol(requestedFirewallEntry["protocol"].asString());
                     fw_entry->mutable_ip_family_type()->set_ip_family_type(
                         (DataUtilsStub::convertIpFamilyStringToEnum(

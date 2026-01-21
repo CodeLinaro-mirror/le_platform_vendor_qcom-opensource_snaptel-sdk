@@ -6,15 +6,17 @@
 #ifndef QOS_MANAGER_STUB_HPP
 #define QOS_MANAGER_STUB_HPP
 
-#include <telux/data/net/QoSManager.hpp>
 #include <telux/common/CommonDefines.hpp>
+#include <telux/data/net/QoSManager.hpp>
 
 #include "common/AsyncTaskQueue.hpp"
 #include "common/ListenerManager.hpp"
+#include "common/event-manager/ClientEventManager.hpp"
 #include "protos/proto-src/data_simulation.grpc.pb.h"
 
 namespace telux {
 namespace data {
+class DataEventListener;
 namespace net {
 
 class QoSFilterImpl : public IQoSFilter {
@@ -61,7 +63,9 @@ class TcConfigImpl : public ITcConfig {
     TcConfigValidFields validityMask_ = 0;
 };
 
-class QoSManagerStub : public IQoSManager {
+class QoSManagerStub : public IQoSManager,
+                       public telux::common::IEventListener,
+                       public std::enable_shared_from_this<QoSManagerStub> {
  public:
     QoSManagerStub();
     ~QoSManagerStub();
@@ -93,6 +97,29 @@ class QoSManagerStub : public IQoSManager {
         std::vector<std::shared_ptr<ITcConfig>> &tcConfigs) override;
 
     telux::common::ErrorCode deleteTrafficClass(std::shared_ptr<ITcConfig> tcConfig) override;
+
+    void onEventUpdate(google::protobuf::Any event) override;
+    BandwidthConfig protoToSdkBandwidthConfig(const dataStub::BandwidthConfig &protoConfig);
+    dataStub::BandwidthConfig sdkToProtoBandwidthConfig(const BandwidthConfig &sdkConfig);
+    std::shared_ptr<ITcConfig> protoToSdkTcConfig(dataStub::ITcConfig &protoTcConfig);
+    dataStub::ITcConfig sdkToProtoTcConfig(std::shared_ptr<ITcConfig> sdkTcConfig);
+    telux::data::net::QoSFilterStatus protoToSdkQoSFilterStatus(
+        const dataStub::QoSFilterStatus &protoStatus);
+
+    // ITrafficFilter conversion (simplified, assuming TrafficFilterImpl handles
+    // nested types)
+
+    bool isValidIPv4Address(const std::string &ipAddress);
+    bool isValidIPv6Address(const std::string &ipAddress);
+    QoSFilterErrorCode sdkToProtoTrafficFilter(
+        std::shared_ptr<ITrafficFilter> sdkFilter, dataStub::ITrafficFilter &protoFilter);
+    std::shared_ptr<ITrafficFilter> protoToSdkTrafficFilter(
+        const dataStub::ITrafficFilter &protoFilter);
+    std::shared_ptr<IQoSFilter> protoToSdkQoSFilter(const dataStub::IQoSFilter &protoQoSFilter);
+
+    void handleStartDataCallEvent(::dataStub::StartDataCallEvent startEvent);
+    void handleStopDataCallEvent(::dataStub::StopDataCallEvent startEvent);
+    void handleQoSFilterStatusChangeEvent(::dataStub::QoSFilterStatusChangeEvent startEvent);
 
  private:
     std::mutex mtx_;

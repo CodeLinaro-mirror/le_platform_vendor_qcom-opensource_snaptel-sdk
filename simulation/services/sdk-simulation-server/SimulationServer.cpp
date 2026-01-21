@@ -46,6 +46,7 @@
 #include "data/net/L2tpServerImpl.hpp"
 #include "data/net/BridgeServerImpl.hpp"
 #include "data/net/VlanServerImpl.hpp"
+#include "data/net/QoSServerImpl.hpp"
 #include "loc/LocationManagerServerImpl.hpp"
 #include "loc/LocationConfiguratorServerImpl.hpp"
 #include "tel/CallManagerServerImpl.hpp"
@@ -183,6 +184,9 @@ void SimulationServer::startGrpcServer() {
 
     std::shared_ptr<VlanServerImpl> vlanService = std::make_shared<VlanServerImpl>();
     builder.RegisterService(vlanService.get());
+
+    std::shared_ptr<QoSServerImpl> qosService = std::make_shared<QoSServerImpl>(dcmService);
+    builder.RegisterService(qosService.get());
 
     std::shared_ptr<DualDataServerImpl> dualDataService = std::make_shared<DualDataServerImpl>();
     builder.RegisterService(dualDataService.get());

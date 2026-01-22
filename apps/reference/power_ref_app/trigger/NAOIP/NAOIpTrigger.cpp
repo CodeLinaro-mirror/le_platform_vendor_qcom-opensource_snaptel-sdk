@@ -13,7 +13,7 @@ NAOIpTrigger::NAOIpTrigger(std::shared_ptr<EventManager> eventManager) {
 
 NAOIpTrigger::~NAOIpTrigger() {
     LOG(DEBUG, __FUNCTION__);
-    eventManager_ = nullptr;
+    eventManager_         = nullptr;
     dataFilterController_ = nullptr;
     if (connectionHandler_) {
         connectionHandler_->cleanup();

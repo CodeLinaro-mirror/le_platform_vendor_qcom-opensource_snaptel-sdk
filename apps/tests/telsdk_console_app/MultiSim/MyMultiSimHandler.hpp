@@ -56,8 +56,8 @@ class MyMultiSimHelper {
     static std::string slotStateToString(telux::tel::SlotState slotState);
     static std::string cardStateToString(telux::tel::CardState cardState);
     static std::string cardErrorToString(telux::tel::CardError cardError);
-   static std::string portStateToString(telux::tel::PortState state);
-   static std::string mepModeToString(telux::tel::Mode mode);
+    static std::string portStateToString(telux::tel::PortState state);
+    static std::string mepModeToString(telux::tel::Mode mode);
 };
 
 #endif  // MYMULTISIMHANDLER_HPP

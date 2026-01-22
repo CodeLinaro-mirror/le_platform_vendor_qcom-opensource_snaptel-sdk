@@ -94,12 +94,13 @@ class ICongestionControlListener {
 
     /** @param [in] newItt - updated inter-transmit time in milliseconds that the library computes
      * The Congestion Control Manager will call this Listener API when it computes a new
-     * inter-transmit time based on the smoothed density of vehicles within range of 
+     * inter-transmit time based on the smoothed density of vehicles within range of
      * the host vehicle.
      * @note -  Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual void onIttUpdate (uint64_t newItt) {}
+    virtual void onIttUpdate(uint64_t newItt) {
+    }
 
     /**
      * Destructor for ICongestionControlListener

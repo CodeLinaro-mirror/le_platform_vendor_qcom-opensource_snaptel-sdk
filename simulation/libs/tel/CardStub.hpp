@@ -42,14 +42,13 @@ class CardStub : public ICard {
         std::shared_ptr<ICardChannelCallback> callback = nullptr) override;
     telux::common::Status closeLogicalChannel(int channelId,
         std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr,
-        bool isEs10 = false) override;
+        bool isEs10                                                       = false) override;
     telux::common::Status transmitApduLogicalChannel(int channel, uint8_t cla, uint8_t instruction,
         uint8_t p1, uint8_t p2, uint8_t p3, std::vector<uint8_t> data,
         std::shared_ptr<ICardCommandCallback> callback = nullptr, bool isEs10 = false) override;
     telux::common::Status transmitApduBasicChannel(uint8_t cla, uint8_t instruction, uint8_t p1,
         uint8_t p2, uint8_t p3, std::vector<uint8_t> data,
-        std::shared_ptr<ICardCommandCallback> callback = nullptr,
-        bool isEs10 = false) override;
+        std::shared_ptr<ICardCommandCallback> callback = nullptr, bool isEs10 = false) override;
     telux::common::Status exchangeSimIO(uint16_t fileId, uint8_t command, uint8_t p1, uint8_t p2,
         uint8_t p3, std::string filePath, std::vector<uint8_t> data, std::string pin2,
         std::string aid, std::shared_ptr<ICardCommandCallback> callback = nullptr) override;

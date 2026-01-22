@@ -54,7 +54,7 @@ class RFBandList : public IRFBandList {
 class ServingSystemManagerStub : public IServingSystemManager,
                                  public IEventListener,
                                  public std::enable_shared_from_this<ServingSystemManagerStub> {
-public:
+ public:
     ServingSystemManagerStub(int phoneId);
     telux::common::Status init(telux::common::InitResponseCb callback);
     ~ServingSystemManagerStub();
@@ -63,20 +63,19 @@ public:
     std::future<bool> onSubsystemReady() override;
     telux::common::ServiceStatus getServiceStatus() override;
 
-    telux::common::Status setRatPreference(RatPreference ratPref,
-        common::ResponseCallback callback) override;
+    telux::common::Status setRatPreference(
+        RatPreference ratPref, common::ResponseCallback callback) override;
     telux::common::Status requestRatPreference(RatPreferenceCallback callback) override;
 
-    telux::common::Status setServiceDomainPreference(ServiceDomainPreference serviceDomain,
-        common::ResponseCallback callback) override;
+    telux::common::Status setServiceDomainPreference(
+        ServiceDomainPreference serviceDomain, common::ResponseCallback callback) override;
     telux::common::Status requestServiceDomainPreference(
         ServiceDomainPreferenceCallback callback) override;
 
     telux::common::Status getSystemInfo(ServingSystemInfo &sysInfo) override;
     telux::tel::DcStatus getDcStatus() override;
     telux::common::Status requestNetworkTime(NetworkTimeResponseCallback callback) override;
-    telux::common::Status requestLteSib16NetworkTime(NetworkTimeResponseCallback callback)
-        override;
+    telux::common::Status requestLteSib16NetworkTime(NetworkTimeResponseCallback callback) override;
     telux::common::Status requestNr5gRrcUtcTime(NetworkTimeResponseCallback callback) override;
     telux::common::Status requestRFBandInfo(RFBandInfoCallback callback) override;
     telux::common::Status getNetworkRejectInfo(NetworkRejectInfo &rejectInfo) override;
@@ -96,15 +95,15 @@ public:
         ServingSystemNotificationMask mask) override;
 
     void cleanup();
-    void onEventUpdate(google::protobuf::Any event)  override;
+    void onEventUpdate(google::protobuf::Any event) override;
 
-private:
+ private:
     int phoneId_;
     std::mutex mtx_;
     std::condition_variable cv_;
     telux::common::InitResponseCb initCb_;
     int cbDelay_;
-    std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_ = nullptr;
+    std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_                          = nullptr;
     std::shared_ptr<telux::common::ListenerManager<IServingSystemListener>> listenerMgr_ = nullptr;
     std::unique_ptr<::telStub::ServingSystemService::Stub> stub_;
     telux::common::ServiceStatus subSystemStatus_;
@@ -119,12 +118,12 @@ private:
     void handleNetworkRejection(::telStub::NetworkRejectInfoEvent event);
     void handleRfBandInfoUpdateEvent(::telStub::RFBandInfoEvent event);
     void handleRrcStateChange(::telStub::RrcStateEvent event);
-    NetworkMode updateNetworkMode(WcdmaRrcState wcdmaRrcState, LteRrcState lteRrcState,
-        Nr5gRrcState nr5gRrcState);
+    NetworkMode updateNetworkMode(
+        WcdmaRrcState wcdmaRrcState, LteRrcState lteRrcState, Nr5gRrcState nr5gRrcState);
 };
 
-} // end of namespace tel
+}  // end of namespace tel
 
-} // end of namespace telux
+}  // end of namespace telux
 
-#endif // SERVING_SYSTEM_MANAGER_STUB_HPP
+#endif  // SERVING_SYSTEM_MANAGER_STUB_HPP

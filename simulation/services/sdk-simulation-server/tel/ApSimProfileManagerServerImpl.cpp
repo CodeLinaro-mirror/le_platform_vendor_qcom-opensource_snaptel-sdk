@@ -18,17 +18,17 @@
 #define JSON_PATH3 "system-state/tel/IApSimProfileManagerStateSlot1.json"
 #define JSON_PATH4 "system-state/tel/IApSimProfileManagerStateSlot2.json"
 #define SUB_JSON_PATH "system-state/tel/ISubscriptionManagerState.json"
-#define MANAGER    "IApSimProfileManager"
+#define MANAGER "IApSimProfileManager"
 #define SLOT_1 1
 #define SLOT_2 2
 
-#define PROFILE_LIST_REQUEST         "profileListRequest"
-#define PROFILE_OPERATION_REQUEST    "profileOperationRequest"
-#define DEFAULT_SUB_ICCID            "89010020000011293999"
+#define PROFILE_LIST_REQUEST "profileListRequest"
+#define PROFILE_OPERATION_REQUEST "profileOperationRequest"
+#define DEFAULT_SUB_ICCID "89010020000011293999"
 
 ApSimProfileManagerServerImpl::ApSimProfileManagerServerImpl() {
     LOG(DEBUG, __FUNCTION__);
-    taskQ_ = std::make_shared<telux::common::AsyncTaskQueue<void>>();
+    taskQ_        = std::make_shared<telux::common::AsyncTaskQueue<void>>();
     profileIccid_ = DEFAULT_SUB_ICCID;
 }
 
@@ -39,31 +39,31 @@ ApSimProfileManagerServerImpl::~ApSimProfileManagerServerImpl() {
     }
 }
 
-grpc::Status ApSimProfileManagerServerImpl::CleanUpService(ServerContext* context,
-    const ::google::protobuf::Empty* request, ::google::protobuf::Empty* response) {
+grpc::Status ApSimProfileManagerServerImpl::CleanUpService(ServerContext *context,
+    const ::google::protobuf::Empty *request, ::google::protobuf::Empty *response) {
     LOG(DEBUG, __FUNCTION__);
     return grpc::Status::OK;
 }
 
-grpc::Status ApSimProfileManagerServerImpl::InitService(ServerContext* context,
-    const ::commonStub::GetServiceStatusRequest* request,
-    commonStub::GetServiceStatusReply* response) {
+grpc::Status ApSimProfileManagerServerImpl::InitService(ServerContext *context,
+    const ::commonStub::GetServiceStatusRequest *request,
+    commonStub::GetServiceStatusReply *response) {
     LOG(DEBUG, __FUNCTION__);
     Json::Value rootObj;
-    std::string filePath = JSON_PATH1;
+    std::string filePath           = JSON_PATH1;
     telux::common::ErrorCode error = JsonParser::readFromJsonFile(rootObj, filePath);
     if (error != ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! ");
         return grpc::Status(grpc::StatusCode::NOT_FOUND, "Json not found");
     }
 
-    int cbDelay = rootObj[MANAGER]["IsSubsystemReadyDelay"].asInt();
-    std::string cbStatus = rootObj[MANAGER]["IsSubsystemReady"].asString();
+    int cbDelay                         = rootObj[MANAGER]["IsSubsystemReadyDelay"].asInt();
+    std::string cbStatus                = rootObj[MANAGER]["IsSubsystemReady"].asString();
     telux::common::ServiceStatus status = CommonUtils::mapServiceStatus(cbStatus);
     LOG(DEBUG, __FUNCTION__, " cbDelay:: ", cbDelay, " cbStatus:: ", cbStatus);
     if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         std::vector<std::string> filters = {telux::tel::TEL_AP_SIM_PROFILE_FILTER};
-        auto &serverEventManager = ServerEventManager::getInstance();
+        auto &serverEventManager         = ServerEventManager::getInstance();
         serverEventManager.registerListener(shared_from_this(), filters);
     }
     response->set_service_status(static_cast<commonStub::ServiceStatus>(status));
@@ -72,45 +72,44 @@ grpc::Status ApSimProfileManagerServerImpl::InitService(ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status ApSimProfileManagerServerImpl::GetServiceStatus(ServerContext* context,
-    const ::commonStub::GetServiceStatusRequest* request,
-    commonStub::GetServiceStatusReply* response) {
+grpc::Status ApSimProfileManagerServerImpl::GetServiceStatus(ServerContext *context,
+    const ::commonStub::GetServiceStatusRequest *request,
+    commonStub::GetServiceStatusReply *response) {
     Json::Value rootObj;
-    std::string filePath = (request->phone_id() == SLOT_1)? JSON_PATH1 : JSON_PATH2;
+    std::string filePath           = (request->phone_id() == SLOT_1) ? JSON_PATH1 : JSON_PATH2;
     telux::common::ErrorCode error = JsonParser::readFromJsonFile(rootObj, filePath);
     if (error != ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! ");
         return grpc::Status(grpc::StatusCode::NOT_FOUND, "Json not found");
     }
-    std::string srvStatus = rootObj[MANAGER]["IsSubsystemReady"].asString();
+    std::string srvStatus               = rootObj[MANAGER]["IsSubsystemReady"].asString();
     telux::common::ServiceStatus status = CommonUtils::mapServiceStatus(srvStatus);
     response->set_service_status(static_cast<commonStub::ServiceStatus>(status));
     return grpc::Status::OK;
 }
 
-grpc::Status ApSimProfileManagerServerImpl::SendRetrieveProfileListResponse(ServerContext* context,
-    const telStub::ProfileListResponseRequest* request,
-    telStub::ProfileListResponseReply* response) {
+grpc::Status ApSimProfileManagerServerImpl::SendRetrieveProfileListResponse(ServerContext *context,
+    const telStub::ProfileListResponseRequest *request,
+    telStub::ProfileListResponseReply *response) {
     LOG(DEBUG, __FUNCTION__);
-    std::string apiJsonPath = (request->slot_id() == SLOT_1)? JSON_PATH1 : JSON_PATH2;
-    std::string stateJsonPath = (request->slot_id() == SLOT_1)? JSON_PATH3 : JSON_PATH4;
-    std::string subsystem = MANAGER;
-    std::string method = "sendRetrieveProfileListResponse";
+    std::string apiJsonPath   = (request->slot_id() == SLOT_1) ? JSON_PATH1 : JSON_PATH2;
+    std::string stateJsonPath = (request->slot_id() == SLOT_1) ? JSON_PATH3 : JSON_PATH4;
+    std::string subsystem     = MANAGER;
+    std::string method        = "sendRetrieveProfileListResponse";
     JsonData data;
-    telux::common::ErrorCode error =
-        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
 
     if (error != ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! ");
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
     }
     if (data.status == telux::common::Status::SUCCESS) {
         int referenceId = static_cast<int>(request->reference_id());
         if (referenceId <= 0) {
-            return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,"Invalid Arguements");
+            return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Invalid Arguements");
         }
-        data.stateRootObj[MANAGER]\
-            ["ProfileListResponse"]["reference_id"] = referenceId;
+        data.stateRootObj[MANAGER]["ProfileListResponse"]["reference_id"] = referenceId;
         data.stateRootObj[MANAGER]["apduExchangeResult"] = static_cast<int>(request->result());
         for (auto &iccid : request->profile_iccid()) {
             data.stateRootObj[MANAGER]["ProfileListResponse"]["profileIccids"] = iccid;
@@ -130,27 +129,27 @@ grpc::Status ApSimProfileManagerServerImpl::SendRetrieveProfileListResponse(Serv
     return grpc::Status::OK;
 }
 
-grpc::Status ApSimProfileManagerServerImpl::SendProfileOperationResponse(ServerContext* context,
-    const telStub::ProfileOperationResponseRequest* request,
-    telStub::ProfileOperationResponseReply* response) {
+grpc::Status ApSimProfileManagerServerImpl::SendProfileOperationResponse(ServerContext *context,
+    const telStub::ProfileOperationResponseRequest *request,
+    telStub::ProfileOperationResponseReply *response) {
     LOG(DEBUG, __FUNCTION__);
-    int phoneId = request->slot_id();
-    std::string apiJsonPath = (phoneId == SLOT_1)? JSON_PATH1 : JSON_PATH2;
-    std::string stateJsonPath = (phoneId == SLOT_1)? JSON_PATH3 : JSON_PATH4;
-    std::string subsystem = MANAGER;
-    std::string method = "sendProfileOperationResponse";
+    int phoneId               = request->slot_id();
+    std::string apiJsonPath   = (phoneId == SLOT_1) ? JSON_PATH1 : JSON_PATH2;
+    std::string stateJsonPath = (phoneId == SLOT_1) ? JSON_PATH3 : JSON_PATH4;
+    std::string subsystem     = MANAGER;
+    std::string method        = "sendProfileOperationResponse";
     JsonData data;
-    telux::common::ErrorCode error =
-        CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
 
     if (error != ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! ");
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
     }
     if (data.status == telux::common::Status::SUCCESS) {
         int referenceId = request->reference_id();
         if (referenceId <= 0) {
-            return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,"Invalid Arguements");
+            return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Invalid Arguements");
         }
         data.stateRootObj[MANAGER]["ProfileOperationResponse"]["reference_id"] = referenceId;
         int result = static_cast<int>(request->result());
@@ -161,19 +160,19 @@ grpc::Status ApSimProfileManagerServerImpl::SendProfileOperationResponse(ServerC
             Json::Value subRootObj;
             error = JsonParser::readFromJsonFile(subRootObj, SUB_JSON_PATH);
             if (error != ErrorCode::SUCCESS) {
-                LOG(ERROR, __FUNCTION__, " Reading JSON File failed" );
+                LOG(ERROR, __FUNCTION__, " Reading JSON File failed");
                 return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
             }
             if (isProfileEnable_) {
-                subRootObj["ISubscriptionManager"]["Subscription"][phoneId-1]["iccId"]
+                subRootObj["ISubscriptionManager"]["Subscription"][phoneId - 1]["iccId"]
                     = profileIccid_;
             } else {
                 // update to default
                 if (profileIccid_ != DEFAULT_SUB_ICCID) {
-                    subRootObj["ISubscriptionManager"]["Subscription"][phoneId-1]["iccId"]
+                    subRootObj["ISubscriptionManager"]["Subscription"][phoneId - 1]["iccId"]
                         = DEFAULT_SUB_ICCID;
                 } else {
-                    subRootObj["ISubscriptionManager"]["Subscription"][phoneId-1]["iccId"] = "";
+                    subRootObj["ISubscriptionManager"]["Subscription"][phoneId - 1]["iccId"] = "";
                 }
             }
             JsonParser::writeToJsonFile(subRootObj, SUB_JSON_PATH);
@@ -199,21 +198,21 @@ void ApSimProfileManagerServerImpl::handleProfileListRequest(std::string eventPa
     try {
         // Read string to get slotId
         std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-        phoneId = std::stoi(token);
+        phoneId           = std::stoi(token);
         LOG(DEBUG, __FUNCTION__, " Slot id is: ", phoneId);
         if (phoneId < SLOT_1 || phoneId > SLOT_2) {
             LOG(ERROR, " Invalid input for slot id");
             return;
         }
         if (phoneId == SLOT_2) {
-            if(!(telux::common::DeviceConfig::isMultiSimSupported())) {
+            if (!(telux::common::DeviceConfig::isMultiSimSupported())) {
                 LOG(ERROR, __FUNCTION__, " Multi SIM is not enabled ");
                 return;
             }
         }
 
         // Read string to get reference id
-        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        token           = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
         int referenceId = std::stoi(token);
         if (referenceId <= 0) {
             LOG(ERROR, __FUNCTION__, " Invalid input for reference id");
@@ -223,7 +222,7 @@ void ApSimProfileManagerServerImpl::handleProfileListRequest(std::string eventPa
         profileListEvent.set_slot_id(phoneId);
         profileListEvent.set_reference_id(referenceId);
         LOG(DEBUG, __FUNCTION__, " referenceId: ", referenceId);
-    } catch(exception const & ex) {
+    } catch (exception const &ex) {
         LOG(ERROR, __FUNCTION__, " Exception Occured: ", ex.what());
         return;
     }
@@ -244,21 +243,21 @@ void ApSimProfileManagerServerImpl::handleProfileOperationRequest(std::string ev
     try {
         // Read string to get slotId
         std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-        phoneId = std::stoi(token);
+        phoneId           = std::stoi(token);
         LOG(DEBUG, __FUNCTION__, " Slot id is: ", phoneId);
         if (phoneId < SLOT_1 || phoneId > SLOT_2) {
             LOG(ERROR, " Invalid input for slot id");
             return;
         }
         if (phoneId == SLOT_2) {
-            if(!(telux::common::DeviceConfig::isMultiSimSupported())) {
+            if (!(telux::common::DeviceConfig::isMultiSimSupported())) {
                 LOG(ERROR, __FUNCTION__, " Multi SIM is not enabled ");
                 return;
             }
         }
 
         // Read string to get reference id
-        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        token           = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
         int referenceId = std::stoi(token);
         if (referenceId <= 0) {
             LOG(ERROR, __FUNCTION__, " Invalid input for reference id");
@@ -266,15 +265,15 @@ void ApSimProfileManagerServerImpl::handleProfileOperationRequest(std::string ev
         }
 
         // Read string to get iccid
-        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        token             = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
         std::string iccid = token;
         if (iccid.length() < 20) {
             LOG(ERROR, __FUNCTION__, " Invalid ICCID");
             return;
         }
 
-         // Read string to get profile operation
-        token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        // Read string to get profile operation
+        token        = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
         int isEnable = std::stoi(token);
         if (isEnable != 0 && isEnable != 1) {
             LOG(ERROR, __FUNCTION__, " Invalid input for profile operation");
@@ -288,8 +287,8 @@ void ApSimProfileManagerServerImpl::handleProfileOperationRequest(std::string ev
         LOG(DEBUG, __FUNCTION__, " referenceId: ", referenceId, " iccid: ", iccid,
             " isEnable: ", isEnable);
         isProfileEnable_ = isEnable;
-        profileIccid_ = iccid;
-    } catch(exception const & ex) {
+        profileIccid_    = iccid;
+    } catch (exception const &ex) {
         LOG(ERROR, __FUNCTION__, " Exception Occured: ", ex.what());
         return;
     }
@@ -303,12 +302,11 @@ void ApSimProfileManagerServerImpl::handleProfileOperationRequest(std::string ev
     taskQ_->add(f);
 }
 
-void ApSimProfileManagerServerImpl::triggerChangeEvent(
-    ::eventService::EventResponse anyResponse) {
+void ApSimProfileManagerServerImpl::triggerChangeEvent(::eventService::EventResponse anyResponse) {
     LOG(DEBUG, __FUNCTION__);
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-    //posting the event to EventService event queue
-    auto& eventImpl = EventService::getInstance();
+    // posting the event to EventService event queue
+    auto &eventImpl = EventService::getInstance();
     eventImpl.updateEventQueue(anyResponse);
 }
 
@@ -320,9 +318,9 @@ void ApSimProfileManagerServerImpl::onEventUpdate(::eventService::UnsolicitedEve
 }
 
 void ApSimProfileManagerServerImpl::onEventUpdate(std::string event) {
-    LOG(DEBUG, __FUNCTION__," Event: ", event );
+    LOG(DEBUG, __FUNCTION__, " Event: ", event);
     std::string token = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
-    LOG(DEBUG, __FUNCTION__," Token: ", token );
+    LOG(DEBUG, __FUNCTION__, " Token: ", token);
     if (PROFILE_LIST_REQUEST == token) {
         handleProfileListRequest(event);
     } else if (PROFILE_OPERATION_REQUEST == token) {

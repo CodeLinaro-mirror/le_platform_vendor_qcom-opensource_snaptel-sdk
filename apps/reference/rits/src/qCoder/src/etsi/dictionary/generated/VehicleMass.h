@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_VehicleMass_H_
-#define	_VehicleMass_H_
-
+#ifndef _VehicleMass_H_
+#define _VehicleMass_H_
 
 #include <asn_application.h>
 
@@ -20,12 +19,12 @@ extern "C" {
 
 /* Dependencies */
 typedef enum VehicleMass {
-	VehicleMass_hundredKg	= 1,
-	VehicleMass_unavailable	= 1024
+    VehicleMass_hundredKg   = 1,
+    VehicleMass_unavailable = 1024
 } e_VehicleMass;
 
 /* VehicleMass */
-typedef long	 VehicleMass_t;
+typedef long VehicleMass_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_VehicleMass;
@@ -43,5 +42,5 @@ per_type_encoder_f VehicleMass_encode_uper;
 }
 #endif
 
-#endif	/* _VehicleMass_H_ */
+#endif /* _VehicleMass_H_ */
 #include <asn_internal.h>

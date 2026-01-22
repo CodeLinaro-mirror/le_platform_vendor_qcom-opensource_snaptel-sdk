@@ -28,9 +28,8 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -52,29 +51,29 @@
  * It provides utility methods to get value of a config setting by passing the key
  */
 class MsdSettings {
-public:
-   // Get the user defined value for any configuration setting
-   static std::string getValue(std::string key);
+ public:
+    // Get the user defined value for any configuration setting
+    static std::string getValue(std::string key);
 
-   // Function to read msdSettings config file containing key value pairs
-   static void readMsdSettingsFile();
+    // Function to read msdSettings config file containing key value pairs
+    static void readMsdSettingsFile();
 
-   // Print all the key value pairs in the cache
-   static void printMsdSettings();
+    // Print all the key value pairs in the cache
+    static void printMsdSettings();
 
-   telux::tel::ECallMsdData readMsdFromFile(std::string filename);
+    telux::tel::ECallMsdData readMsdFromFile(std::string filename);
 
-   telux::tel::ECallOptionalEuroNcapData readEuroNcapOptionalAdditionalDataContent(
-       std::string filename);
+    telux::tel::ECallOptionalEuroNcapData readEuroNcapOptionalAdditionalDataContent(
+        std::string filename);
 
-   void setOptionalAdditionalDataContent(std::vector<uint8_t> optionalAdditionalDataContent);
-   std::vector<uint8_t> getOptionalAdditionalDataContent();
+    void setOptionalAdditionalDataContent(std::vector<uint8_t> optionalAdditionalDataContent);
+    std::vector<uint8_t> getOptionalAdditionalDataContent();
 
-private:
-   // Hashmap to store all msdSettings as key-value pairs
-   static std::map<std::string, std::string> msdSettingsMap_;
-   static std::string filename_;
-   std::vector<uint8_t> encodedOptionalAdditionalDataContent_;
+ private:
+    // Hashmap to store all msdSettings as key-value pairs
+    static std::map<std::string, std::string> msdSettingsMap_;
+    static std::string filename_;
+    std::vector<uint8_t> encodedOptionalAdditionalDataContent_;
 };  // end of class MsdSettings
 
 #endif  // MSDSETTINGS_HPP

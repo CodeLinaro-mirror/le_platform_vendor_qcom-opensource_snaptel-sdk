@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <errno.h>
@@ -19,7 +19,7 @@ void LogsReceiver::onAvailableLogs(uint8_t *data, int length) {
     /* Print data in hexadecimal format (N row * 32 columns) */
     for (int x = 0; x < length; x++) {
         printf("%02x ", data[x] & 0xffU);
-        if (x && !((x+1) % 32) && (x != (length - 1))) {
+        if (x && !((x + 1) % 32) && (x != (length - 1))) {
             printf("\n");
         }
     }
@@ -31,7 +31,7 @@ void LogsReceiver::onAvailableLogs(uint8_t *data, int length) {
  */
 CallbackMethod::CallbackMethod(std::string menuTitle, std::string cursor,
     std::shared_ptr<telux::platform::diag::IDiagLogManager> diagMgr)
-    : CollectionMethod(menuTitle, cursor, diagMgr) {
+   : CollectionMethod(menuTitle, cursor, diagMgr) {
 }
 
 /*
@@ -49,15 +49,14 @@ int CallbackMethod::initCallbackMethod() {
 
     try {
         logsReceiver_ = std::make_shared<LogsReceiver>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "can't allocate LogsReceiver" << std::endl;
         return -ENOMEM;
     }
 
     status = diagMgr_->registerListener(logsReceiver_);
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't register listener, err " <<
-            static_cast<int>(status) << std::endl;
+        std::cout << "can't register listener, err " << static_cast<int>(status) << std::endl;
         return -EIO;
     }
 
@@ -68,33 +67,33 @@ int CallbackMethod::initCallbackMethod() {
  * Prepare options applicable for callback method and display them.
  */
 void CallbackMethod::showCallbackMenu() {
-    std::shared_ptr<ConsoleAppCommand> setConfig = std::make_shared<
-        ConsoleAppCommand>(ConsoleAppCommand("1", "Set configuration", {},
-        std::bind(&CallbackMethod::setConfig, this,
-        telux::platform::diag::LogMethod::CALLBACK)));
+    std::shared_ptr<ConsoleAppCommand> setConfig
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "Set configuration", {},
+            std::bind(
+                &CallbackMethod::setConfig, this, telux::platform::diag::LogMethod::CALLBACK)));
 
-    std::shared_ptr<ConsoleAppCommand> getConfig = std::make_shared<
-        ConsoleAppCommand>(ConsoleAppCommand("2", "Get configuration", {},
-        std::bind(&CallbackMethod::getConfig, this)));
+    std::shared_ptr<ConsoleAppCommand> getConfig
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "2", "Get configuration", {}, std::bind(&CallbackMethod::getConfig, this)));
 
-    std::shared_ptr<ConsoleAppCommand> startCollection = std::make_shared<
-        ConsoleAppCommand>(ConsoleAppCommand("3", "Start log collection", {},
-        std::bind(&CallbackMethod::startCollection, this)));
+    std::shared_ptr<ConsoleAppCommand> startCollection
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "3", "Start log collection", {}, std::bind(&CallbackMethod::startCollection, this)));
 
-    std::shared_ptr<ConsoleAppCommand> stopCollection = std::make_shared<
-        ConsoleAppCommand>(ConsoleAppCommand("4", "Stop log collection", {},
-        std::bind(&CallbackMethod::stopCollection, this)));
+    std::shared_ptr<ConsoleAppCommand> stopCollection
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "4", "Stop log collection", {}, std::bind(&CallbackMethod::stopCollection, this)));
 
-    std::shared_ptr<ConsoleAppCommand> drainBuffer = std::make_shared<
-        ConsoleAppCommand>(ConsoleAppCommand("5", "Drain peripheral's buffer", {},
-        std::bind(&CallbackMethod::drainBuffer, this)));
+    std::shared_ptr<ConsoleAppCommand> drainBuffer
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "5", "Drain peripheral's buffer", {}, std::bind(&CallbackMethod::drainBuffer, this)));
 
-    std::shared_ptr<ConsoleAppCommand> getSrvStatus = std::make_shared<
-        ConsoleAppCommand>(ConsoleAppCommand("6", "Get service status", {},
-        std::bind(&CallbackMethod::getServiceStatus, this)));
+    std::shared_ptr<ConsoleAppCommand> getSrvStatus
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "6", "Get service status", {}, std::bind(&CallbackMethod::getServiceStatus, this)));
 
-    std::vector<std::shared_ptr<ConsoleAppCommand>> cbCmds = {setConfig,
-        getConfig, startCollection, stopCollection, drainBuffer, getSrvStatus};
+    std::vector<std::shared_ptr<ConsoleAppCommand>> cbCmds
+        = {setConfig, getConfig, startCollection, stopCollection, drainBuffer, getSrvStatus};
 
     ConsoleApp::addCommands(cbCmds);
     ConsoleApp::displayMenu();

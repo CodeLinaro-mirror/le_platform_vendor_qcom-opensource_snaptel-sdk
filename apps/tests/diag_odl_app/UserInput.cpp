@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <vector>
@@ -69,13 +69,13 @@ void UserInput::getSourceInfo(telux::platform::diag::DiagConfig &cfg) {
     std::vector<uint32_t> selection;
 
     if (cfg.srcType == telux::platform::diag::SourceType::DEVICE) {
-/*#if defined(FEATURE_EXTERNAL_AP) || defined(FEATURE_QTI_EXTERNAL_AP)
-        getMultipleChoiceNumbersFromUsr(
-            "Enter devices (comma separated, 1-mdm, 2-eap, 3-both): ", 1, 3, selection);
-#else
-        getMultipleChoiceNumbersFromUsr(
-            "Enter devices (comma separated, 1-mdm): ", 1, 1, selection);
-#endif */
+        /*#if defined(FEATURE_EXTERNAL_AP) || defined(FEATURE_QTI_EXTERNAL_AP)
+                getMultipleChoiceNumbersFromUsr(
+                    "Enter devices (comma separated, 1-mdm, 2-eap, 3-both): ", 1, 3, selection);
+        #else
+                getMultipleChoiceNumbersFromUsr(
+                    "Enter devices (comma separated, 1-mdm): ", 1, 1, selection);
+        #endif */
 
         getMultipleChoiceNumbersFromUsr(
             "Enter devices (comma separated, 1-mdm): ", 1, 1, selection);
@@ -89,8 +89,8 @@ void UserInput::getSourceInfo(telux::platform::diag::DiagConfig &cfg) {
                     cfg.srcInfo.device |= telux::platform::diag::DIAG_DEVICE_EXTERNAL_AP;
                     break;
                 case 3:
-                    cfg.srcInfo.device = (telux::platform::diag::DIAG_DEVICE_MDM |
-                        telux::platform::diag::DIAG_DEVICE_EXTERNAL_AP);
+                    cfg.srcInfo.device = (telux::platform::diag::DIAG_DEVICE_MDM
+                                          | telux::platform::diag::DIAG_DEVICE_EXTERNAL_AP);
                     break;
                 default:
                     std::cout << "invalid device " << selection[x] << std::endl;
@@ -98,8 +98,8 @@ void UserInput::getSourceInfo(telux::platform::diag::DiagConfig &cfg) {
         }
     } else {
         getMultipleChoiceNumbersFromUsr(
-            "Enter peripherals (comma separated, 1-integrated AP, 2-modem dsp, 3-both): ",
-            1, 3, selection);
+            "Enter peripherals (comma separated, 1-integrated AP, 2-modem dsp, 3-both): ", 1, 3,
+            selection);
 
         for (uint32_t x = 0; x < selection.size(); x++) {
             switch (selection[x]) {
@@ -110,9 +110,8 @@ void UserInput::getSourceInfo(telux::platform::diag::DiagConfig &cfg) {
                     cfg.srcInfo.peripheral |= telux::platform::diag::DIAG_PERIPHERAL_MODEM_DSP;
                     break;
                 case 3:
-                    cfg.srcInfo.peripheral = (
-                        telux::platform::diag::DIAG_PERIPHERAL_INTEGRATED_AP |
-                        telux::platform::diag::DIAG_PERIPHERAL_MODEM_DSP);
+                    cfg.srcInfo.peripheral = (telux::platform::diag::DIAG_PERIPHERAL_INTEGRATED_AP
+                                              | telux::platform::diag::DIAG_PERIPHERAL_MODEM_DSP);
                     break;
                 default:
                     std::cout << "invalid peripheral " << selection[x] << std::endl;
@@ -128,7 +127,7 @@ void UserInput::getMode(telux::platform::diag::DiagConfig &cfg) {
     uint32_t choice = 0;
 
     getChoiceNumberFromUsr(
-            "Enter mode (1-streaming, 2-threshold, 3-circular buffer): ", 1, 3, choice);
+        "Enter mode (1-streaming, 2-threshold, 3-circular buffer): ", 1, 3, choice);
 
     switch (choice) {
         case 1:
@@ -153,19 +152,19 @@ void UserInput::getMask(telux::platform::diag::DiagConfig &cfg) {
     std::shared_ptr<std::string> eapFile;
     std::shared_ptr<std::string> mdmFile;
 
-/*#if defined(FEATURE_EXTERNAL_AP) || defined(FEATURE_QTI_EXTERNAL_AP)
-    getAbsoluteFilePathFromUser("Specify EAP mask file (yes/no): ", eapFile);
-    cfg.eapLogMaskFile = *eapFile;
+    /*#if defined(FEATURE_EXTERNAL_AP) || defined(FEATURE_QTI_EXTERNAL_AP)
+        getAbsoluteFilePathFromUser("Specify EAP mask file (yes/no): ", eapFile);
+        cfg.eapLogMaskFile = *eapFile;
 
-    if ((cfg.srcInfo.device & telux::platform::diag::DIAG_DEVICE_MDM) ==
-        telux::platform::diag::DIAG_DEVICE_MDM) {
-        getAbsoluteFilePathFromUser("Specify MDM mask file (yes/no): ", mdmFile);
+        if ((cfg.srcInfo.device & telux::platform::diag::DIAG_DEVICE_MDM) ==
+            telux::platform::diag::DIAG_DEVICE_MDM) {
+            getAbsoluteFilePathFromUser("Specify MDM mask file (yes/no): ", mdmFile);
+            cfg.mdmLogMaskFile = *mdmFile;
+        }
+    #else
+        getFileFromUser("Enter MDM mask file (absolute path): ", mdmFile);
         cfg.mdmLogMaskFile = *mdmFile;
-    }
-#else
-    getFileFromUser("Enter MDM mask file (absolute path): ", mdmFile);
-    cfg.mdmLogMaskFile = *mdmFile;
-#endif*/
+    #endif*/
 
     getFileFromUser("Enter MDM mask file (absolute path): ", mdmFile);
     cfg.mdmLogMaskFile = *mdmFile;
@@ -177,14 +176,12 @@ void UserInput::getMask(telux::platform::diag::DiagConfig &cfg) {
 void UserInput::getFileSize(telux::platform::diag::DiagConfig &cfg) {
     uint32_t choice = 0;
 
-    getChoiceNumberFromUsr(
-        "Enter max file size (between 1 to 100 MB): ", 1, 100, choice);
-     cfg.methodConfig.fileConfig.maxSize = choice;
+    getChoiceNumberFromUsr("Enter max file size (between 1 to 100 MB): ", 1, 100, choice);
+    cfg.methodConfig.fileConfig.maxSize = choice;
 
     choice = 0;
-    getChoiceNumberFromUsr(
-        "Enter max number of files (between 2 to 100): ", 2, 100, choice);
-     cfg.methodConfig.fileConfig.maxNumber = choice;
+    getChoiceNumberFromUsr("Enter max number of files (between 2 to 100): ", 2, 100, choice);
+    cfg.methodConfig.fileConfig.maxNumber = choice;
 }
 
 /*
@@ -193,27 +190,24 @@ void UserInput::getFileSize(telux::platform::diag::DiagConfig &cfg) {
 void UserInput::getWaterMark(telux::platform::diag::DiagConfig &cfg) {
     uint32_t choice = 0;
 
-    getChoiceNumberFromUsr(
-        "Enter low water mark (between 1 to 100): ", 1, 100, choice);
-     cfg.modeConfig.bufferedModeConfig.lowWaterMark = choice;
+    getChoiceNumberFromUsr("Enter low water mark (between 1 to 100): ", 1, 100, choice);
+    cfg.modeConfig.bufferedModeConfig.lowWaterMark = choice;
 
     choice = 0;
-    getChoiceNumberFromUsr(
-        "Enter high water mark (between 1 to 100): ", 1, 100, choice);
-     cfg.modeConfig.bufferedModeConfig.highWaterMark = choice;
+    getChoiceNumberFromUsr("Enter high water mark (between 1 to 100): ", 1, 100, choice);
+    cfg.modeConfig.bufferedModeConfig.highWaterMark = choice;
 }
 
 /*
  * Helper to get specific number from the user.
  */
-void UserInput::getChoiceNumberFromUsr(
-    const std::string choicesToDisplay, const uint32_t minVal,
+void UserInput::getChoiceNumberFromUsr(const std::string choicesToDisplay, const uint32_t minVal,
     const uint32_t maxVal, uint32_t &selection) {
 
     uint32_t numFromUsr;
     std::string usrInput = "";
 
-    while(1) {
+    while (1) {
         std::cout << choicesToDisplay;
 
         if ((!std::getline(std::cin, usrInput)) || usrInput.empty()) {
@@ -224,7 +218,7 @@ void UserInput::getChoiceNumberFromUsr(
 
         try {
             numFromUsr = std::stoul(usrInput);
-        } catch (const std::exception& e) {
+        } catch (const std::exception &e) {
             std::cout << "invalid input" << std::endl;
             continue;
         }
@@ -242,14 +236,13 @@ void UserInput::getChoiceNumberFromUsr(
 /*
  * Helper to get specific numbers from the user for setting bitmasks fields.
  */
-void UserInput::getMultipleChoiceNumbersFromUsr(
-    const std::string choicesToDisplay, const uint32_t minVal,
-    const uint32_t maxVal, std::vector<uint32_t> &selection) {
+void UserInput::getMultipleChoiceNumbersFromUsr(const std::string choicesToDisplay,
+    const uint32_t minVal, const uint32_t maxVal, std::vector<uint32_t> &selection) {
 
     uint32_t numFromUsr;
     std::string usrInput = "";
 
-    while(1) {
+    while (1) {
         std::cout << choicesToDisplay;
 
         if ((!std::getline(std::cin, usrInput)) || usrInput.empty()) {
@@ -290,13 +283,13 @@ void UserInput::getMultipleChoiceNumbersFromUsr(
  * Helper to get absolute path of a file on file system from the user.
  * User can provide path or skip.
  */
-void UserInput::getAbsoluteFilePathFromUser(const std::string choicesToDisplay,
-        std::shared_ptr<std::string> &absoluteFilePath) {
+void UserInput::getAbsoluteFilePathFromUser(
+    const std::string choicesToDisplay, std::shared_ptr<std::string> &absoluteFilePath) {
 
     std::string usrInput = "";
     size_t choiceLength;
 
-    while(1) {
+    while (1) {
         std::cout << choicesToDisplay;
 
         if ((!std::getline(std::cin, usrInput)) || usrInput.empty()) {
@@ -325,10 +318,10 @@ void UserInput::getAbsoluteFilePathFromUser(const std::string choicesToDisplay,
 /*
  * Helper to get absolute path of a file on file system from the user.
  */
-void UserInput::getFileFromUser(std::shared_ptr<std::string>& absoluteFilePath) {
+void UserInput::getFileFromUser(std::shared_ptr<std::string> &absoluteFilePath) {
     std::string usrInput = "";
 
-    while(1) {
+    while (1) {
         std::cout << "Enter file's absolute path : ";
 
         if ((!std::getline(std::cin, usrInput)) || usrInput.empty()) {
@@ -338,7 +331,7 @@ void UserInput::getFileFromUser(std::shared_ptr<std::string>& absoluteFilePath) 
 
         try {
             absoluteFilePath = std::make_shared<std::string>(usrInput);
-        } catch (const std::exception& e) {
+        } catch (const std::exception &e) {
             std::cout << "can't allocate string" << std::endl;
             absoluteFilePath = nullptr;
         }
@@ -349,11 +342,11 @@ void UserInput::getFileFromUser(std::shared_ptr<std::string>& absoluteFilePath) 
 /*
  * Helper to get absolute path of a file on file system from the user.
  */
-void UserInput::getFileFromUser(const std::string textToDisplay,
-        std::shared_ptr<std::string> &absoluteFilePath) {
+void UserInput::getFileFromUser(
+    const std::string textToDisplay, std::shared_ptr<std::string> &absoluteFilePath) {
     std::string usrInput = "";
 
-    while(1) {
+    while (1) {
         std::cout << textToDisplay;
 
         if ((!std::getline(std::cin, usrInput)) || usrInput.empty()) {
@@ -363,7 +356,7 @@ void UserInput::getFileFromUser(const std::string textToDisplay,
 
         try {
             absoluteFilePath = std::make_shared<std::string>(usrInput);
-        } catch (const std::exception& e) {
+        } catch (const std::exception &e) {
             std::cout << "can't allocate string" << std::endl;
             absoluteFilePath = nullptr;
         }

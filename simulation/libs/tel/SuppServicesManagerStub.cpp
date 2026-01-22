@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <telux/common/DeviceConfig.hpp>
@@ -31,10 +31,8 @@ telux::common::Status SuppServicesManagerStub::init(telux::common::InitResponseC
         LOG(ERROR, __FUNCTION__, " unable to instantiate AsyncTaskQueue");
         return telux::common::Status::FAILED;
     }
-    auto f = std::async(std::launch::async,
-        [this, callback]() {
-            this->initSync(callback);
-        }).share();
+    auto f
+        = std::async(std::launch::async, [this, callback]() { this->initSync(callback); }).share();
     auto status = taskQ_->add(f);
     return status;
 }
@@ -48,14 +46,13 @@ void SuppServicesManagerStub::initSync(telux::common::InitResponseCb callback) {
 
     grpc::Status reqstatus = suppServiceStub_->InitService(&context, request, &response);
     if (reqstatus.ok()) {
-        telux::common::ServiceStatus cbStatus =
-            static_cast<telux::common::ServiceStatus>(response.service_status());
+        telux::common::ServiceStatus cbStatus
+            = static_cast<telux::common::ServiceStatus>(response.service_status());
         int cbDelay = static_cast<int>(response.delay());
         LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", static_cast<int>(cbStatus));
         this->onServiceStatusChange(cbStatus);
         if (callback) {
-            auto f1 = std::async(std::launch::async,
-                [this, cbDelay, cbStatus, callback]() {
+            auto f1 = std::async(std::launch::async, [this, cbDelay, cbStatus, callback]() {
                 std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
                 callback(cbStatus);
             }).share();
@@ -93,8 +90,8 @@ telux::common::ServiceStatus SuppServicesManagerStub::getServiceStatus() {
     request.set_phone_id(slotId_);
 
     grpc::Status status = suppServiceStub_->GetServiceStatus(&context, request, &response);
-    telux::common::ServiceStatus serviceStatus =
-        static_cast<telux::common::ServiceStatus>(response.service_status());
+    telux::common::ServiceStatus serviceStatus
+        = static_cast<telux::common::ServiceStatus>(response.service_status());
     return serviceStatus;
 }
 
@@ -153,16 +150,15 @@ telux::common::Status SuppServicesManagerStub::setCallWaitingPref(
         LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
         return telux::common::Status::FAILED;
     }
-    FailureCause failCause = FailureCause::UNAVAILABLE;
-    failCause = static_cast<FailureCause>(response.failure_cause());
+    FailureCause failCause         = FailureCause::UNAVAILABLE;
+    failCause                      = static_cast<FailureCause>(response.failure_cause());
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    bool isCallbackNeeded = static_cast<bool>(response.is_callback());
-    int delay = static_cast<int>(response.delay());
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
+    bool isCallbackNeeded          = static_cast<bool>(response.is_callback());
+    int delay                      = static_cast<int>(response.delay());
 
-    if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
-        auto f1 = std::async(std::launch::async,
-            [this, failCause, error, callback, delay]() {
+    if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+        auto f1 = std::async(std::launch::async, [this, failCause, error, callback, delay]() {
             if (callback) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(delay));
                 callback(error, failCause);
@@ -193,32 +189,32 @@ telux::common::Status SuppServicesManagerStub::requestCallWaitingPref(
         LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
         return telux::common::Status::FAILED;
     }
-    FailureCause failureCause = FailureCause::UNAVAILABLE;
+    FailureCause failureCause        = FailureCause::UNAVAILABLE;
     SuppServicesStatus suppSvcStatus = SuppServicesStatus::UNKNOWN;
     suppSvcStatus = static_cast<SuppServicesStatus>(response.supp_services_status());
-    failureCause = static_cast<FailureCause>(response.failure_cause());
+    failureCause  = static_cast<FailureCause>(response.failure_cause());
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    bool isCallbackNeeded = static_cast<bool>(response.is_callback());
-    int delay = static_cast<int>(response.delay());
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
+    bool isCallbackNeeded          = static_cast<bool>(response.is_callback());
+    int delay                      = static_cast<int>(response.delay());
 
     if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
-        auto f1 = std::async(std::launch::async,
-            [this, suppSvcStatus, failureCause, error, callback, delay]() {
-            if (callback) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-                callback(suppSvcStatus, failureCause, error);
-            } else {
-                LOG(ERROR, __FUNCTION__, " Callback is null");
-            }
-        }).share();
+        auto f1 = std::async(
+            std::launch::async, [this, suppSvcStatus, failureCause, error, callback, delay]() {
+                if (callback) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                    callback(suppSvcStatus, failureCause, error);
+                } else {
+                    LOG(ERROR, __FUNCTION__, " Callback is null");
+                }
+            }).share();
         taskQ_->add(f1);
     }
     return status;
 }
 
-telux::common::Status SuppServicesManagerStub::setForwardingPref(ForwardReq forwardReq,
-    SetSuppSvcPrefCallback callback) {
+telux::common::Status SuppServicesManagerStub::setForwardingPref(
+    ForwardReq forwardReq, SetSuppSvcPrefCallback callback) {
     LOG(DEBUG, __FUNCTION__);
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, " SuppServices Manager is not ready");
@@ -228,13 +224,12 @@ telux::common::Status SuppServicesManagerStub::setForwardingPref(ForwardReq forw
     ::telStub::SetForwardingPrefReply response;
     ClientContext context;
     request.set_slot_id(slotId_);
-    request.mutable_forward_req()->set_operation
-        (static_cast<telStub::ForwardOperation_Operation>(forwardReq.operation));
-    request.mutable_forward_req()->set_reason(static_cast<telStub::ForwardReason>
-        (forwardReq.reason));
+    request.mutable_forward_req()->set_operation(
+        static_cast<telStub::ForwardOperation_Operation>(forwardReq.operation));
+    request.mutable_forward_req()->set_reason(
+        static_cast<telStub::ForwardReason>(forwardReq.reason));
     int size = forwardReq.serviceClass.size();
-    for (int j = 0; j < size ; j++)
-    {
+    for (int j = 0; j < size; j++) {
         if (forwardReq.serviceClass.test(j)) {
             request.mutable_forward_req()->add_service_class(
                 static_cast<telStub::ServiceClassType_Type>(j));
@@ -248,16 +243,15 @@ telux::common::Status SuppServicesManagerStub::setForwardingPref(ForwardReq forw
         LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
         return telux::common::Status::FAILED;
     }
-    FailureCause failureCause = FailureCause::UNAVAILABLE;
-    failureCause = static_cast<FailureCause>(response.failure_cause());
+    FailureCause failureCause      = FailureCause::UNAVAILABLE;
+    failureCause                   = static_cast<FailureCause>(response.failure_cause());
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    bool isCallbackNeeded = static_cast<bool>(response.is_callback());
-    int delay = static_cast<int>(response.delay());
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
+    bool isCallbackNeeded          = static_cast<bool>(response.is_callback());
+    int delay                      = static_cast<int>(response.delay());
 
-    if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
-        auto f1 = std::async(std::launch::async,
-            [this, failureCause, error, callback, delay]() {
+    if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+        auto f1 = std::async(std::launch::async, [this, failureCause, error, callback, delay]() {
             if (callback) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(delay));
                 callback(error, failureCause);
@@ -270,8 +264,8 @@ telux::common::Status SuppServicesManagerStub::setForwardingPref(ForwardReq forw
     return status;
 }
 
-telux::common::Status SuppServicesManagerStub::requestForwardingPref(ServiceClass serviceClass,
-    ForwardReason reason, GetForwardingPrefExCb callback) {
+telux::common::Status SuppServicesManagerStub::requestForwardingPref(
+    ServiceClass serviceClass, ForwardReason reason, GetForwardingPrefExCb callback) {
     LOG(DEBUG, __FUNCTION__);
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, " SuppServices Manager is not ready");
@@ -282,11 +276,9 @@ telux::common::Status SuppServicesManagerStub::requestForwardingPref(ServiceClas
     ClientContext context;
     request.set_slot_id(slotId_);
     int size = serviceClass.size();
-    for (int j = 0; j < size ; j++)
-    {
+    for (int j = 0; j < size; j++) {
         if (serviceClass.test(j)) {
-            request.add_service_class(
-                static_cast<telStub::ServiceClassType_Type>(j));
+            request.add_service_class(static_cast<telStub::ServiceClassType_Type>(j));
         }
     }
     request.set_forward_reason(static_cast<telStub::ForwardReason>(reason));
@@ -306,35 +298,35 @@ telux::common::Status SuppServicesManagerStub::requestForwardingPref(ServiceClas
             serviceClassList.set(static_cast<int>(sc));
         }
         info.serviceClass = serviceClassList;
-        info.number = response.mutable_forward_info(i)->number();
+        info.number       = response.mutable_forward_info(i)->number();
         info.noReplyTimer = response.mutable_forward_info(i)->no_reply_timer();
         forwardInfoList.emplace_back(info);
     }
 
-    FailureCause failureCause = FailureCause::UNAVAILABLE;
-    failureCause = static_cast<FailureCause>(response.failure_cause());
+    FailureCause failureCause      = FailureCause::UNAVAILABLE;
+    failureCause                   = static_cast<FailureCause>(response.failure_cause());
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    bool isCallbackNeeded = static_cast<bool>(response.is_callback());
-    int delay = static_cast<int>(response.delay());
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
+    bool isCallbackNeeded          = static_cast<bool>(response.is_callback());
+    int delay                      = static_cast<int>(response.delay());
 
-    if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
-        auto f1 = std::async(std::launch::async,
-            [this, forwardInfoList, failureCause, error, callback, delay]() {
-            if (callback) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-                callback(forwardInfoList, failureCause, error);
-            } else {
-                LOG(ERROR, __FUNCTION__, " Callback is null");
-            }
-        }).share();
+    if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+        auto f1 = std::async(
+            std::launch::async, [this, forwardInfoList, failureCause, error, callback, delay]() {
+                if (callback) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                    callback(forwardInfoList, failureCause, error);
+                } else {
+                    LOG(ERROR, __FUNCTION__, " Callback is null");
+                }
+            }).share();
         taskQ_->add(f1);
     }
     return status;
 }
 
-telux::common::Status SuppServicesManagerStub::setOirPref(ServiceClass serviceClass,
-    SuppServicesStatus suppSvcStatus, SetSuppSvcPrefCallback callback) {
+telux::common::Status SuppServicesManagerStub::setOirPref(
+    ServiceClass serviceClass, SuppServicesStatus suppSvcStatus, SetSuppSvcPrefCallback callback) {
     LOG(DEBUG, __FUNCTION__);
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, " SuppServices Manager is not ready");
@@ -345,31 +337,28 @@ telux::common::Status SuppServicesManagerStub::setOirPref(ServiceClass serviceCl
     ClientContext context;
     request.set_slot_id(slotId_);
     int size = serviceClass.size();
-    for (int j = 0; j < size ; j++)
-    {
+    for (int j = 0; j < size; j++) {
         if (serviceClass.test(j)) {
-            request.add_service_class(
-                static_cast<telStub::ServiceClassType_Type>(j));
+            request.add_service_class(static_cast<telStub::ServiceClassType_Type>(j));
         }
     }
-    request.set_supp_services_status(static_cast<telStub::SuppServicesStatus_Status>
-        (suppSvcStatus));
+    request.set_supp_services_status(
+        static_cast<telStub::SuppServicesStatus_Status>(suppSvcStatus));
     grpc::Status reqstatus = suppServiceStub_->SetOirPref(&context, request, &response);
 
     if (!reqstatus.ok()) {
         LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
         return telux::common::Status::FAILED;
     }
-    FailureCause failureCause = FailureCause::UNAVAILABLE;
-    failureCause = static_cast<FailureCause>(response.failure_cause());
+    FailureCause failureCause      = FailureCause::UNAVAILABLE;
+    failureCause                   = static_cast<FailureCause>(response.failure_cause());
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    bool isCallbackNeeded = static_cast<bool>(response.is_callback());
-    int delay = static_cast<int>(response.delay());
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
+    bool isCallbackNeeded          = static_cast<bool>(response.is_callback());
+    int delay                      = static_cast<int>(response.delay());
 
-    if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
-        auto f1 = std::async(std::launch::async,
-            [this, failureCause, error, callback, delay]() {
+    if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+        auto f1 = std::async(std::launch::async, [this, failureCause, error, callback, delay]() {
             if (callback) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(delay));
                 callback(error, failureCause);
@@ -382,8 +371,8 @@ telux::common::Status SuppServicesManagerStub::setOirPref(ServiceClass serviceCl
     return status;
 }
 
-telux::common::Status SuppServicesManagerStub::requestOirPref(ServiceClass serviceClass,
-    GetOirPrefCb callback) {
+telux::common::Status SuppServicesManagerStub::requestOirPref(
+    ServiceClass serviceClass, GetOirPrefCb callback) {
     LOG(DEBUG, __FUNCTION__);
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, " SuppServices Manager is not ready");
@@ -394,7 +383,7 @@ telux::common::Status SuppServicesManagerStub::requestOirPref(ServiceClass servi
     ClientContext context;
     request.set_slot_id(slotId_);
     int size = serviceClass.size();
-    for (int j = 0; j < size ; j++) {
+    for (int j = 0; j < size; j++) {
         if (serviceClass.test(j)) {
             request.add_service_class(static_cast<telStub::ServiceClassType_Type>(j));
         }
@@ -406,27 +395,27 @@ telux::common::Status SuppServicesManagerStub::requestOirPref(ServiceClass servi
         LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
         return telux::common::Status::FAILED;
     }
-    FailureCause failureCause = FailureCause::UNAVAILABLE;
-    SuppServicesStatus suppSvcStatus = SuppServicesStatus::UNKNOWN;
+    FailureCause failureCause              = FailureCause::UNAVAILABLE;
+    SuppServicesStatus suppSvcStatus       = SuppServicesStatus::UNKNOWN;
     SuppSvcProvisionStatus provisionStatus = SuppSvcProvisionStatus::UNKNOWN;
-    suppSvcStatus = static_cast<SuppServicesStatus>(response.supp_services_status());
+    suppSvcStatus   = static_cast<SuppServicesStatus>(response.supp_services_status());
     provisionStatus = static_cast<SuppSvcProvisionStatus>(response.provision_status());
-    failureCause = static_cast<FailureCause>(response.failure_cause());
+    failureCause    = static_cast<FailureCause>(response.failure_cause());
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    bool isCallbackNeeded = static_cast<bool>(response.is_callback());
-    int delay = static_cast<int>(response.delay());
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
+    bool isCallbackNeeded          = static_cast<bool>(response.is_callback());
+    int delay                      = static_cast<int>(response.delay());
 
-    if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
+    if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
         auto f1 = std::async(std::launch::async,
             [this, suppSvcStatus, provisionStatus, failureCause, error, callback, delay]() {
-            if (callback) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-                callback(suppSvcStatus, provisionStatus, failureCause, error);
-            } else {
-                LOG(ERROR, __FUNCTION__, " Callback is null");
-            }
-        }).share();
+                if (callback) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                    callback(suppSvcStatus, provisionStatus, failureCause, error);
+                } else {
+                    LOG(ERROR, __FUNCTION__, " Callback is null");
+                }
+            }).share();
         taskQ_->add(f1);
     }
     return status;
@@ -439,7 +428,7 @@ telux::common::Status SuppServicesManagerStub::requestCallWaitingPref(
 }
 
 // deprecated API
-telux::common::Status SuppServicesManagerStub::requestForwardingPref(ServiceClass serviceClass,
-    ForwardReason reason, GetForwardingPrefCb callback) {
+telux::common::Status SuppServicesManagerStub::requestForwardingPref(
+    ServiceClass serviceClass, ForwardReason reason, GetForwardingPrefCb callback) {
     return telux::common::Status::NOTSUPPORTED;
 }

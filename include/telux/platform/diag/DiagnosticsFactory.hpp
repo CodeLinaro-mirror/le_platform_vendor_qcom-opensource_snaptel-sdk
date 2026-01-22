@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023,2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -43,7 +43,8 @@ class DiagnosticsFactory {
      * @returns IDiagLogManager instance
      */
     virtual std::shared_ptr<IDiagLogManager> getDiagLogManager(
-        telux::common::InitResponseCb callback = nullptr) = 0;
+        telux::common::InitResponseCb callback = nullptr)
+        = 0;
 
 #ifndef TELUX_DOXY_SKIP
  protected:
@@ -52,14 +53,14 @@ class DiagnosticsFactory {
 #endif
 
  private:
-    DiagnosticsFactory(const DiagnosticsFactory &) = delete;
+    DiagnosticsFactory(const DiagnosticsFactory &)            = delete;
     DiagnosticsFactory &operator=(const DiagnosticsFactory &) = delete;
 };
 
 /** @} */ /* end_addtogroup telematics_diagnostics */
 
-} // end of namespace diag
-} // end of namespace platform
-} // end of namespace telux
+}  // end of namespace diag
+}  // end of namespace platform
+}  // end of namespace telux
 
-#endif // TELUX_PLATFORM_DIAG_DIAGNOSTICSFACTORY_HPP
+#endif  // TELUX_PLATFORM_DIAG_DIAGNOSTICSFACTORY_HPP

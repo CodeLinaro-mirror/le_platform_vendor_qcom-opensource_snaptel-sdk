@@ -1,35 +1,6 @@
 /*
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "CardStub.hpp"
@@ -41,10 +12,10 @@ namespace tel {
 
 CardStub::CardStub(int slotId) {
     LOG(DEBUG, __FUNCTION__);
-    stub_ = CommonUtils::getGrpcStub<CardService>();
-    slotId_ = slotId;
+    stub_            = CommonUtils::getGrpcStub<CardService>();
+    slotId_          = slotId;
     cardFileHandler_ = std::make_shared<CardFileHandlerStub>(static_cast<SlotId>(slotId_));
-    taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
+    taskQ_           = std::make_shared<AsyncTaskQueue<void>>();
 }
 
 CardStub::~CardStub() {
@@ -52,13 +23,13 @@ CardStub::~CardStub() {
 }
 
 void CardStub::cleanup() {
-   LOG(DEBUG, __FUNCTION__);
-   cardApps_.clear();
-   applications_.clear();
-   if (cardFileHandler_) {
-      cardFileHandler_->cleanup();
-      cardFileHandler_ = nullptr;
-   }
+    LOG(DEBUG, __FUNCTION__);
+    cardApps_.clear();
+    applications_.clear();
+    if (cardFileHandler_) {
+        cardFileHandler_->cleanup();
+        cardFileHandler_ = nullptr;
+    }
 }
 
 telux::common::Status CardStub::getState(CardState &cardState) {
@@ -73,37 +44,42 @@ telux::common::Status CardStub::getState(CardState &cardState) {
     grpc::Status status = stub_->GetCardState(&context, request, &response);
 
     if (!status.ok()) {
-       return telux::common::Status::FAILED;
+        return telux::common::Status::FAILED;
     }
-    state = response.card_state();
+    state     = response.card_state();
     cardState = static_cast<telux::tel::CardState>(state);
     return error;
 }
 
-std::vector<std::shared_ptr<ICardApp>> CardStub::getApplications(
-    telux::common::Status *status) {
+void CardStub::getMepInfo(MepInfo &info) {
+    info.isMep = false;
+    info.portId = 0;
+    info.negotiatedMepMode = Mode::NONE;
+}
+
+std::vector<std::shared_ptr<ICardApp>> CardStub::getApplications(telux::common::Status *status) {
     LOG(DEBUG, __FUNCTION__);
     std::vector<std::shared_ptr<ICardApp>> applications;
     std::lock_guard<std::mutex> lock(cardMutex_);
-    if(cardApps_.size() <= 0) {
+    if (cardApps_.size() <= 0) {
         LOG(ERROR, "No card apps");
-        if(status) {
+        if (status) {
             *status = telux::common::Status::NOTREADY;
         }
         return applications;
     }
-    updateSimStatus();  //To get the latest card apps from json
-    for(auto cardApp : cardApps_) {
+    updateSimStatus();  // To get the latest card apps from json
+    for (auto cardApp : cardApps_) {
         applications.emplace_back(cardApp);
     }
-    if(status) {
+    if (status) {
         *status = telux::common::Status::SUCCESS;
     }
     return applications;
 }
 
-void CardStub::setlisteners(std::vector<std::weak_ptr<ICardListener>> listeners){
-    for(auto cardApp : cardApps_) {
+void CardStub::setlisteners(std::vector<std::weak_ptr<ICardListener>> listeners) {
+    for (auto cardApp : cardApps_) {
         cardApp->setlisteners(listeners);
     }
 }
@@ -123,39 +99,39 @@ telux::common::Status CardStub::openLogicalChannel(
         grpc::Status reqstatus = stub_->OpenLogicalChannel(&context, request, &response);
 
         if (!reqstatus.ok()) {
-           return telux::common::Status::FAILED;
+            return telux::common::Status::FAILED;
         }
         telux::tel::IccResult iccresult;
-        iccresult.sw1  = static_cast<int>((response.result()).sw1());
-        iccresult.sw2  = static_cast<int>((response.result()).sw2());
-        iccresult.payload  = static_cast<std::string>((response.result()).pay_load());
-        int channel  = static_cast<int>(response.channel_id());
-        telux::common::Status status = static_cast<telux::common::Status>(response.status());
+        iccresult.sw1                  = static_cast<int>((response.result()).sw1());
+        iccresult.sw2                  = static_cast<int>((response.result()).sw2());
+        iccresult.payload              = static_cast<std::string>((response.result()).pay_load());
+        int channel                    = static_cast<int>(response.channel_id());
+        telux::common::Status status   = static_cast<telux::common::Status>(response.status());
         telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-        bool isCallbackNeeded = static_cast<bool>(response.iscallback());
-        int delay = static_cast<int>(response.delay());
+        bool isCallbackNeeded          = static_cast<bool>(response.iscallback());
+        int delay                      = static_cast<int>(response.delay());
         std::vector<int> store;
         for (auto &r : (response.result()).data()) {
-            int tmp =  static_cast<uint8_t>(r);
-            LOG(DEBUG, __FUNCTION__," data response is  " ,tmp );
+            int tmp = static_cast<uint8_t>(r);
+            LOG(DEBUG, __FUNCTION__, " data response is  ", tmp);
             store.emplace_back(tmp);
         }
         (iccresult.data).assign(store.begin(), store.end());
 
-        LOG(DEBUG, __FUNCTION__," sw1 " ,iccresult.sw1, " sw2 " ,iccresult.sw2,
-            " payload " ,iccresult.payload );
+        LOG(DEBUG, __FUNCTION__, " sw1 ", iccresult.sw1, " sw2 ", iccresult.sw2, " payload ",
+            iccresult.payload);
 
-        if((status == telux::common::Status::SUCCESS ) && (isCallbackNeeded)) {
-            auto f = std::async(std::launch::async,
-             [this, delay, callback, channel, iccresult, error]() {
-                   this->invokeCallback(callback, channel, iccresult, error, delay);
-             }).share();
+        if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+            auto f = std::async(
+                std::launch::async, [this, delay, callback, channel, iccresult, error]() {
+                    this->invokeCallback(callback, channel, iccresult, error, delay);
+                }).share();
             taskQ_->add(f);
         }
         return status;
     } else {
-       LOG(ERROR, __FUNCTION__, " Not a Valid application Id:", applicationId);
-       return telux::common::Status::INVALIDPARAM;
+        LOG(ERROR, __FUNCTION__, " Not a Valid application Id:", applicationId);
+        return telux::common::Status::INVALIDPARAM;
     }
 }
 
@@ -164,13 +140,14 @@ void CardStub::invokeCallback(std::shared_ptr<ICardChannelCallback> callback, in
     LOG(DEBUG, __FUNCTION__);
     std::this_thread::sleep_for(std::chrono::milliseconds(delay));
 
-    if(callback) {
+    if (callback) {
         callback->onChannelResponse(channel, result, error);
     }
 }
 
 telux::common::Status CardStub::closeLogicalChannel(
-    int channelId, std::shared_ptr<telux::common::ICommandResponseCallback> callback) {
+    int channelId, std::shared_ptr<telux::common::ICommandResponseCallback> callback,
+    bool isEs10) {
     ::telStub::CloseLogicalChannelRequest request;
     ::telStub::CloseLogicalChannelReply response;
     ClientContext context;
@@ -182,14 +159,13 @@ telux::common::Status CardStub::closeLogicalChannel(
     if (!reqstatus.ok()) {
         return telux::common::Status::FAILED;
     }
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    bool isCallbackNeeded = static_cast<bool>(response.iscallback());
-    int delay = static_cast<int>(response.delay());
+    bool isCallbackNeeded          = static_cast<bool>(response.iscallback());
+    int delay                      = static_cast<int>(response.delay());
 
-    if((isCallbackNeeded) && (status == telux::common::Status::SUCCESS )) {
-        auto f = std::async(std::launch::async,
-        [this, callback, delay, error]() {
+    if ((isCallbackNeeded) && (status == telux::common::Status::SUCCESS)) {
+        auto f = std::async(std::launch::async, [this, callback, delay, error]() {
             this->invokeCallback(callback, delay, error);
         }).share();
         taskQ_->add(f);
@@ -198,7 +174,7 @@ telux::common::Status CardStub::closeLogicalChannel(
 }
 
 void CardStub::invokeCallback(std::shared_ptr<telux::common::ICommandResponseCallback> callback,
-    int delay, telux::common::ErrorCode error ) {
+    int delay, telux::common::ErrorCode error) {
     LOG(DEBUG, __FUNCTION__);
     std::this_thread::sleep_for(std::chrono::milliseconds(delay));
 
@@ -209,7 +185,7 @@ void CardStub::invokeCallback(std::shared_ptr<telux::common::ICommandResponseCal
 
 telux::common::Status CardStub::transmitApduLogicalChannel(int channel, uint8_t cla,
     uint8_t instruction, uint8_t p1, uint8_t p2, uint8_t p3, std::vector<uint8_t> data,
-    std::shared_ptr<ICardCommandCallback> callback) {
+    std::shared_ptr<ICardCommandCallback> callback, bool isEs10) {
     ::telStub::TransmitAPDURequest request;
     ::telStub::TransmitAPDUReply response;
     ClientContext context;
@@ -217,8 +193,7 @@ telux::common::Status CardStub::transmitApduLogicalChannel(int channel, uint8_t 
     request.set_phone_id(slotId_);
     telux::tel::IccResult iccresult;
     int size = data.size();
-    for (int j = 0; j < size ; j++)
-    {
+    for (int j = 0; j < size; j++) {
         int d = static_cast<int>(data[j]);
         request.add_data(d);
     }
@@ -227,36 +202,35 @@ telux::common::Status CardStub::transmitApduLogicalChannel(int channel, uint8_t 
     if (!reqstatus.ok()) {
         return telux::common::Status::FAILED;
     }
-    iccresult.sw1  = static_cast<int>((response.result()).sw1());
-    iccresult.sw2  = static_cast<int>((response.result()).sw2());
-    iccresult.payload  = static_cast<std::string>((response.result()).pay_load());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
+    iccresult.sw1                  = static_cast<int>((response.result()).sw1());
+    iccresult.sw2                  = static_cast<int>((response.result()).sw2());
+    iccresult.payload              = static_cast<std::string>((response.result()).pay_load());
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    bool isCallbackNeeded = static_cast<bool>(response.iscallback());
-    int delay = static_cast<int>(response.delay());
+    bool isCallbackNeeded          = static_cast<bool>(response.iscallback());
+    int delay                      = static_cast<int>(response.delay());
     std::vector<int> store;
-    for(auto &r : (response.result()).data()) {
-        int tmp =  static_cast<uint8_t>(r);
-        LOG(DEBUG, __FUNCTION__," data response is  " ,tmp );
+    for (auto &r : (response.result()).data()) {
+        int tmp = static_cast<uint8_t>(r);
+        LOG(DEBUG, __FUNCTION__, " data response is  ", tmp);
         store.emplace_back(tmp);
     }
     (iccresult.data).assign(store.begin(), store.end());
 
-    LOG(DEBUG, __FUNCTION__," sw1 " ,iccresult.sw1, " sw2 " ,iccresult.sw2,
-        " payload " ,iccresult.payload, " status ", static_cast<int>(status));
+    LOG(DEBUG, __FUNCTION__, " sw1 ", iccresult.sw1, " sw2 ", iccresult.sw2, " payload ",
+        iccresult.payload, " status ", static_cast<int>(status));
 
-    if((isCallbackNeeded) && (status == telux::common::Status::SUCCESS )) {
-        auto f = std::async(std::launch::async,
-            [this, delay, iccresult, error , callback]() {
-                this->invokeCallback(callback, delay, iccresult, error);
-            }).share();
+    if ((isCallbackNeeded) && (status == telux::common::Status::SUCCESS)) {
+        auto f = std::async(std::launch::async, [this, delay, iccresult, error, callback]() {
+            this->invokeCallback(callback, delay, iccresult, error);
+        }).share();
         taskQ_->add(f);
     }
     return status;
 }
 
 void CardStub::invokeCallback(std::shared_ptr<ICardCommandCallback> callback, int delay,
-    telux::tel::IccResult iccresult, telux::common::ErrorCode error ) {
+    telux::tel::IccResult iccresult, telux::common::ErrorCode error) {
     LOG(DEBUG, __FUNCTION__);
     std::this_thread::sleep_for(std::chrono::milliseconds(delay));
 
@@ -267,7 +241,7 @@ void CardStub::invokeCallback(std::shared_ptr<ICardCommandCallback> callback, in
 
 telux::common::Status CardStub::transmitApduBasicChannel(uint8_t cla, uint8_t instruction,
     uint8_t p1, uint8_t p2, uint8_t p3, std::vector<uint8_t> data,
-    std::shared_ptr<ICardCommandCallback> callback) {
+    std::shared_ptr<ICardCommandCallback> callback, bool isEs10) {
     ::telStub::TransmitBasicAPDURequest request;
     ::telStub::TransmitBasicAPDUReply response;
     ClientContext context;
@@ -275,8 +249,7 @@ telux::common::Status CardStub::transmitApduBasicChannel(uint8_t cla, uint8_t in
     request.set_phone_id(slotId_);
     telux::tel::IccResult iccresult;
     int size = data.size();
-    for (int j = 0; j < size ; j++)
-    {
+    for (int j = 0; j < size; j++) {
         int d = static_cast<int>(data[j]);
         request.add_data(d);
     }
@@ -285,29 +258,28 @@ telux::common::Status CardStub::transmitApduBasicChannel(uint8_t cla, uint8_t in
     if (!reqstatus.ok()) {
         return telux::common::Status::FAILED;
     }
-    iccresult.sw1  = static_cast<int>((response.result()).sw1());
-    iccresult.sw2  = static_cast<int>((response.result()).sw2());
-    iccresult.payload  = static_cast<std::string>((response.result()).pay_load());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
+    iccresult.sw1                  = static_cast<int>((response.result()).sw1());
+    iccresult.sw2                  = static_cast<int>((response.result()).sw2());
+    iccresult.payload              = static_cast<std::string>((response.result()).pay_load());
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    bool isCallbackNeeded = static_cast<bool>(response.iscallback());
-    int delay = static_cast<int>(response.delay());
+    bool isCallbackNeeded          = static_cast<bool>(response.iscallback());
+    int delay                      = static_cast<int>(response.delay());
     std::vector<int> store;
     for (auto &r : (response.result()).data()) {
-        int tmp =  static_cast<uint8_t>(r);
-        LOG(DEBUG, __FUNCTION__,"data response is  " ,tmp );
+        int tmp = static_cast<uint8_t>(r);
+        LOG(DEBUG, __FUNCTION__, "data response is  ", tmp);
         store.emplace_back(tmp);
     }
     (iccresult.data).assign(store.begin(), store.end());
 
-    LOG(DEBUG, __FUNCTION__,"sw1 " ,iccresult.sw1,
-        "sw2 " ,iccresult.sw2,"payload " ,iccresult.payload);
+    LOG(DEBUG, __FUNCTION__, "sw1 ", iccresult.sw1, "sw2 ", iccresult.sw2, "payload ",
+        iccresult.payload);
 
-    if((isCallbackNeeded) && (status == telux::common::Status::SUCCESS )) {
-        auto f = std::async(std::launch::async,
-            [this, iccresult, error, callback, delay]() {
-                this->invokeCallback(callback, delay, iccresult, error);
-            }).share();
+    if ((isCallbackNeeded) && (status == telux::common::Status::SUCCESS)) {
+        auto f = std::async(std::launch::async, [this, iccresult, error, callback, delay]() {
+            this->invokeCallback(callback, delay, iccresult, error);
+        }).share();
         taskQ_->add(f);
     }
     return status;
@@ -322,11 +294,10 @@ telux::common::Status CardStub::exchangeSimIO(uint16_t fileId, uint8_t command, 
     ClientContext context;
 
     request.set_phone_id(slotId_);
-    //add data input
+    // add data input
     telux::tel::IccResult iccresult;
     int size = data.size();
-    for (int j = 0; j < size ; j++)
-    {
+    for (int j = 0; j < size; j++) {
         int d = static_cast<int>(data[j]);
         request.add_data(d);
     }
@@ -335,34 +306,32 @@ telux::common::Status CardStub::exchangeSimIO(uint16_t fileId, uint8_t command, 
     if (!reqstatus.ok()) {
         return telux::common::Status::FAILED;
     }
-    iccresult.sw1  = static_cast<int>((response.result()).sw1());
-    iccresult.sw2  = static_cast<int>((response.result()).sw2());
-    iccresult.payload  = static_cast<std::string>((response.result()).pay_load());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
+    iccresult.sw1                  = static_cast<int>((response.result()).sw1());
+    iccresult.sw2                  = static_cast<int>((response.result()).sw2());
+    iccresult.payload              = static_cast<std::string>((response.result()).pay_load());
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    bool isCallbackNeeded = static_cast<bool>(response.iscallback());
-    int delay = static_cast<int>(response.delay());
+    bool isCallbackNeeded          = static_cast<bool>(response.iscallback());
+    int delay                      = static_cast<int>(response.delay());
     std::vector<int> store;
     for (auto &r : (response.result()).data()) {
-        int tmp =  static_cast<uint8_t>(r);
-        LOG(DEBUG, __FUNCTION__,"data response is  " ,tmp );
+        int tmp = static_cast<uint8_t>(r);
+        LOG(DEBUG, __FUNCTION__, "data response is  ", tmp);
         store.emplace_back(tmp);
     }
     (iccresult.data).assign(store.begin(), store.end());
 
-    LOG(DEBUG, __FUNCTION__,"sw1 " ,iccresult.sw1,
-        "sw2 " ,iccresult.sw2,"payload " ,iccresult.payload);
+    LOG(DEBUG, __FUNCTION__, "sw1 ", iccresult.sw1, "sw2 ", iccresult.sw2, "payload ",
+        iccresult.payload);
 
-    if((isCallbackNeeded) && (status == telux::common::Status::SUCCESS )) {
-        auto f = std::async(std::launch::async,
-            [this, delay, iccresult, error , callback]() {
-                this->invokeCallback(callback, delay, iccresult, error);
-            }).share();
+    if ((isCallbackNeeded) && (status == telux::common::Status::SUCCESS)) {
+        auto f = std::async(std::launch::async, [this, delay, iccresult, error, callback]() {
+            this->invokeCallback(callback, delay, iccresult, error);
+        }).share();
         taskQ_->add(f);
     }
     return status;
 }
-
 
 telux::common::Status CardStub::requestEid(EidResponseCallback callback) {
     ::telStub::requestEidReply response;
@@ -375,17 +344,16 @@ telux::common::Status CardStub::requestEid(EidResponseCallback callback) {
     if (!reqstatus.ok()) {
         return telux::common::Status::FAILED;
     }
-    std::string eid = static_cast<std::string>(response.eid());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
+    std::string eid                = static_cast<std::string>(response.eid());
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    bool isCallbackNeeded = static_cast<bool>(response.iscallback());
-    int delay = static_cast<int>(response.delay());
+    bool isCallbackNeeded          = static_cast<bool>(response.iscallback());
+    int delay                      = static_cast<int>(response.delay());
 
-    if((status == telux::common::Status::SUCCESS ) && (isCallbackNeeded)) {
-        auto f = std::async(std::launch::async,
-            [this, eid, error , callback, delay]() {
-                this->invokeCallback(callback, eid, delay, error);
-            }).share();
+    if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+        auto f = std::async(std::launch::async, [this, eid, error, callback, delay]() {
+            this->invokeCallback(callback, eid, delay, error);
+        }).share();
         taskQ_->add(f);
     }
     return status;
@@ -409,8 +377,8 @@ bool CardStub::isNtnProfileActive() {
     return ntnSupported;
 }
 
-void CardStub::invokeCallback(EidResponseCallback callback, std::string eid, int delay,
-    telux::common::ErrorCode error ) {
+void CardStub::invokeCallback(
+    EidResponseCallback callback, std::string eid, int delay, telux::common::ErrorCode error) {
     LOG(DEBUG, __FUNCTION__);
     std::this_thread::sleep_for(std::chrono::milliseconds(delay));
 
@@ -428,10 +396,10 @@ int CardStub::getSlotId() {
 }
 
 bool CardStub::validateAppId(std::string applicationId) {
-    int count = 0;
+    int count     = 0;
     int appIdSize = applicationId.size();
     for (auto i = 0; i < appIdSize; i++) {
-        if(isxdigit(applicationId[i])) {
+        if (isxdigit(applicationId[i])) {
             count++;
         }
     }
@@ -457,32 +425,31 @@ void CardStub::updateSimStatus() {
     std::vector<CardAppStatus> latestApplications;
     for (int i = 0; i < response.card_apps_size(); i++) {
         CardAppStatus appstatus;
-        apptype = response.mutable_card_apps(i)->app_type();
+        apptype           = response.mutable_card_apps(i)->app_type();
         appstatus.appType = static_cast<telux::tel::AppType>(apptype);
-        LOG(DEBUG, __FUNCTION__,"appType " , static_cast<int>(appstatus.appType));
+        LOG(DEBUG, __FUNCTION__, "appType ", static_cast<int>(appstatus.appType));
 
-        appstate = response.mutable_card_apps(i)->app_state();
+        appstate           = response.mutable_card_apps(i)->app_state();
         appstatus.appState = static_cast<telux::tel::AppState>(appstate);
-        LOG(DEBUG, __FUNCTION__,"appState " , static_cast<int>(appstatus.appState));
+        LOG(DEBUG, __FUNCTION__, "appState ", static_cast<int>(appstatus.appState));
 
         appstatus.aid = response.mutable_card_apps(i)->app_id();
-         LOG(DEBUG, __FUNCTION__,"aid " , appstatus.aid);
-         latestApplications.emplace_back(appstatus);
+        LOG(DEBUG, __FUNCTION__, "aid ", appstatus.aid);
+        latestApplications.emplace_back(appstatus);
     }
-    LOG(DEBUG,__FUNCTION__, "Number of original cardApps : ", cardApps_.size(),
+    LOG(DEBUG, __FUNCTION__, "Number of original cardApps : ", cardApps_.size(),
         "Number of latestApplications: ", latestApplications.size());
 
     // Compare the list of CardApp obtained from server with cached values
-    for(auto matchingCardApp = std::begin(cardApps_); matchingCardApp != std::end(cardApps_);) {
-        auto iter = std::find_if(
-        std::begin(latestApplications), std::end(latestApplications),
-        [=](CardAppStatus cardAppStatus) { return (*matchingCardApp)->match(cardAppStatus); });
-        if(iter != std::end(latestApplications)) {  // matching cardApp found, update the cardApp
-                                                    // with latest cardApp info received from
-                                                    // server
+    for (auto matchingCardApp = std::begin(cardApps_); matchingCardApp != std::end(cardApps_);) {
+        auto iter = std::find_if(std::begin(latestApplications), std::end(latestApplications),
+            [=](CardAppStatus cardAppStatus) { return (*matchingCardApp)->match(cardAppStatus); });
+        if (iter != std::end(latestApplications)) {  // matching cardApp found, update the cardApp
+                                                     // with latest cardApp info received from
+                                                     // server
             LOG(DEBUG, "Updating existing card App details");
             std::shared_ptr<CardAppStub> cardApp = *matchingCardApp;
-            if(cardApp) {
+            if (cardApp) {
                 LOG(DEBUG, "Card App pointer address ", cardApp);
                 cardApp->updateCardApp(*iter);
                 latestApplications.erase(iter);
@@ -494,7 +461,7 @@ void CardStub::updateSimStatus() {
                   // CardApp
             LOG(DEBUG, "dropped Card App found, removing it");
             std::shared_ptr<CardAppStub> cardApp = *matchingCardApp;
-            if(cardApp) {
+            if (cardApp) {
                 LOG(DEBUG, "Card App pointer address ", cardApp);
                 cardApps_.erase(matchingCardApp);  // dropped Card App, remove it
             } else {
@@ -502,8 +469,8 @@ void CardStub::updateSimStatus() {
             }
         }
     }
-      // Add new card app to the list of cached card Apps
-    for(auto &newCardAppStatus : latestApplications) {
+    // Add new card app to the list of cached card Apps
+    for (auto &newCardAppStatus : latestApplications) {
         LOG(DEBUG, "Number of original cardApps : ", cardApps_.size());
         auto cardApp = std::make_shared<CardAppStub>(slotId_, newCardAppStatus);
         cardApps_.emplace_back(cardApp);
@@ -516,6 +483,6 @@ void CardStub::updateSimStatus() {
     }
 }
 
-} // end of namespace tel
+}  // end of namespace tel
 
-} // end of namespace telux
+}  // end of namespace telux

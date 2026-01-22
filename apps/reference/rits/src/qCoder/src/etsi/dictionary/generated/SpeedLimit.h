@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_SpeedLimit_H_
-#define	_SpeedLimit_H_
-
+#ifndef _SpeedLimit_H_
+#define _SpeedLimit_H_
 
 #include <asn_application.h>
 
@@ -20,11 +19,11 @@ extern "C" {
 
 /* Dependencies */
 typedef enum SpeedLimit {
-	SpeedLimit_oneKmPerHour	= 1
+    SpeedLimit_oneKmPerHour = 1
 } e_SpeedLimit;
 
 /* SpeedLimit */
-typedef long	 SpeedLimit_t;
+typedef long SpeedLimit_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_SpeedLimit;
@@ -42,5 +41,5 @@ per_type_encoder_f SpeedLimit_encode_uper;
 }
 #endif
 
-#endif	/* _SpeedLimit_H_ */
+#endif /* _SpeedLimit_H_ */
 #include <asn_internal.h>

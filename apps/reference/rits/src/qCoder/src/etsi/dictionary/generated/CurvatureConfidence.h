@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_CurvatureConfidence_H_
-#define	_CurvatureConfidence_H_
-
+#ifndef _CurvatureConfidence_H_
+#define _CurvatureConfidence_H_
 
 #include <asn_application.h>
 
@@ -20,18 +19,18 @@ extern "C" {
 
 /* Dependencies */
 typedef enum CurvatureConfidence {
-	CurvatureConfidence_onePerMeter_0_00002	= 0,
-	CurvatureConfidence_onePerMeter_0_0001	= 1,
-	CurvatureConfidence_onePerMeter_0_0005	= 2,
-	CurvatureConfidence_onePerMeter_0_002	= 3,
-	CurvatureConfidence_onePerMeter_0_01	= 4,
-	CurvatureConfidence_onePerMeter_0_1	= 5,
-	CurvatureConfidence_outOfRange	= 6,
-	CurvatureConfidence_unavailable	= 7
+    CurvatureConfidence_onePerMeter_0_00002 = 0,
+    CurvatureConfidence_onePerMeter_0_0001  = 1,
+    CurvatureConfidence_onePerMeter_0_0005  = 2,
+    CurvatureConfidence_onePerMeter_0_002   = 3,
+    CurvatureConfidence_onePerMeter_0_01    = 4,
+    CurvatureConfidence_onePerMeter_0_1     = 5,
+    CurvatureConfidence_outOfRange          = 6,
+    CurvatureConfidence_unavailable         = 7
 } e_CurvatureConfidence;
 
 /* CurvatureConfidence */
-typedef long	 CurvatureConfidence_t;
+typedef long CurvatureConfidence_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_CurvatureConfidence;
@@ -49,5 +48,5 @@ per_type_encoder_f CurvatureConfidence_encode_uper;
 }
 #endif
 
-#endif	/* _CurvatureConfidence_H_ */
+#endif /* _CurvatureConfidence_H_ */
 #include <asn_internal.h>

@@ -1,10 +1,10 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
- #ifndef DATA_CONTROL_MANAGER_STUB_HPP
- #define DATA_CONTROL_MANAGER_STUB_HPP
+#ifndef DATA_CONTROL_MANAGER_STUB_HPP
+#define DATA_CONTROL_MANAGER_STUB_HPP
 
 #include <telux/data/DataControlManager.hpp>
 #include <telux/common/CommonDefines.hpp>
@@ -21,11 +21,10 @@ namespace telux {
 namespace data {
 
 class DataControlManagerStub : public IDataControlManager,
-                            public telux::common::IEventListener,
-                            public SimulationManagerStub<DataControlManager>,
-                            public std::enable_shared_from_this<DataControlManagerStub> {
-public:
-
+                               public telux::common::IEventListener,
+                               public SimulationManagerStub<DataControlManager>,
+                               public std::enable_shared_from_this<DataControlManagerStub> {
+ public:
     using SimulationManagerStub::init;
 
     DataControlManagerStub();
@@ -40,10 +39,10 @@ public:
 
     void onEventUpdate(google::protobuf::Any event) override;
 
-    telux::common::ErrorCode setDataStallParams(const SlotId &slotId,
-            const DataStallParams &params) override;
+    telux::common::ErrorCode setDataStallParams(
+        const SlotId &slotId, const DataStallParams &params) override;
 
-protected:
+ protected:
     telux::common::Status init();
     void createListener();
     void cleanup();
@@ -52,7 +51,7 @@ protected:
     void notifyServiceStatus(telux::common::ServiceStatus srvcStatus);
     telux::common::Status registerDefaultIndications();
 
-private:
+ private:
     std::mutex mtx_;
     std::mutex initMtx_;
 
@@ -66,7 +65,7 @@ private:
     void onServiceStatusChange(telux::common::ServiceStatus srvcStatus);
 };
 
-} // end of namespace data
-} // end of namespace telux
+}  // end of namespace data
+}  // end of namespace telux
 
- #endif //DATA_CONTROL_MANAGER_STUB_HPP
+#endif  // DATA_CONTROL_MANAGER_STUB_HPP

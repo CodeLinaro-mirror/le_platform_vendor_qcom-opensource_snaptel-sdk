@@ -1,4 +1,4 @@
-/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+/*
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -17,19 +17,18 @@
 using namespace telux::data;
 using namespace telux::common;
 
-class DataLinkMenu : public ConsoleApp,
-                     public std::enable_shared_from_this<DataLinkMenu> {
-public:
+class DataLinkMenu : public ConsoleApp, public std::enable_shared_from_this<DataLinkMenu> {
+ public:
     // initialize menu and sdk
     bool init();
 
     // Menu Functions
     DataLinkMenu(std::string appName, std::string cursor);
 
-    //Initialization Callback
+    // Initialization Callback
     void onInitCompleted(telux::common::ServiceStatus status);
 
-    //API
+    // API
     void getEthCapability(std::vector<std::string> inputCommand);
     void setPeerEthCapability(std::vector<std::string> inputCommand);
     void setLocalEthOperatingMode(std::vector<std::string> inputCommand);
@@ -40,7 +39,8 @@ public:
     void deregisterListener(std::vector<std::string> inputCommand);
 
     ~DataLinkMenu();
-private:
+
+ private:
     bool addMenuCmds_;
     bool subSystemStatusUpdated_;
     std::mutex mtx_;

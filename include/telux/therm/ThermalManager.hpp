@@ -26,40 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -97,20 +68,23 @@ class ITripPoint;
  * ACPI (Advanced Configuration and Power Interface) thermal zone
  */
 enum class TripType {
-    UNKNOWN,           /**< Trip type is unknown */
-    CRITICAL,          /**< Trip point at which system shuts down */
-    HOT,               /**< Trip point to notify emergency */
-    PASSIVE,           /**< Trip point at which kernel lowers the CPU's frequency and throttle the processor down */
-    ACTIVE,            /**< Trip point at which processor fan turns on */
-    CONFIGURABLE_HIGH, /**< Triggering threshold at which mitigation starts. This type is added to support legacy targets*/
-    CONFIGURABLE_LOW   /**< Clearing threshold at which mitigation stops. This type is added to support legacy targets*/
+    UNKNOWN, /**< Trip type is unknown */
+    CRITICAL, /**< Trip point at which system shuts down */
+    HOT, /**< Trip point to notify emergency */
+    PASSIVE, /**< Trip point at which kernel lowers the CPU's frequency and throttle the processor
+                down */
+    ACTIVE, /**< Trip point at which processor fan turns on */
+    CONFIGURABLE_HIGH, /**< Triggering threshold at which mitigation starts. This type is added to
+                          support legacy targets*/
+    CONFIGURABLE_LOW /**< Clearing threshold at which mitigation stops. This type is added to
+                        support legacy targets*/
 };
 
 /**
  * Defines the event of trip.
  */
 enum class TripEvent {
-    NONE = -1,     /**< Trip event is none */
+    NONE = -1, /**< Trip event is none */
     CROSSED_UNDER, /**< This event will be triggered when the temperature decreases and crosses
                         below the configured trip minus hysteresis temp. This event will not be
                         triggered again, if the temperature remains below the trip temperature.
@@ -122,15 +96,15 @@ enum class TripEvent {
                         Prev temp: 19000 milli degree Celsius,
                         Trip temp: 25000 milli degree Celsius, Hyst: 5000 milli degree Celsius,
                         Curr Temp: 18000 milli degree Celsius / 22000 milli degree Celsius*/
-    CROSSED_OVER   /**< This event will be triggered when the temperature increases and crosses
-                        over the configured trip temperature. This event will not be triggered
-                        again, if the temperature remains over the trip temperature.
-                        For Example: Below scenario considered as CROSSED_OVER.
-                        Prev temp: 24000 milli degree Celsius,
-                        Trip temp: 25000 milli degree Celsius, Curr Temp: 26000 milli degree Celsius,
-                        Below scenario will not generate CROSSED_OVER event again.
-                        Prev temp: 26000 milli degree Celsius, Trip temp: 25000 milli degree Celsius,
-                        Curr Temp: 27000 milli degree Celsius*/
+    CROSSED_OVER /**< This event will be triggered when the temperature increases and crosses
+                      over the configured trip temperature. This event will not be triggered
+                      again, if the temperature remains over the trip temperature.
+                      For Example: Below scenario considered as CROSSED_OVER.
+                      Prev temp: 24000 milli degree Celsius,
+                      Trip temp: 25000 milli degree Celsius, Curr Temp: 26000 milli degree Celsius,
+                      Below scenario will not generate CROSSED_OVER event again.
+                      Prev temp: 26000 milli degree Celsius, Trip temp: 25000 milli degree Celsius,
+                      Curr Temp: 27000 milli degree Celsius*/
 };
 
 /**
@@ -147,7 +121,7 @@ struct BoundCoolingDevice {
  * disabled/enabled.
  */
 enum ThermalNotificationType {
-    TNT_TRIP_UPDATE,       /* Enables onTripEvent() notification*/
+    TNT_TRIP_UPDATE, /* Enables onTripEvent() notification*/
     TNT_CDEV_LEVEL_UPDATE, /* Enables onCoolingDeviceLevelUpdate() notification*/
     TNT_MAX_TYPE,
 };
@@ -423,4 +397,4 @@ class ICoolingDevice {
 }  // end of namespace therm
 }  // end of namespace telux
 
-#endif // TELUX_THERM_THERMALMANAGER_HPP
+#endif  // TELUX_THERM_THERMALMANAGER_HPP

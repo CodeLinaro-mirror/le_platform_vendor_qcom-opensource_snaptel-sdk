@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <iomanip>
@@ -17,16 +17,16 @@
 #include "SecurityCCSServerImpl.hpp"
 
 SecurityCCSServerImpl::SecurityCCSServerImpl()
-    : serverEvent_(ServerEventManager::getInstance())
-    , clientEvent_(EventService::getInstance()) {
+   : serverEvent_(ServerEventManager::getInstance())
+   , clientEvent_(EventService::getInstance()) {
 }
 
 SecurityCCSServerImpl::~SecurityCCSServerImpl() {
     LOG(DEBUG, __FUNCTION__);
 }
 
-grpc::Status SecurityCCSServerImpl::Init(::grpc::ServerContext* context,
-    const ::securityStub::CCSConnectInfo* request, ::commonStub::ErrorCodeMsg* response) {
+grpc::Status SecurityCCSServerImpl::Init(::grpc::ServerContext *context,
+    const ::securityStub::CCSConnectInfo *request, ::commonStub::ErrorCodeMsg *response) {
 
     telux::common::ErrorCode ec;
     telux::common::Status status;
@@ -62,14 +62,14 @@ grpc::Status SecurityCCSServerImpl::Init(::grpc::ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status SecurityCCSServerImpl::DeInit(::grpc::ServerContext* context,
-    const ::securityStub::CCSDisconnectInfo* request, ::commonStub::ErrorCodeMsg* response) {
+grpc::Status SecurityCCSServerImpl::DeInit(::grpc::ServerContext *context,
+    const ::securityStub::CCSDisconnectInfo *request, ::commonStub::ErrorCodeMsg *response) {
 
     clientsCount_--;
     if (!clientsCount_) {
         serverEvent_.deregisterListener(shared_from_this(), CCS_FILTER);
         isServiceInitialized_ = false;
-        curSessionStats_ = {};
+        curSessionStats_      = {};
     }
 
     response->set_ec(commonStub::ErrorCode::ERROR_CODE_SUCCESS);
@@ -77,13 +77,13 @@ grpc::Status SecurityCCSServerImpl::DeInit(::grpc::ServerContext* context,
     return grpc::Status::OK;
 }
 
-grpc::Status SecurityCCSServerImpl::GetCurrentSessionStats(::grpc::ServerContext* context,
-    const ::google::protobuf::Empty* request, ::securityStub::SessionStats* response) {
+grpc::Status SecurityCCSServerImpl::GetCurrentSessionStats(::grpc::ServerContext *context,
+    const ::google::protobuf::Empty *request, ::securityStub::SessionStats *response) {
     std::string ecStr = "";
     telux::common::ErrorCode ec{};
 
-    ecStr = apiConfigJsonRoot_["ICellularSecurityManager"]["getCurrentSessionStats"][
-        "error"].asString();
+    ecStr = apiConfigJsonRoot_["ICellularSecurityManager"]["getCurrentSessionStats"]["error"]
+                .asString();
     ec = CommonUtils::mapErrorCode(ecStr);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         response->set_ec(static_cast<commonStub::ErrorCode>(ec));
@@ -102,41 +102,38 @@ grpc::Status SecurityCCSServerImpl::GetCurrentSessionStats(::grpc::ServerContext
     return grpc::Status::OK;
 }
 
-grpc::Status SecurityCCSServerImpl::registerCCSListener(::grpc::ServerContext* context,
-    const ::google::protobuf::Empty* request,
-    ::commonStub::ErrorCodeMsg* response) {
+grpc::Status SecurityCCSServerImpl::registerCCSListener(::grpc::ServerContext *context,
+    const ::google::protobuf::Empty *request, ::commonStub::ErrorCodeMsg *response) {
 
     std::string ecStr = "";
     telux::common::ErrorCode ec{};
 
     ecStr = apiConfigJsonRoot_["ICellularSecurityManager"]["registerListener"]["error"].asString();
-    ec = CommonUtils::mapErrorCode(ecStr);
+    ec    = CommonUtils::mapErrorCode(ecStr);
     response->set_ec(static_cast<commonStub::ErrorCode>(ec));
 
     return grpc::Status::OK;
 }
 
-grpc::Status SecurityCCSServerImpl::deRegisterCCSListener(::grpc::ServerContext* context,
-    const ::google::protobuf::Empty* request,
-    ::commonStub::ErrorCodeMsg* response) {
+grpc::Status SecurityCCSServerImpl::deRegisterCCSListener(::grpc::ServerContext *context,
+    const ::google::protobuf::Empty *request, ::commonStub::ErrorCodeMsg *response) {
 
     std::string ecStr = "";
     telux::common::ErrorCode ec{};
 
-    ecStr = apiConfigJsonRoot_["ICellularSecurityManager"]["deRegisterListener"][
-        "error"].asString();
+    ecStr
+        = apiConfigJsonRoot_["ICellularSecurityManager"]["deRegisterListener"]["error"].asString();
     ec = CommonUtils::mapErrorCode(ecStr);
     response->set_ec(static_cast<commonStub::ErrorCode>(ec));
 
     return grpc::Status::OK;
 }
-
 
 /*
  * Handle events injected externally by the user.
  */
 void SecurityCCSServerImpl::onEventUpdate(::eventService::UnsolicitedEvent usrEvent) {
-    LOG(DEBUG,__FUNCTION__);
+    LOG(DEBUG, __FUNCTION__);
 
     std::string event;
     std::string token;
@@ -188,17 +185,17 @@ void SecurityCCSServerImpl::handleSSREvent(std::string eventParams) {
  */
 void SecurityCCSServerImpl::handleSecurityReportEvent(std::string eventParams) {
 
-    int32_t score = 0;
-    uint32_t cid = 0;
-    uint32_t pid = 0;
-    uint32_t mcc = 0;
-    uint32_t mnc = 0;
-    uint32_t rat = 0;
-    uint32_t envState = 0;
-    uint32_t teluxPolicy = 0;
+    int32_t score                           = 0;
+    uint32_t cid                            = 0;
+    uint32_t pid                            = 0;
+    uint32_t mcc                            = 0;
+    uint32_t mnc                            = 0;
+    uint32_t rat                            = 0;
+    uint32_t envState                       = 0;
+    uint32_t teluxPolicy                    = 0;
     ssgccs_client_policy_action_t ssgPolicy = POLICY_NO_ACTION;
-    uint32_t threatTypesBitMask = 0;
-    uint32_t category = 0;
+    uint32_t threatTypesBitMask             = 0;
+    uint32_t category                       = 0;
 
     std::string token;
     ::securityStub::CCSReport report{};
@@ -223,7 +220,7 @@ void SecurityCCSServerImpl::handleSecurityReportEvent(std::string eventParams) {
                 cid = std::stoul(token, nullptr, 10);
             } catch (const std::exception &e) {
                 LOG(ERROR, __FUNCTION__, " can't interpret cid ", token);
-                return ;
+                return;
             }
         } else if (token == "pid") {
             token = EventParserUtil::getNextToken(eventParams, CCS_DEFAULT_DELIMITER);
@@ -231,7 +228,7 @@ void SecurityCCSServerImpl::handleSecurityReportEvent(std::string eventParams) {
                 pid = std::stoul(token, nullptr, 10);
             } catch (const std::exception &e) {
                 LOG(ERROR, __FUNCTION__, " can't interpret pid ", token);
-                return ;
+                return;
             }
         } else if (token == "mcc") {
             token = EventParserUtil::getNextToken(eventParams, CCS_DEFAULT_DELIMITER);
@@ -239,7 +236,7 @@ void SecurityCCSServerImpl::handleSecurityReportEvent(std::string eventParams) {
                 mcc = std::stoul(token, nullptr, 10);
             } catch (const std::exception &e) {
                 LOG(ERROR, __FUNCTION__, " can't interpret mcc ", token);
-                return ;
+                return;
             }
         } else if (token == "mnc") {
             token = EventParserUtil::getNextToken(eventParams, CCS_DEFAULT_DELIMITER);
@@ -247,7 +244,7 @@ void SecurityCCSServerImpl::handleSecurityReportEvent(std::string eventParams) {
                 mnc = std::stoul(token, nullptr, 10);
             } catch (const std::exception &e) {
                 LOG(ERROR, __FUNCTION__, " can't interpret mnc ", token);
-                return ;
+                return;
             }
         } else if (token == "threats") {
             token = EventParserUtil::getNextToken(eventParams, CCS_DEFAULT_DELIMITER);
@@ -256,7 +253,7 @@ void SecurityCCSServerImpl::handleSecurityReportEvent(std::string eventParams) {
                 toSSGCategory(threatTypesBitMask, category);
             } catch (const std::exception &e) {
                 LOG(ERROR, __FUNCTION__, " can't interpret threats ", token);
-                return ;
+                return;
             }
         } else if (token == "action_type") {
             token = EventParserUtil::getNextToken(eventParams, CCS_DEFAULT_DELIMITER);
@@ -265,7 +262,7 @@ void SecurityCCSServerImpl::handleSecurityReportEvent(std::string eventParams) {
                 toSSGPolicy(teluxPolicy, ssgPolicy);
             } catch (const std::exception &e) {
                 LOG(ERROR, __FUNCTION__, " can't interpret policy ", token);
-                return ;
+                return;
             }
         } else if (token == "rat") {
             token = EventParserUtil::getNextToken(eventParams, CCS_DEFAULT_DELIMITER);
@@ -273,7 +270,7 @@ void SecurityCCSServerImpl::handleSecurityReportEvent(std::string eventParams) {
                 rat = std::stoul(token, nullptr, 10);
             } catch (const std::exception &e) {
                 LOG(ERROR, __FUNCTION__, " can't interpret RAT ", token);
-                return ;
+                return;
             }
         } else if (token == "env_state") {
             token = EventParserUtil::getNextToken(eventParams, CCS_DEFAULT_DELIMITER);
@@ -281,7 +278,7 @@ void SecurityCCSServerImpl::handleSecurityReportEvent(std::string eventParams) {
                 envState = std::stoul(token, nullptr, 10);
             } catch (const std::exception &e) {
                 LOG(ERROR, __FUNCTION__, " can't interpret env_state ", token);
-                return ;
+                return;
             }
         } else {
         }
@@ -309,8 +306,8 @@ void SecurityCCSServerImpl::handleSecurityReportEvent(std::string eventParams) {
         curSessionStats_.hostile_score_count++;
     }
 
-    curSessionStats_.average_score = (curSessionStats_.average_score + score) /
-        curSessionStats_.indication_count;
+    curSessionStats_.average_score
+        = (curSessionStats_.average_score + score) / curSessionStats_.indication_count;
 
     curSessionStats_.categories_detected |= category;
 
@@ -321,14 +318,14 @@ void SecurityCCSServerImpl::handleSecurityReportEvent(std::string eventParams) {
     }
 }
 
-void SecurityCCSServerImpl::toSSGPolicy(uint32_t teluxPolicy,
-    ssgccs_client_policy_action_t &ssgPolicy) {
+void SecurityCCSServerImpl::toSSGPolicy(
+    uint32_t teluxPolicy, ssgccs_client_policy_action_t &ssgPolicy) {
 
     switch (static_cast<telux::sec::ActionType>(teluxPolicy)) {
         case telux::sec::ActionType::NONE:
             ssgPolicy = POLICY_NO_ACTION;
             break;
-          case telux::sec::ActionType::DEPRIORITIZED:
+        case telux::sec::ActionType::DEPRIORITIZED:
             ssgPolicy = POLICY_DEPRIORITIZE;
             break;
         case telux::sec::ActionType::REMOVED_DEPRIORITIZATION:
@@ -351,71 +348,68 @@ void SecurityCCSServerImpl::toSSGPolicy(uint32_t teluxPolicy,
 void SecurityCCSServerImpl::toSSGCategory(uint32_t threatTypesBitMask, uint32_t &category) {
 
     if ((threatTypesBitMask & static_cast<uint32_t>(telux::sec::CellularThreatType::UNKNOWN))
-            == static_cast<uint32_t>(telux::sec::CellularThreatType::UNKNOWN)) {
+        == static_cast<uint32_t>(telux::sec::CellularThreatType::UNKNOWN)) {
         category |= CATEGORY_FLAG_UNKNOWN;
     }
     if ((threatTypesBitMask & static_cast<uint32_t>(telux::sec::CellularThreatType::IMPRISON))
-            == static_cast<uint32_t>(telux::sec::CellularThreatType::IMPRISON)) {
+        == static_cast<uint32_t>(telux::sec::CellularThreatType::IMPRISON)) {
         category |= CATEGORY_FLAG_IMPRISONER;
     }
     if ((threatTypesBitMask & static_cast<uint32_t>(telux::sec::CellularThreatType::DOS))
-            == static_cast<uint32_t>(telux::sec::CellularThreatType::DOS)) {
+        == static_cast<uint32_t>(telux::sec::CellularThreatType::DOS)) {
         category |= CATEGORY_FLAG_DOS;
     }
     if ((threatTypesBitMask & static_cast<uint32_t>(telux::sec::CellularThreatType::DOWNGRADE))
-            == static_cast<uint32_t>(telux::sec::CellularThreatType::DOWNGRADE)) {
+        == static_cast<uint32_t>(telux::sec::CellularThreatType::DOWNGRADE)) {
         category |= CATEGORY_FLAG_DOWNGRADE;
     }
-    if ((threatTypesBitMask & static_cast<uint32_t>(
-            telux::sec::CellularThreatType::LOCATION_TRACKED_USING_IMSI))
-            == static_cast<uint32_t>(
-            telux::sec::CellularThreatType::LOCATION_TRACKED_USING_IMSI)) {
+    if ((threatTypesBitMask
+            & static_cast<uint32_t>(telux::sec::CellularThreatType::LOCATION_TRACKED_USING_IMSI))
+        == static_cast<uint32_t>(telux::sec::CellularThreatType::LOCATION_TRACKED_USING_IMSI)) {
         category |= CATEGORY_FLAG_LOCATION_TRACKER;
     }
-    if ((threatTypesBitMask & static_cast<uint32_t>(
-            telux::sec::CellularThreatType::LOCATION_TRACKED_USING_AUTH))
-            == static_cast<uint32_t>(
-            telux::sec::CellularThreatType::LOCATION_TRACKED_USING_AUTH)) {
+    if ((threatTypesBitMask
+            & static_cast<uint32_t>(telux::sec::CellularThreatType::LOCATION_TRACKED_USING_AUTH))
+        == static_cast<uint32_t>(telux::sec::CellularThreatType::LOCATION_TRACKED_USING_AUTH)) {
         category |= CATEGORY_FLAG_LOCATION_TRACKER_AUTH_REQEUST;
     }
     if ((threatTypesBitMask & static_cast<uint32_t>(telux::sec::CellularThreatType::PERSUADE))
-            == static_cast<uint32_t>(telux::sec::CellularThreatType::PERSUADE)) {
+        == static_cast<uint32_t>(telux::sec::CellularThreatType::PERSUADE)) {
         category |= CATEGORY_FLAG_ATTRACTIVE;
     }
-    if ((threatTypesBitMask & static_cast<uint32_t>(
-            telux::sec::CellularThreatType::NO_THREAT_DETECTED))
-            == static_cast<uint32_t>(telux::sec::CellularThreatType::NO_THREAT_DETECTED)) {
+    if ((threatTypesBitMask
+            & static_cast<uint32_t>(telux::sec::CellularThreatType::NO_THREAT_DETECTED))
+        == static_cast<uint32_t>(telux::sec::CellularThreatType::NO_THREAT_DETECTED)) {
         category |= CATEGORY_FLAG_DOWNGRADE;
     }
-    if ((threatTypesBitMask & static_cast<uint32_t>(
-            telux::sec::CellularThreatType::NO_ENCRYPTION))
-            == static_cast<uint32_t>(telux::sec::CellularThreatType::NO_ENCRYPTION)) {
+    if ((threatTypesBitMask & static_cast<uint32_t>(telux::sec::CellularThreatType::NO_ENCRYPTION))
+        == static_cast<uint32_t>(telux::sec::CellularThreatType::NO_ENCRYPTION)) {
         category |= CATEGORY_FLAG_NO_ENCRYPTION;
     }
-    if ((threatTypesBitMask & static_cast<uint32_t>(
-            telux::sec::CellularThreatType::WEAK_ENCRYPTION))
-            == static_cast<uint32_t>(telux::sec::CellularThreatType::WEAK_ENCRYPTION)) {
+    if ((threatTypesBitMask
+            & static_cast<uint32_t>(telux::sec::CellularThreatType::WEAK_ENCRYPTION))
+        == static_cast<uint32_t>(telux::sec::CellularThreatType::WEAK_ENCRYPTION)) {
         category |= CATEGORY_FLAG_WEAK_ENCRYPTION;
     }
-    if ((threatTypesBitMask & static_cast<uint32_t>(
-            telux::sec::CellularThreatType::SELF_BLACKLISTING_CELL))
-            == static_cast<uint32_t>(telux::sec::CellularThreatType::SELF_BLACKLISTING_CELL)) {
+    if ((threatTypesBitMask
+            & static_cast<uint32_t>(telux::sec::CellularThreatType::SELF_BLACKLISTING_CELL))
+        == static_cast<uint32_t>(telux::sec::CellularThreatType::SELF_BLACKLISTING_CELL)) {
         category |= CATEGORY_FLAG_SELF_BLACKLISTING_CELL;
     }
-    if ((threatTypesBitMask & static_cast<uint32_t>(
-            telux::sec::CellularThreatType::UNAUTHENTICATED_SMS))
-            == static_cast<uint32_t>(telux::sec::CellularThreatType::UNAUTHENTICATED_SMS)) {
+    if ((threatTypesBitMask
+            & static_cast<uint32_t>(telux::sec::CellularThreatType::UNAUTHENTICATED_SMS))
+        == static_cast<uint32_t>(telux::sec::CellularThreatType::UNAUTHENTICATED_SMS)) {
         category |= CATEGORY_FLAG_UNAUTH_SMS;
     }
-    if ((threatTypesBitMask & static_cast<uint32_t>(
-            telux::sec::CellularThreatType::UNAUTHENTICATED_EMERGENCY_MESSAGE))
-            == static_cast<uint32_t>(
+    if ((threatTypesBitMask
+            & static_cast<uint32_t>(
+                telux::sec::CellularThreatType::UNAUTHENTICATED_EMERGENCY_MESSAGE))
+        == static_cast<uint32_t>(
             telux::sec::CellularThreatType::UNAUTHENTICATED_EMERGENCY_MESSAGE)) {
         category |= CATEGORY_FLAG_UNAUTH_EMERGENCY_MSG;
     }
-    if ((threatTypesBitMask & static_cast<uint32_t>(
-            telux::sec::CellularThreatType::IMSI_LEAK))
-            == static_cast<uint32_t>(telux::sec::CellularThreatType::IMSI_LEAK)) {
+    if ((threatTypesBitMask & static_cast<uint32_t>(telux::sec::CellularThreatType::IMSI_LEAK))
+        == static_cast<uint32_t>(telux::sec::CellularThreatType::IMSI_LEAK)) {
         category |= CATEGORY_FLAG_IMSI_LEAK;
     }
 }
@@ -425,7 +419,7 @@ std::string SecurityCCSServerImpl::toPolicyStr(ssgccs_client_policy_action_t ssg
     switch (ssgPolicy) {
         case POLICY_NO_ACTION:
             return "No Action";
-          case POLICY_DEPRIORITIZE:
+        case POLICY_DEPRIORITIZE:
             return "Deprioritized";
         case POLICY_UNDEPRIORITIZE:
             return "Undeprioritized";

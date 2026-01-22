@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -12,18 +12,17 @@
 namespace telux {
 namespace common {
 
-class SensorReportListener :
-    public EventManager<::sensorStub::EventDispatcherService> {
+class SensorReportListener : public EventManager<::sensorStub::EventDispatcherService> {
 
-public:
+ public:
     static SensorReportListener &getInstance();
 
-private:
+ private:
     SensorReportListener();
     virtual ~SensorReportListener();
 };
 
-} // end of namespace common
-} // end of namespace telux
+}  // end of namespace common
+}  // end of namespace telux
 
-#endif //SENSOR_REPORT_LISTENER_HPP
+#endif  // SENSOR_REPORT_LISTENER_HPP

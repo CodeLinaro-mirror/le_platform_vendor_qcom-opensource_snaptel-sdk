@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_PtActivationType_H_
-#define	_PtActivationType_H_
-
+#ifndef _PtActivationType_H_
+#define _PtActivationType_H_
 
 #include <asn_application.h>
 
@@ -20,13 +19,13 @@ extern "C" {
 
 /* Dependencies */
 typedef enum PtActivationType {
-	PtActivationType_undefinedCodingType	= 0,
-	PtActivationType_r09_16CodingType	= 1,
-	PtActivationType_vdv_50149CodingType	= 2
+    PtActivationType_undefinedCodingType = 0,
+    PtActivationType_r09_16CodingType    = 1,
+    PtActivationType_vdv_50149CodingType = 2
 } e_PtActivationType;
 
 /* PtActivationType */
-typedef long	 PtActivationType_t;
+typedef long PtActivationType_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_PtActivationType;
@@ -44,5 +43,5 @@ per_type_encoder_f PtActivationType_encode_uper;
 }
 #endif
 
-#endif	/* _PtActivationType_H_ */
+#endif /* _PtActivationType_H_ */
 #include <asn_internal.h>

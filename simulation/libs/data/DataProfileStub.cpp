@@ -11,10 +11,9 @@ namespace telux {
 namespace data {
 
 DataProfile::DataProfile(int id, const std::string &name, const std::string &apn,
-                         const std::string &username, const std::string &password,
-                         IpFamilyType ipFamilyType, TechPreference techPref,
-                         AuthProtocolType authType, ApnTypes apnTypes,
-                         EmergencyCapability emergencyAllowed, bool clatEnabled)
+    const std::string &username, const std::string &password, IpFamilyType ipFamilyType,
+    TechPreference techPref, AuthProtocolType authType, ApnTypes apnTypes,
+    EmergencyCapability emergencyAllowed, bool clatEnabled)
    : id_(id)
    , name_(name)
    , apn_(apn)
@@ -29,38 +28,38 @@ DataProfile::DataProfile(int id, const std::string &name, const std::string &apn
 }
 
 int DataProfile::getId() {
-   return id_;
+    return id_;
 }
 
 std::string DataProfile::getName() {
-   return name_;
+    return name_;
 }
 
 std::string DataProfile::getUserName() {
-   return username_;
+    return username_;
 }
 
 std::string DataProfile::getPassword() {
-   return password_;
+    return password_;
 }
 TechPreference DataProfile::getTechPreference() {
-   return techPref_;
+    return techPref_;
 }
 
 AuthProtocolType DataProfile::getAuthProtocolType() {
-   return authType_;
+    return authType_;
 }
 
 IpFamilyType DataProfile::getIpFamilyType() {
-   return ipFamilyType_;
+    return ipFamilyType_;
 }
 
 std::string DataProfile::getApn() {
-   return apn_;
+    return apn_;
 }
 
 ApnTypes DataProfile::getApnTypes() {
-   return apnTypes_;
+    return apnTypes_;
 }
 
 EmergencyCapability DataProfile::getIsEmergencyAllowed() {
@@ -72,14 +71,14 @@ bool DataProfile::isClatEnabled() {
 }
 
 std::string DataProfile::toString() {
-  std::stringstream ss;
-  ss << " id: " << id_ << ", name: " << name_ << ", apn: " << apn_ << ", username: " << username_
-    << ", password: " << password_ << ", IP Family: " << static_cast<int>(ipFamilyType_)
-    << ", Tech Pref: " << static_cast<int>(techPref_)
-    << ", Auth Type: " << static_cast<int>(authType_) << ", Apn Type: " << apnTypes_.to_string()
-    << ", Emergency Allowed: " << static_cast<int>(emergencyAllowed_)
-    << ", CLAT enabled: " << static_cast<int>(clatEnabled_);
+    std::stringstream ss;
+    ss << " id: " << id_ << ", name: " << name_ << ", apn: " << apn_ << ", username: " << username_
+       << ", password: " << password_ << ", IP Family: " << static_cast<int>(ipFamilyType_)
+       << ", Tech Pref: " << static_cast<int>(techPref_)
+       << ", Auth Type: " << static_cast<int>(authType_) << ", Apn Type: " << apnTypes_.to_string()
+       << ", Emergency Allowed: " << static_cast<int>(emergencyAllowed_)
+       << ", CLAT enabled: " << static_cast<int>(clatEnabled_);
     return ss.str();
 }
-}
-}
+}  // namespace data
+}  // namespace telux

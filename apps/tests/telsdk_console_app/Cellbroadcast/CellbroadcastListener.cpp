@@ -26,12 +26,13 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 #include <iostream>
 #include <string>
 
@@ -39,75 +40,84 @@
 
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
-void CellbroadcastListener::onIncomingMessage(SlotId slotId,
-    const std::shared_ptr<telux::tel::CellBroadcastMessage> cbMessage) {
-    PRINT_NOTIFICATION << " Received CB Message on slot id " <<
-        static_cast<int>(slotId) << std::endl;
-    if(cbMessage->getMessageType() == telux::tel::MessageType::ETWS) {
+void CellbroadcastListener::onIncomingMessage(
+    SlotId slotId, const std::shared_ptr<telux::tel::CellBroadcastMessage> cbMessage) {
+    PRINT_NOTIFICATION << " Received CB Message on slot id " << static_cast<int>(slotId)
+                       << std::endl;
+    if (cbMessage->getMessageType() == telux::tel::MessageType::ETWS) {
         std::shared_ptr<telux::tel::EtwsInfo> etwsInfo = cbMessage->getEtwsInfo();
-        if(etwsInfo) {
-            std::string languageCode =
-                (etwsInfo->getLanguageCode() == "") ? "UNAVAILABLE": etwsInfo->getLanguageCode();
-            PRINT_NOTIFICATION << " Incoming Cellbroadcast Message:" <<
-                " \nETWS Info: " << " \nGeographical Scope: " << geograhicalScopeToString(
-                etwsInfo->getGeographicalScope()) << " \nMessage Identifier: " <<
-                etwsInfo->getMessageId() << " \nSerial Number: " << etwsInfo->getSerialNumber() <<
-                " \nLanguage code: " << languageCode <<
-                " \nMessage code: " << etwsInfo->getMessageCode() <<
-                " \nUpdate number: " << etwsInfo->getUpdateNumber() <<
-                " \nMessage: " << etwsInfo->getMessageBody() <<" \nPriority: " <<
-                priorityToString(etwsInfo->getPriority()) <<
-                " \nisEmergencyUserAlert: " << etwsInfo->isEmergencyUserAlert() <<
-                " \nisPopupAlert: " << etwsInfo->isPopupAlert() << " \nisPrimary: " <<
-                etwsInfo->isPrimary() << " \nWarningType: " <<
-                etwsWarningTypeToString(etwsInfo->getEtwsWarningType()) << std::endl;
+        if (etwsInfo) {
+            std::string languageCode
+                = (etwsInfo->getLanguageCode() == "") ? "UNAVAILABLE" : etwsInfo->getLanguageCode();
+            PRINT_NOTIFICATION
+                << " Incoming Cellbroadcast Message:"
+                << " \nETWS Info: "
+                << " \nGeographical Scope: "
+                << geograhicalScopeToString(etwsInfo->getGeographicalScope())
+                << " \nMessage Identifier: " << etwsInfo->getMessageId()
+                << " \nSerial Number: " << etwsInfo->getSerialNumber()
+                << " \nLanguage code: " << languageCode
+                << " \nMessage code: " << etwsInfo->getMessageCode()
+                << " \nUpdate number: " << etwsInfo->getUpdateNumber()
+                << " \nMessage: " << etwsInfo->getMessageBody()
+                << " \nPriority: " << priorityToString(etwsInfo->getPriority())
+                << " \nisEmergencyUserAlert: " << etwsInfo->isEmergencyUserAlert()
+                << " \nisPopupAlert: " << etwsInfo->isPopupAlert()
+                << " \nisPrimary: " << etwsInfo->isPrimary()
+                << " \nWarningType: " << etwsWarningTypeToString(etwsInfo->getEtwsWarningType())
+                << std::endl;
         } else {
             PRINT_NOTIFICATION << " ETWS Info is null " << std::endl;
         }
-    } else if(cbMessage->getMessageType() == telux::tel::MessageType::CMAS) {
+    } else if (cbMessage->getMessageType() == telux::tel::MessageType::CMAS) {
         std::shared_ptr<telux::tel::CmasInfo> cmasInfo = cbMessage->getCmasInfo();
         if (cmasInfo) {
-            std::string languageCode =
-                (cmasInfo->getLanguageCode() == "") ? "UNAVAILABLE": cmasInfo->getLanguageCode();
-            PRINT_NOTIFICATION << " Incoming Cellbroadcast Message:" <<
-                " \nCMAS Info: " << " \nGeographical Scope: " << geograhicalScopeToString(
-                cmasInfo->getGeographicalScope()) << " \nMessage Identifier: " <<
-                cmasInfo->getMessageId() << " \nSerial Number: " << cmasInfo->getSerialNumber() <<
-                " \nLanguage code: " << languageCode <<
-                " \nMessage code: " << cmasInfo->getMessageCode() <<
-                " \nUpdate number: " << cmasInfo->getUpdateNumber() <<
-                " \nMessage: " << cmasInfo->getMessageBody() <<" \nPriority: " <<
-                priorityToString(cmasInfo->getPriority()) << " \nCmasMessageClass: " <<
-                cmasMessageClassToString(cmasInfo->getMessageClass()) << " \nCmasSeverity: " <<
-                cmasSeverityToString(cmasInfo->getSeverity()) << " \nCmasUrgency: " <<
-                cmasUrgencyToString(cmasInfo->getUrgency()) << " \nCmasCertainty: " <<
-                cmasCertaintyToString(cmasInfo->getCertainty()) << std::endl;
+            std::string languageCode
+                = (cmasInfo->getLanguageCode() == "") ? "UNAVAILABLE" : cmasInfo->getLanguageCode();
+            PRINT_NOTIFICATION
+                << " Incoming Cellbroadcast Message:"
+                << " \nCMAS Info: "
+                << " \nGeographical Scope: "
+                << geograhicalScopeToString(cmasInfo->getGeographicalScope())
+                << " \nMessage Identifier: " << cmasInfo->getMessageId()
+                << " \nSerial Number: " << cmasInfo->getSerialNumber()
+                << " \nLanguage code: " << languageCode
+                << " \nMessage code: " << cmasInfo->getMessageCode()
+                << " \nUpdate number: " << cmasInfo->getUpdateNumber()
+                << " \nMessage: " << cmasInfo->getMessageBody()
+                << " \nPriority: " << priorityToString(cmasInfo->getPriority())
+                << " \nCmasMessageClass: " << cmasMessageClassToString(cmasInfo->getMessageClass())
+                << " \nCmasSeverity: " << cmasSeverityToString(cmasInfo->getSeverity())
+                << " \nCmasUrgency: " << cmasUrgencyToString(cmasInfo->getUrgency())
+                << " \nCmasCertainty: " << cmasCertaintyToString(cmasInfo->getCertainty())
+                << std::endl;
             std::shared_ptr<telux::tel::WarningAreaInfo> wac = cmasInfo->getWarningAreaInfo();
             if (wac) {
                 int maxWaitTime = wac->getGeoFenceMaxWaitTime();
-                PRINT_NOTIFICATION << " WAC Information: GeoFenceMaxWaitTime: " << maxWaitTime <<
-                    std::endl;
+                PRINT_NOTIFICATION << " WAC Information: GeoFenceMaxWaitTime: " << maxWaitTime
+                                   << std::endl;
                 std::vector<telux::tel::Geometry> geometries = wac->getGeometries();
-                for (int index = 0 ; index < geometries.size(); index++) {
+                for (int index = 0; index < geometries.size(); index++) {
                     if (geometries[index].getType() == telux::tel::GeometryType::CIRCLE) {
                         std::shared_ptr<telux::tel::Circle> circle = geometries[index].getCircle();
                         if (circle) {
-                            PRINT_NOTIFICATION << " Circle with Radius: " <<
-                                circle->getRadius() << " Center = (" << circle->getCenter().latitude
-                                << ", " << circle->getCenter().longitude << ")" << std::endl;
+                            PRINT_NOTIFICATION << " Circle with Radius: " << circle->getRadius()
+                                               << " Center = (" << circle->getCenter().latitude
+                                               << ", " << circle->getCenter().longitude << ")"
+                                               << std::endl;
                         } else {
                             PRINT_NOTIFICATION << " Invalid circle geometry" << std::endl;
                         }
-                    } else if(geometries[index].getType() == telux::tel::GeometryType::POLYGON) {
-                        std::shared_ptr<telux::tel::Polygon> polygon =
-                            geometries[index].getPolygon();
+                    } else if (geometries[index].getType() == telux::tel::GeometryType::POLYGON) {
+                        std::shared_ptr<telux::tel::Polygon> polygon
+                            = geometries[index].getPolygon();
                         if (polygon) {
                             PRINT_NOTIFICATION << " Polygon with Vertices: " << std::endl;
                             std::vector<telux::tel::Point> points = polygon->getVertices();
-                            for (int index = 0 ; index < points.size(); index++) {
-                                PRINT_NOTIFICATION << " Vertices [" << index + 1 << "] : " << "(" <<
-                                    points[index].latitude << ", " <<
-                                    points[index].longitude << ")" << std::endl;
+                            for (int index = 0; index < points.size(); index++) {
+                                PRINT_NOTIFICATION << " Vertices [" << index + 1 << "] : "
+                                                   << "(" << points[index].latitude << ", "
+                                                   << points[index].longitude << ")" << std::endl;
                             }
                         } else {
                             PRINT_NOTIFICATION << " Invalid polygon geometry" << std::endl;
@@ -125,26 +135,26 @@ void CellbroadcastListener::onIncomingMessage(SlotId slotId,
     }
 }
 
-void CellbroadcastListener::onMessageFilterChange(SlotId slotId,
-    std::vector<telux::tel::CellBroadcastFilter> filters) {
-    PRINT_NOTIFICATION << " Received Message filter change on slot id " <<
-        static_cast<int>(slotId) << std::endl;
+void CellbroadcastListener::onMessageFilterChange(
+    SlotId slotId, std::vector<telux::tel::CellBroadcastFilter> filters) {
+    PRINT_NOTIFICATION << " Received Message filter change on slot id " << static_cast<int>(slotId)
+                       << std::endl;
     for (int index = 0; index < filters.size(); index++) {
-        PRINT_NOTIFICATION << "Filter: " << index + 1 << ", StartMsgId: " <<
-            filters[index].startMessageId << ", EndMsgId: " << filters[index].endMessageId <<
-            std::endl;
+        PRINT_NOTIFICATION << "Filter: " << index + 1
+                           << ", StartMsgId: " << filters[index].startMessageId
+                           << ", EndMsgId: " << filters[index].endMessageId << std::endl;
     }
 };
 
 // Notify SmsManager subsystem restart to user
 void CellbroadcastListener::onServiceStatusChange(telux::common::ServiceStatus status) {
     std::string stat = "";
-    switch(status) {
+    switch (status) {
         case telux::common::ServiceStatus::SERVICE_AVAILABLE:
             stat = " SERVICE_AVAILABLE";
             break;
         case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
-            stat =  " SERVICE_UNAVAILABLE";
+            stat = " SERVICE_UNAVAILABLE";
             break;
         default:
             stat = " Unknown service status";
@@ -154,7 +164,7 @@ void CellbroadcastListener::onServiceStatusChange(telux::common::ServiceStatus s
 }
 
 std::string CellbroadcastListener::geograhicalScopeToString(telux::tel::GeographicalScope scope) {
-    switch(scope) {
+    switch (scope) {
         case telux::tel::GeographicalScope::CELL_WIDE_IMMEDIATE:
             return "CELL_WIDE_IMMEDIATE";
         case telux::tel::GeographicalScope::PLMN_WIDE:
@@ -169,7 +179,7 @@ std::string CellbroadcastListener::geograhicalScopeToString(telux::tel::Geograph
 }
 
 std::string CellbroadcastListener::priorityToString(telux::tel::MessagePriority priority) {
-    switch(priority) {
+    switch (priority) {
         case telux::tel::MessagePriority::UNKNOWN:
             return "UNKNOWN";
         case telux::tel::MessagePriority::NORMAL:
@@ -177,12 +187,12 @@ std::string CellbroadcastListener::priorityToString(telux::tel::MessagePriority 
         case telux::tel::MessagePriority::EMERGENCY:
             return "EMERGENCY";
         default:
-            return  "UNKNOWN Priority";
+            return "UNKNOWN Priority";
     }
 }
 
 std::string CellbroadcastListener::msgTypeToString(telux::tel::MessageType type) {
-    switch(type) {
+    switch (type) {
         case telux::tel::MessageType::UNKNOWN:
             return "UNKNOWN";
         case telux::tel::MessageType::ETWS:
@@ -190,12 +200,13 @@ std::string CellbroadcastListener::msgTypeToString(telux::tel::MessageType type)
         case telux::tel::MessageType::CMAS:
             return "CMAS";
         default:
-            return  "UNKNOWN";
+            return "UNKNOWN";
     }
 }
 
-std::string CellbroadcastListener::etwsWarningTypeToString(telux::tel::EtwsWarningType warningtype) {
-    switch(warningtype) {
+std::string CellbroadcastListener::etwsWarningTypeToString(
+    telux::tel::EtwsWarningType warningtype) {
+    switch (warningtype) {
         case telux::tel::EtwsWarningType::UNKNOWN:
             return "UNKNOWN";
         case telux::tel::EtwsWarningType::EARTHQUAKE:
@@ -209,12 +220,12 @@ std::string CellbroadcastListener::etwsWarningTypeToString(telux::tel::EtwsWarni
         case telux::tel::EtwsWarningType::OTHER_EMERGENCY:
             return "OTHER_EMERGENCY";
         default:
-            return  "UNKNOWN";
+            return "UNKNOWN";
     }
 }
 
 std::string CellbroadcastListener::cmasMessageClassToString(telux::tel::CmasMessageClass msgClass) {
-    switch(msgClass) {
+    switch (msgClass) {
         case telux::tel::CmasMessageClass::UNKNOWN:
             return "UNKNOWN";
         case telux::tel::CmasMessageClass::PRESIDENTIAL_LEVEL_ALERT:
@@ -232,12 +243,12 @@ std::string CellbroadcastListener::cmasMessageClassToString(telux::tel::CmasMess
         case telux::tel::CmasMessageClass::OPERATOR_DEFINED_USE:
             return "OPERATOR_DEFINED_USE";
         default:
-            return  "UNKNOWN";
+            return "UNKNOWN";
     }
 }
 
 std::string CellbroadcastListener::cmasSeverityToString(telux::tel::CmasSeverity severity) {
-    switch(severity) {
+    switch (severity) {
         case telux::tel::CmasSeverity::UNKNOWN:
             return "UNKNOWN";
         case telux::tel::CmasSeverity::EXTREME:
@@ -245,12 +256,12 @@ std::string CellbroadcastListener::cmasSeverityToString(telux::tel::CmasSeverity
         case telux::tel::CmasSeverity::SEVERE:
             return "SEVERE";
         default:
-            return  "UNKNOWN";
+            return "UNKNOWN";
     }
 }
 
 std::string CellbroadcastListener::cmasUrgencyToString(telux::tel::CmasUrgency urgency) {
-    switch(urgency) {
+    switch (urgency) {
         case telux::tel::CmasUrgency::UNKNOWN:
             return "UNKNOWN";
         case telux::tel::CmasUrgency::IMMEDIATE:
@@ -258,12 +269,12 @@ std::string CellbroadcastListener::cmasUrgencyToString(telux::tel::CmasUrgency u
         case telux::tel::CmasUrgency::EXPECTED:
             return "EXPECTED";
         default:
-            return  "UNKNOWN";
+            return "UNKNOWN";
     }
 }
 
 std::string CellbroadcastListener::cmasCertaintyToString(telux::tel::CmasCertainty certainity) {
-    switch(certainity) {
+    switch (certainity) {
         case telux::tel::CmasCertainty::UNKNOWN:
             return "UNKNOWN";
         case telux::tel::CmasCertainty::OBSERVED:
@@ -271,7 +282,6 @@ std::string CellbroadcastListener::cmasCertaintyToString(telux::tel::CmasCertain
         case telux::tel::CmasCertainty::LIKELY:
             return "LIKELY";
         default:
-            return  "UNKNOWN";
+            return "UNKNOWN";
     }
 }
-

@@ -1,11 +1,10 @@
 /*
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- * All rights reserved.
- * Confidential and Proprietary - Qualcomm Technologies, Inc.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
- #ifndef VLAN_MANAGER_STUB_HPP
- #define VLAN_MANAGER_STUB_HPP
+#ifndef VLAN_MANAGER_STUB_HPP
+#define VLAN_MANAGER_STUB_HPP
 
 #include <telux/data/net/VlanManager.hpp>
 #include <telux/common/CommonDefines.hpp>
@@ -18,10 +17,9 @@ namespace telux {
 namespace data {
 namespace net {
 
-class VlanManagerStub : public IVlanManager,
-                        public IVlanListener {
-public:
-    VlanManagerStub (telux::data::OperationType oprType);
+class VlanManagerStub : public IVlanManager, public IVlanListener {
+ public:
+    VlanManagerStub(telux::data::OperationType oprType);
     ~VlanManagerStub();
 
     telux::common::Status init(telux::common::InitResponseCb callback);
@@ -64,7 +62,7 @@ public:
     virtual telux::common::Status queryVlanToBackhaulBindings(BackhaulType backhaulType,
         VlanBindingsResponseCb callback, SlotId slotId = DEFAULT_SLOT_ID) override;
 
-private:
+ private:
     std::mutex mtx_;
     std::mutex initMtx_;
     std::condition_variable cv_;
@@ -82,12 +80,12 @@ private:
     void setSubsystemReady(bool status);
     void setSubSystemStatus(telux::common::ServiceStatus status);
     void invokeInitCallback(telux::common::ServiceStatus status);
-    void invokeCallback(telux::common::ResponseCallback callback,
-        telux::common::ErrorCode error, int cbDelay);
+    void invokeCallback(
+        telux::common::ResponseCallback callback, telux::common::ErrorCode error, int cbDelay);
 };
 
-} // end of namespace net
-} // end of namespace data
-} // end of namespace telux
+}  // end of namespace net
+}  // end of namespace data
+}  // end of namespace telux
 
- #endif //VLAN_MANAGER_STUB_HPP
+#endif  // VLAN_MANAGER_STUB_HPP

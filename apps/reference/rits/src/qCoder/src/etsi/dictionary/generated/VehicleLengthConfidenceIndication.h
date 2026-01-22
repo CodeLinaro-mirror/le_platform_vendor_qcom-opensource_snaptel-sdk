@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_VehicleLengthConfidenceIndication_H_
-#define	_VehicleLengthConfidenceIndication_H_
-
+#ifndef _VehicleLengthConfidenceIndication_H_
+#define _VehicleLengthConfidenceIndication_H_
 
 #include <asn_application.h>
 
@@ -20,15 +19,15 @@ extern "C" {
 
 /* Dependencies */
 typedef enum VehicleLengthConfidenceIndication {
-	VehicleLengthConfidenceIndication_noTrailerPresent	= 0,
-	VehicleLengthConfidenceIndication_trailerPresentWithKnownLength	= 1,
-	VehicleLengthConfidenceIndication_trailerPresentWithUnknownLength	= 2,
-	VehicleLengthConfidenceIndication_trailerPresenceIsUnknown	= 3,
-	VehicleLengthConfidenceIndication_unavailable	= 4
+    VehicleLengthConfidenceIndication_noTrailerPresent                = 0,
+    VehicleLengthConfidenceIndication_trailerPresentWithKnownLength   = 1,
+    VehicleLengthConfidenceIndication_trailerPresentWithUnknownLength = 2,
+    VehicleLengthConfidenceIndication_trailerPresenceIsUnknown        = 3,
+    VehicleLengthConfidenceIndication_unavailable                     = 4
 } e_VehicleLengthConfidenceIndication;
 
 /* VehicleLengthConfidenceIndication */
-typedef long	 VehicleLengthConfidenceIndication_t;
+typedef long VehicleLengthConfidenceIndication_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_VehicleLengthConfidenceIndication;
@@ -46,5 +45,5 @@ per_type_encoder_f VehicleLengthConfidenceIndication_encode_uper;
 }
 #endif
 
-#endif	/* _VehicleLengthConfidenceIndication_H_ */
+#endif /* _VehicleLengthConfidenceIndication_H_ */
 #include <asn_internal.h>

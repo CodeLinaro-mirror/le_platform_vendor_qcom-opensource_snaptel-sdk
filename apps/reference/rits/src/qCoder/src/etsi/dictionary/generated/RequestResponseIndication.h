@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_RequestResponseIndication_H_
-#define	_RequestResponseIndication_H_
-
+#ifndef _RequestResponseIndication_H_
+#define _RequestResponseIndication_H_
 
 #include <asn_application.h>
 
@@ -20,12 +19,12 @@ extern "C" {
 
 /* Dependencies */
 typedef enum RequestResponseIndication {
-	RequestResponseIndication_request	= 0,
-	RequestResponseIndication_response	= 1
+    RequestResponseIndication_request  = 0,
+    RequestResponseIndication_response = 1
 } e_RequestResponseIndication;
 
 /* RequestResponseIndication */
-typedef long	 RequestResponseIndication_t;
+typedef long RequestResponseIndication_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_RequestResponseIndication;
@@ -43,5 +42,5 @@ per_type_encoder_f RequestResponseIndication_encode_uper;
 }
 #endif
 
-#endif	/* _RequestResponseIndication_H_ */
+#endif /* _RequestResponseIndication_H_ */
 #include <asn_internal.h>

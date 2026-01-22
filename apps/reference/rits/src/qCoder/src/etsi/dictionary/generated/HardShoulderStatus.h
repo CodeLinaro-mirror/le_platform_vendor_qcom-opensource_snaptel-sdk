@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_HardShoulderStatus_H_
-#define	_HardShoulderStatus_H_
-
+#ifndef _HardShoulderStatus_H_
+#define _HardShoulderStatus_H_
 
 #include <asn_application.h>
 
@@ -20,13 +19,13 @@ extern "C" {
 
 /* Dependencies */
 typedef enum HardShoulderStatus {
-	HardShoulderStatus_availableForStopping	= 0,
-	HardShoulderStatus_closed	= 1,
-	HardShoulderStatus_availableForDriving	= 2
+    HardShoulderStatus_availableForStopping = 0,
+    HardShoulderStatus_closed               = 1,
+    HardShoulderStatus_availableForDriving  = 2
 } e_HardShoulderStatus;
 
 /* HardShoulderStatus */
-typedef long	 HardShoulderStatus_t;
+typedef long HardShoulderStatus_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_HardShoulderStatus;
@@ -44,5 +43,5 @@ per_type_encoder_f HardShoulderStatus_encode_uper;
 }
 #endif
 
-#endif	/* _HardShoulderStatus_H_ */
+#endif /* _HardShoulderStatus_H_ */
 #include <asn_internal.h>

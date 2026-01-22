@@ -26,11 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef IMSSERVINGSYSTEMMENU_HPP
@@ -48,7 +48,7 @@
 #define MULTI_SIM_NUM_SLOTS 2
 
 class ImsServingSystemMenu : public ConsoleApp {
-public:
+ public:
     /**
      * Initialize commands and SDK
      */
@@ -61,7 +61,7 @@ public:
     void requestServiceStatusOverIms(std::vector<std::string> userInput);
     void requestPdpStatusOverIms(std::vector<std::string> userInput);
 
-private:
+ private:
     // Member variable to keep the Listener object alive till application ends.
     std::map<SlotId, std::shared_ptr<telux::tel::IImsServingSystemListener>> imsServSysListeners_;
     std::map<SlotId, std::shared_ptr<telux::tel::IImsServingSystemManager>> imsServingSystemMgrs_;

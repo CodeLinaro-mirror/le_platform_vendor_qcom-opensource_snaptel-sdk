@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_RcpiThreshold_H_
-#define	_RcpiThreshold_H_
-
+#ifndef _RcpiThreshold_H_
+#define _RcpiThreshold_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* RcpiThreshold */
-typedef long	 RcpiThreshold_t;
+typedef long RcpiThreshold_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_RcpiThreshold;
@@ -37,5 +36,5 @@ per_type_encoder_f RcpiThreshold_encode_uper;
 }
 #endif
 
-#endif	/* _RcpiThreshold_H_ */
+#endif /* _RcpiThreshold_H_ */
 #include <asn_internal.h>

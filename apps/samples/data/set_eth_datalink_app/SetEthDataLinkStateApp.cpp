@@ -1,7 +1,8 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 /*
  * This application demonstrates how to set Ethernet data link state. The steps are as follows:
  *
@@ -31,9 +32,8 @@
 #include <telux/data/DataFactory.hpp>
 #include <telux/data/DataLinkManager.hpp>
 
-
 class SetEthDataLinkStateApp : public telux::data::IDataLinkListener,
-                      public std::enable_shared_from_this<SetEthDataLinkStateApp> {
+                               public std::enable_shared_from_this<SetEthDataLinkStateApp> {
  public:
     int initDataLinkManager() {
         telux::common::Status status;
@@ -42,10 +42,8 @@ class SetEthDataLinkStateApp : public telux::data::IDataLinkListener,
 
         auto &dataFactory = telux::data::DataFactory::getInstance();
 
-        dataLinkMgr_  = dataFactory.getDataLinkManager(
-                [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+        dataLinkMgr_ = dataFactory.getDataLinkManager(
+            [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!dataLinkMgr_) {
             std::cout << "Can't get IDataLinkManager" << std::endl;
@@ -54,15 +52,14 @@ class SetEthDataLinkStateApp : public telux::data::IDataLinkListener,
 
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Data service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Data service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
         status = dataLinkMgr_->registerListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't register listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't register listener, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -75,8 +72,8 @@ class SetEthDataLinkStateApp : public telux::data::IDataLinkListener,
 
         errCode = dataLinkMgr_->setEthDataLinkState(ethLinkState);
         if (errCode != telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Can't set  eth link state, err " <<
-                static_cast<int>(errCode) << std::endl;
+            std::cout << "Can't set  eth link state, err " << static_cast<int>(errCode)
+                      << std::endl;
             return -EIO;
         }
 
@@ -89,8 +86,7 @@ class SetEthDataLinkStateApp : public telux::data::IDataLinkListener,
 
         status = dataLinkMgr_->deregisterListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't deregister listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't deregister listener, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -115,7 +111,7 @@ int main(int argc, char *argv[]) {
 
     int ethState = std::atoi(argv[1]);
 
-    if ( (ethState != 1) || (ethState != 2) ) {
+    if ((ethState != 1) || (ethState != 2)) {
         std::cout << " Invalid input, valid values: 1/2" << std::endl;
         return -EINVAL;
     }
@@ -131,28 +127,28 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<SetEthDataLinkStateApp>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate SetEthDataLinkStateApp" << std::endl;
         return -ENOMEM;
     }
 
-        /** Step - 1 */
-        ret = app->initDataLinkManager();
-        if (ret < 0) {
-            return ret;
-        }
+    /** Step - 1 */
+    ret = app->initDataLinkManager();
+    if (ret < 0) {
+        return ret;
+    }
 
-        /** Step - 2 */
-        ret = app->setEthDataLinkState(linkState);
-        if (ret < 0) {
-            return ret;
-        }
+    /** Step - 2 */
+    ret = app->setEthDataLinkState(linkState);
+    if (ret < 0) {
+        return ret;
+    }
 
-        /** Step - 3 */
-        ret = app->deinit();
-        if (ret < 0) {
-            return ret;
-        }
+    /** Step - 3 */
+    ret = app->deinit();
+    if (ret < 0) {
+        return ret;
+    }
 
     std::cout << "\nEth-init app exiting" << std::endl;
     return 0;

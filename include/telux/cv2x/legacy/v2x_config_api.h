@@ -28,39 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -87,27 +57,27 @@ extern "C" {
     The system always uses the V2X configuration with the highest priority
     if multiple V2X configuration sources exist.
  */
-typedef enum{
-    V2X_CONFIG_SOURCE_UNKNOWN = 0u,   /**< V2X config file source is unknown */
+typedef enum {
+    V2X_CONFIG_SOURCE_UNKNOWN   = 0u, /**< V2X config file source is unknown */
     V2X_CONFIG_SOURCE_PRECONFIG = 1u, /**< V2X config file source is preconfig */
-    V2X_CONFIG_SOURCE_SIM_CARD = 2u,  /**< V2X config file source is SIM card */
-    V2X_CONFIG_SOURCE_OMA_DM = 4u,    /**< V2X config file source is OMA-DM */
-}v2x_config_soure_t;
+    V2X_CONFIG_SOURCE_SIM_CARD  = 2u, /**< V2X config file source is SIM card */
+    V2X_CONFIG_SOURCE_OMA_DM    = 4u, /**< V2X config file source is OMA-DM */
+} v2x_config_soure_t;
 
 /**
     Events relevant to CV2X config file.
  */
-typedef enum{
-    V2X_CONFIG_EVENT_CHANGED = 0u,  /**< V2X config file is changed */
-    V2X_CONFIG_EVENT_EXPIRED = 1u,  /**< V2X config file is expired */
-}v2x_config_event_t;
+typedef enum {
+    V2X_CONFIG_EVENT_CHANGED = 0u, /**< V2X config file is changed */
+    V2X_CONFIG_EVENT_EXPIRED = 1u, /**< V2X config file is expired */
+} v2x_config_event_t;
 
 /**
     Information about any update to a V2X config file.
  */
 typedef struct {
-    v2x_config_soure_t source;       /**< The type of the V2X config file. */
-    v2x_config_event_t event;        /**< Config file event. @newpagetable */
+    v2x_config_soure_t source; /**< The type of the V2X config file. */
+    v2x_config_event_t event; /**< Config file event. @newpagetable */
 } v2x_config_event_info_t;
 
 /**
@@ -121,7 +91,6 @@ typedef struct {
     @newpage
 */
 typedef void (*cv2x_config_event_listener)(v2x_config_event_info_t info);
-
 
 /**
     Register listener for any updates to CV2X configuration.
@@ -208,10 +177,10 @@ extern v2x_status_enum_type v2x_update_configuration(const char *config_file_pat
  */
 extern v2x_status_enum_type v2x_retrieve_configuration(const char *config_file_path);
 
-/** @} *//* end_addtogroup telematics_cv2x_c_config */
+/** @} */ /* end_addtogroup telematics_cv2x_c_config */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // TELUX_CV2X_LEGACY_V2X_CONFIG_API_H
+#endif  // TELUX_CV2X_LEGACY_V2X_CONFIG_API_H

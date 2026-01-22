@@ -26,9 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -45,13 +46,13 @@ using namespace telux::common;
 class AudioConsoleApp : public ConsoleApp,
                         public telux::audio::IAudioListener,
                         public std::enable_shared_from_this<AudioConsoleApp> {
-public :
+ public:
     AudioConsoleApp(std::string appName, std::string cursor);
     ~AudioConsoleApp();
     void init();
     void onServiceStatusChange(telux::common::ServiceStatus status) override;
 
-private:
+ private:
     void initConsole();
     void cleanup();
     void setSystemReady();

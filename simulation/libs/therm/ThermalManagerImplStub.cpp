@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <algorithm>
@@ -36,8 +36,7 @@ ThermalManagerImplStub::~ThermalManagerImplStub() {
 
 void ThermalManagerImplStub::createListener() {
     LOG(DEBUG, __FUNCTION__);
-    listenerMgr_ =
-        std::make_shared<ListenerManager<IThermalListener,ThermalNotificationMask>>();
+    listenerMgr_ = std::make_shared<ListenerManager<IThermalListener, ThermalNotificationMask>>();
 }
 
 void ThermalManagerImplStub::cleanup() {
@@ -78,8 +77,8 @@ void ThermalManagerImplStub::notifyServiceStatus(ServiceStatus srvcStatus) {
     }
     std::vector<std::weak_ptr<IThermalListener>> applisteners;
     listenerMgr_->getAvailableListeners(applisteners);
-    LOG(DEBUG, __FUNCTION__, ":: Notifying thermal service status: ",
-            static_cast<int>(srvcStatus), " to listeners: ", applisteners.size());
+    LOG(DEBUG, __FUNCTION__, ":: Notifying thermal service status: ", static_cast<int>(srvcStatus),
+        " to listeners: ", applisteners.size());
     for (auto &wp : applisteners) {
         if (auto sp = wp.lock()) {
             sp->onServiceStatusChange(srvcStatus);
@@ -96,16 +95,14 @@ Status ThermalManagerImplStub::registerDefaultIndications() {
     LOG(INFO, __FUNCTION__, ":: Registering default SSR indications");
 
     status = clientEventMgr_.registerListener(shared_from_this(), THERM_SSR_FILTER);
-    if ((status != Status::SUCCESS) &&
-        (status != Status::ALREADY)) {
+    if ((status != Status::SUCCESS) && (status != Status::ALREADY)) {
         LOG(ERROR, __FUNCTION__, ":: Registering default SSR indications failed");
         return status;
     }
     return status;
 }
 
-Status ThermalManagerImplStub::initSyncComplete(
-        ServiceStatus srvcStatus) {
+Status ThermalManagerImplStub::initSyncComplete(ServiceStatus srvcStatus) {
     LOG(DEBUG, __FUNCTION__);
 
     Status status = Status::FAILED;
@@ -128,8 +125,7 @@ Status ThermalManagerImplStub::initSyncComplete(
 
     if (activeInd.test(TNT_TRIP_UPDATE)) {
         status = clientEventMgr_.registerListener(shared_from_this(), THERM_TRIP_FILTER);
-        if ((status != Status::SUCCESS) &&
-                (status != Status::ALREADY)) {
+        if ((status != Status::SUCCESS) && (status != Status::ALREADY)) {
             LOG(ERROR, __FUNCTION__, ":: Registering trip change event failed");
             return status;
         }
@@ -137,15 +133,13 @@ Status ThermalManagerImplStub::initSyncComplete(
 
     if (activeInd.test(TNT_CDEV_LEVEL_UPDATE)) {
         status = clientEventMgr_.registerListener(shared_from_this(), THERM_CDEV_FILTER);
-        if ((status != Status::SUCCESS) &&
-                (status != Status::ALREADY)) {
+        if ((status != Status::SUCCESS) && (status != Status::ALREADY)) {
             LOG(ERROR, __FUNCTION__, ":: Registering cdev state change event failed");
             return status;
         }
     }
 
-    LOG(INFO, __FUNCTION__, ":: Registering optional indications: ",
-            activeInd.to_string());
+    LOG(INFO, __FUNCTION__, ":: Registering optional indications: ", activeInd.to_string());
     return status;
 }
 
@@ -153,15 +147,16 @@ void ThermalManagerImplStub::onEventUpdate(google::protobuf::Any event) {
     LOG(DEBUG, __FUNCTION__);
     // Execute all events in separate thread
     auto f = std::async(std::launch::deferred, [this, event]() {
-            if (event.Is<commonStub::GetServiceStatusReply>()) {
-                handleSSREvent(event);
-            } else if (event.Is<::thermStub::RegisterOnTripEventReply>()) {
-                handleOnTripEvent(event);
-            } else if (event.Is<::thermStub::RegisterOnCoolingDeviceLevelChangeReply>()) {
-                handleCdevStateChangeEvent(event);
-            } else {
-                LOG(ERROR, __FUNCTION__, ":: Invalid event");
-    }}).share();
+        if (event.Is<commonStub::GetServiceStatusReply>()) {
+            handleSSREvent(event);
+        } else if (event.Is<::thermStub::RegisterOnTripEventReply>()) {
+            handleOnTripEvent(event);
+        } else if (event.Is<::thermStub::RegisterOnCoolingDeviceLevelChangeReply>()) {
+            handleCdevStateChangeEvent(event);
+        } else {
+            LOG(ERROR, __FUNCTION__, ":: Invalid event");
+        }
+    }).share();
 
     taskQ_.add(f);
 }
@@ -196,7 +191,7 @@ void ThermalManagerImplStub::handleOnTripEvent(google::protobuf::Any event) {
     std::shared_ptr<TripPointImpl> tripPoint = nullptr;
     try {
         tripPoint = std::make_shared<TripPointImpl>();
-    } catch(std::bad_alloc &e) {
+    } catch (std::bad_alloc &e) {
         LOG(ERROR, __FUNCTION__, ":: Invalid instance");
         return;
     }
@@ -207,12 +202,12 @@ void ThermalManagerImplStub::handleOnTripEvent(google::protobuf::Any event) {
     tripPoint->setTripId(gTp.trip_id());
     tripPoint->setTZoneId(gTp.tzone_id());
     {
-        //Notify tripRes to the client
+        // Notify tripRes to the client
         std::lock_guard<std::mutex> lock(mgrListenerMtx_);
         std::vector<std::weak_ptr<IThermalListener>> applisteners;
         listenerMgr_->getAvailableListeners(TNT_TRIP_UPDATE, applisteners);
         LOG(DEBUG, __FUNCTION__, ":: Notifying thermal trip update event ",
-                " to listeners: ", applisteners.size());
+            " to listeners: ", applisteners.size());
 
         for (auto &wp : applisteners) {
             if (auto sp = wp.lock()) {
@@ -232,7 +227,7 @@ void ThermalManagerImplStub::handleCdevStateChangeEvent(google::protobuf::Any ev
     std::shared_ptr<CoolingDeviceImpl> cDev = nullptr;
     try {
         cDev = std::make_shared<CoolingDeviceImpl>();
-    } catch(std::bad_alloc &e) {
+    } catch (std::bad_alloc &e) {
         LOG(ERROR, __FUNCTION__, ":: Invalid instance");
         return;
     }
@@ -243,12 +238,12 @@ void ThermalManagerImplStub::handleCdevStateChangeEvent(google::protobuf::Any ev
     cDev->setMaxCoolingLevel(gCdev.max_cooling_state());
     cDev->setCurrentCoolingLevel(gCdev.current_cooling_state());
     {
-        //Notify cDevEvent to the client
+        // Notify cDevEvent to the client
         std::lock_guard<std::mutex> lock(mgrListenerMtx_);
         std::vector<std::weak_ptr<IThermalListener>> applisteners;
         listenerMgr_->getAvailableListeners(TNT_CDEV_LEVEL_UPDATE, applisteners);
         LOG(DEBUG, __FUNCTION__, ":: Notifying cooling device level update event ",
-                " to listeners: ", applisteners.size());
+            " to listeners: ", applisteners.size());
 
         for (auto &wp : applisteners) {
             if (auto sp = wp.lock()) {
@@ -260,8 +255,7 @@ void ThermalManagerImplStub::handleCdevStateChangeEvent(google::protobuf::Any ev
     }
 }
 
-void ThermalManagerImplStub::onTeluxThermalServiceStatusChange(
-        ServiceStatus srvcStatus) {
+void ThermalManagerImplStub::onTeluxThermalServiceStatusChange(ServiceStatus srvcStatus) {
     LOG(DEBUG, __FUNCTION__, ":: Service Status: ", static_cast<int>(srvcStatus));
 
     if (srvcStatus == getServiceStatus()) {
@@ -281,8 +275,7 @@ Status ThermalManagerImplStub::registerListener(
     std::weak_ptr<IThermalListener> listener, ThermalNotificationMask mask) {
     grpc::Status gStatus;
 
-    if (SimulationManagerStub::getServiceStatus() !=
-            ServiceStatus::SERVICE_AVAILABLE) {
+    if (SimulationManagerStub::getServiceStatus() != ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, ":: thermal service is not available");
         return Status::FAILED;
     }
@@ -296,10 +289,9 @@ Status ThermalManagerImplStub::registerListener(
 
     // Register listener for SSR indication
     status = listenerMgr_->registerListener(listener);
-    if ((status != Status::SUCCESS) &&
-            ((status != Status::ALREADY))) {
+    if ((status != Status::SUCCESS) && ((status != Status::ALREADY))) {
         LOG(ERROR, __FUNCTION__, ":: Failed to register the ssr indications",
-                ", error: ", static_cast<int>(status));
+            ", error: ", static_cast<int>(status));
         return status;
     }
 
@@ -312,7 +304,7 @@ Status ThermalManagerImplStub::registerListener(
     status = listenerMgr_->registerListener(listener, mask, firstReg);
     if (status != Status::SUCCESS) {
         LOG(ERROR, __FUNCTION__, ":: Failed to register the optional listener, mask - ",
-                mask.to_string(), ", error: ", static_cast<int>(status));
+            mask.to_string(), ", error: ", static_cast<int>(status));
         return status;
     }
 
@@ -322,8 +314,7 @@ Status ThermalManagerImplStub::registerListener(
         LOG(DEBUG, __FUNCTION__, ":: Registering for trip event update");
 
         status = clientEventMgr_.registerListener(shared_from_this(), THERM_TRIP_FILTER);
-        if ((status != Status::SUCCESS) &&
-                (status != Status::ALREADY)) {
+        if ((status != Status::SUCCESS) && (status != Status::ALREADY)) {
             LOG(ERROR, __FUNCTION__, ":: Registering trip change event failed");
             return status;
         }
@@ -333,8 +324,7 @@ Status ThermalManagerImplStub::registerListener(
         LOG(DEBUG, __FUNCTION__, ":: Registering for cooling device event update");
 
         status = clientEventMgr_.registerListener(shared_from_this(), THERM_CDEV_FILTER);
-        if ((status != Status::SUCCESS) &&
-                (status != Status::ALREADY)) {
+        if ((status != Status::SUCCESS) && (status != Status::ALREADY)) {
             deregisterListener(listener, firstReg);
             LOG(ERROR, __FUNCTION__, ":: Registering cdev state change event failed");
             return status;
@@ -349,8 +339,7 @@ Status ThermalManagerImplStub::deregisterListener(
     std::weak_ptr<IThermalListener> listener, ThermalNotificationMask mask) {
     grpc::Status gStatus;
 
-    if (SimulationManagerStub::getServiceStatus() !=
-            ServiceStatus::SERVICE_AVAILABLE) {
+    if (SimulationManagerStub::getServiceStatus() != ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, ":: thermal service is not available");
         return Status::FAILED;
     }
@@ -362,14 +351,12 @@ Status ThermalManagerImplStub::deregisterListener(
         return Status::FAILED;
     }
 
-    if (mask.all() ) {
+    if (mask.all()) {
         // De-Register listener for SSR indication
         status = listenerMgr_->deRegisterListener(listener);
-        if ((status != Status::SUCCESS) &&
-            (status != Status::NOSUCH)) {
+        if ((status != Status::SUCCESS) && (status != Status::NOSUCH)) {
             LOG(ERROR, __FUNCTION__,
-                    ": Failed to de-register for SSR notifications, error: ",
-                    static_cast<int>(status));
+                ": Failed to de-register for SSR notifications, error: ", static_cast<int>(status));
             return status;
         }
     } else if (mask.none()) {
@@ -377,8 +364,7 @@ Status ThermalManagerImplStub::deregisterListener(
         return status;
     }
 
-    LOG(INFO, __FUNCTION__, ":: De-registering optional listener", " mask: ",
-            mask.to_string());
+    LOG(INFO, __FUNCTION__, ":: De-registering optional listener", " mask: ", mask.to_string());
     ThermalNotificationMask lastDereg;
     status = listenerMgr_->deRegisterListener(listener, mask, lastDereg);
     LOG(DEBUG, __FUNCTION__, ":: lastDereg: ", lastDereg.to_string());
@@ -387,8 +373,7 @@ Status ThermalManagerImplStub::deregisterListener(
     }
 
     if (status != Status::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, ":: Failed to register for notification mask - ",
-                mask.to_string(),
+        LOG(ERROR, __FUNCTION__, ":: Failed to register for notification mask - ", mask.to_string(),
             ", error: ", static_cast<int>(status));
         return status;
     }
@@ -444,15 +429,13 @@ TripType ThermalManagerImplStub::getTripType(thermStub::TripPoint_TripType grpcT
     }
 }
 
-
 std::vector<std::shared_ptr<IThermalZone>> ThermalManagerImplStub::getThermalZones() {
     std::vector<std::shared_ptr<IThermalZone>> tZones;
     thermStub::GetThermalZonesRequest request;
     thermStub::GetThermalZonesReply response;
     ClientContext context;
 
-    if (SimulationManagerStub::getServiceStatus() !=
-            ServiceStatus::SERVICE_AVAILABLE) {
+    if (SimulationManagerStub::getServiceStatus() != ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, ":: thermal service is not available");
         return tZones;
     }
@@ -467,7 +450,7 @@ std::vector<std::shared_ptr<IThermalZone>> ThermalManagerImplStub::getThermalZon
     LOG(DEBUG, __FUNCTION__, ":: Received Thermal Zones: ", response.thermal_zones_size());
 
     auto grpcTzones = response.thermal_zones();
-    for(const thermStub::ThermalZone &grpcTzone : grpcTzones) {
+    for (const thermStub::ThermalZone &grpcTzone : grpcTzones) {
         std::shared_ptr<ThermalZoneImpl> tZone = std::make_shared<ThermalZoneImpl>();
         tZone->setId(grpcTzone.id());
         tZone->setDescription(grpcTzone.type());
@@ -475,7 +458,7 @@ std::vector<std::shared_ptr<IThermalZone>> ThermalManagerImplStub::getThermalZon
         tZone->setPassiveTemp(grpcTzone.passive_temp());
         std::vector<std::shared_ptr<TripPointImpl>> tripInfo;
         auto grpcTripPoints = grpcTzone.trip_points();
-        for(auto grpcTripPoint : grpcTripPoints) {
+        for (auto grpcTripPoint : grpcTripPoints) {
             std::shared_ptr<TripPointImpl> tripPoint = std::make_shared<TripPointImpl>();
             tripPoint->setType(getTripType(grpcTripPoint.trip_type()));
             tripPoint->setThresholdTemp(grpcTripPoint.threshold_temp());
@@ -487,12 +470,12 @@ std::vector<std::shared_ptr<IThermalZone>> ThermalManagerImplStub::getThermalZon
         tZone->setTripPoints(tripInfo);
         std::vector<BoundCoolingDevice> boundCoolingDevices;
         auto grpcCdevs = grpcTzone.bound_cooling_devices();
-        for(auto grpcCdev : grpcCdevs) {
+        for (auto grpcCdev : grpcCdevs) {
             BoundCoolingDevice boundCoolingDevice;
             boundCoolingDevice.coolingDeviceId = grpcCdev.cooling_device_id();
             std::vector<std::shared_ptr<ITripPoint>> bindingInfo;
             auto grpcCdevTripPoints = grpcCdev.trip_points();
-            for(auto grpcCdevTripPoint : grpcCdevTripPoints) {
+            for (auto grpcCdevTripPoint : grpcCdevTripPoints) {
                 std::shared_ptr<TripPointImpl> tripPoint = std::make_shared<TripPointImpl>();
                 tripPoint->setType(getTripType(grpcCdevTripPoint.trip_type()));
                 tripPoint->setThresholdTemp(grpcCdevTripPoint.threshold_temp());
@@ -516,8 +499,7 @@ std::vector<std::shared_ptr<ICoolingDevice>> ThermalManagerImplStub::getCoolingD
     thermStub::GetCoolingDevicesReply response;
     ClientContext context;
 
-    if (SimulationManagerStub::getServiceStatus() !=
-            ServiceStatus::SERVICE_AVAILABLE) {
+    if (SimulationManagerStub::getServiceStatus() != ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, ":: thermal service is not available");
         return cdevs;
     }
@@ -525,11 +507,10 @@ std::vector<std::shared_ptr<ICoolingDevice>> ThermalManagerImplStub::getCoolingD
     request.set_oper_type(thermStub::ProcType::LOCAL_PROC);
 
     const grpc::Status status = stub_->GetCoolingDevices(&context, request, &response);
-    LOG(DEBUG, __FUNCTION__, ":: Received Cooling devices: ",
-            response.cooling_devices_size());
+    LOG(DEBUG, __FUNCTION__, ":: Received Cooling devices: ", response.cooling_devices_size());
 
     auto grpcCdevs = response.cooling_devices();
-    for(const thermStub::CoolingDevice &grpcCdev : grpcCdevs) {
+    for (const thermStub::CoolingDevice &grpcCdev : grpcCdevs) {
         std::shared_ptr<CoolingDeviceImpl> cDev = std::make_shared<CoolingDeviceImpl>();
         cDev->setId(grpcCdev.id());
         cDev->setDescription(grpcCdev.type());
@@ -546,8 +527,7 @@ std::shared_ptr<IThermalZone> ThermalManagerImplStub::getThermalZone(int thermal
     ClientContext context;
 
     std::shared_ptr<ThermalZoneImpl> tZone = std::make_shared<ThermalZoneImpl>();
-    if (SimulationManagerStub::getServiceStatus() !=
-            ServiceStatus::SERVICE_AVAILABLE) {
+    if (SimulationManagerStub::getServiceStatus() != ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, ":: thermal service is not available");
         return nullptr;
     }
@@ -573,7 +553,7 @@ std::shared_ptr<IThermalZone> ThermalManagerImplStub::getThermalZone(int thermal
     tZone->setPassiveTemp(grpcTz.passive_temp());
     std::vector<std::shared_ptr<TripPointImpl>> tripInfo;
     auto grpcTripPoints = grpcTz.trip_points();
-    for(auto grpcTripPoint : grpcTripPoints) {
+    for (auto grpcTripPoint : grpcTripPoints) {
         std::shared_ptr<TripPointImpl> tripPoint = std::make_shared<TripPointImpl>();
         tripPoint->setType(getTripType(grpcTripPoint.trip_type()));
         tripPoint->setThresholdTemp(grpcTripPoint.threshold_temp());
@@ -585,12 +565,12 @@ std::shared_ptr<IThermalZone> ThermalManagerImplStub::getThermalZone(int thermal
     tZone->setTripPoints(tripInfo);
     std::vector<BoundCoolingDevice> boundCoolingDevices;
     auto grpcCdevs = grpcTz.bound_cooling_devices();
-    for(auto grpcCdev : grpcCdevs) {
+    for (auto grpcCdev : grpcCdevs) {
         BoundCoolingDevice boundCoolingDevice;
         boundCoolingDevice.coolingDeviceId = grpcCdev.cooling_device_id();
         std::vector<std::shared_ptr<ITripPoint>> bindingInfo;
         auto grpcCdevTripPoints = grpcCdev.trip_points();
-        for(auto grpcCdevTripPoint : grpcCdevTripPoints) {
+        for (auto grpcCdevTripPoint : grpcCdevTripPoints) {
             std::shared_ptr<TripPointImpl> tripPoint = std::make_shared<TripPointImpl>();
             tripPoint->setType(getTripType(grpcCdevTripPoint.trip_type()));
             tripPoint->setThresholdTemp(grpcCdevTripPoint.threshold_temp());
@@ -612,8 +592,7 @@ std::shared_ptr<ICoolingDevice> ThermalManagerImplStub::getCoolingDevice(int coo
     ClientContext context;
 
     std::shared_ptr<CoolingDeviceImpl> cDev = std::make_shared<CoolingDeviceImpl>();
-    if (SimulationManagerStub::getServiceStatus() !=
-            ServiceStatus::SERVICE_AVAILABLE) {
+    if (SimulationManagerStub::getServiceStatus() != ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, ":: thermal service is not available");
         return nullptr;
     }

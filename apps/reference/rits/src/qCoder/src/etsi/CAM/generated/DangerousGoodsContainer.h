@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_DangerousGoodsContainer_H_
-#define	_DangerousGoodsContainer_H_
-
+#ifndef _DangerousGoodsContainer_H_
+#define _DangerousGoodsContainer_H_
 
 #include <asn_application.h>
 
@@ -21,10 +20,10 @@ extern "C" {
 
 /* DangerousGoodsContainer */
 typedef struct DangerousGoodsContainer {
-	DangerousGoodsBasic_t	 dangerousGoodsBasic;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    DangerousGoodsBasic_t dangerousGoodsBasic;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } DangerousGoodsContainer_t;
 
 /* Implementation */
@@ -34,5 +33,5 @@ extern asn_TYPE_descriptor_t asn_DEF_DangerousGoodsContainer;
 }
 #endif
 
-#endif	/* _DangerousGoodsContainer_H_ */
+#endif /* _DangerousGoodsContainer_H_ */
 #include <asn_internal.h>

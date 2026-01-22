@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_VehicleLength_H_
-#define	_VehicleLength_H_
-
+#ifndef _VehicleLength_H_
+#define _VehicleLength_H_
 
 #include <asn_application.h>
 
@@ -22,11 +21,11 @@ extern "C" {
 
 /* VehicleLength */
 typedef struct VehicleLength {
-	VehicleLengthValue_t	 vehicleLengthValue;
-	VehicleLengthConfidenceIndication_t	 vehicleLengthConfidenceIndication;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    VehicleLengthValue_t vehicleLengthValue;
+    VehicleLengthConfidenceIndication_t vehicleLengthConfidenceIndication;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } VehicleLength_t;
 
 /* Implementation */
@@ -36,5 +35,5 @@ extern asn_TYPE_descriptor_t asn_DEF_VehicleLength;
 }
 #endif
 
-#endif	/* _VehicleLength_H_ */
+#endif /* _VehicleLength_H_ */
 #include <asn_internal.h>

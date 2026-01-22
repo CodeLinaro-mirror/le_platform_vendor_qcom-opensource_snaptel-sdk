@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_DrivingLaneStatus_H_
-#define	_DrivingLaneStatus_H_
-
+#ifndef _DrivingLaneStatus_H_
+#define _DrivingLaneStatus_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* DrivingLaneStatus */
-typedef BIT_STRING_t	 DrivingLaneStatus_t;
+typedef BIT_STRING_t DrivingLaneStatus_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_DrivingLaneStatus;
@@ -37,5 +36,5 @@ per_type_encoder_f DrivingLaneStatus_encode_uper;
 }
 #endif
 
-#endif	/* _DrivingLaneStatus_H_ */
+#endif /* _DrivingLaneStatus_H_ */
 #include <asn_internal.h>

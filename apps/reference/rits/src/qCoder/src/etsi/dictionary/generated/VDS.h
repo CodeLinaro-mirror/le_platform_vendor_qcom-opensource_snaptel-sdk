@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_VDS_H_
-#define	_VDS_H_
-
+#ifndef _VDS_H_
+#define _VDS_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* VDS */
-typedef IA5String_t	 VDS_t;
+typedef IA5String_t VDS_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_VDS;
@@ -37,5 +36,5 @@ per_type_encoder_f VDS_encode_uper;
 }
 #endif
 
-#endif	/* _VDS_H_ */
+#endif /* _VDS_H_ */
 #include <asn_internal.h>

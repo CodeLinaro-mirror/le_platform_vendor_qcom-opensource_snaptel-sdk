@@ -25,10 +25,11 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ */
+
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -37,10 +38,9 @@
 #include "utils.h"
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
-//struct msg_contents;
+// struct msg_contents;
 /**
  * There are at least three versions of WSMP protocols out in the wild
  * although going forward, the 2016 (Ver #3) is expected to be used as per J2945/1
@@ -49,56 +49,56 @@ extern "C"
  */
 
 typedef enum {
-    WSMP_PROTO_VER1_PRE_2010_POC    = 1,
-    WSMP_PROTO_VER2_2010            = 2,
-    WSMP_PROTO_VER3_2016            = 3,
+    WSMP_PROTO_VER1_PRE_2010_POC = 1,
+    WSMP_PROTO_VER2_2010         = 2,
+    WSMP_PROTO_VER3_2016         = 3,
     WSMP_PROTO_MAX_SUPPORTED
 } WSMP_PROTO_VER_e;
 
 typedef enum {
-    WSMP_SUBTYPE_NULL_NETWORK = 0,
+    WSMP_SUBTYPE_NULL_NETWORK         = 0,
     WSMP_SUBTYPE_ITS_STA_INTERNAL_FWD = 1,
-    WSMP_SUBTYPE_N_HOP_FWD = 2,
-    WSMP_SUBTYPE_GEONETWORKING = 3,
-    WSMP_SUBTYPE_START_RESERVED = 4,
-    WSMP_SUBTYPE_MAX_RESERVED = 15
+    WSMP_SUBTYPE_N_HOP_FWD            = 2,
+    WSMP_SUBTYPE_GEONETWORKING        = 3,
+    WSMP_SUBTYPE_START_RESERVED       = 4,
+    WSMP_SUBTYPE_MAX_RESERVED         = 15
 } WsmpSubtype_e;
 /**
  * IEEE1609 does not techncically limit how many bytes a PSID may extend into,
  * for now it is realistically capped at 4 bytes here, and in the real world.
  */
-#define PSID_LEN_MAX                4
-#define MAX_PSID            (0x1020407f)
+#define PSID_LEN_MAX 4
+#define MAX_PSID (0x1020407f)
 #define WSMP_ABUF_DEFAULT_SIZE 8000
 #define WSMP_ABUF_DEFAULT_HEADROOM 20
 
 /**
  *  see IEEE 1609.3 annex E  -- or Annex F in the 2016 standard
  */
-#define WAVE_ELEM_ID_PWR        4
-#define WAVE_ELEM_ID_CHAN       15
-#define WAVE_ELEM_ID_RATE       16
-#define WAVE_ELEM_ID_LOAD       23
+#define WAVE_ELEM_ID_PWR 4
+#define WAVE_ELEM_ID_CHAN 15
+#define WAVE_ELEM_ID_RATE 16
+#define WAVE_ELEM_ID_LOAD 23
 
 /**
  * WAVE_ELEM_ID_DATA is obsolete after 2010 version of IEEE1609, and WEID  #128
  * is now "Reserved"
  */
-#define WAVE_ELEM_ID_DATA       128
+#define WAVE_ELEM_ID_DATA 128
 
 /**
  * 129 is obsolete as of IEEE1609.3 standard, but it is still observed in
  * some older senders, so seen ocassionally OTA in the wild
  */
-#define WAVE_ELEM_SAFETY_FLAG    129
+#define WAVE_ELEM_SAFETY_FLAG 129
 
 /**
  * Identity Supplement  used in the 2010 version of 1609.3, but no longer.
  * seen in the wild, but 2016 marks WEID #129 as "Reserved"
  */
-#define WAVE_IDENTITY_SUPPLEMENT    130
+#define WAVE_IDENTITY_SUPPLEMENT 130
 
-#define MAX_WAVE_ELEMENTS   6
+#define MAX_WAVE_ELEMENTS 6
 
 typedef enum {
     EXT_FIELD_RATE = 0,
@@ -113,10 +113,10 @@ typedef enum {
     PSID_SYSTEM = 0,
     PSID_EFC,
     /* 0x20 -0x22, 0x80 - 0x85 are defined for SAE J2735 */
-    PSID_BSM = 0x20,
+    PSID_BSM  = 0x20,
     PSID_SPAT = 0x82,
-    PSID_MAP = 0x204097,
-    PSID_WSA = 0x87,
+    PSID_MAP  = 0x204097,
+    PSID_WSA  = 0x87,
 } PSID_e;
 
 /**
@@ -124,23 +124,22 @@ typedef enum {
  * defined, #6-255=Reserved function is described in Tabled 23 of standard.
  */
 typedef enum {
-    TPID_PSID_NOEXT =       0,
-    TPID_PSID_EXT =         1,
-    TPID_ITS_PORTS_NOEXT =  2,
-    TPID_ITS_PORTS_EXT  =   3,
-    TPID_LPP_NOEXT  =       4,
-    TPID_LPP_EXT    =       5,
-    TPID_RESERVED_6 =       6,
-    TPID_RESERVED_MAX =     255
+    TPID_PSID_NOEXT      = 0,
+    TPID_PSID_EXT        = 1,
+    TPID_ITS_PORTS_NOEXT = 2,
+    TPID_ITS_PORTS_EXT   = 3,
+    TPID_LPP_NOEXT       = 4,
+    TPID_LPP_EXT         = 5,
+    TPID_RESERVED_6      = 6,
+    TPID_RESERVED_MAX    = 255
 } TPID_e;
 
 typedef union {
     struct {
-        TPID_e  id : 8;
+        TPID_e id : 8;
     };
     uint8_t octet;
 } tpid_ut;
-
 
 /**
  * Binary flags, indicating which optional WEID extensions were present on a
@@ -149,7 +148,7 @@ typedef union {
 typedef struct {
     unsigned inc_rate_ext : 1;
     unsigned inc_chan_ext : 1;
-    unsigned inc_pwr_ext  : 1;
+    unsigned inc_pwr_ext : 1;
     unsigned inc_load_ext : 1;
 } wsmp_optional_weids_t;
 
@@ -162,7 +161,7 @@ typedef struct {
  * variable length WEID's like the "Channel Load" which come in with 2016 version
  * Macro's for unpacking a WSMP Extension field  , as per IEEE 1609. sec 8.1.1.
  */
-#define WSMP_EXT_FIELD_SIZE(x) (sizeof((x)->wave_element_id) + sizeof((x)->length) +(x)->length)
+#define WSMP_EXT_FIELD_SIZE(x) (sizeof((x)->wave_element_id) + sizeof((x)->length) + (x)->length)
 
 /**
  * determine size of PSID based on the first octet of the PSID
@@ -171,14 +170,14 @@ typedef struct {
  * 110x        3
  * 1110        4
  */
-#define WSMP_PSID_FIELD_SIZE(val) (((val) & 0xe0) == 0xe0 ? \
-     4 : ((val) & 0xc0) == 0xc0 ? 3 : ((val) & 0x80) == 0x80 ? 2 : 1 )
+#define WSMP_PSID_FIELD_SIZE(val) \
+    (((val)&0xe0) == 0xe0 ? 4 : ((val)&0xc0) == 0xc0 ? 3 : ((val)&0x80) == 0x80 ? 2 : 1)
 
 typedef union {
     struct {
-        unsigned int version:           3;
-        unsigned int option_indicator:  1;
-        WsmpSubtype_e subtype:          4;
+        unsigned int version : 3;
+        unsigned int option_indicator : 1;
+        WsmpSubtype_e subtype : 4;
     };
 
     uint8_t data;
@@ -202,13 +201,13 @@ typedef struct wsmp_t_header_port_info {
  */
 typedef struct wsmp_ext_field {
     uint8_t wave_element_id;
-    uint8_t length;             // length of the data field
+    uint8_t length;  // length of the data field
     union {
-        uint8_t data[0];        // generic data, of length "length"
-        uint8_t data_rate;      // these are predefined in Annex H
+        uint8_t data[0];  // generic data, of length "length"
+        uint8_t data_rate;  // these are predefined in Annex H
         uint8_t tx_power;
         uint8_t channel;
-        uint8_t safety_control[1]; // obsolete field, yet seen OTA still
+        uint8_t safety_control[1];  // obsolete field, yet seen OTA still
     } data;
 } PACKED wsmp_ext_field_t;
 
@@ -218,10 +217,10 @@ typedef struct wsmp_ext_field {
 typedef struct wave_element_field {
     uint8_t wave_element_id;
     union {
-        uint8_t  one_octet;     // SVM  -- see 1609.3 sec 8.1.3
-        uint16_t two_octet;     // used if length over 128bytes
+        uint8_t one_octet;  // SVM  -- see 1609.3 sec 8.1.3
+        uint16_t two_octet;  // used if length over 128bytes
     } data_len;
-    uint8_t  data[0];               //variable length data field
+    uint8_t data[0];  // variable length data field
 } PACKED wave_element_field_t;
 
 /**
@@ -236,8 +235,8 @@ typedef struct {
     WSMP_N_HEADER_t n_header;
     wsmp_t_header_port_info_t ports;
     wsmp_optional_weids_t weid_opts;
-    uint8_t weid_qty;   /* set based on number bits on in weid_opt,
-                         also sent OTA in WSMP header frame */
+    uint8_t weid_qty; /* set based on number bits on in weid_opt,
+                       also sent OTA in WSMP header frame */
     uint8_t rate;
     uint8_t chan;
     uint8_t pwr;
@@ -247,10 +246,10 @@ typedef struct {
 
     uint8_t *chan_load_ptr;
     uint32_t chan_load_len;
-    char *payload;      /* payload pointer after wsmp header */
-    int payload_len;    /* payload length after wsmp header */
+    char *payload; /* payload pointer after wsmp header */
+    int payload_len; /* payload length after wsmp header */
 
-    abuf_t *abp;        /* The ASN buffer that contains the payload, used for encoding */
+    abuf_t *abp; /* The ASN buffer that contains the payload, used for encoding */
 } wsmp_data_t;
 
 /**
@@ -262,14 +261,13 @@ typedef struct {
  */
 extern int wsmp_encode(msg_contents *mc);
 
-
 /**
  * @brief Encodes wsm packet using wsmp data structure.
  *
  * @param wsmp data structure that contains wsmp data variables.
  * @return int 0 on success, else fail
  */
-extern int wsmp_data_encode(wsmp_data_t* wsmp);
+extern int wsmp_data_encode(wsmp_data_t *wsmp);
 
 /**
  * @brief Decodes wsm packet using wsmp data structure.
@@ -277,7 +275,7 @@ extern int wsmp_data_encode(wsmp_data_t* wsmp);
  * @param wsmp data structure that contains wsmp data variables.
  * @return int 0 on success, else fail
  */
-extern int wsmp_data_decode(wsmp_data_t* wsmp);
+extern int wsmp_data_decode(wsmp_data_t *wsmp);
 
 /**
  * decode wsmp packet.
@@ -294,4 +292,4 @@ extern int wsmp_decode(msg_contents *mc);
 }
 #endif
 
-#endif // #ifndef _WSMP_H_
+#endif  // #ifndef _WSMP_H_

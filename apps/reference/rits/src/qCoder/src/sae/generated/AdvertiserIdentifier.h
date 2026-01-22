@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_AdvertiserIdentifier_H_
-#define	_AdvertiserIdentifier_H_
-
+#ifndef _AdvertiserIdentifier_H_
+#define _AdvertiserIdentifier_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* AdvertiserIdentifier */
-typedef UTF8String_t	 AdvertiserIdentifier_t;
+typedef UTF8String_t AdvertiserIdentifier_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_AdvertiserIdentifier;
@@ -37,5 +36,5 @@ per_type_encoder_f AdvertiserIdentifier_encode_uper;
 }
 #endif
 
-#endif	/* _AdvertiserIdentifier_H_ */
+#endif /* _AdvertiserIdentifier_H_ */
 #include <asn_internal.h>

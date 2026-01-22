@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_SpeedValue_H_
-#define	_SpeedValue_H_
-
+#ifndef _SpeedValue_H_
+#define _SpeedValue_H_
 
 #include <asn_application.h>
 
@@ -20,13 +19,13 @@ extern "C" {
 
 /* Dependencies */
 typedef enum SpeedValue {
-	SpeedValue_standstill	= 0,
-	SpeedValue_oneCentimeterPerSec	= 1,
-	SpeedValue_unavailable	= 16383
+    SpeedValue_standstill          = 0,
+    SpeedValue_oneCentimeterPerSec = 1,
+    SpeedValue_unavailable         = 16383
 } e_SpeedValue;
 
 /* SpeedValue */
-typedef long	 SpeedValue_t;
+typedef long SpeedValue_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_SpeedValue;
@@ -44,5 +43,5 @@ per_type_encoder_f SpeedValue_encode_uper;
 }
 #endif
 
-#endif	/* _SpeedValue_H_ */
+#endif /* _SpeedValue_H_ */
 #include <asn_internal.h>

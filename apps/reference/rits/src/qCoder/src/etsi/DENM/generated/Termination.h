@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_Termination_H_
-#define	_Termination_H_
-
+#ifndef _Termination_H_
+#define _Termination_H_
 
 #include <asn_application.h>
 
@@ -20,12 +19,12 @@ extern "C" {
 
 /* Dependencies */
 typedef enum Termination {
-	Termination_isCancellation	= 0,
-	Termination_isNegation	= 1
+    Termination_isCancellation = 0,
+    Termination_isNegation     = 1
 } e_Termination;
 
 /* Termination */
-typedef long	 Termination_t;
+typedef long Termination_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_Termination;
@@ -43,5 +42,5 @@ per_type_encoder_f Termination_encode_uper;
 }
 #endif
 
-#endif	/* _Termination_H_ */
+#endif /* _Termination_H_ */
 #include <asn_internal.h>

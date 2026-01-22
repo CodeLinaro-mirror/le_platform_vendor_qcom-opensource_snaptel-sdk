@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -32,17 +32,18 @@ class IWiFiReportListener : public telux::common::ISDKListener {
 
  public:
     /**
-     * Notifies that the implementation completed a threat analysis and that the report is available.
-     * This analysis is performed at various triggers. For example, when a scan for APs is triggered
-     * the implementation performs an analysis and provides a report for every AP it sees in the
-     * vicinity.
+     * Notifies that the implementation completed a threat analysis and that the report is
+     * available. This analysis is performed at various triggers. For example, when a scan for APs
+     * is triggered the implementation performs an analysis and provides a report for every AP it
+     * sees in the vicinity.
      *
      * @param[in] report @ref WiFiSecurityReport result of the Wi-Fi security analysis.
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to change and
      *             could break backwards compatibility.
      */
-    virtual void onReportAvailable(WiFiSecurityReport report) { }
+    virtual void onReportAvailable(WiFiSecurityReport report) {
+    }
 
     /**
      * Notifies that a deauthentication attack is identified.
@@ -52,7 +53,8 @@ class IWiFiReportListener : public telux::common::ISDKListener {
      * @note Eval: This is a new API and is being evaluated. It is subject to change and
      *             could break backwards compatibility.
      */
-    virtual void onDeauthenticationAttack(DeauthenticationInfo deauthenticationInfo) { }
+    virtual void onDeauthenticationAttack(DeauthenticationInfo deauthenticationInfo) {
+    }
 
     /**
      * Gets user's confirmation that the given AP is trusted. This is called only once
@@ -74,12 +76,14 @@ class IWiFiReportListener : public telux::common::ISDKListener {
      * @note Eval: This is a new API and is being evaluated. It is subject to change and
      *             could break backwards compatibility.
      */
-    virtual void isTrustedAP(ApInfo accessPoint, bool& isTrusted) { }
+    virtual void isTrustedAP(ApInfo accessPoint, bool &isTrusted) {
+    }
 
     /**
      * IWiFiReportListener destructor.
      */
-    virtual ~IWiFiReportListener() { }
+    virtual ~IWiFiReportListener() {
+    }
 };
 
 /** @} */ /* end_addtogroup telematics_sec_mgmt */
@@ -87,4 +91,4 @@ class IWiFiReportListener : public telux::common::ISDKListener {
 }  // End of namespace sec
 }  // End of namespace telux
 
-#endif // TELUX_SEC_WCSLISTENER_HPP
+#endif  // TELUX_SEC_WCSLISTENER_HPP

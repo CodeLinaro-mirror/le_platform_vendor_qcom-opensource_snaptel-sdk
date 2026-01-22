@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_HazardousLocation_ObstacleOnTheRoadSubCauseCode_H_
-#define	_HazardousLocation_ObstacleOnTheRoadSubCauseCode_H_
-
+#ifndef _HazardousLocation_ObstacleOnTheRoadSubCauseCode_H_
+#define _HazardousLocation_ObstacleOnTheRoadSubCauseCode_H_
 
 #include <asn_application.h>
 
@@ -20,18 +19,18 @@ extern "C" {
 
 /* Dependencies */
 typedef enum HazardousLocation_ObstacleOnTheRoadSubCauseCode {
-	HazardousLocation_ObstacleOnTheRoadSubCauseCode_unavailable	= 0,
-	HazardousLocation_ObstacleOnTheRoadSubCauseCode_shedLoad	= 1,
-	HazardousLocation_ObstacleOnTheRoadSubCauseCode_partsOfVehicles	= 2,
-	HazardousLocation_ObstacleOnTheRoadSubCauseCode_partsOfTyres	= 3,
-	HazardousLocation_ObstacleOnTheRoadSubCauseCode_bigObjects	= 4,
-	HazardousLocation_ObstacleOnTheRoadSubCauseCode_fallenTrees	= 5,
-	HazardousLocation_ObstacleOnTheRoadSubCauseCode_hubCaps	= 6,
-	HazardousLocation_ObstacleOnTheRoadSubCauseCode_waitingVehicles	= 7
+    HazardousLocation_ObstacleOnTheRoadSubCauseCode_unavailable     = 0,
+    HazardousLocation_ObstacleOnTheRoadSubCauseCode_shedLoad        = 1,
+    HazardousLocation_ObstacleOnTheRoadSubCauseCode_partsOfVehicles = 2,
+    HazardousLocation_ObstacleOnTheRoadSubCauseCode_partsOfTyres    = 3,
+    HazardousLocation_ObstacleOnTheRoadSubCauseCode_bigObjects      = 4,
+    HazardousLocation_ObstacleOnTheRoadSubCauseCode_fallenTrees     = 5,
+    HazardousLocation_ObstacleOnTheRoadSubCauseCode_hubCaps         = 6,
+    HazardousLocation_ObstacleOnTheRoadSubCauseCode_waitingVehicles = 7
 } e_HazardousLocation_ObstacleOnTheRoadSubCauseCode;
 
 /* HazardousLocation-ObstacleOnTheRoadSubCauseCode */
-typedef long	 HazardousLocation_ObstacleOnTheRoadSubCauseCode_t;
+typedef long HazardousLocation_ObstacleOnTheRoadSubCauseCode_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_HazardousLocation_ObstacleOnTheRoadSubCauseCode;
@@ -49,5 +48,5 @@ per_type_encoder_f HazardousLocation_ObstacleOnTheRoadSubCauseCode_encode_uper;
 }
 #endif
 
-#endif	/* _HazardousLocation_ObstacleOnTheRoadSubCauseCode_H_ */
+#endif /* _HazardousLocation_ObstacleOnTheRoadSubCauseCode_H_ */
 #include <asn_internal.h>

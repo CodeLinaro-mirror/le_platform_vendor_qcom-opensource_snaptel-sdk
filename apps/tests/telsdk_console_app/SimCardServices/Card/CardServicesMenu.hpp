@@ -27,11 +27,10 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef CARDSERVICESMENU_HPP
@@ -42,42 +41,44 @@
 #include "console_app_framework/ConsoleApp.hpp"
 #include "MyCardListener.hpp"
 #include "telux/tel/CardApp.hpp"
+#include "telux/common/CommonDefines.hpp"
 
 class CardServicesMenu : public ConsoleApp {
-public:
-   CardServicesMenu(std::string appName, std::string cursor);
-   ~CardServicesMenu();
-   bool init();
+ public:
+    CardServicesMenu(std::string appName, std::string cursor);
+    ~CardServicesMenu();
+    bool init();
 
-private:
-   void getCardState(std::vector<std::string> userInput);
-   void getSupportedApps(std::vector<std::string> userInput);
-   void openLogicalChannel(std::vector<std::string> userInput);
-   void closeLogicalChannel(std::vector<std::string> userInput);
-   void transmitApdu(std::vector<std::string> userInput);
-   void basicTransmitApdu(std::vector<std::string> userInput);
-   void changeCardPin(std::vector<std::string> userInput);
-   void unlockCardByPuk(std::vector<std::string> userInput);
-   void unlockCardByPin(std::vector<std::string> userInput);
-   void queryPin1LockState(std::vector<std::string> userInput);
-   void queryFdnLockState(std::vector<std::string> userInput);
-   void setCardLock(std::vector<std::string> userInput);
-   void cardPower(std::vector<std::string> userInput);
-   void cardFileMenu(std::vector<std::string> userInput);
-   void cardRefreshMenu(std::vector<std::string> userInput);
-   void checkNtnProfileActive(std::vector<std::string> userInput);
-   void selectCardSlot(std::vector<std::string> userInput);
-   std::string appTypeToString(telux::tel::AppType appType);
-   std::string appStateToString(telux::tel::AppState appState);
-   std::string cardStateToString(telux::tel::CardState state);
+ private:
+    void getCardState(std::vector<std::string> userInput);
+    void getSupportedApps(std::vector<std::string> userInput);
+    void openLogicalChannel(std::vector<std::string> userInput);
+    void closeLogicalChannel(std::vector<std::string> userInput);
+    void transmitApdu(std::vector<std::string> userInput);
+    void basicTransmitApdu(std::vector<std::string> userInput);
+    void changeCardPin(std::vector<std::string> userInput);
+    void unlockCardByPuk(std::vector<std::string> userInput);
+    void unlockCardByPin(std::vector<std::string> userInput);
+    void queryPin1LockState(std::vector<std::string> userInput);
+    void queryFdnLockState(std::vector<std::string> userInput);
+    void setCardLock(std::vector<std::string> userInput);
+    void cardPower(std::vector<std::string> userInput);
+    void cardFileMenu(std::vector<std::string> userInput);
+    void cardRefreshMenu(std::vector<std::string> userInput);
+    void checkNtnProfileActive(std::vector<std::string> userInput);
+    void selectCardSlot(std::vector<std::string> userInput);
+    std::string appTypeToString(telux::tel::AppType appType);
+    std::string appStateToString(telux::tel::AppState appState);
+    std::string cardStateToString(telux::tel::CardState state);
+    void getMepInformation(std::vector<std::string> userInput);
 
-   std::shared_ptr<telux::tel::ICardListener> cardListener_;
-   std::shared_ptr<MyOpenLogicalChannelCallback> myOpenLogicalChannelCb_;
-   std::shared_ptr<MyTransmitApduResponseCallback> myTransmitApduCb_;
-   std::shared_ptr<MyCardCommandResponseCallback> myCloseLogicalChannelCb_;
-   std::shared_ptr<telux::tel::ICardManager> cardManager_;
-   int slot_ = DEFAULT_SLOT_ID;
-   std::vector<std::shared_ptr<telux::tel::ICard>> cards_;
+    std::shared_ptr<telux::tel::ICardListener> cardListener_;
+    std::shared_ptr<MyOpenLogicalChannelCallback> myOpenLogicalChannelCb_;
+    std::shared_ptr<MyTransmitApduResponseCallback> myTransmitApduCb_;
+    std::shared_ptr<MyCardCommandResponseCallback> myCloseLogicalChannelCb_;
+    std::shared_ptr<telux::tel::ICardManager> cardManager_;
+    int slot_ = DEFAULT_SLOT_ID;
+    std::vector<std::shared_ptr<telux::tel::ICard>> cards_;
 };
 
 #endif  // CARDSERVICESMENU_HPP

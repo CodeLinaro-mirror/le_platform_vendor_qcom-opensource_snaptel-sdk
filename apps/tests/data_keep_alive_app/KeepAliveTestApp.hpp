@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef KEEPALIVETESTAPP_HPP
@@ -27,47 +27,54 @@ void printMessage(kaproto &msg) {
     std::cout << msg.msg << std::endl;
 }
 namespace tcp_test {
-    template <>
-    class TCPClientWorker<kaproto>
-    {
-        public:
-        TCPClientWorker() {}
-        virtual void messageReceived(kaproto &msg) {
-            std::cout << "Received: ";
-            printMessage(msg);
-        }
-        virtual void onDisconnect() {std::cout << "disconnected\n";}
-        virtual void onConnected() {
-            std::cout << "connected\n";
-        }
-    };
-    template <>
-    class TCPServerWorker<kaproto>
-    {
+template <>
+class TCPClientWorker<kaproto> {
+ public:
+    TCPClientWorker() {
+    }
+    virtual void messageReceived(kaproto &msg) {
+        std::cout << "Received: ";
+        printMessage(msg);
+    }
+    virtual void onDisconnect() {
+        std::cout << "disconnected\n";
+    }
+    virtual void onConnected() {
+        std::cout << "connected\n";
+    }
+};
+template <>
+class TCPServerWorker<kaproto> {
 
-        public:
-        TCPServerWorker() {}
-        ~TCPServerWorker() { s_->disconnect(); }
-        void setServer( std::shared_ptr<TCPServer<kaproto>> s) { s_ = s; }
-        virtual void onAccept(std::string ip, int port) {
-            std::cout << "Connected: " << ip << ":" << port << std::endl;
-        }
-        virtual void messageReceived(kaproto &msg) {
-            std::cout << "Received: ";
-            printMessage(msg);
-        }
-        virtual void onDisconnect() {std::cout << "disconnected\n";}
+ public:
+    TCPServerWorker() {
+    }
+    ~TCPServerWorker() {
+        s_->disconnect();
+    }
+    void setServer(std::shared_ptr<TCPServer<kaproto>> s) {
+        s_ = s;
+    }
+    virtual void onAccept(std::string ip, int port) {
+        std::cout << "Connected: " << ip << ":" << port << std::endl;
+    }
+    virtual void messageReceived(kaproto &msg) {
+        std::cout << "Received: ";
+        printMessage(msg);
+    }
+    virtual void onDisconnect() {
+        std::cout << "disconnected\n";
+    }
 
-        private:
-         std::shared_ptr<TCPServer<kaproto>> s_;
-    };
-}
+ private:
+    std::shared_ptr<TCPServer<kaproto>> s_;
+};
+}  // namespace tcp_test
 
 class KeepAliveTestApp : public IKeepAliveListener,
-                       public ConsoleApp,
-                       public std::enable_shared_from_this<KeepAliveTestApp> {
-public:
-
+                         public ConsoleApp,
+                         public std::enable_shared_from_this<KeepAliveTestApp> {
+ public:
     KeepAliveTestApp();
     ~KeepAliveTestApp();
 
@@ -93,13 +100,13 @@ public:
     void cleanup();
 
     std::shared_ptr<telux::data::IKeepAliveManager> keepAliveMgr_;
-private:
 
-    KeepAliveTestApp(KeepAliveTestApp const &) = delete;
+ private:
+    KeepAliveTestApp(KeepAliveTestApp const &)            = delete;
     KeepAliveTestApp &operator=(KeepAliveTestApp const &) = delete;
 
-    void onTFTResponse(const std::vector<std::shared_ptr<TrafficFlowTemplate>> &tft,
-        ErrorCode error);
+    void onTFTResponse(
+        const std::vector<std::shared_ptr<TrafficFlowTemplate>> &tft, ErrorCode error);
     void logQosDetails(std::shared_ptr<TrafficFlowTemplate> &tft);
     void printFilterDetails(std::shared_ptr<telux::data::IIpFilter> filter);
 

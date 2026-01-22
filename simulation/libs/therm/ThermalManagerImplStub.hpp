@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef THERMAL_MANAGER_IMPL_STUB_HPP
@@ -21,11 +21,10 @@ namespace telux {
 namespace therm {
 
 class ThermalManagerImplStub : public IThermalManager,
-                              public IEventListener,
-                              public SimulationManagerStub<Thermal>,
-                              public std::enable_shared_from_this<ThermalManagerImplStub> {
+                               public IEventListener,
+                               public SimulationManagerStub<Thermal>,
+                               public std::enable_shared_from_this<ThermalManagerImplStub> {
  public:
-
     using SimulationManagerStub::init;
 
     ThermalManagerImplStub(telux::common::ProcType procType);
@@ -34,19 +33,16 @@ class ThermalManagerImplStub : public IThermalManager,
     telux::common::ServiceStatus getServiceStatus() override;
 
     telux::common::Status registerListener(
-        std::weak_ptr<IThermalListener> listener,
-        ThermalNotificationMask mask = 0xFFFF) override;
+        std::weak_ptr<IThermalListener> listener, ThermalNotificationMask mask = 0xFFFF) override;
     telux::common::Status deregisterListener(
-        std::weak_ptr<IThermalListener> listener,
-        ThermalNotificationMask mask = 0xFFFF) override;
+        std::weak_ptr<IThermalListener> listener, ThermalNotificationMask mask = 0xFFFF) override;
 
     std::vector<std::shared_ptr<IThermalZone>> getThermalZones() override;
     std::vector<std::shared_ptr<ICoolingDevice>> getCoolingDevices() override;
     std::shared_ptr<IThermalZone> getThermalZone(int thermalZoneId) override;
     std::shared_ptr<ICoolingDevice> getCoolingDevice(int coolingDeviceId) override;
 
-    telux::common::Status initSyncComplete(
-            telux::common::ServiceStatus srvcStatus) override;
+    telux::common::Status initSyncComplete(telux::common::ServiceStatus srvcStatus) override;
 
  protected:
     telux::common::Status init();
@@ -74,7 +70,6 @@ class ThermalManagerImplStub : public IThermalManager,
     void handleOnTripEvent(google::protobuf::Any event);
     void handleCdevStateChangeEvent(google::protobuf::Any event);
     void onTeluxThermalServiceStatusChange(telux::common::ServiceStatus srvcStatus);
-
 };
 }  // namespace therm
 

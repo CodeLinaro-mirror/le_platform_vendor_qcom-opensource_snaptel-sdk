@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_WMInumber_H_
-#define	_WMInumber_H_
-
+#ifndef _WMInumber_H_
+#define _WMInumber_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* WMInumber */
-typedef IA5String_t	 WMInumber_t;
+typedef IA5String_t WMInumber_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_WMInumber;
@@ -37,5 +36,5 @@ per_type_encoder_f WMInumber_encode_uper;
 }
 #endif
 
-#endif	/* _WMInumber_H_ */
+#endif /* _WMInumber_H_ */
 #include <asn_internal.h>

@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_LateralAccelerationValue_H_
-#define	_LateralAccelerationValue_H_
-
+#ifndef _LateralAccelerationValue_H_
+#define _LateralAccelerationValue_H_
 
 #include <asn_application.h>
 
@@ -20,13 +19,13 @@ extern "C" {
 
 /* Dependencies */
 typedef enum LateralAccelerationValue {
-	LateralAccelerationValue_pointOneMeterPerSecSquaredToRight	= -1,
-	LateralAccelerationValue_pointOneMeterPerSecSquaredToLeft	= 1,
-	LateralAccelerationValue_unavailable	= 161
+    LateralAccelerationValue_pointOneMeterPerSecSquaredToRight = -1,
+    LateralAccelerationValue_pointOneMeterPerSecSquaredToLeft  = 1,
+    LateralAccelerationValue_unavailable                       = 161
 } e_LateralAccelerationValue;
 
 /* LateralAccelerationValue */
-typedef long	 LateralAccelerationValue_t;
+typedef long LateralAccelerationValue_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_LateralAccelerationValue;
@@ -44,5 +43,5 @@ per_type_encoder_f LateralAccelerationValue_encode_uper;
 }
 #endif
 
-#endif	/* _LateralAccelerationValue_H_ */
+#endif /* _LateralAccelerationValue_H_ */
 #include <asn_internal.h>

@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_PosConfidenceEllipse_H_
-#define	_PosConfidenceEllipse_H_
-
+#ifndef _PosConfidenceEllipse_H_
+#define _PosConfidenceEllipse_H_
 
 #include <asn_application.h>
 
@@ -22,12 +21,12 @@ extern "C" {
 
 /* PosConfidenceEllipse */
 typedef struct PosConfidenceEllipse {
-	SemiAxisLength_t	 semiMajorConfidence;
-	SemiAxisLength_t	 semiMinorConfidence;
-	HeadingValue_t	 semiMajorOrientation;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    SemiAxisLength_t semiMajorConfidence;
+    SemiAxisLength_t semiMinorConfidence;
+    HeadingValue_t semiMajorOrientation;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } PosConfidenceEllipse_t;
 
 /* Implementation */
@@ -37,5 +36,5 @@ extern asn_TYPE_descriptor_t asn_DEF_PosConfidenceEllipse;
 }
 #endif
 
-#endif	/* _PosConfidenceEllipse_H_ */
+#endif /* _PosConfidenceEllipse_H_ */
 #include <asn_internal.h>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -48,14 +48,12 @@ class PowerEventsListener : public telux::power::ITcuActivityListener,
         auto &powerFactory = telux::power::PowerFactory::getInstance();
 
         /* Step - 2 */
-        config.clientType = telux::power::ClientType::SLAVE;
-        config.clientName = "slaveClientFoo";
+        config.clientType  = telux::power::ClientType::SLAVE;
+        config.clientName  = "slaveClientFoo";
         config.machineName = telux::power::LOCAL_MACHINE;
 
         tcuActivityMgr_ = powerFactory.getTcuActivityManager(
-            config, [&p](telux::common::ServiceStatus srvStatus) {
-            p.set_value(srvStatus);
-        });
+            config, [&p](telux::common::ServiceStatus srvStatus) { p.set_value(srvStatus); });
 
         if (!tcuActivityMgr_) {
             std::cout << "Can't get ITcuActivityManager" << std::endl;
@@ -65,16 +63,15 @@ class PowerEventsListener : public telux::power::ITcuActivityListener,
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Power service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Power service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
         /* Step - 4 */
         status = tcuActivityMgr_->registerListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't register listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't register listener, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -88,8 +85,7 @@ class PowerEventsListener : public telux::power::ITcuActivityListener,
         /* Step - 6 */
         status = tcuActivityMgr_->deregisterListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't deregister listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't deregister listener, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -97,8 +93,8 @@ class PowerEventsListener : public telux::power::ITcuActivityListener,
     }
 
     /* Step - 5 */
-    void onTcuActivityStateUpdate(telux::power::TcuActivityState state,
-            std::string machineName) override {
+    void onTcuActivityStateUpdate(
+        telux::power::TcuActivityState state, std::string machineName) override {
         telux::common::Status status;
         std::cout << "onTcuActivityStateUpdate()" << std::endl;
 
@@ -112,8 +108,8 @@ class PowerEventsListener : public telux::power::ITcuActivityListener,
                     std::cout << "Suspend acknowledgement sent" << std::endl;
                     break;
                 }
-                std::cout << "Can't acknowledgement suspend, err " <<
-                    static_cast<int>(status) << std::endl;
+                std::cout << "Can't acknowledgement suspend, err " << static_cast<int>(status)
+                          << std::endl;
                 break;
             case telux::power::TcuActivityState::RESUME:
                 std::cout << "Received resume state for machine: " << machineName << std::endl;
@@ -128,12 +124,12 @@ class PowerEventsListener : public telux::power::ITcuActivityListener,
                     std::cout << "Shutdown acknowledgement sent" << std::endl;
                     break;
                 }
-                std::cout << "Can't acknowledgement shutdown, err " <<
-                    static_cast<int>(status) << std::endl;
+                std::cout << "Can't acknowledgement shutdown, err " << static_cast<int>(status)
+                          << std::endl;
                 break;
             default:
-                std::cout << "Unexpected state " << static_cast<int>(state) <<
-                    "received, machine: " << machineName << std::endl;
+                std::cout << "Unexpected state " << static_cast<int>(state)
+                          << "received, machine: " << machineName << std::endl;
                 break;
         }
     }
@@ -154,7 +150,7 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<PowerEventsListener>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate PowerEventsListener" << std::endl;
         return -ENOMEM;
     }

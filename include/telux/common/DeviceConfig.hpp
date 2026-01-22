@@ -26,11 +26,13 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 /**
  * @brief DeviceConfig provides utility functions to get device configuration details
  * such as multi SIM support.
@@ -49,18 +51,17 @@ namespace common {
  * DeviceConfig provides utility functions to get device configuration details.
  */
 class DeviceConfig {
-public:
-   /**
-    * Check whether multi SIM support available.
-    *
-    * @returns bool to determine multi SIM support
-    */
+ public:
+    /**
+     * Check whether multi SIM support available.
+     *
+     * @returns bool to determine multi SIM support
+     */
     static bool isMultiSimSupported();
-
 };
 /** @} */ /* end_addtogroup telematics_common */
 
 }  // End of namespace common
 }  // End of namespace telux
 
-#endif // TELUX_COMMON_DEVICECONFIG_HPP
+#endif  // TELUX_COMMON_DEVICECONFIG_HPP

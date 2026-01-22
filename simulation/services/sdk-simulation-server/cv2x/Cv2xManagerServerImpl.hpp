@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -32,41 +32,31 @@ using grpc::Status;
 
 using cv2xStub::Cv2xManagerService;
 
-class Cv2xManagerServerImpl final
-    : public cv2xStub::Cv2xManagerService::Service {
-public:
-  Cv2xManagerServerImpl();
-  ~Cv2xManagerServerImpl();
-  grpc::Status initService(ServerContext *context,
-                           const google::protobuf::Empty *request,
-                           cv2xStub::GetServiceStatusReply *res);
-  grpc::Status startCv2x(ServerContext *context,
-                         const google::protobuf::Empty *request,
-                         cv2xStub::Cv2xCommandReply *res);
-  grpc::Status stopCv2x(ServerContext *context,
-                        const google::protobuf::Empty *request,
-                        cv2xStub::Cv2xCommandReply *res);
-  grpc::Status setPeakTxPower(ServerContext *context,
-                              const cv2xStub::Cv2xPeakTxPower *request,
-                              ::cv2xStub::Cv2xCommandReply *res);
-  grpc::Status requestCv2xStatus(ServerContext *context,
-                                 const google::protobuf::Empty *request,
-                                 ::cv2xStub::Cv2xRequestStatusReply *res);
-  grpc::Status injectCoarseUtcTime(ServerContext *context,
-                                   const ::cv2xStub::CoarseUtcTime *request,
-                                   ::cv2xStub::Cv2xCommandReply *res);
-  grpc::Status getSlssRxInfo(ServerContext *context,
-                             const google::protobuf::Empty *request,
-                             ::cv2xStub::SlssRxInfoReply *res);
-  grpc::Status setL2Filters(ServerContext *context,
-                            const ::cv2xStub::L2FilterInfos *request,
-                            ::cv2xStub::Cv2xCommandReply *res);
-  grpc::Status removeL2Filters(ServerContext *context,
-                               const ::cv2xStub::L2Ids *request,
-                               ::cv2xStub::Cv2xCommandReply *res);
+class Cv2xManagerServerImpl final : public cv2xStub::Cv2xManagerService::Service {
+ public:
+    Cv2xManagerServerImpl();
+    ~Cv2xManagerServerImpl();
+    grpc::Status initService(ServerContext *context, const google::protobuf::Empty *request,
+        cv2xStub::GetServiceStatusReply *res);
+    grpc::Status startCv2x(ServerContext *context, const google::protobuf::Empty *request,
+        cv2xStub::Cv2xCommandReply *res);
+    grpc::Status stopCv2x(ServerContext *context, const google::protobuf::Empty *request,
+        cv2xStub::Cv2xCommandReply *res);
+    grpc::Status setPeakTxPower(ServerContext *context, const cv2xStub::Cv2xPeakTxPower *request,
+        ::cv2xStub::Cv2xCommandReply *res);
+    grpc::Status requestCv2xStatus(ServerContext *context, const google::protobuf::Empty *request,
+        ::cv2xStub::Cv2xRequestStatusReply *res);
+    grpc::Status injectCoarseUtcTime(ServerContext *context,
+        const ::cv2xStub::CoarseUtcTime *request, ::cv2xStub::Cv2xCommandReply *res);
+    grpc::Status getSlssRxInfo(ServerContext *context, const google::protobuf::Empty *request,
+        ::cv2xStub::SlssRxInfoReply *res);
+    grpc::Status setL2Filters(ServerContext *context, const ::cv2xStub::L2FilterInfos *request,
+        ::cv2xStub::Cv2xCommandReply *res);
+    grpc::Status removeL2Filters(ServerContext *context, const ::cv2xStub::L2Ids *request,
+        ::cv2xStub::Cv2xCommandReply *res);
 
-private:
-  std::shared_ptr<Cv2xServerEvtListener> evtListener_ = nullptr;
+ private:
+    std::shared_ptr<Cv2xServerEvtListener> evtListener_ = nullptr;
 };
 
-#endif // CV2X_MANAGER_SERVER_HPP
+#endif  // CV2X_MANAGER_SERVER_HPP

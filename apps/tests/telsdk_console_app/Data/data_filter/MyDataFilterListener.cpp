@@ -25,6 +25,13 @@
  *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <iostream>
@@ -36,29 +43,34 @@
 
 #define print_notification std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
-void MyDataFilterListener::onDataRestrictModeChange(DataRestrictMode mode) {
-    if (mode.filterMode == DataRestrictModeType::ENABLE) {
-        print_notification << "Data Filter Mode : Enable" << std::endl;
-    } else if (mode.filterMode == DataRestrictModeType::DISABLE) {
-        print_notification << "Data Filter Mode : Disable" << std::endl;
+MyDataFilterListener::MyDataFilterListener(SlotId slotId)
+   : slotId_(slotId) {
+}
+
+void MyDataFilterListener::onDataFilterModeChange(DataRestrictModeType mode) {
+    if (mode == DataRestrictModeType::ENABLE) {
+        print_notification << "Data Filter Mode : Enable for slot " << slotId_ << std::endl;
+    } else if (mode == DataRestrictModeType::DISABLE) {
+        print_notification << "Data Filter Mode : Disable for slot " << slotId_ << std::endl;
     } else {
         std::cout << " ERROR: Invalid Data Filter mode notified" << std::endl;
     }
 }
 
 void MyDataFilterListener::onServiceStatusChange(telux::common::ServiceStatus status) {
-   std::string stat;
+    std::string stat;
 
-   switch(status) {
-      case telux::common::ServiceStatus::SERVICE_AVAILABLE:
-         stat = " SERVICE_AVAILABLE";
-         break;
-      case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
-         stat =  " SERVICE_UNAVAILABLE";
-         break;
-      default:
-         stat = " Unknown service status";
-         break;
-   }
-   print_notification << " ** Data Filter onServiceStatusChange **\n" << stat << std::endl;
+    switch (status) {
+        case telux::common::ServiceStatus::SERVICE_AVAILABLE:
+            stat = " SERVICE_AVAILABLE";
+            break;
+        case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
+            stat = " SERVICE_UNAVAILABLE";
+            break;
+        default:
+            stat = " Unknown service status";
+            break;
+    }
+    print_notification << " ** Data Filter onServiceStatusChange:" << stat
+                       << " for slot:" << slotId_ << std::endl;
 }

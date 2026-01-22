@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_Latitude_H_
-#define	_Latitude_H_
-
+#ifndef _Latitude_H_
+#define _Latitude_H_
 
 #include <asn_application.h>
 
@@ -22,11 +21,11 @@ extern "C" {
 
 /* Latitude */
 typedef struct Latitude {
-	BIT_STRING_t	 fill;
-	long	 lat;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    BIT_STRING_t fill;
+    long lat;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } Latitude_t;
 
 /* Implementation */
@@ -36,5 +35,5 @@ extern asn_TYPE_descriptor_t asn_DEF_LatitudeIeee;
 }
 #endif
 
-#endif	/* _Latitude_H_ */
+#endif /* _Latitude_H_ */
 #include <asn_internal.h>

@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef AUDIODEVICEIMPL_HPP
@@ -17,8 +17,7 @@ namespace audio {
  * Audio clients (applications) uses IAudioDevice.*() APIs to set and get
  * specific details about this device.
  */
-class AudioDeviceImpl : public IAudioDevice,
-                        public std::enable_shared_from_this<AudioDeviceImpl> {
+class AudioDeviceImpl : public IAudioDevice, public std::enable_shared_from_this<AudioDeviceImpl> {
 
  public:
     AudioDeviceImpl(DeviceType deviceType, DeviceDirection deviceDirection);
@@ -30,11 +29,11 @@ class AudioDeviceImpl : public IAudioDevice,
     DeviceDirection getDirection(void) override;
 
  private:
-    DeviceType deviceType_ = DeviceType::DEVICE_TYPE_NONE;
+    DeviceType deviceType_           = DeviceType::DEVICE_TYPE_NONE;
     DeviceDirection deviceDirection_ = DeviceDirection::NONE;
 };
 
 }  // end of namespace audio
 }  // end of namespace telux
 
-#endif // AUDIODEVICEIMPL_HPP
+#endif  // AUDIODEVICEIMPL_HPP

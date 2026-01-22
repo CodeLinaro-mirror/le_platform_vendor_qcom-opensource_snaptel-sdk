@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -55,9 +55,7 @@ class PowerStateChanger : public telux::power::ITcuActivityListener,
         config.clientName = "masterClientFoo";
 
         tcuActivityMgr_ = powerFactory.getTcuActivityManager(
-            config, [&p](telux::common::ServiceStatus srvStatus) {
-            p.set_value(srvStatus);
-        });
+            config, [&p](telux::common::ServiceStatus srvStatus) { p.set_value(srvStatus); });
 
         if (!tcuActivityMgr_) {
             std::cout << "Can't get ITcuActivityManager" << std::endl;
@@ -67,16 +65,15 @@ class PowerStateChanger : public telux::power::ITcuActivityListener,
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Power service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Power service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
         /* Step - 4 */
         status = tcuActivityMgr_->registerListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't register listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't register listener, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -90,8 +87,7 @@ class PowerStateChanger : public telux::power::ITcuActivityListener,
         /* Step - 8 */
         status = tcuActivityMgr_->deregisterListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't deregister listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't deregister listener, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -102,28 +98,26 @@ class PowerStateChanger : public telux::power::ITcuActivityListener,
         telux::common::Status status;
 
         /* Step - 5 */
-        suspendRefused_ = false;
-        responseReceived_ = false;
+        suspendRefused_          = false;
+        responseReceived_        = false;
         acknowledgementReceived_ = false;
 
         status = tcuActivityMgr_->setActivityState(telux::power::TcuActivityState::SUSPEND,
             telux::power::ALL_MACHINES, [this](telux::common::ErrorCode ec) {
                 std::cout << "Received response " << static_cast<int>(ec) << std::endl;
                 std::lock_guard<std::mutex> lock(mutex_);
-                ec_ = ec;
+                ec_               = ec;
                 responseReceived_ = true;
                 cv_.notify_all();
-            }
-        );
+            });
 
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't initiate suspend, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't initiate suspend, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
         std::unique_lock<std::mutex> lock(mutex_);
-        cv_.wait(lock, [this]{ return responseReceived_; });
+        cv_.wait(lock, [this] { return responseReceived_; });
 
         if (ec_ != telux::common::ErrorCode::SUCCESS) {
             std::cout << "Can't suspend, err " << static_cast<int>(ec_) << std::endl;
@@ -133,7 +127,7 @@ class PowerStateChanger : public telux::power::ITcuActivityListener,
         std::cout << "Suspend initiated" << std::endl;
 
         /* Step - 6 */
-        cv_.wait(lock, [this]{ return acknowledgementReceived_; });
+        cv_.wait(lock, [this] { return acknowledgementReceived_; });
 
         if (status_ != telux::common::Status::SUCCESS) {
             std::cout << "Acknowledgement error, err " << static_cast<int>(status_) << std::endl;
@@ -157,20 +151,18 @@ class PowerStateChanger : public telux::power::ITcuActivityListener,
             telux::power::ALL_MACHINES, [this](telux::common::ErrorCode ec) {
                 std::cout << "Received response " << static_cast<int>(ec) << std::endl;
                 std::lock_guard<std::mutex> lock(mutex_);
-                ec_ = ec;
+                ec_               = ec;
                 responseReceived_ = true;
                 cv_.notify_all();
-            }
-        );
+            });
 
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't initiate resume, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't initiate resume, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
         std::unique_lock<std::mutex> lock(mutex_);
-        cv_.wait(lock, [this]{ return responseReceived_; });
+        cv_.wait(lock, [this] { return responseReceived_; });
 
         if (ec_ != telux::common::ErrorCode::SUCCESS) {
             std::cout << "Can't resume, err " << static_cast<int>(ec_) << std::endl;
@@ -183,38 +175,34 @@ class PowerStateChanger : public telux::power::ITcuActivityListener,
         return 0;
     }
 
-    void onSlaveAckStatusUpdate(
-        const telux::common::Status status,
-        const std::string machineName,
+    void onSlaveAckStatusUpdate(const telux::common::Status status, const std::string machineName,
         const std::vector<telux::power::ClientInfo> unresponsiveClients,
         const std::vector<telux::power::ClientInfo> nackResponseClients) {
 
         std::cout << "onSlaveAckStatusUpdate()" << std::endl;
-        std::cout << "status " << static_cast<int>(status) << ", machine name " <<
-            machineName << std::endl;
+        std::cout << "status " << static_cast<int>(status) << ", machine name " << machineName
+                  << std::endl;
 
         if (unresponsiveClients.size()) {
             suspendRefused_ = true;
-            std::cout << "Unresponsive client's count " <<
-                unresponsiveClients.size() << std::endl;
+            std::cout << "Unresponsive client's count " << unresponsiveClients.size() << std::endl;
             for (auto &client : unresponsiveClients) {
-                std::cout << "client name "<< client.first <<
-                    ", machine name " << client.second << std::endl;
+                std::cout << "client name " << client.first << ", machine name " << client.second
+                          << std::endl;
             }
         }
 
         if (nackResponseClients.size()) {
             suspendRefused_ = true;
-            std::cout << "NACK response client's count " <<
-                nackResponseClients.size() << std::endl;
+            std::cout << "NACK response client's count " << nackResponseClients.size() << std::endl;
             for (auto &client : nackResponseClients) {
-                std::cout << "client name "<< client.first <<
-                    ", machine name " << client.second << std::endl;
+                std::cout << "client name " << client.first << ", machine name " << client.second
+                          << std::endl;
             }
         }
 
         std::lock_guard<std::mutex> lock(mutex_);
-        status_ = status;
+        status_                  = status;
         acknowledgementReceived_ = true;
         cv_.notify_all();
     }
@@ -237,7 +225,7 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<PowerStateChanger>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate PowerStateChanger" << std::endl;
         return -ENOMEM;
     }

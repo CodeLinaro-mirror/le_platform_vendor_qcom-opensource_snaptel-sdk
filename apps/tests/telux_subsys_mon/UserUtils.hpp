@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -14,4 +14,4 @@ class UserUtils {
     bool getLocalRemoteFromUser();
 };
 
-#endif // USERUTILS_HPP
+#endif  // USERUTILS_HPP

@@ -22,7 +22,7 @@
 namespace telux {
 namespace wlan {
 
-//Forward declaration
+// Forward declaration
 class IStaListener;
 
 /** @addtogroup telematics_wlan_station
@@ -49,36 +49,36 @@ using Priority = uint16_t;
  * Station Connection IP Type.
  */
 enum class StaIpConfig {
-    DYNAMIC_IP   = 1,   /**< Station is configured with dynamic IP */
-    STATIC_IP    = 2,   /**< Station is configured with Static IP  */
+    DYNAMIC_IP = 1, /**< Station is configured with dynamic IP */
+    STATIC_IP  = 2, /**< Station is configured with Static IP  */
 };
 
 /**
  * Bridge/Router Mode.
  */
 enum class StaBridgeMode {
-    ROUTER = 0,    /**<  Station is in Router Mode      */
-    BRIDGE = 1     /**<  Station is in Bridge Mode      */
+    ROUTER = 0, /**<  Station is in Router Mode      */
+    BRIDGE = 1 /**<  Station is in Bridge Mode      */
 };
 
 /**
  * Static IP Configuration.
  */
 struct StaStaticIpConfig {
-    std::string ipAddr;       /**<   IPv4 address to be assigned. */
-    std::string gwIpAddr;     /**<   IPv4 address of the gateway. */
-    std::string netMask;      /**<   Subnet mask.                 */
-    std::string dnsAddr;      /**<   DNS IPv4 address.            */
+    std::string ipAddr; /**<   IPv4 address to be assigned. */
+    std::string gwIpAddr; /**<   IPv4 address of the gateway. */
+    std::string netMask; /**<   Subnet mask.                 */
+    std::string dnsAddr; /**<   DNS IPv4 address.            */
 };
 
 /**
  * Station base network configuration.
  */
 struct StaNetworkConfig {
-    std::string ssid;               /**< SSID of external Access point               */
-    Priority    priority;           /**< Priority to determine the preferred network */
-    BandType    band;               /**< Operation band type                         */
-    std::string bssid;              /**< BSSID/MAC address of external access point  */
+    std::string ssid; /**< SSID of external Access point               */
+    Priority priority; /**< Priority to determine the preferred network */
+    BandType band; /**< Operation band type                         */
+    std::string bssid; /**< BSSID/MAC address of external access point  */
 };
 
 /**
@@ -86,57 +86,67 @@ struct StaNetworkConfig {
  * station to connect to an external access point.
  */
 struct StaNetworkConfigEntry : StaNetworkConfig {
-    std::string passPhrase;     /**< Passphrase of external Access point    */
-    bool        enable;        /**< Flag to control connection behavior.
-                                    When set to true, initiates a connection to this configured
-                                    network if the station is not already connected, regardless
-                                    of its priority, and also updates the network configuration
-                                    to persistent settings.
-                                    When set to false, only updates the network configuration to
-                                    persistent settings without attempting a connection. */
+    std::string passPhrase; /**< Passphrase of external Access point    */
+    bool enable; /**< Flag to control connection behavior.
+                      When set to true, initiates a connection to this configured
+                      network if the station is not already connected, regardless
+                      of its priority, and also updates the network configuration
+                      to persistent settings.
+                      When set to false, only updates the network configuration to
+                      persistent settings without attempting a connection. */
 };
 
 /**
  * Query listing from WLAN station network configurations.
  */
 struct StaNetworkConfigInfo : StaNetworkConfig {
-    NetworkId   networkId;      /**< Identifier associated with network     */
-    bool        isCurrent;      /**< Indicates whether this is the active
-                                     network configuration                  */
+    NetworkId networkId; /**< Identifier associated with network     */
+    bool isCurrent; /**< Indicates whether this is the active
+                         network configuration                  */
 };
 
 /**
  * Station Configuration
  */
 struct StaConfig {
-    Id                  staId;            /**< Id of station backhaul                 */
-    StaIpConfig         ipConfig;         /**< IP configuration of station backhaul   */
-    StaStaticIpConfig   staticIpConfig;   /**< Static IP configuration if selected    */
-    StaBridgeMode       bridgeMode;       /**< Station configuration as Router/bridge */
+    Id staId; /**< Id of station backhaul                 */
+    StaIpConfig ipConfig; /**< IP configuration of station backhaul   */
+    StaStaticIpConfig staticIpConfig; /**< Static IP configuration if selected    */
+    StaBridgeMode bridgeMode; /**< Station configuration as Router/bridge */
 };
-
 
 /**
  * Details of an individual external access point (AP) discovered during a WLAN station scan.
  * An external AP refers to a Wi-Fi network that the WLAN station can connect to.
  */
-struct ExternalApInfo{
-    std::string ssid;               /**< SSID of external AP                          */
-    std::string bssid;              /**< BSSID/MAC address of external AP             */
-    BandType    band;               /**< Operation band type                          */
-    std::string securityFlags;      /**< Describes the authentication, key management, and encryption schemes supported by the external access point. Below is an example format of the string, indicating that the external AP network utilizes WPA2 for authentication. PSK denotes the key management method, while CCMP specifies the encryption protocol employed. ESS signifies that the network operates in standard infrastructure mode. Example: [WPA2-PSK-CCMP][ESS]                */
-    int16_t    signalStrength;      /**< The detected signal level, measured in dBm and referred to as RSSI, ranges from -100 dBm for the weakest signal to 0 dBm for the strongest possible signal strength  */
+struct ExternalApInfo {
+    std::string ssid; /**< SSID of external AP                          */
+    std::string bssid; /**< BSSID/MAC address of external AP             */
+    BandType band; /**< Operation band type                          */
+    std::string securityFlags; /**< Describes the authentication, key management, and encryption
+                                  schemes supported by the external access point. Below is an
+                                  example format of the string, indicating that the external AP
+                                  network utilizes WPA2 for authentication. PSK denotes the key
+                                  management method, while CCMP specifies the encryption protocol
+                                  employed. ESS signifies that the network operates in standard
+                                  infrastructure mode. Example: [WPA2-PSK-CCMP][ESS] */
+    int16_t signalStrength; /**< The detected signal level, measured in dBm and referred to as RSSI,
+                               ranges from -100 dBm for the weakest signal to 0 dBm for the
+                               strongest possible signal strength  */
 };
-
 
 /**
  * Station Scan result
  */
 struct StaScanResult {
-    Id                             staId;            /**< Id of station backhaul                 */
-    std::vector<ExternalApInfo>    externalApList;   /**< List of scanned External Access point details                                */
-    uint8_t                        batchIndex;       /**< This value serves as the order index for the batched scan results. Batching is performed when the number of APs in the scan results exceeds the capacity of a single batch, the details are communicated through multiple indications. i.e. in batches           */
-    bool                           isScanComplete;   /**< Indicates this scan result is the last of the batches.                        */
+    Id staId; /**< Id of station backhaul                 */
+    std::vector<ExternalApInfo> externalApList; /**< List of scanned External Access point details
+                                                 */
+    uint8_t batchIndex; /**< This value serves as the order index for the batched scan results.
+                           Batching is performed when the number of APs in the scan results exceeds
+                           the capacity of a single batch, the details are communicated through
+                           multiple indications. i.e. in batches           */
+    bool isScanComplete; /**< Indicates this scan result is the last of the batches. */
 };
 
 /** @addtogroup telematics_wlan_station
@@ -166,8 +176,9 @@ class IStaInterfaceManager {
      * @returns operation error code (if any). @ref telux::common::ErrorCode.
      *
      */
-    virtual telux::common::ErrorCode setIpConfig(Id staId, StaIpConfig ipConfig,
-        StaStaticIpConfig staticIpConfig) = 0;
+    virtual telux::common::ErrorCode setIpConfig(
+        Id staId, StaIpConfig ipConfig, StaStaticIpConfig staticIpConfig)
+        = 0;
 
     /**
      * Set Station backhaul to act as router or bridge: Sets Station to act as router or bridge
@@ -208,11 +219,11 @@ class IStaInterfaceManager {
      * @ref telux::wlan::IStaInterfaceManager::setBridgeMode
      *
      * @param [in] config         Station configurations @ref telux::wlan::StaConfig
-      *
+     *
      * @returns operation error code (if any). @ref telux::common::ErrorCode.
      *
      */
-    virtual telux::common::ErrorCode getConfig(std::vector<StaConfig>& config) = 0;
+    virtual telux::common::ErrorCode getConfig(std::vector<StaConfig> &config) = 0;
 
     /**
      * Request current station status: Returns current Sta interface status such as network
@@ -223,7 +234,7 @@ class IStaInterfaceManager {
      * @returns operation error code (if any). @ref telux::common::ErrorCode.
      *
      */
-    virtual telux::common::ErrorCode getStatus(std::vector<StaStatus>& status) = 0;
+    virtual telux::common::ErrorCode getStatus(std::vector<StaStatus> &status) = 0;
 
     /**
      * Initiates a scan for available Wi-Fi access points in the vicinity.
@@ -279,8 +290,9 @@ class IStaInterfaceManager {
      * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
      *         break backwards compatibility.
      */
-    virtual telux::common::ErrorCode addNetworkConfig(Id staId,
-        const StaNetworkConfigEntry &network) = 0;
+    virtual telux::common::ErrorCode addNetworkConfig(
+        Id staId, const StaNetworkConfigEntry &network)
+        = 0;
 
     /**
      * Remove the specified network configuration entry from the saved network configurations.
@@ -323,12 +335,14 @@ class IStaInterfaceManager {
      * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
      *         break backwards compatibility.
      */
-    virtual telux::common::ErrorCode getNetworkConfigs(Id staId,
-        std::vector<StaNetworkConfigInfo>& network) = 0;
+    virtual telux::common::ErrorCode getNetworkConfigs(
+        Id staId, std::vector<StaNetworkConfigInfo> &network)
+        = 0;
 
     /**
      * Connect to the specified network ID from the saved network configurations. Details on
-     * the connection status are notified via @ref telux::wlan::IStaListener::onStationStatusChanged.
+     * the connection status are notified via @ref
+     * telux::wlan::IStaListener::onStationStatusChanged.
      *
      * On platforms with Access control enabled, caller needs to have TELUX_WLAN_STA_CONFIG
      * permission to invoke this API successfully.
@@ -405,13 +419,14 @@ class IStaInterfaceManager {
 };
 
 class IStaListener : public telux::common::ISDKListener {
-public:
+ public:
     /**
      * This function is called when Station Status Changes
      *
      * @param [in] status     List of station state @ref telux::wlan::StaStatus
      */
-    virtual void onStationStatusChanged(std::vector<StaStatus> staStatus) {}
+    virtual void onStationStatusChanged(std::vector<StaStatus> staStatus) {
+    }
 
     /**
      * This function is triggered upon receiving the station scan results. The results may be
@@ -426,19 +441,22 @@ public:
      *         break backwards compatibility.
      */
 
-    virtual void onScanResultUpdated(const StaScanResult &staScanResult) {}
+    virtual void onScanResultUpdated(const StaScanResult &staScanResult) {
+    }
 
     /**
      * This function is called when Station switch to different operation band
      *
      * @param [in] band        New Station operation band @ref telux::wlan::BandType
      */
-    virtual void onStationBandChanged(BandType band) {}
+    virtual void onStationBandChanged(BandType band) {
+    }
 
-    virtual ~IStaListener() {}
+    virtual ~IStaListener() {
+    }
 };
 
 /** @} */ /* end_addtogroup telematics_wlan_station */
-}
-}
-#endif // TELUX_WLAN_STAINTERFACEMANAGER_HPP
+}  // namespace wlan
+}  // namespace telux
+#endif  // TELUX_WLAN_STAINTERFACEMANAGER_HPP

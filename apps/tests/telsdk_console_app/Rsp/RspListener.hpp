@@ -26,12 +26,13 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 #ifndef RSPLISTENER_HPP
 #define RSPLISTENER_HPP
 
@@ -42,8 +43,8 @@ class RspListener : public telux::tel::ISimProfileListener {
  public:
     void onDownloadStatus(SlotId slotId, telux::tel::DownloadStatus status,
         telux::tel::DownloadErrorCause cause) override;
-    void onUserDisplayInfo(SlotId slotId, bool userConsentRequired,
-        telux::tel::PolicyRuleMask mask) override;
+    void onUserDisplayInfo(
+        SlotId slotId, bool userConsentRequired, telux::tel::PolicyRuleMask mask) override;
     void onConfirmationCodeRequired(SlotId slotId, std::string profileName) override;
 
  private:

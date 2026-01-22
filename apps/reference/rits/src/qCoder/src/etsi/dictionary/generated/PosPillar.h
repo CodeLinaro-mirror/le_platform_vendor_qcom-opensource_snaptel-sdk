@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_PosPillar_H_
-#define	_PosPillar_H_
-
+#ifndef _PosPillar_H_
+#define _PosPillar_H_
 
 #include <asn_application.h>
 
@@ -20,12 +19,12 @@ extern "C" {
 
 /* Dependencies */
 typedef enum PosPillar {
-	PosPillar_tenCentimeters	= 1,
-	PosPillar_unavailable	= 30
+    PosPillar_tenCentimeters = 1,
+    PosPillar_unavailable    = 30
 } e_PosPillar;
 
 /* PosPillar */
-typedef long	 PosPillar_t;
+typedef long PosPillar_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_PosPillar;
@@ -43,5 +42,5 @@ per_type_encoder_f PosPillar_encode_uper;
 }
 #endif
 
-#endif	/* _PosPillar_H_ */
+#endif /* _PosPillar_H_ */
 #include <asn_internal.h>

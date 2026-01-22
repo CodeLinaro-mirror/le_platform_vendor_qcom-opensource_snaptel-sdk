@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_TransmissionInterval_H_
-#define	_TransmissionInterval_H_
-
+#ifndef _TransmissionInterval_H_
+#define _TransmissionInterval_H_
 
 #include <asn_application.h>
 
@@ -20,12 +19,12 @@ extern "C" {
 
 /* Dependencies */
 typedef enum TransmissionInterval {
-	TransmissionInterval_oneMilliSecond	= 1,
-	TransmissionInterval_tenSeconds	= 10000
+    TransmissionInterval_oneMilliSecond = 1,
+    TransmissionInterval_tenSeconds     = 10000
 } e_TransmissionInterval;
 
 /* TransmissionInterval */
-typedef long	 TransmissionInterval_t;
+typedef long TransmissionInterval_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_TransmissionInterval;
@@ -43,5 +42,5 @@ per_type_encoder_f TransmissionInterval_encode_uper;
 }
 #endif
 
-#endif	/* _TransmissionInterval_H_ */
+#endif /* _TransmissionInterval_H_ */
 #include <asn_internal.h>

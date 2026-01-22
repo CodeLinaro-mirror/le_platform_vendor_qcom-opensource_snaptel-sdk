@@ -1,8 +1,7 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 
 /**
  * @file       MultiSimManagerStub.hpp
@@ -25,9 +24,9 @@ namespace telux {
 namespace tel {
 
 class MultiSimManagerStub : public IMultiSimManager,
-                                public IEventListener,
-                                public std::enable_shared_from_this<MultiSimManagerStub>  {
-public:
+                            public IEventListener,
+                            public std::enable_shared_from_this<MultiSimManagerStub> {
+ public:
     MultiSimManagerStub();
     telux::common::Status init(telux::common::InitResponseCb callback);
     ~MultiSimManagerStub();
@@ -38,20 +37,27 @@ public:
     telux::common::Status deregisterListener(std::weak_ptr<IMultiSimListener>) override;
     telux::common::Status getSlotCount(int &count) override;
     telux::common::Status requestHighCapability(HighCapabilityCallback callback) override;
-    telux::common::Status setHighCapability(int slotId,
-        common::ResponseCallback callback) override;
-    telux::common::Status switchActiveSlot(SlotId slotId,
-        common::ResponseCallback callback) override;
+    telux::common::Status setHighCapability(int slotId, common::ResponseCallback callback) override;
+    telux::common::Status switchActiveSlot(
+        SlotId slotId, common::ResponseCallback callback) override;
     telux::common::Status requestSlotStatus(SlotStatusCallback callback) override;
+    telux::common::Status configureLogicalSlotMapping(
+        std::map <LogicalSlotId, LogicalSlotMapInfo> mapInfo,
+        common::ResponseCallback callback) override;
+    telux::common::ErrorCode getLogicalSlotMapping(std::map <LogicalSlotId,
+        LogicalSlotMapInfo> &mapInfo) override;
+    telux::common::ErrorCode getPhysicalSlotStatus(std::map<PhysicalSlotId,
+        SimSlotStatus> &slotStatus) override;
     void onEventUpdate(google::protobuf::Any event);
     void cleanup();
-private:
+
+ private:
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     void initSync(telux::common::InitResponseCb callback);
 };
 
-} // end of namespace tel
+}  // end of namespace tel
 
-} // end of namespace telux
+}  // end of namespace telux
 
-#endif // MULTISIM_MANAGER_STUB_HPP
+#endif  // MULTISIM_MANAGER_STUB_HPP

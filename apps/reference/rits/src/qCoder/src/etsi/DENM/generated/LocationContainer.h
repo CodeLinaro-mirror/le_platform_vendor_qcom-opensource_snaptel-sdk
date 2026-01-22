@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_LocationContainer_H_
-#define	_LocationContainer_H_
-
+#ifndef _LocationContainer_H_
+#define _LocationContainer_H_
 
 #include <asn_application.h>
 
@@ -26,17 +25,17 @@ struct Heading;
 
 /* LocationContainer */
 typedef struct LocationContainer {
-	struct Speed	*eventSpeed	/* OPTIONAL */;
-	struct Heading	*eventPositionHeading	/* OPTIONAL */;
-	Traces_t	 traces;
-	RoadType_t	*roadType	/* OPTIONAL */;
-	/*
-	 * This type is extensible,
-	 * possible extensions are below.
-	 */
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    struct Speed *eventSpeed /* OPTIONAL */;
+    struct Heading *eventPositionHeading /* OPTIONAL */;
+    Traces_t traces;
+    RoadType_t *roadType /* OPTIONAL */;
+    /*
+     * This type is extensible,
+     * possible extensions are below.
+     */
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } LocationContainer_t;
 
 /* Implementation */
@@ -50,5 +49,5 @@ extern asn_TYPE_descriptor_t asn_DEF_LocationContainer;
 #include "Speed.h"
 #include "Heading.h"
 
-#endif	/* _LocationContainer_H_ */
+#endif /* _LocationContainer_H_ */
 #include <asn_internal.h>

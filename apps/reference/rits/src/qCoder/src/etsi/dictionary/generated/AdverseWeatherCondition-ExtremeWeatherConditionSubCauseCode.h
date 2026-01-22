@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_AdverseWeatherCondition_ExtremeWeatherConditionSubCauseCode_H_
-#define	_AdverseWeatherCondition_ExtremeWeatherConditionSubCauseCode_H_
-
+#ifndef _AdverseWeatherCondition_ExtremeWeatherConditionSubCauseCode_H_
+#define _AdverseWeatherCondition_ExtremeWeatherConditionSubCauseCode_H_
 
 #include <asn_application.h>
 
@@ -20,17 +19,17 @@ extern "C" {
 
 /* Dependencies */
 typedef enum AdverseWeatherCondition_ExtremeWeatherConditionSubCauseCode {
-	AdverseWeatherCondition_ExtremeWeatherConditionSubCauseCode_unavailable	= 0,
-	AdverseWeatherCondition_ExtremeWeatherConditionSubCauseCode_strongWinds	= 1,
-	AdverseWeatherCondition_ExtremeWeatherConditionSubCauseCode_damagingHail	= 2,
-	AdverseWeatherCondition_ExtremeWeatherConditionSubCauseCode_hurricane	= 3,
-	AdverseWeatherCondition_ExtremeWeatherConditionSubCauseCode_thunderstorm	= 4,
-	AdverseWeatherCondition_ExtremeWeatherConditionSubCauseCode_tornado	= 5,
-	AdverseWeatherCondition_ExtremeWeatherConditionSubCauseCode_blizzard	= 6
+    AdverseWeatherCondition_ExtremeWeatherConditionSubCauseCode_unavailable  = 0,
+    AdverseWeatherCondition_ExtremeWeatherConditionSubCauseCode_strongWinds  = 1,
+    AdverseWeatherCondition_ExtremeWeatherConditionSubCauseCode_damagingHail = 2,
+    AdverseWeatherCondition_ExtremeWeatherConditionSubCauseCode_hurricane    = 3,
+    AdverseWeatherCondition_ExtremeWeatherConditionSubCauseCode_thunderstorm = 4,
+    AdverseWeatherCondition_ExtremeWeatherConditionSubCauseCode_tornado      = 5,
+    AdverseWeatherCondition_ExtremeWeatherConditionSubCauseCode_blizzard     = 6
 } e_AdverseWeatherCondition_ExtremeWeatherConditionSubCauseCode;
 
 /* AdverseWeatherCondition-ExtremeWeatherConditionSubCauseCode */
-typedef long	 AdverseWeatherCondition_ExtremeWeatherConditionSubCauseCode_t;
+typedef long AdverseWeatherCondition_ExtremeWeatherConditionSubCauseCode_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_AdverseWeatherCondition_ExtremeWeatherConditionSubCauseCode;
@@ -48,5 +47,5 @@ per_type_encoder_f AdverseWeatherCondition_ExtremeWeatherConditionSubCauseCode_e
 }
 #endif
 
-#endif	/* _AdverseWeatherCondition_ExtremeWeatherConditionSubCauseCode_H_ */
+#endif /* _AdverseWeatherCondition_ExtremeWeatherConditionSubCauseCode_H_ */
 #include <asn_internal.h>

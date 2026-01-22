@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /*
@@ -26,33 +26,30 @@
 
 class WiFiSecurityReportListener : public telux::sec::IWiFiReportListener,
                                    public std::enable_shared_from_this<WiFiSecurityReportListener> {
-public:
-
+ public:
     /* Step - 6 */
     void onReportAvailable(telux::sec::WiFiSecurityReport report) {
         std::cout << "ssid             : " << report.ssid << std::endl;
         std::cout << "bssid            : " << report.bssid << std::endl;
         std::cout << "is connected     : " << report.isConnectedToAP << std::endl;
         std::cout << "is open          : " << report.isOpenAP << std::endl;
-        std::cout << "ml threat score  : " <<
-            report.mlAlgorithmAnalysis.threatScore << std::endl;
-        std::cout << "ml result        : " <<
-            static_cast<int>(report.mlAlgorithmAnalysis.result) << std::endl;
-        std::cout << "summoning result : " <<
-            static_cast<int>(report.summoningAnalysis.result) << std::endl;
+        std::cout << "ml threat score  : " << report.mlAlgorithmAnalysis.threatScore << std::endl;
+        std::cout << "ml result        : " << static_cast<int>(report.mlAlgorithmAnalysis.result)
+                  << std::endl;
+        std::cout << "summoning result : " << static_cast<int>(report.summoningAnalysis.result)
+                  << std::endl;
     }
 
     void onDeauthenticationAttack(telux::sec::DeauthenticationInfo deauthenticationInfo) {
-        std::cout << "disconnect reason : " <<
-            deauthenticationInfo.deauthenticationReason << std::endl;
-        std::cout << "did AP initiated  : " <<
-            deauthenticationInfo.didAPInitiateDisconnect << std::endl;
-        std::cout << "threat score      : " <<
-            deauthenticationInfo.threatScore << std::endl;
+        std::cout << "disconnect reason : " << deauthenticationInfo.deauthenticationReason
+                  << std::endl;
+        std::cout << "did AP initiated  : " << deauthenticationInfo.didAPInitiateDisconnect
+                  << std::endl;
+        std::cout << "threat score      : " << deauthenticationInfo.threatScore << std::endl;
     }
 
-    void isTrustedAP(telux::sec::ApInfo apInfo, bool& isTrusted) {
-        std::cout << "ssid  : " << apInfo.ssid  << std::endl;
+    void isTrustedAP(telux::sec::ApInfo apInfo, bool &isTrusted) {
+        std::cout << "ssid  : " << apInfo.ssid << std::endl;
         std::cout << "bssid : " << apInfo.bssid << std::endl;
 
         /* In this example we always trust the AP */
@@ -71,10 +68,8 @@ public:
         auto &wifiConSecFact = telux::sec::ConnectionSecurityFactory::getInstance();
 
         /* Step - 3 */
-        wifiConSecMgr_ = wifiConSecFact.getWiFiSecurityManager([&](telux::common::ServiceStatus
-        srvStatus) {
-            p.set_value(srvStatus);
-        });
+        wifiConSecMgr_ = wifiConSecFact.getWiFiSecurityManager(
+            [&](telux::common::ServiceStatus srvStatus) { p.set_value(srvStatus); });
 
         if (!wifiConSecMgr_) {
             std::cout << "failed to get IWiFiSecurityManager" << std::endl;
@@ -115,7 +110,8 @@ public:
 
         return 0;
     }
-private:
+
+ private:
     std::shared_ptr<telux::sec::IWiFiSecurityManager> wifiConSecMgr_;
 };
 
@@ -127,7 +123,7 @@ int main(int argc, char **argv) {
     /* Step - 1 */
     try {
         app = std::make_shared<WiFiSecurityReportListener>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "can't allocate WiFiSecurityReportListener" << std::endl;
         return -ENOMEM;
     }

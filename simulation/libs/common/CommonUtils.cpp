@@ -189,9 +189,9 @@ ErrorCode CommonUtils::mapErrorCode(std::string errorCode) {
         return ErrorCode::INTERNAL;
     } else if (errorCode == "CLIENT_IDS_EXHAUSTED") {
         return ErrorCode::CLIENT_IDS_EXHAUSTED;
-    } else if (errorCode == "NOTSUPPORTED"){
+    } else if (errorCode == "NOTSUPPORTED") {
         return ErrorCode::NOT_SUPPORTED;
-    } else if (errorCode == "INFO_UNAVAILABLE"){
+    } else if (errorCode == "INFO_UNAVAILABLE") {
         return ErrorCode::INFO_UNAVAILABLE;
     }
 
@@ -270,23 +270,21 @@ std::string CommonUtils::readSystemDataValue(
 }
 
 ErrorCode CommonUtils::readJsonData(std::string apiJsonPath, std::string stateJsonPath,
-    std::string subsystem, std::string method, JsonData& data) {
+    std::string subsystem, std::string method, JsonData &data) {
     LOG(DEBUG, __FUNCTION__);
-    ErrorCode err =
-        JsonParser::readFromJsonFile(data.apiRootObj, apiJsonPath);
+    ErrorCode err = JsonParser::readFromJsonFile(data.apiRootObj, apiJsonPath);
     if (err != ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! ");
         return err;
     }
-    CommonUtils::getValues(data.apiRootObj, subsystem, method, data.status,
-        data.error, data.cbDelay );
+    CommonUtils::getValues(
+        data.apiRootObj, subsystem, method, data.status, data.error, data.cbDelay);
 
-    if (data.status == telux::common::Status::SUCCESS ||
-        data.error == telux::common::ErrorCode::SUCCESS) {
-        err =
-            JsonParser::readFromJsonFile(data.stateRootObj, stateJsonPath);
+    if (data.status == telux::common::Status::SUCCESS
+        || data.error == telux::common::ErrorCode::SUCCESS) {
+        err = JsonParser::readFromJsonFile(data.stateRootObj, stateJsonPath);
         if (err != ErrorCode::SUCCESS) {
-            LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+            LOG(ERROR, __FUNCTION__, " Reading JSON File failed! ");
             return err;
         }
     }
@@ -294,16 +292,15 @@ ErrorCode CommonUtils::readJsonData(std::string apiJsonPath, std::string stateJs
     return err;
 }
 
-void CommonUtils::getValues(Json::Value &values, std::string subsystem,
-    std::string method, telux::common::Status &status,
-    telux::common::ErrorCode &errorCode, int &cbDelay) {
+void CommonUtils::getValues(Json::Value &values, std::string subsystem, std::string method,
+    telux::common::Status &status, telux::common::ErrorCode &errorCode, int &cbDelay) {
     std::string statusStr = values[subsystem][method]["status"].asString();
-    status = mapStatus(statusStr);
+    status                = mapStatus(statusStr);
 
     std::string errorStr = values[subsystem][method]["error"].asString();
-    errorCode = mapErrorCode(errorStr);
-    cbDelay = values[subsystem][method]["callbackDelay"].asInt();
-    if(cbDelay == 0) {
+    errorCode            = mapErrorCode(errorStr);
+    cbDelay              = values[subsystem][method]["callbackDelay"].asInt();
+    if (cbDelay == 0) {
         cbDelay = values[subsystem]["DefaultCallbackDelay"].asInt();
     }
 }
@@ -336,10 +333,10 @@ std::vector<std::string> CommonUtils::splitString(const std::string &s, char del
     std::istringstream ss(s);
     std::string token;
 
-    while(std::getline(ss, token, delim)) {
+    while (std::getline(ss, token, delim)) {
         // remove the trailing spaces
-        token.erase(std::remove(token.begin(),token.end(),' '),token.end());
-        if(!token.empty()) {
+        token.erase(std::remove(token.begin(), token.end(), ' '), token.end());
+        if (!token.empty()) {
             elements.push_back(token);
         }
     }
@@ -348,24 +345,23 @@ std::vector<std::string> CommonUtils::splitString(const std::string &s, char del
 
 std::string CommonUtils::getCurrentTimeHHMMSS() {
     using namespace std::chrono;
-    auto ms =
-        std::chrono::duration_cast<milliseconds>(
-            high_resolution_clock::now().time_since_epoch());
+    auto ms
+        = std::chrono::duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
     ms %= 1000;
     std::time_t t = std::time(nullptr);
-    std::tm tm = *std::localtime(&t);
+    std::tm tm    = *std::localtime(&t);
 
     std::stringstream nowSs;
-    nowSs << std::put_time(&tm, "%H%M%S") << '.' << ms.count()/10;
+    nowSs << std::put_time(&tm, "%H%M%S") << '.' << ms.count() / 10;
 
     return nowSs.str();
 }
 
 void CommonUtils::calculateBootTimeStamp(uint64_t &timestamp) {
     // Get the current time in nanoseconds
-    auto now = std::chrono::system_clock::now();
-    auto nowNs = std::chrono::time_point_cast<std::chrono::nanoseconds>(now);
-    auto epoch = nowNs.time_since_epoch();
+    auto now        = std::chrono::system_clock::now();
+    auto nowNs      = std::chrono::time_point_cast<std::chrono::nanoseconds>(now);
+    auto epoch      = nowNs.time_since_epoch();
     auto nowNsCount = std::chrono::duration_cast<std::chrono::nanoseconds>(epoch).count();
 
     // Get the system uptime in seconds
@@ -377,7 +373,7 @@ void CommonUtils::calculateBootTimeStamp(uint64_t &timestamp) {
     timestamp = nowNsCount - uptimeNs.count();
 }
 
-int CommonUtils::bitwiseXOR(const std::string& str) {
+int CommonUtils::bitwiseXOR(const std::string &str) {
     if (str.size() <= 0) {
         return 0;
     }
@@ -392,9 +388,8 @@ int CommonUtils::bitwiseXOR(const std::string& str) {
 
 std::string CommonUtils::convertVectorToString(std::vector<std::uint8_t> bytes, bool toHex) {
     std::stringstream ss;
-    for (std::size_t i = 0; i < bytes.size(); i++)
-    {
-        if(toHex) {
+    for (std::size_t i = 0; i < bytes.size(); i++) {
+        if (toHex) {
             ss << std::hex << static_cast<int>(bytes[i]);
         } else {
             ss << static_cast<int>(bytes[i]) << " ";
@@ -404,11 +399,11 @@ std::string CommonUtils::convertVectorToString(std::vector<std::uint8_t> bytes, 
 }
 
 std::vector<int> CommonUtils::convertStringToVector(std::string input) {
-    std::stringstream iss( input );
+    std::stringstream iss(input);
     int parsednum;
     std::vector<int> myNumbers;
-    while ( iss >> parsednum ) {
-        myNumbers.push_back( parsednum );
+    while (iss >> parsednum) {
+        myNumbers.push_back(parsednum);
     }
     return myNumbers;
 }
@@ -421,7 +416,7 @@ std::string CommonUtils::getGrpcPort() {
 std::vector<std::string> CommonUtils::splitString(std::string msg) {
     std::stringstream ss(msg);
     std::vector<std::string> message;
-    while(ss.good()) {
+    while (ss.good()) {
         std::string str;
         getline(ss, str, ',');
         message.push_back(str);
@@ -440,12 +435,11 @@ long CommonUtils::convertHexToInt(std::string hex) {
 }
 
 std::string CommonUtils::convertIntVectorToString(std::vector<int> integers) {
-  std::stringstream ss;
-  for (std::size_t i = 0; i < integers.size(); i++)
-  {
-          ss << integers[i] << " ";
-  }
-  return ss.str();
+    std::stringstream ss;
+    for (std::size_t i = 0; i < integers.size(); i++) {
+        ss << integers[i] << " ";
+    }
+    return ss.str();
 }
 
 void CommonUtils::logSdkVersion() {

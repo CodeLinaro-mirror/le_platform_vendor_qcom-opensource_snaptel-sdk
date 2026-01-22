@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef SOCKS_MANAGER_SERVER_HPP
@@ -16,22 +16,19 @@ using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
 
-class SocksServerImpl final:
-    public dataStub::SocksManager::Service {
-public:
+class SocksServerImpl final : public dataStub::SocksManager::Service {
+ public:
     SocksServerImpl();
     ~SocksServerImpl();
 
-    grpc::Status InitService(ServerContext* context,
-        const dataStub::InitRequest* request,
-        dataStub::GetServiceStatusReply* response) override;
+    grpc::Status InitService(ServerContext *context, const dataStub::InitRequest *request,
+        dataStub::GetServiceStatusReply *response) override;
 
-    grpc::Status enableSocks(ServerContext* context,
-        const dataStub::EnableSocksRequest* request,
-        dataStub::DefaultReply* response) override;
+    grpc::Status enableSocks(ServerContext *context, const dataStub::EnableSocksRequest *request,
+        dataStub::DefaultReply *response) override;
 
-private:
+ private:
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
 };
 
-#endif //SOCKS_MANAGER_SERVER_HPP
+#endif  // SOCKS_MANAGER_SERVER_HPP

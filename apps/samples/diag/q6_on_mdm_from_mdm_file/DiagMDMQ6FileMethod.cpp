@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -44,9 +44,7 @@ class DiagLogCollector : public std::enable_shared_from_this<DiagLogCollector> {
 
         /* Step - 2 */
         diagMgr_ = diagFactory.getDiagLogManager(
-                [&p](telux::common::ServiceStatus srvStatus) {
-            p.set_value(srvStatus);
-        });
+            [&p](telux::common::ServiceStatus srvStatus) { p.set_value(srvStatus); });
 
         if (!diagMgr_) {
             std::cout << "Can't get IDiagLogManager" << std::endl;
@@ -56,8 +54,8 @@ class DiagLogCollector : public std::enable_shared_from_this<DiagLogCollector> {
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Diag service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Diag service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
@@ -69,18 +67,17 @@ class DiagLogCollector : public std::enable_shared_from_this<DiagLogCollector> {
         telux::common::ErrorCode ec;
         telux::platform::diag::DiagConfig fileMethodCfg{};
 
-        fileMethodCfg.method = telux::platform::diag::LogMethod::FILE;
+        fileMethodCfg.method  = telux::platform::diag::LogMethod::FILE;
         fileMethodCfg.srcType = telux::platform::diag::SourceType::PERIPHERAL;
-        fileMethodCfg.srcInfo.peripheral =
-            telux::platform::diag::PeripheralType::DIAG_PERIPHERAL_MODEM_DSP;
+        fileMethodCfg.srcInfo.peripheral
+            = telux::platform::diag::PeripheralType::DIAG_PERIPHERAL_MODEM_DSP;
         fileMethodCfg.mdmLogMaskFile = mdmMaskFile;
-        fileMethodCfg.modeType = telux::platform::diag::DiagLogMode::STREAMING;
+        fileMethodCfg.modeType       = telux::platform::diag::DiagLogMode::STREAMING;
 
         /* Step - 4 */
         ec = diagMgr_->setConfig(fileMethodCfg);
         if (ec != telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Can't config, err " <<
-                static_cast<int>(ec) << std::endl;
+            std::cout << "Can't config, err " << static_cast<int>(ec) << std::endl;
             return -EIO;
         }
 
@@ -94,8 +91,7 @@ class DiagLogCollector : public std::enable_shared_from_this<DiagLogCollector> {
         /* Step - 5 */
         ec = diagMgr_->startLogCollection();
         if (ec != telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Can't start collection, err " <<
-                static_cast<int>(ec) << std::endl;
+            std::cout << "Can't start collection, err " << static_cast<int>(ec) << std::endl;
             return -EIO;
         }
 
@@ -109,8 +105,7 @@ class DiagLogCollector : public std::enable_shared_from_this<DiagLogCollector> {
         /* Step - 7 */
         ec = diagMgr_->stopLogCollection();
         if (ec != telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Can't stop collection, err " <<
-                static_cast<int>(ec) << std::endl;
+            std::cout << "Can't stop collection, err " << static_cast<int>(ec) << std::endl;
             return -EIO;
         }
 
@@ -134,7 +129,7 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<DiagLogCollector>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate DiagLogCollector" << std::endl;
         return -ENOMEM;
     }

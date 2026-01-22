@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef CELLULARSECURITYMANAGERIMPL_HPP
@@ -24,7 +24,8 @@
 namespace telux {
 namespace sec {
 
-class CellularSecurityManagerImpl : public ICellularSecurityManager,
+class CellularSecurityManagerImpl
+   : public ICellularSecurityManager,
      public telux::common::IEventListener,
      public std::enable_shared_from_this<CellularSecurityManagerImpl> {
 
@@ -85,8 +86,8 @@ class CellularSecurityManagerImpl : public ICellularSecurityManager,
 
     std::shared_ptr<telux::common::ListenerManager<ICellularScanReportListener>> csListenerMgr_;
 
-    const char * const CCS_API_JSON_FILE = "api/sec/ICellularSecurityManager.json";
-    const char * const CCS_FILTER = "ccs";
+    const char *const CCS_API_JSON_FILE = "api/sec/ICellularSecurityManager.json";
+    const char *const CCS_FILTER        = "ccs";
     ClientEventManager &clientEventMgr_;
     std::unique_ptr<::securityStub::SecurityCCSService::Stub> stub_;
 };

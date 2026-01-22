@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include "iostream"
 #include "MyMultiSimHandler.hpp"
 #include "Utils.hpp"
@@ -34,38 +40,38 @@
 #define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
 
 void MyMultiSimCallback::requestHighCapabilityResponse(int slotId, telux::common::ErrorCode error) {
-    if(error == telux::common::ErrorCode::SUCCESS) {
+    if (error == telux::common::ErrorCode::SUCCESS) {
         PRINT_CB << "Slot with high capability: " << slotId << std::endl;
     } else {
         PRINT_CB << "Request high capability request failed, errorCode: " << static_cast<int>(error)
-            << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+                 << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     }
 }
 
 void MyMultiSimCallback::setHighCapabilityResponse(telux::common::ErrorCode error) {
-    if(error == telux::common::ErrorCode::SUCCESS) {
+    if (error == telux::common::ErrorCode::SUCCESS) {
         PRINT_CB << "Set high capability request executed successfully" << std::endl;
     } else {
         PRINT_CB << "Set high capability request failed, errorCode: " << static_cast<int>(error)
-            << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+                 << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     }
 }
 
 void MyMultiSimCallback::setActiveSlotResponse(telux::common::ErrorCode error) {
-    if(error == telux::common::ErrorCode::SUCCESS) {
+    if (error == telux::common::ErrorCode::SUCCESS) {
         PRINT_CB << "Set active slot request executed successfully" << std::endl;
     } else {
         PRINT_CB << "Set active slot request failed, errorCode: " << static_cast<int>(error)
-            << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+                 << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     }
 }
 
-void MyMultiSimCallback::requestsSlotsStatusResponse(std::map<SlotId,
-        telux::tel::SlotStatus> slotStatus, telux::common::ErrorCode error) {
-    if(error == telux::common::ErrorCode::SUCCESS) {
+void MyMultiSimCallback::requestsSlotsStatusResponse(
+    std::map<SlotId, telux::tel::SlotStatus> slotStatus, telux::common::ErrorCode error) {
+    if (error == telux::common::ErrorCode::SUCCESS) {
         PRINT_CB << "Slots status request executed successfully" << std::endl;
-        for(auto it = slotStatus.begin(); it != slotStatus.end(); ++it) {
-            auto slotId = it->first;
+        for (auto it = slotStatus.begin(); it != slotStatus.end(); ++it) {
+            auto slotId     = it->first;
             auto slotStatus = it->second;
             PRINT_CB << " SlotId: " << static_cast<int>(slotId)
                      << ", SlotState: " << MyMultiSimHelper::slotStateToString(slotStatus.slotState)
@@ -75,87 +81,121 @@ void MyMultiSimCallback::requestsSlotsStatusResponse(std::map<SlotId,
         }
     } else {
         PRINT_CB << "Slots status request failed, errorCode: " << static_cast<int>(error)
-            << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+                 << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     }
 }
 
 std::string MyMultiSimHelper::slotStateToString(telux::tel::SlotState slotState) {
-   std::string slotStateString = "UNKNOWN";
-   switch(slotState) {
-    case telux::tel::SlotState::ACTIVE:
-        slotStateString = "ACTIVE";
-        break;
-    case telux::tel::SlotState::INACTIVE:
-        slotStateString = "INACTIVE";
-        break;
-    default:
-        slotStateString = "UNKNOWN";
-        break;
-   }
-   return slotStateString;
+    std::string slotStateString = "UNKNOWN";
+    switch (slotState) {
+        case telux::tel::SlotState::ACTIVE:
+            slotStateString = "ACTIVE";
+            break;
+        case telux::tel::SlotState::INACTIVE:
+            slotStateString = "INACTIVE";
+            break;
+        default:
+            slotStateString = "UNKNOWN";
+            break;
+    }
+    return slotStateString;
 }
 
 std::string MyMultiSimHelper::cardStateToString(telux::tel::CardState cardState) {
-   std::string cardStateString = "UNKNOWN";
-   switch(cardState) {
-    case telux::tel::CardState::CARDSTATE_ABSENT:
-        cardStateString = "ABSENT";
-        break;
-    case telux::tel::CardState::CARDSTATE_PRESENT:
-        cardStateString = "PRESENT";
-        break;
-    case telux::tel::CardState::CARDSTATE_ERROR:
-        cardStateString = "ERROR";
-        break;
-    case telux::tel::CardState::CARDSTATE_UNKNOWN:
-        cardStateString = "UNKNOWN";
-        break;
-    default:
-        cardStateString = "UNKNOWN";
-        break;
-   }
-   return cardStateString;
+    std::string cardStateString = "UNKNOWN";
+    switch (cardState) {
+        case telux::tel::CardState::CARDSTATE_ABSENT:
+            cardStateString = "ABSENT";
+            break;
+        case telux::tel::CardState::CARDSTATE_PRESENT:
+            cardStateString = "PRESENT";
+            break;
+        case telux::tel::CardState::CARDSTATE_ERROR:
+            cardStateString = "ERROR";
+            break;
+        case telux::tel::CardState::CARDSTATE_UNKNOWN:
+            cardStateString = "UNKNOWN";
+            break;
+        default:
+            cardStateString = "UNKNOWN";
+            break;
+    }
+    return cardStateString;
 }
 
 std::string MyMultiSimHelper::cardErrorToString(telux::tel::CardError cardError) {
-   std::string cardErrorString = "UNKNOWN";
-   switch(cardError) {
-    case telux::tel::CardError::POWER_DOWN:
-        cardErrorString = "POWER_DOWN";
-        break;
-    case telux::tel::CardError::POLL_ERROR:
-        cardErrorString = "POLL_ERROR";
-        break;
-    case telux::tel::CardError::NO_ATR_RECEIVED:
-        cardErrorString = "NO_ATR_RECEIVED";
-        break;
-    case telux::tel::CardError::VOLT_MISMATCH:
-        cardErrorString = "VOLT_MISMATCH";
-        break;
-    case telux::tel::CardError::PARITY_ERROR:
-        cardErrorString = "PARITY_ERROR";
-        break;
-    case telux::tel::CardError::POSSIBLY_REMOVED:
-        cardErrorString = "POSSIBLY_REMOVED";
-        break;
-    case telux::tel::CardError::TECHNICAL_PROBLEMS:
-        cardErrorString = "TECHNICAL_PROBLEMS";
-        break;
-    case telux::tel::CardError::NULL_BYTES:
-        cardErrorString = "NULL_BYTES";
-        break;
-    case telux::tel::CardError::SAP_CONNECTED:
-        cardErrorString = "SAP_CONNECTED";
-        break;
-    case telux::tel::CardError::CMD_TIMEOUT:
-        cardErrorString = "CMD_TIMEOUT";
-        break;
-    case telux::tel::CardError::UNKNOWN:
-        cardErrorString = "UNKNOWN";
-        break;
-    default:
-        cardErrorString = "UNKNOWN";
-        break;
-   }
-   return cardErrorString;
+    std::string cardErrorString = "UNKNOWN";
+    switch (cardError) {
+        case telux::tel::CardError::POWER_DOWN:
+            cardErrorString = "POWER_DOWN";
+            break;
+        case telux::tel::CardError::POLL_ERROR:
+            cardErrorString = "POLL_ERROR";
+            break;
+        case telux::tel::CardError::NO_ATR_RECEIVED:
+            cardErrorString = "NO_ATR_RECEIVED";
+            break;
+        case telux::tel::CardError::VOLT_MISMATCH:
+            cardErrorString = "VOLT_MISMATCH";
+            break;
+        case telux::tel::CardError::PARITY_ERROR:
+            cardErrorString = "PARITY_ERROR";
+            break;
+        case telux::tel::CardError::POSSIBLY_REMOVED:
+            cardErrorString = "POSSIBLY_REMOVED";
+            break;
+        case telux::tel::CardError::TECHNICAL_PROBLEMS:
+            cardErrorString = "TECHNICAL_PROBLEMS";
+            break;
+        case telux::tel::CardError::NULL_BYTES:
+            cardErrorString = "NULL_BYTES";
+            break;
+        case telux::tel::CardError::SAP_CONNECTED:
+            cardErrorString = "SAP_CONNECTED";
+            break;
+        case telux::tel::CardError::CMD_TIMEOUT:
+            cardErrorString = "CMD_TIMEOUT";
+            break;
+        case telux::tel::CardError::UNKNOWN:
+            cardErrorString = "UNKNOWN";
+            break;
+        default:
+            cardErrorString = "UNKNOWN";
+            break;
+    }
+    return cardErrorString;
+}
+
+// Update implementation to use fully qualified types
+std::string MyMultiSimHelper::portStateToString(telux::tel::PortState state) {
+    switch (state) {
+        case telux::tel::PortState::INACTIVE:
+            return "INACTIVE";
+        case telux::tel::PortState::ACTIVE:
+            return "ACTIVE";
+        default:
+            return "UNKNOWN";
+    }
+}
+
+std::string MyMultiSimHelper::mepModeToString(telux::tel::Mode mode) {
+    switch (mode) {
+        case telux::tel::Mode::NONE:
+            return "NONE";
+        case telux::tel::Mode::MEP_A1:
+            return "MEP_A1";
+        case telux::tel::Mode::MEP_B:
+            return "MEP_B";
+        default:
+            return "UNKNOWN";
+    }
+}
+
+void MyMultiSimCallback::configureLogicalSlotMappingResponse(telux::common::ErrorCode error) {
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        std::cout << "Configure logical slot mapping completed successfully" << std::endl;
+    } else {
+        std::cout << "Configure logical slot mapping failed, error: "
+                  << static_cast<int>(error) << std::endl;
+    }
 }

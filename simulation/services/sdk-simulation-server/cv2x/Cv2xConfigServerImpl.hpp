@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -34,22 +34,19 @@ using grpc::Status;
 using cv2xStub::Cv2xConfigService;
 
 class Cv2xConfigServerImpl final : public cv2xStub::Cv2xConfigService::Service {
-public:
-  Cv2xConfigServerImpl();
-  ~Cv2xConfigServerImpl();
-  grpc::Status initService(ServerContext *context,
-                           const google::protobuf::Empty *request,
-                           cv2xStub::GetServiceStatusReply *res);
-  grpc::Status updateConfiguration(ServerContext *context,
-                                   const cv2xStub::Cv2xConfigPath *request,
-                                   ::cv2xStub::Cv2xCommandReply *res);
-  grpc::Status retrieveConfiguration(ServerContext *context,
-                                     const cv2xStub::Cv2xConfigPath *request,
-                                     ::cv2xStub::Cv2xCommandReply *res);
+ public:
+    Cv2xConfigServerImpl();
+    ~Cv2xConfigServerImpl();
+    grpc::Status initService(ServerContext *context, const google::protobuf::Empty *request,
+        cv2xStub::GetServiceStatusReply *res);
+    grpc::Status updateConfiguration(ServerContext *context,
+        const cv2xStub::Cv2xConfigPath *request, ::cv2xStub::Cv2xCommandReply *res);
+    grpc::Status retrieveConfiguration(ServerContext *context,
+        const cv2xStub::Cv2xConfigPath *request, ::cv2xStub::Cv2xCommandReply *res);
 
-private:
-  std::string path_;
-  telux::common::AsyncTaskQueue<void> taskQ_;
+ private:
+    std::string path_;
+    telux::common::AsyncTaskQueue<void> taskQ_;
 };
 
-#endif // CV2X_CONFIG_SERVER_HPP
+#endif  // CV2X_CONFIG_SERVER_HPP

@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef AUDIODEFINESINTERNAL_HPP
@@ -32,7 +32,7 @@
 #define STREAM_TONE_START_REQ 18
 #define STREAM_TONE_STOP_REQ 19
 #define DELETE_TRANSCODER_REQ 20
-#define CREATE_TRANSCODER_REQ  21
+#define CREATE_TRANSCODER_REQ 21
 #define STREAM_FLUSH_REQ 22
 #define STREAM_DRAIN_REQ 23
 #define STREAM_DTMF_DETECTED_IND 26
@@ -99,8 +99,8 @@ struct StreamHandle {
     int channels = 0;
     PrivateStreamData *privateStreamData;
     bool streamStarted = false;
-    bool dtmfStarted = false;
-    bool isAMR = false;
+    bool dtmfStarted   = false;
+    bool isAMR         = false;
 };
 
 /*
@@ -147,4 +147,4 @@ struct CreatedTranscoderInfo {
 }  // end of namespace audio
 }  // end of namespace telux
 
-#endif // AUDIODEFINESINTERNAL_HPP
+#endif  // AUDIODEFINESINTERNAL_HPP

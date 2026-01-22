@@ -28,9 +28,8 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -82,8 +81,8 @@ enum class TcuActivityState {
  * Acknowledgement to accept or deny to transition to the notified power state.
  */
 enum class StateChangeResponse {
-    ACK,    /**< Ready to change state */
-    NACK    /**< Not ready to change state */
+    ACK, /**< Ready to change state */
+    NACK /**< Not ready to change state */
 };
 
 /**
@@ -92,16 +91,16 @@ enum class StateChangeResponse {
  * a system there can be only one master client and any number of slave clients.
  */
 enum class ClientType {
-    SLAVE,     /**< Slave client */
-    MASTER,    /**< Master client */
+    SLAVE, /**< Slave client */
+    MASTER, /**< Master client */
 };
 
 /**
  * Confirms whether a machine is registered with the power management framework or not.
  */
 enum class MachineEvent {
-    AVAILABLE,      /**< Machine is registered */
-    UNAVAILABLE     /**< Machine is unregistered (for example, crashed, rebooted, shutdown) */
+    AVAILABLE, /**< Machine is registered */
+    UNAVAILABLE /**< Machine is unregistered (for example, crashed, rebooted, shutdown) */
 };
 
 /**
@@ -158,8 +157,8 @@ struct ClientInstanceConfig {
  *              TcuActivityState).
  */
 enum class TcuActivityStateAck {
-    SUSPEND_ACK,    /**< processed TcuActivityState::SUSPEND notification */
-    SHUTDOWN_ACK,   /**< processed TcuActivityState::SHUTDOWN notification */
+    SUSPEND_ACK, /**< processed TcuActivityState::SUSPEND notification */
+    SHUTDOWN_ACK, /**< processed TcuActivityState::SHUTDOWN notification */
 };
 
 /** @} */ /* end_addtogroup telematics_power_manager */
@@ -167,4 +166,4 @@ enum class TcuActivityStateAck {
 }  // end of namespace power
 }  // end of namespace telux
 
-#endif // TELUX_POWER_TCUACTIVITYDEFINES_HPP
+#endif  // TELUX_POWER_TCUACTIVITYDEFINES_HPP

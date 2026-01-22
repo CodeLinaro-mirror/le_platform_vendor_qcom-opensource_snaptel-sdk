@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_ChInfoOptions_H_
-#define	_ChInfoOptions_H_
-
+#ifndef _ChInfoOptions_H_
+#define _ChInfoOptions_H_
 
 #include <asn_application.h>
 
@@ -24,17 +23,17 @@ struct ChannelInfoExts;
 
 /* ChInfoOptions */
 typedef struct ChInfoOptions {
-	NULL_t	*option1	/* OPTIONAL */;
-	NULL_t	*option2	/* OPTIONAL */;
-	NULL_t	*option3	/* OPTIONAL */;
-	NULL_t	*option4	/* OPTIONAL */;
-	NULL_t	*option5	/* OPTIONAL */;
-	NULL_t	*option6	/* OPTIONAL */;
-	NULL_t	*option7	/* OPTIONAL */;
-	struct ChannelInfoExts	*extensions	/* OPTIONAL */;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    NULL_t *option1 /* OPTIONAL */;
+    NULL_t *option2 /* OPTIONAL */;
+    NULL_t *option3 /* OPTIONAL */;
+    NULL_t *option4 /* OPTIONAL */;
+    NULL_t *option5 /* OPTIONAL */;
+    NULL_t *option6 /* OPTIONAL */;
+    NULL_t *option7 /* OPTIONAL */;
+    struct ChannelInfoExts *extensions /* OPTIONAL */;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } ChInfoOptions_t;
 
 /* Implementation */
@@ -47,5 +46,5 @@ extern asn_TYPE_descriptor_t asn_DEF_ChInfoOptions;
 /* Referred external types */
 #include "ChannelInfoExts.h"
 
-#endif	/* _ChInfoOptions_H_ */
+#endif /* _ChInfoOptions_H_ */
 #include <asn_internal.h>

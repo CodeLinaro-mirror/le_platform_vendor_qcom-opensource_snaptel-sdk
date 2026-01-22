@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_RoadType_H_
-#define	_RoadType_H_
-
+#ifndef _RoadType_H_
+#define _RoadType_H_
 
 #include <asn_application.h>
 
@@ -20,14 +19,14 @@ extern "C" {
 
 /* Dependencies */
 typedef enum RoadType {
-	RoadType_urban_NoStructuralSeparationToOppositeLanes	= 0,
-	RoadType_urban_WithStructuralSeparationToOppositeLanes	= 1,
-	RoadType_nonUrban_NoStructuralSeparationToOppositeLanes	= 2,
-	RoadType_nonUrban_WithStructuralSeparationToOppositeLanes	= 3
+    RoadType_urban_NoStructuralSeparationToOppositeLanes      = 0,
+    RoadType_urban_WithStructuralSeparationToOppositeLanes    = 1,
+    RoadType_nonUrban_NoStructuralSeparationToOppositeLanes   = 2,
+    RoadType_nonUrban_WithStructuralSeparationToOppositeLanes = 3
 } e_RoadType;
 
 /* RoadType */
-typedef long	 RoadType_t;
+typedef long RoadType_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_RoadType;
@@ -45,5 +44,5 @@ per_type_encoder_f RoadType_encode_uper;
 }
 #endif
 
-#endif	/* _RoadType_H_ */
+#endif /* _RoadType_H_ */
 #include <asn_internal.h>

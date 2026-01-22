@@ -28,8 +28,8 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -67,22 +67,17 @@ void ThermalShutdownTestApp::printHelp() {
 Status ThermalShutdownTestApp::parseArguments(int argc, char **argv) {
     int arg;
 
-    while(1) {
-        static struct option long_options[] = {
-            {"listen",          no_argument, 0, 'l'},
-            {"enable",          no_argument, 0, 'e'},
-            {"disable",         no_argument, 0, 'd'},
-            {"get-status",      no_argument, 0, 'g'},
-            {"console-mode",    no_argument, 0, 'c'},
-            {"help",            no_argument, 0, 'h'},
-            {0, 0, 0, 0}
-        };
+    while (1) {
+        static struct option long_options[]
+            = {{"listen", no_argument, 0, 'l'}, {"enable", no_argument, 0, 'e'},
+                {"disable", no_argument, 0, 'd'}, {"get-status", no_argument, 0, 'g'},
+                {"console-mode", no_argument, 0, 'c'}, {"help", no_argument, 0, 'h'}, {0, 0, 0, 0}};
         int opt_index = 0;
-        arg = getopt_long(argc, argv, "ledgch", long_options, &opt_index);
-        if(arg == -1) {
+        arg           = getopt_long(argc, argv, "ledgch", long_options, &opt_index);
+        if (arg == -1) {
             break;
         }
-        switch(arg) {
+        switch (arg) {
             case 'l':
                 listenerEnabled_ = true;
                 break;
@@ -115,7 +110,7 @@ void ThermalShutdownTestApp::handleArguments() {
         std::cout << " Invalid command manager " << std::endl;
         return;
     }
-    if(setCommand_ != AutoShutdownMode::UNKNOWN) {
+    if (setCommand_ != AutoShutdownMode::UNKNOWN) {
         myThermCmdMgr_->sendAutoShutdownModeCommand(setCommand_);
         myThermCmdMgr_->registerForUpdates();
 
@@ -130,7 +125,7 @@ void ThermalShutdownTestApp::handleArguments() {
         }
         myThermCmdMgr_->deregisterForUpdates();
     }
-    if(getCommand_) {
+    if (getCommand_) {
         auto f = myThermCmdMgr_->getAutoShutdownModeCommand();
         f.wait();
     }
@@ -140,12 +135,12 @@ void ThermalShutdownTestApp::handleArguments() {
         mainLoop();
         myThermCmdMgr_->deregisterForUpdates();
     }
-    if(listenerEnabled_) {
+    if (listenerEnabled_) {
         myThermCmdMgr_->registerForUpdates();
         std::unique_lock<std::mutex> lock(mtx_);
         std::cout << APP_NAME << " Press CTRL+C to exit" << std::endl;
-        cv_.wait(lock, [this](){return exiting_;});
-        if(listenerEnabled_) {
+        cv_.wait(lock, [this]() { return exiting_; });
+        if (listenerEnabled_) {
             myThermCmdMgr_->deregisterForUpdates();
         }
     }
@@ -153,19 +148,19 @@ void ThermalShutdownTestApp::handleArguments() {
 }
 
 ThermalShutdownTestApp::ThermalShutdownTestApp()
-    : ConsoleApp("Thermal Shutdown-Management Menu", "thrml-shtdwn-mgmt> ")
-    , myThermCmdMgr_(nullptr)
-    , exiting_(false)
-    , listenerEnabled_(false)
-    , setCommand_(AutoShutdownMode::UNKNOWN)
-    , getCommand_(false)
-    , isConsole_(false) {
+   : ConsoleApp("Thermal Shutdown-Management Menu", "thrml-shtdwn-mgmt> ")
+   , myThermCmdMgr_(nullptr)
+   , exiting_(false)
+   , listenerEnabled_(false)
+   , setCommand_(AutoShutdownMode::UNKNOWN)
+   , getCommand_(false)
+   , isConsole_(false) {
 }
 
 ThermalShutdownTestApp::~ThermalShutdownTestApp() {
 }
 
-ThermalShutdownTestApp & ThermalShutdownTestApp::getInstance() {
+ThermalShutdownTestApp &ThermalShutdownTestApp::getInstance() {
     static ThermalShutdownTestApp instance;
     return instance;
 }
@@ -174,12 +169,11 @@ bool ThermalShutdownTestApp::listnerEnableStatus() {
     return listenerEnabled_;
 }
 
-void signalHandler(int signum)
-{
+void signalHandler(int signum) {
     ThermalShutdownTestApp::getInstance().signalHandler(signum);
 }
 
-void ThermalShutdownTestApp::signalHandler( int signum ) {
+void ThermalShutdownTestApp::signalHandler(int signum) {
     std::lock_guard<std::mutex> lock(mtx_);
     std::cout << APP_NAME << " Interrupt signal (" << signum << ") received.." << std::endl;
     exiting_ = true;
@@ -189,8 +183,8 @@ void ThermalShutdownTestApp::signalHandler( int signum ) {
 int ThermalShutdownTestApp::init() {
 
     myThermCmdMgr_ = std::make_shared<ThermalCommandMgr>();
-    int rc = myThermCmdMgr_->init();
-    if(rc) {
+    int rc         = myThermCmdMgr_->init();
+    if (rc) {
         return -1;
     }
     return 0;
@@ -198,56 +192,54 @@ int ThermalShutdownTestApp::init() {
 
 void ThermalShutdownTestApp::consoleinit() {
 
-   std::shared_ptr<ConsoleAppCommand> getAutoShutdownmode
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "1", "Get auto shutdown mode", {},
-         std::bind(&ThermalCommandMgr::getAutoShutdownModeCommand, myThermCmdMgr_)));
+    std::shared_ptr<ConsoleAppCommand> getAutoShutdownmode
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "Get auto shutdown mode", {},
+            std::bind(&ThermalCommandMgr::getAutoShutdownModeCommand, myThermCmdMgr_)));
 
-   std::shared_ptr<ConsoleAppCommand> disableAutoShutdownCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "2", "Disable auto shutdown mode", {},
-         std::bind(&ThermalCommandMgr::sendAutoShutdownModeCommand, myThermCmdMgr_,
-                   AutoShutdownMode::DISABLE)));
+    std::shared_ptr<ConsoleAppCommand> disableAutoShutdownCommand
+        = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand("2", "Disable auto shutdown mode", {},
+                std::bind(&ThermalCommandMgr::sendAutoShutdownModeCommand, myThermCmdMgr_,
+                    AutoShutdownMode::DISABLE)));
 
-   std::shared_ptr<ConsoleAppCommand> enableAutoShutdownCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "3", "Enable auto shutdown mode", {},
-         std::bind(&ThermalCommandMgr::sendAutoShutdownModeCommand, myThermCmdMgr_,
+    std::shared_ptr<ConsoleAppCommand> enableAutoShutdownCommand
+        = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand("3", "Enable auto shutdown mode", {},
+                std::bind(&ThermalCommandMgr::sendAutoShutdownModeCommand, myThermCmdMgr_,
                     AutoShutdownMode::ENABLE)));
 
-   std::shared_ptr<ConsoleAppCommand> recurringdisableAutoShutdownmode
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "4", "Always disable auto shutdown mode", {},
-         std::bind(&ThermalCommandMgr::sendRecurringDisableCommand, myThermCmdMgr_)));
+    std::shared_ptr<ConsoleAppCommand> recurringdisableAutoShutdownmode
+        = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand("4", "Always disable auto shutdown mode", {},
+                std::bind(&ThermalCommandMgr::sendRecurringDisableCommand, myThermCmdMgr_)));
 
-   std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListThermalMenu
-      = {getAutoShutdownmode, disableAutoShutdownCommand, enableAutoShutdownCommand,
-          recurringdisableAutoShutdownmode};
-   ConsoleApp::addCommands(commandsListThermalMenu);
-   ConsoleApp::displayMenu();
+    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListThermalMenu = {getAutoShutdownmode,
+        disableAutoShutdownCommand, enableAutoShutdownCommand, recurringdisableAutoShutdownmode};
+    ConsoleApp::addCommands(commandsListThermalMenu);
+    ConsoleApp::displayMenu();
 }
 
 /**
  * Main routine
  */
-int main(int argc, char ** argv) {
+int main(int argc, char **argv) {
 
     Status ret = Status::FAILED;
     // Setting required secondary groups for SDK file/diag logging
     std::vector<std::string> supplementaryGrps{"system", "diag", "logd", "dlt"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
-    if (rc == -1){
+    if (rc == -1) {
         std::cout << APP_NAME << "Adding supplementary groups failed!" << std::endl;
     }
     auto &ThermMgmtTest = ThermalShutdownTestApp::getInstance();
 
-    if( 0 != ThermMgmtTest.init()) {
-        std::cout << APP_NAME <<
-            " Failed to initialize the Thermal-Shutdown management service" << std::endl;
+    if (0 != ThermMgmtTest.init()) {
+        std::cout << APP_NAME << " Failed to initialize the Thermal-Shutdown management service"
+                  << std::endl;
         return -1;
     }
     ret = ThermMgmtTest.parseArguments(argc, argv);
-    if(ret !=Status::SUCCESS) {
+    if (ret != Status::SUCCESS) {
         return -1;
     }
     signal(SIGINT, signalHandler);

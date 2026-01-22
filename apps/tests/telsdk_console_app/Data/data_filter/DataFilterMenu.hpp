@@ -26,10 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Technologies, Inc. are provided under the following license:
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -72,7 +73,6 @@ using namespace telux::data::net;
 
 class DataFilterMenu : public IDataFilterListener, public ConsoleApp {
  public:
-
     // initialize menu and sdk
     bool init();
 
@@ -82,11 +82,10 @@ class DataFilterMenu : public IDataFilterListener, public ConsoleApp {
     void addFilter();
     void removeAllFilter();
 
-    SlotId getSlotIdOfFilter(
-        DataConfigParser instance, std::map<std::string, std::string> filter);
+    SlotId getSlotIdOfFilter(DataConfigParser instance, std::map<std::string, std::string> filter);
 
-    IpProtocol getTypeOfFilter(DataConfigParser instance,
-            std::map<std::string, std::string> filter);
+    IpProtocol getTypeOfFilter(
+        DataConfigParser instance, std::map<std::string, std::string> filter);
     void addIPParameters(std::shared_ptr<telux::data::IIpFilter> &dataFilter,
         DataConfigParser instance, std::map<std::string, std::string> filterMap);
     void commandCallback(ErrorCode errorCode);
@@ -98,6 +97,11 @@ class DataFilterMenu : public IDataFilterListener, public ConsoleApp {
 
  private:
     bool initDataFilterManagerAndListener(SlotId slotId);
+    bool getDataFiltersConfig(int slotId, std::string filePath,
+        std::vector<std::shared_ptr<telux::data::IIpFilter>> &dataFilters);
+    void getIPInfo(std::shared_ptr<telux::data::IIpFilter> &dataFilter);
+    void getPortInfo(int &srcPort, int &srcRange, int &destPort, int &destRange);
+    bool getDataFiltersInput(std::vector<std::shared_ptr<telux::data::IIpFilter>> &dataFilters);
 
     std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
     std::map<SlotId, std::shared_ptr<telux::data::IDataConnectionManager>> dataConnManagerMap_;
@@ -107,6 +111,5 @@ class DataFilterMenu : public IDataFilterListener, public ConsoleApp {
     std::map<SlotId, std::shared_ptr<telux::data::IDataFilterManager>> dataFilterManagerMap_;
     std::map<SlotId, std::shared_ptr<MyDataFilterListener>> dataFilterListener_;
     std::map<SlotId, ResponseCallback> responseCbMap_;
-
 };
 #endif

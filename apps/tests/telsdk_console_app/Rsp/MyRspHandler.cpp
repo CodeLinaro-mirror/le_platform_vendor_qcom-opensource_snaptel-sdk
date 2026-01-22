@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include "iostream"
 #include "MyRspHandler.hpp"
 #include "Utils.hpp"
@@ -34,8 +40,8 @@
 #define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
 
 void MyRspCallback::onProfileListResponse(
-        const std::vector<std::shared_ptr<telux::tel::SimProfile>> &profiles,
-        telux::common::ErrorCode errorCode) {
+    const std::vector<std::shared_ptr<telux::tel::SimProfile>> &profiles,
+    telux::common::ErrorCode errorCode) {
     if (errorCode == telux::common::ErrorCode::SUCCESS) {
         if (profiles.size() == 0) {
             PRINT_CB << "Profile List is empty  \n";
@@ -54,17 +60,18 @@ void MyRspCallback::onProfileListResponse(
             }
         }
     } else {
-        PRINT_CB << "\n Request profile list failed, ErrorCode: " <<static_cast<int>(errorCode)
-                 << " Description : " << Utils::getErrorCodeAsString(errorCode)<< std::endl;
+        PRINT_CB << "\n Request profile list failed, ErrorCode: " << static_cast<int>(errorCode)
+                 << " Description : " << Utils::getErrorCodeAsString(errorCode) << std::endl;
     }
 }
 
 void MyRspCallback::onEidResponse(std::string eid, telux::common::ErrorCode errorCode) {
     if (errorCode == telux::common::ErrorCode::SUCCESS) {
-        PRINT_CB << "Eid : " << eid <<std::endl;;
+        PRINT_CB << "Eid : " << eid << std::endl;
+        ;
     } else {
-        PRINT_CB << "Request Eid failed, ErrorCode: " <<static_cast<int>(errorCode)
-                 << " Description : " << Utils::getErrorCodeAsString(errorCode)<< std::endl;
+        PRINT_CB << "Request Eid failed, ErrorCode: " << static_cast<int>(errorCode)
+                 << " Description : " << Utils::getErrorCodeAsString(errorCode) << std::endl;
     }
 }
 
@@ -72,20 +79,20 @@ void MyRspCallback::onResponseCallback(telux::common::ErrorCode error) {
     std::cout << std::endl;
     if (error != telux::common::ErrorCode::SUCCESS) {
         PRINT_CB << "Request failed with errorCode: " << static_cast<int>(error)
-                 << " Description : " << Utils::getErrorCodeAsString(error)<< std::endl;
+                 << " Description : " << Utils::getErrorCodeAsString(error) << std::endl;
     } else {
         PRINT_CB << "Request processed successfully \n";
     }
 }
 
-void MyRspCallback::onServerAddressResponse(std::string smdpAddress,
-        std::string smdsAddress, telux::common::ErrorCode errorCode) {
+void MyRspCallback::onServerAddressResponse(
+    std::string smdpAddress, std::string smdsAddress, telux::common::ErrorCode errorCode) {
     if (errorCode == telux::common::ErrorCode::SUCCESS) {
-        PRINT_CB << "SM-DP+ Address : " << smdpAddress <<std::endl;
-        PRINT_CB << "SMDS Address : " << smdsAddress <<std::endl;;
+        PRINT_CB << "SM-DP+ Address : " << smdpAddress << std::endl;
+        PRINT_CB << "SMDS Address : " << smdsAddress << std::endl;
+        ;
     } else {
-        PRINT_CB << "Request Server Address failed, ErrorCode: " <<static_cast<int>(errorCode)
-                 << " Description : " << Utils::getErrorCodeAsString(errorCode)<< std::endl;
+        PRINT_CB << "Request Server Address failed, ErrorCode: " << static_cast<int>(errorCode)
+                 << " Description : " << Utils::getErrorCodeAsString(errorCode) << std::endl;
     }
 }
-

@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_DriveDirection_H_
-#define	_DriveDirection_H_
-
+#ifndef _DriveDirection_H_
+#define _DriveDirection_H_
 
 #include <asn_application.h>
 
@@ -20,13 +19,13 @@ extern "C" {
 
 /* Dependencies */
 typedef enum DriveDirection {
-	DriveDirection_forward	= 0,
-	DriveDirection_backward	= 1,
-	DriveDirection_unavailable	= 2
+    DriveDirection_forward     = 0,
+    DriveDirection_backward    = 1,
+    DriveDirection_unavailable = 2
 } e_DriveDirection;
 
 /* DriveDirection */
-typedef long	 DriveDirection_t;
+typedef long DriveDirection_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_DriveDirection;
@@ -44,5 +43,5 @@ per_type_encoder_f DriveDirection_encode_uper;
 }
 #endif
 
-#endif	/* _DriveDirection_H_ */
+#endif /* _DriveDirection_H_ */
 #include <asn_internal.h>

@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "BridgeManagerStub.hpp"
@@ -18,10 +18,10 @@ namespace telux {
 namespace data {
 namespace net {
 
-BridgeManagerStub::BridgeManagerStub () {
+BridgeManagerStub::BridgeManagerStub() {
     LOG(DEBUG, __FUNCTION__);
-    taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
-    listenerMgr_ = std::make_shared<telux::common::ListenerManager<IBridgeListener>>();
+    taskQ_           = std::make_shared<AsyncTaskQueue<void>>();
+    listenerMgr_     = std::make_shared<telux::common::ListenerManager<IBridgeListener>>();
     subSystemStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
 }
 
@@ -36,9 +36,8 @@ telux::common::Status BridgeManagerStub::init(telux::common::InitResponseCb call
     LOG(DEBUG, __FUNCTION__);
 
     initCb_ = callback;
-    auto f =
-        std::async(std::launch::async, [this, callback]() {
-        this->initSync(callback);}).share();
+    auto f
+        = std::async(std::launch::async, [this, callback]() { this->initSync(callback); }).share();
     taskQ_->add(f);
 
     return telux::common::Status::SUCCESS;
@@ -54,10 +53,9 @@ void BridgeManagerStub::initSync(telux::common::InitResponseCb callback) {
     ::dataStub::GetServiceStatusReply response;
     ClientContext context;
 
-    grpc::Status reqStatus = stub_->InitService(&context, request, &response);
-    telux::common::ServiceStatus cbStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
-    int cbDelay = DEFAULT_DELAY;
+    grpc::Status reqStatus                = stub_->InitService(&context, request, &response);
+    telux::common::ServiceStatus cbStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    int cbDelay                           = DEFAULT_DELAY;
 
     do {
         if (!reqStatus.ok()) {
@@ -65,23 +63,21 @@ void BridgeManagerStub::initSync(telux::common::InitResponseCb callback) {
             break;
         }
 
-        cbStatus =
-            static_cast<telux::common::ServiceStatus>(response.service_status());
-        cbDelay = static_cast<int>(response.delay());
+        cbStatus = static_cast<telux::common::ServiceStatus>(response.service_status());
+        cbDelay  = static_cast<int>(response.delay());
 
         this->onServiceStatusChange(cbStatus);
         LOG(DEBUG, __FUNCTION__, " ServiceStatus: ", static_cast<int>(cbStatus));
     } while (0);
 
-    bool isSubsystemReady = (cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE)?
-        true : false;
+    bool isSubsystemReady
+        = (cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) ? true : false;
     setSubSystemStatus(cbStatus);
     setSubsystemReady(isSubsystemReady);
 
     if (callback && (cbDelay != SKIP_CALLBACK)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay,
-            " cbStatus::", static_cast<int>(cbStatus));
+        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", static_cast<int>(cbStatus));
         invokeInitCallback(cbStatus);
     }
 }
@@ -93,15 +89,12 @@ void BridgeManagerStub::invokeInitCallback(telux::common::ServiceStatus status) 
     }
 }
 
-void BridgeManagerStub::invokeCallback(telux::common::ResponseCallback callback,
-    telux::common::ErrorCode error, int cbDelay ) {
+void BridgeManagerStub::invokeCallback(
+    telux::common::ResponseCallback callback, telux::common::ErrorCode error, int cbDelay) {
     LOG(DEBUG, __FUNCTION__);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-    auto f = std::async(std::launch::async,
-        [this, error , callback]() {
-            callback(error);
-        }).share();
+    auto f = std::async(std::launch::async, [this, error, callback]() { callback(error); }).share();
     taskQ_->add(f);
 }
 
@@ -144,8 +137,7 @@ bool BridgeManagerStub::isSubsystemReady() {
     return ready_;
 }
 
-telux::common::Status BridgeManagerStub::registerListener(
-    std::weak_ptr<IBridgeListener> listener) {
+telux::common::Status BridgeManagerStub::registerListener(std::weak_ptr<IBridgeListener> listener) {
     LOG(DEBUG, __FUNCTION__);
     return listenerMgr_->registerListener(listener);
 }
@@ -171,8 +163,8 @@ void BridgeManagerStub::onServiceStatusChange(ServiceStatus status) {
     }
 }
 
-telux::common::ErrorCode BridgeManagerStub::setInterfaceBridge(InterfaceType ifaceType,
-    uint32_t bridgeId) {
+telux::common::ErrorCode BridgeManagerStub::setInterfaceBridge(
+    InterfaceType ifaceType, uint32_t bridgeId) {
     LOG(DEBUG, __FUNCTION__);
 
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
@@ -180,8 +172,7 @@ telux::common::ErrorCode BridgeManagerStub::setInterfaceBridge(InterfaceType ifa
         return telux::common::ErrorCode::SUBSYSTEM_UNAVAILABLE;
     }
 
-    if (ifaceType < InterfaceType::AP_PRIMARY ||
-        ifaceType > InterfaceType::AP_QUATERNARY) {
+    if (ifaceType < InterfaceType::AP_PRIMARY || ifaceType > InterfaceType::AP_QUATERNARY) {
         return telux::common::ErrorCode::NOT_SUPPORTED;
     }
 
@@ -199,8 +190,8 @@ telux::common::ErrorCode BridgeManagerStub::setInterfaceBridge(InterfaceType ifa
     return error;
 }
 
-telux::common::ErrorCode BridgeManagerStub::getInterfaceBridge(InterfaceType ifaceType,
-    uint32_t& bridgeId) {
+telux::common::ErrorCode BridgeManagerStub::getInterfaceBridge(
+    InterfaceType ifaceType, uint32_t &bridgeId) {
     LOG(DEBUG, __FUNCTION__);
 
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
@@ -208,8 +199,7 @@ telux::common::ErrorCode BridgeManagerStub::getInterfaceBridge(InterfaceType ifa
         return telux::common::ErrorCode::SUBSYSTEM_UNAVAILABLE;
     }
 
-    if (ifaceType < InterfaceType::AP_PRIMARY ||
-        ifaceType > InterfaceType::AP_QUATERNARY) {
+    if (ifaceType < InterfaceType::AP_PRIMARY || ifaceType > InterfaceType::AP_QUATERNARY) {
         return telux::common::ErrorCode::NOT_SUPPORTED;
     }
 
@@ -230,26 +220,25 @@ telux::common::ErrorCode BridgeManagerStub::getInterfaceBridge(InterfaceType ifa
     return error;
 }
 
-telux::common::Status BridgeManagerStub::enableBridge(bool enable,
-    telux::common::ResponseCallback callback) {
+telux::common::Status BridgeManagerStub::enableBridge(
+    bool enable, telux::common::ResponseCallback callback) {
     return telux::common::Status::NOTSUPPORTED;
 }
 
-telux::common::Status BridgeManagerStub::addBridge( BridgeInfo config,
-    telux::common::ResponseCallback callback) {
+telux::common::Status BridgeManagerStub::addBridge(
+    BridgeInfo config, telux::common::ResponseCallback callback) {
     return telux::common::Status::NOTSUPPORTED;
 }
 
-telux::common::Status BridgeManagerStub::requestBridgeInfo(
-    BridgeInfoResponseCb callback) {
+telux::common::Status BridgeManagerStub::requestBridgeInfo(BridgeInfoResponseCb callback) {
     return telux::common::Status::NOTSUPPORTED;
 }
 
-telux::common::Status BridgeManagerStub::removeBridge(std::string ifaceName,
-    telux::common::ResponseCallback callback) {
+telux::common::Status BridgeManagerStub::removeBridge(
+    std::string ifaceName, telux::common::ResponseCallback callback) {
     return telux::common::Status::NOTSUPPORTED;
 }
 
-} // end of namespace net
-} // end of namespace data
-} // end of namespace telux
+}  // end of namespace net
+}  // end of namespace data
+}  // end of namespace telux

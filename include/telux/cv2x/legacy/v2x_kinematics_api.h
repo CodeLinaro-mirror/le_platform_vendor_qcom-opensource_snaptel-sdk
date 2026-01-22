@@ -26,9 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -73,7 +74,7 @@ typedef int v2x_kinematics_handle_t;
 
     @newpage
  */
-typedef void (*v2x_kinematics_init_callback_t)(v2x_status_enum_type  status, void *context);
+typedef void (*v2x_kinematics_init_callback_t)(v2x_status_enum_type status, void *context);
 
 /**
     User-defined listener function called when a data rate is updated.
@@ -87,8 +88,8 @@ typedef void (*v2x_kinematics_init_callback_t)(v2x_status_enum_type  status, voi
     @param[in] ctx     Pointer to the application context from which this
                        listener was registered.
  */
-typedef void (*v2x_kinematics_rate_notification_listener_t)(v2x_status_enum_type  status, v2x_rates_t *rate,
-        void *ctx);
+typedef void (*v2x_kinematics_rate_notification_listener_t)(
+    v2x_status_enum_type status, v2x_rates_t *rate, void *ctx);
 
 /**
     User-defined callback function called upon completion of a
@@ -178,8 +179,8 @@ extern v2x_api_ver_t v2x_kinematics_api_version(void);
     @par
     #V2X_KINEMATICS_HANDLE_BAD -- Upon an error. @newpage
  */
-extern v2x_kinematics_handle_t  v2x_kinematics_init(v2x_init_t *param, v2x_kinematics_init_callback_t cb,
-        void *context);
+extern v2x_kinematics_handle_t v2x_kinematics_init(
+    v2x_init_t *param, v2x_kinematics_init_callback_t cb, void *context);
 
 /**
     Gets the current rate and offset from the Kinematics library.
@@ -198,9 +199,8 @@ extern v2x_kinematics_handle_t  v2x_kinematics_init(v2x_init_t *param, v2x_kinem
     @return
     Indication of success or failure from #v2x_status_enum_type. @newpage
  */
-extern v2x_status_enum_type v2x_kinematics_start_rate_notification(v2x_kinematics_handle_t handle,
-        v2x_kinematics_rate_notification_listener_t cb,
-        void *context);
+extern v2x_status_enum_type v2x_kinematics_start_rate_notification(
+    v2x_kinematics_handle_t handle, v2x_kinematics_rate_notification_listener_t cb, void *context);
 
 /**
     Sets the current rate and offset from the Kinematics library.
@@ -223,9 +223,8 @@ extern v2x_status_enum_type v2x_kinematics_start_rate_notification(v2x_kinematic
     Indication of success or failure from #v2x_status_enum_type. @newpage
  */
 v2x_status_enum_type v2x_kinematics_set_rate(v2x_kinematics_handle_t handle, v2x_rates_t *rate,
-        v2x_kinematics_set_rate_callback_t cb,
-        void *context);
-/** @} *//* end_addtogroup telematics_cv2x_c_kinematics */
+    v2x_kinematics_set_rate_callback_t cb, void *context);
+/** @} */ /* end_addtogroup telematics_cv2x_c_kinematics */
 
 /** @addtogroup telematics_cv2x_c_kinematics
 @{ */
@@ -247,7 +246,7 @@ v2x_status_enum_type v2x_kinematics_set_rate(v2x_kinematics_handle_t handle, v2x
     This function requests GNSS fix/motion callbacks at a specified rate (Hz)
     with a specified offset.
     @par
-    Only certain rates are supported (such as 1 Hz, 2 Hz, 5 Hz, 10 Hz), which 
+    Only certain rates are supported (such as 1 Hz, 2 Hz, 5 Hz, 10 Hz), which
     are obtained from v2x_kinematics_get_capabilities().
     @par
     Currently, a request cannot be made for a rate slower than 1 Hz.
@@ -255,8 +254,8 @@ v2x_status_enum_type v2x_kinematics_set_rate(v2x_kinematics_handle_t handle, v2x
     @return
     Indication of success or failure from #v2x_status_enum_type. @newpage
  */
-v2x_status_enum_type v2x_kinematics_register_listener(v2x_kinematics_handle_t handle,
-        v2x_kinematics_newfix_listener_t listener, void *context);
+v2x_status_enum_type v2x_kinematics_register_listener(
+    v2x_kinematics_handle_t handle, v2x_kinematics_newfix_listener_t listener, void *context);
 
 /**
     Deregisters a previously registered GNSS fix that the listener established
@@ -275,8 +274,8 @@ v2x_status_enum_type v2x_kinematics_register_listener(v2x_kinematics_handle_t ha
     @return
     Indication of success or failure from #v2x_status_enum_type. @newpage
  */
-v2x_status_enum_type v2x_kinematics_deregister_listener(v2x_kinematics_handle_t handle, v2x_kinematics_deregister_callback_t cb,
-        void *context);
+v2x_status_enum_type v2x_kinematics_deregister_listener(
+    v2x_kinematics_handle_t handle, v2x_kinematics_deregister_callback_t cb, void *context);
 
 /**
     Terminates the Kinematics library.
@@ -294,8 +293,8 @@ v2x_status_enum_type v2x_kinematics_deregister_listener(v2x_kinematics_handle_t 
     @return
     Indication of success or failure from #v2x_status_enum_type. @newpage
  */
-v2x_status_enum_type v2x_kinematics_final(v2x_kinematics_handle_t handle, v2x_kinematics_final_callback_t cb,
-        void *context);
+v2x_status_enum_type v2x_kinematics_final(
+    v2x_kinematics_handle_t handle, v2x_kinematics_final_callback_t cb, void *context);
 
 /**
     Enables the Kinematics fixes from GNSS.
@@ -323,10 +322,10 @@ void v2x_kinematics_enable_fixes(v2x_kinematics_handle_t handle);
  */
 void v2x_kinematics_disable_fixes(v2x_kinematics_handle_t handle);
 
-/** @} *//* end_addtogroup telematics_cv2x_c_kinematics */
+/** @} */ /* end_addtogroup telematics_cv2x_c_kinematics */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // TELUX_CV2X_LEGACY_V2X_KINEMATICS_API_H
+#endif  // TELUX_CV2X_LEGACY_V2X_KINEMATICS_API_H

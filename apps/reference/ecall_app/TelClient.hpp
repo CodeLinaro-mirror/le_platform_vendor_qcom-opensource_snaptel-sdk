@@ -28,9 +28,8 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -48,17 +47,17 @@ using namespace telux::tel;
  * network scan fail indication is reported, when high capability switch is required.
  */
 struct ECallInfo {
-    bool transmitMsd;          /**< Set to true if MSD needs to be transmitted*/
-    ECallMsdData msdData;      /**< If the transmitMsd is true, msdData will holds all the details
-                                    required to construct an MSD */
-    std::vector<uint8_t> msdPdu;/**< If the transmitMsd is true, msdData will holds all the details
-                                    required to construct an MSD */
-    bool isCustomNumber;       /**< Set to true if client is dialing*/
-    std::string dialNumber;    /**< If isCustomNumber is true, dialNumber holds the number */
-    ECallCategory category;    /**< ECall Category ie., automatic or normal */
-    ECallVariant variant;      /**< ECall Variant ie., test or emergency or voice call */
-    bool eCallNWScanFailed;    /**< Set to true if the emergency network scan fail indication is
-                                     reported */
+    bool transmitMsd; /**< Set to true if MSD needs to be transmitted*/
+    ECallMsdData msdData; /**< If the transmitMsd is true, msdData will holds all the details
+                               required to construct an MSD */
+    std::vector<uint8_t> msdPdu; /**< If the transmitMsd is true, msdData will holds all the details
+                                     required to construct an MSD */
+    bool isCustomNumber; /**< Set to true if client is dialing*/
+    std::string dialNumber; /**< If isCustomNumber is true, dialNumber holds the number */
+    ECallCategory category; /**< ECall Category ie., automatic or normal */
+    ECallVariant variant; /**< ECall Variant ie., test or emergency or voice call */
+    bool eCallNWScanFailed; /**< Set to true if the emergency network scan fail indication is
+                                  reported */
     bool triggerHighCapSwitch; /**< Set to true if high capability switch is required */
     ECallMsdTransmissionStatus msdTransmissionStatus;
     /**< MSD transmission status */
@@ -298,8 +297,8 @@ class TelClient : public ICallListener,
      * code.
      *
      */
-    telux::common::Status getEncodedOptionalAdditionalDataContent(ECallOptionalEuroNcapData
-        optionalAdditionalData, std::vector<uint8_t> &data);
+    telux::common::Status getEncodedOptionalAdditionalDataContent(
+        ECallOptionalEuroNcapData optionalAdditionalData, std::vector<uint8_t> &data);
 
     /**
      * Gets encoded eCall MSD payload.
@@ -310,8 +309,8 @@ class TelClient : public ICallListener,
      * @returns Error code for getECallMsdPayload i.e success or suitable status code.
      *
      */
-    telux::common::ErrorCode getECallMsdPayload(ECallMsdData eCallMsd,
-        std::vector<uint8_t> &msdPdu);
+    telux::common::ErrorCode getECallMsdPayload(
+        ECallMsdData eCallMsd, std::vector<uint8_t> &msdPdu);
 
     /**
      * Configure eCall redial parameters.
@@ -346,7 +345,7 @@ class TelClient : public ICallListener,
      * @param [in] MSD data
      *
      */
-    void setECallMsd(ECallMsdData& msdData_);
+    void setECallMsd(ECallMsdData &msdData_);
 
     /**
      * Restart eCall High Level Application Protocol (HLAP) timer for residual timer duration.
@@ -410,7 +409,7 @@ class TelClient : public ICallListener,
     void onServiceStatusChange(ServiceStatus status) override;
     void setEraGlonassEnabled(bool isEnabled);
     bool isEraGlonassEnabled();
-    void getCacheData(int &dialDuration, int &autoAnswerDuration );
+    void getCacheData(int &dialDuration, int &autoAnswerDuration);
 
     TelClient();
     ~TelClient();

@@ -1,5 +1,4 @@
 /*
- * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -30,42 +29,42 @@ namespace diag {
 /**
  * Minimum size of the log file.
  */
-#define MIN_DIAG_FILE_SIZE_MB  1
+#define MIN_DIAG_FILE_SIZE_MB 1
 
 /**
  * Maximum size of the log file.
  */
-#define MAX_DIAG_FILE_SIZE_MB  100
+#define MAX_DIAG_FILE_SIZE_MB 100
 
 /**
  * Minimum number of the log files.
  */
-#define MIN_NUM_DIAG_FILES  2
+#define MIN_NUM_DIAG_FILES 2
 
 /**
  * Maximum number of the log files.
  */
-#define MAX_NUM_DIAG_FILES  100
+#define MAX_NUM_DIAG_FILES 100
 
 /**
  * Log flushing stops when this is reached.
  */
-#define MIN_WATER_MARK  1
+#define MIN_WATER_MARK 1
 
 /**
  * Log flushing starts when this is reached.
  */
-#define MAX_WATER_MARK  100
+#define MAX_WATER_MARK 100
 
 /**
  * Default value - flushing stops when this is reached.
  */
-#define DEFAULT_LOW_WATER_MARK  15
+#define DEFAULT_LOW_WATER_MARK 15
 
 /**
  * Default value - flushing starts when this is reached.
  */
-#define DEFAULT_HIGH_WATER_MARK  85
+#define DEFAULT_HIGH_WATER_MARK 85
 
 /**
  * Specifies how an application gets the collected logs.
@@ -317,7 +316,7 @@ struct BufferedModeConfig {
      * Default value is DEFAULT_HIGH_WATER_MARK.
      * Valid range is MIN_WATER_MARK <= highWaterMark <= MAX_WATER_MARK.
      */
-     uint8_t highWaterMark;
+    uint8_t highWaterMark;
 
     /**
      * Low watermark percentage - logs flushing will stop when this
@@ -333,11 +332,13 @@ struct BufferedModeConfig {
  * Specifies configuration for the diagnostics log collection process.
  * Please refer to the below table while setting up the configuration-
  *
- * | Log Mode        | File Log Method | Callback Log Method | Is Draining Supported? | Are Watermarks applicable? | APPS log collection | Q6 log collection |
- * |---------------- |-----------------|---------------------|------------------------|----------------------------|---------------------|-------------------|
- * | Streaming       | 1               | 1                   | 0                      | 0                          | 1                   | 1                 |
- * | Threshold       | 1               | 1                   | 1                      | 1                          | 0                   | 1                 |
- * | CircularBuffer  | 1               | 1                   | 1                      | 0                          | 0                   | 1                 |
+ * | Log Mode        | File Log Method | Callback Log Method | Is Draining Supported? | Are
+ * Watermarks applicable? | APPS log collection | Q6 log collection |
+ * |----------------
+ * |-----------------|---------------------|------------------------|----------------------------|---------------------|-------------------|
+ * | Streaming       | 1               | 1                   | 0                      | 0 | 1 | 1 |
+ * | Threshold       | 1               | 1                   | 1                      | 1 | 0 | 1 |
+ * | CircularBuffer  | 1               | 1                   | 1                      | 0 | 0 | 1 |
  *
  * Legends -
  * 1: Supported
@@ -615,7 +616,7 @@ class IDiagLogManager {
      *          @ref telux::common::ServiceStatus::SERVICE_FAILED if the service needs
      *          re-initialization
      */
-   virtual telux::common::ServiceStatus getServiceStatus() = 0;
+    virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
      * Drains logs from the circular buffer.
@@ -668,8 +669,8 @@ class IDiagLogManager {
 
 /** @} */ /* end_addtogroup telematics_diagnostics */
 
-} // end of namespace diag
-} // end of namespace platform
-} // end of namespace telux
+}  // end of namespace diag
+}  // end of namespace platform
+}  // end of namespace telux
 
-#endif // TELUX_PLATFORM_DIAG_DIAGLOGMANAGER_HPP
+#endif  // TELUX_PLATFORM_DIAG_DIAGLOGMANAGER_HPP

@@ -27,8 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -62,19 +63,20 @@ using grpc::ClientContext;
 
 using sensorStub::SensorClientService;
 
-namespace telux{
-namespace sensor{
+namespace telux {
+namespace sensor {
 
 enum SelfTestFail {
     ACCEL = (1 << 0),
-    GYRO = (1 << 1)
+    GYRO  = (1 << 1)
 };
 
-class SensorClientStub: public ISensorClient,
-                        public IEventListener,
-                        public std::enable_shared_from_this<SensorClientStub> {
-  public:
-    SensorClientStub(SensorInfo sensorInfo, std::shared_ptr<::sensorStub::SensorClientService::Stub> stub);
+class SensorClientStub : public ISensorClient,
+                         public IEventListener,
+                         public std::enable_shared_from_this<SensorClientStub> {
+ public:
+    SensorClientStub(
+        SensorInfo sensorInfo, std::shared_ptr<::sensorStub::SensorClientService::Stub> stub);
     ~SensorClientStub();
     SensorInfo getSensorInfo() override;
     telux::common::Status configure(SensorConfiguration configuration) override;
@@ -90,7 +92,7 @@ class SensorClientStub: public ISensorClient,
     void init();
     void onEventUpdate(google::protobuf::Any event) override;
 
-  private:
+ private:
     SensorConfiguration mergeConfiguration(SensorConfiguration requestedConfig);
     bool checkStreamingConfiguration(SensorConfiguration configuration);
     void onConfigurationUpdate(int sensorId, float samplingRate, int batchCount, bool isRotated);
@@ -118,10 +120,10 @@ class SensorClientStub: public ISensorClient,
     bool sensorSessionActive_;
     SensorConfiguration config_;
     uint64_t lastReceivedEvent_;
-    uint64_t lastReceivedSample_=0;
-    uint64_t outgoingSampleCount_=0;
-    uint64_t receivedSampleCount_=0;
-    uint64_t reqTimeGap_ =0;
+    uint64_t lastReceivedSample_  = 0;
+    uint64_t outgoingSampleCount_ = 0;
+    uint64_t receivedSampleCount_ = 0;
+    uint64_t reqTimeGap_          = 0;
     std::vector<std::vector<std::string>> events_;
     std::map<uint64_t, uint64_t> sensorSamplingMap_;
     uint64_t sampleCountFromMap_;
@@ -129,8 +131,7 @@ class SensorClientStub: public ISensorClient,
     std::weak_ptr<telux::sensor::SensorClientStub> myself_;
 };
 
+}  // namespace sensor
 
-}
-
-}
+}  // namespace telux
 #endif

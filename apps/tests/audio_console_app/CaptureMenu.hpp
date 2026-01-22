@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef CAPTUREMENU_HPP
 #define CAPTUREMENU_HPP
 
@@ -34,14 +40,14 @@
 #include "AudioClient.hpp"
 
 class CaptureMenu : public ConsoleApp {
-public:
+ public:
     CaptureMenu(std::string appName, std::string cursor, std::shared_ptr<AudioClient> audioClient);
     ~CaptureMenu();
     void init();
     void cleanup();
     void setSystemReady();
 
-private:
+ private:
     void createStream(std::vector<std::string> userInput);
     void deleteStream(std::vector<std::string> userInput);
     void getDevice(std::vector<std::string> userInput);
@@ -53,8 +59,8 @@ private:
     void startCapture(std::vector<std::string> userInput);
     void stopCapture(std::vector<std::string> userInput);
 
-    void readCallback(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
-           telux::common::ErrorCode error);
+    void readCallback(
+        std::shared_ptr<telux::audio::IStreamBuffer> buffer, telux::common::ErrorCode error);
     void record();
 
     std::shared_ptr<IAudioCaptureStream> audioCaptureStream_;
@@ -64,11 +70,11 @@ private:
     std::mutex mutex_;
     std::condition_variable cv_;
     uint32_t bufferRecordedTillNow_;
-    FILE * file_;
+    FILE *file_;
     std::vector<std::thread> runningThreads_;
     std::atomic<bool> captureStatus_;
     std::atomic<bool> ready_;
     std::atomic<bool> readFail_;
 };
 
-#endif // CAPTUREMENU_HPP
+#endif  // CAPTUREMENU_HPP

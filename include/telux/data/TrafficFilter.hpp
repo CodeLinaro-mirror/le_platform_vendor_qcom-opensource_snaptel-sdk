@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef TELUX_DATA_TRAFFICFILTER_HPP
@@ -17,31 +17,36 @@ namespace data {
  * @brief Specifies the data path through the various internal components.
  */
 enum class DataPath {
-    TETHERED_TO_WAN_HW = 0, /**< Data flow between clients tethered to the NAD over ethernet and the WAN interface using hardware acceleration. Data path: Eth <=> IPA <=> Modem <=> WAN */
-    TETHERED_TO_APPS_SW,    /**< Data flows between clients tethered to the NAD over ethernet and software running on the application processor using a software path. Data path: Eth <=> Apps Processor */
-    APPS_TO_WAN             /**< Data flow between the application processor and WAN. Data path: Apps Processor <=> WAN */
+    TETHERED_TO_WAN_HW
+        = 0, /**< Data flow between clients tethered to the NAD over ethernet and the WAN interface
+                using hardware acceleration. Data path: Eth <=> IPA <=> Modem <=> WAN */
+    TETHERED_TO_APPS_SW, /**< Data flows between clients tethered to the NAD over ethernet and
+                            software running on the application processor using a software path.
+                            Data path: Eth <=> Apps Processor */
+    APPS_TO_WAN /**< Data flow between the application processor and WAN. Data path: Apps Processor
+                   <=> WAN */
 };
 
 /**
  * @brief Provide valid parameters in @ref ITrafficFilter
  */
 enum TrafficFilterValidField {
-    TF_DIRECTION_VALID = (1 << 0),
-    TF_PCP_VALID = (1 << 1),
-    TF_IP_PROTOCOL_VALID = (1 << 2),
-    TF_SOURCE_IPV4_ADDRESS_VALID = (1 << 3),
-    TF_SOURCE_IPV6_ADDRESS_VALID = (1 << 4),
-    TF_SOURCE_PORT_VALID = (1 << 5),
-    TF_SOURCE_VLAN_LIST_VALID = (1 << 6),
+    TF_DIRECTION_VALID                = (1 << 0),
+    TF_PCP_VALID                      = (1 << 1),
+    TF_IP_PROTOCOL_VALID              = (1 << 2),
+    TF_SOURCE_IPV4_ADDRESS_VALID      = (1 << 3),
+    TF_SOURCE_IPV6_ADDRESS_VALID      = (1 << 4),
+    TF_SOURCE_PORT_VALID              = (1 << 5),
+    TF_SOURCE_VLAN_LIST_VALID         = (1 << 6),
     TF_DESTINATION_IPV4_ADDRESS_VALID = (1 << 7),
     TF_DESTINATION_IPV6_ADDRESS_VALID = (1 << 8),
-    TF_DESTINATION_PORT_VALID = (1 << 9),
-    TF_DESTINATION_VLAN_LIST_VALID = (1 << 10),
-    TF_DATA_PATH_VALID = (1 << 11),
-    TF_SOURCE_PORT_RANGE_VALID = (1 << 12),
-    TF_DESTINATION_PORT_RANGE_VALID = (1 << 13),
-    TF_SOURCE_PORT_CONFIG_VALID = (1 << 14),
-    TF_DESTINATION_PORT_CONFIG_VALID = (1 << 15),
+    TF_DESTINATION_PORT_VALID         = (1 << 9),
+    TF_DESTINATION_VLAN_LIST_VALID    = (1 << 10),
+    TF_DATA_PATH_VALID                = (1 << 11),
+    TF_SOURCE_PORT_RANGE_VALID        = (1 << 12),
+    TF_DESTINATION_PORT_RANGE_VALID   = (1 << 13),
+    TF_SOURCE_PORT_CONFIG_VALID       = (1 << 14),
+    TF_DESTINATION_PORT_CONFIG_VALID  = (1 << 15),
 };
 
 /**
@@ -114,8 +119,8 @@ enum class FieldType {
  */
 struct PortConfig {
     uint16_t port;
-    uint16_t range = 0;  /**< Optional field. */
-    uint16_t maxActiveConnections = 0;  /**< Optional field. */
+    uint16_t range                = 0; /**< Optional field. */
+    uint16_t maxActiveConnections = 0; /**< Optional field. */
 };
 
 /**
@@ -207,7 +212,7 @@ class ITrafficFilter {
      * @note Eval: This is a new API and is being evaluated. It is subject to
      * change and could break backwards compatibility.
      */
-    virtual PortConfig& getPortConfig(FieldType fieldType) = 0;
+    virtual PortConfig &getPortConfig(FieldType fieldType) = 0;
 
     /**
      * @brief Retrieves the port.
@@ -230,7 +235,7 @@ class ITrafficFilter {
      * @note Eval: This is a new API and is being evaluated. It is subject to change and could
      * break backwards compatibility.
      */
-    virtual void getPortRange(FieldType fieldType, uint16_t& startPort, uint16_t& range) = 0;
+    virtual void getPortRange(FieldType fieldType, uint16_t &startPort, uint16_t &range) = 0;
 
     /**
      * @brief Retrieves the list of VLANs.

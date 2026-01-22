@@ -26,9 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -74,9 +75,7 @@ class ECallerWithPdu : public telux::tel::IMakeCallCallback,
 
         /* Step - 2 */
         callMgr_ = phoneFactory.getCallManager(
-                [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+            [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!callMgr_) {
             std::cout << "Can't get ICallManager" << std::endl;
@@ -86,8 +85,8 @@ class ECallerWithPdu : public telux::tel::IMakeCallCallback,
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Call manager service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Call manager service unavailable, status "
+                      << static_cast<int>(serviceStatus) << std::endl;
             return -EIO;
         }
 
@@ -98,40 +97,40 @@ class ECallerWithPdu : public telux::tel::IMakeCallCallback,
     int triggerECall() {
         telux::common::Status status;
         int emergencyCategory = 64;
-        int eCallVariant = 1;
-        int phoneId = DEFAULT_PHONE_ID;
+        int eCallVariant      = 1;
+        int phoneId           = DEFAULT_PHONE_ID;
         /* Populate eCallMsdData with valid information */
         telux::tel::ECallMsdData eCallMsdData{};
         eCallMsdData.optionals.recentVehicleLocationN1Present = true;
         eCallMsdData.optionals.recentVehicleLocationN2Present = true;
-        eCallMsdData.optionals.numberOfPassengersPresent = 1;
-        eCallMsdData.messageIdentifier = 60;
-        eCallMsdData.control.automaticActivation = true;
-        eCallMsdData.control.testCall = false;
-        eCallMsdData.control.positionCanBeTrusted = true;
+        eCallMsdData.optionals.numberOfPassengersPresent      = 1;
+        eCallMsdData.messageIdentifier                        = 60;
+        eCallMsdData.control.automaticActivation              = true;
+        eCallMsdData.control.testCall                         = false;
+        eCallMsdData.control.positionCanBeTrusted             = true;
         eCallMsdData.control.vehicleType = telux::tel::ECallVehicleType::PASSENGER_VEHICLE_CLASS_M1;
-        eCallMsdData.vehicleIdentificationNumber.isowmi = "ECA";
-        eCallMsdData.vehicleIdentificationNumber.isovds = "LLEXAM";
-        eCallMsdData.vehicleIdentificationNumber.isovisModelyear = "P";
-        eCallMsdData.vehicleIdentificationNumber.isovisSeqPlant = "LE02013";
-        eCallMsdData.vehiclePropulsionStorage.gasolineTankPresent = true;
-        eCallMsdData.vehiclePropulsionStorage.dieselTankPresent = true;
-        eCallMsdData.vehiclePropulsionStorage.compressedNaturalGas = false;
-        eCallMsdData.vehiclePropulsionStorage.liquidPropaneGas = false;
+        eCallMsdData.vehicleIdentificationNumber.isowmi             = "ECA";
+        eCallMsdData.vehicleIdentificationNumber.isovds             = "LLEXAM";
+        eCallMsdData.vehicleIdentificationNumber.isovisModelyear    = "P";
+        eCallMsdData.vehicleIdentificationNumber.isovisSeqPlant     = "LE02013";
+        eCallMsdData.vehiclePropulsionStorage.gasolineTankPresent   = true;
+        eCallMsdData.vehiclePropulsionStorage.dieselTankPresent     = true;
+        eCallMsdData.vehiclePropulsionStorage.compressedNaturalGas  = false;
+        eCallMsdData.vehiclePropulsionStorage.liquidPropaneGas      = false;
         eCallMsdData.vehiclePropulsionStorage.electricEnergyStorage = false;
-        eCallMsdData.vehiclePropulsionStorage.hydrogenStorage = false;
-        eCallMsdData.vehiclePropulsionStorage.otherStorage = false;
-        eCallMsdData.timestamp = 1367878452;
-        eCallMsdData.vehicleLocation.positionLatitude = 123;
-        eCallMsdData.vehicleLocation.positionLongitude = 1234;
-        eCallMsdData.vehicleDirection = 4;
-        eCallMsdData.optionals.optionalDataPresent = true;
-        eCallMsdData.recentVehicleLocationN1.latitudeDelta = -1;
-        eCallMsdData.recentVehicleLocationN1.longitudeDelta = -10;
-        eCallMsdData.recentVehicleLocationN2.latitudeDelta = -1;
-        eCallMsdData.recentVehicleLocationN2.longitudeDelta = -30;
-        eCallMsdData.numberOfPassengers = 2;
-        eCallMsdData.optionalPdu.oid = "8.1";
+        eCallMsdData.vehiclePropulsionStorage.hydrogenStorage       = false;
+        eCallMsdData.vehiclePropulsionStorage.otherStorage          = false;
+        eCallMsdData.timestamp                                      = 1367878452;
+        eCallMsdData.vehicleLocation.positionLatitude               = 123;
+        eCallMsdData.vehicleLocation.positionLongitude              = 1234;
+        eCallMsdData.vehicleDirection                               = 4;
+        eCallMsdData.optionals.optionalDataPresent                  = true;
+        eCallMsdData.recentVehicleLocationN1.latitudeDelta          = -1;
+        eCallMsdData.recentVehicleLocationN1.longitudeDelta         = -10;
+        eCallMsdData.recentVehicleLocationN2.latitudeDelta          = -1;
+        eCallMsdData.recentVehicleLocationN2.longitudeDelta         = -30;
+        eCallMsdData.numberOfPassengers                             = 2;
+        eCallMsdData.optionalPdu.oid                                = "8.1";
         /* If already encoded optional additional data content is available, fill "oadData",
           otherwise fill Euro NCAP optional additional data content fields.
           # For example, std::string oadData("0832D28480"); */
@@ -144,17 +143,17 @@ class ECallerWithPdu : public telux::tel::IMakeCallCallback,
             // get encoded optional additional data content
             telux::tel::ECallOptionalEuroNcapData optionalEuroNcapData = {};
             // refer ECallLocationOfImpact for more values.
-            optionalEuroNcapData.locationOfImpact = telux::tel::ECallLocationOfImpact::FRONT;
+            optionalEuroNcapData.locationOfImpact        = telux::tel::ECallLocationOfImpact::FRONT;
             optionalEuroNcapData.rollOverDetectedPresent = false;
-            optionalEuroNcapData.rollOverDetected = false;
+            optionalEuroNcapData.rollOverDetected        = false;
             // deltav range limit is 100 to 255
             optionalEuroNcapData.deltaV.rangeLimit = 125;
             // deltav VX range is -255 to 255
             optionalEuroNcapData.deltaV.deltaVX = -45;
             // deltav VY range is -255 to 255
             optionalEuroNcapData.deltaV.deltaVY = 10;
-            auto encodeOADContentStatus = callMgr_->encodeEuroNcapOptionalAdditionalData(
-                optionalEuroNcapData, data);
+            auto encodeOADContentStatus
+                = callMgr_->encodeEuroNcapOptionalAdditionalData(optionalEuroNcapData, data);
             if (encodeOADContentStatus != telux::common::Status::SUCCESS) {
                 std::cout << " Optional additional data content encoding failed" << std::endl;
                 return 1;
@@ -163,7 +162,7 @@ class ECallerWithPdu : public telux::tel::IMakeCallCallback,
         }
 
         /* Step - 4 */
-        std::vector<uint8_t> msdPdu = {};
+        std::vector<uint8_t> msdPdu      = {};
         telux::common::ErrorCode errCode = callMgr_->encodeECallMsd(eCallMsdData, msdPdu);
         if (errCode == telux::common::ErrorCode::SUCCESS) {
             std::stringstream ss;
@@ -173,13 +172,12 @@ class ECallerWithPdu : public telux::tel::IMakeCallCallback,
             std::cout << "ECall MSD payload is : " << ss.str() << std::endl;
         } else {
             std::cout << "ERROR - Failed to retrieve ecall msd payload,"
-                << " Error:" << static_cast<int>(errCode) << "\n";
+                      << " Error:" << static_cast<int>(errCode) << "\n";
         }
         /* Step - 5 */
-        status = callMgr_->makeECall(phoneId,
-            msdPdu, emergencyCategory, eCallVariant,
+        status = callMgr_->makeECall(phoneId, msdPdu, emergencyCategory, eCallVariant,
             std::bind(&ECallerWithPdu::makeCallResponse, this, std::placeholders::_1,
-                 std::placeholders::_2));
+                std::placeholders::_2));
         if (status != telux::common::Status::SUCCESS) {
             std::cout << "Can't call, err " << static_cast<int>(status) << std::endl;
             return -EIO;
@@ -204,8 +202,8 @@ class ECallerWithPdu : public telux::tel::IMakeCallCallback,
     }
 
     /* Step - 6 */
-    void makeCallResponse(telux::common::ErrorCode ec,
-            std::shared_ptr<telux::tel::ICall> call) override {
+    void makeCallResponse(
+        telux::common::ErrorCode ec, std::shared_ptr<telux::tel::ICall> call) override {
         std::cout << "makeCallResponse()" << std::endl;
 
         if (ec != telux::common::ErrorCode::SUCCESS) {
@@ -215,9 +213,9 @@ class ECallerWithPdu : public telux::tel::IMakeCallCallback,
 
         dialedCall_ = call;
 
-        std::cout << "Index " << call->getCallIndex() <<
-            " direction " << static_cast<int>(call->getCallDirection()) <<
-            " number " << call->getRemotePartyNumber() << std::endl;
+        std::cout << "Index " << call->getCallIndex() << " direction "
+                  << static_cast<int>(call->getCallDirection()) << " number "
+                  << call->getRemotePartyNumber() << std::endl;
     }
 
  private:
@@ -232,7 +230,7 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<ECallerWithPdu>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate ECallerPdu" << std::endl;
         return -ENOMEM;
     }

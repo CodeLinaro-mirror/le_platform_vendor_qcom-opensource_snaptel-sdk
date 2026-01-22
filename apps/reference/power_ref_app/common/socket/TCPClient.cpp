@@ -1,7 +1,7 @@
 /*
-*  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
-*  SPDX-License-Identifier: BSD-3-Clause-Clear
-*/
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 #ifndef TCP_CLIENT_CPP
 #define TCP_CLIENT_CPP
@@ -59,25 +59,25 @@ class TCPClient : public IIPConnection {
         struct sockaddr_storage local_addr;
         socklen_t addr_len = sizeof(local_addr);
         if (getsockname(clientSocket_, (struct sockaddr *)&local_addr, &addr_len) < 0) {
-        LOG(ERROR, __FUNCTION__, "Error getting local address");
+            LOG(ERROR, __FUNCTION__, "Error getting local address");
             close(clientSocket_);
             isConnected_ = false;
             return false;
         }
-        if (local_addr.ss_family == AF_INET) { // IPv4
+        if (local_addr.ss_family == AF_INET) {  // IPv4
             struct sockaddr_in *addr_in = (struct sockaddr_in *)&local_addr;
             inet_ntop(AF_INET, &(addr_in->sin_addr), ip_str, sizeof(ip_str));
-            port = ntohs(addr_in->sin_port);
+            port                            = ntohs(addr_in->sin_port);
             connectionConfig_->clientIpAddr = ip_str;
-            connectionConfig_->clientPort = port;
-            connectionConfig_->ipFamily = telux::data::IpFamilyType::IPV4;
-        } else if (local_addr.ss_family == AF_INET6) { // IPv6
+            connectionConfig_->clientPort   = port;
+            connectionConfig_->ipFamily     = telux::data::IpFamilyType::IPV4;
+        } else if (local_addr.ss_family == AF_INET6) {  // IPv6
             struct sockaddr_in6 *addr_in6 = (struct sockaddr_in6 *)&local_addr;
             inet_ntop(AF_INET6, &(addr_in6->sin6_addr), ip_str, sizeof(ip_str));
-            port = ntohs(addr_in6->sin6_port);
+            port                            = ntohs(addr_in6->sin6_port);
             connectionConfig_->clientIpAddr = ip_str;
-            connectionConfig_->clientPort = port;
-            connectionConfig_->ipFamily = telux::data::IpFamilyType::IPV6;
+            connectionConfig_->clientPort   = port;
+            connectionConfig_->ipFamily     = telux::data::IpFamilyType::IPV6;
         }
 
         // Get the remote (destination) address and port
@@ -89,18 +89,18 @@ class TCPClient : public IIPConnection {
             isConnected_ = false;
             return false;
         }
-        if (remote_addr.ss_family == AF_INET) { // IPv4
+        if (remote_addr.ss_family == AF_INET) {  // IPv4
             struct sockaddr_in *addr_in = (struct sockaddr_in *)&remote_addr;
             inet_ntop(AF_INET, &(addr_in->sin_addr), ip_str, sizeof(ip_str));
-            port = ntohs(addr_in->sin_port);
+            port                            = ntohs(addr_in->sin_port);
             connectionConfig_->serverIpAddr = ip_str;
-            connectionConfig_->serverPort = port;
-        } else if (remote_addr.ss_family == AF_INET6) { // IPv6
+            connectionConfig_->serverPort   = port;
+        } else if (remote_addr.ss_family == AF_INET6) {  // IPv6
             struct sockaddr_in6 *addr_in6 = (struct sockaddr_in6 *)&remote_addr;
             inet_ntop(AF_INET6, &(addr_in6->sin6_addr), ip_str, sizeof(ip_str));
-            port = ntohs(addr_in6->sin6_port);
+            port                            = ntohs(addr_in6->sin6_port);
             connectionConfig_->serverIpAddr = ip_str;
-            connectionConfig_->serverPort = port;
+            connectionConfig_->serverPort   = port;
         }
         // Call the worker onConnect method with the updated connection info
         for (auto listener : listeners_) {
@@ -119,40 +119,40 @@ class TCPClient : public IIPConnection {
         }
 
         try {
-        do {
-            IPMessage msg;
-            memset(&msg, 0, sizeof(msg));
-            ssize_t n = 0;
-            n = recv(clientSocket_, static_cast<void *>(&msg), sizeof(msg), 0);
+            do {
+                IPMessage msg;
+                memset(&msg, 0, sizeof(msg));
+                ssize_t n = 0;
+                n         = recv(clientSocket_, static_cast<void *>(&msg), sizeof(msg), 0);
 
-            if (n <= 0) {
-                LOG(ERROR, __FUNCTION__, " connection interrupted or closed");
-                isConnected_ = false;
-                break;
-            }
+                if (n <= 0) {
+                    LOG(ERROR, __FUNCTION__, " connection interrupted or closed");
+                    isConnected_ = false;
+                    break;
+                }
 
-            LOG(DEBUG, __FUNCTION__, " length = ", n, " current listeners: ", listeners_.size());
+                LOG(DEBUG, __FUNCTION__, " length = ", n,
+                    " current listeners: ", listeners_.size());
+                for (auto listener : listeners_) {
+                    listener->messageReceived(msg, n, connectionConfig_);
+                }
+
+            } while (true);
+
             for (auto listener : listeners_) {
-                listener->messageReceived(msg, n, connectionConfig_);
+                listener->onDisconnect(connectionConfig_);
             }
 
-        } while (true);
-
-        for (auto listener : listeners_) {
-            listener->onDisconnect(connectionConfig_);
-        }
-
-        if (connectionConfig_->protocol == Protocol::TCP) {
-            if (shutdown(clientSocket_, SHUT_RDWR) == -1) {
-            LOG(ERROR, __FUNCTION__,
-                "shutdown failed errno = ", std::string(strerror(errno)));
+            if (connectionConfig_->protocol == Protocol::TCP) {
+                if (shutdown(clientSocket_, SHUT_RDWR) == -1) {
+                    LOG(ERROR, __FUNCTION__,
+                        "shutdown failed errno = ", std::string(strerror(errno)));
+                }
             }
-        }
 
-        if (close(clientSocket_) == -1) {
-            LOG(ERROR, __FUNCTION__,
-                "close failed errno = ", std::string(strerror(errno)));
-        }
+            if (close(clientSocket_) == -1) {
+                LOG(ERROR, __FUNCTION__, "close failed errno = ", std::string(strerror(errno)));
+            }
 
         } catch (const std::exception &e) {
             isConnected_ = false;
@@ -166,7 +166,7 @@ class TCPClient : public IIPConnection {
     bool start(std::shared_ptr<Connection> connectionConfig) override {
         LOG(DEBUG, __FUNCTION__);
         receivedStopClient_ = false;
-        connectionConfig_ = connectionConfig;
+        connectionConfig_   = connectionConfig;
         std::lock_guard<std::mutex> lk(mtx_);
         if (isConnected_) {
             return false;
@@ -183,28 +183,29 @@ class TCPClient : public IIPConnection {
                 LOG(DEBUG, __FUNCTION__, " TCP client starting...");
 
                 if (!setupSocketAndBind()) {
-                    usleep(4000000); // Retry delay
+                    usleep(4000000);  // Retry delay
                     continue;
                 };
 
                 if (!connectToServer()) {
-                    usleep(4000000); // Retry delay
+                    usleep(4000000);  // Retry delay
                     continue;
                 }
 
                 isConnected_ = true;
-                int no = 1;
+                int no       = 1;
                 setsockopt(clientSocket_, SOL_SOCKET, SO_KEEPALIVE, &no, sizeof(int));
                 updateConnectionParams();
-                readLoop(); // TCP-specific listener
+                readLoop();  // TCP-specific listener
             } while (!receivedStopClient_);
         }).detach();
     }
 
     bool bindToDevice(int clientSocket, std::string deviceName) {
         LOG(DEBUG, __FUNCTION__);
-        if (setsockopt(clientSocket, SOL_SOCKET, SO_BINDTODEVICE,
-            deviceName.c_str(), deviceName.size()) != 0) {
+        if (setsockopt(
+                clientSocket, SOL_SOCKET, SO_BINDTODEVICE, deviceName.c_str(), deviceName.size())
+            != 0) {
             LOG(ERROR, __FUNCTION__, "Failed to bind to device: ", strerror(errno));
             return false;
         }
@@ -213,9 +214,8 @@ class TCPClient : public IIPConnection {
 
     bool setupSocketAndBind() {
         LOG(DEBUG, __FUNCTION__);
-        int domain = (connectionConfig_->ipFamily == telux::data::IpFamilyType::IPV6)
-                        ? AF_INET6
-                        : AF_INET;
+        int domain
+            = (connectionConfig_->ipFamily == telux::data::IpFamilyType::IPV6) ? AF_INET6 : AF_INET;
 
         clientSocket_ = socket(domain, SOCK_STREAM, 0);
         if (clientSocket_ < 0) {
@@ -224,23 +224,21 @@ class TCPClient : public IIPConnection {
         }
 
         struct sockaddr *sockAddrBind = nullptr;
-        socklen_t sockSize = 0;
-        int reuse = 1;
+        socklen_t sockSize            = 0;
+        int reuse                     = 1;
 
         // Prepare bind address
         if (!prepareBindAddress(&sockAddrBind, &sockSize)) {
             return false;
         }
 
-        if(!bindToDevice(clientSocket_, connectionConfig_->dataCall->getInterfaceName())) {
+        if (!bindToDevice(clientSocket_, connectionConfig_->dataCall->getInterfaceName())) {
             return false;
         }
 
         if (sockAddrBind != nullptr) {
-            setsockopt(clientSocket_, SOL_SOCKET, SO_REUSEADDR, &reuse,
-                        sizeof(reuse));
-            setsockopt(clientSocket_, SOL_SOCKET, SO_REUSEPORT, &reuse,
-                        sizeof(reuse));
+            setsockopt(clientSocket_, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
+            setsockopt(clientSocket_, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse));
             if (bind(clientSocket_, sockAddrBind, sockSize) < 0) {
                 LOG(ERROR, __FUNCTION__, " bind : ", std::string(strerror(errno)));
                 return false;
@@ -252,36 +250,35 @@ class TCPClient : public IIPConnection {
     bool connectToServer() {
         LOG(DEBUG, __FUNCTION__);
         struct sockaddr *sockAddrConnect = nullptr;
-        socklen_t sockSize = 0;
+        socklen_t sockSize               = 0;
 
         if (connectionConfig_->ipFamily == telux::data::IpFamilyType::IPV4) {
             struct sockaddr_in v4ServerAddr = {};
-            if (!inet_pton(AF_INET, connectionConfig_->serverIpAddr.c_str(),
-                            &(v4ServerAddr.sin_addr))) {
+            if (!inet_pton(
+                    AF_INET, connectionConfig_->serverIpAddr.c_str(), &(v4ServerAddr.sin_addr))) {
                 LOG(ERROR, __FUNCTION__, " failed destination IPv4 parsing");
                 return false;
             }
             v4ServerAddr.sin_family = AF_INET;
-            v4ServerAddr.sin_port = htons(connectionConfig_->serverPort);
-            sockAddrConnect = reinterpret_cast<struct sockaddr *>(&v4ServerAddr);
-            sockSize = sizeof(sockaddr_in);
+            v4ServerAddr.sin_port   = htons(connectionConfig_->serverPort);
+            sockAddrConnect         = reinterpret_cast<struct sockaddr *>(&v4ServerAddr);
+            sockSize                = sizeof(sockaddr_in);
         } else {
             struct sockaddr_in6 v6ServerAddr = {};
-            if (!inet_pton(AF_INET6, connectionConfig_->serverIpAddr.c_str(),
-                            &(v6ServerAddr.sin6_addr))) {
+            if (!inet_pton(
+                    AF_INET6, connectionConfig_->serverIpAddr.c_str(), &(v6ServerAddr.sin6_addr))) {
                 LOG(ERROR, __FUNCTION__, " failed destination IPv6 parsing");
                 return false;
             }
             v6ServerAddr.sin6_family = AF_INET6;
-            v6ServerAddr.sin6_port = htons(connectionConfig_->serverPort);
-            sockAddrConnect = reinterpret_cast<struct sockaddr *>(&v6ServerAddr);
-            sockSize = sizeof(sockaddr_in6);
+            v6ServerAddr.sin6_port   = htons(connectionConfig_->serverPort);
+            sockAddrConnect          = reinterpret_cast<struct sockaddr *>(&v6ServerAddr);
+            sockSize                 = sizeof(sockaddr_in6);
         }
 
         if (connect(clientSocket_, sockAddrConnect, sockSize) == -1) {
-            LOG(ERROR, __FUNCTION__, " connect : ",
-                std::string(strerror(errno)), "; Connection config: ",
-                connectionConfig_->toString());
+            LOG(ERROR, __FUNCTION__, " connect : ", std::string(strerror(errno)),
+                "; Connection config: ", connectionConfig_->toString());
             return false;
         }
         return true;
@@ -294,7 +291,7 @@ class TCPClient : public IIPConnection {
             if (!connectionConfig_->dataCall->getIpv4Info().addr.ifAddress.empty()) {
                 if (!inet_pton(AF_INET,
                         connectionConfig_->dataCall->getIpv4Info().addr.ifAddress.c_str(),
-                            &(v4ClientAddr.sin_addr))) {
+                        &(v4ClientAddr.sin_addr))) {
                     LOG(ERROR, __FUNCTION__, " failed source IPv4 parsing ",
                         std::string(strerror(errno)));
                     return false;
@@ -305,13 +302,13 @@ class TCPClient : public IIPConnection {
                 v4ClientAddr.sin_port = htons(connectionConfig_->clientPort);
             }
             *sockAddrBind = reinterpret_cast<struct sockaddr *>(&v4ClientAddr);
-            *sockSize = sizeof(sockaddr_in);
+            *sockSize     = sizeof(sockaddr_in);
         } else {
             static struct sockaddr_in6 v6ClientAddr = {};
             if (!connectionConfig_->dataCall->getIpv6Info().addr.ifAddress.empty()) {
                 if (!inet_pton(AF_INET6,
                         connectionConfig_->dataCall->getIpv6Info().addr.ifAddress.c_str(),
-                            &(v6ClientAddr.sin6_addr))) {
+                        &(v6ClientAddr.sin6_addr))) {
                     LOG(ERROR, __FUNCTION__, " failed source IPv6 parsing ",
                         std::string(strerror(errno)));
                     return false;
@@ -322,7 +319,7 @@ class TCPClient : public IIPConnection {
                 v6ClientAddr.sin6_port = htons(connectionConfig_->clientPort);
             }
             *sockAddrBind = reinterpret_cast<struct sockaddr *>(&v6ClientAddr);
-            *sockSize = sizeof(sockaddr_in6);
+            *sockSize     = sizeof(sockaddr_in6);
         }
         return true;
     }
@@ -330,7 +327,7 @@ class TCPClient : public IIPConnection {
     void cleanup() override {
         LOG(ERROR, __FUNCTION__, " Stopping  client ");
         receivedStopClient_ = true;
-        isConnected_ = false;
+        isConnected_        = false;
         if (clientSocket_ != -1) {
             if (shutdown(clientSocket_, SHUT_RDWR) == -1) {
                 LOG(ERROR, __FUNCTION__, " shutdown : ", std::string(strerror(errno)));
@@ -344,8 +341,8 @@ class TCPClient : public IIPConnection {
 
     bool sendMessage(IPMessage &msg) override {
         LOG(DEBUG, __FUNCTION__);
-        if (send(clientSocket_, static_cast<const void *>(&msg), sizeof(IPMessage), 0) !=
-            sizeof(IPMessage)) {
+        if (send(clientSocket_, static_cast<const void *>(&msg), sizeof(IPMessage), 0)
+            != sizeof(IPMessage)) {
             LOG(ERROR, __FUNCTION__, " send : ", std::string(strerror(errno)));
             for (auto listener : listeners_) {
                 listener->onDisconnect(connectionConfig_);
@@ -367,13 +364,13 @@ class TCPClient : public IIPConnection {
                 socklen_t len = sizeof(info);
                 if (getsockopt(clientSocket_, IPPROTO_TCP, TCP_INFO, &info, &len) == 0) {
                     if (info.tcpi_unacked == 0) {
-                        break; // All ACKs received
+                        break;  // All ACKs received
                     }
                 } else {
                     LOG(ERROR, __FUNCTION__, " getsockopt : ", std::string(strerror(errno)));
                     return false;
                 }
-                usleep(100000); // Sleep 100ms to avoid busy-waiting
+                usleep(100000);  // Sleep 100ms to avoid busy-waiting
             }
         }
         return true;
@@ -393,4 +390,4 @@ class TCPClient : public IIPConnection {
     std::mutex mtx_;
     std::atomic<bool> isConnected_ = {false};
 };
-#endif // TCP_CLIENT_CPP
+#endif  // TCP_CLIENT_CPP

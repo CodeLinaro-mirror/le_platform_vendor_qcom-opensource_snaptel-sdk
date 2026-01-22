@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "StreamCache.hpp"
@@ -21,11 +21,11 @@ StreamCache::~StreamCache() {
 /*
  * Provides an unused unique identifier in an atomic test_and_set() fashion.
  */
-telux::common::ErrorCode StreamCache::getNextAvailableStreamID(uint32_t& streamId) {
+telux::common::ErrorCode StreamCache::getNextAvailableStreamID(uint32_t &streamId) {
 
     std::lock_guard<std::mutex> lock(streamIndexMutex_);
 
-    for(uint32_t x=0; x < MAX_NUM_STREAMS; x++) {
+    for (uint32_t x = 0; x < MAX_NUM_STREAMS; x++) {
         if (!streamIdIndexes_.test(x)) {
             streamIdIndexes_.set(x);
             streamId = x;

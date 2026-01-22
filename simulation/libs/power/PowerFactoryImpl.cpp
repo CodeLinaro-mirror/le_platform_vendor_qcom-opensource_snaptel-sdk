@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "common/CommonUtils.hpp"
@@ -34,7 +34,7 @@ PowerFactory &PowerFactory::getInstance() {
 /* Constructor */
 PowerFactoryImpl::PowerFactoryImpl() {
     LOG(DEBUG, __FUNCTION__);
-//    CommonUtils::logSdkVersion();
+    //    CommonUtils::logSdkVersion();
 }
 
 /* Destructor */
@@ -62,9 +62,9 @@ std::shared_ptr<ITcuActivityManager> PowerFactoryImpl::getTcuActivityManager(
     }
 
     ClientInstanceConfig config;
-    std::string machineName      = "PVM";
+    std::string machineName = "PVM";
     config.clientName
-        = machineName + "_" + EnvUtils::getCurrentAppName() +  "_" +std::to_string(getpid());
+        = machineName + "_" + EnvUtils::getCurrentAppName() + "_" + std::to_string(getpid());
     LOG(INFO, __FUNCTION__, "  clientName = ", config.clientName);
     config.clientType  = clientType;
     config.machineName = LOCAL_MACHINE;
@@ -84,8 +84,7 @@ std::shared_ptr<ITcuActivityManager> PowerFactoryImpl::getTcuActivityManager(
     if (config.clientType == ClientType::SLAVE) {
         /* Ensure slave is identifiable. Uniqueness of the name can't be verified. */
         if (config.clientName.empty() || config.clientName.length() > CLIENTNAME_LENGTH
-            || config.machineName.empty()
-            || config.machineName.length() > MACHINE_NAME_LENGTH) {
+            || config.machineName.empty() || config.machineName.length() > MACHINE_NAME_LENGTH) {
             LOG(ERROR, __FUNCTION__, " unexpected client or machine name; client name length = ",
                 config.clientName.length(), " machine name length = ", config.machineName.length());
             return nullptr;

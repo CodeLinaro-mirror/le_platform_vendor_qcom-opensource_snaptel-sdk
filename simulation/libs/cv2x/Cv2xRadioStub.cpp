@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -379,7 +379,6 @@ telux::common::Status Cv2xRxMetaDataHelper::getRxMetaDataInfo(const uint8_t *pay
     return telux::common::Status::SUCCESS;
 }
 
-
 Cv2xRadioEvtListener::Cv2xRadioEvtListener(std::shared_ptr<Cv2xRadioCapabilities> caps) {
     caps_ = caps;
 }
@@ -409,7 +408,7 @@ void Cv2xRadioEvtListener::onDuplicateAddr(const bool detected) {
     NOTIFY_LISTENER(listenerMgr_, ICv2xRadioListener, onMacAddressCloneAttack, detected);
 }
 
-void Cv2xRadioEvtListener::onSpsScheduleInfo(const ::cv2xStub::SpsSchedulingInfo& schedulingInfo) {
+void Cv2xRadioEvtListener::onSpsScheduleInfo(const ::cv2xStub::SpsSchedulingInfo &schedulingInfo) {
     LOG(DEBUG, __FUNCTION__);
     cv2x::SpsSchedulingInfo info;
     info.spsId       = static_cast<uint8_t>(schedulingInfo.spsid());
@@ -418,7 +417,7 @@ void Cv2xRadioEvtListener::onSpsScheduleInfo(const ::cv2xStub::SpsSchedulingInfo
     NOTIFY_LISTENER(listenerMgr_, ICv2xRadioListener, onSpsSchedulingChanged, info);
 }
 
-void Cv2xRadioEvtListener::onCapabilitiesChange(const ::cv2xStub::RadioCapabilites& caps) {
+void Cv2xRadioEvtListener::onCapabilitiesChange(const ::cv2xStub::RadioCapabilites &caps) {
     LOG(DEBUG, __FUNCTION__);
     auto poolSize = caps.pools_size();
     if (not caps_) {
@@ -478,9 +477,9 @@ telux::common::Status Cv2xRadioEvtListener::deregisterListener(
 
 Cv2xRadioSimulation::Cv2xRadioSimulation() {
     LOG(DEBUG, __FUNCTION__);
-    taskQ_        = std::make_shared<AsyncTaskQueue<void>>();
-    serviceStub_  = CommonUtils::getGrpcStub<::cv2xStub::Cv2xRadioService>();
-    caps_ = std::make_shared<Cv2xRadioCapabilities>();
+    taskQ_       = std::make_shared<AsyncTaskQueue<void>>();
+    serviceStub_ = CommonUtils::getGrpcStub<::cv2xStub::Cv2xRadioService>();
+    caps_        = std::make_shared<Cv2xRadioCapabilities>();
     if (caps_) {
         caps_->linkIpMtuBytes          = SIMULATION_LINK_IP_MTU_BYTES;
         caps_->linkNonIpMtuBytes       = SIMULATION_LINK_NON_IP_MTU_BYTES;
@@ -1080,15 +1079,15 @@ telux::common::ErrorCode Cv2xRadioSimulation::initTxSpsFlow(TrafficIpType ipType
 
         // SPS socket initialization succeeded. Create and initialize Event socket.
         if (eventSrcPortValid) {
-            auto cb = [&txEventFlow, &eventStatus, &ec] (std::shared_ptr<ICv2xTxFlow> flow,
-                telux::common::ErrorCode error) {
+            auto cb = [&txEventFlow, &eventStatus, &ec](
+                          std::shared_ptr<ICv2xTxFlow> flow, telux::common::ErrorCode error) {
                 if (telux::common::ErrorCode::SUCCESS == error) {
                     txEventFlow = flow;
                     eventStatus = telux::common::Status::SUCCESS;
-                    ec = telux::common::ErrorCode::SUCCESS;
+                    ec          = telux::common::ErrorCode::SUCCESS;
                 } else {
                     eventStatus = telux::common::Status::FAILED;
-                    ec = (telux::common::ErrorCode::SUCCESS != ec) ? error : ec;
+                    ec          = (telux::common::ErrorCode::SUCCESS != ec) ? error : ec;
                     LOG(ERROR, "Error in registering combine.event flow ", static_cast<int>(ec));
                 }
             };
@@ -2096,13 +2095,13 @@ telux::common::Status Cv2xRadioSimulation::requestDataSessionSettings(
     CALL_RPC(serviceStub_->requestDataSessionSettings, request, res, response, delay);
     if (res == telux::common::Status::SUCCESS && cb && taskQ_) {
         auto ec = static_cast<telux::common::ErrorCode>(response.error());
-        auto f = std::async(std::launch::async, [this, delay, ec, cb]() {
+        auto f  = std::async(std::launch::async, [this, delay, ec, cb]() {
             if (delay > 0) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(delay));
             }
             DataSessionSettings nonIpSettings;
             nonIpSettings.mtuValid = true;
-            nonIpSettings.mtu = getCapabilities().linkNonIpMtuBytes;
+            nonIpSettings.mtu      = getCapabilities().linkNonIpMtuBytes;
             cb(nonIpSettings, ec);
         }).share();
         taskQ_->add(f);

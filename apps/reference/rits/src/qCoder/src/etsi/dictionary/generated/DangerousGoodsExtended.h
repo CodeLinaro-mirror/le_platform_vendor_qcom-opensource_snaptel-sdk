@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_DangerousGoodsExtended_H_
-#define	_DangerousGoodsExtended_H_
-
+#ifndef _DangerousGoodsExtended_H_
+#define _DangerousGoodsExtended_H_
 
 #include <asn_application.h>
 
@@ -25,17 +24,17 @@ extern "C" {
 
 /* DangerousGoodsExtended */
 typedef struct DangerousGoodsExtended {
-	DangerousGoodsBasic_t	 dangerousGoodsType;
-	long	 unNumber;
-	BOOLEAN_t	 elevatedTemperature;
-	BOOLEAN_t	 tunnelsRestricted;
-	BOOLEAN_t	 limitedQuantity;
-	IA5String_t	*emergencyActionCode	/* OPTIONAL */;
-	IA5String_t	*phoneNumber	/* OPTIONAL */;
-	UTF8String_t	*companyName	/* OPTIONAL */;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    DangerousGoodsBasic_t dangerousGoodsType;
+    long unNumber;
+    BOOLEAN_t elevatedTemperature;
+    BOOLEAN_t tunnelsRestricted;
+    BOOLEAN_t limitedQuantity;
+    IA5String_t *emergencyActionCode /* OPTIONAL */;
+    IA5String_t *phoneNumber /* OPTIONAL */;
+    UTF8String_t *companyName /* OPTIONAL */;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } DangerousGoodsExtended_t;
 
 /* Implementation */
@@ -45,5 +44,5 @@ extern asn_TYPE_descriptor_t asn_DEF_DangerousGoodsExtended;
 }
 #endif
 
-#endif	/* _DangerousGoodsExtended_H_ */
+#endif /* _DangerousGoodsExtended_H_ */
 #include <asn_internal.h>

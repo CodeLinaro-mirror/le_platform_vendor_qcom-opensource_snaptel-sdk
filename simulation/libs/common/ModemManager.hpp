@@ -1,6 +1,6 @@
-/**
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -28,8 +28,7 @@ namespace common {
 
 class IModemManager {
 
-public:
-
+ public:
     /**
      * Get voice service state
      *
@@ -39,8 +38,9 @@ public:
      * @returns returns suitable error code.
      *
      */
-    virtual telux::common::ErrorCode getVoiceServiceState(int slotId,
-        telStub::VoiceServiceStateInfo& serviceInfo) = 0;
+    virtual telux::common::ErrorCode getVoiceServiceState(
+        int slotId, telStub::VoiceServiceStateInfo &serviceInfo)
+        = 0;
 
     /**
      * Get system info like serving RAT and domain.
@@ -53,7 +53,8 @@ public:
      *
      */
     virtual telux::common::ErrorCode getSystemInfo(int slotId, telStub::RadioTechnology &servingRat,
-        telStub::ServiceDomainInfo_Domain &servingDomain) = 0;
+        telStub::ServiceDomainInfo_Domain &servingDomain)
+        = 0;
 
     /**
      * Get eCall operating mode
@@ -63,14 +64,13 @@ public:
 
      * @returns suitable error code.
      */
-    virtual telux::common::ErrorCode getEcallOperatingMode(int slotId,
-        telStub::ECallMode& mode) = 0;
+    virtual telux::common::ErrorCode getEcallOperatingMode(int slotId, telStub::ECallMode &mode)
+        = 0;
 
     /**
      * Destructor for IModemManager
      */
     virtual ~IModemManager(){};
-
 };
 
 }  // End of namespace common

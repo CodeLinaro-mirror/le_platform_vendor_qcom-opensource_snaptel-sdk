@@ -19,62 +19,62 @@
 #include <telux/common/CommonDefines.hpp>
 #include <telux/wlan/WlanDefines.hpp>
 
-
 namespace telux {
 namespace wlan {
 
 /** @addtogroup telematics_wlan
  * @{ */
 
-//Forward declaration
+// Forward declaration
 class IWlanListener;
 
 /**
  * Wlan Interface State
  */
 enum class InterfaceState {
-    INACTIVE  = 0x00,   /**<  Interface is Inactive  */
-    ACTIVE    = 0x01,   /**<  Interface is Active    */
+    INACTIVE = 0x00, /**<  Interface is Inactive  */
+    ACTIVE   = 0x01, /**<  Interface is Active    */
 };
 
 /**
  * Wlan Interface Device
  */
 enum class HwDeviceType {
-    UNKNOWN   = 0,                  /**<  Wlan device is Unknown   */
-    QCA6574   = 1,                  /**<  Wlan device is QCA6574   */
-    QCA6696   = 2,                  /**<  Wlan device is QCA6696   */
-    QCA6595   = 3,                  /**<  Wlan device is QCA6595   */
-    QCA6797   = 4,                  /**<  Wlan device is QCA6797   */
+    UNKNOWN = 0, /**<  Wlan device is Unknown   */
+    QCA6574 = 1, /**<  Wlan device is QCA6574   */
+    QCA6696 = 2, /**<  Wlan device is QCA6696   */
+    QCA6595 = 3, /**<  Wlan device is QCA6595   */
+    QCA6797 = 4, /**<  Wlan device is QCA6797   */
 };
 
 /**
  * Wlan Device Performance State
  */
 enum class DevicePerfState {
-    UNKNOWN   = 0,                  /**<  Device is in Unknown performance state   */
-    FULL      = 1,                  /**<  Device is in full performance state      */
-    REDUCED   = 2,                  /**<  Device is in reduced performance state   */
-    SHUTDOWN  = 3,                  /**<  Device is shutdown                       */
+    UNKNOWN  = 0, /**<  Device is in Unknown performance state   */
+    FULL     = 1, /**<  Device is in full performance state      */
+    REDUCED  = 2, /**<  Device is in reduced performance state   */
+    SHUTDOWN = 3, /**<  Device is shutdown                       */
 };
 
 /**
  * Wlan Interface status
  */
 struct InterfaceStatus {
-    HwDeviceType     device;              /**> WiFi hardware type           */
-    std::vector<ApStatus>  apStatus;      /**< Vector of active APs status  */
-    std::vector<StaStatus> staStatus;     /**< Vector of active Sta status  */
+    HwDeviceType device; /**> WiFi hardware type           */
+    std::vector<ApStatus> apStatus; /**< Vector of active APs status  */
+    std::vector<StaStatus> staStatus; /**< Vector of active Sta status  */
 };
 
 /**
  * Wlan Regulatory Setting
  */
 struct RegulatoryParams {
-    std::string         country;     /**< Country code according to ISO 3166 alpha-2 standard     */
-    float               opChannel;   /**< Operating channel according to IEEE 802.11 Standards    */
-    std::vector<float>  opClass;     /**< Operating class according to IEEE 802.11 Standards      */
-    uint32_t            txPowerMw;   /**< Transmit power in multiple of 100 MilliWatts Actual transmit power = value set here * 100 milliwatts */
+    std::string country; /**< Country code according to ISO 3166 alpha-2 standard     */
+    float opChannel; /**< Operating channel according to IEEE 802.11 Standards    */
+    std::vector<float> opClass; /**< Operating class according to IEEE 802.11 Standards      */
+    uint32_t txPowerMw; /**< Transmit power in multiple of 100 MilliWatts Actual transmit power =
+                           value set here * 100 milliwatts */
 };
 
 /** @addtogroup telematics_wlan
@@ -118,7 +118,7 @@ class IWlanDeviceManager {
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
      */
-    virtual  telux::common::ErrorCode enable(bool enable) = 0;
+    virtual telux::common::ErrorCode enable(bool enable) = 0;
 
     /**
      * Set Wlan mode - number of supported APs, and stations.
@@ -140,7 +140,7 @@ class IWlanDeviceManager {
      * @returns operation error code (if any). @ref telux::common::ErrorCode.
      *
      */
-    virtual  telux::common::ErrorCode setMode(int numOfAp, int numOfSta) = 0;
+    virtual telux::common::ErrorCode setMode(int numOfAp, int numOfSta) = 0;
 
     /**
      * Request Wlan configuration: Returns the configuration that was set using
@@ -156,7 +156,7 @@ class IWlanDeviceManager {
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
      */
-    virtual telux::common::ErrorCode getConfig(int& numAp, int& numSta) = 0;
+    virtual telux::common::ErrorCode getConfig(int &numAp, int &numSta) = 0;
 
     /**
      * Request Wlan status: Return Wlan enablement status and Interface status of APs and Station
@@ -166,12 +166,13 @@ class IWlanDeviceManager {
      *
      * @param [in] isEnabled            true: Wlan is enabled. false: Wlan is Disabled.
      * @param [in] status               vector of interface status @ref InterfaceStatus.
-      *
+     *
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
      */
     virtual telux::common::ErrorCode getStatus(
-        bool& isEnabled, std::vector<InterfaceStatus>& status) = 0;
+        bool &isEnabled, std::vector<InterfaceStatus> &status)
+        = 0;
 
     /**
      * Set the country in which the device is operating. The country code will be used to make the
@@ -198,7 +199,7 @@ class IWlanDeviceManager {
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
      */
-    virtual telux::common::ErrorCode getRegulatoryParams(RegulatoryParams& regulatoryParams) = 0;
+    virtual telux::common::ErrorCode getRegulatoryParams(RegulatoryParams &regulatoryParams) = 0;
 
     /**
      * Set Transmit Power
@@ -214,8 +215,8 @@ class IWlanDeviceManager {
      * power settings only when the interface is fully initialized and actively handling traffic.
      *
      * To restore the default transmit power as defined by the regulatory domain associated with
-     * the active country set by @ref telux::wlan::IWlanDeviceManager::setActiveCountry, either hostapd or
-     * wpa_supplicant daemons need to be restarted via
+     * the active country set by @ref telux::wlan::IWlanDeviceManager::setActiveCountry, either
+     * hostapd or wpa_supplicant daemons need to be restarted via
      * @ref telux::wlan::IApInterfaceManager::manageApService or
      * @ref telux::wlan::IStaInterfaceManager::manageStaService.
      *
@@ -253,7 +254,7 @@ class IWlanDeviceManager {
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
      */
-    virtual telux::common::ErrorCode getTxPower(uint32_t& txPowerMw) = 0;
+    virtual telux::common::ErrorCode getTxPower(uint32_t &txPowerMw) = 0;
 
     /**
      * Register a listener for specific events in the Wlan Manager
@@ -282,15 +283,15 @@ class IWlanDeviceManager {
     virtual ~IWlanDeviceManager(){};
 };  // end of IWlanDeviceManager
 
-
 class IWlanListener : public telux::common::ISDKListener {
-public:
+ public:
     /**
      * This function is called when service status changes.
      *
      * @param [in] status - @ref ServiceStatus
      */
-    virtual void onServiceStatusChange(telux::common::ServiceStatus status) {}
+    virtual void onServiceStatusChange(telux::common::ServiceStatus status) {
+    }
 
     /**
      * This function is called when temperature has crossed threshold
@@ -299,18 +300,21 @@ public:
      * @param [in] perfState   - current performance state of device due to device temperature
      */
 
-    virtual void onTempCrossed(float temperature, DevicePerfState perfState) {}
+    virtual void onTempCrossed(float temperature, DevicePerfState perfState) {
+    }
     /**
      * This function is called when Wlan enablement has changed
      *
      * @param [in] enable     True: Wlan is enabled, False: Wlan is disabled
      */
-    virtual void onEnableChanged(bool enable) {}
+    virtual void onEnableChanged(bool enable) {
+    }
 
-    virtual ~IWlanListener() {}
+    virtual ~IWlanListener() {
+    }
 };
 
 /** @} */ /* end_addtogroup telematics_wlan */
-}
-}
-#endif // TELUX_WLAN_WLANDEVICEMANAGER_HPP
+}  // namespace wlan
+}  // namespace telux
+#endif  // TELUX_WLAN_WLANDEVICEMANAGER_HPP

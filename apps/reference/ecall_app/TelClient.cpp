@@ -28,9 +28,8 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -87,7 +86,7 @@ TelClient::TelClient()
 }
 
 TelClient::~TelClient() {
-    eCallInprogress_ = false;
+    eCallInprogress_        = false;
     isPrivateEcallTriggered = false;
     eCallDataMap_.clear();
 }
@@ -95,8 +94,8 @@ TelClient::~TelClient() {
 // Initialize the telephony subsystem
 telux::common::Status TelClient::init() {
 
-    answerCommandCallback_ = std::make_shared<AnswerCommandCallback>(shared_from_this());
-    hangupCommandCallback_ = std::make_shared<HangupCommandCallback>();
+    answerCommandCallback_    = std::make_shared<AnswerCommandCallback>(shared_from_this());
+    hangupCommandCallback_    = std::make_shared<HangupCommandCallback>();
     updateMsdCommandCallback_ = std::make_shared<UpdateMsdCommandCallback>();
 
     // Get PhoneFactory
@@ -104,24 +103,23 @@ telux::common::Status TelClient::init() {
     // Get Call Manager from PhoneFactory
     std::promise<ServiceStatus> prom;
     //  Get the PhoneFactory and CallManager instances
-    callMgr_ = phoneFactory.getCallManager([&](ServiceStatus status) {
-       prom.set_value(status);
-    });
+    callMgr_ = phoneFactory.getCallManager([&](ServiceStatus status) { prom.set_value(status); });
     if (!callMgr_) {
-       std::cout << CLIENT_NAME << "Failed to get Call Manager" << std::endl;
-       return telux::common::Status::FAILED;
+        std::cout << CLIENT_NAME << "Failed to get Call Manager" << std::endl;
+        return telux::common::Status::FAILED;
     }
 
     ServiceStatus callMgrsubSystemStatus = callMgr_->getServiceStatus();
-    if(callMgrsubSystemStatus != ServiceStatus::SERVICE_AVAILABLE) {
-       std::cout << "CallManager subsystem is not ready" << ", Please wait " << std::endl;
+    if (callMgrsubSystemStatus != ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "CallManager subsystem is not ready"
+                  << ", Please wait " << std::endl;
     }
     callMgrsubSystemStatus = prom.get_future().get();
-    if(callMgrsubSystemStatus == ServiceStatus::SERVICE_AVAILABLE) {
-       std::cout << "CallManager subsystem is  ready " << std::endl;
+    if (callMgrsubSystemStatus == ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "CallManager subsystem is  ready " << std::endl;
     } else {
-       std::cout << "Unable to initialise CallManager subsystem " << std::endl;
-       return telux::common::Status::FAILED;
+        std::cout << "Unable to initialise CallManager subsystem " << std::endl;
+        return telux::common::Status::FAILED;
     }
     auto status = callMgr_->registerListener(shared_from_this());
     if (status != telux::common::Status::SUCCESS) {
@@ -156,8 +154,8 @@ bool TelClient::isEraGlonassEnabled() {
 
 // Fills the dial duration and auto answer user data required for new eCall triggered during
 // network scan failure.
-void TelClient::getCacheData(int &dialDuration, int &autoAnswerDuration ) {
-    dialDuration = dialDuration_;
+void TelClient::getCacheData(int &dialDuration, int &autoAnswerDuration) {
+    dialDuration       = dialDuration_;
     autoAnswerDuration = autoAnswerDuration_;
 }
 
@@ -169,7 +167,7 @@ void TelClient::setEraGlonassEnabled(bool isEnabled) {
 void TelClient::setECallProgressState(bool state) {
     std::unique_lock<std::mutex> lock(mutex_);
     if (!state) {
-       isPrivateEcallTriggered = false;
+        isPrivateEcallTriggered = false;
     }
     eCallInprogress_ = state;
 }
@@ -183,7 +181,7 @@ telux::tel::CallDirection TelClient::getECallDirection() {
 }
 
 // Update locally cached MSD recieved after location update
-void TelClient::setECallMsd(ECallMsdData& msdData) {
+void TelClient::setECallMsd(ECallMsdData &msdData) {
     std::lock_guard<std::mutex> lock(mutex_);
     msdData_ = msdData;
 }
@@ -197,12 +195,12 @@ void TelClient::onIncomingCall(std::shared_ptr<ICall> call) {
         << "\n Call Index: " << (int)call->getCallIndex()
         << ", Call Direction: " << TelClientUtils::callDirectionToString(call->getCallDirection())
         << ", Phone Number: " << call->getRemotePartyNumber() << std::endl;
-    if(isEraGlonassEnabled()) {
-        std::cout << CLIENT_NAME <<" isDialDurationTimeOut_: " << isDialDurationTimeOut_
-            << ", isT9TimerActive_: " << isT9TimerActive_ << std::endl;
+    if (isEraGlonassEnabled()) {
+        std::cout << CLIENT_NAME << " isDialDurationTimeOut_: " << isDialDurationTimeOut_
+                  << ", isT9TimerActive_: " << isT9TimerActive_ << std::endl;
         // Incoming PSAP callback must be answered if T9 HLAP timer is ACTIVE or auto answer
         // dial duration has not expired.
-        if((!isAutoAnswerDurationTimeOut_) && (isT9TimerActive_)) {
+        if ((!isAutoAnswerDurationTimeOut_) && (isT9TimerActive_)) {
             answer(call->getPhoneId(), shared_from_this());
         }
     }
@@ -216,17 +214,17 @@ void TelClient::onCallInfoChange(std::shared_ptr<ICall> call) {
         << "\n Call Index: " << (int)call->getCallIndex()
         << ", Call Direction: " << TelClientUtils::callDirectionToString(call->getCallDirection())
         << ", Phone Number: " << call->getRemotePartyNumber() << std::endl;
-    if(isEraGlonassEnabled()) {
-        std::cout << CLIENT_NAME << " willECallRedial_:" << willECallRedial_<< std::endl;
+    if (isEraGlonassEnabled()) {
+        std::cout << CLIENT_NAME << " willECallRedial_:" << willECallRedial_ << std::endl;
     }
     // During the redial(by modem or app) scenario to setup audio session
     if (call->getCallState() == telux::tel::CallState::CALL_DIALING) {
-        if((call->getCallType() == telux::tel::CallType::EMERGENCY_CALL) ||
-            (call->getCallType() == telux::tel::CallType::EMERGENCY_IP_CALL)) {
+        if ((call->getCallType() == telux::tel::CallType::EMERGENCY_CALL)
+            || (call->getCallType() == telux::tel::CallType::EMERGENCY_IP_CALL)) {
             if (eCall_ == nullptr) {
                 eCall_ = call;
-                if(isEraGlonassEnabled()) {
-                    if(!disconnectECallInNextAttempt_) {
+                if (isEraGlonassEnabled()) {
+                    if (!disconnectECallInNextAttempt_) {
                         setECallProgressState(true);
                         if (callListener_) {
                             callListener_->onCallConnect(call->getPhoneId());
@@ -249,8 +247,8 @@ void TelClient::onCallInfoChange(std::shared_ptr<ICall> call) {
                 }
             } else {
                 std::cout << CLIENT_NAME << "eCall ptr is not null\n";
-                if(isEraGlonassEnabled()) {
-                    if(disconnectECallInNextAttempt_) {
+                if (isEraGlonassEnabled()) {
+                    if (disconnectECallInNextAttempt_) {
                         /**
                          * During ERA-GLONASS eCall redial call states transition from
                          * OUTGOING -> CALL_ENDED. Call termination request is sent during
@@ -269,8 +267,8 @@ void TelClient::onCallInfoChange(std::shared_ptr<ICall> call) {
             }
         }
     }
-    if(isEraGlonassEnabled()) {
-        if(call->getCallState() == telux::tel::CallState::CALL_ACTIVE) {
+    if (isEraGlonassEnabled()) {
+        if (call->getCallState() == telux::tel::CallState::CALL_ACTIVE) {
             // The dial timer must be stop when UE has established connection with PSAP.
             std::lock_guard<std::mutex> lock(dialDurationMtx_);
             {
@@ -281,10 +279,11 @@ void TelClient::onCallInfoChange(std::shared_ptr<ICall> call) {
         }
     }
     if (call->getCallState() == telux::tel::CallState::CALL_ENDED) {
-        if((call->getCallType() == telux::tel::CallType::EMERGENCY_CALL) ||
-            (call->getCallType() == telux::tel::CallType::EMERGENCY_IP_CALL) ||
-            (isIncomingCallInProgress_)) {
-            std::cout << CLIENT_NAME << "  Cause of call termination: "
+        if ((call->getCallType() == telux::tel::CallType::EMERGENCY_CALL)
+            || (call->getCallType() == telux::tel::CallType::EMERGENCY_IP_CALL)
+            || (isIncomingCallInProgress_)) {
+            std::cout
+                << CLIENT_NAME << "  Cause of call termination: "
                 << TelClientUtils::callEndCauseToString(call->getCallEndCause())
                 << ((call->getSipErrorCode() > 0) ? " and Sip error code: " : "")
                 << ((call->getSipErrorCode() > 0) ? std::to_string(call->getSipErrorCode()) : "")
@@ -297,8 +296,8 @@ void TelClient::onCallInfoChange(std::shared_ptr<ICall> call) {
                     }
                     setECallProgressState(false);
                     isIncomingCallInProgress_ = false;
-                    if(isEraGlonassEnabled()) {
-                        if(!willECallRedial_ || clearECall_) {
+                    if (isEraGlonassEnabled()) {
+                        if (!willECallRedial_ || clearECall_) {
                             // When modem is redialing, eCall_ must not be cleared to ensure
                             // hangup is sent on valid eCall.
                             std::cout << CLIENT_NAME << "  clear eCall cache " << std::endl;
@@ -309,7 +308,8 @@ void TelClient::onCallInfoChange(std::shared_ptr<ICall> call) {
                 }
             }
         } else {
-           std::cout << CLIENT_NAME << "  Cause of call termination: "
+            std::cout
+                << CLIENT_NAME << "  Cause of call termination: "
                 << TelClientUtils::callEndCauseToString(call->getCallEndCause())
                 << ((call->getSipErrorCode() > 0) ? " and Sip error code: " : "")
                 << ((call->getSipErrorCode() > 0) ? std::to_string(call->getSipErrorCode()) : "")
@@ -343,24 +343,22 @@ void TelClient::onECallMsdTransmissionStatus(
 
 // Callback to notify request from PSAP for MSD update
 void TelClient::OnMsdUpdateRequest(int phoneId) {
-    std::cout << CLIENT_NAME << "Request to send the MSD receieved from PSAP for SlotId "
-              << phoneId
+    std::cout << CLIENT_NAME << "Request to send the MSD receieved from PSAP for SlotId " << phoneId
               << " for the ecall Type : "
-              << (isPrivateEcallTriggered ? "Private ecall" : "Standard or NG ecall")
-              << std::endl;
+              << (isPrivateEcallTriggered ? "Private ecall" : "Standard or NG ecall") << std::endl;
     if (!isPrivateEcallTriggered) {
-       ECallMsdData msdData;
-       if (isECallInProgress()) {
-          {
-             std::lock_guard<std::mutex> lock(mutex_);
-             msdData = msdData_;
-          }
-          auto status = updateECallMSD(phoneId, msdData);
-          if (status != telux::common::Status::SUCCESS) {
-             std::cout << CLIENT_NAME << "Failed to update MSD " << std::endl;
-             return;
-          }
-       }
+        ECallMsdData msdData;
+        if (isECallInProgress()) {
+            {
+                std::lock_guard<std::mutex> lock(mutex_);
+                msdData = msdData_;
+            }
+            auto status = updateECallMSD(phoneId, msdData);
+            if (status != telux::common::Status::SUCCESS) {
+                std::cout << CLIENT_NAME << "Failed to update MSD " << std::endl;
+                return;
+            }
+        }
     }
 }
 
@@ -369,21 +367,20 @@ void TelClient::onECallRedial(int phoneId, ECallRedialInfo info) {
     std::cout << CLIENT_NAME << " eCall redial will"
               << (info.willECallRedial ? " be performed " : " not be perfomed")
               << (info.willECallRedial ? " and redial reason is " : " and not redial reason is")
-              << TelClientUtils::eCallRedialReasonToString(info.reason)
-              << std::endl;
-    if(isEraGlonassEnabled()) {
+              << TelClientUtils::eCallRedialReasonToString(info.reason) << std::endl;
+    if (isEraGlonassEnabled()) {
         willECallRedial_ = info.willECallRedial;
-        if((!(info.willECallRedial)) &&
-            ((info.reason == telux::tel::ReasonType::MAX_REDIAL_ATTEMPTED)
-            || (info.reason == telux::tel::ReasonType::CALL_CONNECTED))) {
-                // The dial timer must stop when hangup is sent by PSAP or
-                // maximum redial attempts are exhausted.
-                std::lock_guard<std::mutex> lock(dialDurationMtx_);
-                {
-                    stopDialTimer_ = true;
-                    std::cout << " Stop dial timer " << stopDialTimer_ << std::endl;
-                    dialDurationCv_.notify_all();
-                }
+        if ((!(info.willECallRedial))
+            && ((info.reason == telux::tel::ReasonType::MAX_REDIAL_ATTEMPTED)
+                || (info.reason == telux::tel::ReasonType::CALL_CONNECTED))) {
+            // The dial timer must stop when hangup is sent by PSAP or
+            // maximum redial attempts are exhausted.
+            std::lock_guard<std::mutex> lock(dialDurationMtx_);
+            {
+                stopDialTimer_ = true;
+                std::cout << " Stop dial timer " << stopDialTimer_ << std::endl;
+                dialDurationCv_.notify_all();
+            }
         }
     }
 }
@@ -423,20 +420,21 @@ void TelClient::onECallHlapTimerEvent(int phoneId, ECallHlapTimerEvents timerEve
                        + TelClientUtils::eCallHlapTimerEventToString(timerEvents.t10) + "\n");
     }
     std::cout << CLIENT_NAME << infoStr << std::endl;
-    if(isEraGlonassEnabled()) {
-        if(timerEvents.t9 == HlapTimerEvent::STARTED) {
+    if (isEraGlonassEnabled()) {
+        if (timerEvents.t9 == HlapTimerEvent::STARTED) {
             isT9TimerActive_ = true;
             autoAnswerTimer_ = std::async(std::launch::async, [this] {
                 std::cout << " autoAnswerDuration_: " << autoAnswerDuration_ << std::endl;
                 std::unique_lock<std::mutex> lock(autoAnswerMtx_);
                 {
-                    auto start = std::chrono::steady_clock::now();
-                    auto timeout = std::chrono::minutes(autoAnswerDuration_);
+                    auto start     = std::chrono::steady_clock::now();
+                    auto timeout   = std::chrono::minutes(autoAnswerDuration_);
                     auto predicate = [&] {
-                        if(!isT9TimerActive_) {
+                        if (!isT9TimerActive_) {
                             std::cout << " T9 Timer is stopped" << std::endl;
                             return true;
-                        } if(std::chrono::steady_clock::now() - start >= timeout){
+                        }
+                        if (std::chrono::steady_clock::now() - start >= timeout) {
                             isAutoAnswerDurationTimeOut_ = true;
                             std::cout << "Auto answer Timeout" << std::endl;
                             return true;
@@ -448,12 +446,12 @@ void TelClient::onECallHlapTimerEvent(int phoneId, ECallHlapTimerEvents timerEve
                     }
                 }
             }).share();
-        } else if((timerEvents.t9 == HlapTimerEvent::STOPPED)
-            || (timerEvents.t9 == HlapTimerEvent::EXPIRED)) {
-                isT9TimerActive_ = false;
-                autoAnswerCv_.notify_all();
+        } else if ((timerEvents.t9 == HlapTimerEvent::STOPPED)
+                   || (timerEvents.t9 == HlapTimerEvent::EXPIRED)) {
+            isT9TimerActive_ = false;
+            autoAnswerCv_.notify_all();
         } else {
-            //Nothing
+            // Nothing
         }
     }
 }
@@ -566,9 +564,9 @@ void TelClient::hlapTimerStatusResponse(
 
 // Callback which provides response to stop T10 HLAP timer
 void TelClient::stopT10TimerResponse(telux::common::ErrorCode error) {
-    if(error != telux::common::ErrorCode::SUCCESS) {
+    if (error != telux::common::ErrorCode::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to stop T10 ECall HLAP timer with error code: "
-            << Utils::getErrorCodeAsString(error) << std::endl;
+                  << Utils::getErrorCodeAsString(error) << std::endl;
         return;
     } else {
         std::cout << CLIENT_NAME << "Successfully stopped T10 ECall HLAP timer" << std::endl;
@@ -577,21 +575,20 @@ void TelClient::stopT10TimerResponse(telux::common::ErrorCode error) {
 
 // Callback which provides response for set post test registration timer
 void TelClient::setECallPostTestRegistrationTimerResponse(telux::common::ErrorCode error) {
-    if(error != telux::common::ErrorCode::SUCCESS) {
+    if (error != telux::common::ErrorCode::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to stop POST TEST REG ECall timer with error code: "
-            << Utils::getErrorCodeAsString(error) << std::endl;
+                  << Utils::getErrorCodeAsString(error) << std::endl;
         return;
     } else {
         std::cout << CLIENT_NAME << "Successfully set POST TEST REG HLAP timer" << std::endl;
     }
 }
 
-
 // Callback which provides response to set HLAP timer
 void TelClient::setHlapTimerResponse(telux::common::ErrorCode error) {
-    if(error != telux::common::ErrorCode::SUCCESS) {
+    if (error != telux::common::ErrorCode::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to set ECall HLAP timer with error code: "
-            << Utils::getErrorCodeAsString(error) << std::endl;
+                  << Utils::getErrorCodeAsString(error) << std::endl;
         return;
     } else {
         std::cout << CLIENT_NAME << "Successfully set ECall HLAP timer" << std::endl;
@@ -600,22 +597,22 @@ void TelClient::setHlapTimerResponse(telux::common::ErrorCode error) {
 
 // Callback which provides response to get HLAP timer
 void TelClient::getHlapTimerResponse(telux::common::ErrorCode error, uint32_t timeDuration) {
-    if(error != telux::common::ErrorCode::SUCCESS) {
+    if (error != telux::common::ErrorCode::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to get ECall HLAP timer with error code: "
-            << Utils::getErrorCodeAsString(error) << std::endl;
+                  << Utils::getErrorCodeAsString(error) << std::endl;
         return;
     } else {
-        std::cout << CLIENT_NAME << "Successfully get ECall HLAP timer is " <<
-            timeDuration << std::endl;
+        std::cout << CLIENT_NAME << "Successfully get ECall HLAP timer is " << timeDuration
+                  << std::endl;
     }
 }
 
 // Callback which provides response to configure ECall redial parameters
 void TelClient::configureECallRedialResponse(telux::common::ErrorCode error) {
-    if(error != telux::common::ErrorCode::SUCCESS) {
-        std::cout << CLIENT_NAME <<
-            "Configuration of ECall Redial parameters failed with error code: "
-            << Utils::getErrorCodeAsString(error) << std::endl;
+    if (error != telux::common::ErrorCode::SUCCESS) {
+        std::cout << CLIENT_NAME
+                  << "Configuration of ECall Redial parameters failed with error code: "
+                  << Utils::getErrorCodeAsString(error) << std::endl;
         return;
     } else {
         std::cout << CLIENT_NAME << "Successfully configured eCall redial parameters" << std::endl;
@@ -624,9 +621,9 @@ void TelClient::configureECallRedialResponse(telux::common::ErrorCode error) {
 
 // Callback which provides response for restart of HLAP timer
 void TelClient::restartHlapTimerResponse(telux::common::ErrorCode error) {
-    if(error != telux::common::ErrorCode::SUCCESS) {
+    if (error != telux::common::ErrorCode::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to restart eCall HLAP timer with error code: "
-            << Utils::getErrorCodeAsString(error) << std::endl;
+                  << Utils::getErrorCodeAsString(error) << std::endl;
         return;
     } else {
         std::cout << CLIENT_NAME << "Successfully restarted eCall HLAP timer " << std::endl;
@@ -647,13 +644,13 @@ telux::common::Status TelClient::startECall(int phoneId, std::vector<uint8_t> ms
     // Initiate an eCall
     telux::common::Status status = telux::common::Status::FAILED;
     if (transmitMsd) {
-        if(msdPdu.empty()) {
-            status = callMgr_->makeECall(phoneId, msdData, (int)category, (int)variant,
-                shared_from_this());
+        if (msdPdu.empty()) {
+            status = callMgr_->makeECall(
+                phoneId, msdData, (int)category, (int)variant, shared_from_this());
         } else {
             status = callMgr_->makeECall(phoneId, msdPdu, (int)category, (int)variant,
-                 std::bind(&TelClient::makeCallResponse, this, std::placeholders::_1,
-                 std::placeholders::_2));
+                std::bind(&TelClient::makeCallResponse, this, std::placeholders::_1,
+                    std::placeholders::_2));
         }
     } else {
         status = callMgr_->makeECall(phoneId, (int)category, (int)variant,
@@ -663,26 +660,26 @@ telux::common::Status TelClient::startECall(int phoneId, std::vector<uint8_t> ms
     if (status == telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Request to make an ECall is sent successfully" << std::endl;
 
-        ECallInfo ecallInfo = {};
-        ecallInfo.transmitMsd = transmitMsd;
-        ecallInfo.msdData = msdData;
-        ecallInfo.msdPdu = msdPdu;
-        ecallInfo.isCustomNumber = false;
-        ecallInfo.category = category;
-        ecallInfo.variant = variant;
-        ecallInfo.triggerHighCapSwitch = false;
+        ECallInfo ecallInfo             = {};
+        ecallInfo.transmitMsd           = transmitMsd;
+        ecallInfo.msdData               = msdData;
+        ecallInfo.msdPdu                = msdPdu;
+        ecallInfo.isCustomNumber        = false;
+        ecallInfo.category              = category;
+        ecallInfo.variant               = variant;
+        ecallInfo.triggerHighCapSwitch  = false;
         ecallInfo.msdTransmissionStatus = telux::tel::ECallMsdTransmissionStatus::FAILURE;
-        ecallInfo.eCallNWScanFailed = false;
-        eCallDataMap_[phoneId] = ecallInfo;
-        if(isEraGlonassEnabled()) {
-            isDialDurationTimeOut_ = false;
-            stopDialTimer_ = false;
-            willECallRedial_ = false;
+        ecallInfo.eCallNWScanFailed     = false;
+        eCallDataMap_[phoneId]          = ecallInfo;
+        if (isEraGlonassEnabled()) {
+            isDialDurationTimeOut_        = false;
+            stopDialTimer_                = false;
+            willECallRedial_              = false;
             disconnectECallInNextAttempt_ = false;
-            isT9TimerActive_ = false;
-            isAutoAnswerDurationTimeOut_ = false;
-            dialDuration_ = dialDuration;
-            autoAnswerDuration_ = autoAnswerDuration;
+            isT9TimerActive_              = false;
+            isAutoAnswerDurationTimeOut_  = false;
+            dialDuration_                 = dialDuration;
+            autoAnswerDuration_           = autoAnswerDuration;
         }
     } else {
         std::cout << CLIENT_NAME << "Request to make an ECall failed!" << std::endl;
@@ -690,7 +687,7 @@ telux::common::Status TelClient::startECall(int phoneId, std::vector<uint8_t> ms
         return telux::common::Status::FAILED;
     }
     callListener_ = callListener;
-    if(isEraGlonassEnabled()) {
+    if (isEraGlonassEnabled()) {
         autoDialDurationTimer_ = std::async(std::launch::async, [this, dialDuration, phoneId] {
             this->signalForExpiryOfDialDuration(dialDuration);
             this->autoHangup(phoneId);
@@ -703,14 +700,14 @@ void TelClient::signalForExpiryOfDialDuration(int dialDuration) {
     isDialDurationTimeOut_ = false;
     std::cout << " signalForExpiryOfDialDuration: " << dialDuration << std::endl;
     std::unique_lock<std::mutex> lock(dialDurationMtx_);
-    auto start = std::chrono::steady_clock::now();
-    auto timeout = std::chrono::minutes(dialDuration);
+    auto start     = std::chrono::steady_clock::now();
+    auto timeout   = std::chrono::minutes(dialDuration);
     auto predicate = [&] {
-        if(stopDialTimer_) {
+        if (stopDialTimer_) {
             std::cout << "Timer is stopped" << std::endl;
             return true;
         }
-        if(std::chrono::steady_clock::now() - start >= timeout) {
+        if (std::chrono::steady_clock::now() - start >= timeout) {
             isDialDurationTimeOut_ = true;
             std::cout << "Timeout, exiting redialing send request" << std::endl;
             return true;
@@ -724,11 +721,11 @@ void TelClient::signalForExpiryOfDialDuration(int dialDuration) {
 
 void TelClient::autoHangup(int phoneId) {
     std::cout << "autoHangup" << std::endl;
-    if( stopDialTimer_) {
+    if (stopDialTimer_) {
         std::cout << " Exiting as timer is already stopped " << std::endl;
-    } else if(isDialDurationTimeOut_) {
+    } else if (isDialDurationTimeOut_) {
         std::cout << " Sending auto hangup request " << std::endl;
-        if(eCall_) {
+        if (eCall_) {
             hangup(phoneId, eCall_->getCallIndex());
             clearECall_ = true;
         }
@@ -754,13 +751,13 @@ telux::common::Status TelClient::startECall(int phoneId, std::vector<uint8_t> ms
     // Initiate voice eCall
     telux::common::Status status = telux::common::Status::FAILED;
     if (transmitMsd) {
-        if(msdPdu.empty()) {
-            status = callMgr_->makeECall(phoneId, dialNumber, msdData, (int)category,
-                shared_from_this());
+        if (msdPdu.empty()) {
+            status = callMgr_->makeECall(
+                phoneId, dialNumber, msdData, (int)category, shared_from_this());
         } else {
             status = callMgr_->makeECall(phoneId, dialNumber, msdPdu, (int)category,
-                 std::bind(&TelClient::makeCallResponse, this, std::placeholders::_1,
-                 std::placeholders::_2));
+                std::bind(&TelClient::makeCallResponse, this, std::placeholders::_1,
+                    std::placeholders::_2));
         }
     } else {
         status = callMgr_->makeECall(phoneId, dialNumber, (int)category,
@@ -770,17 +767,17 @@ telux::common::Status TelClient::startECall(int phoneId, std::vector<uint8_t> ms
     if (status == telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Request to make a Voice ECall is sent successfully"
                   << std::endl;
-        ECallInfo ecallInfo = {};
-        ecallInfo.transmitMsd = transmitMsd;
-        ecallInfo.msdData = msdData;
-        ecallInfo.msdPdu = msdPdu;
-        ecallInfo.isCustomNumber = true;
-        ecallInfo.category = category;
-        ecallInfo.dialNumber = dialNumber;
-        ecallInfo.triggerHighCapSwitch = false;
+        ECallInfo ecallInfo             = {};
+        ecallInfo.transmitMsd           = transmitMsd;
+        ecallInfo.msdData               = msdData;
+        ecallInfo.msdPdu                = msdPdu;
+        ecallInfo.isCustomNumber        = true;
+        ecallInfo.category              = category;
+        ecallInfo.dialNumber            = dialNumber;
+        ecallInfo.triggerHighCapSwitch  = false;
         ecallInfo.msdTransmissionStatus = telux::tel::ECallMsdTransmissionStatus::FAILURE;
-        ecallInfo.eCallNWScanFailed = false;
-        eCallDataMap_[phoneId] = ecallInfo;
+        ecallInfo.eCallNWScanFailed     = false;
+        eCallDataMap_[phoneId]          = ecallInfo;
     } else {
         std::cout << CLIENT_NAME << "Request to make a Voice ECall failed!" << std::endl;
         setECallProgressState(false);
@@ -801,9 +798,9 @@ telux::common::Status TelClient::startECall(int phoneId, const std::vector<uint8
     setECallProgressState(true);
     // Initiate voice eCall
     telux::common::Status status = telux::common::Status::FAILED;
-    status = callMgr_->makeECall(phoneId, dialNumber, rawData,
-        std::bind(
-             &TelClient::makeCallResponse, this, std::placeholders::_1, std::placeholders::_2));
+    status                       = callMgr_->makeECall(phoneId, dialNumber, rawData,
+                              std::bind(
+            &TelClient::makeCallResponse, this, std::placeholders::_1, std::placeholders::_2));
     if (status == telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Request to make a self test eCall is sent successfully"
                   << std::endl;
@@ -837,12 +834,12 @@ telux::common::Status TelClient::startECall(int phoneId, const std::vector<uint8
     }
     if (acceptInfo != "") {
         header.acceptInfo = acceptInfo;
-    } else  {
+    } else {
         header.acceptInfo = "";
     }
     status = callMgr_->makeECall(phoneId, dialNumber, rawData, header,
         std::bind(
-             &TelClient::makeCallResponse, this, std::placeholders::_1, std::placeholders::_2));
+            &TelClient::makeCallResponse, this, std::placeholders::_1, std::placeholders::_2));
     if (status == telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Request to make a Voice ECall over IMS is sent successfully"
                   << std::endl;
@@ -892,7 +889,7 @@ telux::common::Status TelClient::answer(
         std::cout << CLIENT_NAME << "Invalid Call Manager, Failed answer call" << std::endl;
         return telux::common::Status::FAILED;
     }
-    std::shared_ptr<telux::tel::ICall> spCall = nullptr;
+    std::shared_ptr<telux::tel::ICall> spCall                = nullptr;
     std::vector<std::shared_ptr<telux::tel::ICall>> callList = callMgr_->getInProgressCalls();
     // Fetch the list of in progress calls from CallManager and accept the incoming call.
     for (auto callIterator = std::begin(callList); callIterator != std::end(callList);
@@ -936,7 +933,7 @@ telux::common::Status TelClient::hangup(int phoneId, int callIndex) {
     // If callIndex is not provided, iterate through the call list in the application and hangup if
     // only one call is Active or on Hold. If callIndex is provided, hangup the corresponding call.
     std::vector<std::shared_ptr<telux::tel::ICall>> callList = callMgr_->getInProgressCalls();
-    int numOfCalls = 0;
+    int numOfCalls                                           = 0;
     for (auto callIterator = std::begin(callList); callIterator != std::end(callList);
          ++callIterator) {
         if (phoneId == (*callIterator)->getPhoneId()) {
@@ -959,10 +956,8 @@ telux::common::Status TelClient::hangup(int phoneId, int callIndex) {
     } else {
         if (isEraGlonassEnabled()) {
             if (willECallRedial_) {
-                std::cout << CLIENT_NAME <<
-                    " ERA-GLONASS eCall redial is perfomed by modem" <<
-                    "so call will get disconnected before next redial."
-                    << std::endl;
+                std::cout << CLIENT_NAME << " ERA-GLONASS eCall redial is perfomed by modem"
+                          << "so call will get disconnected before next redial." << std::endl;
                 disconnectECallInNextAttempt_ = true;
             } else {
                 disconnectECallInNextAttempt_ = false;
@@ -1021,15 +1016,14 @@ void TelClient::updateEcallResponse(telux::common::ErrorCode error) {
 
 // Stop T10 eCall High Level Application Protocol(HLAP) timer
 telux::common::Status TelClient::stopT10Timer(int phoneId) {
-    if(!callMgr_) {
+    if (!callMgr_) {
         std::cout << CLIENT_NAME << "Invalid Call Manager, Failed to send request to stop T10 timer"
-            << std::endl;
+                  << std::endl;
         return telux::common::Status::FAILED;
     }
-    auto status = callMgr_->requestNetworkDeregistration(phoneId,
-                            std::bind(&TelClient::stopT10TimerResponse, this,
-                            std::placeholders::_1));
-    if(status != telux::common::Status::SUCCESS) {
+    auto status = callMgr_->requestNetworkDeregistration(
+        phoneId, std::bind(&TelClient::stopT10TimerResponse, this, std::placeholders::_1));
+    if (status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to send request to stop T10 timer" << std::endl;
         return telux::common::Status::FAILED;
     }
@@ -1037,17 +1031,16 @@ telux::common::Status TelClient::stopT10Timer(int phoneId) {
 }
 
 // Set the value of eCall High Level Application Protocol(HLAP) timer
-telux::common::Status TelClient::setHlapTimer(int phoneId, HlapTimerType type,
-    uint32_t timeDuration) {
-    if(!callMgr_) {
+telux::common::Status TelClient::setHlapTimer(
+    int phoneId, HlapTimerType type, uint32_t timeDuration) {
+    if (!callMgr_) {
         std::cout << CLIENT_NAME << "Invalid Call Manager, Failed to send request to set HLAP timer"
-            << std::endl;
+                  << std::endl;
         return telux::common::Status::FAILED;
     }
     auto status = callMgr_->updateEcallHlapTimer(phoneId, type, timeDuration,
-                            std::bind(&TelClient::setHlapTimerResponse, this,
-                            std::placeholders::_1));
-    if(status != telux::common::Status::SUCCESS) {
+        std::bind(&TelClient::setHlapTimerResponse, this, std::placeholders::_1));
+    if (status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to send request to set HLAP timer" << std::endl;
         return telux::common::Status::FAILED;
     }
@@ -1056,18 +1049,19 @@ telux::common::Status TelClient::setHlapTimer(int phoneId, HlapTimerType type,
 
 // Set the value of POST TEST REGISTRATION timer.
 telux::common::Status TelClient::setPostTestRegistrationTimer(int phoneId, uint32_t timeDuration) {
-    if(!callMgr_) {
-        std::cout << CLIENT_NAME <<
-            "Invalid Call Manager, Failed to send request to set post test registration timer"
+    if (!callMgr_) {
+        std::cout
+            << CLIENT_NAME
+            << "Invalid Call Manager, Failed to send request to set post test registration timer"
             << std::endl;
         return telux::common::Status::FAILED;
     }
     auto status = callMgr_->updateECallPostTestRegistrationTimer(phoneId, timeDuration,
-                            std::bind(&TelClient::setECallPostTestRegistrationTimerResponse, this,
-                            std::placeholders::_1));
-    if(status != telux::common::Status::SUCCESS) {
-        std::cout << CLIENT_NAME <<
-            "Failed to send request to set post test registration timer" << std::endl;
+        std::bind(
+            &TelClient::setECallPostTestRegistrationTimerResponse, this, std::placeholders::_1));
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to send request to set post test registration timer"
+                  << std::endl;
         return telux::common::Status::FAILED;
     }
     return telux::common::Status::SUCCESS;
@@ -1075,32 +1069,32 @@ telux::common::Status TelClient::setPostTestRegistrationTimer(int phoneId, uint3
 
 // Get the value of POST TEST REGISTRATION timer.
 telux::common::ErrorCode TelClient::getECallPostTestRegistrationTimer(int phoneId) {
-    if(!callMgr_) {
+    if (!callMgr_) {
         std::cout << CLIENT_NAME << "Invalid Ecall Manager, Failed to get Ecall configuration"
-            << std::endl;
+                  << std::endl;
         return telux::common::ErrorCode::INVALID_STATE;
     }
     uint32_t timer = 0;
     auto errorCode = callMgr_->getECallPostTestRegistrationTimer(phoneId, timer);
-    if(errorCode == telux::common::ErrorCode::SUCCESS) {
+    if (errorCode == telux::common::ErrorCode::SUCCESS) {
         std::cout << CLIENT_NAME << " ECall post test registration timer: " << timer << std::endl;
     } else {
         std::cout << CLIENT_NAME
-            << "Failed to get eCall post test registration timer with errorCode "
-            << static_cast<int>(errorCode) << std::endl;
+                  << "Failed to get eCall post test registration timer with errorCode "
+                  << static_cast<int>(errorCode) << std::endl;
     }
     return errorCode;
 }
 
 telux::common::Status TelClient::getECallConfig() {
-    if(!callMgr_) {
+    if (!callMgr_) {
         std::cout << CLIENT_NAME << "Invalid Ecall Manager, Failed to get Ecall configuration"
-            << std::endl;
+                  << std::endl;
         return telux::common::Status::FAILED;
     }
     telux::tel::EcallConfig config = {};
-    auto status = callMgr_->getECallConfig(config);
-    if(status == telux::common::Status::SUCCESS) {
+    auto status                    = callMgr_->getECallConfig(config);
+    if (status == telux::common::Status::SUCCESS) {
         TelClientUtils::printEcallConfig(config);
     } else {
         std::cout << CLIENT_NAME << "Failed to get eCall configuration" << std::endl;
@@ -1111,14 +1105,14 @@ telux::common::Status TelClient::getECallConfig() {
 
 // Get eCall redial parameters for call origination failure and call drop.
 telux::common::ErrorCode TelClient::getECallRedialConfig() {
-    if(!callMgr_) {
+    if (!callMgr_) {
         std::cout << CLIENT_NAME << "Invalid Ecall Manager" << std::endl;
         return telux::common::ErrorCode::INVALID_STATE;
     }
     std::vector<int> callOrigTimeGap = {};
     std::vector<int> callDropTimeGap = {};
     auto errorCode = callMgr_->getECallRedialConfig(callOrigTimeGap, callDropTimeGap);
-    if(errorCode == telux::common::ErrorCode::SUCCESS) {
+    if (errorCode == telux::common::ErrorCode::SUCCESS) {
         std::cout << " Call origination failure redial config values ";
         for (int value : callOrigTimeGap) {
             std::cout << value << " ";
@@ -1131,22 +1125,22 @@ telux::common::ErrorCode TelClient::getECallRedialConfig() {
         std::cout << std::endl;
     } else {
         std::cout << CLIENT_NAME << "Failed to get eCall redial configuration"
-            << static_cast<int>(errorCode) << std::endl;
+                  << static_cast<int>(errorCode) << std::endl;
     }
     return errorCode;
 }
 
 // Get the value of eCall High Level Application Protocol(HLAP) timer
 telux::common::Status TelClient::getHlapTimer(int phoneId, HlapTimerType type) {
-    if(!callMgr_) {
+    if (!callMgr_) {
         std::cout << CLIENT_NAME << "Invalid Call Manager, Failed to send request to get HLAP timer"
-            << std::endl;
+                  << std::endl;
         return telux::common::Status::FAILED;
     }
     auto status = callMgr_->requestEcallHlapTimer(phoneId, type,
-                            std::bind(&TelClient::getHlapTimerResponse, this,
-                            std::placeholders::_1, std::placeholders::_2));
-    if(status != telux::common::Status::SUCCESS) {
+        std::bind(
+            &TelClient::getHlapTimerResponse, this, std::placeholders::_1, std::placeholders::_2));
+    if (status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to send request to get HLAP timer" << std::endl;
         return telux::common::Status::FAILED;
     }
@@ -1154,29 +1148,29 @@ telux::common::Status TelClient::getHlapTimer(int phoneId, HlapTimerType type) {
 }
 
 telux::common::Status TelClient::setECallConfig(EcallConfig config) {
-    if(!callMgr_) {
+    if (!callMgr_) {
         std::cout << CLIENT_NAME << "Invalid Ecall Manager, Failed to set Ecall configuration"
-            << std::endl;
+                  << std::endl;
         return telux::common::Status::FAILED;
     }
     auto status = callMgr_->setECallConfig(config);
-    if(status != telux::common::Status::SUCCESS) {
+    if (status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to set eCall configuration" << std::endl;
         return telux::common::Status::FAILED;
     }
     return telux::common::Status::SUCCESS;
 }
 
-telux::common::Status TelClient::restartECallHlapTimer(int phoneId, EcallHlapTimerId id,
-    int duration) {
-    if(!callMgr_) {
+telux::common::Status TelClient::restartECallHlapTimer(
+    int phoneId, EcallHlapTimerId id, int duration) {
+    if (!callMgr_) {
         std::cout << CLIENT_NAME << "Invalid Ecall Manager, Failed to restart eCall HLAP timer"
-            << std::endl;
+                  << std::endl;
         return telux::common::Status::FAILED;
     }
     auto status = callMgr_->restartECallHlapTimer(phoneId, id, duration,
         std::bind(&TelClient::restartHlapTimerResponse, this, std::placeholders::_1));
-    if(status != telux::common::Status::SUCCESS) {
+    if (status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to restart eCall HLAP timer" << std::endl;
         return telux::common::Status::FAILED;
     }
@@ -1187,31 +1181,31 @@ telux::common::Status TelClient::getEncodedOptionalAdditionalDataContent(
     ECallOptionalEuroNcapData optionalEuroNcapData, std::vector<uint8_t> &data) {
     if (!callMgr_) {
         std::cout << CLIENT_NAME << "Invalid ECall Manager, Failed to get encoded optional"
-            << " additional data content" << std::endl;
+                  << " additional data content" << std::endl;
         return telux::common::Status::FAILED;
     }
     auto status = callMgr_->encodeEuroNcapOptionalAdditionalData(optionalEuroNcapData, data);
     std::vector<uint8_t> optionalAdditionalDataContent = data;
     if (status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to get encoded optional additional data content"
-            << std::endl;
+                  << std::endl;
         return telux::common::Status::FAILED;
     } else {
-        std::string encodedString(optionalAdditionalDataContent.begin(),
-            optionalAdditionalDataContent.end());
+        std::string encodedString(
+            optionalAdditionalDataContent.begin(), optionalAdditionalDataContent.end());
         TelClientUtils::printEncodedOptionalAdditionalDataContent(encodedString);
     }
     return telux::common::Status::SUCCESS;
 }
 
-telux::common::ErrorCode TelClient::getECallMsdPayload(ECallMsdData eCallMsd,
-    std::vector<uint8_t> &msdPdu) {
+telux::common::ErrorCode TelClient::getECallMsdPayload(
+    ECallMsdData eCallMsd, std::vector<uint8_t> &msdPdu) {
     if (!callMgr_) {
         std::cout << CLIENT_NAME << "Invalid Call Manager, Failed to get encoded eCall"
-            << " MSD payload" << std::endl;
+                  << " MSD payload" << std::endl;
         return telux::common::ErrorCode::GENERIC_FAILURE;
     }
-    auto errCode = callMgr_->encodeECallMsd(eCallMsd, msdPdu);
+    auto errCode                    = callMgr_->encodeECallMsd(eCallMsd, msdPdu);
     std::vector<uint8_t> msdPayload = msdPdu;
     if (errCode != telux::common::ErrorCode::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to get encoded eCall MSD payload" << std::endl;
@@ -1229,7 +1223,7 @@ telux::common::ErrorCode TelClient::getECallMsdPayload(ECallMsdData eCallMsd,
 telux::common::Status TelClient::configureECallRedial(int config, std::vector<int> &timeGap) {
     if (!callMgr_) {
         std::cout << CLIENT_NAME << "Invalid Call Manager,  Failed to configure eCall redial"
-            << " configuration " << std::endl;
+                  << " configuration " << std::endl;
         return telux::common::Status::FAILED;
     }
     auto status = callMgr_->configureECallRedial(static_cast<RedialConfigType>(config), timeGap,

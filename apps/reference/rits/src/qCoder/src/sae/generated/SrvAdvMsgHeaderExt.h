@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_SrvAdvMsgHeaderExt_H_
-#define	_SrvAdvMsgHeaderExt_H_
-
+#ifndef _SrvAdvMsgHeaderExt_H_
+#define _SrvAdvMsgHeaderExt_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* SrvAdvMsgHeaderExt */
-typedef Extension_22P0_t	 SrvAdvMsgHeaderExt_t;
+typedef Extension_22P0_t SrvAdvMsgHeaderExt_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_SrvAdvMsgHeaderExt;
@@ -37,5 +36,5 @@ per_type_encoder_f SrvAdvMsgHeaderExt_encode_uper;
 }
 #endif
 
-#endif	/* _SrvAdvMsgHeaderExt_H_ */
+#endif /* _SrvAdvMsgHeaderExt_H_ */
 #include <asn_internal.h>

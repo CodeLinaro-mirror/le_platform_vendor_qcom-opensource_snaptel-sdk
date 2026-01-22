@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_MACaddress_H_
-#define	_MACaddress_H_
-
+#ifndef _MACaddress_H_
+#define _MACaddress_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* MACaddress */
-typedef OCTET_STRING_t	 MACaddress_t;
+typedef OCTET_STRING_t MACaddress_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_MACaddress;
@@ -37,5 +36,5 @@ per_type_encoder_f MACaddress_encode_uper;
 }
 #endif
 
-#endif	/* _MACaddress_H_ */
+#endif /* _MACaddress_H_ */
 #include <asn_internal.h>

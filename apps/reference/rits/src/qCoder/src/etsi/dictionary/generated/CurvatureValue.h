@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_CurvatureValue_H_
-#define	_CurvatureValue_H_
-
+#ifndef _CurvatureValue_H_
+#define _CurvatureValue_H_
 
 #include <asn_application.h>
 
@@ -20,14 +19,14 @@ extern "C" {
 
 /* Dependencies */
 typedef enum CurvatureValue {
-	CurvatureValue_straight	= 0,
-	CurvatureValue_reciprocalOf1MeterRadiusToRight	= -30000,
-	CurvatureValue_reciprocalOf1MeterRadiusToLeft	= 30000,
-	CurvatureValue_unavailable	= 30001
+    CurvatureValue_straight                        = 0,
+    CurvatureValue_reciprocalOf1MeterRadiusToRight = -30000,
+    CurvatureValue_reciprocalOf1MeterRadiusToLeft  = 30000,
+    CurvatureValue_unavailable                     = 30001
 } e_CurvatureValue;
 
 /* CurvatureValue */
-typedef long	 CurvatureValue_t;
+typedef long CurvatureValue_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_CurvatureValue;
@@ -45,5 +44,5 @@ per_type_encoder_f CurvatureValue_encode_uper;
 }
 #endif
 
-#endif	/* _CurvatureValue_H_ */
+#endif /* _CurvatureValue_H_ */
 #include <asn_internal.h>

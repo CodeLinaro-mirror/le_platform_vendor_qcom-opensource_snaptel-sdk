@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "Alsa.hpp"
@@ -20,9 +20,8 @@ namespace audio {
 /*
  * Audio stream types supported.
  */
-const std::vector<StreamType> Alsa::SUPPORTED_STREAM_TYPES = {
-        StreamType::VOICE_CALL, StreamType::PLAY, StreamType::CAPTURE,
-        StreamType::LOOPBACK, StreamType::TONE_GENERATOR};
+const std::vector<StreamType> Alsa::SUPPORTED_STREAM_TYPES = {StreamType::VOICE_CALL,
+    StreamType::PLAY, StreamType::CAPTURE, StreamType::LOOPBACK, StreamType::TONE_GENERATOR};
 
 /*
  * Telsdk audio device to PAL audio device mapping. When the audio server is run, it will
@@ -45,15 +44,14 @@ const std::vector<StreamType> Alsa::SUPPORTED_STREAM_TYPES = {
  *   -------------------------------------------------------------------------------------
  */
 const DeviceMappingTable Alsa::DEFAULT_DEVS_TABLE = {10,
-        {DeviceDirection::RX, DeviceDirection::RX, DeviceDirection::RX, DeviceDirection::RX,
-         DeviceDirection::RX, DeviceDirection::TX, DeviceDirection::TX, DeviceDirection::TX,
-         DeviceDirection::TX, DeviceDirection::TX},
-        {DeviceType::DEVICE_TYPE_SPEAKER, DeviceType::DEVICE_TYPE_SPEAKER_2,
-         DeviceType::DEVICE_TYPE_SPEAKER_3, DeviceType::DEVICE_TYPE_BT_SCO_SPEAKER,
-         DeviceType::DEVICE_TYPE_PROXY_SPEAKER, DeviceType::DEVICE_TYPE_MIC,
-         DeviceType::DEVICE_TYPE_MIC_2, DeviceType::DEVICE_TYPE_MIC_3,
-         DeviceType::DEVICE_TYPE_BT_SCO_MIC, DeviceType::DEVICE_TYPE_PROXY_MIC}
-};
+    {DeviceDirection::RX, DeviceDirection::RX, DeviceDirection::RX, DeviceDirection::RX,
+        DeviceDirection::RX, DeviceDirection::TX, DeviceDirection::TX, DeviceDirection::TX,
+        DeviceDirection::TX, DeviceDirection::TX},
+    {DeviceType::DEVICE_TYPE_SPEAKER, DeviceType::DEVICE_TYPE_SPEAKER_2,
+        DeviceType::DEVICE_TYPE_SPEAKER_3, DeviceType::DEVICE_TYPE_BT_SCO_SPEAKER,
+        DeviceType::DEVICE_TYPE_PROXY_SPEAKER, DeviceType::DEVICE_TYPE_MIC,
+        DeviceType::DEVICE_TYPE_MIC_2, DeviceType::DEVICE_TYPE_MIC_3,
+        DeviceType::DEVICE_TYPE_BT_SCO_MIC, DeviceType::DEVICE_TYPE_PROXY_MIC}};
 
 #ifdef __cplusplus
 extern "C" {
@@ -61,14 +59,14 @@ extern "C" {
 
 Alsa::Alsa() {
     LOG(DEBUG, __FUNCTION__);
-     try{
+    try {
         config_ = std::make_shared<SimulationConfigParser>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         LOG(ERROR, __FUNCTION__, " can't create SimulationConfigParser");
     }
-    runLoopback_ = false;
-    runTone_ = false;
-    pipelineLen = rand() % 10;
+    runLoopback_   = false;
+    runTone_       = false;
+    pipelineLen    = rand() % 10;
     sendWriteReady = 0;
 }
 
@@ -85,16 +83,16 @@ telux::common::ErrorCode Alsa::init(std::shared_ptr<ISSREventListener> ssrEventL
     if (ret < 0) {
         /* Use default device mapping, if the user doesn't override it through
          * tel.conf or an error occurs while parsing tel.conf for mappings. */
-         finalDevicesTable_ = Alsa::DEFAULT_DEVS_TABLE;
-         pcmDevice_ = DEFAULT_DEVICE;
-         sndCardCtlDevice_ = DEFAULT_DEVICE;
-         LOG(INFO, __FUNCTION__, " default device mapping loaded");
+        finalDevicesTable_ = Alsa::DEFAULT_DEVS_TABLE;
+        pcmDevice_         = DEFAULT_DEVICE;
+        sndCardCtlDevice_  = DEFAULT_DEVICE;
+        LOG(INFO, __FUNCTION__, " default device mapping loaded");
     }
 
     /* Register for event-injection notification for audio filter. */
     auto &serverEventManager = ServerEventManager::getInstance();
     status = serverEventManager.registerListener(shared_from_this(), AUDIO_FILTER);
-    if(status != telux::common::Status::SUCCESS){
+    if (status != telux::common::Status::SUCCESS) {
         LOG(ERROR, __FUNCTION__, "Failed to register for event: ", AUDIO_FILTER);
     }
 
@@ -108,21 +106,21 @@ telux::common::ErrorCode Alsa::deinit() {
 
     telux::common::Status status;
 
-    if(privateSSRData_) {
+    if (privateSSRData_) {
         delete privateSSRData_;
     }
 
     auto &serverEventManager = ServerEventManager::getInstance();
     status = serverEventManager.deregisterListener(shared_from_this(), AUDIO_FILTER);
-    if(status != telux::common::Status::SUCCESS){
+    if (status != telux::common::Status::SUCCESS) {
         LOG(ERROR, __FUNCTION__, "Failed to deregister for event: ", AUDIO_FILTER);
     }
 
     return telux::common::ErrorCode::SUCCESS;
 }
 
-telux::common::ErrorCode Alsa::getSupportedDevices(std::vector<DeviceType>& devices,
-        std::vector<DeviceDirection>& devicesDirection) {
+telux::common::ErrorCode Alsa::getSupportedDevices(
+    std::vector<DeviceType> &devices, std::vector<DeviceDirection> &devicesDirection) {
 
     for (uint32_t x = 0; x < finalDevicesTable_.numDevices; x++) {
         devices.push_back(finalDevicesTable_.deviceType[x]);
@@ -132,16 +130,15 @@ telux::common::ErrorCode Alsa::getSupportedDevices(std::vector<DeviceType>& devi
     return telux::common::ErrorCode::SUCCESS;
 }
 
-telux::common::ErrorCode Alsa::getSupportedStreamTypes(std::vector<StreamType>& streamTypes) {
+telux::common::ErrorCode Alsa::getSupportedStreamTypes(std::vector<StreamType> &streamTypes) {
 
     streamTypes = SUPPORTED_STREAM_TYPES;
     return telux::common::ErrorCode::SUCCESS;
 }
 
+telux::common::ErrorCode Alsa::mapStreamType(StreamType streamType, snd_pcm_stream_t &stream) {
 
-telux::common::ErrorCode Alsa::mapStreamType(StreamType streamType, snd_pcm_stream_t& stream) {
-
-    switch(streamType) {
+    switch (streamType) {
         case StreamType::TONE_GENERATOR:
         case StreamType::PLAY:
             stream = SND_PCM_STREAM_PLAYBACK;
@@ -157,9 +154,9 @@ telux::common::ErrorCode Alsa::mapStreamType(StreamType streamType, snd_pcm_stre
     return telux::common::ErrorCode::SUCCESS;
 }
 
-telux::common::ErrorCode Alsa::mapStreamChannelMask( uint32_t channelTypeMask, int& channels) {
+telux::common::ErrorCode Alsa::mapStreamChannelMask(uint32_t channelTypeMask, int &channels) {
 
-    switch(channelTypeMask) {
+    switch (channelTypeMask) {
         case ChannelType::LEFT:
             channels = 1;
             break;
@@ -167,7 +164,7 @@ telux::common::ErrorCode Alsa::mapStreamChannelMask( uint32_t channelTypeMask, i
             channels = 1;
             break;
         case (ChannelType::LEFT | ChannelType::RIGHT):
-                channels = 2;
+            channels = 2;
             break;
         default:
             LOG(ERROR, __FUNCTION__, " invalid channel type ", channelTypeMask);
@@ -176,37 +173,37 @@ telux::common::ErrorCode Alsa::mapStreamChannelMask( uint32_t channelTypeMask, i
     return telux::common::ErrorCode::SUCCESS;
 }
 
-telux::common::ErrorCode Alsa::createStream(StreamHandle& streamHandle,
-        StreamParams streamParams, uint32_t& readBufferMinSize,
-        uint32_t& writeBufferMinSize) {
+telux::common::ErrorCode Alsa::createStream(StreamHandle &streamHandle, StreamParams streamParams,
+    uint32_t &readBufferMinSize, uint32_t &writeBufferMinSize) {
 
     telux::common::ErrorCode ec;
     /* Currently, only PCM format is supported. Therefore, setting format as PCM. */
-    snd_pcm_format_t format = SND_PCM_FORMAT_S16_LE;;
+    snd_pcm_format_t format = SND_PCM_FORMAT_S16_LE;
+    ;
     snd_pcm_hw_params_t *params;
     snd_pcm_stream_t stream;
     int ret;
     ChannelVolume vol;
     std::vector<ChannelVolume> channelsVolume{};
 
-    if(StreamType::VOICE_CALL == streamHandle.type) {
+    if (StreamType::VOICE_CALL == streamHandle.type) {
         /*
          * Enable DTMF detection. Currently only RX path is supported.
          */
         dtmfIndicationListenerMap_[streamParams.streamId] = streamParams.streamEventListener;
-        LOG(DEBUG, __FUNCTION__,"Registered listener ");
+        LOG(DEBUG, __FUNCTION__, "Registered listener ");
         return telux::common::ErrorCode::SUCCESS;
     }
 
-    ec = mapStreamChannelMask(streamParams.config.streamConfig.channelTypeMask,
-            streamHandle.channels);
+    ec = mapStreamChannelMask(
+        streamParams.config.streamConfig.channelTypeMask, streamHandle.channels);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         return ec;
     }
 
-    if(StreamType::LOOPBACK == streamHandle.type){
-        ret = snd_pcm_open (&streamHandle.loopbackPlayHandle, pcmDevice_.c_str(), SND_PCM_STREAM_PLAYBACK,
-            0);
+    if (StreamType::LOOPBACK == streamHandle.type) {
+        ret = snd_pcm_open(
+            &streamHandle.loopbackPlayHandle, pcmDevice_.c_str(), SND_PCM_STREAM_PLAYBACK, 0);
         if (ret < 0) {
             LOG(ERROR, __FUNCTION__, "Can't open PCM device: ", pcmDevice_.c_str());
             return telux::common::ErrorCode::SYSTEM_ERR;
@@ -216,12 +213,12 @@ telux::common::ErrorCode Alsa::createStream(StreamHandle& streamHandle,
             SND_PCM_ACCESS_RW_INTERLEAVED, streamHandle.channels,
             streamParams.config.streamConfig.sampleRate, 1, 500000);
         if (ret < 0) {
-            LOG(ERROR, __FUNCTION__,"Loopback playback open error:");
+            LOG(ERROR, __FUNCTION__, "Loopback playback open error:");
             return telux::common::ErrorCode::SYSTEM_ERR;
         }
 
-        ret = snd_pcm_open (&streamHandle.loopbackCaptureHandle, pcmDevice_.c_str(), SND_PCM_STREAM_CAPTURE,
-            0);
+        ret = snd_pcm_open(
+            &streamHandle.loopbackCaptureHandle, pcmDevice_.c_str(), SND_PCM_STREAM_CAPTURE, 0);
         if (ret < 0) {
             LOG(ERROR, __FUNCTION__, "Can't open PCM device: ", pcmDevice_.c_str());
             return telux::common::ErrorCode::SYSTEM_ERR;
@@ -231,7 +228,7 @@ telux::common::ErrorCode Alsa::createStream(StreamHandle& streamHandle,
             SND_PCM_ACCESS_RW_INTERLEAVED, streamHandle.channels,
             streamParams.config.streamConfig.sampleRate, 1, 500000);
         if (ret < 0) {
-            LOG(ERROR, __FUNCTION__,"Loopback capture open error:");
+            LOG(ERROR, __FUNCTION__, "Loopback capture open error:");
             return telux::common::ErrorCode::SYSTEM_ERR;
         }
 
@@ -259,24 +256,24 @@ telux::common::ErrorCode Alsa::createStream(StreamHandle& streamHandle,
      * stream of samples. If there is more than one channel, the channels will be interleaved.
      * In the case of stereo data: left sample, right sample, left, right.
      */
-    ret = snd_pcm_hw_params_set_access(streamHandle.pcmHandle, params,
-        SND_PCM_ACCESS_RW_INTERLEAVED);
+    ret = snd_pcm_hw_params_set_access(
+        streamHandle.pcmHandle, params, SND_PCM_ACCESS_RW_INTERLEAVED);
     if (ret < 0) {
-        LOG(ERROR, __FUNCTION__,"Can't set interleaved mode.");
+        LOG(ERROR, __FUNCTION__, "Can't set interleaved mode.");
         return telux::common::ErrorCode::SYSTEM_ERR;
     }
 
-    if(StreamType::TONE_GENERATOR == streamHandle.type) {
+    if (StreamType::TONE_GENERATOR == streamHandle.type) {
         ret = snd_pcm_hw_params_set_format(streamHandle.pcmHandle, params, SND_PCM_FORMAT_FLOAT);
-        if (ret < 0){
-            LOG(ERROR, __FUNCTION__,"Can't set format.");
+        if (ret < 0) {
+            LOG(ERROR, __FUNCTION__, "Can't set format.");
             return telux::common::ErrorCode::SYSTEM_ERR;
         }
     } else {
         /* Restrict a configuration space to contain only one format. */
         ret = snd_pcm_hw_params_set_format(streamHandle.pcmHandle, params, format);
-        if (ret < 0){
-            LOG(ERROR, __FUNCTION__,"Can't set format.");
+        if (ret < 0) {
+            LOG(ERROR, __FUNCTION__, "Can't set format.");
             return telux::common::ErrorCode::SYSTEM_ERR;
         }
     }
@@ -284,15 +281,15 @@ telux::common::ErrorCode Alsa::createStream(StreamHandle& streamHandle,
     /* Restrict a configuration space to contain only given no channels count.*/
     ret = snd_pcm_hw_params_set_channels(streamHandle.pcmHandle, params, streamHandle.channels);
     if (ret < 0) {
-        LOG(ERROR, __FUNCTION__,"Can't set channels number.");
+        LOG(ERROR, __FUNCTION__, "Can't set channels number.");
         return telux::common::ErrorCode::SYSTEM_ERR;
     }
 
     /*Restrict a configuration space to have rate nearest to a target.*/
-    ret = snd_pcm_hw_params_set_rate_near(streamHandle.pcmHandle, params,
-        &streamParams.config.streamConfig.sampleRate, 0);
-    if (ret < 0){
-        LOG(ERROR, __FUNCTION__,"Can't set rate.");
+    ret = snd_pcm_hw_params_set_rate_near(
+        streamHandle.pcmHandle, params, &streamParams.config.streamConfig.sampleRate, 0);
+    if (ret < 0) {
+        LOG(ERROR, __FUNCTION__, "Can't set rate.");
         return telux::common::ErrorCode::SYSTEM_ERR;
     }
 
@@ -300,8 +297,8 @@ telux::common::ErrorCode Alsa::createStream(StreamHandle& streamHandle,
      * snd_pcm_prepare it.
      */
     ret = snd_pcm_hw_params(streamHandle.pcmHandle, params);
-    if (ret  < 0){
-        LOG(ERROR, __FUNCTION__,"Can't set harware parameters. ");
+    if (ret < 0) {
+        LOG(ERROR, __FUNCTION__, "Can't set harware parameters. ");
         return telux::common::ErrorCode::SYSTEM_ERR;
     }
 
@@ -311,134 +308,132 @@ telux::common::ErrorCode Alsa::createStream(StreamHandle& streamHandle,
 
     /* Set volume for stream as 1 as default for the stream.*/
     vol.channelType = ChannelType::LEFT;
-    vol.vol = 1;
+    vol.vol         = 1;
     channelsVolume.push_back(vol);
     vol.channelType = ChannelType::RIGHT;
-    vol.vol = 1;
+    vol.vol         = 1;
     channelsVolume.push_back(vol);
 
-
     /* Set buffer size for a particular stream.*/
-    switch (streamHandle.type)
-    {
-    case StreamType::PLAY:
-        writeBufferMinSize = streamHandle.frames * streamHandle.channels * 2;
+    switch (streamHandle.type) {
+        case StreamType::PLAY:
+            writeBufferMinSize = streamHandle.frames * streamHandle.channels * 2;
 
-        ec = setVolume(streamHandle, StreamDirection::RX , channelsVolume);
-        if (ec != telux::common::ErrorCode::SUCCESS) {
-            return telux::common::ErrorCode::SYSTEM_ERR;
-        }
-        break;
-    case StreamType::CAPTURE:
-        readBufferMinSize = streamHandle.frames * streamHandle.channels * 2;
-        ec = setVolume(streamHandle, StreamDirection::RX , channelsVolume);
-        if (ec != telux::common::ErrorCode::SUCCESS) {
-            return telux::common::ErrorCode::SYSTEM_ERR;
-        }
-    default:
-        /* Default values of writeBufferMinSize and readBufferMinSize set to 0.*/
-        break;
+            ec = setVolume(streamHandle, StreamDirection::RX, channelsVolume);
+            if (ec != telux::common::ErrorCode::SUCCESS) {
+                return telux::common::ErrorCode::SYSTEM_ERR;
+            }
+            break;
+        case StreamType::CAPTURE:
+            readBufferMinSize = streamHandle.frames * streamHandle.channels * 2;
+            ec                = setVolume(streamHandle, StreamDirection::RX, channelsVolume);
+            if (ec != telux::common::ErrorCode::SUCCESS) {
+                return telux::common::ErrorCode::SYSTEM_ERR;
+            }
+        default:
+            /* Default values of writeBufferMinSize and readBufferMinSize set to 0.*/
+            break;
     }
 
     return telux::common::ErrorCode::SUCCESS;
 }
 
-telux::common::ErrorCode Alsa::deleteStream(StreamHandle& streamHandle) {
+telux::common::ErrorCode Alsa::deleteStream(StreamHandle &streamHandle) {
 
     int ret;
 
     switch (streamHandle.type) {
-    case StreamType::VOICE_CALL:
-        return telux::common::ErrorCode::SUCCESS;
-        break;
-    case StreamType::TONE_GENERATOR:
-        for(std::thread &th: toneThread_) {
-            if(th.joinable()){
-                th.join();
-            }
-        }
-    case StreamType::PLAY:
-        if(streamHandle.inTranscodeStreamId == inTranscodeStreamId_) {
+        case StreamType::VOICE_CALL:
             return telux::common::ErrorCode::SUCCESS;
-        }
-
-        ret = snd_pcm_drop(streamHandle.pcmHandle);
-        if (ret  < 0){
-            LOG(ERROR, __FUNCTION__,"Can't drain PCM. ");
-            return telux::common::ErrorCode::SYSTEM_ERR;
-        }
-
-        ret = snd_pcm_close(streamHandle.pcmHandle);
-        if (ret  < 0){
-            LOG(ERROR, __FUNCTION__,"Can't close PCM stream. ");
-            return telux::common::ErrorCode::SYSTEM_ERR;
-        }
-        break;
-    case StreamType::CAPTURE:
-        if(streamHandle.outTranscodeStreamId == outTranscodeStreamId_) {
-            return telux::common::ErrorCode::SUCCESS;
-        }
-
-        ret = snd_pcm_close(streamHandle.pcmHandle);
-        if (ret  < 0){
-            LOG(ERROR, __FUNCTION__,"Can't close PCM stream. ");
-            return telux::common::ErrorCode::SYSTEM_ERR;
-        }
-        break;
-    case StreamType::LOOPBACK:
-        for(std::thread &th: loopThread_) {
-            if(th.joinable()){
-                th.join();
+            break;
+        case StreamType::TONE_GENERATOR:
+            for (std::thread &th : toneThread_) {
+                if (th.joinable()) {
+                    th.join();
+                }
             }
-        }
-        //Delete loopback play stream
-        ret = snd_pcm_drain(streamHandle.loopbackPlayHandle);
-        if (ret  < 0){
-            LOG(ERROR, __FUNCTION__,"Can't drain PCM. ");
-            return telux::common::ErrorCode::SYSTEM_ERR;
-        }
-        ret = snd_pcm_close(streamHandle.loopbackPlayHandle);
-        if (ret  < 0){
-            LOG(ERROR, __FUNCTION__,"Can't close PCM stream. ");
-            return telux::common::ErrorCode::SYSTEM_ERR;
-        }
-        //Delete loopback capture stream
-        ret = snd_pcm_close(streamHandle.loopbackCaptureHandle);
-        if (ret  < 0){
-            LOG(ERROR, __FUNCTION__,"Can't close PCM stream. ");
-            return telux::common::ErrorCode::SYSTEM_ERR;
-        }
-        break;
+        case StreamType::PLAY:
+            if (streamHandle.inTranscodeStreamId == inTranscodeStreamId_) {
+                return telux::common::ErrorCode::SUCCESS;
+            }
 
-    default:
-        LOG(ERROR, __FUNCTION__,"Invalid stream type: ", static_cast<int>(streamHandle.type));
-        return telux::common::ErrorCode::SYSTEM_ERR;
-        break;
+            ret = snd_pcm_drop(streamHandle.pcmHandle);
+            if (ret < 0) {
+                LOG(ERROR, __FUNCTION__, "Can't drain PCM. ");
+                return telux::common::ErrorCode::SYSTEM_ERR;
+            }
+
+            ret = snd_pcm_close(streamHandle.pcmHandle);
+            if (ret < 0) {
+                LOG(ERROR, __FUNCTION__, "Can't close PCM stream. ");
+                return telux::common::ErrorCode::SYSTEM_ERR;
+            }
+            break;
+        case StreamType::CAPTURE:
+            if (streamHandle.outTranscodeStreamId == outTranscodeStreamId_) {
+                return telux::common::ErrorCode::SUCCESS;
+            }
+
+            ret = snd_pcm_close(streamHandle.pcmHandle);
+            if (ret < 0) {
+                LOG(ERROR, __FUNCTION__, "Can't close PCM stream. ");
+                return telux::common::ErrorCode::SYSTEM_ERR;
+            }
+            break;
+        case StreamType::LOOPBACK:
+            for (std::thread &th : loopThread_) {
+                if (th.joinable()) {
+                    th.join();
+                }
+            }
+            // Delete loopback play stream
+            ret = snd_pcm_drain(streamHandle.loopbackPlayHandle);
+            if (ret < 0) {
+                LOG(ERROR, __FUNCTION__, "Can't drain PCM. ");
+                return telux::common::ErrorCode::SYSTEM_ERR;
+            }
+            ret = snd_pcm_close(streamHandle.loopbackPlayHandle);
+            if (ret < 0) {
+                LOG(ERROR, __FUNCTION__, "Can't close PCM stream. ");
+                return telux::common::ErrorCode::SYSTEM_ERR;
+            }
+            // Delete loopback capture stream
+            ret = snd_pcm_close(streamHandle.loopbackCaptureHandle);
+            if (ret < 0) {
+                LOG(ERROR, __FUNCTION__, "Can't close PCM stream. ");
+                return telux::common::ErrorCode::SYSTEM_ERR;
+            }
+            break;
+
+        default:
+            LOG(ERROR, __FUNCTION__, "Invalid stream type: ", static_cast<int>(streamHandle.type));
+            return telux::common::ErrorCode::SYSTEM_ERR;
+            break;
     }
 
     return telux::common::ErrorCode::SUCCESS;
 }
 
-telux::common::ErrorCode Alsa::startLoopback(snd_pcm_t *captureHandle, snd_pcm_t *playHandle,
-    int channels) {
+telux::common::ErrorCode Alsa::startLoopback(
+    snd_pcm_t *captureHandle, snd_pcm_t *playHandle, int channels) {
     int64_t actualReadLength, actualLengthWritten;
     unsigned char buf[MAX_BUFFER_SIZE];
     int buf_frames = MAX_BUFFER_SIZE / (channels * 2);
 
-    while(runLoopback_) {
+    while (runLoopback_) {
         actualReadLength = snd_pcm_readi(captureHandle, buf, buf_frames);
         if (actualReadLength == -EPIPE || actualReadLength == -ESTRPIPE) {
-            LOG(ERROR, __FUNCTION__,"read error: ", snd_strerror(actualReadLength));
+            LOG(ERROR, __FUNCTION__, "read error: ", snd_strerror(actualReadLength));
             return telux::common::ErrorCode::SYSTEM_ERR;
         }
 
-        actualLengthWritten = snd_pcm_writei (playHandle, buf, buf_frames);
+        actualLengthWritten = snd_pcm_writei(playHandle, buf, buf_frames);
         if (actualLengthWritten == -EPIPE) {
             snd_pcm_prepare(playHandle);
             return telux::common::ErrorCode::SUCCESS;
         }
-        if(actualLengthWritten == -ESTRPIPE) {
-            LOG(ERROR, __FUNCTION__,"write error: ", snd_strerror(actualLengthWritten));
+        if (actualLengthWritten == -ESTRPIPE) {
+            LOG(ERROR, __FUNCTION__, "write error: ", snd_strerror(actualLengthWritten));
             return telux::common::ErrorCode::SYSTEM_ERR;
         }
     }
@@ -461,8 +456,8 @@ telux::common::ErrorCode Alsa::start(StreamHandle streamHandle) {
 telux::common::ErrorCode Alsa::stop(StreamHandle streamHandle) {
     /*Used to start loopback.*/
     runLoopback_ = false;
-    for(std::thread &th: loopThread_) {
-        if(th.joinable()){
+    for (std::thread &th : loopThread_) {
+        if (th.joinable()) {
             th.join();
         }
     }
@@ -473,19 +468,19 @@ telux::common::ErrorCode Alsa::stop(StreamHandle streamHandle) {
  * By default, secondary MI2S is used for handset, teritiary MI2S is
  * used for headset. Both are used as mono.
  */
-telux::common::ErrorCode Alsa::setDevice(StreamHandle streamHandle,
-        std::vector<DeviceType>& deviceTypes) {
+telux::common::ErrorCode Alsa::setDevice(
+    StreamHandle streamHandle, std::vector<DeviceType> &deviceTypes) {
     return telux::common::ErrorCode::SUCCESS;
 }
 
-telux::common::ErrorCode Alsa::getDevice(StreamHandle streamHandle,
-        std::vector<DeviceType>& deviceTypes) {
+telux::common::ErrorCode Alsa::getDevice(
+    StreamHandle streamHandle, std::vector<DeviceType> &deviceTypes) {
 
     return telux::common::ErrorCode::SUCCESS;
 }
 
-telux::common::ErrorCode Alsa::setVolume(StreamHandle streamHandle,
-        StreamDirection direction, std::vector<ChannelVolume> channelsVolume) {
+telux::common::ErrorCode Alsa::setVolume(StreamHandle streamHandle, StreamDirection direction,
+    std::vector<ChannelVolume> channelsVolume) {
 
     int err;
     long vol;
@@ -493,40 +488,40 @@ telux::common::ErrorCode Alsa::setVolume(StreamHandle streamHandle,
     uint32_t numChannels = 0;
     snd_mixer_t *h_mixer;
     snd_mixer_selem_id_t *sid;
-    snd_mixer_elem_t *elem ;
+    snd_mixer_elem_t *elem;
 
     numChannels = channelsVolume.size();
 
     if ((err = snd_mixer_open(&h_mixer, 0)) < 0) {
-        LOG(ERROR, __FUNCTION__,"Mixer open error: ", err);
+        LOG(ERROR, __FUNCTION__, "Mixer open error: ", err);
     }
 
     if ((err = snd_mixer_attach(h_mixer, sndCardCtlDevice_.c_str())) < 0) {
-        LOG(ERROR, __FUNCTION__,"Mixer attach error: ", err);
+        LOG(ERROR, __FUNCTION__, "Mixer attach error: ", err);
     }
 
     if ((err = snd_mixer_selem_register(h_mixer, NULL, NULL)) < 0) {
-        LOG(ERROR, __FUNCTION__,"Mixer simple element register error:", err);
+        LOG(ERROR, __FUNCTION__, "Mixer simple element register error:", err);
     }
 
     if ((err = snd_mixer_load(h_mixer)) < 0) {
-        LOG(ERROR, __FUNCTION__,"Mixer load error:", err);
+        LOG(ERROR, __FUNCTION__, "Mixer load error:", err);
     }
 
-    switch(streamHandle.type) {
+    switch (streamHandle.type) {
         case StreamType::PLAY:
             snd_mixer_selem_id_alloca(&sid);
             snd_mixer_selem_id_set_index(sid, 0);
             snd_mixer_selem_id_set_name(sid, "Master");
 
             if ((elem = snd_mixer_find_selem(h_mixer, sid)) == NULL) {
-                LOG(ERROR, __FUNCTION__,"Cannot find simple element");
+                LOG(ERROR, __FUNCTION__, "Cannot find simple element");
             }
 
             for (uint32_t x = 0; x < numChannels; x++) {
                 snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
                 vol = channelsVolume.at(x).vol * max;
-                switch(channelsVolume.at(x).channelType) {
+                switch (channelsVolume.at(x).channelType) {
                     case ChannelType::LEFT:
                         snd_mixer_selem_set_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, vol);
                         break;
@@ -546,13 +541,13 @@ telux::common::ErrorCode Alsa::setVolume(StreamHandle streamHandle,
             snd_mixer_selem_id_set_name(sid, "Capture");
 
             if ((elem = snd_mixer_find_selem(h_mixer, sid)) == NULL) {
-                LOG(ERROR, __FUNCTION__,"Cannot find simple element");
+                LOG(ERROR, __FUNCTION__, "Cannot find simple element");
             }
 
             for (uint32_t x = 0; x < numChannels; x++) {
                 snd_mixer_selem_get_capture_volume_range(elem, &min, &max);
-                vol = channelsVolume.at(x).vol*max;
-                switch(channelsVolume.at(x).channelType) {
+                vol = channelsVolume.at(x).vol * max;
+                switch (channelsVolume.at(x).channelType) {
                     case ChannelType::LEFT:
                         snd_mixer_selem_set_capture_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, vol);
 
@@ -578,8 +573,8 @@ telux::common::ErrorCode Alsa::setVolume(StreamHandle streamHandle,
     return telux::common::ErrorCode::SUCCESS;
 }
 
-telux::common::ErrorCode Alsa::getVolume(StreamHandle streamHandle,
-        int channelTypeMask, std::vector<ChannelVolume>& channelsVolume) {
+telux::common::ErrorCode Alsa::getVolume(
+    StreamHandle streamHandle, int channelTypeMask, std::vector<ChannelVolume> &channelsVolume) {
 
     int err;
     long vol;
@@ -587,10 +582,10 @@ telux::common::ErrorCode Alsa::getVolume(StreamHandle streamHandle,
     ChannelVolume tmp{};
     snd_mixer_t *h_mixer;
     snd_mixer_selem_id_t *sid;
-    snd_mixer_elem_t *elem ;
+    snd_mixer_elem_t *elem;
     std::vector<snd_mixer_selem_channel_id_t> channels{};
 
-    switch(channelTypeMask) {
+    switch (channelTypeMask) {
         case ChannelType::LEFT:
             channels.push_back(SND_MIXER_SCHN_FRONT_LEFT);
             break;
@@ -607,35 +602,35 @@ telux::common::ErrorCode Alsa::getVolume(StreamHandle streamHandle,
     }
 
     if ((err = snd_mixer_open(&h_mixer, 0)) < 0) {
-        LOG(ERROR, __FUNCTION__,"Mixer open error: ", err);
+        LOG(ERROR, __FUNCTION__, "Mixer open error: ", err);
     }
 
     if ((err = snd_mixer_attach(h_mixer, sndCardCtlDevice_.c_str())) < 0) {
-        LOG(ERROR, __FUNCTION__,"Mixer attach error: ", err);
+        LOG(ERROR, __FUNCTION__, "Mixer attach error: ", err);
     }
 
     if ((err = snd_mixer_selem_register(h_mixer, NULL, NULL)) < 0) {
-        LOG(ERROR, __FUNCTION__,"Mixer simple element register error:", err);
+        LOG(ERROR, __FUNCTION__, "Mixer simple element register error:", err);
     }
 
     if ((err = snd_mixer_load(h_mixer)) < 0) {
-        LOG(ERROR, __FUNCTION__,"Mixer load error:", err);
+        LOG(ERROR, __FUNCTION__, "Mixer load error:", err);
     }
 
-    switch(streamHandle.type) {
+    switch (streamHandle.type) {
         case StreamType::PLAY:
             snd_mixer_selem_id_alloca(&sid);
             snd_mixer_selem_id_set_index(sid, 0);
             snd_mixer_selem_id_set_name(sid, "Master");
 
             if ((elem = snd_mixer_find_selem(h_mixer, sid)) == NULL) {
-                LOG(ERROR, __FUNCTION__,"Cannot find simple element");
+                LOG(ERROR, __FUNCTION__, "Cannot find simple element");
             }
 
-            for(auto channel : channels) {
+            for (auto channel : channels) {
                 snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
                 snd_mixer_selem_get_playback_volume(elem, channel, &vol);
-                switch(channel) {
+                switch (channel) {
                     case SND_MIXER_SCHN_FRONT_LEFT:
                         tmp.channelType = ChannelType::LEFT;
                         break;
@@ -646,7 +641,7 @@ telux::common::ErrorCode Alsa::getVolume(StreamHandle streamHandle,
                         LOG(ERROR, __FUNCTION__, " invalid channel type ", channel);
                         return telux::common::ErrorCode::INVALID_ARGUMENTS;
                 }
-                tmp.vol = std::ceil((float)vol/max*10.0)/10.0;
+                tmp.vol = std::ceil((float)vol / max * 10.0) / 10.0;
                 channelsVolume.emplace_back(tmp);
             }
             break;
@@ -656,13 +651,13 @@ telux::common::ErrorCode Alsa::getVolume(StreamHandle streamHandle,
             snd_mixer_selem_id_set_name(sid, "Capture");
 
             if ((elem = snd_mixer_find_selem(h_mixer, sid)) == NULL) {
-                LOG(ERROR, __FUNCTION__,"Cannot find simple element");
+                LOG(ERROR, __FUNCTION__, "Cannot find simple element");
             }
 
-            for(auto channel : channels) {
+            for (auto channel : channels) {
                 snd_mixer_selem_get_capture_volume_range(elem, &min, &max);
                 snd_mixer_selem_get_capture_volume(elem, channel, &vol);
-                switch(channel) {
+                switch (channel) {
                     case SND_MIXER_SCHN_FRONT_LEFT:
                         tmp.channelType = ChannelType::LEFT;
                         break;
@@ -673,7 +668,7 @@ telux::common::ErrorCode Alsa::getVolume(StreamHandle streamHandle,
                         LOG(ERROR, __FUNCTION__, " invalid channel type ", channel);
                         return telux::common::ErrorCode::INVALID_ARGUMENTS;
                 }
-                tmp.vol = std::ceil((float)vol/max*10.0)/10.0;
+                tmp.vol = std::ceil((float)vol / max * 10.0) / 10.0;
                 channelsVolume.emplace_back(tmp);
             }
             break;
@@ -692,9 +687,9 @@ telux::common::ErrorCode Alsa::setMuteState(StreamHandle streamHandle, StreamMut
 
     telux::common::ErrorCode ec;
 
-    if (prevMuteState ==  muteInfo.enable){
+    if (prevMuteState == muteInfo.enable) {
         return telux::common::ErrorCode::SUCCESS;
-    } else if (muteInfo.enable == true){
+    } else if (muteInfo.enable == true) {
         /* Set volume for stream as 0 for muting the stream.*/
         for (uint32_t x = 0; x < channelsVolume.size(); x++) {
             channelsVolume.at(x).vol = 0;
@@ -703,8 +698,7 @@ telux::common::ErrorCode Alsa::setMuteState(StreamHandle streamHandle, StreamMut
         if (ec != telux::common::ErrorCode::SUCCESS) {
             return telux::common::ErrorCode::SYSTEM_ERR;
         }
-    }
-     else {
+    } else {
         /* If muteInfo.enable is false then restore the volume for the stream.*/
         ec = setVolume(streamHandle, muteInfo.dir, channelsVolume);
         if (ec != telux::common::ErrorCode::SUCCESS) {
@@ -715,19 +709,18 @@ telux::common::ErrorCode Alsa::setMuteState(StreamHandle streamHandle, StreamMut
     return telux::common::ErrorCode::SUCCESS;
 }
 
-telux::common::ErrorCode Alsa::getMuteState(StreamHandle streamHandle,
-        StreamMute& muteInfo, StreamDirection direction) {
+telux::common::ErrorCode Alsa::getMuteState(
+    StreamHandle streamHandle, StreamMute &muteInfo, StreamDirection direction) {
     return telux::common::ErrorCode::SUCCESS;
 }
 
-telux::common::ErrorCode Alsa::write(StreamHandle& streamHandle,
-        uint8_t *data, uint32_t writeLengthRequested,
-        uint32_t offset, int64_t timeStamp, bool isLastBuffer,
-        int64_t& actualLengthWritten) {
+telux::common::ErrorCode Alsa::write(StreamHandle &streamHandle, uint8_t *data,
+    uint32_t writeLengthRequested, uint32_t offset, int64_t timeStamp, bool isLastBuffer,
+    int64_t &actualLengthWritten) {
 
-    if(streamHandle.inTranscodeStreamId == inTranscodeStreamId_) {
+    if (streamHandle.inTranscodeStreamId == inTranscodeStreamId_) {
         sendWriteReady++;
-        if(sendWriteReady%pipelineLen == 0 && (!isLastBuffer)){
+        if (sendWriteReady % pipelineLen == 0 && (!isLastBuffer)) {
             auto streamEventListener = streamHandle.privateStreamData->streamEventListener.lock();
             if (streamEventListener) {
                 streamEventListener->onWriteReadyEvent(inTranscodeStreamId_);
@@ -739,7 +732,7 @@ telux::common::ErrorCode Alsa::write(StreamHandle& streamHandle,
         }
 
         actualLengthWritten = writeLengthRequested;
-        if(isLastBuffer){
+        if (isLastBuffer) {
             auto streamEventListener = streamHandle.privateStreamData->streamEventListener.lock();
             if (streamEventListener) {
                 streamEventListener->onDrainDoneEvent(inTranscodeStreamId_);
@@ -758,14 +751,14 @@ telux::common::ErrorCode Alsa::write(StreamHandle& streamHandle,
         return telux::common::ErrorCode::SUCCESS;
     }
 
-    if(actualLengthWritten == -ESTRPIPE) {
-        LOG(ERROR, __FUNCTION__,"write error: ", snd_strerror(actualLengthWritten));
+    if (actualLengthWritten == -ESTRPIPE) {
+        LOG(ERROR, __FUNCTION__, "write error: ", snd_strerror(actualLengthWritten));
         free(data);
         return telux::common::ErrorCode::SYSTEM_ERR;
     }
 
     free(data);
-    LOG(DEBUG, __FUNCTION__,"written frames ", actualLengthWritten);
+    LOG(DEBUG, __FUNCTION__, "written frames ", actualLengthWritten);
     /*
      * Set the actualLengthWritten to writeLengthRequested as the value for the last buffer size
      * will be lesser than streamHandle.frames * streamHandle.channels * 2. And this will result in
@@ -776,24 +769,24 @@ telux::common::ErrorCode Alsa::write(StreamHandle& streamHandle,
     return telux::common::ErrorCode::SUCCESS;
 }
 
-telux::common::ErrorCode Alsa::read(StreamHandle& streamHandle,
-        std::shared_ptr<std::vector<uint8_t>> data, uint32_t readLengthRequested,
-        int64_t& actualReadLength) {
+telux::common::ErrorCode Alsa::read(StreamHandle &streamHandle,
+    std::shared_ptr<std::vector<uint8_t>> data, uint32_t readLengthRequested,
+    int64_t &actualReadLength) {
 
-    if(streamHandle.outTranscodeStreamId == outTranscodeStreamId_) {
+    if (streamHandle.outTranscodeStreamId == outTranscodeStreamId_) {
         actualReadLength = readLengthRequested;
         return telux::common::ErrorCode::SUCCESS;
     }
 
-    uint8_t* bufferPtr = data->data();
-    actualReadLength = snd_pcm_readi(streamHandle.pcmHandle, bufferPtr, streamHandle.frames);
+    uint8_t *bufferPtr = data->data();
+    actualReadLength   = snd_pcm_readi(streamHandle.pcmHandle, bufferPtr, streamHandle.frames);
 
     if (actualReadLength == -EPIPE || actualReadLength == -ESTRPIPE) {
-        LOG(ERROR, __FUNCTION__,"read error: ", snd_strerror(actualReadLength));
+        LOG(ERROR, __FUNCTION__, "read error: ", snd_strerror(actualReadLength));
         return telux::common::ErrorCode::SYSTEM_ERR;
     }
 
-    LOG(DEBUG, __FUNCTION__,"read frames ", actualReadLength);
+    LOG(DEBUG, __FUNCTION__, "read frames ", actualReadLength);
     actualReadLength = actualReadLength * streamHandle.channels * 2;
 
     return telux::common::ErrorCode::SUCCESS;
@@ -817,8 +810,8 @@ telux::common::ErrorCode Alsa::flush(StreamHandle streamHandle) {
 /*
  * Configure and start playing dtmf tone.
  */
-telux::common::ErrorCode Alsa::startDtmf(StreamHandle streamHandle, uint16_t gain,
-        uint16_t duration, DtmfTone dtmfTone) {
+telux::common::ErrorCode Alsa::startDtmf(
+    StreamHandle streamHandle, uint16_t gain, uint16_t duration, DtmfTone dtmfTone) {
     return telux::common::ErrorCode::SUCCESS;
 }
 
@@ -853,12 +846,11 @@ telux::common::ErrorCode Alsa::deRegisterDTMFDetection(StreamHandle streamHandle
  *  Output(from telsdk's perspective)/Capture(from PAL's perspective)
  * PCM data
  */
-telux::common::ErrorCode Alsa::setupInTranscodeStream(StreamHandle& streamHandle,
-        uint32_t streamId, TranscodingFormatInfo inInfo,
-        std::shared_ptr<IStreamEventListener> streamEventListener,
-        uint32_t& writeMinSize) {
+telux::common::ErrorCode Alsa::setupInTranscodeStream(StreamHandle &streamHandle, uint32_t streamId,
+    TranscodingFormatInfo inInfo, std::shared_ptr<IStreamEventListener> streamEventListener,
+    uint32_t &writeMinSize) {
     streamHandle.inTranscodeStreamId = streamId;
-    inTranscodeStreamId_ = streamId;
+    inTranscodeStreamId_             = streamId;
 
     streamHandle.privateStreamData = new (std::nothrow) PrivateStreamData();
     if (!streamHandle.privateStreamData) {
@@ -866,48 +858,46 @@ telux::common::ErrorCode Alsa::setupInTranscodeStream(StreamHandle& streamHandle
         return telux::common::ErrorCode::NO_MEMORY;
     }
 
-    streamHandle.privateStreamData->streamId = streamId;
+    streamHandle.privateStreamData->streamId            = streamId;
     streamHandle.privateStreamData->streamEventListener = streamEventListener;
 
     return telux::common::ErrorCode::SUCCESS;
 }
 
-telux::common::ErrorCode Alsa::setupOutTranscodeStream(StreamHandle& streamHandle,
-        uint32_t streamId, TranscodingFormatInfo outInfo,
-        std::shared_ptr<IStreamEventListener> streamEventListener,
-        uint32_t& readMinSize) {
+telux::common::ErrorCode Alsa::setupOutTranscodeStream(StreamHandle &streamHandle,
+    uint32_t streamId, TranscodingFormatInfo outInfo,
+    std::shared_ptr<IStreamEventListener> streamEventListener, uint32_t &readMinSize) {
 
     streamHandle.outTranscodeStreamId = streamId;
-    outTranscodeStreamId_ = streamId;
+    outTranscodeStreamId_             = streamId;
 
-     streamHandle.privateStreamData = new (std::nothrow) PrivateStreamData();
+    streamHandle.privateStreamData = new (std::nothrow) PrivateStreamData();
     if (!streamHandle.privateStreamData) {
         LOG(ERROR, __FUNCTION__, " can't allocate PrivateStreamData");
         return telux::common::ErrorCode::NO_MEMORY;
     }
 
-    streamHandle.privateStreamData->streamId = streamId;
+    streamHandle.privateStreamData->streamId            = streamId;
     streamHandle.privateStreamData->streamEventListener = streamEventListener;
 
     return telux::common::ErrorCode::SUCCESS;
 }
 
-
 float Alsa::generateSignal(float t1, float t2) {
-    //Z transform used for 2 frequency tone.
+    // Z transform used for 2 frequency tone.
     float ret = 2;
 
-    InFreq1_ = 2*cos(t1)*RegFreq1_[0]-RegFreq1_[1];
+    InFreq1_     = 2 * cos(t1) * RegFreq1_[0] - RegFreq1_[1];
     RegFreq1_[1] = RegFreq1_[0];
     RegFreq1_[0] = InFreq1_;
 
-    ret += sin(t1)*RegFreq1_[1];
+    ret += sin(t1) * RegFreq1_[1];
 
-    InFreq2_ = 2*cos(t2)*RegFreq2_[0]-RegFreq2_[1];
+    InFreq2_     = 2 * cos(t2) * RegFreq2_[0] - RegFreq2_[1];
     RegFreq2_[1] = RegFreq2_[0];
     RegFreq2_[0] = InFreq2_;
 
-    ret += sin(t2)*RegFreq2_[1];
+    ret += sin(t2) * RegFreq2_[1];
 
     return ret;
 }
@@ -918,18 +908,18 @@ void Alsa::genTone(std::vector<uint16_t> toneFrequency, int channels, uint32_t s
     int noOfFreq = toneFrequency.size();
     float t, t1, t2;
 
-    switch(noOfFreq) {
+    switch (noOfFreq) {
         case 1:
-            t = 2*M_PI*toneFrequency[0]/(sampleRate*channels);
-            for (uint32_t i=0; i < sampleRate; i++) {
-                buf[i] = sin(t*i);
+            t = 2 * M_PI * toneFrequency[0] / (sampleRate * channels);
+            for (uint32_t i = 0; i < sampleRate; i++) {
+                buf[i] = sin(t * i);
             }
             break;
         case 2:
-            t1 = 2*M_PI*toneFrequency[0]/(sampleRate*channels);
-            t2 = 2*M_PI*toneFrequency[1]/(sampleRate*channels);
-            for (uint32_t i=0; i < sampleRate ; i++) {
-                buf[i] = generateSignal(t1,t2);
+            t1 = 2 * M_PI * toneFrequency[0] / (sampleRate * channels);
+            t2 = 2 * M_PI * toneFrequency[1] / (sampleRate * channels);
+            for (uint32_t i = 0; i < sampleRate; i++) {
+                buf[i] = generateSignal(t1, t2);
             }
             break;
         default:
@@ -941,20 +931,20 @@ telux::common::ErrorCode Alsa::generateTone(StreamHandle streamHandle, uint32_t 
     uint16_t gain, uint16_t duration, std::vector<uint16_t> toneFrequency) {
     int ret;
     float buf[sampleRate];
-    int nbSamples = sampleRate * streamHandle.channels * (duration/1000);
-    int nbTimes = nbSamples / sampleRate;
+    int nbSamples  = sampleRate * streamHandle.channels * (duration / 1000);
+    int nbTimes    = nbSamples / sampleRate;
     int restFrames = nbSamples % sampleRate;
 
-    if (nbSamples >0) {
+    if (nbSamples > 0) {
         genTone(toneFrequency, streamHandle.channels, sampleRate, gain, buf);
         if (nbTimes > 0) {
-            for (int i=0; i < nbTimes; i++) {
-                if(!runTone_){
+            for (int i = 0; i < nbTimes; i++) {
+                if (!runTone_) {
                     break;
                 }
                 ret = snd_pcm_writei(streamHandle.pcmHandle, buf, sampleRate);
                 if (ret == -EPIPE || ret == -ESTRPIPE) {
-                    LOG(ERROR, __FUNCTION__,"write error: ", snd_strerror(ret));
+                    LOG(ERROR, __FUNCTION__, "write error: ", snd_strerror(ret));
                     snd_pcm_prepare(streamHandle.pcmHandle);
                     return telux::common::ErrorCode::SYSTEM_ERR;
                 }
@@ -963,7 +953,7 @@ telux::common::ErrorCode Alsa::generateTone(StreamHandle streamHandle, uint32_t 
         if (restFrames > 0 && runTone_) {
             ret = snd_pcm_writei(streamHandle.pcmHandle, buf, restFrames);
             if (ret == -EPIPE || ret == -ESTRPIPE) {
-                LOG(ERROR, __FUNCTION__,"write error: ", snd_strerror(ret));
+                LOG(ERROR, __FUNCTION__, "write error: ", snd_strerror(ret));
                 snd_pcm_prepare(streamHandle.pcmHandle);
                 return telux::common::ErrorCode::SYSTEM_ERR;
             }
@@ -975,17 +965,17 @@ telux::common::ErrorCode Alsa::generateTone(StreamHandle streamHandle, uint32_t 
 /*
  * Configure and start playing tone.
  */
-telux::common::ErrorCode Alsa::startTone(StreamHandle& streamHandle, uint32_t sampleRate,
-        uint16_t gain, uint16_t duration, std::vector<uint16_t> toneFrequency) {
+telux::common::ErrorCode Alsa::startTone(StreamHandle &streamHandle, uint32_t sampleRate,
+    uint16_t gain, uint16_t duration, std::vector<uint16_t> toneFrequency) {
 
-    if(runTone_) {
+    if (runTone_) {
         stopTone(streamHandle);
     }
 
-    runTone_ = true;
+    runTone_                   = true;
     streamHandle.streamStarted = true;
-    std::thread toneThread(&Alsa::generateTone, this, streamHandle, sampleRate, gain,
-        duration, toneFrequency);
+    std::thread toneThread(
+        &Alsa::generateTone, this, streamHandle, sampleRate, gain, duration, toneFrequency);
 
     toneThread_.emplace_back(std::move(toneThread));
 
@@ -995,11 +985,11 @@ telux::common::ErrorCode Alsa::startTone(StreamHandle& streamHandle, uint32_t sa
 /*
  * Stop playing tone.
  */
-telux::common::ErrorCode Alsa::stopTone(StreamHandle& streamHandle) {
-    runTone_ = false;
+telux::common::ErrorCode Alsa::stopTone(StreamHandle &streamHandle) {
+    runTone_                   = false;
     streamHandle.streamStarted = false;
-    for(std::thread &th: toneThread_) {
-        if(th.joinable()){
+    for (std::thread &th : toneThread_) {
+        if (th.joinable()) {
             th.join();
         }
     }
@@ -1013,7 +1003,7 @@ telux::common::ErrorCode Alsa::stopTone(StreamHandle& streamHandle) {
     return telux::common::ErrorCode::SUCCESS;
 }
 
-telux::common::ErrorCode Alsa::getCalibrationStatus(CalibrationInitStatus& status) {
+telux::common::ErrorCode Alsa::getCalibrationStatus(CalibrationInitStatus &status) {
 
     LOG(INFO, __FUNCTION__, " not supported");
     return telux::common::ErrorCode::NOT_SUPPORTED;
@@ -1023,22 +1013,22 @@ telux::common::ErrorCode Alsa::getCalibrationStatus(CalibrationInitStatus& statu
  * By-default buffer size is set to maximum size IPC/RPC framework can support.
  * This is overridden, if PAL says buffer size should be less than this.
  */
-telux::common::ErrorCode Alsa::setBufferSize(StreamHandle streamHandle,
-        size_t& inSize, size_t& outSize) {
+telux::common::ErrorCode Alsa::setBufferSize(
+    StreamHandle streamHandle, size_t &inSize, size_t &outSize) {
     return telux::common::ErrorCode::SUCCESS;
 }
 
 /*
  * Extract comma separated values and convert them into their telsdk/Pal specific values.
  */
-int Alsa::loadMappingArray(std::string key, MappedValueType mappedValueType,
-        uint32_t numOfValues, DeviceMappingTable& deviceTbl) {
+int Alsa::loadMappingArray(std::string key, MappedValueType mappedValueType, uint32_t numOfValues,
+    DeviceMappingTable &deviceTbl) {
 
     uint32_t mappedValue, x = 0;
     std::string commaSeparatedValues;
     std::stringstream valuesStream;
 
-    if(config_){
+    if (config_) {
         commaSeparatedValues = config_->getValue(key);
         if (commaSeparatedValues.empty()) {
             LOG(ERROR, __FUNCTION__, " can't read value of ", key);
@@ -1080,7 +1070,7 @@ int Alsa::loadUserDeviceMapping() {
     uint32_t numDevices;
     DeviceMappingTable deviceTbl{};
 
-    if(config_){
+    if (config_) {
 
         pcmDevice_ = config_->getValue("PCM_DEVICE");
         if (pcmDevice_.empty()) {
@@ -1099,25 +1089,23 @@ int Alsa::loadUserDeviceMapping() {
 
         try {
             numDevices = std::stoul(numOfDevices, nullptr, 10);
-        } catch (const std::exception& e) {
+        } catch (const std::exception &e) {
             LOG(ERROR, __FUNCTION__, " can't interpret NUM_DEVICES");
             return -1;
         }
 
         if (numDevices > MAX_DEVICES) {
-            LOG(ERROR, __FUNCTION__," NUM_DEVICES more then supported");
+            LOG(ERROR, __FUNCTION__, " NUM_DEVICES more then supported");
             return -1;
         }
         deviceTbl.numDevices = numDevices;
 
-        ret = loadMappingArray("DEVICE_TYPE", MappedValueType::DEVICE_TYPE,
-                numDevices, deviceTbl);
+        ret = loadMappingArray("DEVICE_TYPE", MappedValueType::DEVICE_TYPE, numDevices, deviceTbl);
         if (ret < 0) {
             return ret;
         }
 
-        ret = loadMappingArray("DEVICE_DIR", MappedValueType::DEVICE_DIR,
-                numDevices, deviceTbl);
+        ret = loadMappingArray("DEVICE_DIR", MappedValueType::DEVICE_DIR, numDevices, deviceTbl);
         if (ret < 0) {
             return ret;
         }
@@ -1129,7 +1117,6 @@ int Alsa::loadUserDeviceMapping() {
 
     return -1;
 }
-
 
 void Alsa::onEventUpdate(::eventService::UnsolicitedEvent event) {
     if (event.filter() == AUDIO_FILTER) {
@@ -1177,8 +1164,7 @@ void Alsa::handleDTMFDetectedEvent(std::string eventParams) {
         case DtmfLowFreq::FREQ_941:
             break;
         default:
-            LOG(ERROR, __FUNCTION__, " invalid low frquency ",
-                lowFreq, " ,dropping event");
+            LOG(ERROR, __FUNCTION__, " invalid low frquency ", lowFreq, " ,dropping event");
             return;
     }
 
@@ -1190,26 +1176,24 @@ void Alsa::handleDTMFDetectedEvent(std::string eventParams) {
         case DtmfHighFreq::FREQ_1633:
             break;
         default:
-            LOG(ERROR, __FUNCTION__, " invalid high frquency ",
-                highFreq, " ,dropping event");
+            LOG(ERROR, __FUNCTION__, " invalid high frquency ", highFreq, " ,dropping event");
             return;
     }
-    LOG(DEBUG, __FUNCTION__,"Registered listener, sending notifcation ");
-    for(auto it = dtmfIndicationListenerMap_.begin(); it != dtmfIndicationListenerMap_.end(); it++)
-    {
+    LOG(DEBUG, __FUNCTION__, "Registered listener, sending notifcation ");
+    for (auto it = dtmfIndicationListenerMap_.begin(); it != dtmfIndicationListenerMap_.end();
+         it++) {
         it->second->onDTMFDetectedEvent(it->first, lowFreq, highFreq, StreamDirection::RX);
     }
 }
 
-
 void Alsa::handleSSREvent(std::string eventParams) {
 
     if (eventParams == "SERVICE_AVAILABLE") {
-        for(auto sp : ssrListenerMap_){
+        for (auto sp : ssrListenerMap_) {
             sp->onSSREvent(SSREvent::AUDIO_ONLINE);
         }
     } else if (eventParams == "SERVICE_UNAVAILABLE" || eventParams == "SERVICE_FAILED") {
-        for(auto sp : ssrListenerMap_){
+        for (auto sp : ssrListenerMap_) {
             sp->onSSREvent(SSREvent::AUDIO_OFFLINE);
         }
     } else {

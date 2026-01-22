@@ -26,12 +26,13 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 #include <iostream>
 
 #include <telux/tel/PhoneFactory.hpp>
@@ -41,31 +42,31 @@
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
 void MySubscriptionListener::onSubscriptionInfoChanged(
-   std::shared_ptr<telux::tel::ISubscription> subscription) {
-   std::cout << "\n";
-   if(subscription) {
-      PRINT_NOTIFICATION
-         << " onSubscriptionInfoChanged: CarrierName : " << subscription->getCarrierName()
-         << ", PhoneNumber : " << subscription->getPhoneNumber() << std::endl;
-   } else {
-      PRINT_NOTIFICATION << " onSubscriptionInfoChanged: Subscription is empty" << std::endl;
-   }
+    std::shared_ptr<telux::tel::ISubscription> subscription) {
+    std::cout << "\n";
+    if (subscription) {
+        PRINT_NOTIFICATION
+            << " onSubscriptionInfoChanged: CarrierName : " << subscription->getCarrierName()
+            << ", PhoneNumber : " << subscription->getPhoneNumber() << std::endl;
+    } else {
+        PRINT_NOTIFICATION << " onSubscriptionInfoChanged: Subscription is empty" << std::endl;
+    }
 }
 
 void MySubscriptionListener::onNumberOfSubscriptionsChanged(int count) {
-   std::cout << "\n";
-   PRINT_NOTIFICATION << "\nonNumberOfSubscriptionsChanged: count = " << count << std::endl;
+    std::cout << "\n";
+    PRINT_NOTIFICATION << "\nonNumberOfSubscriptionsChanged: count = " << count << std::endl;
 }
 
 // Notify SubscriptionManager subsystem status
 void MySubscriptionListener::onServiceStatusChange(telux::common::ServiceStatus status) {
     std::string stat = "";
-    switch(status) {
+    switch (status) {
         case telux::common::ServiceStatus::SERVICE_AVAILABLE:
             stat = " SERVICE_AVAILABLE";
             break;
         case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
-            stat =  " SERVICE_UNAVAILABLE";
+            stat = " SERVICE_UNAVAILABLE";
             break;
         default:
             stat = " Unknown service status";

@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_PathHistory_H_
-#define	_PathHistory_H_
-
+#ifndef _PathHistory_H_
+#define _PathHistory_H_
 
 #include <asn_application.h>
 
@@ -24,10 +23,10 @@ struct PathPoint;
 
 /* PathHistory */
 typedef struct PathHistory {
-	A_SEQUENCE_OF(struct PathPoint) list;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    A_SEQUENCE_OF(struct PathPoint) list;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } PathHistory_t;
 
 /* Implementation */
@@ -40,5 +39,5 @@ extern asn_TYPE_descriptor_t asn_DEF_PathHistory;
 /* Referred external types */
 #include "PathPoint.h"
 
-#endif	/* _PathHistory_H_ */
+#endif /* _PathHistory_H_ */
 #include <asn_internal.h>

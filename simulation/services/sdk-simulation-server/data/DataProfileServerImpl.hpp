@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef DATA_PROFILE_SERVER_HPP
@@ -29,39 +29,34 @@ using grpc::Status;
 
 using dataStub::DataProfileManager;
 
-class DataProfileServerImpl final:
-    public dataStub::DataProfileManager::Service {
-public:
+class DataProfileServerImpl final : public dataStub::DataProfileManager::Service {
+ public:
     DataProfileServerImpl();
     ~DataProfileServerImpl();
 
-    grpc::Status InitService(ServerContext* context,
-        const dataStub::SlotInfo* request,
-        dataStub::GetServiceStatusReply* response) override;
+    grpc::Status InitService(ServerContext *context, const dataStub::SlotInfo *request,
+        dataStub::GetServiceStatusReply *response) override;
 
-    grpc::Status RequestProfileById(ServerContext* context,
-        const dataStub::RequestProfileByIdRequest* request,
-        dataStub::RequestProfileByIdReply* response) override;
+    grpc::Status RequestProfileById(ServerContext *context,
+        const dataStub::RequestProfileByIdRequest *request,
+        dataStub::RequestProfileByIdReply *response) override;
 
-    grpc::Status CreateProfile(ServerContext* context,
-        const dataStub::CreateProfileRequest* request,
-        dataStub::CreateProfileReply* response) override;
+    grpc::Status CreateProfile(ServerContext *context,
+        const dataStub::CreateProfileRequest *request,
+        dataStub::CreateProfileReply *response) override;
 
-    grpc::Status DeleteProfile(ServerContext* context,
-        const dataStub::DeleteProfileRequest* request,
-        dataStub::DefaultReply* response) override;
+    grpc::Status DeleteProfile(ServerContext *context,
+        const dataStub::DeleteProfileRequest *request, dataStub::DefaultReply *response) override;
 
-    grpc::Status ModifyProfile(ServerContext* context,
-        const dataStub::ModifyProfileRequest* request,
-        dataStub::DefaultReply* response) override;
+    grpc::Status ModifyProfile(ServerContext *context,
+        const dataStub::ModifyProfileRequest *request, dataStub::DefaultReply *response) override;
 
-    grpc::Status RequestProfileList(ServerContext* context,
-        const dataStub::RequestProfileListRequest* request,
-        dataStub::RequestProfileListReply* response) override;
+    grpc::Status RequestProfileList(ServerContext *context,
+        const dataStub::RequestProfileListRequest *request,
+        dataStub::RequestProfileListReply *response) override;
 
-    grpc::Status QueryProfile(ServerContext* context,
-        const dataStub::QueryProfileRequest* request,
-        dataStub::QueryProfileReply* response) override;
+    grpc::Status QueryProfile(ServerContext *context, const dataStub::QueryProfileRequest *request,
+        dataStub::QueryProfileReply *response) override;
 };
 
-#endif //DATA_PROFILE_SERVER_HPP
+#endif  // DATA_PROFILE_SERVER_HPP

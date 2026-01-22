@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef MYRSPHANDLER_HPP
 #define MYRSPHANDLER_HPP
 
@@ -35,16 +41,15 @@
 #include <memory>
 
 class MyRspCallback {
-public:
+ public:
     static void onProfileListResponse(
         const std::vector<std::shared_ptr<telux::tel::SimProfile>> &profiles,
         telux::common::ErrorCode error);
 
     static void onEidResponse(std::string eid, telux::common::ErrorCode errorCode);
     static void onResponseCallback(telux::common::ErrorCode error);
-    static void onServerAddressResponse(std::string smdpAddress,
-        std::string smdsAddress, telux::common::ErrorCode error);
+    static void onServerAddressResponse(
+        std::string smdpAddress, std::string smdsAddress, telux::common::ErrorCode error);
 };
 
 #endif  // MYRSPHANDLER_HPP
-

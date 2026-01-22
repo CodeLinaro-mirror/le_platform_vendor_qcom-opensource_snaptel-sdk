@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_Longitude_H_
-#define	_Longitude_H_
-
+#ifndef _Longitude_H_
+#define _Longitude_H_
 
 #include <asn_application.h>
 
@@ -20,13 +19,13 @@ extern "C" {
 
 /* Dependencies */
 typedef enum Longitude {
-	Longitude_oneMicrodegreeEast	= 10,
-	Longitude_oneMicrodegreeWest	= -10,
-	Longitude_unavailable	= 1800000001
+    Longitude_oneMicrodegreeEast = 10,
+    Longitude_oneMicrodegreeWest = -10,
+    Longitude_unavailable        = 1800000001
 } e_Longitude;
 
 /* Longitude */
-typedef long	 Longitude_t;
+typedef long Longitude_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_Longitude;
@@ -44,5 +43,5 @@ per_type_encoder_f Longitude_encode_uper;
 }
 #endif
 
-#endif	/* _Longitude_H_ */
+#endif /* _Longitude_H_ */
 #include <asn_internal.h>

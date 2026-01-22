@@ -26,12 +26,13 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 #ifndef MYSAPCARDLISTENER_HPP
 #define MYSAPCARDLISTENER_HPP
 
@@ -47,35 +48,35 @@
 #include <telux/tel/PhoneFactory.hpp>
 
 class MySapCommandResponseCallback : public telux::common::ICommandResponseCallback {
-public:
-   void commandResponse(telux::common::ErrorCode error) override;
+ public:
+    void commandResponse(telux::common::ErrorCode error) override;
 };
 
 class MyCardReaderCallback : public telux::tel::ICardReaderCallback {
-public:
-   void cardReaderResponse(telux::tel::CardReaderStatus responseStatus,
-                           telux::common::ErrorCode error) override;
+ public:
+    void cardReaderResponse(
+        telux::tel::CardReaderStatus responseStatus, telux::common::ErrorCode error) override;
 };
 
 class MySapTransmitApduResponseCallback : public telux::tel::ISapCardCommandCallback {
-public:
-   void onResponse(telux::tel::IccResult result, telux::common::ErrorCode error) override;
+ public:
+    void onResponse(telux::tel::IccResult result, telux::common::ErrorCode error) override;
 };
 
 class MyAtrResponseCallback : public telux::tel::IAtrResponseCallback {
-public:
-   void atrResponse(std::vector<int> responseAtr, telux::common::ErrorCode error) override;
+ public:
+    void atrResponse(std::vector<int> responseAtr, telux::common::ErrorCode error) override;
 };
 
 class MySapStateCallback {
-public:
-   static void sapStateResponse(telux::tel::SapState sapState, telux::common::ErrorCode error);
-   static void logSapState(telux::tel::SapState sapState);
+ public:
+    static void sapStateResponse(telux::tel::SapState sapState, telux::common::ErrorCode error);
+    static void logSapState(telux::tel::SapState sapState);
 };
 
 class MySapCardListener : public telux::tel::ISapCardListener {
-public:
-   void onServiceStatusChange(telux::common::ServiceStatus status) override;
+ public:
+    void onServiceStatusChange(telux::common::ServiceStatus status) override;
 };
 
 #endif  // MYSAPCARDLISTENER_HPP

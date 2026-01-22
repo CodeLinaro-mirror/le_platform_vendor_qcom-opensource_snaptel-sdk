@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef COMMONUTILS_HPP
@@ -16,16 +16,16 @@
 using grpc::Channel;
 
 #define handleApiResponseForMethod(subSystem, manager)                                       \
-    telux::common::Status status = Status::FAILED;                                           \
+    telux::common::Status status       = Status::FAILED;                                     \
     telux::common::ErrorCode errorCode = ErrorCode::GENERIC_FAILURE;                         \
-    int cbDelay = 100;                                                                  \
+    int cbDelay                        = 100;                                                \
     Json::Value rootNode;                                                                    \
     do {                                                                                     \
         ErrorCode err                                                                        \
             = JsonParser::readFromJsonFile(rootNode, "api/" subSystem "/" manager ".json");  \
         if (err != ErrorCode::SUCCESS) {                                                     \
             LOG(ERROR, "Unable to read file: " subSystem "/" manager);                       \
-            status = Status::FAILED;                                                         \
+            status    = Status::FAILED;                                                      \
             errorCode = ErrorCode::GENERIC_FAILURE;                                          \
             break;                                                                           \
         }                                                                                    \
@@ -58,17 +58,16 @@ struct JsonData {
  * derived class function - downcasted_shared_from_this<DerivedClass>().
  *
  */
-class SharedFromThis : public std::enable_shared_from_this
-        <SharedFromThis> {
-public:
+class SharedFromThis : public std::enable_shared_from_this<SharedFromThis> {
+ public:
     virtual ~SharedFromThis() {
     }
 };
 
 template <class T>
 class enable_inheritable_shared_from_this : virtual public SharedFromThis {
-public:
-    std::shared_ptr<T> shared_from_this () {
+ public:
+    std::shared_ptr<T> shared_from_this() {
         return std::dynamic_pointer_cast<T>(SharedFromThis::shared_from_this());
     }
 
@@ -86,13 +85,12 @@ class CommonUtils {
     static std::vector<std::string> splitString(const std::string &str, char delimiter);
     static std::string getCurrentTimeHHMMSS();
     static void calculateBootTimeStamp(uint64_t &timestamp);
-    static int bitwiseXOR(const std::string& str);
+    static int bitwiseXOR(const std::string &str);
     /* convert hexadecimal value to decimal */
     static long convertHexToInt(std::string hex);
 
-    static void getValues(Json::Value &values, std::string subsystem,
-        std::string method, telux::common::Status &status,
-        telux::common::ErrorCode &errorCode, int &cbDelay);
+    static void getValues(Json::Value &values, std::string subsystem, std::string method,
+        telux::common::Status &status, telux::common::ErrorCode &errorCode, int &cbDelay);
     static telux::common::ServiceStatus mapServiceStatus(std::string status);
     static std::string mapServiceString(telux::common::ServiceStatus srvStatus);
     static std::string readSystemDataValue(
@@ -106,22 +104,22 @@ class CommonUtils {
      */
     static void logSdkVersion();
 
-    template<typename T>
+    template <typename T>
     static std::unique_ptr<typename T::Stub> getGrpcStub() {
-        return T::NewStub(grpc::CreateChannel(CommonUtils::getGrpcPort(),
-            grpc::InsecureChannelCredentials()));
+        return T::NewStub(
+            grpc::CreateChannel(CommonUtils::getGrpcPort(), grpc::InsecureChannelCredentials()));
     }
 
-    template<typename T>
-    static void updateJsonValue(const std::string& filePath, const std::string& subsystem,
-        const std::string& method, const std::string& attribute, T val) {
+    template <typename T>
+    static void updateJsonValue(const std::string &filePath, const std::string &subsystem,
+        const std::string &method, const std::string &attribute, T val) {
         Json::Value rootObj;
         ErrorCode error = JsonParser::readFromJsonFile(rootObj, filePath);
         if (error != ErrorCode::SUCCESS) {
             LOG(ERROR, __FUNCTION__, " Reading JSON File failed! ");
             LOG(ERROR, __FUNCTION__, " filePath::", filePath);
-            LOG(ERROR, __FUNCTION__, " subsystem::", subsystem,
-                " method::", method, " attribute::", attribute, " val::", val);
+            LOG(ERROR, __FUNCTION__, " subsystem::", subsystem, " method::", method,
+                " attribute::", attribute, " val::", val);
         }
 
         rootObj[subsystem][method][attribute] = val;
@@ -144,16 +142,16 @@ class CommonUtils {
     }
 
     static ErrorCode readJsonData(std::string apiJsonPath, std::string stateJsonPath,
-        std::string subsystem, std::string method, JsonData& data);
+        std::string subsystem, std::string method, JsonData &data);
 
     static std::vector<std::string> splitString(std::string str);
     static std::string convertIntVectorToString(std::vector<int> integers);
+
  private:
     static std::string readSystemDataValue(
         Json::Value &jsonValue, std::string defaultValue, std::vector<std::string> &path);
     template <typename T>
-    static void writeSystemDataValue(
-        Json::Value &node, T value, std::vector<std::string> &path) {
+    static void writeSystemDataValue(Json::Value &node, T value, std::vector<std::string> &path) {
         try {
             std::string p = path.front();
             path.erase(path.begin());

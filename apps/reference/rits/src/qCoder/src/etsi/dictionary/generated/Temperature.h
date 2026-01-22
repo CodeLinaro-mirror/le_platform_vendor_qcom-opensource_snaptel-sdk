@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_Temperature_H_
-#define	_Temperature_H_
-
+#ifndef _Temperature_H_
+#define _Temperature_H_
 
 #include <asn_application.h>
 
@@ -20,13 +19,13 @@ extern "C" {
 
 /* Dependencies */
 typedef enum Temperature {
-	Temperature_equalOrSmallerThanMinus60Deg	= -60,
-	Temperature_oneDegreeCelsius	= 1,
-	Temperature_equalOrGreaterThan67Deg	= 67
+    Temperature_equalOrSmallerThanMinus60Deg = -60,
+    Temperature_oneDegreeCelsius             = 1,
+    Temperature_equalOrGreaterThan67Deg      = 67
 } e_Temperature;
 
 /* Temperature */
-typedef long	 Temperature_t;
+typedef long Temperature_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_Temperature;
@@ -44,5 +43,5 @@ per_type_encoder_f Temperature_encode_uper;
 }
 #endif
 
-#endif	/* _Temperature_H_ */
+#endif /* _Temperature_H_ */
 #include <asn_internal.h>

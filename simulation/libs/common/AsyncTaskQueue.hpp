@@ -1,38 +1,9 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
- /**
+/**
  * @file       AsyncTaskQueue.hpp
  *
  * @brief      Implements a queue that will hold on futures for async tasks. This allows async
@@ -89,20 +60,20 @@ class AsyncTaskQueue {
         while (true) {
             bool wait = false;
             std::deque<std::shared_future<void>>::iterator itr;
-        {
-            std::lock_guard<std::mutex> lock(tasksMutex_);
-            purgeCompleted();
+            {
+                std::lock_guard<std::mutex> lock(tasksMutex_);
+                purgeCompleted();
                 itr = std::begin(tasksQueue_);
-            // Iterate from head of queue and remove if the task is complete
+                // Iterate from head of queue and remove if the task is complete
                 if (itr != std::end(tasksQueue_)) {
-                if (itr->valid()) {
+                    if (itr->valid()) {
                         wait = true;
-                }
+                    }
                     tasksQueue_.erase(itr);
                 } else {
                     break;
+                }
             }
-        }
             if (wait) {
                 itr->wait();
             }
@@ -169,8 +140,8 @@ class AsyncTaskQueue {
      * @param [in] wp - class object this asyncTaskQueue access its members during execution
      * @param [in] policy - specify execute in order or not
      */
-    template<class Function, typename ClassName>
-    Status add(Function&& func, std::weak_ptr<ClassName> wp, std::launch policy) {
+    template <class Function, typename ClassName>
+    Status add(Function &&func, std::weak_ptr<ClassName> wp, std::launch policy) {
         auto wrapper = [func, wp]() {
             auto sp = wp.lock();
             if (sp) {
@@ -235,7 +206,7 @@ class AsyncTaskQueue {
         // futures don't have any methods to immediately find out if it's ready.
         // We always have to supply some timeout.
         std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-        auto itr = std::begin(tasksQueue_);
+        auto itr                                  = std::begin(tasksQueue_);
 
         // Iterate from head of queue and remove if the task is complete
         while (itr != std::end(tasksQueue_)) {
@@ -268,11 +239,11 @@ class AsyncTaskQueue {
         }
     }
 
-    std::mutex tasksMutex_;                         // mutex protecting unordered, async queue
+    std::mutex tasksMutex_;  // mutex protecting unordered, async queue
     std::deque<std::shared_future<T>> tasksQueue_;  // queue of futures for async tasks
 
     std::shared_ptr<std::thread> orderedTaskThread_;  // Thread to execute ordered task
-    std::mutex orderedTasksMutex_;                    // mutex protecting ordered, deferred queue
+    std::mutex orderedTasksMutex_;  // mutex protecting ordered, deferred queue
     std::condition_variable orderedTasksCv_;  // Condition variable used for waking up the worker
                                               // thread
     std::deque<std::shared_future<T>> orderedTasksQueue_;  // queue of futures for deferred tasks

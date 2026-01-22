@@ -28,39 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -74,7 +44,7 @@
 
 int gVerbosity = 0;
 void set_codec_verbosity(int value) {
-    if(value)
+    if (value)
         printf("Codec verbosity will be set to: %d\n", value);
     gVerbosity = value;
 }
@@ -89,12 +59,11 @@ void set_codec_verbosity(int value) {
  *           for verification before continuing decoding.
  *         -1 failure.
  */
-int decode_msg(msg_contents *mc)
-{
+int decode_msg(msg_contents *mc) {
     int ret = 0;
     wsmp_data_t *wsmpp;
     if (!mc || !mc->abuf.data) {
-        if(gVerbosity)
+        if (gVerbosity)
             fprintf(stderr, "%s: invalid input\n", __func__);
         return -1;
     }
@@ -103,47 +72,47 @@ int decode_msg(msg_contents *mc)
         abuf_pull(&mc->abuf, 1);
 
         if ((ret = wsmp_decode(mc)) < 0) {
-            if(gVerbosity)
+            if (gVerbosity)
                 fprintf(stderr, "WSMP decode failure\n");
             return ret;
         }
         wsmpp = (wsmp_data_t *)mc->wsmp;
         if ((ret = ieee1609_2_decode_unsecured(mc)) < 0) {
-            if(gVerbosity)
+            if (gVerbosity)
                 fprintf(stderr, "IEEE1609.2 decode failure\n");
             return ret;
         } else {
             ieee1609_2_data *ie = mc->ieee1609_2data;
-            if (ie->content != unsecuredData){
-                if(gVerbosity)
+            if (ie->content != unsecuredData) {
+                if (gVerbosity)
                     fprintf(stderr, "IEEE1609.2 contains signed data\n");
                 return 1;
             }
         }
-        if(gVerbosity)
+        if (gVerbosity)
             printf("PSID of received message is: %02x\n", wsmpp->psid);
         if (wsmpp->psid == PSID_WSA && mc->msgId == ((int)WSA_MSG_ID)) {
 #ifdef WITH_WSA
             if ((ret = decode_as_wsa(mc)) < 0) {
-                if(gVerbosity)
+                if (gVerbosity)
                     fprintf(stderr, "WSA decode failure\n");
                 return -1;
             } else {
-                if(gVerbosity > 3)
+                if (gVerbosity > 3)
                     print_wsa(mc->wsa);
                 ret = 0;
             }
 #else
-            if(gVerbosity)
+            if (gVerbosity)
                 fprintf(stderr, "WSA not supprted\n");
 #endif
         } else {
-            if(mc->msgId != ((int)WSA_MSG_ID)){
+            if (mc->msgId != ((int)WSA_MSG_ID)) {
                 if ((ret = decode_as_j2735(mc)) < 0) {
-                    if(gVerbosity)
+                    if (gVerbosity)
                         fprintf(stderr, "J2735 decode failure\n");
                     return -1;
-                }else{
+                } else {
                     ret = 0;
                 }
             }
@@ -152,12 +121,12 @@ int decode_msg(msg_contents *mc)
 #ifdef ETSI
         // family ID is removed by GeoNetwork router.
         if ((ret = btp_decode(mc)) < 0) {
-            if(gVerbosity)
+            if (gVerbosity)
                 fprintf(stderr, "BTP decode failure\n");
             return ret;
         }
         if ((ret = decode_as_etsi(mc)) < 0) {
-            if(gVerbosity)
+            if (gVerbosity)
                 fprintf(stderr, "ETSI decode failure\n");
         }
 #endif
@@ -174,8 +143,8 @@ int decode_msg_continue(msg_contents *mc) {
     int ret = 0;
 
     if (mc->stackId == STACK_ID_SAE) {
-        if ((ret = decode_as_j2735(mc)) < 0 ) {
-            if(gVerbosity)
+        if ((ret = decode_as_j2735(mc)) < 0) {
+            if (gVerbosity)
                 fprintf(stderr, "J2735 decode failure\n");
         } else {
             ret = 0;
@@ -198,12 +167,11 @@ int decode_msg_continue(msg_contents *mc) {
  * and correspdong data structure(mc->cam or mc->denm) shall be intialized by
  * the caller before calling this function.
  */
-int encode_msg(msg_contents *mc)
-{
+int encode_msg(msg_contents *mc) {
     int ret = 0;
     wsmp_data_t *wsmpp;
     if (!mc || !mc->abuf.data) {
-        if(gVerbosity)
+        if (gVerbosity)
             fprintf(stderr, "%s invalid input\n", __func__);
         return -1;
     }
@@ -213,11 +181,11 @@ int encode_msg(msg_contents *mc)
 #ifdef WITH_WSA
             mc->msgId = (int)WSA_MSG_ID;
             if ((ret = encode_as_wsa(mc)) < 0) {
-                if(gVerbosity)
+                if (gVerbosity)
                     fprintf(stderr, "WSA encode failure\n");
                 return ret;
             }
-            if(gVerbosity > 3) {
+            if (gVerbosity > 3) {
                 print_wsa(mc->wsa);
             }
 #else
@@ -226,32 +194,32 @@ int encode_msg(msg_contents *mc)
         } else {
             mc->j2735_msg_id = J2735_MSGID_BASIC_SAFETY;
             if ((ret = encode_as_j2735(mc)) < 0) {
-                if(gVerbosity)
+                if (gVerbosity)
                     fprintf(stderr, "J2735 encode failure\n");
                 return ret;
             }
         }
         if ((ret = ieee1609_2_encode_unsecured(mc)) < 0) {
-            if(gVerbosity)
+            if (gVerbosity)
                 fprintf(stderr, "IEEE1609.2 encode failure\n");
             return ret;
         } else if (ret == 1) {
             return ret;
         }
         if ((ret = wsmp_encode(mc)) < 0) {
-            if(gVerbosity)
+            if (gVerbosity)
                 fprintf(stderr, "WSMP encode failure\n");
             return ret;
         }
     } else {
 #ifdef ETSI
         if ((ret = encode_as_etsi(mc)) < 0) {
-            if(gVerbosity)
+            if (gVerbosity)
                 fprintf(stderr, "ETSI encode failure\n");
             return ret;
         }
         if ((ret = btp_encode(mc)) < 0) {
-            if(gVerbosity)
+            if (gVerbosity)
                 fprintf(stderr, "BTP encode failure\n");
             return ret;
         }
@@ -264,18 +232,17 @@ int encode_msg(msg_contents *mc)
 
     return ret;
 }
-int encode_msg_continue(msg_contents *mc)
-{
+int encode_msg_continue(msg_contents *mc) {
     int ret = 0;
     if (!mc || !mc->abuf.data) {
-        if(gVerbosity)
+        if (gVerbosity)
             fprintf(stderr, "%s invalid input\n", __func__);
         return -1;
     }
     if (mc->stackId == STACK_ID_SAE) {
         if ((ret = wsmp_encode(mc)) < 0) {
-            if(gVerbosity)
-                fprintf(stderr,"WSMP encode failure\n");
+            if (gVerbosity)
+                fprintf(stderr, "WSMP encode failure\n");
             return ret;
         }
     } else {

@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef DATA_LINK_SERVER_HPP
@@ -15,59 +15,53 @@
 
 #define DEFAULT_DELIMITER " "
 
+using commonStub::GetServiceStatusReply;
+using commonStub::ServiceStatus;
+using dataStub::DataLinkManager;
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
-using dataStub::DataLinkManager;
-using commonStub::ServiceStatus;
-using commonStub::GetServiceStatusReply;
 
-class DataLinkServerImpl final:
-    public dataStub::DataLinkManager::Service,
-    public IServerEventListener,
-    public std::enable_shared_from_this<DataLinkServerImpl> {
+class DataLinkServerImpl final : public dataStub::DataLinkManager::Service,
+                                 public IServerEventListener,
+                                 public std::enable_shared_from_this<DataLinkServerImpl> {
 
-public:
+ public:
     DataLinkServerImpl();
     ~DataLinkServerImpl();
 
-    grpc::Status InitService(ServerContext* context,
-        const google::protobuf::Empty *request,
-        commonStub::GetServiceStatusReply* response) override;
+    grpc::Status InitService(ServerContext *context, const google::protobuf::Empty *request,
+        commonStub::GetServiceStatusReply *response) override;
 
-    grpc::Status SetEthDataLinkState(ServerContext* context,
+    grpc::Status SetEthDataLinkState(ServerContext *context,
         const dataStub::SetEthDatalinkStateRequest *request,
-        dataStub::SetEthDatalinkStateReply* response) override;
+        dataStub::SetEthDatalinkStateReply *response) override;
 
-    grpc::Status GetEthDataLinkState(ServerContext* context,
-        const google::protobuf::Empty *request,
-    dataStub::GetEthDataLinkStateReply* response) override;
+    grpc::Status GetEthDataLinkState(ServerContext *context, const google::protobuf::Empty *request,
+        dataStub::GetEthDataLinkStateReply *response) override;
 
-    grpc::Status GetServiceStatus(ServerContext* context,
-        const google::protobuf::Empty* request,
-        commonStub::GetServiceStatusReply* response) override;
+    grpc::Status GetServiceStatus(ServerContext *context, const google::protobuf::Empty *request,
+        commonStub::GetServiceStatusReply *response) override;
 
-    grpc::Status GetEthCapability(ServerContext* context,
-        const ::google::protobuf::Empty* request,
-        dataStub::GetEthCapabilityReply* response) override;
+    grpc::Status GetEthCapability(ServerContext *context, const ::google::protobuf::Empty *request,
+        dataStub::GetEthCapabilityReply *response) override;
 
-    grpc::Status SetLocalEthOperatingMode(
-        ServerContext* context,
-        const dataStub::SetLocalEthOperatingModeRequest* request,
-        dataStub::SetLocalEthOperatingModeReply* response) override;
+    grpc::Status SetLocalEthOperatingMode(ServerContext *context,
+        const dataStub::SetLocalEthOperatingModeRequest *request,
+        dataStub::SetLocalEthOperatingModeReply *response) override;
 
-    grpc::Status SetPeerEthCapability(ServerContext* context,
-        const dataStub::SetPeerEthCapabilityRequest* request,
-        dataStub::DefaultReply* response) override;
+    grpc::Status SetPeerEthCapability(ServerContext *context,
+        const dataStub::SetPeerEthCapabilityRequest *request,
+        dataStub::DefaultReply *response) override;
 
-    grpc::Status SetPeerModeChangeRequestStatus(ServerContext* context,
-        const dataStub::SetPeerModeChangeRequestStatusRequest* request,
-        dataStub::DefaultReply* response) override;
+    grpc::Status SetPeerModeChangeRequestStatus(ServerContext *context,
+        const dataStub::SetPeerModeChangeRequestStatusRequest *request,
+        dataStub::DefaultReply *response) override;
 
     void onEventUpdate(::eventService::UnsolicitedEvent event);
 
-private:
+ private:
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     ServerEventManager &serverEvent_;
     EventService &clientEvent_;
@@ -76,18 +70,17 @@ private:
 
     telux::common::Status registerDefaultIndications();
     void onSSREvent(telux::common::ServiceStatus srvStatus);
-    void notifyServiceStateChanged(telux::common::ServiceStatus srvStatus,
-            std::string srvStatusStr);
+    void notifyServiceStateChanged(
+        telux::common::ServiceStatus srvStatus, std::string srvStatusStr);
     telux::common::ServiceStatus getServiceStatus();
     void setServiceStatus(telux::common::ServiceStatus srvStatus);
     void onEventUpdate(std::string event);
     void handleSSREvent(std::string eventParams);
-    grpc::Status setResponse(telux::common::ServiceStatus srvStatus,
-            commonStub::GetServiceStatusReply* response);
-    void handleEvent(std::string token,std::string event);
+    grpc::Status setResponse(
+        telux::common::ServiceStatus srvStatus, commonStub::GetServiceStatusReply *response);
+    void handleEvent(std::string token, std::string event);
     void handleOnEthModeChangeTransactionStatus(std::string event);
     void handleOnEthModeChangeRequest(std::string event);
-
 };
 
-#endif //DATA_LINK_SERVER_HPP
+#endif  // DATA_LINK_SERVER_HPP

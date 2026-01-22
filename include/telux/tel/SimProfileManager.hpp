@@ -26,42 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * @file       SimProfileManager.hpp
@@ -127,8 +97,8 @@ using EidResponseCb = std::function<void(std::string eid, telux::common::ErrorCo
  * @param [in] error              Return code which indicates whether the operation
  *                                succeeded or not.  @ref telux::common::ErrorCode.
  */
-using ServerAddressResponseCb = std::function<void(std::string smdpAddress,
-    std::string smdsAddress, telux::common::ErrorCode error)>;
+using ServerAddressResponseCb = std::function<void(
+    std::string smdpAddress, std::string smdsAddress, telux::common::ErrorCode error)>;
 
 /**
  *@brief ISimProfileManager is a primary interface for remote eUICCs (eSIMs or embedded SIMs)
@@ -157,15 +127,15 @@ class ISimProfileManager {
     virtual std::future<bool> onSubsystemReady() = 0;
 
     /**
-    * This status indicates whether the ISimProfileManager object is in a usable state.
-    *
-    * @returns SERVICE_AVAILABLE    - If SimProfile Manager is ready for service.
-    *          SERVICE_UNAVAILABLE  - If SimProfile Manager is temporarily unavailable.
-    *          SERVICE_FAILED       - If SimProfile Manager encountered an irrecoverable
-    *                                 failure.
-    *
-    *
-    */
+     * This status indicates whether the ISimProfileManager object is in a usable state.
+     *
+     * @returns SERVICE_AVAILABLE    - If SimProfile Manager is ready for service.
+     *          SERVICE_UNAVAILABLE  - If SimProfile Manager is temporarily unavailable.
+     *          SERVICE_FAILED       - If SimProfile Manager encountered an irrecoverable
+     *                                 failure.
+     *
+     *
+     */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
@@ -184,9 +154,9 @@ class ISimProfileManager {
      *
      * @returns Status of add profile i.e. success or suitable error code.
      */
-    virtual telux::common::Status addProfile(SlotId slotId,
-        const std::string &activationCode, const std::string &confirmationCode = "",
-        bool userConsentSupported = false, common::ResponseCallback callback = nullptr)
+    virtual telux::common::Status addProfile(SlotId slotId, const std::string &activationCode,
+        const std::string &confirmationCode = "", bool userConsentSupported = false,
+        common::ResponseCallback callback = nullptr)
         = 0;
 
     /**
@@ -220,8 +190,8 @@ class ISimProfileManager {
      *
      * @returns Status of delete profile i.e. success or suitable error code.
      */
-    virtual telux::common::Status deleteProfile(SlotId slotId, int profileId,
-        common::ResponseCallback callback = nullptr)
+    virtual telux::common::Status deleteProfile(
+        SlotId slotId, int profileId, common::ResponseCallback callback = nullptr)
         = 0;
 
     /**
@@ -286,8 +256,7 @@ class ISimProfileManager {
      *
      * @deprecated Use telux::tel::ICard::requestEid API instead
      */
-    virtual telux::common::Status requestEid(SlotId slotId, EidResponseCb callback)
-        = 0;
+    virtual telux::common::Status requestEid(SlotId slotId, EidResponseCb callback) = 0;
 
     /**
      * Provide user consent required for downloading and installing profile.
@@ -325,8 +294,8 @@ class ISimProfileManager {
      *
      * @returns  Status of provide confirmation code i.e. success or suitable error code.
      */
-    virtual telux::common::Status provideConfirmationCode(SlotId slotId, std::string code,
-        common::ResponseCallback callback = nullptr)
+    virtual telux::common::Status provideConfirmationCode(
+        SlotId slotId, std::string code, common::ResponseCallback callback = nullptr)
         = 0;
 
     /**
@@ -341,8 +310,9 @@ class ISimProfileManager {
      *
      * @returns  Status of server address request i.e. success or suitable error code.
      */
-    virtual telux::common::Status requestServerAddress(SlotId slotId,
-        ServerAddressResponseCb callback) = 0;
+    virtual telux::common::Status requestServerAddress(
+        SlotId slotId, ServerAddressResponseCb callback)
+        = 0;
 
     /**
      * Set Subscription Manager Data Preparation (SM-DP+) address on the eUICC. If SMDP+
@@ -357,8 +327,9 @@ class ISimProfileManager {
      *                               SM-DP+ request.
      * @returns  Status of set server address request i.e. success or suitable error code.
      */
-    virtual telux::common::Status setServerAddress(SlotId slotId, const std::string &smdpAddress,
-        common::ResponseCallback callback = nullptr) = 0;
+    virtual telux::common::Status setServerAddress(
+        SlotId slotId, const std::string &smdpAddress, common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Resets the memory of the eUICC card based on @ref telux::tel::ResetOptionMask.
@@ -373,8 +344,9 @@ class ISimProfileManager {
      * @returns  Status of memory reset request i.e. success or suitable error code.
      *
      */
-    virtual telux::common::Status memoryReset(SlotId slotId, ResetOptionMask mask,
-        common::ResponseCallback callback = nullptr) = 0;
+    virtual telux::common::Status memoryReset(
+        SlotId slotId, ResetOptionMask mask, common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Register a listener to listen for status of specific events like download and installation
@@ -405,7 +377,7 @@ class ISimProfileManager {
 };  // end of ISimProfileManager
 
 /** @} */ /* end_addtogroup telematics_rsp */
-}
-}
+}  // namespace tel
+}  // namespace telux
 
-#endif // TELUX_TEL_SIMPROFILEMANAGER_HPP
+#endif  // TELUX_TEL_SIMPROFILEMANAGER_HPP

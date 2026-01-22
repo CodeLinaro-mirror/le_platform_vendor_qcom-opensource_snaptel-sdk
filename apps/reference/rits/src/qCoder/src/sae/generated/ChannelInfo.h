@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_ChannelInfo_H_
-#define	_ChannelInfo_H_
-
+#ifndef _ChannelInfo_H_
+#define _ChannelInfo_H_
 
 #include <asn_application.h>
 
@@ -25,14 +24,14 @@ extern "C" {
 
 /* ChannelInfo */
 typedef struct ChannelInfo {
-	OperatingClass80211_t	 operatingClass;
-	ChannelNumber80211_t	 channelNumber;
-	TXpower80211_t	 powerLevel;
-	WsaChInfoDataRate_t	 dataRate;
-	ChInfoOptions_t	 extensions;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    OperatingClass80211_t operatingClass;
+    ChannelNumber80211_t channelNumber;
+    TXpower80211_t powerLevel;
+    WsaChInfoDataRate_t dataRate;
+    ChInfoOptions_t extensions;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } ChannelInfo_t;
 
 /* Implementation */
@@ -42,5 +41,5 @@ extern asn_TYPE_descriptor_t asn_DEF_ChannelInfo;
 }
 #endif
 
-#endif	/* _ChannelInfo_H_ */
+#endif /* _ChannelInfo_H_ */
 #include <asn_internal.h>

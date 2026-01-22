@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_YawRate_H_
-#define	_YawRate_H_
-
+#ifndef _YawRate_H_
+#define _YawRate_H_
 
 #include <asn_application.h>
 
@@ -22,11 +21,11 @@ extern "C" {
 
 /* YawRate */
 typedef struct YawRate {
-	YawRateValue_t	 yawRateValue;
-	YawRateConfidence_t	 yawRateConfidence;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    YawRateValue_t yawRateValue;
+    YawRateConfidence_t yawRateConfidence;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } YawRate_t;
 
 /* Implementation */
@@ -36,5 +35,5 @@ extern asn_TYPE_descriptor_t asn_DEF_YawRate;
 }
 #endif
 
-#endif	/* _YawRate_H_ */
+#endif /* _YawRate_H_ */
 #include <asn_internal.h>

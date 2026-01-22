@@ -26,9 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -179,7 +180,8 @@ class DataFactory {
      *
      */
     virtual std::shared_ptr<telux::data::net::IFirewallEntry> getNewFirewallEntry(
-        IpProtocol proto, Direction direction, IpFamilyType ipFamilyType) = 0;
+        IpProtocol proto, Direction direction, IpFamilyType ipFamilyType)
+        = 0;
 
     /**
      * Get IIpFilter instance based on IP Protocol, This can be used in Firewall Manager and
@@ -236,7 +238,8 @@ class DataFactory {
      *
      */
     virtual std::shared_ptr<telux::data::net::IBridgeManager> getBridgeManager(
-        telux::common::InitResponseCb clientCallback = nullptr) = 0;
+        telux::common::InitResponseCb clientCallback = nullptr)
+        = 0;
 
     /**
      * Get L2TP Manager
@@ -248,7 +251,8 @@ class DataFactory {
      *
      */
     virtual std::shared_ptr<telux::data::net::IL2tpManager> getL2tpManager(
-        telux::common::InitResponseCb clientCallback = nullptr) = 0;
+        telux::common::InitResponseCb clientCallback = nullptr)
+        = 0;
 
     /**
      * Get Data Settings Manager
@@ -274,7 +278,8 @@ class DataFactory {
      *
      */
     virtual std::shared_ptr<IClientManager> getClientManager(
-        telux::common::InitResponseCb clientCallback = nullptr) = 0;
+        telux::common::InitResponseCb clientCallback = nullptr)
+        = 0;
 
     /**
      * Get DualData Manager
@@ -286,7 +291,8 @@ class DataFactory {
      *
      */
     virtual std::shared_ptr<telux::data::IDualDataManager> getDualDataManager(
-        telux::common::InitResponseCb clientCallback = nullptr) = 0;
+        telux::common::InitResponseCb clientCallback = nullptr)
+        = 0;
 
     /**
      * Get DataControl Manager
@@ -298,7 +304,8 @@ class DataFactory {
      *
      */
     virtual std::shared_ptr<telux::data::IDataControlManager> getDataControlManager(
-        telux::common::InitResponseCb clientCallback = nullptr) = 0;
+        telux::common::InitResponseCb clientCallback = nullptr)
+        = 0;
 
     /**
      * Gets the QoS manager instance.
@@ -310,7 +317,8 @@ class DataFactory {
      *
      */
     virtual std::shared_ptr<telux::data::net::IQoSManager> getQoSManager(
-            telux::common::InitResponseCb clientCallback = nullptr) = 0;
+        telux::common::InitResponseCb clientCallback = nullptr)
+        = 0;
 
     /**
      * Gets the KeepAlive manager instance.
@@ -324,9 +332,9 @@ class DataFactory {
      *
      */
     virtual std::shared_ptr<telux::data::IKeepAliveManager> getKeepAliveManager(
-        SlotId slotId = DEFAULT_SLOT_ID,
-        telux::common::InitResponseCb clientCallback = nullptr) = 0;
-   /**
+        SlotId slotId = DEFAULT_SLOT_ID, telux::common::InitResponseCb clientCallback = nullptr)
+        = 0;
+    /**
      * Get Data Link Manager
      * For hypervisor-based platforms, IDataLinkManager is supported only in the primary/host VM.
      *
@@ -337,7 +345,8 @@ class DataFactory {
      *
      */
     virtual std::shared_ptr<IDataLinkManager> getDataLinkManager(
-        telux::common::InitResponseCb clientCallback = nullptr) = 0;
+        telux::common::InitResponseCb clientCallback = nullptr)
+        = 0;
 
 #ifndef TELUX_DOXY_SKIP
  protected:
@@ -346,7 +355,7 @@ class DataFactory {
 #endif
 
  private:
-    DataFactory(const DataFactory &) = delete;
+    DataFactory(const DataFactory &)            = delete;
     DataFactory &operator=(const DataFactory &) = delete;
 };
 
@@ -354,4 +363,4 @@ class DataFactory {
 }  // namespace data
 }  // namespace telux
 
-#endif // TELUX_DATA_DATAFACTORY_HPP
+#endif  // TELUX_DATA_DATAFACTORY_HPP

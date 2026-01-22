@@ -27,7 +27,13 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include<queue>
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+#include <queue>
 
 #include <telux/audio/AudioManager.hpp>
 #include <telux/audio/AudioListener.hpp>
@@ -37,8 +43,8 @@ using namespace telux::audio;
 using namespace telux::common;
 
 class TranscoderApp : public ITranscodeListener,
-                       public std::enable_shared_from_this<TranscoderApp> {
-public:
+                      public std::enable_shared_from_this<TranscoderApp> {
+ public:
     TranscoderApp();
     ~TranscoderApp();
 
@@ -48,10 +54,10 @@ public:
 
     void onReadyForWrite() override;
 
-private:
+ private:
     void writeCallback(std::shared_ptr<IAudioBuffer> buffer, uint32_t bytes, ErrorCode error);
-    void readCallback(std::shared_ptr<telux::audio::IAudioBuffer> buffer,
-         uint32_t isLastBuffer, telux::common::ErrorCode error);
+    void readCallback(std::shared_ptr<telux::audio::IAudioBuffer> buffer, uint32_t isLastBuffer,
+        telux::common::ErrorCode error);
     void createTranscoder();
     void write();
     void read();

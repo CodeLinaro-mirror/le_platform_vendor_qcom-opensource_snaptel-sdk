@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef DUALDATAMANAGEMENTMENU_HPP
@@ -57,4 +57,4 @@ class DualDataManagementMenu : public ConsoleApp,
     std::shared_ptr<telux::data::IDualDataManager> dualDataManager_;
 };
 
-#endif //DUALDATAMANAGEMENTMENU_HPP
+#endif  // DUALDATAMANAGEMENTMENU_HPP

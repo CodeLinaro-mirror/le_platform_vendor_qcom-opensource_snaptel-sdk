@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_PosLonCarr_H_
-#define	_PosLonCarr_H_
-
+#ifndef _PosLonCarr_H_
+#define _PosLonCarr_H_
 
 #include <asn_application.h>
 
@@ -20,12 +19,12 @@ extern "C" {
 
 /* Dependencies */
 typedef enum PosLonCarr {
-	PosLonCarr_oneCentimeter	= 1,
-	PosLonCarr_unavailable	= 127
+    PosLonCarr_oneCentimeter = 1,
+    PosLonCarr_unavailable   = 127
 } e_PosLonCarr;
 
 /* PosLonCarr */
-typedef long	 PosLonCarr_t;
+typedef long PosLonCarr_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_PosLonCarr;
@@ -43,5 +42,5 @@ per_type_encoder_f PosLonCarr_encode_uper;
 }
 #endif
 
-#endif	/* _PosLonCarr_H_ */
+#endif /* _PosLonCarr_H_ */
 #include <asn_internal.h>

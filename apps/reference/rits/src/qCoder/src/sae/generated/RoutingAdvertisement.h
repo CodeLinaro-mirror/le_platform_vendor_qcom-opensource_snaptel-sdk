@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_RoutingAdvertisement_H_
-#define	_RoutingAdvertisement_H_
-
+#ifndef _RoutingAdvertisement_H_
+#define _RoutingAdvertisement_H_
 
 #include <asn_application.h>
 
@@ -25,15 +24,15 @@ extern "C" {
 
 /* RoutingAdvertisement */
 typedef struct RoutingAdvertisement {
-	RouterLifetime_t	 lifetime;
-	IpV6Prefix_t	 ipPrefix;
-	IpV6PrefixLength_t	 ipPrefixLength;
-	IPv6Address_t	 defaultGateway;
-	IPv6Address_t	 primaryDns;
-	RoutAdvertExts_t	 extensions;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    RouterLifetime_t lifetime;
+    IpV6Prefix_t ipPrefix;
+    IpV6PrefixLength_t ipPrefixLength;
+    IPv6Address_t defaultGateway;
+    IPv6Address_t primaryDns;
+    RoutAdvertExts_t extensions;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } RoutingAdvertisement_t;
 
 /* Implementation */
@@ -43,5 +42,5 @@ extern asn_TYPE_descriptor_t asn_DEF_RoutingAdvertisement;
 }
 #endif
 
-#endif	/* _RoutingAdvertisement_H_ */
+#endif /* _RoutingAdvertisement_H_ */
 #include <asn_internal.h>

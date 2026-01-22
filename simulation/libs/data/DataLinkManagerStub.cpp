@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "DataLinkManagerStub.hpp"
@@ -23,15 +23,14 @@ namespace data {
 using telux::common::Status;
 
 DataLinkManagerStub::DataLinkManagerStub()
-    : SimulationManagerStub<DataLinkManager>(std::string("IDataLinkManagerStub"))
-    , clientEventMgr_(ClientEventManager::getInstance()) {
+   : SimulationManagerStub<DataLinkManager>(std::string("IDataLinkManagerStub"))
+   , clientEventMgr_(ClientEventManager::getInstance()) {
     LOG(DEBUG, __FUNCTION__);
 }
 
 DataLinkManagerStub::~DataLinkManagerStub() {
     LOG(DEBUG, __FUNCTION__);
 }
-
 
 void DataLinkManagerStub::createListener() {
     LOG(DEBUG, __FUNCTION__);
@@ -73,24 +72,20 @@ Status DataLinkManagerStub::registerDefaultIndications() {
     LOG(INFO, __FUNCTION__, ":: Registering default SSR indications");
 
     status = clientEventMgr_.registerListener(shared_from_this(), DATA_LINK_SSR_FILTER);
-    if ((status != Status::SUCCESS) &&
-        (status != Status::ALREADY)) {
+    if ((status != Status::SUCCESS) && (status != Status::ALREADY)) {
         LOG(ERROR, __FUNCTION__, ":: Registering default SSR indications failed");
         return status;
     }
 
-    status = clientEventMgr_.registerListener(shared_from_this(),
-            ETH_DATA_LINK_STATE_CHANGE_FILTER);
-    if ((status != Status::SUCCESS) &&
-        (status != Status::ALREADY)) {
+    status
+        = clientEventMgr_.registerListener(shared_from_this(), ETH_DATA_LINK_STATE_CHANGE_FILTER);
+    if ((status != Status::SUCCESS) && (status != Status::ALREADY)) {
         LOG(ERROR, __FUNCTION__, ":: Registering eth datalink state change indications failed");
         return status;
     }
 
-
-    status =  clientEventMgr_.registerListener(shared_from_this(), ETH_MODE_EVENTS_FILTER);
-        if ((status != Status::SUCCESS) &&
-        (status != Status::ALREADY)) {
+    status = clientEventMgr_.registerListener(shared_from_this(), ETH_MODE_EVENTS_FILTER);
+    if ((status != Status::SUCCESS) && (status != Status::ALREADY)) {
         LOG(ERROR, __FUNCTION__, ":: Registering default indications failed");
         return status;
     }
@@ -120,12 +115,11 @@ ServiceStatus DataLinkManagerStub::getServiceStatus() {
     return SimulationManagerStub::getServiceStatus();
 }
 
-Status DataLinkManagerStub::initSyncComplete(
-        ServiceStatus srvcStatus) {
+Status DataLinkManagerStub::initSyncComplete(ServiceStatus srvcStatus) {
     LOG(DEBUG, __FUNCTION__);
 
     Status status = Status::FAILED;
-    status = registerDefaultIndications();
+    status        = registerDefaultIndications();
 
     return status;
 }
@@ -134,22 +128,22 @@ void DataLinkManagerStub::onEventUpdate(google::protobuf::Any event) {
     LOG(DEBUG, __FUNCTION__);
 
     // Execute all events in separate thread
-     auto f = std::async(std::launch::deferred, [this, event]() {
-            if (event.Is<commonStub::GetServiceStatusReply>()) {
-                handleSSREvent(event);
-            } else if (event.Is<dataStub::OnEthDataLinkStateChangeReply>()) {
-                handleEthDatalinkChangeEvent(event);
-            } else if (event.Is<::dataStub::EthModeChangeRequestEvent>()) {
-                ::dataStub::EthModeChangeRequestEvent indication;
-                event.UnpackTo(&indication);
-                this->handleOnEthModeChangeRequest(indication);
-            } else if (event.Is<::dataStub::EthModeChangeTransactionStatusEvent>()) {
-                ::dataStub::EthModeChangeTransactionStatusEvent indication;
-                event.UnpackTo(&indication);
-                this->handleOnEthModeChangeTransactionStatus(indication);
-            } else {
-                LOG(ERROR, __FUNCTION__, ":: Invalid event");
-            }
+    auto f = std::async(std::launch::deferred, [this, event]() {
+        if (event.Is<commonStub::GetServiceStatusReply>()) {
+            handleSSREvent(event);
+        } else if (event.Is<dataStub::OnEthDataLinkStateChangeReply>()) {
+            handleEthDatalinkChangeEvent(event);
+        } else if (event.Is<::dataStub::EthModeChangeRequestEvent>()) {
+            ::dataStub::EthModeChangeRequestEvent indication;
+            event.UnpackTo(&indication);
+            this->handleOnEthModeChangeRequest(indication);
+        } else if (event.Is<::dataStub::EthModeChangeTransactionStatusEvent>()) {
+            ::dataStub::EthModeChangeTransactionStatusEvent indication;
+            event.UnpackTo(&indication);
+            this->handleOnEthModeChangeTransactionStatus(indication);
+        } else {
+            LOG(ERROR, __FUNCTION__, ":: Invalid event");
+        }
     }).share();
 
     taskQ_.add(f);
@@ -178,14 +172,13 @@ void DataLinkManagerStub::handleEthDatalinkChangeEvent(google::protobuf::Any eve
     std::vector<std::weak_ptr<IDataLinkListener>> applisteners;
     listenerMgr_->getAvailableListeners(applisteners);
     LOG(DEBUG, __FUNCTION__, ":: Notifying eth data link state change event ",
-            " to listeners: ", applisteners.size());
+        " to listeners: ", applisteners.size());
 
     for (auto &wp : applisteners) {
         if (auto sp = wp.lock()) {
             sp->onEthDataLinkStateChange(linkState);
         }
     }
-
 }
 
 void DataLinkManagerStub::handleSSREvent(google::protobuf::Any event) {
@@ -211,8 +204,7 @@ void DataLinkManagerStub::handleSSREvent(google::protobuf::Any event) {
     onServiceStatusChange(srvcStatus);
 }
 
-void DataLinkManagerStub::onServiceStatusChange(
-        ServiceStatus srvcStatus) {
+void DataLinkManagerStub::onServiceStatusChange(ServiceStatus srvcStatus) {
     LOG(DEBUG, __FUNCTION__, ":: Service Status: ", static_cast<int>(srvcStatus));
 
     if (srvcStatus == getServiceStatus()) {
@@ -240,8 +232,8 @@ telux::common::Status DataLinkManagerStub::deregisterListener(
     return listenerMgr_->deRegisterListener(listener);
 }
 
-telux::common::ErrorCode DataLinkManagerStub::setEthDataLinkState(telux::data::LinkState linkState)
-{
+telux::common::ErrorCode DataLinkManagerStub::setEthDataLinkState(
+    telux::data::LinkState linkState) {
     LOG(DEBUG, __FUNCTION__);
 
     ::dataStub::SetEthDatalinkStateRequest request;
@@ -250,16 +242,15 @@ telux::common::ErrorCode DataLinkManagerStub::setEthDataLinkState(telux::data::L
 
     if (linkState == telux::data::LinkState::UP) {
         request.mutable_eth_datalink_state()->set_link_state(
-                ::dataStub::LinkStateEnum_LinkState_UP);
+            ::dataStub::LinkStateEnum_LinkState_UP);
     } else {
         request.mutable_eth_datalink_state()->set_link_state(
-                ::dataStub::LinkStateEnum_LinkState_DOWN);
+            ::dataStub::LinkStateEnum_LinkState_DOWN);
     }
 
     grpc::Status reqStatus = stub_->SetEthDataLinkState(&context, request, &response);
 
-    telux::common::ErrorCode error  =
-        static_cast<telux::common::ErrorCode>(response.error());
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
 
     if (error == telux::common::ErrorCode::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -273,13 +264,13 @@ telux::common::ErrorCode DataLinkManagerStub::setEthDataLinkState(telux::data::L
 }
 
 telux::common::ErrorCode DataLinkManagerStub::getEthDataLinkState(
-        telux::data::LinkState &ethLinkState) {
+    telux::data::LinkState &ethLinkState) {
     LOG(DEBUG, __FUNCTION__);
 
     ::google::protobuf::Empty request;
     ::dataStub::GetEthDataLinkStateReply response;
     ClientContext context;
-    ethLinkState = telux::data::LinkState::UNKNOWN;
+    ethLinkState           = telux::data::LinkState::UNKNOWN;
     grpc::Status reqStatus = stub_->GetEthDataLinkState(&context, request, &response);
 
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
@@ -307,10 +298,8 @@ telux::common::ErrorCode DataLinkManagerStub::getEthDataLinkState(
     return error;
 }
 
-
 telux::common::Status DataLinkManagerStub::getEthCapability(
-    telux::data::EthCapability &ethCapability)
-{
+    telux::data::EthCapability &ethCapability) {
     LOG(DEBUG, __FUNCTION__);
 
     ::google::protobuf::Empty request;
@@ -335,16 +324,14 @@ telux::common::Status DataLinkManagerStub::getEthCapability(
     return telux::common::Status::SUCCESS;
 }
 
-
-telux::common::Status DataLinkManagerStub::setPeerEthCapability(telux::data::EthCapability
-        ethCapability)
-{
+telux::common::Status DataLinkManagerStub::setPeerEthCapability(
+    telux::data::EthCapability ethCapability) {
     LOG(DEBUG, __FUNCTION__);
     ::dataStub::SetPeerEthCapabilityRequest request;
     ::dataStub::DefaultReply response;
     ClientContext context;
 
-    for (int i = 0; i < 32; ++i) { // Iterate up to 31st bit to check each EthModeType
+    for (int i = 0; i < 32; ++i) {  // Iterate up to 31st bit to check each EthModeType
         if ((ethCapability.ethModes >> i) & 1) {
             request.mutable_capability()->add_eth_modes(static_cast<dataStub::EthModeEnum>(1 << i));
         }
@@ -353,14 +340,15 @@ telux::common::Status DataLinkManagerStub::setPeerEthCapability(telux::data::Eth
     grpc::Status reqStatus = stub_->SetPeerEthCapability(&context, request, &response);
 
     if (!reqStatus.ok()) {
-        LOG(ERROR, __FUNCTION__, " SetPeerEthCapability request failed: ", reqStatus.error_message());
+        LOG(ERROR, __FUNCTION__,
+            " SetPeerEthCapability request failed: ", reqStatus.error_message());
         return telux::common::Status::FAILED;
     }
     return static_cast<telux::common::Status>(response.status());
 }
 
-telux::common::Status DataLinkManagerStub::setLocalEthOperatingMode(telux::data::EthModeType
-        ethModeType, telux::common::ResponseCallback callback) {
+telux::common::Status DataLinkManagerStub::setLocalEthOperatingMode(
+    telux::data::EthModeType ethModeType, telux::common::ResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__);
     ::dataStub::SetLocalEthOperatingModeRequest request;
     ::dataStub::SetLocalEthOperatingModeReply response;
@@ -370,17 +358,14 @@ telux::common::Status DataLinkManagerStub::setLocalEthOperatingMode(telux::data:
 
     grpc::Status reqStatus = stub_->SetLocalEthOperatingMode(&context, request, &response);
 
-    telux::common::ErrorCode error =
-        static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<
-        telux::common::Status>(response.status());
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
 
     if (error == telux::common::ErrorCode::SUCCESS) {
         if (!reqStatus.ok()) {
             LOG(ERROR, __FUNCTION__, " SetLocalEthOperatingMode request failed");
             error = telux::common::ErrorCode::INTERNAL_ERROR;
-        }
-        else {
+        } else {
             if (listenerMgr_) {
                 std::vector<std::weak_ptr<IDataLinkListener>> listeners;
                 listenerMgr_->getAvailableListeners(listeners);
@@ -397,8 +382,8 @@ telux::common::Status DataLinkManagerStub::setLocalEthOperatingMode(telux::data:
     return status;
 }
 
-telux::common::Status DataLinkManagerStub::setPeerModeChangeRequestStatus(LinkModeChangeStatus
-        status) {
+telux::common::Status DataLinkManagerStub::setPeerModeChangeRequestStatus(
+    LinkModeChangeStatus status) {
 
     LOG(DEBUG, __FUNCTION__);
     ::dataStub::SetPeerModeChangeRequestStatusRequest request;
@@ -410,38 +395,44 @@ telux::common::Status DataLinkManagerStub::setPeerModeChangeRequestStatus(LinkMo
     grpc::Status reqStatus = stub_->SetPeerModeChangeRequestStatus(&context, request, &response);
 
     if (!reqStatus.ok()) {
-        LOG(ERROR, __FUNCTION__, " SetPeerModeChangeRequestStatus request failed: ",
-            reqStatus.error_message());
+        LOG(ERROR, __FUNCTION__,
+            " SetPeerModeChangeRequestStatus request failed: ", reqStatus.error_message());
         return telux::common::Status::FAILED;
     }
 
     telux::common::Status serverStatus = static_cast<telux::common::Status>(response.status());
-
 
     if (serverStatus != telux::common::Status::SUCCESS) {
         return telux::common::Status::FAILED;
     }
 
     return static_cast<telux::common::Status>(response.status());
-
 }
-
 
 telux::data::EthModeType mapProtoEthModeToTelux(dataStub::EthModeEnum protoMode) {
     switch (protoMode) {
-        case dataStub::EthModeEnum_USXGMII_10G: return telux::data::ETHMODE_USXGMII_10G;
-        case dataStub::EthModeEnum_USXGMII_5G: return telux::data::ETHMODE_USXGMII_5G;
-        case dataStub::EthModeEnum_USXGMII_2_5G: return telux::data::ETHMODE_USXGMII_2_5G;
-        case dataStub::EthModeEnum_USXGMII_1G: return telux::data::ETHMODE_USXGMII_1G;
-        case dataStub::EthModeEnum_USXGMII_100M: return telux::data::ETHMODE_USXGMII_100M;
-        case dataStub::EthModeEnum_USXGMII_10M: return telux::data::ETHMODE_USXGMII_10M;
-        case dataStub::EthModeEnum_SGMII_2_5G: return telux::data::ETHMODE_SGMII_2_5G;
-        case dataStub::EthModeEnum_SGMII_1G: return telux::data::ETHMODE_SGMII_1G;
-        case dataStub::EthModeEnum_SGMII_100M: return telux::data::ETHMODE_SGMII_100M;
-        default: return telux::data::ETHMODE_UNKNOWN;
+        case dataStub::EthModeEnum_USXGMII_10G:
+            return telux::data::ETHMODE_USXGMII_10G;
+        case dataStub::EthModeEnum_USXGMII_5G:
+            return telux::data::ETHMODE_USXGMII_5G;
+        case dataStub::EthModeEnum_USXGMII_2_5G:
+            return telux::data::ETHMODE_USXGMII_2_5G;
+        case dataStub::EthModeEnum_USXGMII_1G:
+            return telux::data::ETHMODE_USXGMII_1G;
+        case dataStub::EthModeEnum_USXGMII_100M:
+            return telux::data::ETHMODE_USXGMII_100M;
+        case dataStub::EthModeEnum_USXGMII_10M:
+            return telux::data::ETHMODE_USXGMII_10M;
+        case dataStub::EthModeEnum_SGMII_2_5G:
+            return telux::data::ETHMODE_SGMII_2_5G;
+        case dataStub::EthModeEnum_SGMII_1G:
+            return telux::data::ETHMODE_SGMII_1G;
+        case dataStub::EthModeEnum_SGMII_100M:
+            return telux::data::ETHMODE_SGMII_100M;
+        default:
+            return telux::data::ETHMODE_UNKNOWN;
     }
 }
-
 
 telux::data::LinkModeChangeStatus mapProtoModeChangeStatusToTelux(
     dataStub::ModeChangeStatusEnum protoStatus) {
@@ -456,12 +447,13 @@ telux::data::LinkModeChangeStatus mapProtoModeChangeStatusToTelux(
             return telux::data::LinkModeChangeStatus::REJECTED;
         case dataStub::ModeChangeStatusEnum_TIMEOUT:
             return telux::data::LinkModeChangeStatus::TIMEOUT;
-        default: return telux::data::LinkModeChangeStatus::UNKNOWN;
+        default:
+            return telux::data::LinkModeChangeStatus::UNKNOWN;
     }
 }
 
-
-void DataLinkManagerStub::handleOnEthModeChangeRequest(::dataStub::EthModeChangeRequestEvent indication) {
+void DataLinkManagerStub::handleOnEthModeChangeRequest(
+    ::dataStub::EthModeChangeRequestEvent indication) {
     LOG(DEBUG, __FUNCTION__);
 
     telux::data::EthModeType ethModeType = mapProtoEthModeToTelux(indication.eth_mode_type());
@@ -469,8 +461,8 @@ void DataLinkManagerStub::handleOnEthModeChangeRequest(::dataStub::EthModeChange
     if (listenerMgr_) {
         std::vector<std::weak_ptr<IDataLinkListener>> applisteners;
         listenerMgr_->getAvailableListeners(applisteners);
-        LOG(DEBUG, __FUNCTION__, ":: Notifying onEthModeChangeRequest event to listeners: ",
-            applisteners.size());
+        LOG(DEBUG, __FUNCTION__,
+            ":: Notifying onEthModeChangeRequest event to listeners: ", applisteners.size());
 
         for (auto &wp : applisteners) {
             if (auto sp = wp.lock()) {
@@ -480,18 +472,17 @@ void DataLinkManagerStub::handleOnEthModeChangeRequest(::dataStub::EthModeChange
     }
 }
 
-
 void DataLinkManagerStub::handleOnEthModeChangeTransactionStatus(
     ::dataStub::EthModeChangeTransactionStatusEvent indication) {
     LOG(DEBUG, __FUNCTION__);
 
-    telux::data::EthModeType ethModeType = mapProtoEthModeToTelux(indication.eth_mode_type());
+    telux::data::EthModeType ethModeType     = mapProtoEthModeToTelux(indication.eth_mode_type());
     telux::data::LinkModeChangeStatus status = mapProtoModeChangeStatusToTelux(indication.status());
 
     if (listenerMgr_) {
         std::vector<std::weak_ptr<IDataLinkListener>> applisteners;
         listenerMgr_->getAvailableListeners(applisteners);
-        LOG(DEBUG, __FUNCTION__, "Notifying event to listeners: ",applisteners.size());
+        LOG(DEBUG, __FUNCTION__, "Notifying event to listeners: ", applisteners.size());
 
         for (auto &wp : applisteners) {
             if (auto sp = wp.lock()) {
@@ -501,5 +492,5 @@ void DataLinkManagerStub::handleOnEthModeChangeTransactionStatus(
     }
 }
 
-} // end of namespace data
-} // end of namespace telux
+}  // end of namespace data
+}  // end of namespace telux

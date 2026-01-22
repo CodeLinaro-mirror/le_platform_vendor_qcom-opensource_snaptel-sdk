@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -22,34 +22,34 @@
 #include "event/EventService.hpp"
 #include <thread>
 
-class ImsServingManagerServerImpl final : public telStub::ImsServingSystem::Service,
-                                          public IServerEventListener,
-                                          public
-                                    std::enable_shared_from_this<ImsServingManagerServerImpl> {
+class ImsServingManagerServerImpl final
+   : public telStub::ImsServingSystem::Service,
+     public IServerEventListener,
+     public std::enable_shared_from_this<ImsServingManagerServerImpl> {
 
-public:
+ public:
     ImsServingManagerServerImpl();
     ~ImsServingManagerServerImpl();
-    grpc::Status InitService(ServerContext* context,
-        const ::commonStub::GetServiceStatusRequest* request,
-        commonStub::GetServiceStatusReply* response) override;
-    grpc::Status GetServiceStatus(ServerContext* context,
-        const ::commonStub::GetServiceStatusRequest* request,
-        commonStub::GetServiceStatusReply* response) override;
-    grpc::Status RequestRegistrationInfo(ServerContext* context,
-        const ::telStub::RequestRegistrationInfoRequest* request,
-        telStub::RequestRegistrationInfoReply* response) override;
-    grpc::Status RequestServiceInfo(ServerContext* context,
-        const ::telStub::RequestServiceInfoRequest* request,
-        telStub::RequestServiceInfoReply* response) override;
-    grpc::Status RequestPdpStatus(ServerContext* context,
-    const ::telStub::RequestPdpStatusRequest* request,
-        telStub::RequestPdpStatusReply* response) override;
-    grpc::Status CleanUpService(ServerContext* context,
-        const ::google::protobuf::Empty* request, ::google::protobuf::Empty* response) override;
+    grpc::Status InitService(ServerContext *context,
+        const ::commonStub::GetServiceStatusRequest *request,
+        commonStub::GetServiceStatusReply *response) override;
+    grpc::Status GetServiceStatus(ServerContext *context,
+        const ::commonStub::GetServiceStatusRequest *request,
+        commonStub::GetServiceStatusReply *response) override;
+    grpc::Status RequestRegistrationInfo(ServerContext *context,
+        const ::telStub::RequestRegistrationInfoRequest *request,
+        telStub::RequestRegistrationInfoReply *response) override;
+    grpc::Status RequestServiceInfo(ServerContext *context,
+        const ::telStub::RequestServiceInfoRequest *request,
+        telStub::RequestServiceInfoReply *response) override;
+    grpc::Status RequestPdpStatus(ServerContext *context,
+        const ::telStub::RequestPdpStatusRequest *request,
+        telStub::RequestPdpStatusReply *response) override;
+    grpc::Status CleanUpService(ServerContext *context, const ::google::protobuf::Empty *request,
+        ::google::protobuf::Empty *response) override;
     void onEventUpdate(::eventService::UnsolicitedEvent message) override;
 
-private:
+ private:
     void handleImsRegStatusChanged(std::string eventParams);
     void handleImsServiceInfoChanged(std::string eventParams);
     void handleImsPdpStatusInfoChanged(std::string eventParams);
@@ -58,4 +58,4 @@ private:
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
 };
 
-#endif // IMS_SERVING_SYSTEM_MANAGER_SERVER_HPP
+#endif  // IMS_SERVING_SYSTEM_MANAGER_SERVER_HPP

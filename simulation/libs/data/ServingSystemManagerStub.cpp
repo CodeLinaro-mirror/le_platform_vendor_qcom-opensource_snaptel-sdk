@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "ServingSystemManagerStub.hpp"
@@ -17,11 +17,11 @@ using grpc::Status;
 namespace telux {
 namespace data {
 
-ServingSystemManagerStub::ServingSystemManagerStub (SlotId slotId) {
+ServingSystemManagerStub::ServingSystemManagerStub(SlotId slotId) {
     LOG(DEBUG, __FUNCTION__);
-    taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
+    taskQ_       = std::make_shared<AsyncTaskQueue<void>>();
     listenerMgr_ = std::make_shared<telux::common::ListenerManager<IServingSystemListener>>();
-    slotId_ = slotId;
+    slotId_      = slotId;
 }
 
 ServingSystemManagerStub::~ServingSystemManagerStub() {
@@ -35,9 +35,8 @@ telux::common::Status ServingSystemManagerStub::init(telux::common::InitResponse
     LOG(DEBUG, __FUNCTION__);
 
     initCb_ = callback;
-    auto f =
-        std::async(std::launch::async, [this, callback]() {
-        this->initSync(callback);}).share();
+    auto f
+        = std::async(std::launch::async, [this, callback]() { this->initSync(callback); }).share();
     taskQ_->add(f);
     return telux::common::Status::SUCCESS;
 }
@@ -53,10 +52,9 @@ void ServingSystemManagerStub::initSync(telux::common::InitResponseCb callback) 
     ClientContext context;
 
     request.set_slot_id(slotId_);
-    grpc::Status reqStatus = stub_->InitService(&context, request, &response);
-    telux::common::ServiceStatus cbStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
-    int cbDelay = DEFAULT_DELAY;
+    grpc::Status reqStatus                = stub_->InitService(&context, request, &response);
+    telux::common::ServiceStatus cbStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    int cbDelay                           = DEFAULT_DELAY;
 
     do {
         if (!reqStatus.ok()) {
@@ -64,9 +62,8 @@ void ServingSystemManagerStub::initSync(telux::common::InitResponseCb callback) 
             break;
         }
 
-        cbStatus =
-            static_cast<telux::common::ServiceStatus>(response.service_status());
-        cbDelay = static_cast<int>(response.delay());
+        cbStatus = static_cast<telux::common::ServiceStatus>(response.service_status());
+        cbDelay  = static_cast<int>(response.delay());
 
         this->onServiceStatusChange(cbStatus);
         LOG(DEBUG, __FUNCTION__, " ServiceStatus: ", static_cast<int>(cbStatus));
@@ -76,8 +73,7 @@ void ServingSystemManagerStub::initSync(telux::common::InitResponseCb callback) 
 
     if (callback && (cbDelay != SKIP_CALLBACK)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay,
-            " cbStatus::", static_cast<int>(cbStatus));
+        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", static_cast<int>(cbStatus));
         invokeInitCallback(cbStatus);
     }
 }
@@ -89,15 +85,12 @@ void ServingSystemManagerStub::invokeInitCallback(telux::common::ServiceStatus s
     }
 }
 
-void ServingSystemManagerStub::invokeCallback(telux::common::ResponseCallback callback,
-    telux::common::ErrorCode error, int cbDelay ) {
+void ServingSystemManagerStub::invokeCallback(
+    telux::common::ResponseCallback callback, telux::common::ErrorCode error, int cbDelay) {
     LOG(DEBUG, __FUNCTION__);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-    auto f = std::async(std::launch::async,
-        [this, error , callback]() {
-            callback(error);
-        }).share();
+    auto f = std::async(std::launch::async, [this, error, callback]() { callback(error); }).share();
     taskQ_->add(f);
 }
 
@@ -138,8 +131,8 @@ telux::common::Status ServingSystemManagerStub::requestServiceStatus(
     RequestServiceStatusResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
 
-    telux::data::ServiceStatus serviceStatus = {telux::data::DataServiceState::UNKNOWN,
-        telux::data::NetworkRat::UNKNOWN};
+    telux::data::ServiceStatus serviceStatus
+        = {telux::data::DataServiceState::UNKNOWN, telux::data::NetworkRat::UNKNOWN};
 
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, " Data ServingSystem manager not ready");
@@ -147,7 +140,7 @@ telux::common::Status ServingSystemManagerStub::requestServiceStatus(
     }
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
     ::dataStub::ServingStatusRequest request;
@@ -157,14 +150,15 @@ telux::common::Status ServingSystemManagerStub::requestServiceStatus(
     request.mutable_serving_status()->set_slot_id(slotId_);
     grpc::Status reqStatus = stub_->RequestServiceStatus(&context, request, &response);
 
-    error = static_cast<telux::common::ErrorCode>(response.reply().error());
+    error  = static_cast<telux::common::ErrorCode>(response.reply().error());
     status = static_cast<telux::common::Status>(response.reply().status());
-    delay = static_cast<int>(response.reply().delay());
+    delay  = static_cast<int>(response.reply().delay());
 
     serviceStatus.serviceState = static_cast<telux::data::DataServiceState>(
         response.data_service_state().data_service_state());
-    serviceStatus.networkRat = static_cast<telux::data::NetworkRat>(
-        response.network_rat().network_rat());;
+    serviceStatus.networkRat
+        = static_cast<telux::data::NetworkRat>(response.network_rat().network_rat());
+    ;
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -173,11 +167,11 @@ telux::common::Status ServingSystemManagerStub::requestServiceStatus(
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f = std::async(std::launch::async,
-                [this, error, serviceStatus, delay, callback]() {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-                    callback(serviceStatus, error);
-                }).share();
+            auto f
+                = std::async(std::launch::async, [this, error, serviceStatus, delay, callback]() {
+                      std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                      callback(serviceStatus, error);
+                  }).share();
             taskQ_->add(f);
         }
     }
@@ -197,7 +191,7 @@ telux::common::Status ServingSystemManagerStub::requestRoamingStatus(
     }
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
     ::dataStub::RoamingStatusRequest request;
@@ -207,13 +201,14 @@ telux::common::Status ServingSystemManagerStub::requestRoamingStatus(
     request.mutable_roaming_status()->set_slot_id(slotId_);
     grpc::Status reqStatus = stub_->RequestRoamingStatus(&context, request, &response);
 
-    error = static_cast<telux::common::ErrorCode>(response.reply().error());
+    error  = static_cast<telux::common::ErrorCode>(response.reply().error());
     status = static_cast<telux::common::Status>(response.reply().status());
-    delay = static_cast<int>(response.reply().delay());
+    delay  = static_cast<int>(response.reply().delay());
 
     roamingStatus.isRoaming = response.is_roaming();
-    roamingStatus.type = static_cast<telux::data::RoamingType>(
-        response.roaming_type().roaming_type());;
+    roamingStatus.type
+        = static_cast<telux::data::RoamingType>(response.roaming_type().roaming_type());
+    ;
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -222,11 +217,11 @@ telux::common::Status ServingSystemManagerStub::requestRoamingStatus(
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f = std::async(std::launch::async,
-                [this, error, roamingStatus, delay, callback]() {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-                    callback(roamingStatus, error);
-                }).share();
+            auto f
+                = std::async(std::launch::async, [this, error, roamingStatus, delay, callback]() {
+                      std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                      callback(roamingStatus, error);
+                  }).share();
             taskQ_->add(f);
         }
     }
@@ -235,18 +230,18 @@ telux::common::Status ServingSystemManagerStub::requestRoamingStatus(
 }
 
 telux::common::Status ServingSystemManagerStub::makeDormant(
-     telux::common::ResponseCallback callback = nullptr) {
+    telux::common::ResponseCallback callback = nullptr) {
     LOG(DEBUG, __FUNCTION__);
 
     DrbStatus dormantstatus = DrbStatus::UNKNOWN;
 
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-         LOG(ERROR, __FUNCTION__, " Serving System is not available");
-          return telux::common::Status::NOTREADY;
+        LOG(ERROR, __FUNCTION__, " Serving System is not available");
+        return telux::common::Status::NOTREADY;
     }
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
     ::dataStub::MakeDormantStatusRequest request;
@@ -261,14 +256,16 @@ telux::common::Status ServingSystemManagerStub::makeDormant(
         error = telux::common::ErrorCode::INVALID_STATE;
         return telux::common::Status::FAILED;
     }
-    error = static_cast<telux::common::ErrorCode>(response.error());
+    error  = static_cast<telux::common::ErrorCode>(response.error());
     status = static_cast<telux::common::Status>(response.status());
-    delay = static_cast<int>(response.delay());
+    delay  = static_cast<int>(response.delay());
 
     if (callback && (delay != SKIP_CALLBACK)) {
         auto f = std::async(std::launch::async, [this, error, dormantstatus, delay, callback]() {
-             std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-             callback(error); }).share(); taskQ_->add(f);
+            std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+            callback(error);
+        }).share();
+        taskQ_->add(f);
     }
     return status;
 }
@@ -283,7 +280,7 @@ telux::common::Status ServingSystemManagerStub::requestNrIconType(
     }
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
     NrIconType type = telux::data::NrIconType::NONE;
 
@@ -294,12 +291,12 @@ telux::common::Status ServingSystemManagerStub::requestNrIconType(
     request.mutable_nr_icon_status()->set_slot_id(slotId_);
     grpc::Status reqStatus = stub_->RequestNrIconType(&context, request, &response);
 
-    error = static_cast<telux::common::ErrorCode>(response.reply().error());
+    error  = static_cast<telux::common::ErrorCode>(response.reply().error());
     status = static_cast<telux::common::Status>(response.reply().status());
-    delay = static_cast<int>(response.reply().delay());
+    delay  = static_cast<int>(response.reply().delay());
 
-    type = static_cast<telux::data::NrIconType>(
-        response.nr_icon_type().nr_icon_type());;
+    type = static_cast<telux::data::NrIconType>(response.nr_icon_type().nr_icon_type());
+    ;
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -308,11 +305,10 @@ telux::common::Status ServingSystemManagerStub::requestNrIconType(
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f = std::async(std::launch::async,
-                [this, error, type, delay, callback]() {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-                    callback(type, error);
-                }).share();
+            auto f = std::async(std::launch::async, [this, error, type, delay, callback]() {
+                std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                callback(type, error);
+            }).share();
             taskQ_->add(f);
         }
     }
@@ -397,5 +393,5 @@ void ServingSystemManagerStub::onDrbStatusChanged(DrbStatus status) {
     }
 }
 
-} // end of namespace data
-} // end of namespace telux
+}  // end of namespace data
+}  // end of namespace telux

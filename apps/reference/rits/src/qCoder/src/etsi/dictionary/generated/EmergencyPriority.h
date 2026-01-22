@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_EmergencyPriority_H_
-#define	_EmergencyPriority_H_
-
+#ifndef _EmergencyPriority_H_
+#define _EmergencyPriority_H_
 
 #include <asn_application.h>
 
@@ -20,12 +19,12 @@ extern "C" {
 
 /* Dependencies */
 typedef enum EmergencyPriority {
-	EmergencyPriority_requestForRightOfWay	= 0,
-	EmergencyPriority_requestForFreeCrossingAtATrafficLight	= 1
+    EmergencyPriority_requestForRightOfWay                  = 0,
+    EmergencyPriority_requestForFreeCrossingAtATrafficLight = 1
 } e_EmergencyPriority;
 
 /* EmergencyPriority */
-typedef BIT_STRING_t	 EmergencyPriority_t;
+typedef BIT_STRING_t EmergencyPriority_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_EmergencyPriority;
@@ -43,5 +42,5 @@ per_type_encoder_f EmergencyPriority_encode_uper;
 }
 #endif
 
-#endif	/* _EmergencyPriority_H_ */
+#endif /* _EmergencyPriority_H_ */
 #include <asn_internal.h>

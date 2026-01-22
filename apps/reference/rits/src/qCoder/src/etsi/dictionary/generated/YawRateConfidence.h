@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_YawRateConfidence_H_
-#define	_YawRateConfidence_H_
-
+#ifndef _YawRateConfidence_H_
+#define _YawRateConfidence_H_
 
 #include <asn_application.h>
 
@@ -20,19 +19,19 @@ extern "C" {
 
 /* Dependencies */
 typedef enum YawRateConfidence {
-	YawRateConfidence_degSec_000_01	= 0,
-	YawRateConfidence_degSec_000_05	= 1,
-	YawRateConfidence_degSec_000_10	= 2,
-	YawRateConfidence_degSec_001_00	= 3,
-	YawRateConfidence_degSec_005_00	= 4,
-	YawRateConfidence_degSec_010_00	= 5,
-	YawRateConfidence_degSec_100_00	= 6,
-	YawRateConfidence_outOfRange	= 7,
-	YawRateConfidence_unavailable	= 8
+    YawRateConfidence_degSec_000_01 = 0,
+    YawRateConfidence_degSec_000_05 = 1,
+    YawRateConfidence_degSec_000_10 = 2,
+    YawRateConfidence_degSec_001_00 = 3,
+    YawRateConfidence_degSec_005_00 = 4,
+    YawRateConfidence_degSec_010_00 = 5,
+    YawRateConfidence_degSec_100_00 = 6,
+    YawRateConfidence_outOfRange    = 7,
+    YawRateConfidence_unavailable   = 8
 } e_YawRateConfidence;
 
 /* YawRateConfidence */
-typedef long	 YawRateConfidence_t;
+typedef long YawRateConfidence_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_YawRateConfidence;
@@ -50,5 +49,5 @@ per_type_encoder_f YawRateConfidence_encode_uper;
 }
 #endif
 
-#endif	/* _YawRateConfidence_H_ */
+#endif /* _YawRateConfidence_H_ */
 #include <asn_internal.h>

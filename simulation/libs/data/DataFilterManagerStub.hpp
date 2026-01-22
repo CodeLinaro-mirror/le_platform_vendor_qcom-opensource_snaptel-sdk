@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef DATA_FILTER_MANAGER_STUB_HPP
@@ -22,8 +22,8 @@ class DataFilterManagerStub : public IDataFilterManager,
                               public telux::common::IEventListener,
                               public std::enable_shared_from_this<DataFilterManagerStub> {
 
-public:
-    DataFilterManagerStub (SlotId slotId);
+ public:
+    DataFilterManagerStub(SlotId slotId);
     ~DataFilterManagerStub();
 
     telux::common::Status init(telux::common::InitResponseCb callback);
@@ -34,12 +34,15 @@ public:
 
     telux::common::ServiceStatus getServiceStatus() override;
 
-    telux::common::Status setDataRestrictMode(DataRestrictMode mode,
-        telux::common::ResponseCallback callback = nullptr) override;
+    telux::common::Status setDataRestrictMode(
+        DataRestrictMode mode, telux::common::ResponseCallback callback = nullptr) override;
 
     telux::common::Status requestDataRestrictMode(DataRestrictModeCb callback) override;
 
     telux::common::Status addDataRestrictFilter(std::shared_ptr<IIpFilter> &filter,
+        telux::common::ResponseCallback callback = nullptr) override;
+
+    telux::common::Status addDataRestrictFilters(std::vector<std::shared_ptr<IIpFilter>> &filters,
         telux::common::ResponseCallback callback = nullptr) override;
 
     telux::common::Status removeAllDataRestrictFilters(
@@ -51,7 +54,7 @@ public:
 
     telux::common::Status deregisterListener(std::weak_ptr<IDataFilterListener> listener) override;
 
-    virtual void onDataRestrictModeChange(DataRestrictMode mode) override;
+    virtual void onDataFilterModeChange(DataRestrictModeType filterMode) override;
     virtual void onServiceStatusChange(telux::common::ServiceStatus status) override;
 
     /* @deprecated because NAO IP filters are global filters */
@@ -69,18 +72,17 @@ public:
         IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN) override;
 
     /* @deprecated because NAO IP filters are global filters */
-    telux::common::Status removeAllDataRestrictFilters(
-        telux::common::ResponseCallback callback, int profileId,
-        IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN) override;
+    telux::common::Status removeAllDataRestrictFilters(telux::common::ResponseCallback callback,
+        int profileId, IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN) override;
 
     void onEventUpdate(google::protobuf::Any event) override;
 
-private:
+ private:
     void initSync(telux::common::InitResponseCb callback);
     void setSubSystemStatus(telux::common::ServiceStatus status);
     void invokeInitCallback(telux::common::ServiceStatus status);
-    void invokeCallback(telux::common::ResponseCallback callback,
-        telux::common::ErrorCode error, int cbDelay);
+    void invokeCallback(
+        telux::common::ResponseCallback callback, telux::common::ErrorCode error, int cbDelay);
     bool waitForInitialization();
 
     std::mutex mtx_;
@@ -97,7 +99,7 @@ private:
     telux::common::ServiceStatus subSystemStatus_;
 };
 
-} // end of namespace data
-} // end of namespace telux
+}  // end of namespace data
+}  // end of namespace telux
 
-#endif //DATA_FILTER_MANAGER_STUB_HPP
+#endif  // DATA_FILTER_MANAGER_STUB_HPP

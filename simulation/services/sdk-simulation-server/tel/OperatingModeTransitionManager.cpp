@@ -1,7 +1,7 @@
 /*
-* Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
-* SPDX-License-Identifier: BSD-3-Clause-Clear
-*/
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 #include <telux/common/DeviceConfig.hpp>
 #include "libs/common/CommonUtils.hpp"
@@ -12,55 +12,52 @@
 #include <thread>
 #include <chrono>
 
-#define TEL_PHONE_MANAGER                       "IPhoneManager"
+#define TEL_PHONE_MANAGER "IPhoneManager"
 
-static std::string phMgrJsonApiPaths[] = {
-    "api/tel/IPhoneManagerSlot1.json",
-    "api/tel/IPhoneManagerSlot2.json"
-};
+static std::string phMgrJsonApiPaths[]
+    = {"api/tel/IPhoneManagerSlot1.json", "api/tel/IPhoneManagerSlot2.json"};
 
-static std::string phMgrJsonSystemStatePaths[] = {
-    "system-state/tel/IPhoneManagerStateSlot1.json",
-    "system-state/tel/IPhoneManagerStateSlot2.json"
-};
+static std::string phMgrJsonSystemStatePaths[] = {"system-state/tel/IPhoneManagerStateSlot1.json",
+    "system-state/tel/IPhoneManagerStateSlot2.json"};
 
 namespace telux {
 namespace tel {
 
 FactoryTestMode::FactoryTestMode(std::weak_ptr<BaseStateMachine> parent)
-    : BaseState("FactoryTestMode",
-    OperatingModeTransitionManager::StateID::STATE_FACTORY_TEST, parent) {
+   : BaseState(
+       "FactoryTestMode", OperatingModeTransitionManager::StateID::STATE_FACTORY_TEST, parent) {
 }
 
 bool FactoryTestMode::onEvent(std::shared_ptr<telux::common::Event> event) {
-    LOG(DEBUG, " FactoryTestMode: ", __FUNCTION__,
-        " Received event: ", event->name_, " current state: ", name_);
+    LOG(DEBUG, " FactoryTestMode: ", __FUNCTION__, " Received event: ", event->name_,
+        " current state: ", name_);
     return true;
 }
 
 void FactoryTestMode::onEnter() {
     LOG(DEBUG, " FactoryTestMode: ", __FUNCTION__);
-    if(parent_.lock()) {
-        std::shared_ptr<OperatingModeTransitionManager> opTmMgr =
-            std::static_pointer_cast<OperatingModeTransitionManager>(parent_.lock());
+    if (parent_.lock()) {
+        std::shared_ptr<OperatingModeTransitionManager> opTmMgr
+            = std::static_pointer_cast<OperatingModeTransitionManager>(parent_.lock());
         if (opTmMgr) {
             if (opTmMgr->getPrevState() != nullptr) {
                 int prevState = opTmMgr->getPrevState()->getCurrentState();
                 if (prevState == OperatingModeTransitionManager::StateID::STATE_ONLINE) {
                     opTmMgr->notifyAll(telStub::OperatingMode::FACTORY_TEST);
-                } else if(prevState ==
-                    OperatingModeTransitionManager::StateID::STATE_FACTORY_TEST) {
+                } else if (prevState
+                           == OperatingModeTransitionManager::StateID::STATE_FACTORY_TEST) {
                     LOG(DEBUG, __FUNCTION__, " No state change, hence no notification");
-                } else if(prevState == OperatingModeTransitionManager::StateID::STATE_AIRPLANE ||
-                    prevState ==
-                        OperatingModeTransitionManager::StateID::STATE_PERSISTENT_LOW_POWER) {
+                } else if (prevState == OperatingModeTransitionManager::StateID::STATE_AIRPLANE
+                           || prevState
+                                  == OperatingModeTransitionManager::StateID::
+                                      STATE_PERSISTENT_LOW_POWER) {
                     opTmMgr->notifyOperatingMode(telStub::OperatingMode::FACTORY_TEST);
-                } else if(prevState == OperatingModeTransitionManager::StateID::STATE_OFFLINE) {
+                } else if (prevState == OperatingModeTransitionManager::StateID::STATE_OFFLINE) {
                     LOG(DEBUG, __FUNCTION__,
                         " No state change invalid transaction, hence no notification");
-                } else if(prevState == OperatingModeTransitionManager::StateID::STATE_RESETTING) {
+                } else if (prevState == OperatingModeTransitionManager::StateID::STATE_RESETTING) {
                     LOG(DEBUG, __FUNCTION__, " No state change, hence no notification");
-                } else if(prevState == OperatingModeTransitionManager::StateID::STATE_SHUTDOWN) {
+                } else if (prevState == OperatingModeTransitionManager::StateID::STATE_SHUTDOWN) {
                     LOG(DEBUG, __FUNCTION__, " No state change, hence no notification");
                 }
             } else {
@@ -79,39 +76,39 @@ void FactoryTestMode::onExit() {
 }
 
 OnlineMode::OnlineMode(std::weak_ptr<BaseStateMachine> parent)
-    : BaseState("OnlineMode",
-    OperatingModeTransitionManager::StateID::STATE_ONLINE, parent) {
+   : BaseState("OnlineMode", OperatingModeTransitionManager::StateID::STATE_ONLINE, parent) {
 }
 
 bool OnlineMode::onEvent(std::shared_ptr<telux::common::Event> event) {
-    LOG(DEBUG, " OnlineMode: ", __FUNCTION__,
-        " Received event: ", event->name_, " current state: ", name_);
+    LOG(DEBUG, " OnlineMode: ", __FUNCTION__, " Received event: ", event->name_,
+        " current state: ", name_);
     return true;
 }
 
 void OnlineMode::onEnter() {
     LOG(DEBUG, " OnlineMode: ", __FUNCTION__);
-    if(parent_.lock()) {
-        std::shared_ptr<OperatingModeTransitionManager> opTmMgr =
-            std::static_pointer_cast<OperatingModeTransitionManager>(parent_.lock());
+    if (parent_.lock()) {
+        std::shared_ptr<OperatingModeTransitionManager> opTmMgr
+            = std::static_pointer_cast<OperatingModeTransitionManager>(parent_.lock());
         if (opTmMgr) {
             if (opTmMgr->getPrevState() != nullptr) {
                 int prevState = opTmMgr->getPrevState()->getCurrentState();
                 if (prevState == OperatingModeTransitionManager::StateID::STATE_ONLINE) {
                     LOG(DEBUG, __FUNCTION__, " No state change, hence no notification");
-                } else if(prevState ==
-                    OperatingModeTransitionManager::StateID::STATE_FACTORY_TEST || prevState ==
-                        OperatingModeTransitionManager::StateID::STATE_PERSISTENT_LOW_POWER) {
+                } else if (prevState == OperatingModeTransitionManager::StateID::STATE_FACTORY_TEST
+                           || prevState
+                                  == OperatingModeTransitionManager::StateID::
+                                      STATE_PERSISTENT_LOW_POWER) {
                     opTmMgr->notifyAll(telStub::OperatingMode::ONLINE);
-                } else if(prevState == OperatingModeTransitionManager::StateID::STATE_AIRPLANE) {
+                } else if (prevState == OperatingModeTransitionManager::StateID::STATE_AIRPLANE) {
                     opTmMgr->notifyAll(telStub::OperatingMode::ONLINE);
-                    //Add operator info
-                } else if(prevState == OperatingModeTransitionManager::StateID::STATE_OFFLINE) {
+                    // Add operator info
+                } else if (prevState == OperatingModeTransitionManager::StateID::STATE_OFFLINE) {
                     LOG(DEBUG, __FUNCTION__,
                         " No state change invalid transaction, hence no notification");
-                } else if(prevState == OperatingModeTransitionManager::StateID::STATE_RESETTING) {
+                } else if (prevState == OperatingModeTransitionManager::StateID::STATE_RESETTING) {
                     LOG(DEBUG, __FUNCTION__, " No state change, hence no notification");
-                } else if(prevState == OperatingModeTransitionManager::StateID::STATE_SHUTDOWN) {
+                } else if (prevState == OperatingModeTransitionManager::StateID::STATE_SHUTDOWN) {
                     LOG(DEBUG, __FUNCTION__, " No state change, hence no notification");
                 }
             } else {
@@ -130,37 +127,36 @@ void OnlineMode::onExit() {
 }
 
 OfflineMode::OfflineMode(std::weak_ptr<BaseStateMachine> parent)
-    : BaseState("OfflineMode",
-    OperatingModeTransitionManager::StateID::STATE_OFFLINE, parent) {
+   : BaseState("OfflineMode", OperatingModeTransitionManager::StateID::STATE_OFFLINE, parent) {
 }
 
 bool OfflineMode::onEvent(std::shared_ptr<telux::common::Event> event) {
-    LOG(DEBUG, " OfflineMode: ", __FUNCTION__,
-        " Received event: ", event->name_, " current state: ", name_);
+    LOG(DEBUG, " OfflineMode: ", __FUNCTION__, " Received event: ", event->name_,
+        " current state: ", name_);
     return true;
 }
 
 void OfflineMode::onEnter() {
     LOG(DEBUG, " OfflineMode: ", __FUNCTION__);
-    if(parent_.lock()) {
-        std::shared_ptr<OperatingModeTransitionManager> opTmMgr =
-            std::static_pointer_cast<OperatingModeTransitionManager>(parent_.lock());
+    if (parent_.lock()) {
+        std::shared_ptr<OperatingModeTransitionManager> opTmMgr
+            = std::static_pointer_cast<OperatingModeTransitionManager>(parent_.lock());
         if (opTmMgr) {
             if (opTmMgr->getPrevState() != nullptr) {
                 int prevState = opTmMgr->getPrevState()->getCurrentState();
                 if (prevState == OperatingModeTransitionManager::StateID::STATE_ONLINE) {
                     opTmMgr->notifyAll(telStub::OperatingMode::OFFLINE);
-                } else if(prevState == OperatingModeTransitionManager::StateID::STATE_FACTORY_TEST
-                    || prevState == OperatingModeTransitionManager::StateID::STATE_AIRPLANE ||
-                    prevState ==
-                    OperatingModeTransitionManager::StateID::STATE_PERSISTENT_LOW_POWER) {
+                } else if (prevState == OperatingModeTransitionManager::StateID::STATE_FACTORY_TEST
+                           || prevState == OperatingModeTransitionManager::StateID::STATE_AIRPLANE
+                           || prevState
+                                  == OperatingModeTransitionManager::StateID::
+                                      STATE_PERSISTENT_LOW_POWER) {
                     opTmMgr->notifyOperatingMode(telStub::OperatingMode::OFFLINE);
-                } else if(prevState == OperatingModeTransitionManager::StateID::STATE_OFFLINE) {
-                    LOG(DEBUG, __FUNCTION__,
-                        " No state change , hence no notification");
-                } else if(prevState == OperatingModeTransitionManager::StateID::STATE_RESETTING) {
+                } else if (prevState == OperatingModeTransitionManager::StateID::STATE_OFFLINE) {
+                    LOG(DEBUG, __FUNCTION__, " No state change , hence no notification");
+                } else if (prevState == OperatingModeTransitionManager::StateID::STATE_RESETTING) {
                     LOG(DEBUG, __FUNCTION__, " No state change, hence no notification");
-                } else if(prevState == OperatingModeTransitionManager::StateID::STATE_SHUTDOWN) {
+                } else if (prevState == OperatingModeTransitionManager::StateID::STATE_SHUTDOWN) {
                     LOG(DEBUG, __FUNCTION__, " No state change, hence no notification");
                 }
             } else {
@@ -179,39 +175,39 @@ void OfflineMode::onExit() {
 }
 
 PersistentLowPowerMode::PersistentLowPowerMode(std::weak_ptr<BaseStateMachine> parent)
-    : BaseState("PersistentLowPowerMode",
-    OperatingModeTransitionManager::StateID::STATE_PERSISTENT_LOW_POWER, parent) {
+   : BaseState("PersistentLowPowerMode",
+       OperatingModeTransitionManager::StateID::STATE_PERSISTENT_LOW_POWER, parent) {
 }
 
 bool PersistentLowPowerMode::onEvent(std::shared_ptr<telux::common::Event> event) {
-    LOG(DEBUG, " PersistentLowPowerMode: ", __FUNCTION__,
-        " Received event: ", event->name_, " current state: ", name_);
+    LOG(DEBUG, " PersistentLowPowerMode: ", __FUNCTION__, " Received event: ", event->name_,
+        " current state: ", name_);
     return true;
 }
 
 void PersistentLowPowerMode::onEnter() {
     LOG(DEBUG, " PersistentLowPowerMode: ", __FUNCTION__);
-    if(parent_.lock()) {
-        std::shared_ptr<OperatingModeTransitionManager> opTmMgr =
-            std::static_pointer_cast<OperatingModeTransitionManager>(parent_.lock());
+    if (parent_.lock()) {
+        std::shared_ptr<OperatingModeTransitionManager> opTmMgr
+            = std::static_pointer_cast<OperatingModeTransitionManager>(parent_.lock());
         if (opTmMgr) {
             if (opTmMgr->getPrevState() != nullptr) {
                 int prevState = opTmMgr->getPrevState()->getCurrentState();
                 if (prevState == OperatingModeTransitionManager::StateID::STATE_ONLINE) {
                     opTmMgr->notifyAll(telStub::OperatingMode::PERSISTENT_LOW_POWER);
-                } else if(prevState ==
-                    OperatingModeTransitionManager::StateID::STATE_FACTORY_TEST || prevState ==
-                    OperatingModeTransitionManager::StateID::STATE_AIRPLANE) {
+                } else if (prevState == OperatingModeTransitionManager::StateID::STATE_FACTORY_TEST
+                           || prevState
+                                  == OperatingModeTransitionManager::StateID::STATE_AIRPLANE) {
                     opTmMgr->notifyOperatingMode(telStub::OperatingMode::PERSISTENT_LOW_POWER);
-                } else if(prevState == OperatingModeTransitionManager::StateID::STATE_OFFLINE) {
+                } else if (prevState == OperatingModeTransitionManager::StateID::STATE_OFFLINE) {
                     LOG(DEBUG, __FUNCTION__,
                         " No state change invalid transaction, hence no notification");
-                } else if(prevState == OperatingModeTransitionManager::StateID::STATE_RESETTING) {
+                } else if (prevState == OperatingModeTransitionManager::StateID::STATE_RESETTING) {
                     LOG(DEBUG, __FUNCTION__, " No state change, hence no notification");
-                } else if(prevState == OperatingModeTransitionManager::StateID::STATE_SHUTDOWN) {
+                } else if (prevState == OperatingModeTransitionManager::StateID::STATE_SHUTDOWN) {
                     LOG(DEBUG, __FUNCTION__, " No state change, hence no notification");
-                } else if(prevState ==
-                    OperatingModeTransitionManager::StateID::STATE_PERSISTENT_LOW_POWER) {
+                } else if (prevState
+                           == OperatingModeTransitionManager::StateID::STATE_PERSISTENT_LOW_POWER) {
                     LOG(DEBUG, __FUNCTION__, " No state change, hence no notification");
                 }
             } else {
@@ -230,49 +226,48 @@ void PersistentLowPowerMode::onExit() {
 }
 
 AirplaneMode::AirplaneMode(std::weak_ptr<BaseStateMachine> parent)
-    : BaseState("AirplaneMode",
-    OperatingModeTransitionManager::StateID::STATE_AIRPLANE, parent) {
+   : BaseState("AirplaneMode", OperatingModeTransitionManager::StateID::STATE_AIRPLANE, parent) {
 }
 
 bool AirplaneMode::onEvent(std::shared_ptr<telux::common::Event> event) {
-    LOG(DEBUG, " AirplaneMode: ", __FUNCTION__,
-        " Received event: ", event->name_, " current state: ", name_);
+    LOG(DEBUG, " AirplaneMode: ", __FUNCTION__, " Received event: ", event->name_,
+        " current state: ", name_);
     return true;
 }
 
 void AirplaneMode::onEnter() {
     LOG(DEBUG, " AirplaneMode: ", __FUNCTION__);
-    if(parent_.lock()) {
-        std::shared_ptr<OperatingModeTransitionManager> opTmMgr =
-            std::static_pointer_cast<OperatingModeTransitionManager>(parent_.lock());
+    if (parent_.lock()) {
+        std::shared_ptr<OperatingModeTransitionManager> opTmMgr
+            = std::static_pointer_cast<OperatingModeTransitionManager>(parent_.lock());
         if (opTmMgr) {
             if (opTmMgr->getPrevState() != nullptr) {
                 int prevState = opTmMgr->getPrevState()->getCurrentState();
                 if (prevState == OperatingModeTransitionManager::StateID::STATE_ONLINE) {
                     opTmMgr->notifyAll(telStub::OperatingMode::AIRPLANE);
-                } else if(prevState == OperatingModeTransitionManager::StateID::STATE_FACTORY_TEST)
-                    {
+                } else if (prevState
+                           == OperatingModeTransitionManager::StateID::STATE_FACTORY_TEST) {
                     opTmMgr->notifyOperatingMode(telStub::OperatingMode::AIRPLANE);
-                    telStub::VoiceServiceStateEvent voiceServiceStateEvent =
-                        TelUtil::createVoiceServiceStateEvent(
-                        SLOT_ID_1, telStub::VoiceServiceState::NOT_REG_AND_SEARCHING,
-                        telStub::VoiceServiceDenialCause::GENERAL,
-                        telStub::RadioTechnology::RADIO_TECH_UNKNOWN);
-                    opTmMgr->getBuilder()->addVoiceServiceStateChangeEvent(SLOT_ID_1,
-                        voiceServiceStateEvent);
+                    telStub::VoiceServiceStateEvent voiceServiceStateEvent
+                        = TelUtil::createVoiceServiceStateEvent(SLOT_ID_1,
+                            telStub::VoiceServiceState::NOT_REG_AND_SEARCHING,
+                            telStub::VoiceServiceDenialCause::GENERAL,
+                            telStub::RadioTechnology::RADIO_TECH_UNKNOWN);
+                    opTmMgr->getBuilder()->addVoiceServiceStateChangeEvent(
+                        SLOT_ID_1, voiceServiceStateEvent);
                     std::shared_ptr<Notification> notification = opTmMgr->getBuilder()->build();
                     notification->notify();
-                } else if(prevState == OperatingModeTransitionManager::StateID::STATE_AIRPLANE) {
+                } else if (prevState == OperatingModeTransitionManager::StateID::STATE_AIRPLANE) {
                     LOG(DEBUG, __FUNCTION__, " No state change, hence no notification");
-                } else if(prevState == OperatingModeTransitionManager::StateID::STATE_OFFLINE) {
+                } else if (prevState == OperatingModeTransitionManager::StateID::STATE_OFFLINE) {
                     LOG(DEBUG, __FUNCTION__,
                         " No state change invalid transaction, hence no notification");
-                } else if(prevState == OperatingModeTransitionManager::StateID::STATE_RESETTING) {
+                } else if (prevState == OperatingModeTransitionManager::StateID::STATE_RESETTING) {
                     LOG(DEBUG, __FUNCTION__, " No state change, hence no notification");
-                } else if(prevState == OperatingModeTransitionManager::StateID::STATE_SHUTDOWN) {
+                } else if (prevState == OperatingModeTransitionManager::StateID::STATE_SHUTDOWN) {
                     LOG(DEBUG, __FUNCTION__, " No state change, hence no notification");
-                } else if(prevState ==
-                    OperatingModeTransitionManager::StateID::STATE_PERSISTENT_LOW_POWER) {
+                } else if (prevState
+                           == OperatingModeTransitionManager::StateID::STATE_PERSISTENT_LOW_POWER) {
                     opTmMgr->notifyOperatingMode(telStub::OperatingMode::AIRPLANE);
                 }
             } else {
@@ -292,34 +287,33 @@ void AirplaneMode::onExit() {
 }
 
 ResettingMode::ResettingMode(std::weak_ptr<BaseStateMachine> parent)
-    : BaseState("ResettingMode",
-    OperatingModeTransitionManager::StateID::STATE_RESETTING, parent) {
+   : BaseState("ResettingMode", OperatingModeTransitionManager::StateID::STATE_RESETTING, parent) {
 }
 
 bool ResettingMode::onEvent(std::shared_ptr<telux::common::Event> event) {
-    LOG(DEBUG, " ResettingMode: ", __FUNCTION__,
-        " Received event: ", event->name_, " current state: ", name_);
+    LOG(DEBUG, " ResettingMode: ", __FUNCTION__, " Received event: ", event->name_,
+        " current state: ", name_);
     return true;
 }
 
 void ResettingMode::onEnter() {
     LOG(DEBUG, " ResettingMode: ", __FUNCTION__);
-    if(parent_.lock()) {
-        std::shared_ptr<OperatingModeTransitionManager> opTmMgr =
-            std::static_pointer_cast<OperatingModeTransitionManager>(parent_.lock());
+    if (parent_.lock()) {
+        std::shared_ptr<OperatingModeTransitionManager> opTmMgr
+            = std::static_pointer_cast<OperatingModeTransitionManager>(parent_.lock());
         if (opTmMgr) {
             if (opTmMgr->getPrevState() != nullptr) {
                 int prevState = opTmMgr->getPrevState()->getCurrentState();
-                if (prevState == OperatingModeTransitionManager::StateID::STATE_ONLINE ||
-                    prevState == OperatingModeTransitionManager::StateID::STATE_FACTORY_TEST ||
-                    prevState == OperatingModeTransitionManager::StateID::STATE_AIRPLANE ||
-                    prevState == OperatingModeTransitionManager::StateID::STATE_OFFLINE ||
-                    prevState ==
-                        OperatingModeTransitionManager::StateID::STATE_PERSISTENT_LOW_POWER) {
+                if (prevState == OperatingModeTransitionManager::StateID::STATE_ONLINE
+                    || prevState == OperatingModeTransitionManager::StateID::STATE_FACTORY_TEST
+                    || prevState == OperatingModeTransitionManager::StateID::STATE_AIRPLANE
+                    || prevState == OperatingModeTransitionManager::StateID::STATE_OFFLINE
+                    || prevState
+                           == OperatingModeTransitionManager::StateID::STATE_PERSISTENT_LOW_POWER) {
                     opTmMgr->notifyOperatingMode(telStub::OperatingMode::RESETTING);
-                } else if(prevState == OperatingModeTransitionManager::StateID::STATE_RESETTING) {
+                } else if (prevState == OperatingModeTransitionManager::StateID::STATE_RESETTING) {
                     LOG(DEBUG, __FUNCTION__, " No state change, hence no notification");
-                } else if(prevState == OperatingModeTransitionManager::StateID::STATE_SHUTDOWN) {
+                } else if (prevState == OperatingModeTransitionManager::StateID::STATE_SHUTDOWN) {
                     LOG(DEBUG, __FUNCTION__, " No state change, hence no notification");
                 }
             } else {
@@ -338,35 +332,34 @@ void ResettingMode::onExit() {
 }
 
 ShutdownMode::ShutdownMode(std::weak_ptr<BaseStateMachine> parent)
-    : BaseState("ShutdownMode",
-    OperatingModeTransitionManager::StateID::STATE_SHUTDOWN, parent) {
+   : BaseState("ShutdownMode", OperatingModeTransitionManager::StateID::STATE_SHUTDOWN, parent) {
 }
 
 bool ShutdownMode::onEvent(std::shared_ptr<telux::common::Event> event) {
-    LOG(DEBUG, " ShutdownMode: ", __FUNCTION__,
-        " Received event: ", event->name_, " current state: ", name_);
+    LOG(DEBUG, " ShutdownMode: ", __FUNCTION__, " Received event: ", event->name_,
+        " current state: ", name_);
     return true;
 }
 
 void ShutdownMode::onEnter() {
     LOG(DEBUG, " ShutdownMode: ", __FUNCTION__);
-    if(parent_.lock()) {
-        std::shared_ptr<OperatingModeTransitionManager> opTmMgr =
-            std::static_pointer_cast<OperatingModeTransitionManager>(parent_.lock());
+    if (parent_.lock()) {
+        std::shared_ptr<OperatingModeTransitionManager> opTmMgr
+            = std::static_pointer_cast<OperatingModeTransitionManager>(parent_.lock());
         if (opTmMgr) {
             if (opTmMgr->getPrevState() != nullptr) {
                 int prevState = opTmMgr->getPrevState()->getCurrentState();
-                if (prevState == OperatingModeTransitionManager::StateID::STATE_ONLINE ||
-                    prevState == OperatingModeTransitionManager::StateID::STATE_FACTORY_TEST ||
-                    prevState == OperatingModeTransitionManager::StateID::STATE_AIRPLANE ||
-                    prevState ==
-                        OperatingModeTransitionManager::StateID::STATE_PERSISTENT_LOW_POWER) {
+                if (prevState == OperatingModeTransitionManager::StateID::STATE_ONLINE
+                    || prevState == OperatingModeTransitionManager::StateID::STATE_FACTORY_TEST
+                    || prevState == OperatingModeTransitionManager::StateID::STATE_AIRPLANE
+                    || prevState
+                           == OperatingModeTransitionManager::StateID::STATE_PERSISTENT_LOW_POWER) {
                     opTmMgr->notifyOperatingMode(telStub::OperatingMode::SHUTTING_DOWN);
-                } else if(prevState == OperatingModeTransitionManager::StateID::STATE_OFFLINE) {
+                } else if (prevState == OperatingModeTransitionManager::StateID::STATE_OFFLINE) {
                     LOG(DEBUG, __FUNCTION__, " No state change, hence no notification");
-                } else if(prevState == OperatingModeTransitionManager::StateID::STATE_RESETTING) {
+                } else if (prevState == OperatingModeTransitionManager::StateID::STATE_RESETTING) {
                     LOG(DEBUG, __FUNCTION__, " No state change, hence no notification");
-                } else if(prevState == OperatingModeTransitionManager::StateID::STATE_SHUTDOWN) {
+                } else if (prevState == OperatingModeTransitionManager::StateID::STATE_SHUTDOWN) {
                     LOG(DEBUG, __FUNCTION__, " No state change, hence no notification");
                 }
             } else {
@@ -384,8 +377,8 @@ void ShutdownMode::onExit() {
     LOG(DEBUG, " ShutdownMode: ", __FUNCTION__);
 }
 
-OperatingModeTransitionManager::OperatingModeTransitionManager() :
-    BaseStateMachine("OperatingModeTransitionManager") {
+OperatingModeTransitionManager::OperatingModeTransitionManager()
+   : BaseStateMachine("OperatingModeTransitionManager") {
     LOG(DEBUG, __FUNCTION__);
 }
 
@@ -419,24 +412,25 @@ void OperatingModeTransitionManager::stop() {
 bool OperatingModeTransitionManager::onEvent(std::shared_ptr<telux::common::Event> event) {
 
     bool eventStatus = false;
-    if(event->id_ ==
-        static_cast<int>(OperatingModeTransitionManager::EventID::UPDATE_OPERATING_MODE)) {
-        std::shared_ptr<PhoneEvent> phoneEvent
-                    = std::dynamic_pointer_cast<PhoneEvent>(event);
-        telStub::OperatingMode operatingMode = phoneEvent->getOperatingMode();
+    if (event->id_
+        == static_cast<int>(OperatingModeTransitionManager::EventID::UPDATE_OPERATING_MODE)) {
+        std::shared_ptr<PhoneEvent> phoneEvent = std::dynamic_pointer_cast<PhoneEvent>(event);
+        telStub::OperatingMode operatingMode   = phoneEvent->getOperatingMode();
         if (prevState_ != nullptr) {
-            int prevStateId = prevState_->getCurrentState();
+            int prevStateId    = prevState_->getCurrentState();
             int currentStateId = static_cast<int>(operatingMode);
-            LOG(DEBUG, __FUNCTION__, " currentStateId:", currentStateId, " prevStateId:",
-                prevStateId);
-            if (prevStateId == STATE_OFFLINE && ((currentStateId == STATE_ONLINE) ||
-                (currentStateId == STATE_PERSISTENT_LOW_POWER) || (currentStateId == STATE_AIRPLANE)
-                || (currentStateId == STATE_FACTORY_TEST))) {
+            LOG(DEBUG, __FUNCTION__, " currentStateId:", currentStateId,
+                " prevStateId:", prevStateId);
+            if (prevStateId == STATE_OFFLINE
+                && ((currentStateId == STATE_ONLINE)
+                    || (currentStateId == STATE_PERSISTENT_LOW_POWER)
+                    || (currentStateId == STATE_AIRPLANE)
+                    || (currentStateId == STATE_FACTORY_TEST))) {
                 LOG(DEBUG, __FUNCTION__, " INVALID_TRANSITION");
                 return false;
             }
         }
-        switch(operatingMode) {
+        switch (operatingMode) {
             case telStub::OperatingMode::ONLINE:
                 changeState(std::make_shared<telux::tel::OnlineMode>(shared_from_this()));
                 break;
@@ -456,8 +450,8 @@ bool OperatingModeTransitionManager::onEvent(std::shared_ptr<telux::common::Even
                 changeState(std::make_shared<telux::tel::ShutdownMode>(shared_from_this()));
                 break;
             case telStub::OperatingMode::PERSISTENT_LOW_POWER:
-                changeState(std::make_shared<telux::tel::PersistentLowPowerMode>(
-                    shared_from_this()));
+                changeState(
+                    std::make_shared<telux::tel::PersistentLowPowerMode>(shared_from_this()));
                 break;
             default:
                 LOG(ERROR, __FUNCTION__, " Invalid operating mode");
@@ -473,7 +467,7 @@ bool OperatingModeTransitionManager::onEvent(std::shared_ptr<telux::common::Even
         if (currentState_ != nullptr) {
             LOG(DEBUG, __FUNCTION__, " CurrentState:", currentState_->getCurrentState());
         }
-        prevState_ = currentState_;
+        prevState_  = currentState_;
         eventStatus = true;
     }
     return eventStatus;
@@ -501,7 +495,7 @@ grpc::Status OperatingModeTransitionManager::init() {
             errorString = " Get Serving RAT during init failed";
             break;
         }
-    } while(0);
+    } while (0);
     if (error != telux::common::ErrorCode::SUCCESS) {
         LOG(ERROR, __FUNCTION__, errorString);
         return grpc::Status(grpc::StatusCode::INTERNAL, errorString);
@@ -511,14 +505,14 @@ grpc::Status OperatingModeTransitionManager::init() {
 
 telux::common::ErrorCode OperatingModeTransitionManager::initSignalStrength() {
     LOG(DEBUG, __FUNCTION__);
-    telStub::SignalStrength signalStrength {};
-    telux::common::ErrorCode error =
-        TelUtil::readSignalStrengthFromJsonFile(SLOT_ID_1, signalStrength);
+    telStub::SignalStrength signalStrength{};
+    telux::common::ErrorCode error
+        = TelUtil::readSignalStrengthFromJsonFile(SLOT_ID_1, signalStrength);
     if (error == telux::common::ErrorCode::SUCCESS) {
         cachedSS_[SLOT_ID_1] = signalStrength;
         if (telux::common::DeviceConfig::isMultiSimSupported()) {
             signalStrength = {};
-            error = TelUtil::readSignalStrengthFromJsonFile(SLOT_ID_2, signalStrength);
+            error          = TelUtil::readSignalStrengthFromJsonFile(SLOT_ID_2, signalStrength);
             if (error == telux::common::ErrorCode::SUCCESS) {
                 cachedSS_[SLOT_ID_2] = signalStrength;
             } else {
@@ -533,10 +527,9 @@ telux::common::ErrorCode OperatingModeTransitionManager::initSignalStrength() {
 
 telux::common::ErrorCode OperatingModeTransitionManager::initServingRat() {
     LOG(DEBUG, __FUNCTION__);
-    telStub::RadioTechnology rat {};
-    telStub::ServiceDomainInfo_Domain domain {};
-    telux::common::ErrorCode error =
-        TelUtil::readSystemInfoFromJsonFile(SLOT_ID_1, rat, domain);
+    telStub::RadioTechnology rat{};
+    telStub::ServiceDomainInfo_Domain domain{};
+    telux::common::ErrorCode error = TelUtil::readSystemInfoFromJsonFile(SLOT_ID_1, rat, domain);
     if (error == telux::common::ErrorCode::SUCCESS) {
         cachedServingRat_[SLOT_ID_1] = rat;
         if (telux::common::DeviceConfig::isMultiSimSupported()) {
@@ -555,9 +548,9 @@ telux::common::ErrorCode OperatingModeTransitionManager::initServingRat() {
 
 telux::common::ErrorCode OperatingModeTransitionManager::updateCachedSignalStrength(int slotId) {
     LOG(DEBUG, __FUNCTION__);
-    telStub::SignalStrength signalStrength {};
-    telux::common::ErrorCode error =
-        TelUtil::readSignalStrengthFromJsonFile(slotId, signalStrength);
+    telStub::SignalStrength signalStrength{};
+    telux::common::ErrorCode error
+        = TelUtil::readSignalStrengthFromJsonFile(slotId, signalStrength);
     if (error == telux::common::ErrorCode::SUCCESS) {
         cachedSS_[slotId] = signalStrength;
     } else {
@@ -568,10 +561,9 @@ telux::common::ErrorCode OperatingModeTransitionManager::updateCachedSignalStren
 
 telux::common::ErrorCode OperatingModeTransitionManager::updateCachedServingRat(int slotId) {
     LOG(DEBUG, __FUNCTION__);
-    telStub::RadioTechnology rat {};
-    telStub::ServiceDomainInfo_Domain domain {};
-    telux::common::ErrorCode error =
-        TelUtil::readSystemInfoFromJsonFile(slotId, rat, domain);
+    telStub::RadioTechnology rat{};
+    telStub::ServiceDomainInfo_Domain domain{};
+    telux::common::ErrorCode error = TelUtil::readSystemInfoFromJsonFile(slotId, rat, domain);
     if (error == telux::common::ErrorCode::SUCCESS) {
         cachedServingRat_[slotId] = rat;
     } else {
@@ -587,7 +579,7 @@ telux::common::ErrorCode OperatingModeTransitionManager::initOperatingMode() {
     if (error == telux::common::ErrorCode::SUCCESS) {
         updateOperatingMode(operatingMode);
     }
-    switch(operatingMode) {
+    switch (operatingMode) {
         case telStub::OperatingMode::ONLINE:
             prevState_ = std::make_shared<telux::tel::OnlineMode>(shared_from_this());
             break;
@@ -621,15 +613,15 @@ telux::common::ErrorCode OperatingModeTransitionManager::getOperatingMode(
     LOG(DEBUG, __FUNCTION__);
     telStub::OperatingModeEvent event;
     telux::common::ErrorCode error = TelUtil::readOperatingModeEventFromJsonFile(event);
-    operatingMode = event.operating_mode();
+    operatingMode                  = event.operating_mode();
     return error;
 }
 
 telux::common::ErrorCode OperatingModeTransitionManager::updateOperatingMode(
     telStub::OperatingMode operatingMode) {
     LOG(DEBUG, __FUNCTION__);
-    std::shared_ptr<telux::common::Event> event = createEvent(UPDATE_OPERATING_MODE,
-        "updateOperatingMode", DEFAULT_SLOT_ID);
+    std::shared_ptr<telux::common::Event> event
+        = createEvent(UPDATE_OPERATING_MODE, "updateOperatingMode", DEFAULT_SLOT_ID);
     std::shared_ptr<PhoneEvent> phoneEvent = std::dynamic_pointer_cast<PhoneEvent>(event);
     phoneEvent->setOperatingMode(operatingMode);
     if (!onEvent(event)) {
@@ -638,23 +630,23 @@ telux::common::ErrorCode OperatingModeTransitionManager::updateOperatingMode(
     return telux::common::ErrorCode::SUCCESS;
 }
 
-::telStub::SignalStrength& OperatingModeTransitionManager::getCachedSS(int slotId) {
+::telStub::SignalStrength &OperatingModeTransitionManager::getCachedSS(int slotId) {
     if (cachedSS_.find(slotId) != cachedSS_.end()) {
         LOG(DEBUG, __FUNCTION__, " Key exist: ", slotId);
     } else {
         LOG(DEBUG, __FUNCTION__, " Key does not exist: ", slotId);
-        telStub::SignalStrength strength {};
+        telStub::SignalStrength strength{};
         cachedSS_[slotId] = strength;
     }
     return cachedSS_[slotId];
 }
 
-::telStub::RadioTechnology& OperatingModeTransitionManager::getCachedServingRat(int slotId) {
+::telStub::RadioTechnology &OperatingModeTransitionManager::getCachedServingRat(int slotId) {
     if (cachedServingRat_.find(slotId) != cachedServingRat_.end()) {
         LOG(DEBUG, __FUNCTION__, " Key exist: ", slotId);
     } else {
         LOG(DEBUG, __FUNCTION__, " Key does not exist: ", slotId);
-        telStub::RadioTechnology rat {};
+        telStub::RadioTechnology rat{};
         cachedServingRat_[slotId] = rat;
     }
     return cachedServingRat_[slotId];
@@ -665,39 +657,40 @@ telux::common::ServiceStatus OperatingModeTransitionManager::readSubsystemStatus
     return readSubsystemStatus(slotId, cbDelay);
 }
 
-telux::common::ServiceStatus OperatingModeTransitionManager::readSubsystemStatus(int slotId,
-    int &cbDelay) {
+telux::common::ServiceStatus OperatingModeTransitionManager::readSubsystemStatus(
+    int slotId, int &cbDelay) {
     Json::Value rootObj;
-    std::string filePath = (slotId == SLOT_ID_1)? phMgrJsonApiPaths[0] : phMgrJsonApiPaths[1];
+    std::string filePath = (slotId == SLOT_ID_1) ? phMgrJsonApiPaths[0] : phMgrJsonApiPaths[1];
     telux::common::ErrorCode error = JsonParser::readFromJsonFile(rootObj, filePath);
     if (error != ErrorCode::SUCCESS) {
         LOG(ERROR, __FUNCTION__, " Reading JSON File failed");
         return telux::common::ServiceStatus::SERVICE_FAILED;
     }
 
-    cbDelay = rootObj[TEL_PHONE_MANAGER]["IsSubsystemReadyDelay"].asInt();
+    cbDelay              = rootObj[TEL_PHONE_MANAGER]["IsSubsystemReadyDelay"].asInt();
     std::string cbStatus = rootObj[TEL_PHONE_MANAGER]["IsSubsystemReady"].asString();
     telux::common::ServiceStatus status = CommonUtils::mapServiceStatus(cbStatus);
     LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", cbStatus, " slotId::", slotId);
     return status;
 }
 
-telux::common::ErrorCode OperatingModeTransitionManager::readJsonData(int slotId,
-    std::string method, JsonData &data) {
+telux::common::ErrorCode OperatingModeTransitionManager::readJsonData(
+    int slotId, std::string method, JsonData &data) {
     LOG(DEBUG, __FUNCTION__);
-    std::string apiJsonPath = (slotId == SLOT_ID_1)? phMgrJsonApiPaths[0] : phMgrJsonApiPaths[1];
-    std::string subsystem = TEL_PHONE_MANAGER;
-    std::string stateJsonPath = (slotId == SLOT_ID_1)?
-        phMgrJsonSystemStatePaths[0] : phMgrJsonSystemStatePaths[1];
+    std::string apiJsonPath = (slotId == SLOT_ID_1) ? phMgrJsonApiPaths[0] : phMgrJsonApiPaths[1];
+    std::string subsystem   = TEL_PHONE_MANAGER;
+    std::string stateJsonPath
+        = (slotId == SLOT_ID_1) ? phMgrJsonSystemStatePaths[0] : phMgrJsonSystemStatePaths[1];
     return CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
 }
 
-telux::common::ErrorCode OperatingModeTransitionManager::readJsonData(int slotId,
-    std::string method, JsonData &data, std::string &stateJsonPath) {
+telux::common::ErrorCode OperatingModeTransitionManager::readJsonData(
+    int slotId, std::string method, JsonData &data, std::string &stateJsonPath) {
     LOG(DEBUG, __FUNCTION__);
-    std::string apiJsonPath = (slotId == SLOT_ID_1)? phMgrJsonApiPaths[0] : phMgrJsonApiPaths[1];
-    std::string subsystem = TEL_PHONE_MANAGER;
-    stateJsonPath = (slotId == SLOT_ID_1)? phMgrJsonSystemStatePaths[0] : phMgrJsonSystemStatePaths[1];
+    std::string apiJsonPath = (slotId == SLOT_ID_1) ? phMgrJsonApiPaths[0] : phMgrJsonApiPaths[1];
+    std::string subsystem   = TEL_PHONE_MANAGER;
+    stateJsonPath
+        = (slotId == SLOT_ID_1) ? phMgrJsonSystemStatePaths[0] : phMgrJsonSystemStatePaths[1];
     return CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
 }
 
@@ -707,66 +700,61 @@ void OperatingModeTransitionManager::notifyAll(telStub::OperatingMode mode) {
         noOfSlots = 2;
     }
     std::shared_ptr<TelephonyNotificationBuilder> notificationBuilder = getBuilder();
-    if (mode == telStub::OperatingMode::FACTORY_TEST ||
-        mode == telStub::OperatingMode::OFFLINE||
-        mode == telStub::OperatingMode::PERSISTENT_LOW_POWER ||
-        mode == telStub::OperatingMode::AIRPLANE ||
-        mode == telStub::OperatingMode::ONLINE) {
+    if (mode == telStub::OperatingMode::FACTORY_TEST || mode == telStub::OperatingMode::OFFLINE
+        || mode == telStub::OperatingMode::PERSISTENT_LOW_POWER
+        || mode == telStub::OperatingMode::AIRPLANE || mode == telStub::OperatingMode::ONLINE) {
         telStub::OperatingModeEvent opModeEvent = TelUtil::createOperatingModeEvent(mode);
         notificationBuilder->addOperatingModeChangeEvent(opModeEvent);
     }
 
-    for (int slotId = 1 ; slotId <= noOfSlots; slotId++){
-        if (mode == telStub::OperatingMode::FACTORY_TEST ||
-            mode == telStub::OperatingMode::OFFLINE||
-            mode == telStub::OperatingMode::PERSISTENT_LOW_POWER ||
-            mode == telStub::OperatingMode::AIRPLANE) {
+    for (int slotId = 1; slotId <= noOfSlots; slotId++) {
+        if (mode == telStub::OperatingMode::FACTORY_TEST || mode == telStub::OperatingMode::OFFLINE
+            || mode == telStub::OperatingMode::PERSISTENT_LOW_POWER
+            || mode == telStub::OperatingMode::AIRPLANE) {
 
-            telStub::ServiceStateChangeEvent serviceStateChangeEvent =
-                TelUtil::createServiceStateEvent(slotId, telStub::ServiceState::OUT_OF_SERVICE);
-            notificationBuilder->addServiceStateChangeEvent(slotId,serviceStateChangeEvent);
+            telStub::ServiceStateChangeEvent serviceStateChangeEvent
+                = TelUtil::createServiceStateEvent(slotId, telStub::ServiceState::OUT_OF_SERVICE);
+            notificationBuilder->addServiceStateChangeEvent(slotId, serviceStateChangeEvent);
 
-            telStub::VoiceServiceStateEvent voiceServiceStateEvent =
-                TelUtil::createVoiceServiceStateEvent(slotId,
-                telStub::VoiceServiceState::NOT_REG_AND_SEARCHING,
-                telStub::VoiceServiceDenialCause::GENERAL,
-                telStub::RadioTechnology::RADIO_TECH_UNKNOWN);
+            telStub::VoiceServiceStateEvent voiceServiceStateEvent
+                = TelUtil::createVoiceServiceStateEvent(slotId,
+                    telStub::VoiceServiceState::NOT_REG_AND_SEARCHING,
+                    telStub::VoiceServiceDenialCause::GENERAL,
+                    telStub::RadioTechnology::RADIO_TECH_UNKNOWN);
             notificationBuilder->addVoiceServiceStateChangeEvent(slotId, voiceServiceStateEvent);
 
-            telStub::SignalStrengthChangeEvent signalStrengthChangeEvent =
-                TelUtil::createSignalStrengthWithDefaultValues(slotId);
+            telStub::SignalStrengthChangeEvent signalStrengthChangeEvent
+                = TelUtil::createSignalStrengthWithDefaultValues(slotId);
             notificationBuilder->addSignalStrengthChangeEvent(slotId, signalStrengthChangeEvent);
 
-            telStub::VoiceRadioTechnologyChangeEvent voiceRadioTechnologyChangeEvent =
-                TelUtil::createVoiceRadioTechnologyChangeEvent(
-                slotId, telStub::RadioTechnology::RADIO_TECH_IS95A);
-            notificationBuilder->addVoiceRadioTechnologyChangeEvent(slotId,
-                voiceRadioTechnologyChangeEvent);
+            telStub::VoiceRadioTechnologyChangeEvent voiceRadioTechnologyChangeEvent
+                = TelUtil::createVoiceRadioTechnologyChangeEvent(
+                    slotId, telStub::RadioTechnology::RADIO_TECH_IS95A);
+            notificationBuilder->addVoiceRadioTechnologyChangeEvent(
+                slotId, voiceRadioTechnologyChangeEvent);
             std::shared_ptr<Notification> notification = notificationBuilder->build();
             notification->notify();
         } else if (mode == telStub::OperatingMode::ONLINE) {
 
             ::telStub::SignalStrength cachedSignalStrength = getCachedSS(slotId);
-            telStub::SignalStrengthChangeEvent signalStrengthChangeEvent =
-                TelUtil::createSignalStrengthEvent(slotId, cachedSignalStrength);
+            telStub::SignalStrengthChangeEvent signalStrengthChangeEvent
+                = TelUtil::createSignalStrengthEvent(slotId, cachedSignalStrength);
             notificationBuilder->addSignalStrengthChangeEvent(slotId, signalStrengthChangeEvent);
 
             ::telStub::RadioTechnology cachedServingRat = getCachedServingRat(slotId);
-            telStub::VoiceRadioTechnologyChangeEvent voiceRadioTechnologyChangeEvent =
-                TelUtil::createVoiceRadioTechnologyChangeEvent(
-                slotId, cachedServingRat);
-            notificationBuilder->addVoiceRadioTechnologyChangeEvent(slotId,
-                voiceRadioTechnologyChangeEvent);
+            telStub::VoiceRadioTechnologyChangeEvent voiceRadioTechnologyChangeEvent
+                = TelUtil::createVoiceRadioTechnologyChangeEvent(slotId, cachedServingRat);
+            notificationBuilder->addVoiceRadioTechnologyChangeEvent(
+                slotId, voiceRadioTechnologyChangeEvent);
 
-            telStub::ServiceStateChangeEvent serviceStateChangeEvent =
-                TelUtil::createServiceStateEvent(slotId, telStub::ServiceState::IN_SERVICE);
-            notificationBuilder->addServiceStateChangeEvent(slotId,serviceStateChangeEvent);
+            telStub::ServiceStateChangeEvent serviceStateChangeEvent
+                = TelUtil::createServiceStateEvent(slotId, telStub::ServiceState::IN_SERVICE);
+            notificationBuilder->addServiceStateChangeEvent(slotId, serviceStateChangeEvent);
 
-            telStub::VoiceServiceStateEvent voiceServiceStateEvent =
-                TelUtil::createVoiceServiceStateEvent(slotId,
-                telStub::VoiceServiceState::REG_HOME,
-                telStub::VoiceServiceDenialCause::GENERAL,
-                cachedServingRat);
+            telStub::VoiceServiceStateEvent voiceServiceStateEvent
+                = TelUtil::createVoiceServiceStateEvent(slotId,
+                    telStub::VoiceServiceState::REG_HOME, telStub::VoiceServiceDenialCause::GENERAL,
+                    cachedServingRat);
             notificationBuilder->addVoiceServiceStateChangeEvent(slotId, voiceServiceStateEvent);
             std::shared_ptr<Notification> notification = notificationBuilder->build();
             notification->notify();
@@ -789,7 +777,6 @@ std::shared_ptr<BaseState> OperatingModeTransitionManager::getPrevState() {
 Notification::Notification() {
     LOG(DEBUG, __FUNCTION__);
     taskQ_ = std::make_shared<telux::common::AsyncTaskQueue<void>>();
-
 }
 
 Notification::~Notification() {
@@ -812,7 +799,7 @@ void Notification::notify() {
     auto f = std::async(std::launch::async, [this]() {
         {
             std::lock_guard<std::mutex> lck(notificationMutex_);
-            for(eventService::EventResponse event : events_) {
+            for (eventService::EventResponse event : events_) {
                 this->triggerChangeEvent(event);
             }
             events_.clear();
@@ -824,8 +811,8 @@ void Notification::notify() {
 void Notification::triggerChangeEvent(eventService::EventResponse eventResponse) {
     LOG(DEBUG, __FUNCTION__);
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-    //posting the event to EventService event queue
-    auto& eventImpl = EventService::getInstance();
+    // posting the event to EventService event queue
+    auto &eventImpl = EventService::getInstance();
     eventImpl.updateEventQueue(eventResponse);
 }
 
@@ -871,8 +858,7 @@ void TelephonyNotificationBuilder::addSignalStrengthChangeEvent(
     }
 }
 
-void TelephonyNotificationBuilder::addOperatingModeChangeEvent(
-    telStub::OperatingModeEvent &event) {
+void TelephonyNotificationBuilder::addOperatingModeChangeEvent(telStub::OperatingModeEvent &event) {
     LOG(DEBUG, __FUNCTION__);
     telux::common::ErrorCode error = TelUtil::writeOperatingModeToJsonFile(event);
     if (error == telux::common::ErrorCode::SUCCESS) {
@@ -888,8 +874,8 @@ void TelephonyNotificationBuilder::addOperatingModeChangeEvent(
     }
 }
 
-void TelephonyNotificationBuilder::addServiceStateChangeEvent(int phoneId,
-    telStub::ServiceStateChangeEvent &event) {
+void TelephonyNotificationBuilder::addServiceStateChangeEvent(
+    int phoneId, telStub::ServiceStateChangeEvent &event) {
     LOG(DEBUG, __FUNCTION__);
     telux::common::ErrorCode error = TelUtil::writeServiceStateToJsonFile(phoneId, event);
     if (error == telux::common::ErrorCode::SUCCESS) {
@@ -905,8 +891,8 @@ void TelephonyNotificationBuilder::addServiceStateChangeEvent(int phoneId,
     }
 }
 
-void TelephonyNotificationBuilder::addVoiceRadioTechnologyChangeEvent(int phoneId,
-    telStub::VoiceRadioTechnologyChangeEvent &event) {
+void TelephonyNotificationBuilder::addVoiceRadioTechnologyChangeEvent(
+    int phoneId, telStub::VoiceRadioTechnologyChangeEvent &event) {
     LOG(DEBUG, __FUNCTION__);
     telux::common::ErrorCode error = TelUtil::writeVoiceRadioTechnologyToJsonFile(phoneId, event);
     if (error == telux::common::ErrorCode::SUCCESS) {
@@ -927,7 +913,7 @@ std::shared_ptr<Notification> TelephonyNotificationBuilder::build() {
 
     {
         std::lock_guard<std::mutex> lck(notificationBuilderMutex_);
-        for(eventService::EventResponse event : events_) {
+        for (eventService::EventResponse event : events_) {
             notification_->addEvent(event);
         }
         events_.clear();

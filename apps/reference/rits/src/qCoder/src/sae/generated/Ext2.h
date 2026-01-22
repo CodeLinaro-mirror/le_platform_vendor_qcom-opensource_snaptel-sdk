@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_Ext2_H_
-#define	_Ext2_H_
-
+#ifndef _Ext2_H_
+#define _Ext2_H_
 
 #include <asn_application.h>
 
@@ -22,21 +21,21 @@ extern "C" {
 
 /* Dependencies */
 typedef enum Ext2_PR {
-	Ext2_PR_NOTHING,	/* No components present */
-	Ext2_PR_content,
-	Ext2_PR_extension
+    Ext2_PR_NOTHING, /* No components present */
+    Ext2_PR_content,
+    Ext2_PR_extension
 } Ext2_PR;
 
 /* Ext2 */
 typedef struct Ext2 {
-	Ext2_PR present;
-	union Ext2_u {
-		long	 content;
-		Ext3_t	 extension;
-	} choice;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    Ext2_PR present;
+    union Ext2_u {
+        long content;
+        Ext3_t extension;
+    } choice;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } Ext2_t;
 
 /* Implementation */
@@ -46,5 +45,5 @@ extern asn_TYPE_descriptor_t asn_DEF_Ext2;
 }
 #endif
 
-#endif	/* _Ext2_H_ */
+#endif /* _Ext2_H_ */
 #include <asn_internal.h>

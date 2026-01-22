@@ -73,10 +73,8 @@ class DataConnection : public telux::data::IDataConnectionListener,
         auto &dataFactory = telux::data::DataFactory::getInstance();
 
         /* Step - 2 */
-        dataConMgr_ = dataFactory.getDataConnectionManager(slotId,
-                [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+        dataConMgr_ = dataFactory.getDataConnectionManager(
+            slotId, [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!dataConMgr_) {
             std::cout << "Can't get IDataConnectionManager" << std::endl;
@@ -86,16 +84,15 @@ class DataConnection : public telux::data::IDataConnectionListener,
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Data service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Data service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
         /* Step - 4 */
         status = dataConMgr_->registerListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't register listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't register listener, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -109,8 +106,7 @@ class DataConnection : public telux::data::IDataConnectionListener,
         /* Step - 6 */
         status = dataConMgr_->deregisterListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't deregister listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't deregister listener, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -120,15 +116,14 @@ class DataConnection : public telux::data::IDataConnectionListener,
     int makeDataCall(int profileId, telux::data::OperationType opType) {
         telux::common::Status status;
 
-        auto responseCb = std::bind(&DataConnection::responseCallback,
-            this, std::placeholders::_1, std::placeholders::_2);
+        auto responseCb = std::bind(
+            &DataConnection::responseCallback, this, std::placeholders::_1, std::placeholders::_2);
 
         /* Step - 5 */
-        status = dataConMgr_->startDataCall(profileId, telux::data::IpFamilyType::IPV4V6,
-            responseCb, opType);
+        status = dataConMgr_->startDataCall(
+            profileId, telux::data::IpFamilyType::IPV4V6, responseCb, opType);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't start data call, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't start data call, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -138,14 +133,12 @@ class DataConnection : public telux::data::IDataConnectionListener,
 
     /* Receives response of the startDataCall() request */
     void responseCallback(
-        const std::shared_ptr<telux::data::IDataCall> &dataCall,
-        telux::common::ErrorCode error) {
+        const std::shared_ptr<telux::data::IDataCall> &dataCall, telux::common::ErrorCode error) {
         std::cout << "\nresponseCallback(), err " << static_cast<int>(error) << std::endl;
     }
 
     /* Receives data call information whenever there is a change */
-    void onDataCallInfoChanged(
-        const std::shared_ptr<telux::data::IDataCall> &dataCall) override {
+    void onDataCallInfoChanged(const std::shared_ptr<telux::data::IDataCall> &dataCall) override {
 
         std::cout << "\nonDataCallInfoChanged()" << std::endl;
         std::list<telux::data::IpAddrInfo> ipAddrList;
@@ -155,23 +148,23 @@ class DataConnection : public telux::data::IDataConnectionListener,
         std::cout << " Profile ID: " << dataCall->getProfileId() << std::endl;
         std::cout << " Interface name: " << dataCall->getInterfaceName() << std::endl;
 
-        std::cout << " Data call status: " <<
-            static_cast<int>(dataCall->getDataCallStatus()) << std::endl;
-        std::cout << " Data call end reason, type : " <<
-            static_cast<int>(dataCall->getDataCallEndReason().type) << std::endl;
+        std::cout << " Data call status: " << static_cast<int>(dataCall->getDataCallStatus())
+                  << std::endl;
+        std::cout << " Data call end reason, type : "
+                  << static_cast<int>(dataCall->getDataCallEndReason().type) << std::endl;
 
         ipAddrList = dataCall->getIpAddressInfo();
-        for(auto &it : ipAddrList) {
+        for (auto &it : ipAddrList) {
             std::cout << "\n ifAddress: " << it.ifAddress
-                << "\n primaryDnsAddress: " << it.primaryDnsAddress
-                << "\n secondaryDnsAddress: " << it.secondaryDnsAddress
-                << "\n mtuValue: " << it.mtu << std::endl;
+                      << "\n primaryDnsAddress: " << it.primaryDnsAddress
+                      << "\n secondaryDnsAddress: " << it.secondaryDnsAddress
+                      << "\n mtuValue: " << it.mtu << std::endl;
         }
 
-        std::cout << " IP family type: " <<
-            static_cast<int>(dataCall->getIpFamilyType()) << std::endl;
-        std::cout << " Tech preference: " <<
-            static_cast<int>(dataCall->getTechPreference()) << std::endl;
+        std::cout << " IP family type: " << static_cast<int>(dataCall->getIpFamilyType())
+                  << std::endl;
+        std::cout << " Tech preference: " << static_cast<int>(dataCall->getTechPreference())
+                  << std::endl;
     }
 
  private:
@@ -188,14 +181,13 @@ int main(int argc, char *argv[]) {
         return -EINVAL;
     }
 
-    SlotId slotId = static_cast<SlotId>(std::atoi(argv[1]));
-    int profileId = std::atoi(argv[2]);
-    telux::data::OperationType opType = static_cast<telux::data::OperationType>
-        (std::atoi(argv[3]));
+    SlotId slotId                     = static_cast<SlotId>(std::atoi(argv[1]));
+    int profileId                     = std::atoi(argv[2]);
+    telux::data::OperationType opType = static_cast<telux::data::OperationType>(std::atoi(argv[3]));
 
     try {
         app = std::make_shared<DataConnection>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate DataConnection" << std::endl;
         return -ENOMEM;
     }

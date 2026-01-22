@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <iostream>
 #include <iterator>
 #include <sstream>
@@ -37,8 +43,7 @@
  * Initialize an Command Request
  */
 ConsoleAppCommand::ConsoleAppCommand(std::string id, std::string name,
-                                     std::vector<std::string> arguments,
-                                     std::function<void(std::vector<std::string> &)> command)
+    std::vector<std::string> arguments, std::function<void(std::vector<std::string> &)> command)
    : id_(id)
    , name_(name)
    , arguments_(arguments)
@@ -46,25 +51,25 @@ ConsoleAppCommand::ConsoleAppCommand(std::string id, std::string name,
 }
 
 std::string ConsoleAppCommand::getId() {
-   return id_;
+    return id_;
 }
 
 std::string ConsoleAppCommand::getName() {
-   return name_;
+    return name_;
 }
 
 std::vector<std::string> ConsoleAppCommand::getArguments() {
-   return arguments_;
+    return arguments_;
 }
 
 void ConsoleAppCommand::displayCommand() {
-   std::cout << "   " << id_ << " - " << name_;
-   for(auto argument : arguments_) {
-      std::cout << " <" << argument << "> ";
-   }
-   std::cout << std::endl;
+    std::cout << "   " << id_ << " - " << name_;
+    for (auto argument : arguments_) {
+        std::cout << " <" << argument << "> ";
+    }
+    std::cout << std::endl;
 }
 
 void ConsoleAppCommand::executeCommand(std::vector<std::string> userInput) {
-   command_(userInput);
+    command_(userInput);
 }

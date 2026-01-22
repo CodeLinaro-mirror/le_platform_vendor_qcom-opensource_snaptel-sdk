@@ -37,15 +37,14 @@ using ::dataStub::DataConnectionManager;
  * Throttle information for the corresponding APN
  */
 struct APNThrottleInfo {
-    std::string apn;                            /**< APN name */
-    std::vector<int> profileIds;                /**< Profile IDs with the same APN */
-    uint32_t ipv4Time;                          /**< Remaining IPv4 throttled time in milliseconds*/
-    uint32_t ipv6Time;                          /**< Remaining IPv6 throttled time in milliseconds*/
-    bool isBlocked;                             /**< Is APN blocked on all plmns */
-    std::string mcc;                            /**< Mobile Country Code */
-    std::string mnc;                            /**< Mobile Network Code */
+    std::string apn; /**< APN name */
+    std::vector<int> profileIds; /**< Profile IDs with the same APN */
+    uint32_t ipv4Time; /**< Remaining IPv4 throttled time in milliseconds*/
+    uint32_t ipv6Time; /**< Remaining IPv6 throttled time in milliseconds*/
+    bool isBlocked; /**< Is APN blocked on all plmns */
+    std::string mcc; /**< Mobile Country Code */
+    std::string mnc; /**< Mobile Network Code */
 };
-
 
 struct DataCallParams {
     int slotId;
@@ -64,57 +63,51 @@ struct DataCallParams {
     std::set<int> ownersId;
 };
 
-class DataConnectionServerImpl final:
-    public dataStub::DataConnectionManager::Service,
-    public IServerEventListener,
-    public std::enable_shared_from_this<DataConnectionServerImpl> {
-public:
+class DataConnectionServerImpl final
+   : public dataStub::DataConnectionManager::Service,
+     public IServerEventListener,
+     public std::enable_shared_from_this<DataConnectionServerImpl> {
+ public:
     DataConnectionServerImpl();
     ~DataConnectionServerImpl();
 
-    grpc::Status InitService(ServerContext* context,
-        const dataStub::SlotInfo* request,
-        dataStub::GetServiceStatusReply* response) override;
+    grpc::Status InitService(ServerContext *context, const dataStub::SlotInfo *request,
+        dataStub::GetServiceStatusReply *response) override;
 
-    grpc::Status SetDefaultProfile(ServerContext* context,
-        const dataStub::SetDefaultProfileRequest* request,
-        dataStub::DefaultReply* response) override;
+    grpc::Status SetDefaultProfile(ServerContext *context,
+        const dataStub::SetDefaultProfileRequest *request,
+        dataStub::DefaultReply *response) override;
 
-    grpc::Status GetDefaultProfile(ServerContext* context,
-        const dataStub::GetDefaultProfileRequest* request,
-        dataStub::GetDefaultProfileReply* response) override;
+    grpc::Status GetDefaultProfile(ServerContext *context,
+        const dataStub::GetDefaultProfileRequest *request,
+        dataStub::GetDefaultProfileReply *response) override;
 
-    grpc::Status SetRoamingMode(ServerContext* context,
-        const dataStub::SetRoamingModeRequest* request,
-        dataStub::DefaultReply* response) override;
+    grpc::Status SetRoamingMode(ServerContext *context,
+        const dataStub::SetRoamingModeRequest *request, dataStub::DefaultReply *response) override;
 
-    grpc::Status RequestRoamingMode(ServerContext* context,
-        const dataStub::RequestRoamingModeRequest* request,
-        dataStub::RequestRoamingModeReply* response) override;
+    grpc::Status RequestRoamingMode(ServerContext *context,
+        const dataStub::RequestRoamingModeRequest *request,
+        dataStub::RequestRoamingModeReply *response) override;
 
-    grpc::Status StartDatacall(ServerContext* context,
-        const dataStub::DataCallInputParams* request,
-        dataStub::DefaultReply* response) override;
+    grpc::Status StartDatacall(ServerContext *context, const dataStub::DataCallInputParams *request,
+        dataStub::DefaultReply *response) override;
 
-    grpc::Status StopDatacall(ServerContext* context,
-        const dataStub::DataCallInputParams* request,
-        dataStub::DefaultReply* response) override;
+    grpc::Status StopDatacall(ServerContext *context, const dataStub::DataCallInputParams *request,
+        dataStub::DefaultReply *response) override;
 
-    grpc::Status RequestDatacallList(ServerContext* context,
-        const dataStub::DataCallInputParams* request,
-        dataStub::RequestDataCallListReply* response) override;
+    grpc::Status RequestDatacallList(ServerContext *context,
+        const dataStub::DataCallInputParams *request,
+        dataStub::RequestDataCallListReply *response) override;
 
-    grpc::Status RequestThrottledApnInfo(ServerContext* context,
-        const dataStub::SlotInfo* request,
-        dataStub::ThrottleInfoReply* response) override;
+    grpc::Status RequestThrottledApnInfo(ServerContext *context, const dataStub::SlotInfo *request,
+        dataStub::ThrottleInfoReply *response) override;
 
-    grpc::Status CleanUpService(ServerContext* context,
-        const ::dataStub::ClientInfo* request,
-        ::google::protobuf::Empty* response) override;
+    grpc::Status CleanUpService(ServerContext *context, const ::dataStub::ClientInfo *request,
+        ::google::protobuf::Empty *response) override;
 
-    grpc::Status requestConnectedDataCallLists(ServerContext* context,
-        const dataStub::CachedDataCallsRequest* request,
-        dataStub::CachedDataCalls* response) override;
+    grpc::Status requestConnectedDataCallLists(ServerContext *context,
+        const dataStub::CachedDataCallsRequest *request,
+        dataStub::CachedDataCalls *response) override;
 
     /* Could be used if all the datacalls need to be teared down.
      * For ex: if WWAN connectivity is disabled via DataSettingsManager, then
@@ -129,20 +122,19 @@ public:
 
     void onEventUpdate(::eventService::UnsolicitedEvent message);
 
-private:
-    bool getIpv4Address(const std::string &ifaceName,
-        std::string &ipAddress, std::string &gatewayAddress,
-        std::string &dnsPrimaryAddress, std::string &dnsSecondaryAddress, uint16_t &mtuValue);
-    bool getIpv6Address(const std::string &ifaceName,
-        std::string &ipAddress, std::string &gatewayAddress,
-        std::string &dnsPrimaryAddress, std::string &dnsSecondaryAddress, uint16_t &mtuValue);
+ private:
+    bool getIpv4Address(const std::string &ifaceName, std::string &ipAddress,
+        std::string &gatewayAddress, std::string &dnsPrimaryAddress,
+        std::string &dnsSecondaryAddress, uint16_t &mtuValue);
+    bool getIpv6Address(const std::string &ifaceName, std::string &ipAddress,
+        std::string &gatewayAddress, std::string &dnsPrimaryAddress,
+        std::string &dnsSecondaryAddress, uint16_t &mtuValue);
 
     void triggerStartDataCallEvent(int profileId, int slotId, std::string ipFamilyType,
         unsigned int client_id, std::string ifaceName = "");
-    void triggerStopDataCallEvent(int profileId, int slotId, std::string ipFamilyType,
-        std::string ifaceName);
-    void triggerThrottledApnInfoChangedEvent(dataStub::APNThrottleInfoList* response);
-
+    void triggerStopDataCallEvent(
+        int profileId, int slotId, std::string ipFamilyType, std::string ifaceName);
+    void triggerThrottledApnInfoChangedEvent(dataStub::APNThrottleInfoList *response);
 
     void getInactiveInterfaces();
     bool isWwanConnectivityAllowed(int slotId);
@@ -154,8 +146,8 @@ private:
     void startThrottleRetryTimer();
     void notifyThrottledApnInfoEvent();
 
-    void clearCachedDataCall(std::map<int, std::shared_ptr<DataCallParams>>& dataCallsMap,
-        bool stopAllCalls = false, const unsigned int& client_id = 0);
+    void clearCachedDataCall(std::map<int, std::shared_ptr<DataCallParams>> &dataCallsMap,
+        bool stopAllCalls = false, const unsigned int &client_id = 0);
 
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     std::map<int, std::shared_ptr<DataCallParams>> dataCallsSlot1_;
@@ -171,9 +163,8 @@ private:
     std::mutex apnThrottleInfoMtx_;
     std::atomic<bool> timerStarted_;
     std::future<void> timerFuture_;
-    telux::common::ServiceStatus serviceStatus_ =
-          telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    telux::common::ServiceStatus serviceStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
     std::mutex mtx_;
 };
 
-#endif //DATA_CONNECTION_SERVER_HPP
+#endif  // DATA_CONNECTION_SERVER_HPP

@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_DangerousEndOfQueueSubCauseCode_H_
-#define	_DangerousEndOfQueueSubCauseCode_H_
-
+#ifndef _DangerousEndOfQueueSubCauseCode_H_
+#define _DangerousEndOfQueueSubCauseCode_H_
 
 #include <asn_application.h>
 
@@ -20,15 +19,15 @@ extern "C" {
 
 /* Dependencies */
 typedef enum DangerousEndOfQueueSubCauseCode {
-	DangerousEndOfQueueSubCauseCode_unavailable	= 0,
-	DangerousEndOfQueueSubCauseCode_suddenEndOfQueue	= 1,
-	DangerousEndOfQueueSubCauseCode_queueOverHill	= 2,
-	DangerousEndOfQueueSubCauseCode_queueAroundBend	= 3,
-	DangerousEndOfQueueSubCauseCode_queueInTunnel	= 4
+    DangerousEndOfQueueSubCauseCode_unavailable      = 0,
+    DangerousEndOfQueueSubCauseCode_suddenEndOfQueue = 1,
+    DangerousEndOfQueueSubCauseCode_queueOverHill    = 2,
+    DangerousEndOfQueueSubCauseCode_queueAroundBend  = 3,
+    DangerousEndOfQueueSubCauseCode_queueInTunnel    = 4
 } e_DangerousEndOfQueueSubCauseCode;
 
 /* DangerousEndOfQueueSubCauseCode */
-typedef long	 DangerousEndOfQueueSubCauseCode_t;
+typedef long DangerousEndOfQueueSubCauseCode_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_DangerousEndOfQueueSubCauseCode;
@@ -46,5 +45,5 @@ per_type_encoder_f DangerousEndOfQueueSubCauseCode_encode_uper;
 }
 #endif
 
-#endif	/* _DangerousEndOfQueueSubCauseCode_H_ */
+#endif /* _DangerousEndOfQueueSubCauseCode_H_ */
 #include <asn_internal.h>

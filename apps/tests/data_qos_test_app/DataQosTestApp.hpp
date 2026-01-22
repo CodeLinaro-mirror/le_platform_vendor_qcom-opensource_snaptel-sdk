@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef QOSTESTAPP_HPP
 #define QOSTESTAPP_HPP
 
@@ -44,8 +50,7 @@ using namespace telux::common;
 class DataQosTestApp : public IDataConnectionListener,
                        public ConsoleApp,
                        public std::enable_shared_from_this<DataQosTestApp> {
-public:
-
+ public:
     DataQosTestApp();
     ~DataQosTestApp();
 
@@ -59,15 +64,15 @@ public:
 
     // Member variable to keep the manager object alive till application ends.
     std::shared_ptr<telux::data::IDataConnectionManager> dataConnMgr_;
-private:
 
-    DataQosTestApp(DataQosTestApp const &) = delete;
+ private:
+    DataQosTestApp(DataQosTestApp const &)            = delete;
     DataQosTestApp &operator=(DataQosTestApp const &) = delete;
 
     void dataCallListResponseCb(
-        const std::vector<std::shared_ptr<IDataCall>> &dataCallList,ErrorCode error);
-    void onTFTResponse(const std::vector<std::shared_ptr<TrafficFlowTemplate>> &tft,
-        ErrorCode error);
+        const std::vector<std::shared_ptr<IDataCall>> &dataCallList, ErrorCode error);
+    void onTFTResponse(
+        const std::vector<std::shared_ptr<TrafficFlowTemplate>> &tft, ErrorCode error);
     void logQosDetails(std::shared_ptr<TrafficFlowTemplate> &tft);
     void printFilterDetails(std::shared_ptr<telux::data::IIpFilter> filter);
 

@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_RoadworksSubCauseCode_H_
-#define	_RoadworksSubCauseCode_H_
-
+#ifndef _RoadworksSubCauseCode_H_
+#define _RoadworksSubCauseCode_H_
 
 #include <asn_application.h>
 
@@ -20,17 +19,17 @@ extern "C" {
 
 /* Dependencies */
 typedef enum RoadworksSubCauseCode {
-	RoadworksSubCauseCode_unavailable	= 0,
-	RoadworksSubCauseCode_majorRoadworks	= 1,
-	RoadworksSubCauseCode_roadMarkingWork	= 2,
-	RoadworksSubCauseCode_slowMovingRoadMaintenance	= 3,
-	RoadworksSubCauseCode_shortTermStationaryRoadworks	= 4,
-	RoadworksSubCauseCode_streetCleaning	= 5,
-	RoadworksSubCauseCode_winterService	= 6
+    RoadworksSubCauseCode_unavailable                  = 0,
+    RoadworksSubCauseCode_majorRoadworks               = 1,
+    RoadworksSubCauseCode_roadMarkingWork              = 2,
+    RoadworksSubCauseCode_slowMovingRoadMaintenance    = 3,
+    RoadworksSubCauseCode_shortTermStationaryRoadworks = 4,
+    RoadworksSubCauseCode_streetCleaning               = 5,
+    RoadworksSubCauseCode_winterService                = 6
 } e_RoadworksSubCauseCode;
 
 /* RoadworksSubCauseCode */
-typedef long	 RoadworksSubCauseCode_t;
+typedef long RoadworksSubCauseCode_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_RoadworksSubCauseCode;
@@ -48,5 +47,5 @@ per_type_encoder_f RoadworksSubCauseCode_encode_uper;
 }
 #endif
 
-#endif	/* _RoadworksSubCauseCode_H_ */
+#endif /* _RoadworksSubCauseCode_H_ */
 #include <asn_internal.h>

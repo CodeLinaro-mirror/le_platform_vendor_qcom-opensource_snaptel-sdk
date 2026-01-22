@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef CACONTROLMANAGERIMPL_HPP
@@ -107,12 +107,11 @@ class CAControlManagerImpl : public ICAControlManager,
     /* Dispatches load and capacity to the registered listeners */
     std::shared_ptr<telux::common::TaskDispatcher> newStatsDispatcher_;
 
-    std::shared_ptr<telux::common::ListenerManager<
-        ICAControlManagerListener>> caCtrlListenerMgr_;
+    std::shared_ptr<telux::common::ListenerManager<ICAControlManagerListener>> caCtrlListenerMgr_;
 
     void cacheMessageCounts(MVM_STATS_MSG_COUNT messageCounts);
 
-    const char * const CALC_FILTER = "calc";
+    const char *const CALC_FILTER = "calc";
     ClientEventManager &clientEventMgr_;
     static std::unique_ptr<::securityStub::SecurityCALCService::Stub> stub_;
 

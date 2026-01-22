@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef CLIENTCACHE_HPP
@@ -29,12 +29,12 @@ class ClientCache {
 
     void unCacheClient(std::shared_ptr<AudioClient> audioClient);
 
-    void associateStream(std::shared_ptr<AudioClient> audioClient, StreamType type,
-      uint32_t streamId);
+    void associateStream(
+        std::shared_ptr<AudioClient> audioClient, StreamType type, uint32_t streamId);
 
     void disassociateStream(uint32_t streamId);
 
-    std::map<int,std::shared_ptr<AudioClient>>& getClientsList(void);
+    std::map<int, std::shared_ptr<AudioClient>> &getClientsList(void);
 
     void disassociateAllStreams(void);
 
@@ -44,7 +44,7 @@ class ClientCache {
 
  private:
     std::mutex clientListGuard_;
-    std::map<int,std::shared_ptr<AudioClient>> audioClientsList_;
+    std::map<int, std::shared_ptr<AudioClient>> audioClientsList_;
 };
 
 }  // end of namespace audio

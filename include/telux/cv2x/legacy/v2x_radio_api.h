@@ -28,39 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -124,7 +94,7 @@ typedef int v2x_radio_handle_t;
 /** Maximum length of the trusted ID list that can be passed in
     v2x_radio_update_trusted_ue_list().
  */
-#define MAX_TRUSTED_IDS_LIST_LEN   (50)
+#define MAX_TRUSTED_IDS_LIST_LEN (50)
 
 /** Maximum length for the subscribed service ID list that can
      be passed in v2x_radio_rx_sock_create_and_bind_v2().
@@ -162,10 +132,10 @@ typedef int v2x_radio_handle_t;
       the value for V2X_WAN_NONCONCURRENT.
  */
 typedef enum {
-    V2X_WWAN_NONCONCURRENT = 0,  /**< No simultaneous WWAN + CV2X on this
-                                      interface. */
-    V2X_WWAN_CONCURRENT = 1      /**< Interface allows requests for concurrent
-                                      support of WWAN + CV2X connections. */
+    V2X_WWAN_NONCONCURRENT = 0, /**< No simultaneous WWAN + CV2X on this
+                                     interface. */
+    V2X_WWAN_CONCURRENT = 1 /**< Interface allows requests for concurrent
+                                 support of WWAN + CV2X connections. */
 } v2x_concurrency_sel_t;
 
 /**
@@ -176,14 +146,14 @@ typedef enum {
     %v2x_radio_status_ex_t instead.
  */
 typedef enum {
-    V2X_INACTIVE = 0,    /**< V2X communication is disabled. */
-    V2X_ACTIVE,          /**< V2X communication is enabled. Transmit and
-                              receive are possible. */
-    V2X_TX_SUSPENDED,    /**< Small loss of timing precision occurred.
-                              Transmit is no longer supported. */
-    V2X_RX_SUSPENDED,    /**< Radio can no longer receive any messages. */
-    V2X_TXRX_SUSPENDED,  /**< Radio can no longer transmit or receive for
-                              some reason. @newpage */
+    V2X_INACTIVE = 0, /**< V2X communication is disabled. */
+    V2X_ACTIVE, /**< V2X communication is enabled. Transmit and
+                     receive are possible. */
+    V2X_TX_SUSPENDED, /**< Small loss of timing precision occurred.
+                           Transmit is no longer supported. */
+    V2X_RX_SUSPENDED, /**< Radio can no longer receive any messages. */
+    V2X_TXRX_SUSPENDED, /**< Radio can no longer transmit or receive for
+                             some reason. @newpage */
 } v2x_event_t;
 
 /**
@@ -191,23 +161,23 @@ typedef enum {
     priority. For example, 8 is the current 3GPP standard.
  */
 typedef enum {
-    V2X_PRIO_MOST_URGENT = 0,  /**< Highest priority. */
-    V2X_PRIO_1 = 1,
-    V2X_PRIO_2 = 2,
-    V2X_PRIO_3 = 3,
-    V2X_PRIO_4 = 4,
-    V2X_PRIO_5 = 5,
-    V2X_PRIO_6 = 6,
-    V2X_PRIO_BACKGROUND = 7    /**< Lowest priority. */
+    V2X_PRIO_MOST_URGENT = 0, /**< Highest priority. */
+    V2X_PRIO_1           = 1,
+    V2X_PRIO_2           = 2,
+    V2X_PRIO_3           = 3,
+    V2X_PRIO_4           = 4,
+    V2X_PRIO_5           = 5,
+    V2X_PRIO_6           = 6,
+    V2X_PRIO_BACKGROUND  = 7 /**< Lowest priority. */
 } v2x_priority_et;
 
 /**
     Valid service availability states.
  */
-typedef enum  {
+typedef enum {
     SERVICE_UNAVAILABLE = 0,
-    SERVICE_AVAILABLE = 1,
-    SERVICE_FAILED = 2,
+    SERVICE_AVAILABLE   = 1,
+    SERVICE_FAILED      = 2,
 } v2x_service_status_t;
 
 /**
@@ -219,10 +189,10 @@ typedef enum  {
     Used in @ref v2x_status_info_t
  */
 typedef enum {
-    V2X_RADIO_STATUS_INACTIVE = 0,    /**< RX/TX is inactive */
-    V2X_RADIO_STATUS_ACTIVE = 1,      /**< RX/TX is active */
-    V2X_RADIO_STATUS_SUSPENDED = 2,   /**< RX/TX is suspended */
-    V2X_RADIO_STATUS_UNKNOWN = 3,     /**< RX/TX status unknown */
+    V2X_RADIO_STATUS_INACTIVE  = 0, /**< RX/TX is inactive */
+    V2X_RADIO_STATUS_ACTIVE    = 1, /**< RX/TX is active */
+    V2X_RADIO_STATUS_SUSPENDED = 2, /**< RX/TX is suspended */
+    V2X_RADIO_STATUS_UNKNOWN   = 3, /**< RX/TX status unknown */
 } v2x_radio_status_type_t;
 
 /**
@@ -232,70 +202,70 @@ typedef enum {
     Used in @ref v2x_status_info_t
  */
 typedef enum {
-    V2X_RADIO_CAUSE_TIMING,           /**< CV2X is suspended due to the outage of timing
-                                           reference. */
-    V2X_RADIO_CAUSE_CONFIG,           /**< CV2X is inactive due to v2x.xml is missing, invalid,
-                                           or expired. */
-    V2X_RADIO_CAUSE_UE_MODE,          /**< CV2X is inactive due to CV2X mode is not started. */
-    V2X_RADIO_CAUSE_GEOPOLYGON,       /**< CV2X is inactive due to UE enters a geo-polygon that
-                                           does not support cv2x. */
-    V2X_RADIO_CAUSE_THERMAL,          /**< CV2X is suspended when the device's temperature
-                                           is high. */
-    V2X_RADIO_CAUSE_THERMAL_ECALL,    /**< CV2X is suspended when the device's temperature
-                                           is high and emergency call is ongoing. */
-    V2X_RADIO_CAUSE_GEOPOLYGON_SWITCH,/**< CV2X is suspended when UE switches to a new geopolygon
-                                           that also supports CV2X and UE is already in CV2X
-                                           active status, CV2X status will change to active after
-                                           the update is done. */
-    V2X_RADIO_CAUSE_SENSING,          /**< CV2X Tx is suspended when GNSS signal recovers or CV2X
-                                           mode just starts. UE needs sensing for 1 second before
-                                           Tx can begin, Tx status will change to active after
-                                           sensing is done. */
-    V2X_RADIO_CAUSE_LPM,              /**< CV2X is inactive due to unexpected operating mode. */
-    V2X_RADIO_CAUSE_DISABLED,         /**< CV2X is inactive due to CV2X is disabled in the EFS. */
-    V2X_RADIO_CAUSE_NO_GNSS,          /**< CV2X is inactive due to GNSS signal is not available
-                                           when starting CV2X. */
-    V2X_RADIO_CAUSE_INVALID_LICENSE,  /**< CV2X is inactive due to invalid license. */
-    V2X_RADIO_CAUSE_NOT_READY,        /**< CV2X is inactive due to low layer is not ready to
-                                           start CV2X. */
-    V2X_RADIO_CAUSE_NTN,              /**< CV2X is suspended due to NTN is in progress. */
+    V2X_RADIO_CAUSE_TIMING, /**< CV2X is suspended due to the outage of timing
+                                 reference. */
+    V2X_RADIO_CAUSE_CONFIG, /**< CV2X is inactive due to v2x.xml is missing, invalid,
+                                 or expired. */
+    V2X_RADIO_CAUSE_UE_MODE, /**< CV2X is inactive due to CV2X mode is not started. */
+    V2X_RADIO_CAUSE_GEOPOLYGON, /**< CV2X is inactive due to UE enters a geo-polygon that
+                                     does not support cv2x. */
+    V2X_RADIO_CAUSE_THERMAL, /**< CV2X is suspended when the device's temperature
+                                  is high. */
+    V2X_RADIO_CAUSE_THERMAL_ECALL, /**< CV2X is suspended when the device's temperature
+                                        is high and emergency call is ongoing. */
+    V2X_RADIO_CAUSE_GEOPOLYGON_SWITCH, /**< CV2X is suspended when UE switches to a new geopolygon
+                                            that also supports CV2X and UE is already in CV2X
+                                            active status, CV2X status will change to active after
+                                            the update is done. */
+    V2X_RADIO_CAUSE_SENSING, /**< CV2X Tx is suspended when GNSS signal recovers or CV2X
+                                  mode just starts. UE needs sensing for 1 second before
+                                  Tx can begin, Tx status will change to active after
+                                  sensing is done. */
+    V2X_RADIO_CAUSE_LPM, /**< CV2X is inactive due to unexpected operating mode. */
+    V2X_RADIO_CAUSE_DISABLED, /**< CV2X is inactive due to CV2X is disabled in the EFS. */
+    V2X_RADIO_CAUSE_NO_GNSS, /**< CV2X is inactive due to GNSS signal is not available
+                                  when starting CV2X. */
+    V2X_RADIO_CAUSE_INVALID_LICENSE, /**< CV2X is inactive due to invalid license. */
+    V2X_RADIO_CAUSE_NOT_READY, /**< CV2X is inactive due to low layer is not ready to
+                                    start CV2X. */
+    V2X_RADIO_CAUSE_NTN, /**< CV2X is suspended due to NTN is in progress. */
 
-    V2X_RADIO_CAUSE_NO_DATA_CALL,     /**< CV2X is inactive due to no cv2x data call. */
-    V2X_RADIO_CAUSE_UNKNOWN,          /**< Invalid cause type only used internally. */
+    V2X_RADIO_CAUSE_NO_DATA_CALL, /**< CV2X is inactive due to no cv2x data call. */
+    V2X_RADIO_CAUSE_UNKNOWN, /**< Invalid cause type only used internally. */
 } v2x_radio_cause_type_t;
 
 /**
     Encapsulates CV2X Tx/Rx status and cause of failure.
  */
 typedef struct {
-    v2x_radio_status_type_t status;  /**< Tx/Rx status */
-    v2x_radio_cause_type_t cause;    /**< Cause of failure */
+    v2x_radio_status_type_t status; /**< Tx/Rx status */
+    v2x_radio_cause_type_t cause; /**< Cause of failure */
 } v2x_status_info_t;
 
 /**
     Encapsulates status of CV2X radio.
  */
 typedef struct {
-    v2x_status_info_t tx_status;  /**< TX status */
-    v2x_status_info_t rx_status;  /**< RX status */
+    v2x_status_info_t tx_status; /**< TX status */
+    v2x_status_info_t rx_status; /**< RX status */
 } v2x_radio_status_t;
 
 /**
     Encapsulates status for single TX/RX pool.
  */
 typedef struct {
-    uint8_t pool_id;             /**< pool ID */
-    v2x_status_info_t status;    /**< Tx/Rx pool status */
+    uint8_t pool_id; /**< pool ID */
+    v2x_status_info_t status; /**< Tx/Rx pool status */
 } v2x_pool_status_t;
 
 /**
     V2X overall radio status and per pool status.
  */
 typedef struct {
-    v2x_radio_status_t status;       /**< CV2X overall TX/RX status */
-    uint8_t tx_pool_size;            /**< Number of Tx pools in array of pool_status. */
+    v2x_radio_status_t status; /**< CV2X overall TX/RX status */
+    uint8_t tx_pool_size; /**< Number of Tx pools in array of pool_status. */
     v2x_pool_status_t tx_pool_status[V2X_MAX_TX_POOL_NUM]; /**< CV2X Tx pool status. */
-    uint8_t rx_pool_size;            /**< Number of Rx pools in array of pool_status. */
+    uint8_t rx_pool_size; /**< Number of Rx pools in array of pool_status. */
     v2x_pool_status_t rx_pool_status[V2X_MAX_RX_POOL_NUM]; /**< CV2X Rx pool status. */
 } v2x_radio_status_ex_t;
 
@@ -339,9 +309,9 @@ typedef struct {
     This struct is used in #v2x_iface_capabilities_t.
  */
 typedef struct {
-    uint8_t pool_id;      /**< ID of the Tx pool. */
-    uint16_t min_freq;    /**< Minimum EARFCN of this pool. */
-    uint16_t max_freq;    /**< Maximum EARFCN of this pool. @newpagetable */
+    uint8_t pool_id; /**< ID of the Tx pool. */
+    uint16_t min_freq; /**< Minimum EARFCN of this pool. */
+    uint16_t max_freq; /**< Maximum EARFCN of this pool. @newpagetable */
 } tx_pool_id_info_t;
 
 /**
@@ -525,7 +495,7 @@ uint16_t v2x_convert_priority_to_traffic_class(v2x_priority_et priority);
     the input IPv6 traffic class parameter.
  */
 v2x_priority_et v2x_convert_traffic_class_to_priority(uint16_t traffic_class);
-/** @} *//* end_addtogroup telematics_cv2x_c_radio */
+/** @} */ /* end_addtogroup telematics_cv2x_c_radio */
 
 /** @ingroup v2x_deprecated_radio
     Deprecated. Use #v2x_tx_flow_info_t.
@@ -670,8 +640,7 @@ typedef struct {
 
     @newpage
     */
-    void (*v2x_radio_init_complete)(v2x_status_enum_type status,
-                                    void *context);
+    void (*v2x_radio_init_complete)(v2x_status_enum_type status, void *context);
 
     /**
     Callback made when the status in the radio changes. For example, in
@@ -687,8 +656,7 @@ typedef struct {
     @param[in] context  Pointer to the context of the caller who originally
                         registered for this callback.
     */
-    void (*v2x_radio_status_listener)(v2x_event_t event,
-                                      void *context);
+    void (*v2x_radio_status_listener)(v2x_event_t event, void *context);
 
     /**
     Callback made from lower layers when periodic radio measurements are
@@ -735,8 +703,7 @@ typedef struct {
     @param[in] context  Pointer to the context of the caller who originally
                         registered for this callback.
     */
-    void (*v2x_radio_capabilities_listener)(v2x_iface_capabilities_t *caps,
-                                            void *context);
+    void (*v2x_radio_capabilities_listener)(v2x_iface_capabilities_t *caps, void *context);
 
     /**
     Callback made when the service status changes.
@@ -750,8 +717,7 @@ typedef struct {
 
     @newpage
     */
-    void (*v2x_service_status_listener)(v2x_service_status_t status,
-                                        void *context);
+    void (*v2x_service_status_listener)(v2x_service_status_t status, void *context);
 
 } v2x_radio_calls_t;
 
@@ -800,8 +766,8 @@ typedef struct {
 
     @newpage
     */
-    void (*v2x_radio_l2_reservation_change_complete_cb)(void *context,
-                                                        v2x_sps_mac_details_t *details);
+    void (*v2x_radio_l2_reservation_change_complete_cb)(
+        void *context, v2x_sps_mac_details_t *details);
 
     /**
     Callback periodically made when the MAC SPS timeslot changes. The new
@@ -820,8 +786,7 @@ typedef struct {
 
     @newpage
     */
-    void (*v2x_radio_sps_offset_changed)(void *context,
-                                         v2x_sps_mac_details_t *details);
+    void (*v2x_radio_sps_offset_changed)(void *context, v2x_sps_mac_details_t *details);
 
 } v2x_per_sps_reservation_calls_t;
 
@@ -829,8 +794,8 @@ typedef struct {
     V2X Tx retransmission policies supported by the modem.
  */
 typedef enum {
-    V2X_AUTO_RETRANSMIT_DISABLED = 0,  /**< Retransmit mode is disabled. */
-    V2X_AUTO_RETRANSMIT_ENABLED = 1,   /**< Retransmit mode is enabled. */
+    V2X_AUTO_RETRANSMIT_DISABLED  = 0, /**< Retransmit mode is disabled. */
+    V2X_AUTO_RETRANSMIT_ENABLED   = 1, /**< Retransmit mode is enabled. */
     V2X_AUTO_RETRANSMIT_DONT_CARE = 2, /**< Modem falls back to its default
                                             behavior. */
 } v2x_auto_retransmit_policy_t;
@@ -840,20 +805,20 @@ typedef enum {
     Used in @ref v2x_slss_sync_ref_ue_info_t
  */
 typedef enum {
-    V2X_SLSS_SYNC_PATTERN_OFFSET_IND_1,   /**< UE transmits SLSS in subframes indicated by
-                                               the syncOffsetIndicator1 specified in V2X
-                                               configuration. */
-    V2X_SLSS_SYNC_PATTERN_OFFSET_IND_2,   /**< UE transmits SLSS in subframes indicated by
-                                               the syncOffsetIndicator2 specified in V2X
-                                               configuration. */
-    V2X_SLSS_SYNC_PATTERN_OFFSET_IND_3,   /**< UE transmits SLSS in subframes indicated by
-                                               the syncOffsetIndicator3 specified in V2X
-                                               configuration. */
-    V2X_SLSS_SYNC_PATTERN_ODD_RESERVED,   /**< UE transmits SLSS in odd-numbered reserved
-                                               subframes. */
-    V2X_SLSS_SYNC_PATTERN_EVEN_RESERVED,  /**< UE transmits SLSS in even-numbered reserved
-                                               subframes. */
-    V2X_SLSS_SYNC_PATTERN_UNKNOWN,        /**< Unkown SLSS sync pattern. */
+    V2X_SLSS_SYNC_PATTERN_OFFSET_IND_1, /**< UE transmits SLSS in subframes indicated by
+                                             the syncOffsetIndicator1 specified in V2X
+                                             configuration. */
+    V2X_SLSS_SYNC_PATTERN_OFFSET_IND_2, /**< UE transmits SLSS in subframes indicated by
+                                             the syncOffsetIndicator2 specified in V2X
+                                             configuration. */
+    V2X_SLSS_SYNC_PATTERN_OFFSET_IND_3, /**< UE transmits SLSS in subframes indicated by
+                                             the syncOffsetIndicator3 specified in V2X
+                                             configuration. */
+    V2X_SLSS_SYNC_PATTERN_ODD_RESERVED, /**< UE transmits SLSS in odd-numbered reserved
+                                             subframes. */
+    V2X_SLSS_SYNC_PATTERN_EVEN_RESERVED, /**< UE transmits SLSS in even-numbered reserved
+                                              subframes. */
+    V2X_SLSS_SYNC_PATTERN_UNKNOWN, /**< Unkown SLSS sync pattern. */
 } v2x_slss_sync_pattern_t;
 
 /**
@@ -946,7 +911,9 @@ typedef struct {
 typedef struct {
     int sock; /**< Pointer to the file descriptor for the socket. */
 
-    struct sockaddr_in6 sockaddr; /**< IPv6 socket address. The sockaddr_in6 buffer is initialized with the IPv6 source address and source port that are used for the bind() function. */
+    struct sockaddr_in6 sockaddr; /**< IPv6 socket address. The sockaddr_in6 buffer is initialized
+                                     with the IPv6 source address and source port that are used for
+                                     the bind() function. */
 
 } v2x_sock_info_t;
 
@@ -988,8 +955,8 @@ typedef struct {
     V2X Ip Types
  */
 typedef enum {
-    TRAFFIC_IP = 0,     /**< Use Ip type traffic. */
-    TRAFFIC_NON_IP = 1  /**< Use Non-Ip type traffic. @newpage */
+    TRAFFIC_IP     = 0, /**< Use Ip type traffic. */
+    TRAFFIC_NON_IP = 1 /**< Use Non-Ip type traffic. @newpage */
 } traffic_ip_type_t;
 
 typedef traffic_ip_type_t traffic_ip_type;
@@ -1013,9 +980,9 @@ typedef struct src_l2_filter_info_t {
     Fault detection for Tx chain that including PA and front end.
  */
 typedef enum {
-    INACTIVE,      /**< The Tx chain is not working. */
-    OPERATIONAL,   /**< The Tx chain is operational. */
-    FAULT,         /**< Fault detected on the Tx chain. */
+    INACTIVE, /**< The Tx chain is not working. */
+    OPERATIONAL, /**< The Tx chain is operational. */
+    FAULT, /**< Fault detected on the Tx chain. */
 } rf_status_t;
 
 /**
@@ -1034,20 +1001,19 @@ typedef struct {
     Defines possible values for the segment type of a transport block.
  */
 typedef enum {
-    FIRST,      /**< V2X packet is segmented, it's the first transport block. */
-    LAST,       /**< V2X packet is segmented, it's the last transport block. */
-    MIDDLE,     /**< V2X packet is segmented, it's a transport block between first and last. */
-    ONLY_ONE,   /**< V2X packet is not segmented, it's the only one transport block. */
+    FIRST, /**< V2X packet is segmented, it's the first transport block. */
+    LAST, /**< V2X packet is segmented, it's the last transport block. */
+    MIDDLE, /**< V2X packet is segmented, it's a transport block between first and last. */
+    ONLY_ONE, /**< V2X packet is not segmented, it's the only one transport block. */
 } v2x_segment_type_t;
-
 
 /**
     Defines new Tx or re-Tx type relevant to a transport block.
  */
 typedef enum {
-    V2X_NEW_TX,        /**< New Tx of the V2X transport block. */
-    V2X_RE_TX,         /**< Re-Tx of the V2X transport block. */
-    V2X_SLSS_TX,       /**< Tx of SLSS. */
+    V2X_NEW_TX, /**< New Tx of the V2X transport block. */
+    V2X_RE_TX, /**< Re-Tx of the V2X transport block. */
+    V2X_SLSS_TX, /**< Tx of SLSS. */
 } v2x_tx_type_t;
 
 /**
@@ -1115,7 +1081,7 @@ typedef void (*v2x_tx_status_report_listener)(const v2x_tx_status_report_t info)
     @param[out] status     Pointer to V2X overall Tx/Rx status and per pool status.
     @newpage
 */
-typedef void (*v2x_ext_radio_status_listener)(const v2x_radio_status_ex_t* status);
+typedef void (*v2x_ext_radio_status_listener)(const v2x_radio_status_ex_t *status);
 
 /**
     Called when CV2X SLSS Rx is enabled and any of below events has occurred:
@@ -1131,7 +1097,7 @@ typedef void (*v2x_ext_radio_status_listener)(const v2x_radio_status_ex_t* statu
     @param[out] info     Pointer to V2X SLSS Rx information.
     @newpage
 */
-typedef void (*v2x_slss_rx_listener)(const v2x_slss_rx_info_t* info);
+typedef void (*v2x_slss_rx_listener)(const v2x_slss_rx_info_t *info);
 
 /**
     Method used to query the platform SDK for its version number, build
@@ -1159,7 +1125,7 @@ extern v2x_api_ver_t v2x_radio_api_version();
     Error code - If there is a problem (see #v2x_status_enum_type).
  */
 extern v2x_status_enum_type v2x_radio_query_capabilities(v2x_iface_capabilities_t *caps);
-/** @} *//* end_addtogroup telematics_cv2x_c_radio */
+/** @} */ /* end_addtogroup telematics_cv2x_c_radio */
 
 /** @ingroup v2x_deprecated_radio
     Deprecated. Gets the capabilities of a specific Radio interface attached to the system.
@@ -1184,7 +1150,8 @@ extern v2x_status_enum_type v2x_radio_query_capabilities(v2x_iface_capabilities_
     @par
     Error code - If there is a problem (see #v2x_status_enum_type).
  */
-extern v2x_status_enum_type v2x_radio_query_parameters(const char *iface_name, v2x_iface_capabilities_t *caps);
+extern v2x_status_enum_type v2x_radio_query_parameters(
+    const char *iface_name, v2x_iface_capabilities_t *caps);
 
 /** @ingroup v2x_deprecated_radio
     Deprecated. Pass #traffic_ip_type_t on radio init.
@@ -1234,10 +1201,8 @@ extern v2x_status_enum_type v2x_radio_query_parameters(const char *iface_name, v
     #V2X_RADIO_HANDLE_BAD - If there is an error. No initialization callback
     is made. @newpage
  */
-v2x_radio_handle_t v2x_radio_init(char *interface_name,
-                                  v2x_concurrency_sel_t mode,
-                                  v2x_radio_calls_t *callbacks,
-                                  void *context);
+v2x_radio_handle_t v2x_radio_init(
+    char *interface_name, v2x_concurrency_sel_t mode, v2x_radio_calls_t *callbacks, void *context);
 
 /** @ingroup v2x_deprecated_radio
     Deprecated. Pass #v2x_tx_flow_info_t on flow creation.
@@ -1269,8 +1234,8 @@ v2x_radio_handle_t v2x_radio_init(char *interface_name,
     The interface must be pre-initialized with v2x_radio_init() or v2x_radio_init_v2(). The handle
     from that function must be used as the parameter in this function. @newpage
  */
-extern v2x_status_enum_type v2x_radio_set_macphy(v2x_radio_handle_t handle, v2x_radio_macphy_params_t *macphy,
-        void *context);
+extern v2x_status_enum_type v2x_radio_set_macphy(
+    v2x_radio_handle_t handle, v2x_radio_macphy_params_t *macphy, void *context);
 
 /** @addtogroup telematics_cv2x_c_radio
 @{ */
@@ -1303,7 +1268,7 @@ extern v2x_status_enum_type v2x_radio_deinit(v2x_radio_handle_t handle);
 
     @param[in] handle        Identifies the initialized Radio interface.
     @param[out] sock         Pointer to the socket that, on success, returns
-                             the socket descriptor. The caller must release 
+                             the socket descriptor. The caller must release
                              this socket with v2x_radio_sock_close().
     @param[out] rx_sockaddr  Pointer to the IPv6 UDP socket. The sockaddr_in6
                              buffer is initialized with the IPv6 source address
@@ -1328,7 +1293,8 @@ extern v2x_status_enum_type v2x_radio_deinit(v2x_radio_handle_t handle);
     The interface must be pre-initialized with v2x_radio_init() or v2x_radio_init_v2(). The handle
     from that function must be used as the parameter in this function. @newpage
  */
-extern int v2x_radio_rx_sock_create_and_bind(v2x_radio_handle_t handle, int *sock, struct sockaddr_in6 *rx_sockaddr);
+extern int v2x_radio_rx_sock_create_and_bind(
+    v2x_radio_handle_t handle, int *sock, struct sockaddr_in6 *rx_sockaddr);
 
 /**
     Opens a new V2X radio receive socket with specific service IDs for subscription,
@@ -1404,11 +1370,8 @@ extern int v2x_radio_rx_sock_create_and_bind(v2x_radio_handle_t handle, int *soc
     - v2x_radio_tx_event_sock_create_and_bind_v2()
     - v2x_radio_tx_event_sock_create_and_bind_v3() @newpage
  */
-extern int v2x_radio_rx_sock_create_and_bind_v2(v2x_radio_handle_t handle,
-    int id_ist_len,
-    uint32_t *id_list,
-    int *sock,
-    struct sockaddr_in6 *rx_sockaddr);
+extern int v2x_radio_rx_sock_create_and_bind_v2(v2x_radio_handle_t handle, int id_ist_len,
+    uint32_t *id_list, int *sock, struct sockaddr_in6 *rx_sockaddr);
 
 /**
     Opens a new V2X radio receive socket with specific service IDs for subscription
@@ -1486,12 +1449,8 @@ extern int v2x_radio_rx_sock_create_and_bind_v2(v2x_radio_handle_t handle,
     - v2x_radio_tx_event_sock_create_and_bind_v2()
     - v2x_radio_tx_event_sock_create_and_bind_v3() @newpage
  */
-extern int v2x_radio_rx_sock_create_and_bind_v3(v2x_radio_handle_t handle,
-    uint16_t port_num,
-    int id_ist_len,
-    uint32_t *id_list,
-    int *sock,
-    struct sockaddr_in6 *rx_sockaddr);
+extern int v2x_radio_rx_sock_create_and_bind_v3(v2x_radio_handle_t handle, uint16_t port_num,
+    int id_ist_len, uint32_t *id_list, int *sock, struct sockaddr_in6 *rx_sockaddr);
 
 /**
      Enable or disable the meta data report for the packets corresponding to the service IDs.
@@ -1525,10 +1484,8 @@ extern int v2x_radio_rx_sock_create_and_bind_v3(v2x_radio_handle_t handle,
      @return
      0 -- On success.
  */
-extern int v2x_radio_enable_rx_meta_data(v2x_radio_handle_t handle,
-                                         bool enable,
-                                         int id_list_len,
-                                         uint32_t *id_list);
+extern int v2x_radio_enable_rx_meta_data(
+    v2x_radio_handle_t handle, bool enable, int id_list_len, uint32_t *id_list);
 /**
     Creates Tx SPS socket, Tx Event socket and Rx socket with specified parameters.
     The socket is also bound as an AF_INET6 UDP type socket.
@@ -1621,17 +1578,10 @@ extern int v2x_radio_enable_rx_meta_data(v2x_radio_handle_t handle,
     The interface must be pre-initialized with v2x_radio_init(). The handle from
     that function must be used as the parameter in this function. @newpage
  */
-extern int v2x_radio_sock_create_and_bind(
-    v2x_radio_handle_t handle,
-    v2x_tx_sps_flow_info_t *tx_flow_info,
-    v2x_per_sps_reservation_calls_t *calls,
-    int tx_sps_portnum,
-    int tx_event_portnum,
-    int rx_portnum,
-    v2x_sid_list_t *rx_id_list,
-    v2x_sock_info_t *tx_sps_sock,
-    v2x_sock_info_t *tx_event_sock,
-    v2x_sock_info_t *rx_sock);
+extern int v2x_radio_sock_create_and_bind(v2x_radio_handle_t handle,
+    v2x_tx_sps_flow_info_t *tx_flow_info, v2x_per_sps_reservation_calls_t *calls,
+    int tx_sps_portnum, int tx_event_portnum, int rx_portnum, v2x_sid_list_t *rx_id_list,
+    v2x_sock_info_t *tx_sps_sock, v2x_sock_info_t *tx_event_sock, v2x_sock_info_t *rx_sock);
 
 /**
     Creates and binds a socket with a bandwidth-reserved (SPS) Tx flow with the
@@ -1726,14 +1676,9 @@ extern int v2x_radio_sock_create_and_bind(
     from that function must be used as the parameter in this function. @newpage
 */
 extern int v2x_radio_tx_sps_sock_create_and_bind(v2x_radio_handle_t handle,
-        v2x_tx_bandwidth_reservation_t *res,
-        v2x_per_sps_reservation_calls_t *calls,
-        int sps_portnum,
-        int event_portnum,
-        int *sps_sock,
-        struct sockaddr_in6 *sps_sockaddr,
-        int *event_sock,
-        struct sockaddr_in6 *event_sockaddr);
+    v2x_tx_bandwidth_reservation_t *res, v2x_per_sps_reservation_calls_t *calls, int sps_portnum,
+    int event_portnum, int *sps_sock, struct sockaddr_in6 *sps_sockaddr, int *event_sock,
+    struct sockaddr_in6 *event_sockaddr);
 
 /**
     Creates a socket with a bandwidth-reserved (SPS) Tx flow.
@@ -1809,11 +1754,8 @@ extern int v2x_radio_tx_sps_sock_create_and_bind(v2x_radio_handle_t handle,
     from that function must be used as the parameter in this function. @newpage
 */
 extern int v2x_radio_tx_sps_only_create(v2x_radio_handle_t handle,
-    v2x_tx_bandwidth_reservation_t *res,
-    v2x_per_sps_reservation_calls_t *calls,
-    int sps_portnum,
-    int *sps_sock,
-    struct sockaddr_in6 *sps_sockaddr);
+    v2x_tx_bandwidth_reservation_t *res, v2x_per_sps_reservation_calls_t *calls, int sps_portnum,
+    int *sps_sock, struct sockaddr_in6 *sps_sockaddr);
 
 /**
     Adjusts the reservation for transmit bandwidth.
@@ -1849,9 +1791,9 @@ extern int v2x_radio_tx_sps_only_create(v2x_radio_handle_t handle,
     An SPS flow must have been successfully initialized with the
     v2x_radio_tx_sps_sock_create_and_bind(). @newpage
  */
-extern v2x_status_enum_type v2x_radio_tx_reservation_change(int *sps_sock,
-        v2x_tx_bandwidth_reservation_t *updated_reservation);
-/** @} *//* end_addtogroup telematics_cv2x_c_radio */
+extern v2x_status_enum_type v2x_radio_tx_reservation_change(
+    int *sps_sock, v2x_tx_bandwidth_reservation_t *updated_reservation);
+/** @} */ /* end_addtogroup telematics_cv2x_c_radio */
 
 /** @ingroup v2x_deprecated_radio
     Obsolete. This API is not supported and will be removed in the future.
@@ -1905,11 +1847,8 @@ extern void v2x_radio_tx_flush(char *interface);
      - EAFNOSUPPORT - On failure to find the interface.
      - EACCES - On failure to get the MAC address of the device. @newpage
  */
-extern int v2x_radio_tx_event_sock_create_and_bind(const char *interface,
-        int v2x_id,
-        int event_portnum,
-        struct sockaddr_in6 *event_sock_addr,
-        int *sock);
+extern int v2x_radio_tx_event_sock_create_and_bind(const char *interface, int v2x_id,
+    int event_portnum, struct sockaddr_in6 *event_sock_addr, int *sock);
 
 /**
     Requests a channel utilization (CBP/CBR) measurement result on a
@@ -1943,8 +1882,8 @@ extern int v2x_radio_tx_event_sock_create_and_bind(const char *interface,
     The interface must be pre-initialized with v2x_radio_init() or v2x_radio_init_v2(). The handle
     from that function must be used as the parameter in this function. @newpage
  */
-extern v2x_status_enum_type v2x_radio_start_measurements(v2x_radio_handle_t handle,
-        v2x_chan_meas_params_t *measure_this_way);
+extern v2x_status_enum_type v2x_radio_start_measurements(
+    v2x_radio_handle_t handle, v2x_chan_meas_params_t *measure_this_way);
 
 /**
     Discontinues any periodic MAC/Phy channel measurements and the reporting of
@@ -1963,7 +1902,7 @@ extern v2x_status_enum_type v2x_radio_start_measurements(v2x_radio_handle_t hand
     v2x_radio_start_measurements(). @newpage
  */
 extern v2x_status_enum_type v2x_radio_stop_measurements(v2x_radio_handle_t handle);
-/** @} *//* end_addtogroup telematics_cv2x_c_radio */
+/** @} */ /* end_addtogroup telematics_cv2x_c_radio */
 
 /** @ingroup v2x_deprecated_radio
     Obsolete. This API is not supported and will be removed in the future.
@@ -2064,8 +2003,7 @@ extern v2x_event_t cv2x_status_poll(uint64_t *status_age_useconds);
      - EAFNOSUPPORT - On failure to find the interface.
      - EACCES - On failure to get the MAC address of the device. @newpage
  */
-extern int v2x_radio_trigger_l2_update(
-    v2x_radio_handle_t handle);
+extern int v2x_radio_trigger_l2_update(v2x_radio_handle_t handle);
 
 /**
     Updates the list of malicious and trusted IDs tracked by the modem.
@@ -2090,9 +2028,8 @@ extern int v2x_radio_trigger_l2_update(
      - EACCES - On failure to get the MAC address of the device. @newpage
  */
 int v2x_radio_update_trusted_ue_list(unsigned int malicious_list_len,
-                                     unsigned int malicious_list[MAX_MALICIOUS_IDS_LIST_LEN],
-                                     unsigned int trusted_list_len,
-                                     trusted_ue_info_t trusted_list[MAX_TRUSTED_IDS_LIST_LEN]);
+    unsigned int malicious_list[MAX_MALICIOUS_IDS_LIST_LEN], unsigned int trusted_list_len,
+    trusted_ue_info_t trusted_list[MAX_TRUSTED_IDS_LIST_LEN]);
 
 /**
     Creates and binds a socket with a bandwidth-reserved (SPS) Tx flow with the
@@ -2191,15 +2128,9 @@ int v2x_radio_update_trusted_ue_list(unsigned int malicious_list_len,
     The interface must be pre-initialized with v2x_radio_init() or v2x_radio_init_v2(). The handle
     from that function must be used as the parameter in this function. @newpage
 */
-extern int v2x_radio_tx_sps_sock_create_and_bind_v2(
-    v2x_radio_handle_t handle,
-    v2x_tx_sps_flow_info_t *sps_flow_info,
-    v2x_per_sps_reservation_calls_t *calls,
-    int sps_portnum,
-    int event_portnum,
-    int *sps_sock,
-    struct sockaddr_in6 *sps_sockaddr,
-    int *event_sock,
+extern int v2x_radio_tx_sps_sock_create_and_bind_v2(v2x_radio_handle_t handle,
+    v2x_tx_sps_flow_info_t *sps_flow_info, v2x_per_sps_reservation_calls_t *calls, int sps_portnum,
+    int event_portnum, int *sps_sock, struct sockaddr_in6 *sps_sockaddr, int *event_sock,
     struct sockaddr_in6 *event_sockaddr);
 
 /**
@@ -2275,11 +2206,8 @@ extern int v2x_radio_tx_sps_sock_create_and_bind_v2(
     from that function must be used as the parameter in this function. @newpage
 */
 int v2x_radio_tx_sps_only_create_v2(v2x_radio_handle_t handle,
-    v2x_tx_sps_flow_info_t *sps_flow_info,
-    v2x_per_sps_reservation_calls_t *calls,
-    int sps_portnum,
-    int *sps_sock,
-    struct sockaddr_in6 *sps_sockaddr);
+    v2x_tx_sps_flow_info_t *sps_flow_info, v2x_per_sps_reservation_calls_t *calls, int sps_portnum,
+    int *sps_sock, struct sockaddr_in6 *sps_sockaddr);
 
 /**
     Adjusts the reservation for transmit bandwidth.
@@ -2320,10 +2248,8 @@ int v2x_radio_tx_sps_only_create_v2(v2x_radio_handle_t handle,
     v2x_radio_tx_sps_sock_create_and_bind_v2(). @newpage
  */
 extern v2x_status_enum_type v2x_radio_tx_reservation_change_v2(
-    int *sps_sock,
-    v2x_tx_sps_flow_info_t *updated_flow_info);
-/** @} *//* end_addtogroup telematics_cv2x_c_radio */
-
+    int *sps_sock, v2x_tx_sps_flow_info_t *updated_flow_info);
+/** @} */ /* end_addtogroup telematics_cv2x_c_radio */
 
 /** @ingroup v2x_deprecated_radio
     Deprecated. Pass #traffic_ip_type_t on flow creation.
@@ -2371,12 +2297,8 @@ extern v2x_status_enum_type v2x_radio_tx_reservation_change_v2(
      - EAFNOSUPPORT - On failure to find the interface.
      - EACCES - On failure to get the MAC address of the device. @newpage
  */
-extern int v2x_radio_tx_event_sock_create_and_bind_v2(
-    const char *interface,
-    int v2x_id,
-    int event_portnum,
-    v2x_tx_flow_info_t *event_flow_info,
-    struct sockaddr_in6 *event_sock_addr,
+extern int v2x_radio_tx_event_sock_create_and_bind_v2(const char *interface, int v2x_id,
+    int event_portnum, v2x_tx_flow_info_t *event_flow_info, struct sockaddr_in6 *event_sock_addr,
     int *sock);
 
 /** @addtogroup telematics_cv2x_c_radio
@@ -2413,8 +2335,7 @@ extern int v2x_radio_tx_event_sock_create_and_bind_v2(
     v2x_radio_tx_event_sock_create_and_bind_v3(). @newpage
  */
 extern v2x_status_enum_type v2x_radio_tx_event_flow_info_change(
-    int *sock,
-    v2x_tx_flow_info_t *updated_flow_info);
+    int *sock, v2x_tx_flow_info_t *updated_flow_info);
 
 /**
     Starts V2X mode.
@@ -2506,10 +2427,8 @@ extern v2x_status_enum_type stop_v2x_mode();
     #V2X_RADIO_HANDLE_BAD -- If there is an error. No initialization callback
     is made. @newpage
  */
-v2x_radio_handle_t v2x_radio_init_v2(traffic_ip_type_t ip_type,
-                                     v2x_concurrency_sel_t mode,
-                                     v2x_radio_calls_t *callbacks_p,
-                                     void *ctx_p);
+v2x_radio_handle_t v2x_radio_init_v2(traffic_ip_type_t ip_type, v2x_concurrency_sel_t mode,
+    v2x_radio_calls_t *callbacks_p, void *ctx_p);
 
 /**
     Initializes Cv2x radio and sets the callback that will be used when events
@@ -2558,11 +2477,8 @@ v2x_radio_handle_t v2x_radio_init_v2(traffic_ip_type_t ip_type,
     Use @ref v2x_register_ext_radio_status_listener to register a listener for CV2X overall
     Tx/Rx status, then use @ref v2x_get_ext_radio_status to get current V2X overall radio status.
  */
-int v2x_radio_init_v3(v2x_concurrency_sel_t mode,
-                      v2x_radio_calls_t *callbacks_p,
-                      void *ctx_p,
-                      v2x_radio_handle_t *ip_handle_p,
-                      v2x_radio_handle_t *non_ip_handle_p);
+int v2x_radio_init_v3(v2x_concurrency_sel_t mode, v2x_radio_calls_t *callbacks_p, void *ctx_p,
+    v2x_radio_handle_t *ip_handle_p, v2x_radio_handle_t *non_ip_handle_p);
 
 /**
     Opens and binds an event-driven socket (one with no bandwidth reservation).
@@ -2607,13 +2523,9 @@ int v2x_radio_init_v3(v2x_concurrency_sel_t mode,
      - EAFNOSUPPORT - On failure to find the interface.
      - EACCES - On failure to get the MAC address of the device.
  */
-int v2x_radio_tx_event_sock_create_and_bind_v3(
-        traffic_ip_type_t ip_type,
-        int v2x_id,
-        int event_portnum,
-        v2x_tx_flow_info_t *event_flow_info,
-        struct sockaddr_in6 *event_sockaddr,
-        int *sock);
+int v2x_radio_tx_event_sock_create_and_bind_v3(traffic_ip_type_t ip_type, int v2x_id,
+    int event_portnum, v2x_tx_flow_info_t *event_flow_info, struct sockaddr_in6 *event_sockaddr,
+    int *sock);
 
 /**
     Returns interface name set during radio initialization.
@@ -2634,7 +2546,7 @@ int v2x_radio_tx_event_sock_create_and_bind_v3(
     #V2X_STATUS_FAIL - If there is an error. Interface name will be an
     empty string. @newpage
  */
-v2x_status_enum_type get_iface_name(traffic_ip_type_t ip_type, char * iface_name, size_t buffer_len);
+v2x_status_enum_type get_iface_name(traffic_ip_type_t ip_type, char *iface_name, size_t buffer_len);
 
 /**
     Creates a TCP socket for event Tx and Rx. The socket is bound as an AF_INET6 TCP
@@ -2695,11 +2607,8 @@ v2x_status_enum_type get_iface_name(traffic_ip_type_t ip_type, char * iface_name
     v2x_radio_init(). The handle from that function must be used as the
     parameter in this function. @newpage
  */
-extern int v2x_radio_tcp_sock_create_and_bind(
-    v2x_radio_handle_t handle,
-    const v2x_tx_flow_info_t *event_info,
-    const socket_info_t *sock_info,
-    int *sock_fd,
+extern int v2x_radio_tcp_sock_create_and_bind(v2x_radio_handle_t handle,
+    const v2x_tx_flow_info_t *event_info, const socket_info_t *sock_info, int *sock_fd,
     struct sockaddr_in6 *sockaddr);
 
 /**
@@ -2732,7 +2641,7 @@ v2x_status_enum_type v2x_set_peak_tx_power(int8_t txPower);
 
     @returns V2X_STATUS_SUCCESS on success. Error status otherwise.
  */
-v2x_status_enum_type v2x_set_l2_filters(uint32_t list_len, src_l2_filter_info* list_array);
+v2x_status_enum_type v2x_set_l2_filters(uint32_t list_len, src_l2_filter_info *list_array);
 
 /**
     Remove specific src L2 ID list for filtering.
@@ -2746,7 +2655,7 @@ v2x_status_enum_type v2x_set_l2_filters(uint32_t list_len, src_l2_filter_info* l
 
     @returns V2X_STATUS_SUCCESS on success. Error status otherwise.
  */
-v2x_status_enum_type v2x_remove_l2_filters(uint32_t list_len, uint32_t* l2_id_list);
+v2x_status_enum_type v2x_remove_l2_filters(uint32_t list_len, uint32_t *l2_id_list);
 
 /**
     Registers a listener for CV2X Tx status report.
@@ -2773,8 +2682,7 @@ v2x_status_enum_type v2x_remove_l2_filters(uint32_t list_len, uint32_t* l2_id_li
     CV2X radio must be pre-initialized with @ref v2x_radio_init_v2() or v2x_radio_init_v3().
  */
 v2x_status_enum_type v2x_register_tx_status_report_listener(
-    uint16_t port,
-    v2x_tx_status_report_listener callback);
+    uint16_t port, v2x_tx_status_report_listener callback);
 
 /**
     Deregisters a listener for CV2X Tx status report.
@@ -2812,7 +2720,7 @@ v2x_status_enum_type v2x_deregister_tx_status_report_listener(uint16_t port);
 
     @returns V2X_STATUS_SUCCESS on success. Error status otherwise.
  */
-v2x_status_enum_type v2x_set_global_IPaddr(uint8_t prefix_len, uint8_t* ipv6_addr);
+v2x_status_enum_type v2x_set_global_IPaddr(uint8_t prefix_len, uint8_t *ipv6_addr);
 
 /**
     Set CV2X IP interface global IP unicast routing information.
@@ -2823,7 +2731,7 @@ v2x_status_enum_type v2x_set_global_IPaddr(uint8_t prefix_len, uint8_t* ipv6_add
 
     @returns V2X_STATUS_SUCCESS on success. Error status otherwise.
  */
-v2x_status_enum_type v2x_set_ip_routing_info(uint8_t* dest_mac_addr);
+v2x_status_enum_type v2x_set_ip_routing_info(uint8_t *dest_mac_addr);
 
 /**
     Get current V2X overall radio status and per pool status.
@@ -2834,7 +2742,7 @@ v2x_status_enum_type v2x_set_ip_routing_info(uint8_t* dest_mac_addr);
 
     @returns V2X_STATUS_SUCCESS on success. Error status otherwise.
  */
-v2x_status_enum_type v2x_get_ext_radio_status(v2x_radio_status_ex_t* status);
+v2x_status_enum_type v2x_get_ext_radio_status(v2x_radio_status_ex_t *status);
 
 /**
     Registers a listener for CV2X overall Tx/Rx status and per pool status.
@@ -2851,8 +2759,7 @@ v2x_status_enum_type v2x_get_ext_radio_status(v2x_radio_status_ex_t* status);
     @par
     #V2X_STATUS_FAIL -- If there is an error.
  */
-v2x_status_enum_type v2x_register_ext_radio_status_listener(
-    v2x_ext_radio_status_listener callback);
+v2x_status_enum_type v2x_register_ext_radio_status_listener(v2x_ext_radio_status_listener callback);
 
 /**
     Get the current V2X SLSS Rx information.
@@ -2862,7 +2769,7 @@ v2x_status_enum_type v2x_register_ext_radio_status_listener(
 
     @returns V2X_STATUS_SUCCESS on success. Error status otherwise.
  */
-v2x_status_enum_type v2x_get_slss_rx_info(v2x_slss_rx_info_t* slss_info);
+v2x_status_enum_type v2x_get_slss_rx_info(v2x_slss_rx_info_t *slss_info);
 
 /**
     Registers a listener for CV2X SLSS Rx information.
@@ -2936,7 +2843,7 @@ v2x_status_enum_type v2x_inject_coarse_utc_time(uint64_t utc);
  */
 v2x_status_enum_type v2x_inject_vehicle_speed(uint32_t speed);
 
-/** @} *//* end_addtogroup telematics_cv2x_c_radio */
+/** @} */ /* end_addtogroup telematics_cv2x_c_radio */
 
 /*
  * Testing functions mainly for sim environment
@@ -2951,4 +2858,4 @@ void v2x_disable_socket_connect();
 }
 #endif
 
-#endif // TELUX_CV2X_LEGACY_V2X_RADIO_API_H
+#endif  // TELUX_CV2X_LEGACY_V2X_RADIO_API_H

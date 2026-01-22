@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <iostream>
 #include <memory>
 #include <chrono>
@@ -48,42 +54,42 @@ extern "C" {
 const std::string MAPS_URL = "https://www.google.com/maps/search/?api=1&query=";
 
 void MyLocationListener::onDetailedLocationUpdate(
-   const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo) {
-   std::string locMsg = MAPS_URL + std::to_string(locationInfo->getLatitude()) + ","
-                        + std::to_string(locationInfo->getLongitude());
+    const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo) {
+    std::string locMsg = MAPS_URL + std::to_string(locationInfo->getLatitude()) + ","
+                         + std::to_string(locationInfo->getLongitude());
 
-   // Instantiate ICommandResponseCallback
-   auto smsCb = std::make_shared<SmsCallback>();
+    // Instantiate ICommandResponseCallback
+    auto smsCb = std::make_shared<SmsCallback>();
 
-   std::lock_guard<std::mutex> locationLock(locationLock_);
-   // if smsManager is not empty then send an SMS and remove location listener.
-   if(smsManager_ && requestReceived_) {
-      smsManager_->sendSms(locMsg, senderNumber_, smsCb);
-      requestReceived_ = false;
-   }
+    std::lock_guard<std::mutex> locationLock(locationLock_);
+    // if smsManager is not empty then send an SMS and remove location listener.
+    if (smsManager_ && requestReceived_) {
+        smsManager_->sendSms(locMsg, senderNumber_, smsCb);
+        requestReceived_ = false;
+    }
 }
 
 MyLocationListener::MyLocationListener() {
-   // Get Default SMS manager instance
-   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   smsManager_ = phoneFactory.getSmsManager();
+    // Get Default SMS manager instance
+    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+    smsManager_        = phoneFactory.getSmsManager();
 }
 
 void MyLocationListener::setRequestReceived(bool requestReceived, std::string senderNumber) {
-   // Mark requestReceived as true so that when location fix is received, it can be sent as an SMS
-   std::lock_guard<std::mutex> locationLock(locationLock_);
-   requestReceived_ = requestReceived;
-   senderNumber_ = senderNumber;
+    // Mark requestReceived as true so that when location fix is received, it can be sent as an SMS
+    std::lock_guard<std::mutex> locationLock(locationLock_);
+    requestReceived_ = requestReceived;
+    senderNumber_    = senderNumber;
 }
 
 MyLocationCommandCallback::MyLocationCommandCallback() {
 }
 
 void MyLocationCommandCallback::commandResponse(telux::common::ErrorCode error) {
-   if(error == telux::common::ErrorCode::SUCCESS) {
-      PRINT_NOTIFICATION << "startLocationServiceResponse successfully" << std::endl;
-   } else {
-      PRINT_NOTIFICATION << "startLocationServiceResponse error = " << static_cast<int>(error)
-                         << std::endl;
-   }
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        PRINT_NOTIFICATION << "startLocationServiceResponse successfully" << std::endl;
+    } else {
+        PRINT_NOTIFICATION << "startLocationServiceResponse error = " << static_cast<int>(error)
+                           << std::endl;
+    }
 }

@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_ProviderMacAddress_H_
-#define	_ProviderMacAddress_H_
-
+#ifndef _ProviderMacAddress_H_
+#define _ProviderMacAddress_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* ProviderMacAddress */
-typedef MACaddress_t	 ProviderMacAddress_t;
+typedef MACaddress_t ProviderMacAddress_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_ProviderMacAddress;
@@ -37,5 +36,5 @@ per_type_encoder_f ProviderMacAddress_encode_uper;
 }
 #endif
 
-#endif	/* _ProviderMacAddress_H_ */
+#endif /* _ProviderMacAddress_H_ */
 #include <asn_internal.h>

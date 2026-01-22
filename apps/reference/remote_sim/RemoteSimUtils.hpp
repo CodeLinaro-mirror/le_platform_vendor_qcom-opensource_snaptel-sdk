@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file    RemoteSimUtils.hpp
  * @brief   This file contains declarations for the RemoteSimUtils class, which
@@ -38,11 +44,11 @@
 #define REMOTESIMUTILS_HPP
 
 extern "C" {
-    #include <syslog.h>
+#include <syslog.h>
 }
 
 class RemoteSimUtils {
-public:
+ public:
     static void printLog(int level, const char *fmt, ...);
 
     static bool enableDebug_;
@@ -50,10 +56,10 @@ public:
 };
 
 #define LOGI(fmt, args...) \
-    RemoteSimUtils::printLog(LOG_NOTICE, "[I][%s:%d] " fmt, __func__, __LINE__, ## args)
+    RemoteSimUtils::printLog(LOG_NOTICE, "[I][%s:%d] " fmt, __func__, __LINE__, ##args)
 #define LOGD(fmt, args...) \
-    RemoteSimUtils::printLog(LOG_DEBUG, "[D][%s:%d] " fmt, __func__, __LINE__, ## args)
+    RemoteSimUtils::printLog(LOG_DEBUG, "[D][%s:%d] " fmt, __func__, __LINE__, ##args)
 #define LOGE(fmt, args...) \
-    RemoteSimUtils::printLog(LOG_ERR, "[E][%s:%d] " fmt, __func__, __LINE__, ## args)
+    RemoteSimUtils::printLog(LOG_ERR, "[E][%s:%d] " fmt, __func__, __LINE__, ##args)
 
-#endif // REMOTESIMUTILS_HPP
+#endif  // REMOTESIMUTILS_HPP

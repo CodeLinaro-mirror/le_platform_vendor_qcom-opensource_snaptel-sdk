@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <regex>
@@ -104,7 +104,8 @@ telux::common::Status TcuActivityManagerImpl::init(telux::common::InitResponseCb
         return telux::common::Status::FAILED;
     }
 
-    svcStatusListenerMgr_ = std::make_shared<telux::common::ListenerManager<IServiceStatusListener>>();
+    svcStatusListenerMgr_
+        = std::make_shared<telux::common::ListenerManager<IServiceStatusListener>>();
     if (!svcStatusListenerMgr_) {
         LOG(ERROR, __FUNCTION__, " FAILED to create service state ListenerManager instance");
         cleanup();
@@ -257,7 +258,7 @@ telux::common::Status TcuActivityManagerImpl::sendActivityStateAck(
     StateChangeResponse ack, TcuActivityState state) {
     LOG(DEBUG, __FUNCTION__);
     telux::common::Status status = telux::common::Status::FAILED;
-    status = grpcClient_->sendActivityStateAck(ack, state);
+    status                       = grpcClient_->sendActivityStateAck(ack, state);
     return status;
 }
 
@@ -269,7 +270,7 @@ telux::common::Status TcuActivityManagerImpl::sendActivityStateAck(TcuActivitySt
 telux::common::Status TcuActivityManagerImpl::setModemActivityState(TcuActivityState state) {
     LOG(INFO, __FUNCTION__, " state: ", static_cast<int>(state));
     telux::common::Status status = telux::common::Status::FAILED;
-    status = grpcClient_->setModemActivityState(state);
+    status                       = grpcClient_->setModemActivityState(state);
     return status;
 }
 
@@ -286,19 +287,19 @@ telux::common::Status TcuActivityManagerImpl::getAllMachineNames(
     return telux::common::Status::SUCCESS;
 }
 
-telux::common::ErrorCode TcuActivityManagerImpl::getActivityState(std::string machineName,
-    TcuActivityState &state) {
+telux::common::ErrorCode TcuActivityManagerImpl::getActivityState(
+    std::string machineName, TcuActivityState &state) {
     LOG(DEBUG, __FUNCTION__);
-    if((config_.clientType == ClientType::SLAVE) && (machineName != "PVM")) {
+    if ((config_.clientType == ClientType::SLAVE) && (machineName != "PVM")) {
         return telux::common::ErrorCode::OPERATION_NOT_ALLOWED;
     }
-    if(machineName != "PVM") {
+    if (machineName != "PVM") {
         LOG(DEBUG, __FUNCTION__, " machinename not found ");
         return telux::common::ErrorCode::INVALID_ARGUMENTS;
     }
-    telux::common::Status status            = telux::common::Status::FAILED;
-    status = grpcClient_->getActivityState(state);
-    if(status == telux::common::Status::SUCCESS) {
+    telux::common::Status status = telux::common::Status::FAILED;
+    status                       = grpcClient_->getActivityState(state);
+    if (status == telux::common::Status::SUCCESS) {
         return telux::common::ErrorCode::SUCCESS;
     }
     LOG(DEBUG, __FUNCTION__, " Failed - ", static_cast<int>(status));
@@ -332,7 +333,7 @@ void TcuActivityManagerImpl::onTcuStateUpdate(TcuActivityState state, std::strin
     }
     // If there are no listeners, send acknowledgement
     if (applisteners.size() == 0) {
-        LOG(DEBUG, __FUNCTION__ , " Sending ACK");
+        LOG(DEBUG, __FUNCTION__, " Sending ACK");
         if (state == TcuActivityState::RESUME) {
             return;
         }
@@ -356,11 +357,11 @@ void TcuActivityManagerImpl::onSlaveAckStatusUpdate(std::vector<std::string> nac
     std::vector<ClientInfo> nackResponseClients;
     std::vector<ClientInfo> unresponsiveClients;
 
-    for(auto client: nackList) {
+    for (auto client : nackList) {
         nackResponseClients.push_back({client, machineName});
     }
 
-    for(auto client: noackList) {
+    for (auto client : noackList) {
         unresponsiveClients.push_back({client, machineName});
     }
 
@@ -371,7 +372,7 @@ void TcuActivityManagerImpl::onSlaveAckStatusUpdate(std::vector<std::string> nac
         LOG(ERROR, __FUNCTION__, " listenerMgr is null");
     }
 
-    if(!nackResponseClients.empty() || !unresponsiveClients.empty()) {
+    if (!nackResponseClients.empty() || !unresponsiveClients.empty()) {
         status = telux::common::Status::NOTREADY;
     }
 

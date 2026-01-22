@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef TEST_TCPSERVER_HPP
@@ -16,105 +16,116 @@
 #include <unistd.h>
 #include <cstring>
 
-
 namespace tcp_test {
 
-template<typename T>
+template <typename T>
 class TCPServerWorker {
 
-    public:
-    TCPServerWorker() {}
-    virtual void onAccept(std::string) {}
-    virtual void messageReceived(T &msg) {}
-    virtual void onDisconnect() {}
+ public:
+    TCPServerWorker() {
+    }
+    virtual void onAccept(std::string) {
+    }
+    virtual void messageReceived(T &msg) {
+    }
+    virtual void onDisconnect() {
+    }
 };
 
-template<typename T>
+template <typename T>
 class TCPServer {
 
-    public:
+ public:
     TCPServer(std::shared_ptr<TCPServerWorker<T>> worker, int serverPort, std::string strServerAddr,
-        std::string serverIpInterface) : serverPort_(serverPort), worker_(worker),
-        strServerAddr_(strServerAddr), strServerInterface_(serverIpInterface) {
+        std::string serverIpInterface)
+       : serverPort_(serverPort)
+       , worker_(worker)
+       , strServerAddr_(strServerAddr)
+       , strServerInterface_(serverIpInterface) {
 
         if (pipe(exitPipe_) == -1) {
             std::cout << "pipe: " << std::string(strerror(errno)) << std::endl;
         }
     }
 
-    ~TCPServer() { disconnect(); }
+    ~TCPServer() {
+        disconnect();
+    }
 
     bool startServer() {
-        receivedStopServer_ = false;
-        struct sockaddr *sockAddr = NULL;
+        receivedStopServer_         = false;
+        struct sockaddr *sockAddr   = NULL;
         struct sockaddr *clientAddr = NULL;
-        int reuse = 1;
-        int bnd = 0;
-        socklen_t sockSize = 0;
-        int domain = 0;
+        int reuse                   = 1;
+        int bnd                     = 0;
+        socklen_t sockSize          = 0;
+        int domain                  = 0;
 
         v4ServerAddr_ = {};
         v6ServerAddr_ = {};
         v4ClientAddr_ = {};
         v6ClientAddr_ = {};
         if (inet_pton(AF_INET, strServerAddr_.c_str(), &(v4ServerAddr_.sin_addr))) {
-            domain = AF_INET;
+            domain                   = AF_INET;
             v4ServerAddr_.sin_family = AF_INET;
-            v4ServerAddr_.sin_port = htons(serverPort_);
-            sockAddr = reinterpret_cast<struct sockaddr*>(&v4ServerAddr_);
-            clientAddr = reinterpret_cast<struct sockaddr*>(&v4ClientAddr_);
-            sockSize = sizeof(sockaddr_in);
+            v4ServerAddr_.sin_port   = htons(serverPort_);
+            sockAddr                 = reinterpret_cast<struct sockaddr *>(&v4ServerAddr_);
+            clientAddr               = reinterpret_cast<struct sockaddr *>(&v4ClientAddr_);
+            sockSize                 = sizeof(sockaddr_in);
         } else if (inet_pton(AF_INET6, strServerAddr_.c_str(), &(v6ServerAddr_.sin6_addr))) {
-            domain = AF_INET6;
+            domain                    = AF_INET6;
             v6ServerAddr_.sin6_family = AF_INET6;
-            v6ServerAddr_.sin6_port = htons(serverPort_);
-            sockAddr = reinterpret_cast<struct sockaddr*>(&v6ServerAddr_);
-            clientAddr = reinterpret_cast<struct sockaddr*>(&v6ClientAddr_);
-            sockSize = sizeof(sockaddr_in6);
+            v6ServerAddr_.sin6_port   = htons(serverPort_);
+            sockAddr                  = reinterpret_cast<struct sockaddr *>(&v6ServerAddr_);
+            clientAddr                = reinterpret_cast<struct sockaddr *>(&v6ClientAddr_);
+            sockSize                  = sizeof(sockaddr_in6);
         } else {
             return false;
         }
 
-        listenSocket_ = socket(domain, SOCK_STREAM, 0 );
+        listenSocket_ = socket(domain, SOCK_STREAM, 0);
 
-        if (listenSocket_ == -1 ) {
-            std::cout << " socket : "<< std::string(strerror(errno));
+        if (listenSocket_ == -1) {
+            std::cout << " socket : " << std::string(strerror(errno));
             return false;
         }
         setsockopt(listenSocket_, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
 
         bnd = bind(listenSocket_, (struct sockaddr *)sockAddr, sockSize);
-        if (bnd < 0 ) {
-            std::cout << " bind : "<< std::string(strerror(errno));
+        if (bnd < 0) {
+            std::cout << " bind : " << std::string(strerror(errno));
             return false;
         }
 
         listen(listenSocket_, 1);
         do {
             socket_ = accept(listenSocket_, (struct sockaddr *)clientAddr, &sockSize);
-            if (socket_ < 0 ) {
-                std::cout << " accept : "<< std::string(strerror(errno));
+            if (socket_ < 0) {
+                std::cout << " accept : " << std::string(strerror(errno));
                 return false;
             }
             int no = 0;
             setsockopt(socket_, SOL_SOCKET, SO_KEEPALIVE, &no, sizeof(int));
 
             if (!strServerInterface_.empty()) {
-                if (setsockopt(socket_, SOL_SOCKET, SO_BINDTODEVICE,
-                    strServerInterface_.c_str(), strServerInterface_.size()) != 0) {
-                    std::cout <<  " Failed to bind to device: ", strerror(errno);
+                if (setsockopt(socket_, SOL_SOCKET, SO_BINDTODEVICE, strServerInterface_.c_str(),
+                        strServerInterface_.size())
+                    != 0) {
+                    std::cout << " Failed to bind to device: ", strerror(errno);
                     return false;
                 }
             }
 
             char addrbuf[40];
-            switch(clientAddr->sa_family) {
+            switch (clientAddr->sa_family) {
                 case AF_INET:
-                    inet_ntop(AF_INET, &(((struct sockaddr_in *)clientAddr)->sin_addr), addrbuf, 40);
+                    inet_ntop(
+                        AF_INET, &(((struct sockaddr_in *)clientAddr)->sin_addr), addrbuf, 40);
                     clientPort_ = ntohs((((struct sockaddr_in *)clientAddr)->sin_port));
                     break;
                 case AF_INET6:
-                    inet_ntop(AF_INET6, &(((struct sockaddr_in6 *)clientAddr)->sin6_addr), addrbuf, 40);
+                    inet_ntop(
+                        AF_INET6, &(((struct sockaddr_in6 *)clientAddr)->sin6_addr), addrbuf, 40);
                     clientPort_ = ntohs((((struct sockaddr_in6 *)clientAddr)->sin6_port));
                     break;
                 default:
@@ -127,10 +138,10 @@ class TCPServer {
                 fd_set read_fds;
                 FD_ZERO(&read_fds);
                 FD_SET(socket_, &read_fds);
-                FD_SET(exitPipe_[0], &read_fds); // Add the exit pipe to the read set
+                FD_SET(exitPipe_[0], &read_fds);  // Add the exit pipe to the read set
 
-                int retval = select(std::max(socket_, exitPipe_[0]) + 1, &read_fds,
-                    NULL, NULL, NULL);
+                int retval
+                    = select(std::max(socket_, exitPipe_[0]) + 1, &read_fds, NULL, NULL, NULL);
                 if (retval == -1) {
                     std::cout << "select: " << std::string(strerror(errno)) << std::endl;
                     break;
@@ -139,10 +150,10 @@ class TCPServer {
                 if (FD_ISSET(socket_, &read_fds)) {
                     T msg;
                     memset(&msg, 0, sizeof(msg));
-                    ssize_t n = recv(socket_, static_cast<void *>(&msg), sizeof(msg)-1, 0);
-                    std::cout <<" length : " << n << " ";
+                    ssize_t n = recv(socket_, static_cast<void *>(&msg), sizeof(msg) - 1, 0);
+                    std::cout << " length : " << n << " ";
                     if (n <= 0) {
-                        std::cout << " recv : "<< std::string(strerror(errno));
+                        std::cout << " recv : " << std::string(strerror(errno));
                         worker_->onDisconnect();
                         break;
                     }
@@ -150,7 +161,7 @@ class TCPServer {
                 }
 
                 if (FD_ISSET(exitPipe_[0], &read_fds)) {
-                    break; // Exit the loop
+                    break;  // Exit the loop
                 }
             }
         } while (!receivedStopServer_);
@@ -159,9 +170,9 @@ class TCPServer {
     }
 
     void sendMessage(T *msg) {
-        if(socket_ != -1) {
+        if (socket_ != -1) {
             if (send(socket_, static_cast<const void *>(msg), sizeof(T), 0) != sizeof(T)) {
-                std::cout << " send : "<< std::string(strerror(errno));
+                std::cout << " send : " << std::string(strerror(errno));
                 worker_->onDisconnect();
                 close(socket_);
                 socket_ = -1;
@@ -173,38 +184,33 @@ class TCPServer {
 
     void disconnect() {
         std::cout << " Stopping TCP Server " << std::endl;
-        char signal = 'x';
+        char signal          = 'x';
         ssize_t bytesWritten = write(exitPipe_[1], &signal, 1);
         if (bytesWritten == -1) {
             std::cout << "write: " << std::string(strerror(errno)) << std::endl;
         }
-        if(listenSocket_ != -1) {
-            if(shutdown(listenSocket_, SHUT_RDWR) == -1) {
-                std::cout << " shutdown " << std::string(strerror(errno))
-                << std::endl;
+        if (listenSocket_ != -1) {
+            if (shutdown(listenSocket_, SHUT_RDWR) == -1) {
+                std::cout << " shutdown " << std::string(strerror(errno)) << std::endl;
             }
             if (close(listenSocket_) == -1) {
-                std::cout << " close " << std::string(strerror(errno))
-                << std::endl;
+                std::cout << " close " << std::string(strerror(errno)) << std::endl;
             }
         }
 
-        if(socket_ != -1) {
+        if (socket_ != -1) {
             if (shutdown(socket_, SHUT_RDWR) == -1) {
-                std::cout << "client  shutdown  "
-                << std::string(strerror(errno))<< std::endl;
+                std::cout << "client  shutdown  " << std::string(strerror(errno)) << std::endl;
             }
             if (close(socket_) == -1) {
-                std::cout << "client close " << std::string(strerror(errno))
-                << std::endl;
+                std::cout << "client close " << std::string(strerror(errno)) << std::endl;
             }
         }
         listenSocket_ = -1;
-        socket_ = -1;
+        socket_       = -1;
     }
 
-    private:
-
+ private:
     int serverPort_;
     int clientPort_;
     std::shared_ptr<TCPServerWorker<T>> worker_;
@@ -214,14 +220,13 @@ class TCPServer {
     struct sockaddr_in6 v6ServerAddr_;
     struct sockaddr_in v4ClientAddr_;
     struct sockaddr_in6 v6ClientAddr_;
-    int listenSocket_ = -1;
-    int socket_ = -1;
+    int listenSocket_                     = -1;
+    int socket_                           = -1;
     std::atomic<bool> receivedStopServer_ = {false};
     int exitPipe_[2];
     std::string strServerInterface_;
 };
 
-};
+};  // namespace tcp_test
 
-
-#endif // TEST_TCPSERVER_HPP
+#endif  // TEST_TCPSERVER_HPP

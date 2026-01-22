@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "CryptoAcceleratorManagerImpl.hpp"
@@ -18,7 +18,7 @@ std::unique_ptr<::securityStub::CryptoAcceleratorManagerService::Stub>
     CryptoAcceleratorManagerImpl::stub_;
 
 CryptoAcceleratorManagerImpl::CryptoAcceleratorManagerImpl()
-    : clientEventMgr_(ClientEventManager::getInstance()) {
+   : clientEventMgr_(ClientEventManager::getInstance()) {
     exitNow_ = false;
 }
 
@@ -36,8 +36,8 @@ CryptoAcceleratorManagerImpl::~CryptoAcceleratorManagerImpl() {
 }
 
 // Helper to convert Telux ECCCurve to gRPC EccCurve.
-securityStub::EccCurve
-CryptoAcceleratorManagerImpl::convertCurveTeluxToGrpc(telux::sec::ECCCurve teluxCurve) {
+securityStub::EccCurve CryptoAcceleratorManagerImpl::convertCurveTeluxToGrpc(
+    telux::sec::ECCCurve teluxCurve) {
 
     securityStub::EccCurve grpcCurve;
 
@@ -58,15 +58,15 @@ CryptoAcceleratorManagerImpl::convertCurveTeluxToGrpc(telux::sec::ECCCurve telux
             grpcCurve = securityStub::EccCurve::CURVE_BRAINPOOLP384R1;
             break;
         default:
-            grpcCurve = securityStub::EccCurve::CURVE_NISTP256; // Default or error
+            grpcCurve = securityStub::EccCurve::CURVE_NISTP256;  // Default or error
             break;
     }
     return grpcCurve;
 }
 
 // Helper to convert Telux RequestPriority to gRPC RequestPriority.
-securityStub::RequestPriority
-CryptoAcceleratorManagerImpl::convertPriorityTeluxToGrpc(telux::sec::RequestPriority teluxPriority) {
+securityStub::RequestPriority CryptoAcceleratorManagerImpl::convertPriorityTeluxToGrpc(
+    telux::sec::RequestPriority teluxPriority) {
 
     securityStub::RequestPriority grpcPriority;
 
@@ -78,7 +78,7 @@ CryptoAcceleratorManagerImpl::convertPriorityTeluxToGrpc(telux::sec::RequestPrio
             grpcPriority = securityStub::RequestPriority::REQ_PRIORITY_NORMAL;
             break;
         default:
-            grpcPriority = securityStub::RequestPriority::REQ_PRIORITY_NORMAL; // Default
+            grpcPriority = securityStub::RequestPriority::REQ_PRIORITY_NORMAL;  // Default
             break;
     }
     return grpcPriority;
@@ -99,11 +99,11 @@ CryptoAcceleratorManagerImpl::convertPriorityTeluxToGrpc(telux::sec::RequestPrio
  *ICryptoAcceleratorListener::onVerificationResult()| |                     |
  *ecqvPostDataForMultiplyAndAdd() | ICryptoAcceleratorListener::onCalculationResult() |
  * ------------------------------------------------------------------------------------------------
-*/
+ */
 telux::common::ErrorCode CryptoAcceleratorManagerImpl::init(
     Mode mode, std::weak_ptr<ICryptoAcceleratorListener> cryptoAccelListener) {
 
-    telux::common::ErrorCode ec = telux::common::ErrorCode::SUCCESS;
+    telux::common::ErrorCode ec  = telux::common::ErrorCode::SUCCESS;
     telux::common::Status status = telux::common::Status::SUCCESS;
     grpc::Status reqStatus{};
     grpc::ClientContext clientCtx{};
@@ -114,8 +114,7 @@ telux::common::ErrorCode CryptoAcceleratorManagerImpl::init(
     stub_ = CommonUtils::getGrpcStub<securityStub::CryptoAcceleratorManagerService>();
 
     status = clientEventMgr_.registerListener(shared_from_this(), CRYPTOACC_FILTER);
-    if ((status != telux::common::Status::SUCCESS) &&
-        (status != telux::common::Status::ALREADY)) {
+    if ((status != telux::common::Status::SUCCESS) && (status != telux::common::Status::ALREADY)) {
         LOG(ERROR, __FUNCTION__, " can't register with ClientEventManager");
         return telux::common::CommonUtils::toErrorCode(status);
     }
@@ -130,8 +129,8 @@ telux::common::ErrorCode CryptoAcceleratorManagerImpl::init(
 
     if (resultAndSsrListener) {
         try {
-            caListenerMgr_ =
-                std::make_shared<telux::common::ListenerManager<ICryptoAcceleratorListener>>();
+            caListenerMgr_
+                = std::make_shared<telux::common::ListenerManager<ICryptoAcceleratorListener>>();
         } catch (const std::exception &e) {
             LOG(ERROR, __FUNCTION__, " can't create ICryptoAcceleratorListener manager");
             return telux::common::ErrorCode::NO_MEMORY;
@@ -158,13 +157,12 @@ telux::common::ErrorCode CryptoAcceleratorManagerImpl::init(
 
     ec = static_cast<telux::common::ErrorCode>(response.ec());
     if (ec != telux::common::ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, "can't register with server, error code: ",
-            static_cast<int>(ec));
+        LOG(ERROR, __FUNCTION__, "can't register with server, error code: ", static_cast<int>(ec));
         return ec;
     }
 
     connectionInitialized_ = true;
-    currentServiceStatus_ = telux::common::ServiceStatus::SERVICE_AVAILABLE;
+    currentServiceStatus_  = telux::common::ServiceStatus::SERVICE_AVAILABLE;
 
     return telux::common::ErrorCode::SUCCESS;
 }
@@ -189,8 +187,8 @@ telux::common::ErrorCode CryptoAcceleratorManagerImpl::deinit() {
 
     ec = static_cast<telux::common::ErrorCode>(response.ec());
     if (ec != telux::common::ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, "can't deregister with server, error code: ",
-            static_cast<int>(ec));
+        LOG(ERROR, __FUNCTION__,
+            "can't deregister with server, error code: ", static_cast<int>(ec));
         return ec;
     }
 
@@ -218,7 +216,8 @@ void CryptoAcceleratorManagerImpl::onEventUpdate(google::protobuf::Any event) {
         /* Task queue is lock protected internally. Therefore, no locking is required
          * here to synchronize with deliverResultAsync/Sync(). Application will get
          * result and ssr event serially */
-        if (auto sp = std::dynamic_pointer_cast<ICryptoAcceleratorListener>(ssrListener[0].lock())) {
+        if (auto sp
+            = std::dynamic_pointer_cast<ICryptoAcceleratorListener>(ssrListener[0].lock())) {
             asyncResultAndSsrDispatcher_->submitTask([=] {
                 sp->onServiceStatusChange(serviceStatus);
                 LOG(DEBUG, __FUNCTION__, " new status ", static_cast<int>(serviceStatus));
@@ -240,12 +239,12 @@ void CryptoAcceleratorManagerImpl::onEventUpdate(google::protobuf::Any event) {
  * (`onVerificationResult` or `onCalculationResult`) based on the operation type.
  * A simulated delay can be introduced before delivery.
  */
-void CryptoAcceleratorManagerImpl::deliverResultAsync(securityStub::OperationResult result,
-                                                      int cbDelay) {
+void CryptoAcceleratorManagerImpl::deliverResultAsync(
+    securityStub::OperationResult result, int cbDelay) {
 
-    uint32_t uniqueId = result.id();
+    uint32_t uniqueId           = result.id();
     telux::common::ErrorCode ec = static_cast<telux::common::ErrorCode>(result.error_code());
-    std::vector<uint8_t> resultData(result.data().begin(), result.data().end()); // Copy bytes
+    std::vector<uint8_t> resultData(result.data().begin(), result.data().end());  // Copy bytes
     std::vector<std::weak_ptr<ICryptoAcceleratorListener>> eccListener;
 
     caListenerMgr_->getAvailableListeners(eccListener);
@@ -315,13 +314,13 @@ telux::common::ErrorCode CryptoAcceleratorManagerImpl::eccPostDigestForVerificat
         return telux::common::ErrorCode::TRANSPORT_ERROR;
     }
 
-    ec = static_cast<telux::common::ErrorCode>(response.error_code());
+    ec     = static_cast<telux::common::ErrorCode>(response.error_code());
     status = static_cast<telux::common::Status>(response.status());
-    delay = static_cast<int>(response.delay());
+    delay  = static_cast<int>(response.delay());
 
     if (status != telux::common::Status::SUCCESS) {
         LOG(ERROR, __FUNCTION__, " Operation failed with status: ", static_cast<int>(status));
-        return ec; // Return the specific error from the backend.
+        return ec;  // Return the specific error from the backend.
     }
 
     if (resultDeliveryMode_ == Mode::MODE_ASYNC_LISTENER) {
@@ -398,7 +397,6 @@ telux::common::ErrorCode CryptoAcceleratorManagerImpl::ecqvPostDataForMultiplyAn
     const ECCPoint &multiplicandPoint, const ECCPoint &addendPoint, const Scalar &scalar,
     telux::sec::ECCCurve curve, uint32_t uniqueId, telux::sec::RequestPriority priority) {
 
-
     securityStub::EcqvRequest request;
     grpc::ClientContext clientCtx{};
     securityStub::EcqvPostResponse response;
@@ -430,13 +428,13 @@ telux::common::ErrorCode CryptoAcceleratorManagerImpl::ecqvPostDataForMultiplyAn
         return telux::common::ErrorCode::TRANSPORT_ERROR;
     }
 
-    ec = static_cast<telux::common::ErrorCode>(response.error_code());
+    ec     = static_cast<telux::common::ErrorCode>(response.error_code());
     status = static_cast<telux::common::Status>(response.status());
-    delay = static_cast<int>(response.delay());
+    delay  = static_cast<int>(response.delay());
 
     if (status != telux::common::Status::SUCCESS) {
         LOG(ERROR, __FUNCTION__, " Operation failed with status: ", static_cast<int>(status));
-        return ec; // Return the specific error from the backend.
+        return ec;  // Return the specific error from the backend.
     }
 
     if (resultDeliveryMode_ == Mode::MODE_ASYNC_LISTENER) {
@@ -464,7 +462,6 @@ telux::common::ErrorCode CryptoAcceleratorManagerImpl::ecqvPointMultiplyAndAdd(
     const ECCPoint &multiplicandPoint, const ECCPoint &addendPoint, const Scalar &scalar,
     telux::sec::ECCCurve curve, uint32_t uniqueId, telux::sec::RequestPriority priority,
     std::vector<uint8_t> &resultData) {
-
 
     securityStub::EcqvRequest request;
     grpc::ClientContext clientCtx{};
@@ -516,7 +513,6 @@ telux::common::ErrorCode CryptoAcceleratorManagerImpl::getAsyncResults(
     std::vector<OperationResult> &results, uint32_t numResultsToRead, int32_t timeout,
     uint32_t &numResultsRead) {
 
-
     securityStub::GetAsyncResultsRequest request;
     securityStub::GetAsyncResultsResponse response{};
     grpc::ClientContext clientCtx{};
@@ -552,14 +548,14 @@ telux::common::ErrorCode CryptoAcceleratorManagerImpl::getAsyncResults(
     }
 
     numResultsRead = response.numresultsread();
-    results.clear(); // Clear any existing data in the output vector.
-    results.reserve(numResultsRead); // Reserve space for efficiency.
+    results.clear();  // Clear any existing data in the output vector.
+    results.reserve(numResultsRead);  // Reserve space for efficiency.
 
     for (int i = 0; i < response.results_size(); ++i) {
-        const auto& grpc_op_result = response.results(i);
-        telux_op_result.id = grpc_op_result.id();
+        const auto &grpc_op_result    = response.results(i);
+        telux_op_result.id            = grpc_op_result.id();
         telux_op_result.operationType = static_cast<uint32_t>(grpc_op_result.operationtype());
-        telux_op_result.errCode = grpc_op_result.error_code();
+        telux_op_result.errCode       = grpc_op_result.error_code();
 
         data_len = std::min((size_t)CA_RESULT_DATA_LENGTH, (size_t)grpc_op_result.data().length());
         memcpy(telux_op_result.data, grpc_op_result.data().data(), data_len);

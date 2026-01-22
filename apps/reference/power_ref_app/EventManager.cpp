@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "EventManager.hpp"
@@ -25,14 +25,14 @@ bool EventManager::init() {
     std::promise<telux::common::ServiceStatus> prom = std::promise<telux::common::ServiceStatus>();
 
     ClientInstanceConfig config;
-    config.clientName = DAEMON_NAME + std::to_string(getpid());
-    config.clientType = ClientType::MASTER;
+    config.clientName  = DAEMON_NAME + std::to_string(getpid());
+    config.clientType  = ClientType::MASTER;
     config.machineName = ALL_MACHINES;
-    tcuActivityStateMgr_ = powerFactory.getTcuActivityManager(config,
-                                           [&](telux::common::ServiceStatus status) {
-                                               LOG(DEBUG, __FUNCTION__, " Init Callback called ");
-                                               prom.set_value(status);
-                                           });
+    tcuActivityStateMgr_
+        = powerFactory.getTcuActivityManager(config, [&](telux::common::ServiceStatus status) {
+              LOG(DEBUG, __FUNCTION__, " Init Callback called ");
+              prom.set_value(status);
+          });
     if (tcuActivityStateMgr_ == nullptr) {
         LOG(ERROR, __FUNCTION__, " ERROR - Failed to get manager instance");
         initSucceed = false;
@@ -47,12 +47,12 @@ bool EventManager::init() {
         // considering during boot up system state will be resume
         tcuActivityStateMgr_->setActivityState(
             TcuActivityState::RESUME, ALL_MACHINES, [this](ErrorCode errorCode) {
-            if (errorCode == telux::common::ErrorCode::SUCCESS) {
-                LOG(DEBUG, " Setting resume in beginning Command initiated successfully " );
-            } else {
-                LOG(ERROR,  " Setting resume in beginning Command failed !!!"  );
-            }
-        });
+                if (errorCode == telux::common::ErrorCode::SUCCESS) {
+                    LOG(DEBUG, " Setting resume in beginning Command initiated successfully ");
+                } else {
+                    LOG(ERROR, " Setting resume in beginning Command failed !!!");
+                }
+            });
 
         tcuActivityStateMgr_->getMachineName(localMachineName_);
     } else {
@@ -68,9 +68,16 @@ bool EventManager::init() {
 EventManager::EventManager() {
     LOG(DEBUG, __FUNCTION__);
 }
+
 EventManager::~EventManager() {
     LOG(DEBUG, __FUNCTION__);
-    tcuActivityStateMgr_.reset();
+}
+
+void EventManager::cleanup() {
+    LOG(DEBUG, __FUNCTION__);
+    std::lock_guard<std::mutex> lk(cleanup_);
+    if (tcuActivityStateMgr_)
+        tcuActivityStateMgr_.reset();
     eventQueue_.clear();
 }
 
@@ -79,16 +86,16 @@ void EventManager::notifyOnEventRejected(shared_ptr<Event> event, EventStatus st
 
     event->setEventStatus(status);
     // TriggerType
-    for (std::vector<weak_ptr<IEventListener>>::iterator it =
-             eventListeners_[TriggerType::UNKNOWN].begin();
+    for (std::vector<weak_ptr<IEventListener>>::iterator it
+         = eventListeners_[TriggerType::UNKNOWN].begin();
          it != eventListeners_[TriggerType::UNKNOWN].end(); ++it) {
         if (std::shared_ptr<IEventListener> eventListener = (*it).lock()) {
             eventListener->onEventRejected(event, status);
         }
     }
 
-    for (std::vector<weak_ptr<IEventListener>>::iterator it =
-             eventListeners_[event->getTriggerType()].begin();
+    for (std::vector<weak_ptr<IEventListener>>::iterator it
+         = eventListeners_[event->getTriggerType()].begin();
          it != eventListeners_[event->getTriggerType()].end(); ++it) {
         if (std::shared_ptr<IEventListener> eventListener = (*it).lock()) {
             eventListener->onEventRejected(event, status);
@@ -96,9 +103,8 @@ void EventManager::notifyOnEventRejected(shared_ptr<Event> event, EventStatus st
     }
 }
 
-void EventManager::notifyAndEraseEventProcessed(TriggerType triggerType,
-                                                TcuActivityState triggeredState, bool succeed,
-                                                EventStatus status) {
+void EventManager::notifyAndEraseEventProcessed(
+    TriggerType triggerType, TcuActivityState triggeredState, bool succeed, EventStatus status) {
     LOG(DEBUG, __FUNCTION__);
     // notify  and erase duplicate event
     for (std::deque<shared_ptr<Event>>::iterator it = eventQueue_.begin();
@@ -108,15 +114,15 @@ void EventManager::notifyAndEraseEventProcessed(TriggerType triggerType,
 
             sameEventInQueue->setEventStatus(status);
             LOG(DEBUG, __FUNCTION__, "  removing event id = ", (int)sameEventInQueue->getId());
-            for (std::vector<weak_ptr<IEventListener>>::iterator itl =
-                     eventListeners_[TriggerType::UNKNOWN].begin();
+            for (std::vector<weak_ptr<IEventListener>>::iterator itl
+                 = eventListeners_[TriggerType::UNKNOWN].begin();
                  itl != eventListeners_[TriggerType::UNKNOWN].end(); ++itl) {
                 if (std::shared_ptr<IEventListener> eventListener = (*itl).lock()) {
                     eventListener->onEventProcessed(sameEventInQueue, succeed);
                 }
             }
-            for (std::vector<weak_ptr<IEventListener>>::iterator itl =
-                     eventListeners_[triggerType].begin();
+            for (std::vector<weak_ptr<IEventListener>>::iterator itl
+                 = eventListeners_[triggerType].begin();
                  itl != eventListeners_[triggerType].end(); ++itl) {
                 if (std::shared_ptr<IEventListener> eventListener = (*itl).lock()) {
                     eventListener->onEventProcessed(sameEventInQueue, succeed);
@@ -131,13 +137,13 @@ void EventManager::notifyAndEraseEventProcessed(TriggerType triggerType,
     LOG(DEBUG, __FUNCTION__, " end");
 }
 
-void EventManager::updateEventStatus(shared_ptr<Event> event,
-                                     bool removeFromQueue, bool succeed, EventStatus status) {
+void EventManager::updateEventStatus(
+    shared_ptr<Event> event, bool removeFromQueue, bool succeed, EventStatus status) {
     LOG(DEBUG, __FUNCTION__, "  event = ", (int)event->getId(), " ,status = ", (int)status,
         ", remove from queue = ", (int)removeFromQueue, " succeed = ", (int)succeed);
     if (removeFromQueue) {
-        notifyAndEraseEventProcessed(event->getTriggerType(), event->getTriggeredState(), succeed,
-                                     status);
+        notifyAndEraseEventProcessed(
+            event->getTriggerType(), event->getTriggeredState(), succeed, status);
     } else {
         // will update failure cases
         if (!succeed) {
@@ -160,12 +166,10 @@ void EventManager::pushEvent(shared_ptr<Event> event) {
 
     LOG(DEBUG, __FUNCTION__, " local machine name: ", localMachineName_,
         "local state: ", RefAppUtils::tcuActivityStateToString(localState_),
-        " incoming machine name: ",
-        event->getMachineName(), " incoming state: ",
-        RefAppUtils::tcuActivityStateToString(event->getTriggeredState()));
-    if((localMachineName_.compare(event->getMachineName()) == 0)
-        || event->getMachineName().empty()
-        ||(event->getMachineName().compare(ALL_MACHINES) == 0)
+        " incoming machine name: ", event->getMachineName(),
+        " incoming state: ", RefAppUtils::tcuActivityStateToString(event->getTriggeredState()));
+    if ((localMachineName_.compare(event->getMachineName()) == 0) || event->getMachineName().empty()
+        || (event->getMachineName().compare(ALL_MACHINES) == 0)
         || (event->getMachineName().compare(LOCAL_MACHINE))) {
         localState_ = event->getTriggeredState();
     }
@@ -175,14 +179,13 @@ void EventManager::pushEvent(shared_ptr<Event> event) {
     TcuActivityState newState = event->getTriggeredState();
     do {
         std::vector<std::string> machineNames;
-        //check if provided valid machine name
-        if (tcuActivityStateMgr_->getAllMachineNames(machineNames) ==
-            telux::common::Status::SUCCESS) {
+        // check if provided valid machine name
+        if (tcuActivityStateMgr_->getAllMachineNames(machineNames)
+            == telux::common::Status::SUCCESS) {
             auto it = std::find(machineNames.begin(), machineNames.end(), event->getMachineName());
             if (it == machineNames.end() && event->getMachineName() != ALL_MACHINES) {
                 LOG(ERROR, __FUNCTION__, " unable to find given machine name");
-                updateEventStatus(event, false, false,
-                                    EventStatus::REJECTED_INVALID_MACHINE_NAME);
+                updateEventStatus(event, false, false, EventStatus::REJECTED_INVALID_MACHINE_NAME);
 
                 break;
             }
@@ -195,17 +198,17 @@ void EventManager::pushEvent(shared_ptr<Event> event) {
             TcuActivityState inProgressTrigger = eventQueue_[0]->getTriggeredState();
             // check event in progress for event overriden
             for (std::deque<shared_ptr<Event>>::iterator it = eventQueue_.begin();
-                it != eventQueue_.end();) {
-                if ((*it)->getTriggeredState() != newState &&
-                    (*it)->getTriggeredState() != inProgressTrigger) {
+                 it != eventQueue_.end();) {
+                if ((*it)->getTriggeredState() != newState
+                    && (*it)->getTriggeredState() != inProgressTrigger) {
 
                     shared_ptr<Event> overridenEvent = *it;
                     LOG(ERROR, __FUNCTION__,
                         " REJECTED_EVENT_OVERRIDDEN  event = ", overridenEvent->toString());
 
                     it = eventQueue_.erase(it);
-                    updateEventStatus(overridenEvent, false, false,
-                                    EventStatus::REJECTED_EVENT_OVERRIDDEN);
+                    updateEventStatus(
+                        overridenEvent, false, false, EventStatus::REJECTED_EVENT_OVERRIDDEN);
                 } else {
                     ++it;
                 }
@@ -214,8 +217,8 @@ void EventManager::pushEvent(shared_ptr<Event> event) {
             eventQueue_.push_back(event);
         } else {
 
-            if (tcuActivityStateMgr_->getServiceStatus() !=
-                    telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            if (tcuActivityStateMgr_->getServiceStatus()
+                != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
                 // tcu activity manager down
                 LOG(ERROR, __FUNCTION__, " tcu activity state manager down ");
                 updateEventStatus(event, false, false, EventStatus::FAILED_TCU_ACTIVITY);
@@ -227,32 +230,32 @@ void EventManager::pushEvent(shared_ptr<Event> event) {
             eventQueue_.push_back(event);
             setActivityState(event);
         }
-    }while (0);
+    } while (0);
 }
 
 void EventManager::setActivityState(shared_ptr<Event> event) {
     LOG(DEBUG, __FUNCTION__);
-    tcuActivityStateMgr_->setActivityState(event->getTriggeredState(), event->getMachineName(),
-        [event, this](ErrorCode errorCode) {
-        if (errorCode != telux::common::ErrorCode::SUCCESS ) {
-            LOG(ERROR, __FUNCTION__,  " Command failed !!!"  );
-            processedEventHandler(EventStatus::FAILED_TCU_ACTIVITY);
-        } else {
-            LOG(DEBUG, __FUNCTION__,  " Command initiated successfully " );
-            if (event->getTriggeredState() == TcuActivityState::RESUME) {
-                //Acknowledgment message (onSlaveAckStatusUpdate) is not expected for resume.
-                processedEventHandler(EventStatus::SUCCEED);
-                releaseWakeLock();
+    tcuActivityStateMgr_->setActivityState(
+        event->getTriggeredState(), event->getMachineName(), [event, this](ErrorCode errorCode) {
+            if (errorCode != telux::common::ErrorCode::SUCCESS) {
+                LOG(ERROR, __FUNCTION__, " Command failed !!!");
+                processedEventHandler(EventStatus::FAILED_TCU_ACTIVITY);
             } else {
-                event->setEventStatus(EventStatus::IN_PROGRESS_TCU_ACTIVITY);
+                LOG(DEBUG, __FUNCTION__, " Command initiated successfully ");
+                if (event->getTriggeredState() == TcuActivityState::RESUME) {
+                    // Acknowledgment message (onSlaveAckStatusUpdate) is not expected for resume.
+                    processedEventHandler(EventStatus::SUCCEED);
+                    releaseWakeLock();
+                } else {
+                    event->setEventStatus(EventStatus::IN_PROGRESS_TCU_ACTIVITY);
+                }
             }
-        }
-    });
+        });
 }
 
 // Event listener
-void EventManager::registerListener(weak_ptr<IEventListener> eventListener,
-                                    TriggerType triggerType) {
+void EventManager::registerListener(
+    weak_ptr<IEventListener> eventListener, TriggerType triggerType) {
     LOG(DEBUG, __FUNCTION__, " TriggerType = ", (int)triggerType);
     if (eventListeners_.find(triggerType) == eventListeners_.end()) {
         std::vector<weak_ptr<IEventListener>> temp;
@@ -270,19 +273,18 @@ void EventManager::writeToSystemNode(char *nodepath, char *value, int length) {
     string logTmp;
     fd = open(nodepath, O_WRONLY | O_APPEND | O_NONBLOCK);
     if (fd < 0) {
-        logTmp = " Opening of  node failed!!! err " + string(nodepath) +
-                 " errno = " + string(strerror(errno));
+        logTmp = " Opening of  node failed!!! err " + string(nodepath)
+                 + " errno = " + string(strerror(errno));
         LOG(ERROR, __FUNCTION__, logTmp);
     } else {
         LOG(DEBUG, __FUNCTION__, " Opening of  node success ", string(nodepath));
         int returnValueWrite = write(fd, value, length);
         if (returnValueWrite == -1) {
-            logTmp = " Writing of  to  node failed err "+ string(value) +
-                     " "+string(nodepath) + " errno = " + string(strerror(errno));
+            logTmp = " Writing of  to  node failed err " + string(value) + " " + string(nodepath)
+                     + " errno = " + string(strerror(errno));
             LOG(ERROR, __FUNCTION__, logTmp);
         } else {
-            logTmp = " Writing of  to  node success " + string(value) +
-                     " " + string(nodepath);
+            logTmp = " Writing of  to  node success " + string(value) + " " + string(nodepath);
             LOG(DEBUG, __FUNCTION__, logTmp);
         }
     }
@@ -291,23 +293,22 @@ void EventManager::writeToSystemNode(char *nodepath, char *value, int length) {
 
 void EventManager::holdWakeLock() {
     LOG(DEBUG, __FUNCTION__);
-    writeToSystemNode((char *)WAKELOCK_PATH, (char *)WAKE_LOCK,
-        strlen(WAKE_LOCK));
+    writeToSystemNode((char *)WAKELOCK_PATH, (char *)WAKE_LOCK, strlen(WAKE_LOCK));
 }
 
-void EventManager::holdWakeLock(const std::string& wakeLockValue) {
+void EventManager::holdWakeLock(const std::string &wakeLockValue) {
     LOG(DEBUG, __FUNCTION__);
     writeToSystemNode((char *)WAKELOCK_PATH, (char *)wakeLockValue.c_str(), wakeLockValue.length());
 }
 
 void EventManager::releaseWakeLock() {
     LOG(DEBUG, __FUNCTION__);
-    writeToSystemNode((char *)WAKEUNLOCK_PATH, (char *)WAKE_LOCK,
-        strlen(WAKE_LOCK));
+    writeToSystemNode((char *)WAKEUNLOCK_PATH, (char *)WAKE_LOCK, strlen(WAKE_LOCK));
 }
-void EventManager::releaseWakeLock(const std::string& wakeLockValue) {
+void EventManager::releaseWakeLock(const std::string &wakeLockValue) {
     LOG(DEBUG, __FUNCTION__);
-    writeToSystemNode((char *)WAKEUNLOCK_PATH, (char *)wakeLockValue.c_str(), wakeLockValue.length());
+    writeToSystemNode(
+        (char *)WAKEUNLOCK_PATH, (char *)wakeLockValue.c_str(), wakeLockValue.length());
 }
 
 void EventManager::processedEventHandler(EventStatus status) {
@@ -319,10 +320,10 @@ void EventManager::processedEventHandler(EventStatus status) {
     bool isEventExecutionSucceed = true;
     if (!eventQueue_.empty()) {
         // check event in progress
-        shared_ptr<Event> processedEvent =
-            *((std::deque<shared_ptr<Event>>::iterator)eventQueue_.begin());
+        shared_ptr<Event> processedEvent
+            = *((std::deque<shared_ptr<Event>>::iterator)eventQueue_.begin());
 
-        //check for the latest event
+        // check for the latest event
         if (eventQueue_.back()->getTriggeredState() != processedEvent->getTriggeredState()) {
             LOG(ERROR, __FUNCTION__, " found conflict with latest event");
             updateEventStatus(processedEvent, true, false, EventStatus::REJECTED_EVENT_OVERRIDDEN);
@@ -334,12 +335,12 @@ void EventManager::processedEventHandler(EventStatus status) {
         // keep processing the next event
         LOG(DEBUG, __FUNCTION__, " check next event ");
         if (!eventQueue_.empty()) {
-            shared_ptr<Event> nextEvent =
-                *((std::deque<shared_ptr<Event>>::iterator)eventQueue_.begin());
+            shared_ptr<Event> nextEvent
+                = *((std::deque<shared_ptr<Event>>::iterator)eventQueue_.begin());
             LOG(DEBUG, __FUNCTION__, " execute next event. event = ", nextEvent->toString());
             setActivityState(nextEvent);
         } else {
-            //after processing all event in queue remove temporary wake lock
+            // after processing all event in queue remove temporary wake lock
             releaseWakeLock();
         }
     } else {
@@ -365,20 +366,20 @@ void EventManager::onSlaveAckStatusUpdate(const telux::common::Status status,
         eventStatus = EventStatus::FAILED_TCU_ACTIVITY;
     }
 
-    if(unresponsiveClients.size() > 0) {
+    if (unresponsiveClients.size() > 0) {
         LOG(ERROR, __FUNCTION__, " Number of unresponsive clients : ", unresponsiveClients.size());
         for (size_t i = 0; i < unresponsiveClients.size(); i++) {
-            LOG(ERROR, __FUNCTION__, " client name : ", unresponsiveClients[i].first
-                , " , machine name : ", unresponsiveClients[i].second);
+            LOG(ERROR, __FUNCTION__, " client name : ", unresponsiveClients[i].first,
+                " , machine name : ", unresponsiveClients[i].second);
         }
     }
 
-    if(nackResponseClients.size() > 0) {
-        LOG(ERROR, __FUNCTION__, " Number of clients responded with nack : ",
-         nackResponseClients.size());
+    if (nackResponseClients.size() > 0) {
+        LOG(ERROR, __FUNCTION__,
+            " Number of clients responded with nack : ", nackResponseClients.size());
         for (size_t i = 0; i < nackResponseClients.size(); i++) {
-            LOG(ERROR, __FUNCTION__, " client name : ", nackResponseClients[i].first
-                    ," , machine name : ", nackResponseClients[i].second);
+            LOG(ERROR, __FUNCTION__, " client name : ", nackResponseClients[i].first,
+                " , machine name : ", nackResponseClients[i].second);
         }
     }
 

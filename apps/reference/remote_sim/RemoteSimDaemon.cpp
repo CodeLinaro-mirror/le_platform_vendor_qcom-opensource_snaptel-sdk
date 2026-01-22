@@ -26,12 +26,13 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 /**
  * @file    RemoteSimDaemon.cpp
  * @brief   This daemon interfaces with the modem to provide it with WWAN functionality
@@ -44,7 +45,7 @@
 #include <iostream>
 
 extern "C" {
-    #include <unistd.h>
+#include <unistd.h>
 }
 
 #include "RemoteSimDaemon.hpp"
@@ -56,14 +57,12 @@ extern "C" {
 using namespace telux::common;
 using namespace telux::tel;
 
-RemoteSimDaemon & RemoteSimDaemon::getInstance()
-{
+RemoteSimDaemon &RemoteSimDaemon::getInstance() {
     static RemoteSimDaemon instance;
     return instance;
 }
 
-int RemoteSimDaemon::runDaemon(int argc, char **argv)
-{
+int RemoteSimDaemon::runDaemon(int argc, char **argv) {
     if (readArguments(argc, argv, slotId_) != Status::SUCCESS) {
         return EXIT_FAILURE;
     }
@@ -97,8 +96,7 @@ int RemoteSimDaemon::runDaemon(int argc, char **argv)
     return EXIT_SUCCESS;
 }
 
-void RemoteSimDaemon::notifyModemConnAvailable()
-{
+void RemoteSimDaemon::notifyModemConnAvailable() {
     if (!modemConnected_) {
         if (remoteSimMgr_->sendConnectionAvailable(eventCallback) != Status::SUCCESS) {
             LOGE("Failed to send connection available event request to the modem!\n");
@@ -107,8 +105,7 @@ void RemoteSimDaemon::notifyModemConnAvailable()
     }
 }
 
-void RemoteSimDaemon::notifyModemConnUnavailable()
-{
+void RemoteSimDaemon::notifyModemConnUnavailable() {
     if (modemConnected_) {
         if (remoteSimMgr_->sendConnectionUnavailable(eventCallback) != Status::SUCCESS) {
             LOGE("Failed to send connection available event request to the modem!\n");
@@ -117,35 +114,31 @@ void RemoteSimDaemon::notifyModemConnUnavailable()
     }
 }
 
-void RemoteSimDaemon::signalHandler(int signum)
-{
+void RemoteSimDaemon::signalHandler(int signum) {
     LOGI("Received signal %d, terminating program.\n", signum);
     RemoteSimDaemon::getInstance().deInit();
     exit(EXIT_SUCCESS);
 }
 
-void RemoteSimDaemon::eventCallback(ErrorCode errorCode)
-{
+void RemoteSimDaemon::eventCallback(ErrorCode errorCode) {
     LOGD("Received event response with errorcode %d.\n", static_cast<int>(errorCode));
 }
 
-void RemoteSimDaemon::printUsage(char **argv)
-{
+void RemoteSimDaemon::printUsage(char **argv) {
     std::cout << std::endl;
     std::cout << "\tUsage: " << argv[0] << " -i <Slot Id> [-flag]" << std::endl;
     std::cout << std::endl;
 
     std::cout << "\t-i <Slot Id> \tThe slot Id of the DUT which needs to be bounded to remote SIM"
-        << std::endl;
+              << std::endl;
     std::cout << "\t-d \t\tEnables debug-level log messages" << std::endl;
     std::cout << "\t-s \t\tEnables the printing of log messages to console (instead of syslog)"
-        << std::endl;
+              << std::endl;
     std::cout << "\t-h \t\tPrints these usage instructions" << std::endl;
     std::cout << std::endl;
 }
 
-Status RemoteSimDaemon::readArguments(int argc, char **argv, int& slotId)
-{
+Status RemoteSimDaemon::readArguments(int argc, char **argv, int &slotId) {
     while (1) {
         switch (getopt(argc, argv, "i:dsh")) {
             case -1:
@@ -171,13 +164,10 @@ Status RemoteSimDaemon::readArguments(int argc, char **argv, int& slotId)
     }
 }
 
-Status RemoteSimDaemon::initDaemon()
-{
+Status RemoteSimDaemon::initDaemon() {
     std::promise<telux::common::ServiceStatus> remoteSimMgrprom;
-    remoteSimMgr_ = PhoneFactory::getInstance().getRemoteSimManager(slotId_,
-        [&](telux::common::ServiceStatus status) {
-        remoteSimMgrprom.set_value(status);
-    });
+    remoteSimMgr_ = PhoneFactory::getInstance().getRemoteSimManager(
+        slotId_, [&](telux::common::ServiceStatus status) { remoteSimMgrprom.set_value(status); });
     if (remoteSimMgr_ == nullptr) {
         LOGE("Failed to create RemoteSimManager!\n");
         return Status::FAILED;
@@ -187,12 +177,12 @@ Status RemoteSimDaemon::initDaemon()
         LOGD("Remote SIM subsystem not ready yet, waiting...\n");
     }
     remoteSimMgrStatus = remoteSimMgrprom.get_future().get();
-    listener_ = std::make_shared<RemoteSimListener>();
+    listener_          = std::make_shared<RemoteSimListener>();
     if (remoteSimMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOGD("Remote SIM subsystem is ready now.\n");
         if (remoteSimMgr_->registerListener(listener_) != Status::SUCCESS) {
-           LOGE("Listener registration failed!\n");
-           return Status::FAILED;
+            LOGE("Listener registration failed!\n");
+            return Status::FAILED;
         }
     } else {
         LOGE("RemoteSim subsystem failed to initialize.\n");
@@ -216,8 +206,7 @@ Status RemoteSimDaemon::initDaemon()
     return Status::SUCCESS;
 }
 
-void RemoteSimDaemon::deInit()
-{
+void RemoteSimDaemon::deInit() {
     notifyModemConnUnavailable();
     simConnection_.tearDownClientConnection();
     if (remoteSimMgr_) {
@@ -226,8 +215,7 @@ void RemoteSimDaemon::deInit()
     remoteSimMgr_ = nullptr;
 }
 
-void RemoteSimDaemon::handleApduTransfer(uint8_t *buf, int bytes)
-{
+void RemoteSimDaemon::handleApduTransfer(uint8_t *buf, int bytes) {
     if (bytes < APDU_MSG_HEADER_LENGTH) {
         LOGE("Client APDU transfer msg length is too short!\n");
         return;
@@ -237,7 +225,7 @@ void RemoteSimDaemon::handleApduTransfer(uint8_t *buf, int bytes)
 
     if (buf[2] != bytes - APDU_MSG_HEADER_LENGTH) {
         LOGE("Client APDU transfer msg is malformed! Received %d data bytes out of %d!\n",
-             bytes - APDU_MSG_HEADER_LENGTH, buf[2]);
+            bytes - APDU_MSG_HEADER_LENGTH, buf[2]);
     } else {
         std::vector<uint8_t> apdu;
 
@@ -252,33 +240,28 @@ void RemoteSimDaemon::handleApduTransfer(uint8_t *buf, int bytes)
     }
 }
 
-void RemoteSimDaemon::handleCardConnect(uint8_t *buf, int bytes)
-{
+void RemoteSimDaemon::handleCardConnect(uint8_t *buf, int bytes) {
     LOGD("Received Card Connect msg response from client.\n");
 }
 
-void RemoteSimDaemon::handleCardDisconnect(uint8_t *buf, int bytes)
-{
+void RemoteSimDaemon::handleCardDisconnect(uint8_t *buf, int bytes) {
     LOGD("Received Card Disconnect msg response from client.\n");
 }
 
-void RemoteSimDaemon::handleCardPowerUp(uint8_t *buf, int bytes)
-{
+void RemoteSimDaemon::handleCardPowerUp(uint8_t *buf, int bytes) {
     LOGD("Received Card Power Up msg response from client.\n");
 }
 
-void RemoteSimDaemon::handleCardPowerDown(uint8_t *buf, int bytes)
-{
+void RemoteSimDaemon::handleCardPowerDown(uint8_t *buf, int bytes) {
     LOGD("Received Card Power Down msg response from client.\n");
 }
 
-void RemoteSimDaemon::handleCardReset(uint8_t *buf, int bytes)
-{
+void RemoteSimDaemon::handleCardReset(uint8_t *buf, int bytes) {
     LOGD("Received Card Reset msg response from client.\n");
 
     if (buf[1] != bytes - 2) {
         LOGE("Client Card Reset msg is malformed! Received %d AtR values out of %d!\n", bytes - 2,
-             buf[1]);
+            buf[1]);
     } else {
         std::vector<uint8_t> atr;
 
@@ -292,13 +275,12 @@ void RemoteSimDaemon::handleCardReset(uint8_t *buf, int bytes)
     }
 }
 
-void RemoteSimDaemon::handleCardInserted(uint8_t *buf, int bytes)
-{
+void RemoteSimDaemon::handleCardInserted(uint8_t *buf, int bytes) {
     LOGD("Received Card Inserted msg from client.\n");
 
     if (buf[1] != bytes - 2) {
         LOGE("Client Card Inserted msg is malformed! Received %d AtR values out of %d!\n",
-             bytes - 2, buf[1]);
+            bytes - 2, buf[1]);
     } else {
         std::vector<uint8_t> atr;
 
@@ -312,8 +294,7 @@ void RemoteSimDaemon::handleCardInserted(uint8_t *buf, int bytes)
     }
 }
 
-void RemoteSimDaemon::handleCardRemoved(uint8_t *buf, int bytes)
-{
+void RemoteSimDaemon::handleCardRemoved(uint8_t *buf, int bytes) {
     LOGD("Received Card Removed msg from client.\n");
 
     if (remoteSimMgr_->sendCardRemoved(eventCallback) != Status::SUCCESS) {
@@ -321,13 +302,11 @@ void RemoteSimDaemon::handleCardRemoved(uint8_t *buf, int bytes)
     }
 }
 
-void RemoteSimDaemon::handleConnKeepalive(uint8_t *buf, int bytes)
-{
+void RemoteSimDaemon::handleConnKeepalive(uint8_t *buf, int bytes) {
     LOGD("Received Connection Keepalive msg from client.\n");
 }
 
-void RemoteSimDaemon::handleClientMsg(uint8_t *buf, int bytes)
-{
+void RemoteSimDaemon::handleClientMsg(uint8_t *buf, int bytes) {
     switch (buf[0]) {
         case APDU_TRANSFER_MSG:
             handleApduTransfer(buf, bytes);
@@ -406,7 +385,6 @@ void RemoteSimListener::onServiceStatusChange(ServiceStatus status) {
     }
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     return RemoteSimDaemon::getInstance().runDaemon(argc, argv);
 }

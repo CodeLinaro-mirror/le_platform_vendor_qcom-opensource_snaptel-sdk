@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_SrvAdvContentCount_H_
-#define	_SrvAdvContentCount_H_
-
+#ifndef _SrvAdvContentCount_H_
+#define _SrvAdvContentCount_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* SrvAdvContentCount */
-typedef long	 SrvAdvContentCount_t;
+typedef long SrvAdvContentCount_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_SrvAdvContentCount;
@@ -37,5 +36,5 @@ per_type_encoder_f SrvAdvContentCount_encode_uper;
 }
 #endif
 
-#endif	/* _SrvAdvContentCount_H_ */
+#endif /* _SrvAdvContentCount_H_ */
 #include <asn_internal.h>

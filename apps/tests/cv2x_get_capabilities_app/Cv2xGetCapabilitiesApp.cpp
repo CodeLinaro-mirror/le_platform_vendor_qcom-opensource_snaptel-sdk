@@ -26,12 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
  * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 
 /**
  * @file: Cv2xGetCapabilitiesApp.cpp
@@ -53,66 +53,58 @@
 #include <map>
 #include <vector>
 
-#include "../../common/utils/Utils.hpp"
-
-#include "../../common/utils/SignalHandler.hpp"
 #include <telux/cv2x/Cv2xRadio.hpp>
 #include <telux/cv2x/Cv2xRadioListener.hpp>
 #include <telux/cv2x/Cv2xRadioTypes.hpp>
 
-using std::cout;
-using std::cin;
-using std::cerr;
+#include "../../common/utils/Utils.hpp"
+#include "../../common/utils/SignalHandler.hpp"
+#include "../../common/utils/ThreadSafeOStreamBuf.hpp"
+
 using std::atomic;
+using std::cerr;
+using std::cin;
+using std::cout;
 using std::endl;
-using std::promise;
-using std::string;
-using std::shared_ptr;
-using std::stringstream;
 using std::hex;
 using std::map;
+using std::promise;
+using std::shared_ptr;
+using std::string;
+using std::stringstream;
 using telux::common::ErrorCode;
-using telux::common::Status;
 using telux::common::ServiceStatus;
+using telux::common::Status;
+using telux::cv2x::Cv2xCauseType;
 using telux::cv2x::Cv2xFactory;
+using telux::cv2x::Cv2xRadioCapabilities;
 using telux::cv2x::Cv2xStatus;
 using telux::cv2x::Cv2xStatusEx;
 using telux::cv2x::Cv2xStatusType;
-using telux::cv2x::Cv2xCauseType;
-using telux::cv2x::TrafficCategory;
 using telux::cv2x::ICv2xRadio;
-using telux::cv2x::Cv2xRadioCapabilities;
 using telux::cv2x::RadioConcurrencyMode;
+using telux::cv2x::TrafficCategory;
 
 static Cv2xStatusEx gCv2xStatus;
 static promise<ErrorCode> gCallbackPromise;
 static promise<ErrorCode> gCapabilityPromise;
 
 static map<Cv2xStatusType, string> gCv2xStatusToString = {
-    { Cv2xStatusType::INACTIVE, "INACTIVE" },
-    { Cv2xStatusType::ACTIVE, "ACTIVE" },
-    { Cv2xStatusType::SUSPENDED, "SUSPENDED" },
-    { Cv2xStatusType::UNKNOWN, "UNKNOWN" },
+    {Cv2xStatusType::INACTIVE, "INACTIVE"},
+    {Cv2xStatusType::ACTIVE, "ACTIVE"},
+    {Cv2xStatusType::SUSPENDED, "SUSPENDED"},
+    {Cv2xStatusType::UNKNOWN, "UNKNOWN"},
 };
 
-static map<Cv2xCauseType, string> gCv2xCauseToString = {
-    {Cv2xCauseType::TIMING, "TIMING"},
-    {Cv2xCauseType::CONFIG, "CONFIG"},
-    {Cv2xCauseType::UE_MODE, "UE_MODE"},
-    {Cv2xCauseType::GEOPOLYGON, "GEOPOLYGON"},
-    {Cv2xCauseType::THERMAL, "THERMAL"},
+static map<Cv2xCauseType, string> gCv2xCauseToString = {{Cv2xCauseType::TIMING, "TIMING"},
+    {Cv2xCauseType::CONFIG, "CONFIG"}, {Cv2xCauseType::UE_MODE, "UE_MODE"},
+    {Cv2xCauseType::GEOPOLYGON, "GEOPOLYGON"}, {Cv2xCauseType::THERMAL, "THERMAL"},
     {Cv2xCauseType::THERMAL_ECALL, "THERMAL_ECALL"},
-    {Cv2xCauseType::GEOPOLYGON_SWITCH, "GEOPOLYGON_SWITCH"},
-    {Cv2xCauseType::SENSING, "SENSING"},
-    {Cv2xCauseType::LPM, "LPM"},
-    {Cv2xCauseType::DISABLED, "DISABLED"},
-    {Cv2xCauseType::NO_GNSS, "NO_GNSS"},
-    {Cv2xCauseType::INVALID_LICENSE, "INVALID_LICENSE"},
-    {Cv2xCauseType::NOT_READY, "NOT_READY"},
-    {Cv2xCauseType::NTN, "NTN"},
-    {Cv2xCauseType::NO_DATA_CALL, "NO_DATA_CALL"},
-    {Cv2xCauseType::UNKNOWN, "UNKNOWN"}
-};
+    {Cv2xCauseType::GEOPOLYGON_SWITCH, "GEOPOLYGON_SWITCH"}, {Cv2xCauseType::SENSING, "SENSING"},
+    {Cv2xCauseType::LPM, "LPM"}, {Cv2xCauseType::DISABLED, "DISABLED"},
+    {Cv2xCauseType::NO_GNSS, "NO_GNSS"}, {Cv2xCauseType::INVALID_LICENSE, "INVALID_LICENSE"},
+    {Cv2xCauseType::NOT_READY, "NOT_READY"}, {Cv2xCauseType::NTN, "NTN"},
+    {Cv2xCauseType::NO_DATA_CALL, "NO_DATA_CALL"}, {Cv2xCauseType::UNKNOWN, "UNKNOWN"}};
 
 static string statusToString(const Cv2xStatus &status, bool printUnknown = true) {
     stringstream ss;
@@ -153,8 +145,8 @@ static string statusToString(const Cv2xStatusEx &status) {
     }
 
     if (status.timeUncertaintyValid) {
-        ss << "\tTime uncertainty= "
-            << std::fixed << std::setprecision(10) << status.timeUncertainty << "\n";
+        ss << "\tTime uncertainty= " << std::fixed << std::setprecision(10)
+           << status.timeUncertainty << "\n";
     }
     return ss.str();
 }
@@ -162,38 +154,53 @@ static string statusToString(const Cv2xStatusEx &status) {
 static string capabilitiesToString(const Cv2xRadioCapabilities &capabilities) {
     stringstream ss;
 
-    ss << "\t" << "V2X Capabilities:" << "\n";
-    ss << "\t" << "linkIpMtuBytes: " << static_cast<int>(capabilities.linkIpMtuBytes) << "\n";
-    ss << "\t" << "linkNonMtuBytes: " << static_cast<int>(capabilities.linkNonIpMtuBytes) << "\n";
-    ss << "\t" << "maxSupportedConcurrency: "
-        << ((capabilities.maxSupportedConcurrency == RadioConcurrencyMode::WWAN_CONCURRENT) ?
-        "WWAN_CONCURRENT" : "WWAN_NONCONCURRENT") << "\n";
-    ss << "\t" << "nonIpTxPayloadOffsetBytes: " <<
-        static_cast<int>(capabilities.nonIpTxPayloadOffsetBytes) << "\n";
-    ss << "\t" << "nonIpRxPayloadOffsetBytes: "
-        << static_cast<int>(capabilities.nonIpRxPayloadOffsetBytes) << "\n";
-    ss << "\t" << "Periodicities Supported - size: "
-        << capabilities.periodicities.size() << "\n";
+    ss << "\t"
+       << "V2X Capabilities:"
+       << "\n";
+    ss << "\t"
+       << "linkIpMtuBytes: " << static_cast<int>(capabilities.linkIpMtuBytes) << "\n";
+    ss << "\t"
+       << "linkNonMtuBytes: " << static_cast<int>(capabilities.linkNonIpMtuBytes) << "\n";
+    ss << "\t"
+       << "maxSupportedConcurrency: "
+       << ((capabilities.maxSupportedConcurrency == RadioConcurrencyMode::WWAN_CONCURRENT)
+                  ? "WWAN_CONCURRENT"
+                  : "WWAN_NONCONCURRENT")
+       << "\n";
+    ss << "\t"
+       << "nonIpTxPayloadOffsetBytes: " << static_cast<int>(capabilities.nonIpTxPayloadOffsetBytes)
+       << "\n";
+    ss << "\t"
+       << "nonIpRxPayloadOffsetBytes: " << static_cast<int>(capabilities.nonIpRxPayloadOffsetBytes)
+       << "\n";
+    ss << "\t"
+       << "Periodicities Supported - size: " << capabilities.periodicities.size() << "\n";
     for (auto i = 0u; i < capabilities.periodicities.size(); ++i) {
         ss << "\t" << static_cast<int64_t>(capabilities.periodicities[i]);
     }
     ss << "\n";
-    ss << "\t" << "maxNumAutoRetransmissions: "
-        << static_cast<int>(capabilities.maxNumAutoRetransmissions) << "\n";
-    ss << "\t" << "layer2MacAddressSize: "
-        << static_cast<int>(capabilities.layer2MacAddressSize) << "\n";
-    ss << "\t" << "prioritiesSupported: " << capabilities.prioritiesSupported << "\n";
-    ss << "\t" << "maxNumSpsFlows: " << static_cast<int>(capabilities.maxNumSpsFlows) << "\n";
-    ss << "\t" << "maxNumNonSpsFlows: "
-        << static_cast<int>(capabilities.maxNumNonSpsFlows) << "\n";
-    ss << "\t" << "maxTxPower: " << static_cast<int>(capabilities.maxTxPower) << "\n";
-    ss << "\t" << "minTxPower: " << static_cast<int>(capabilities.minTxPower) << "\n";
-    ss << "\t" << "TX pool ids supported - size: "
-        << capabilities.txPoolIdsSupported.size() << "\n";
+    ss << "\t"
+       << "maxNumAutoRetransmissions: " << static_cast<int>(capabilities.maxNumAutoRetransmissions)
+       << "\n";
+    ss << "\t"
+       << "layer2MacAddressSize: " << static_cast<int>(capabilities.layer2MacAddressSize) << "\n";
+    ss << "\t"
+       << "prioritiesSupported: " << capabilities.prioritiesSupported << "\n";
+    ss << "\t"
+       << "maxNumSpsFlows: " << static_cast<int>(capabilities.maxNumSpsFlows) << "\n";
+    ss << "\t"
+       << "maxNumNonSpsFlows: " << static_cast<int>(capabilities.maxNumNonSpsFlows) << "\n";
+    ss << "\t"
+       << "maxTxPower: " << static_cast<int>(capabilities.maxTxPower) << "\n";
+    ss << "\t"
+       << "minTxPower: " << static_cast<int>(capabilities.minTxPower) << "\n";
+    ss << "\t"
+       << "TX pool ids supported - size: " << capabilities.txPoolIdsSupported.size() << "\n";
     for (auto i = 0u; i < capabilities.txPoolIdsSupported.size(); ++i) {
-        ss << "\t" << "Pool ID: " << static_cast<int>(capabilities.txPoolIdsSupported[i].poolId)
-            << " minFreq " << static_cast<int>(capabilities.txPoolIdsSupported[i].minFreq)
-            << " maxFreq " << static_cast<int>(capabilities.txPoolIdsSupported[i].maxFreq);
+        ss << "\t"
+           << "Pool ID: " << static_cast<int>(capabilities.txPoolIdsSupported[i].poolId)
+           << " minFreq " << static_cast<int>(capabilities.txPoolIdsSupported[i].minFreq)
+           << " maxFreq " << static_cast<int>(capabilities.txPoolIdsSupported[i].maxFreq);
     }
     return ss.str();
 }
@@ -207,8 +214,8 @@ static void cv2xStatusCallback(Cv2xStatusEx status, ErrorCode error) {
     gCallbackPromise.set_value(error);
 }
 
-static void requestCapabilitiesCallback(const Cv2xRadioCapabilities & capabilities,
-                                        ErrorCode error) {
+static void requestCapabilitiesCallback(
+    const Cv2xRadioCapabilities &capabilities, ErrorCode error) {
     if (ErrorCode::SUCCESS == error) {
         cout << "Request capabilities success" << endl;
         cout << capabilitiesToString(capabilities) << endl;
@@ -220,6 +227,11 @@ static void requestCapabilitiesCallback(const Cv2xRadioCapabilities & capabiliti
 
 int main(int argc, char *argv[]) {
     std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    if (isatty(fileno(stdout))) {
+        std::cout << std::unitbuf;
+    }
+    static ThreadSafeOStreamBuf safeCout;
     sigset_t sigset;
     sigemptyset(&sigset);
     sigaddset(&sigset, SIGINT);
@@ -237,24 +249,24 @@ int main(int argc, char *argv[]) {
 
     std::vector<std::string> groups{"system", "diag", "radio", "logd", "dlt"};
     int rc = Utils::setSupplementaryGroups(groups);
-    if (rc == -1){
+    if (rc == -1) {
         cout << "Adding supplementary group failed!" << std::endl;
     }
 
     // Get handle to Cv2xRadioManager
     bool cv2xRadioManagerStatusUpdated = false;
-    telux::common::ServiceStatus cv2xRadioManagerStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    telux::common::ServiceStatus cv2xRadioManagerStatus
+        = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
     std::condition_variable cv;
     std::mutex mtx;
     auto statusCb = [&](telux::common::ServiceStatus status) {
         std::lock_guard<std::mutex> lock(mtx);
         cv2xRadioManagerStatusUpdated = true;
-        cv2xRadioManagerStatus = status;
+        cv2xRadioManagerStatus        = status;
         cv.notify_all();
     };
 
-    auto & cv2xFactory = Cv2xFactory::getInstance();
+    auto &cv2xFactory     = Cv2xFactory::getInstance();
     auto cv2xRadioManager = cv2xFactory.getCv2xRadioManager(statusCb);
     if (!cv2xRadioManager) {
         cout << "Error: failed to get Cv2xRadioManager." << endl;
@@ -264,8 +276,7 @@ int main(int argc, char *argv[]) {
     {
         std::unique_lock<std::mutex> lck(mtx);
         cv.wait(lck, [&] { return cv2xRadioManagerStatusUpdated; });
-        if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
-            cv2xRadioManagerStatus) {
+        if (telux::common::ServiceStatus::SERVICE_AVAILABLE != cv2xRadioManagerStatus) {
             cerr << "C-V2X Radio Manager initialization failed, exiting" << endl;
             return EXIT_FAILURE;
         }
@@ -283,13 +294,13 @@ int main(int argc, char *argv[]) {
 
     // Get handle to Cv2xRadio
     bool cv2x_radio_status_updated = false;
-    telux::common::ServiceStatus cv2xRadioStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    telux::common::ServiceStatus cv2xRadioStatus
+        = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
 
     auto radioCb = [&](telux::common::ServiceStatus status) {
         std::lock_guard<std::mutex> lock(mtx);
         cv2x_radio_status_updated = true;
-        cv2xRadioStatus = status;
+        cv2xRadioStatus           = status;
         cv.notify_all();
     };
 
@@ -325,4 +336,3 @@ int main(int argc, char *argv[]) {
 
     return EXIT_SUCCESS;
 }
-

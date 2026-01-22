@@ -28,8 +28,8 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -64,13 +64,13 @@
 class Utils {
  public:
     void printOperatorName(telux::tel::OperatorInfo operatorInfo) {
-        std::cout << "Operator name: " << operatorInfo.getName() <<
-            "\nMcc: " << operatorInfo.getMcc() <<
-            "\nMnc: " << operatorInfo.getMnc() << std::endl;
+        std::cout << "Operator name: " << operatorInfo.getName()
+                  << "\nMcc: " << operatorInfo.getMcc() << "\nMnc: " << operatorInfo.getMnc()
+                  << std::endl;
     }
 
     void printInUseStatus(telux::tel::InUseStatus status) {
-        switch(status) {
+        switch (status) {
             case telux::tel::InUseStatus::UNKNOWN:
                 std::cout << "In-use status: UNKNOWN, ";
                 break;
@@ -82,11 +82,11 @@ class Utils {
                 break;
             default:
                 break;
-       }
+        }
     }
 
     void printRoamingStatus(telux::tel::RoamingStatus status) {
-        switch(status) {
+        switch (status) {
             case telux::tel::RoamingStatus::UNKNOWN:
                 std::cout << "Roaming status: UNKNOWN, ";
                 break;
@@ -98,11 +98,11 @@ class Utils {
                 break;
             default:
                 break;
-       }
+        }
     }
 
     void printForbiddenStatus(telux::tel::ForbiddenStatus status) {
-        switch(status) {
+        switch (status) {
             case telux::tel::ForbiddenStatus::UNKNOWN:
                 std::cout << "Forbidden status: UNKNOWN, ";
                 break;
@@ -114,11 +114,11 @@ class Utils {
                 break;
             default:
                 break;
-       }
+        }
     }
 
     void printPreferredStatus(telux::tel::PreferredStatus status) {
-        switch(status) {
+        switch (status) {
             case telux::tel::PreferredStatus::UNKNOWN:
                 std::cout << "Preferred status: UNKNOWN" << std::endl;
                 break;
@@ -130,7 +130,7 @@ class Utils {
                 break;
             default:
                 break;
-       }
+        }
     }
 };
 
@@ -144,10 +144,8 @@ class NetworkScanner : public std::enable_shared_from_this<NetworkScanner> {
         auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
 
         /* Step - 2 */
-        networkMgr_ = phoneFactory.getNetworkSelectionManager(DEFAULT_SLOT_ID,
-                [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+        networkMgr_ = phoneFactory.getNetworkSelectionManager(
+            DEFAULT_SLOT_ID, [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!networkMgr_) {
             std::cout << "Can't get INetworkSelectionManager" << std::endl;
@@ -157,8 +155,8 @@ class NetworkScanner : public std::enable_shared_from_this<NetworkScanner> {
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Network selection service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Network selection service unavailable, status "
+                      << static_cast<int>(serviceStatus) << std::endl;
             return -EIO;
         }
 
@@ -169,8 +167,8 @@ class NetworkScanner : public std::enable_shared_from_this<NetworkScanner> {
     int scanNetwork() {
         telux::common::Status status;
 
-        auto responseCb = std::bind(&NetworkScanner::networkScanResultReceiver,
-            this, std::placeholders::_1, std::placeholders::_2);
+        auto responseCb = std::bind(&NetworkScanner::networkScanResultReceiver, this,
+            std::placeholders::_1, std::placeholders::_2);
 
         /* Step - 4 */
         status = networkMgr_->performNetworkScan(responseCb);
@@ -185,8 +183,7 @@ class NetworkScanner : public std::enable_shared_from_this<NetworkScanner> {
 
     /* Step - 6 */
     void networkScanResultReceiver(
-        std::vector<telux::tel::OperatorInfo> operatorsInfo,
-        telux::common::ErrorCode error) {
+        std::vector<telux::tel::OperatorInfo> operatorsInfo, telux::common::ErrorCode error) {
 
         std::cout << "networkScanResultReceiver()" << std::endl;
         if (error != telux::common::ErrorCode::SUCCESS) {
@@ -215,7 +212,7 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<NetworkScanner>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate NetworkScanner" << std::endl;
         return -ENOMEM;
     }

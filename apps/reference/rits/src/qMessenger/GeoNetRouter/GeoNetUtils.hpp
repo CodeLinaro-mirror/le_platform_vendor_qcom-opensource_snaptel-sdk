@@ -26,6 +26,13 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file GeoNetUtils.hpp
  * @brief Some utilities of GeoNet
@@ -40,32 +47,25 @@
 #include "GeoNetRouter.hpp"
 #include "gn_internal.h"
 
-namespace gn{
-    class GeoNetUtils {
-    public:
-        GeoNetUtils() {
-        }
-        ~GeoNetUtils() { }
+namespace gn {
+class GeoNetUtils {
+ public:
+    GeoNetUtils() {
+    }
+    ~GeoNetUtils() {
+    }
 
     static bool GnAddrMatch(const gn_addr_t &Addr1, const gn_addr_t &Addr2) {
-        if (Addr1.st != Addr2.st ||
-                Addr1.mid[0] != Addr2.mid[0] ||
-                Addr1.mid[1] != Addr2.mid[1] ||
-                Addr1.mid[2] != Addr2.mid[2] ||
-                Addr1.mid[3] != Addr2.mid[3] ||
-                Addr1.mid[4] != Addr2.mid[4] ||
-                Addr1.mid[5] != Addr2.mid[5]) {
+        if (Addr1.st != Addr2.st || Addr1.mid[0] != Addr2.mid[0] || Addr1.mid[1] != Addr2.mid[1]
+            || Addr1.mid[2] != Addr2.mid[2] || Addr1.mid[3] != Addr2.mid[3]
+            || Addr1.mid[4] != Addr2.mid[4] || Addr1.mid[5] != Addr2.mid[5]) {
             return false;
         }
         return true;
     }
     static bool GnMacMatch(const uint8_t *Addr1, const uint8_t *Addr2) {
-        if (Addr1[0] != Addr2[0] ||
-                Addr1[1] != Addr2[1] ||
-                Addr1[2] != Addr2[2] ||
-                Addr1[3] != Addr2[3] ||
-                Addr1[4] != Addr2[4] ||
-                Addr1[5] != Addr2[5]) {
+        if (Addr1[0] != Addr2[0] || Addr1[1] != Addr2[1] || Addr1[2] != Addr2[2]
+            || Addr1[3] != Addr2[3] || Addr1[4] != Addr2[4] || Addr1[5] != Addr2[5]) {
             return false;
         }
         return true;
@@ -73,44 +73,44 @@ namespace gn{
     static int GeoDistance(double lat_a, double long_a, double lat_b, double long_b) {
         // Uses the haversine formula to calculate the great-circle distance betwen two points
         double R, a, c, d;
-        R = 6371000.0; // Radius of the earth (in meters)
-        a = pow((sin(lat_b - lat_a) / 2.0), 2) +
-        (cos(lat_a) * cos(lat_b) * pow(sin(long_b - long_a) / 2.0, 2));
+        R = 6371000.0;  // Radius of the earth (in meters)
+        a = pow((sin(lat_b - lat_a) / 2.0), 2)
+            + (cos(lat_a) * cos(lat_b) * pow(sin(long_b - long_a) / 2.0, 2));
         c = 2 * atan2(sqrt(a), sqrt(1.0 - a));
         d = R * c;
         return static_cast<int>(d);
     }
 
-    static int GeoDistance(int32_t lat_a, int32_t long_a,
-                    int32_t lat_b, int32_t long_b, geo_pos_unit_e unit) {
-        return GeoDistance(static_cast<double>(lat_a * M_PI *unit/180.0),
-                static_cast<double>(long_a * M_PI * unit /180.0),
-                static_cast<double>(lat_b * M_PI * unit/180.0),
-                static_cast<double>(long_b * M_PI * unit/180.0));
+    static int GeoDistance(
+        int32_t lat_a, int32_t long_a, int32_t lat_b, int32_t long_b, geo_pos_unit_e unit) {
+        return GeoDistance(static_cast<double>(lat_a * M_PI * unit / 180.0),
+            static_cast<double>(long_a * M_PI * unit / 180.0),
+            static_cast<double>(lat_b * M_PI * unit / 180.0),
+            static_cast<double>(long_b * M_PI * unit / 180.0));
     }
 
-    static int GeoBearing(int32_t lat_a, int32_t long_a,
-                    int32_t lat_b, int32_t long_b, geo_pos_unit_e unit) {
+    static int GeoBearing(
+        int32_t lat_a, int32_t long_a, int32_t lat_b, int32_t long_b, geo_pos_unit_e unit) {
 
-        double phi1 = (lat_a * M_PI/180.0)/unit;
-        double phi2 = phi2 = (lat_b * M_PI/180.0)/unit;
-        double delta_phi = ((lat_b - lat_a) * M_PI/180.0)/unit;
-        double delta_lamda = ((long_b - long_a) * M_PI/180.0)/unit;
+        double phi1 = (lat_a * M_PI / 180.0) / unit;
+        double phi2 = phi2 = (lat_b * M_PI / 180.0) / unit;
+        double delta_phi   = ((lat_b - lat_a) * M_PI / 180.0) / unit;
+        double delta_lamda = ((long_b - long_a) * M_PI / 180.0) / unit;
 
         double y = sin(delta_lamda) * cos(phi2);
-        double x = cos(phi1)*sin(phi2) - sin(phi1)*cos(phi2)*cos(delta_lamda);
+        double x = cos(phi1) * sin(phi2) - sin(phi1) * cos(phi2) * cos(delta_lamda);
 
-        return (atan2(y, x)*unit*180/M_PI);
+        return (atan2(y, x) * unit * 180 / M_PI);
     }
 
     static void CartesianTransform(int32_t lat_a, int32_t long_a, int32_t lat_c, int32_t long_c,
-            int32_t angle_c, geo_pos_unit_e unit, int32_t &x, int32_t &y) {
+        int32_t angle_c, geo_pos_unit_e unit, int32_t &x, int32_t &y) {
         int32_t b, d;
         d = GeoDistance(lat_a, long_a, lat_c, long_c, unit);
         b = GeoBearing(lat_a, long_a, lat_c, long_c, unit);
 
-        x = d * cos(((b - angle_c)*M_PI/180)/unit);
-        y = d * sin(((b - angle_c)*M_PI/180)/unit);
+        x = d * cos(((b - angle_c) * M_PI / 180) / unit);
+        y = d * sin(((b - angle_c) * M_PI / 180) / unit);
     }
 
     /**
@@ -140,18 +140,18 @@ namespace gn{
             case GeoAreaType::GEO_AREA_TYPE_CIRCLE:
                 if (a == (x + y))
                     f = 0;
-                else if ( a > (x + y))
+                else if (a > (x + y))
                     f = 1;
                 else
                     f = -1;
                 break;
             case GeoAreaType::GEO_AREA_TYPE_RECT:
-                f = std::min(a*b - b*x, a*b - a*y);
+                f = std::min(a * b - b * x, a * b - a * y);
                 break;
             case GeoAreaType::GEO_AREA_TYPE_ELIP:
-                if (a*b == (b*x + a*y))
+                if (a * b == (b * x + a * y))
                     f = 0;
-                else if (a*b > (b*x + a*y))
+                else if (a * b > (b * x + a * y))
                     f = 1;
                 else
                     f = -1;
@@ -164,25 +164,25 @@ namespace gn{
 
     static uint32_t GetTimestampSinceEpoch() {
         std::chrono::system_clock::time_point EpochTP;
-            // Create TAI epoch, which is 2004-01-01 00:00:00.000
-            // UTC
-            std::tm tm = {0};
-            tm.tm_sec = 0;
-            tm.tm_min = 0;
-            tm.tm_hour = 0;
-            tm.tm_mday = 1;
-            tm.tm_mon = 0;
-            tm.tm_year = 104;
-            tm.tm_isdst = -1;
-            // Convert std::tm to std::time_t (popular extension)
-            std::time_t tt = timegm(&tm);
-            // Convert std::time_t to std::chrono::system_clock::time_point
-            EpochTP = std::chrono::system_clock::from_time_t(tt);
+        // Create TAI epoch, which is 2004-01-01 00:00:00.000
+        // UTC
+        std::tm tm  = {0};
+        tm.tm_sec   = 0;
+        tm.tm_min   = 0;
+        tm.tm_hour  = 0;
+        tm.tm_mday  = 1;
+        tm.tm_mon   = 0;
+        tm.tm_year  = 104;
+        tm.tm_isdst = -1;
+        // Convert std::tm to std::time_t (popular extension)
+        std::time_t tt = timegm(&tm);
+        // Convert std::time_t to std::chrono::system_clock::time_point
+        EpochTP                                   = std::chrono::system_clock::from_time_t(tt);
         std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
         auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - EpochTP);
         return diff.count();
     }
-    //static std::chrono::system_clock::time_point EpochTP;
-    };
-}   //namespace gn
+    // static std::chrono::system_clock::time_point EpochTP;
+};
+}  // namespace gn
 #endif

@@ -25,12 +25,13 @@
  *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 /**
  * @file       SimProfile.hpp
  * @brief      This is a container class represents single eUICC profile on the card.
@@ -57,11 +58,10 @@ namespace tel {
  */
 class SimProfile {
  public:
-
     SimProfile(int profileId, ProfileType profileType, const std::string &iccid, bool isActive,
         const std::string &nickName, const std::string &spn, const std::string &name,
         IconType iconType, std::vector<uint8_t> icon, ProfileClass profileClass,
-        PolicyRuleMask policyRuleMask, int slotId = DEFAULT_SLOT_ID);
+        PolicyRuleMask policyRuleMask, int slotId = DEFAULT_SLOT_ID, uint8_t portId = 0);
 
     /**
      * Get slot id associated for this profile
@@ -157,6 +157,14 @@ class SimProfile {
      */
     std::string toString();
 
+    /**
+     * Provides the port identifer for the profile.
+     *
+     * @note Port identifer for inactive profile returns 255.
+     * @returns portId for the profile
+     */
+    uint8_t getPortId();
+
  private:
     int profileId_;
     ProfileType profileType_;
@@ -170,10 +178,11 @@ class SimProfile {
     ProfileClass profileClass_;
     PolicyRuleMask policyRuleMask_;
     int slotId_;
+    uint8_t portId_;
 };
 
 /** @} */ /* end_addtogroup telematics_rsp */
-}
-}
+}  // namespace tel
+}  // namespace telux
 
-#endif // TELUX_TEL_SIMPROFILE_HPP
+#endif  // TELUX_TEL_SIMPROFILE_HPP

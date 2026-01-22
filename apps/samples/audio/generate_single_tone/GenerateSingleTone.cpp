@@ -1,35 +1,6 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /*
@@ -71,9 +42,7 @@ int GenerateSingleTone::init() {
 
     /* Step - 2 */
     audioManager_ = audioFactory.getAudioManager(
-            [&p](telux::common::ServiceStatus srvStatus) {
-        p.set_value(srvStatus);
-    });
+        [&p](telux::common::ServiceStatus srvStatus) { p.set_value(srvStatus); });
 
     if (!audioManager_) {
         std::cout << "Can't get IAudioManager" << std::endl;
@@ -103,18 +72,19 @@ int GenerateSingleTone::createToneStream() {
 
     sc.type = telux::audio::StreamType::TONE_GENERATOR;
     sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
-    sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
+    sc.format          = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
     sc.channelTypeMask = telux::audio::ChannelType::LEFT | telux::audio::ChannelType::RIGHT;
 
-    status = audioManager_->createStream(sc, [&p, this] (
-            std::shared_ptr<telux::audio::IAudioStream> &audioStream,
-            telux::common::ErrorCode result) {
-        if (result == telux::common::ErrorCode::SUCCESS) {
-            audioToneStream_ = std::dynamic_pointer_cast<
-                telux::audio::IAudioToneGeneratorStream>(audioStream);
-        }
-        p.set_value(result);
-    });
+    status = audioManager_->createStream(
+        sc, [&p, this](std::shared_ptr<telux::audio::IAudioStream> &audioStream,
+                telux::common::ErrorCode result) {
+            if (result == telux::common::ErrorCode::SUCCESS) {
+                audioToneStream_
+                    = std::dynamic_pointer_cast<telux::audio::IAudioToneGeneratorStream>(
+                        audioStream);
+            }
+            p.set_value(result);
+        });
 
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "can't create tone stream, err " << static_cast<int>(status) << std::endl;
@@ -140,10 +110,8 @@ int GenerateSingleTone::deleteToneStream() {
     telux::common::Status status;
     telux::common::ErrorCode ec;
 
-    status = audioManager_->deleteStream(audioToneStream_, [&p, this] (
-            telux::common::ErrorCode result) {
-        p.set_value(result);
-    });
+    status = audioManager_->deleteStream(
+        audioToneStream_, [&p, this](telux::common::ErrorCode result) { p.set_value(result); });
 
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "can't delete tone stream, err " << static_cast<int>(status) << std::endl;
@@ -171,12 +139,10 @@ int GenerateSingleTone::generateSingleTone() {
 
     std::vector<uint16_t> frequency{1244};
     uint16_t duration = 12000;
-    uint16_t gain = 5000;
+    uint16_t gain     = 5000;
 
-    status = audioToneStream_->playTone(frequency, duration, gain,
-        [&p] (telux::common::ErrorCode result) {
-            p.set_value(result);
-    });
+    status = audioToneStream_->playTone(
+        frequency, duration, gain, [&p](telux::common::ErrorCode result) { p.set_value(result); });
 
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "can't play tone, err " << static_cast<int>(status) << std::endl;
@@ -202,9 +168,8 @@ int GenerateSingleTone::stopGeneratingTone() {
     telux::common::Status status;
     telux::common::ErrorCode ec;
 
-    status = audioToneStream_->stopTone([&p] (telux::common::ErrorCode result) {
-        p.set_value(result);
-    });
+    status = audioToneStream_->stopTone(
+        [&p](telux::common::ErrorCode result) { p.set_value(result); });
 
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "can't stop tone, err " << static_cast<int>(status) << std::endl;
@@ -228,7 +193,7 @@ int main(int argc, char **argv) {
 
     try {
         app = std::make_shared<GenerateSingleTone>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "can't allocate GenerateSingleTone" << std::endl;
         return -ENOMEM;
     }

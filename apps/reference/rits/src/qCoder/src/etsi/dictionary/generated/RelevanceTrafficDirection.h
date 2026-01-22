@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_RelevanceTrafficDirection_H_
-#define	_RelevanceTrafficDirection_H_
-
+#ifndef _RelevanceTrafficDirection_H_
+#define _RelevanceTrafficDirection_H_
 
 #include <asn_application.h>
 
@@ -20,14 +19,14 @@ extern "C" {
 
 /* Dependencies */
 typedef enum RelevanceTrafficDirection {
-	RelevanceTrafficDirection_allTrafficDirections	= 0,
-	RelevanceTrafficDirection_upstreamTraffic	= 1,
-	RelevanceTrafficDirection_downstreamTraffic	= 2,
-	RelevanceTrafficDirection_oppositeTraffic	= 3
+    RelevanceTrafficDirection_allTrafficDirections = 0,
+    RelevanceTrafficDirection_upstreamTraffic      = 1,
+    RelevanceTrafficDirection_downstreamTraffic    = 2,
+    RelevanceTrafficDirection_oppositeTraffic      = 3
 } e_RelevanceTrafficDirection;
 
 /* RelevanceTrafficDirection */
-typedef long	 RelevanceTrafficDirection_t;
+typedef long RelevanceTrafficDirection_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_RelevanceTrafficDirection;
@@ -45,5 +44,5 @@ per_type_encoder_f RelevanceTrafficDirection_encode_uper;
 }
 #endif
 
-#endif	/* _RelevanceTrafficDirection_H_ */
+#endif /* _RelevanceTrafficDirection_H_ */
 #include <asn_internal.h>

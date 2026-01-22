@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -13,10 +13,10 @@ using namespace telux::tel;
 using namespace std;
 
 CallStub::CallStub(int phoneId, CallInfo callInfo)
-    : stub_(DialerService::NewStub(grpc::CreateChannel("localhost:8089",
-    grpc::InsecureChannelCredentials())))
-    , phoneId_(phoneId)
-    , callInfo_(callInfo) {
+   : stub_(DialerService::NewStub(
+       grpc::CreateChannel("localhost:8089", grpc::InsecureChannelCredentials())))
+   , phoneId_(phoneId)
+   , callInfo_(callInfo) {
     taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
 }
 
@@ -24,8 +24,8 @@ telux::common::Status CallStub::answer(
     std::shared_ptr<telux::common::ICommandResponseCallback> callback, RttMode mode) {
     LOG(DEBUG, "answer()");
     telux::common::Status status = telux::common::Status::FAILED;
-    if ((callInfo_.callState == CallState::CALL_INCOMING ) ||
-        (callInfo_.callState == CallState::CALL_WAITING)) {
+    if ((callInfo_.callState == CallState::CALL_INCOMING)
+        || (callInfo_.callState == CallState::CALL_WAITING)) {
         ::telStub::AnswerRequest request;
         ::telStub::AnswerReply response;
         ClientContext context;
@@ -33,20 +33,19 @@ telux::common::Status CallStub::answer(
         request.set_call_index(callInfo_.index);
         request.set_mode(static_cast<telStub::RttMode>(mode));
         LOG(DEBUG, "Answer(), phoneId ", phoneId_, " callIndex", callInfo_.index, " rtt mode ",
-        static_cast<int>(mode));
+            static_cast<int>(mode));
         grpc::Status reqstatus = stub_->Answer(&context, request, &response);
         if (!reqstatus.ok()) {
             return telux::common::Status::FAILED;
         }
         telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-        status = static_cast<telux::common::Status>(response.status());
-        bool isCallbackNeeded = static_cast<bool>(response.iscallback());
-        int delay = static_cast<int>(response.delay());
-        if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCommandCallback(callback, error, delay);
-                }).share();
+        status                         = static_cast<telux::common::Status>(response.status());
+        bool isCallbackNeeded          = static_cast<bool>(response.iscallback());
+        int delay                      = static_cast<int>(response.delay());
+        if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCommandCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     } else {
@@ -75,15 +74,14 @@ telux::common::Status CallStub::hold(
             return telux::common::Status::FAILED;
         }
         telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-        status = static_cast<telux::common::Status>(response.status());
-        bool isCallbackNeeded = static_cast<bool>(response.iscallback());
-        int delay = static_cast<int>(response.delay());
+        status                         = static_cast<telux::common::Status>(response.status());
+        bool isCallbackNeeded          = static_cast<bool>(response.iscallback());
+        int delay                      = static_cast<int>(response.delay());
 
-        if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCommandCallback(callback, error, delay);
-                }).share();
+        if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCommandCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     } else {
@@ -112,14 +110,13 @@ telux::common::Status CallStub::resume(
             return telux::common::Status::FAILED;
         }
         telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-        status = static_cast<telux::common::Status>(response.status());
-        bool isCallbackNeeded = static_cast<bool>(response.iscallback());
-        int delay = static_cast<int>(response.delay());
-        if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCommandCallback(callback, error, delay);
-                }).share();
+        status                         = static_cast<telux::common::Status>(response.status());
+        bool isCallbackNeeded          = static_cast<bool>(response.iscallback());
+        int delay                      = static_cast<int>(response.delay());
+        if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCommandCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     } else {
@@ -149,14 +146,13 @@ telux::common::Status CallStub::reject(
             return telux::common::Status::FAILED;
         }
         telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-        status = static_cast<telux::common::Status>(response.status());
-        bool isCallbackNeeded = static_cast<bool>(response.iscallback());
-        int delay = static_cast<int>(response.delay());
-        if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCommandCallback(callback, error, delay);
-                }).share();
+        status                         = static_cast<telux::common::Status>(response.status());
+        bool isCallbackNeeded          = static_cast<bool>(response.iscallback());
+        int delay                      = static_cast<int>(response.delay());
+        if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCommandCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     } else {
@@ -187,14 +183,13 @@ telux::common::Status CallStub::reject(const std::string &rejectSMS,
             return telux::common::Status::FAILED;
         }
         telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-        status = static_cast<telux::common::Status>(response.status());
-        bool isCallbackNeeded = static_cast<bool>(response.iscallback());
-        int delay = static_cast<int>(response.delay());
-        if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCommandCallback(callback, error, delay);
-                }).share();
+        status                         = static_cast<telux::common::Status>(response.status());
+        bool isCallbackNeeded          = static_cast<bool>(response.iscallback());
+        int delay                      = static_cast<int>(response.delay());
+        if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCommandCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     } else {
@@ -209,7 +204,7 @@ telux::common::Status CallStub::reject(const std::string &rejectSMS,
  */
 telux::common::Status CallStub::hangup(
     std::shared_ptr<telux::common::ICommandResponseCallback> callback) {
-     telux::common::Status status = telux::common::Status::FAILED;
+    telux::common::Status status = telux::common::Status::FAILED;
     if (callInfo_.callState == CallState::CALL_ON_HOLD
         || callInfo_.callState == CallState::CALL_WAITING
         || callInfo_.callState == CallState::CALL_ACTIVE
@@ -226,14 +221,13 @@ telux::common::Status CallStub::hangup(
             return telux::common::Status::FAILED;
         }
         telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-        status = static_cast<telux::common::Status>(response.status());
-        bool isCallbackNeeded = static_cast<bool>(response.iscallback());
-        int delay = static_cast<int>(response.delay());
-        if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCommandCallback(callback, error, delay);
-                }).share();
+        status                         = static_cast<telux::common::Status>(response.status());
+        bool isCallbackNeeded          = static_cast<bool>(response.iscallback());
+        int delay                      = static_cast<int>(response.delay());
+        if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCommandCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     } else {
@@ -243,13 +237,12 @@ telux::common::Status CallStub::hangup(
     return status;
 }
 
-void CallStub::invokeCommandCallback(std::shared_ptr<ICommandResponseCallback> callback,
-    ErrorCode error, int cbDelay) {
+void CallStub::invokeCommandCallback(
+    std::shared_ptr<ICommandResponseCallback> callback, ErrorCode error, int cbDelay) {
     std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-    auto f = std::async(std::launch::async,
-        [this, error , callback]() {
-            callback->commandResponse(error);
-        }).share();
+    auto f = std::async(std::launch::async, [this, error, callback]() {
+        callback->commandResponse(error);
+    }).share();
     taskQ_->add(f);
 }
 
@@ -352,9 +345,8 @@ bool CallStub::match(std::shared_ptr<CallStub> &ci) {
     logCallDetails();  // Logging call details only for debugging purposes
     LOG(DEBUG, __FUNCTION__, " SlotId = ", ci->getPhoneId(),
         " Original Call CallInfo: remotePartyNumber = ", ci->getRemotePartyNumber(),
-        ", callIndex = ", ci->getCallIndex(), "call state = ",
-            static_cast<int>(ci->getCallState()),
-        ", callDirection = ",  static_cast<int>(ci->getCallDirection()));
+        ", callIndex = ", ci->getCallIndex(), "call state = ", static_cast<int>(ci->getCallState()),
+        ", callDirection = ", static_cast<int>(ci->getCallDirection()));
 
     /* In case of MO call initially the cached call index will be -1, so ignore comparing the
        cached call index and new call info index and just compare the remote party number of
@@ -372,8 +364,8 @@ bool CallStub::match(std::shared_ptr<CallStub> &ci) {
              direction(isMt) and slotId
     */
     if (callInfo_.index != INVALID_CALL_INDEX) {
-        if ((callInfo_.index == ci->getCallIndex()) &&
-            (callInfo_.callDirection == ci->getCallDirection())
+        if ((callInfo_.index == ci->getCallIndex())
+            && (callInfo_.callDirection == ci->getCallDirection())
             && (ci->getPhoneId() == phoneId_)) {
             return true;
         }
@@ -387,11 +379,10 @@ bool CallStub::match(std::shared_ptr<CallStub> &ci) {
 }
 
 bool CallStub::isInfoStale(const std::shared_ptr<CallStub> &ci) {
-    return ((callInfo_.index != ci->getCallIndex()) ||
-            (callInfo_.callDirection != ci->getCallDirection())
+    return ((callInfo_.index != ci->getCallIndex())
+            || (callInfo_.callDirection != ci->getCallDirection())
             || (callInfo_.remotePartyNumber != ci->getRemotePartyNumber())
-            || (callInfo_.callState != ci->getCallState())
-            || (callInfo_.mode != ci->getRttMode())
+            || (callInfo_.callState != ci->getCallState()) || (callInfo_.mode != ci->getRttMode())
             || (callInfo_.localRttCapability != ci->getLocalRttCapability())
             || (callInfo_.peerRttCapability != ci->getPeerRttCapability())
             || (callInfo_.callType != ci->getCallType()));
@@ -421,15 +412,15 @@ void CallStub::logCallDetails() {
 telux::common::Status CallStub::updateCallInfo(std::shared_ptr<CallStub> &callInfo) {
     LOG(DEBUG, "Current call details");
     logCallDetails();
-    callInfo_.index = callInfo->getCallIndex();
-    callInfo_.callDirection = callInfo->getCallDirection();
-    callInfo_.remotePartyNumber = callInfo->getRemotePartyNumber();
-    callInfo_.callState = callInfo->getCallState();
-    callInfo_.mode = callInfo->getRttMode();
+    callInfo_.index              = callInfo->getCallIndex();
+    callInfo_.callDirection      = callInfo->getCallDirection();
+    callInfo_.remotePartyNumber  = callInfo->getRemotePartyNumber();
+    callInfo_.callState          = callInfo->getCallState();
+    callInfo_.mode               = callInfo->getRttMode();
     callInfo_.localRttCapability = callInfo->getLocalRttCapability();
-    callInfo_.peerRttCapability = callInfo->getPeerRttCapability();
-    callInfo_.callType = callInfo->getCallType();
-    callInfo_.callReason = callInfo->getCallReason();
+    callInfo_.peerRttCapability  = callInfo->getPeerRttCapability();
+    callInfo_.callType           = callInfo->getCallType();
+    callInfo_.callReason         = callInfo->getCallReason();
     LOG(DEBUG, "Updated call details");
     logCallDetails();
     return telux::common::Status::SUCCESS;
@@ -473,8 +464,8 @@ void CallStub::setCallReason(std::string reason) {
     callInfo_.callReason = reason;
 }
 
-telux::common::Status CallStub::modify(RttMode mode,
-    std::shared_ptr<telux::common::ICommandResponseCallback> callback) {
+telux::common::Status CallStub::modify(
+    RttMode mode, std::shared_ptr<telux::common::ICommandResponseCallback> callback) {
     LOG(DEBUG, __FUNCTION__, " RTT mode is : ", static_cast<int>(mode));
     if (mode == RttMode::UNKNOWN) {
         return telux::common::Status::INVALIDPARAM;
@@ -483,8 +474,8 @@ telux::common::Status CallStub::modify(RttMode mode,
     return status;
 }
 
-telux::common::Status CallStub::respondToModifyRequest(bool modifyResponseType,
-    std::shared_ptr<telux::common::ICommandResponseCallback> callback) {
+telux::common::Status CallStub::respondToModifyRequest(
+    bool modifyResponseType, std::shared_ptr<telux::common::ICommandResponseCallback> callback) {
     RttMode rttMode = RttMode::DISABLED;
     LOG(DEBUG, __FUNCTION__, " Current rtt mode is : ", static_cast<int>(callInfo_.mode));
     if ((callInfo_.mode == RttMode::DISABLED) || (callInfo_.mode == RttMode::FULL)) {
@@ -502,8 +493,8 @@ telux::common::Status CallStub::respondToModifyRequest(bool modifyResponseType,
         }
     }
     LOG(DEBUG, __FUNCTION__, " Modified rtt mode is : ", static_cast<int>(rttMode));
-    telux::common::Status status = modifyOrRespondToModifyCall(rttMode, "respondToModifyRequest",
-        callback);
+    telux::common::Status status
+        = modifyOrRespondToModifyCall(rttMode, "respondToModifyRequest", callback);
     return status;
 }
 
@@ -516,21 +507,20 @@ telux::common::Status CallStub::modifyOrRespondToModifyCall(RttMode mode, std::s
     request.set_call_index(callInfo_.index);
     request.set_rtt_mode(static_cast<telStub::RttMode>(mode));
     request.set_api_type(api);
-    LOG(DEBUG, __FUNCTION__," phoneId ", phoneId_, " callIndex ", callInfo_.index);
+    LOG(DEBUG, __FUNCTION__, " phoneId ", phoneId_, " callIndex ", callInfo_.index);
     grpc::Status reqstatus = stub_->ModifyOrRespondToModifyCall(&context, request, &response);
     if (!reqstatus.ok()) {
         return telux::common::Status::FAILED;
     }
 
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    bool isCallbackNeeded = static_cast<bool>(response.iscallback());
-    int delay = static_cast<int>(response.delay());
-    if ((status == telux::common::Status::SUCCESS )&& (isCallbackNeeded)) {
-        auto f1 = std::async(std::launch::async,
-            [this, error, callback, delay]() {
-                this->invokeCommandCallback(callback, error, delay);
-            }).share();
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
+    bool isCallbackNeeded          = static_cast<bool>(response.iscallback());
+    int delay                      = static_cast<int>(response.delay());
+    if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+        auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+            this->invokeCommandCallback(callback, error, delay);
+        }).share();
         taskQ_->add(f1);
     }
     return status;

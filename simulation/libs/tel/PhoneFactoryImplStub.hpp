@@ -38,42 +38,40 @@ class PhoneFactoryImplStub : public PhoneFactory {
 
     virtual std::shared_ptr<IPhoneManager> getPhoneManager(
         telux::common::InitResponseCb callback = nullptr) override;
-    virtual std::shared_ptr<ISmsManager> getSmsManager(int phoneId = DEFAULT_PHONE_ID,
+    virtual std::shared_ptr<ISmsManager> getSmsManager(
+        int phoneId = DEFAULT_PHONE_ID, telux::common::InitResponseCb callback = nullptr) override;
+    virtual std::shared_ptr<ICallManager> getCallManager(
         telux::common::InitResponseCb callback = nullptr) override;
-    virtual std::shared_ptr<ICallManager> getCallManager(telux::common::InitResponseCb
-        callback = nullptr) override;
-    virtual std::shared_ptr<ICardManager> getCardManager(telux::common::InitResponseCb
-        callback = nullptr) override;
-    virtual std::shared_ptr<ISapCardManager> getSapCardManager(int slotId = DEFAULT_SLOT_ID,
+    virtual std::shared_ptr<ICardManager> getCardManager(
         telux::common::InitResponseCb callback = nullptr) override;
+    virtual std::shared_ptr<ISapCardManager> getSapCardManager(
+        int slotId = DEFAULT_SLOT_ID, telux::common::InitResponseCb callback = nullptr) override;
     virtual std::shared_ptr<ISubscriptionManager> getSubscriptionManager(
         telux::common::InitResponseCb callback = nullptr) override;
     virtual std::shared_ptr<IServingSystemManager> getServingSystemManager(
         int slotId = DEFAULT_SLOT_ID, telux::common::InitResponseCb callback = nullptr) override;
     virtual std::shared_ptr<INetworkSelectionManager> getNetworkSelectionManager(
-        int slotId = DEFAULT_SLOT_ID, telux::common::InitResponseCb  callback = nullptr) override;
-    virtual std::shared_ptr<IRemoteSimManager> getRemoteSimManager(int slotId = DEFAULT_SLOT_ID,
-        telux::common::InitResponseCb  callback = nullptr) override;
+        int slotId = DEFAULT_SLOT_ID, telux::common::InitResponseCb callback = nullptr) override;
+    virtual std::shared_ptr<IRemoteSimManager> getRemoteSimManager(
+        int slotId = DEFAULT_SLOT_ID, telux::common::InitResponseCb callback = nullptr) override;
     virtual std::shared_ptr<IMultiSimManager> getMultiSimManager(
         telux::common::InitResponseCb callback = nullptr) override;
     virtual std::shared_ptr<ICellBroadcastManager> getCellBroadcastManager(
-        SlotId slotId = DEFAULT_SLOT_ID,
-        telux::common::InitResponseCb  callback = nullptr) override;
+        SlotId slotId = DEFAULT_SLOT_ID, telux::common::InitResponseCb callback = nullptr) override;
     virtual std::shared_ptr<ISimProfileManager> getSimProfileManager(
-        telux::common::InitResponseCb  callback = nullptr) override;
+        telux::common::InitResponseCb callback = nullptr) override;
     virtual std::shared_ptr<IImsSettingsManager> getImsSettingsManager(
-        telux::common::InitResponseCb  callback = nullptr) override;
+        telux::common::InitResponseCb callback = nullptr) override;
     virtual std::shared_ptr<IEcallManager> getEcallManager(
         telux::common::InitResponseCb callback = nullptr) override;
     virtual std::shared_ptr<IHttpTransactionManager> getHttpTransactionManager(
-        telux::common::InitResponseCb  callback = nullptr) override;
-    virtual std::shared_ptr<IImsServingSystemManager> getImsServingSystemManager(SlotId slotId,
         telux::common::InitResponseCb callback = nullptr) override;
+    virtual std::shared_ptr<IImsServingSystemManager> getImsServingSystemManager(
+        SlotId slotId, telux::common::InitResponseCb callback = nullptr) override;
     virtual std::shared_ptr<ISuppServicesManager> getSuppServicesManager(
-        SlotId slotId = DEFAULT_SLOT_ID, telux::common::InitResponseCb  callback = nullptr)
-            override;
+        SlotId slotId = DEFAULT_SLOT_ID, telux::common::InitResponseCb callback = nullptr) override;
     virtual std::shared_ptr<IApSimProfileManager> getApSimProfileManager(
-        telux::common::InitResponseCb  callback = nullptr) override;
+        telux::common::InitResponseCb callback = nullptr) override;
 
  private:
     PhoneFactoryImplStub();

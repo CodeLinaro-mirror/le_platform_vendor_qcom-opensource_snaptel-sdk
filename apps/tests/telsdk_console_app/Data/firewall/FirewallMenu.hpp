@@ -28,8 +28,8 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -47,7 +47,6 @@
 #include <memory>
 #include <string>
 #include <iomanip>
-
 
 #include "console_app_framework/ConsoleApp.hpp"
 
@@ -77,23 +76,24 @@ class FirewallMenu : public ConsoleApp,
     void addHwAccelerationFirewallEntry(std::vector<std::string> inputCommand);
     void requestHwAccelerationFirewallEntries(std::vector<std::string> inputCommand);
 
-    //Initialization callback
+    // Initialization callback
     void onInitComplete(telux::common::ServiceStatus status);
 
     FirewallMenu(std::string appName, std::string cursor);
     ~FirewallMenu();
+
  private:
     // get IPV4 Firewall params from user and set IPV4Info
-    void getIPV4ParamsFromUser(telux::data::IpProtocol proto,
-        std::shared_ptr<IIpFilter> ipFilter, std::shared_ptr<IIpFilter> ipFilterTcpUdp);
+    void getIPV4ParamsFromUser(telux::data::IpProtocol proto, std::shared_ptr<IIpFilter> ipFilter,
+        std::shared_ptr<IIpFilter> ipFilterTcpUdp);
     // get IPV6 Firewall params from user and set IPV6Info
-    void getIPV6ParamsFromUser(telux::data::IpProtocol proto,
-        std::shared_ptr<IIpFilter> ipFilter, std::shared_ptr<IIpFilter> ipFilterTcpUdp);
+    void getIPV6ParamsFromUser(telux::data::IpProtocol proto, std::shared_ptr<IIpFilter> ipFilter,
+        std::shared_ptr<IIpFilter> ipFilterTcpUdp);
     // get Transport Firewall params from user and set TCP/UDP Info
-    void getProtocolParams(telux::data::IpProtocol proto,
-        std::shared_ptr<IIpFilter> ipFilter, std::shared_ptr<IIpFilter> ipFilterTcpUdp);
-    void getProtocolParamsFromUser (std::string proto, int &srcPort,
-        int &srcRange, int &destPort, int &destRange);
+    void getProtocolParams(telux::data::IpProtocol proto, std::shared_ptr<IIpFilter> ipFilter,
+        std::shared_ptr<IIpFilter> ipFilterTcpUdp);
+    void getProtocolParamsFromUser(
+        std::string proto, int &srcPort, int &srcRange, int &destPort, int &destRange);
     void parseProtoInfo(std::shared_ptr<IIpFilter> filter, telux::data::IpProtocol protocol,
         int &srcPort, int &destPort, int &srcPortRange, int &dstPortRange, std::string &protoStr);
     void displayFirewallEntry();

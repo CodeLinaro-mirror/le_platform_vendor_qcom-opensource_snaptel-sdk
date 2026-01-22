@@ -1,7 +1,7 @@
- /*
-  *  Copyright (c) 2021,2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
-  *  SPDX-License-Identifier: BSD-3-Clause-Clear
-  */
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * @file       DataFactoryImplStub.hpp
@@ -23,25 +23,24 @@
 namespace telux {
 namespace data {
 
-class DataFactoryImplStub : public DataFactory,
-                            public telux::common::FactoryHelper {
+class DataFactoryImplStub : public DataFactory, public telux::common::FactoryHelper {
  public:
     static DataFactory &getInstance();
 
     virtual std::shared_ptr<IDataConnectionManager> getDataConnectionManager(
-        SlotId slotId = DEFAULT_SLOT_ID,
+        SlotId slotId                                = DEFAULT_SLOT_ID,
         telux::common::InitResponseCb clientCallback = nullptr) override;
 
     virtual std::shared_ptr<IDataProfileManager> getDataProfileManager(
-        SlotId slotId = DEFAULT_SLOT_ID,
+        SlotId slotId                                = DEFAULT_SLOT_ID,
         telux::common::InitResponseCb clientCallback = nullptr) override;
 
     virtual std::shared_ptr<IServingSystemManager> getServingSystemManager(
-        SlotId slotId = DEFAULT_SLOT_ID,
+        SlotId slotId                                = DEFAULT_SLOT_ID,
         telux::common::InitResponseCb clientCallback = nullptr) override;
 
     virtual std::shared_ptr<IDataFilterManager> getDataFilterManager(
-        SlotId slotId = DEFAULT_SLOT_ID,
+        SlotId slotId                                = DEFAULT_SLOT_ID,
         telux::common::InitResponseCb clientCallback = nullptr) override;
 
     virtual std::shared_ptr<telux::data::net::INatManager> getNatManager(
@@ -91,7 +90,7 @@ class DataFactoryImplStub : public DataFactory,
         telux::common::InitResponseCb clientCallback = nullptr) override;
 
     virtual std::shared_ptr<telux::data::IKeepAliveManager> getKeepAliveManager(
-        SlotId slotId = DEFAULT_SLOT_ID,
+        SlotId slotId                                = DEFAULT_SLOT_ID,
         telux::common::InitResponseCb clientCallback = nullptr) override;
 
  private:
@@ -99,8 +98,7 @@ class DataFactoryImplStub : public DataFactory,
     ~DataFactoryImplStub();
 
     void initCompleteNotifier(
-        std::vector<telux::common::InitResponseCb> &initCbs,
-        telux::common::ServiceStatus status);
+        std::vector<telux::common::InitResponseCb> &initCbs, telux::common::ServiceStatus status);
     void initCompleteNotifierWithSlotId(
         std::map<SlotId, std::vector<telux::common::InitResponseCb>> &initCbs,
         telux::common::ServiceStatus status, SlotId slotId);
@@ -130,7 +128,7 @@ class DataFactoryImplStub : public DataFactory,
     std::weak_ptr<telux::data::IDataControlManager> dataControlManager_;
     std::weak_ptr<telux::data::IDataLinkManager> dataLinkManager_;
     std::weak_ptr<telux::data::net::IQoSManager> qosManager_;
-	std::weak_ptr<telux::data::IKeepAliveManager> KeepAliveManager_;
+    std::weak_ptr<telux::data::IKeepAliveManager> KeepAliveManager_;
 
     std::map<SlotId, std::vector<telux::common::InitResponseCb>> dataProfileCallbacks_;
     std::map<SlotId, std::vector<telux::common::InitResponseCb>> servingSystemCallbacks_;
@@ -148,7 +146,7 @@ class DataFactoryImplStub : public DataFactory,
     std::vector<telux::common::InitResponseCb> dataControlCallbacks_;
     std::vector<telux::common::InitResponseCb> dataLinkCallbacks_;
     std::vector<telux::common::InitResponseCb> qosCallbacks_;
-	std::vector<telux::common::InitResponseCb> keepAliveCallbacks_;
+    std::vector<telux::common::InitResponseCb> keepAliveCallbacks_;
 };
 
 }  // namespace data

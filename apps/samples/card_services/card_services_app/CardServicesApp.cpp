@@ -26,40 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021, 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /*
@@ -101,9 +72,9 @@
 
 /* Card events */
 enum class CardEvent {
-   OPEN_LOGICAL_CHANNEL = 1,  /* Open Logical channel */
-   CLOSE_LOGICAL_CHANNEL = 2, /* Close Logical channel */
-   TRANSMIT_APDU_CHANNEL = 3  /* Transmit of APDU on channel */
+    OPEN_LOGICAL_CHANNEL  = 1, /* Open Logical channel */
+    CLOSE_LOGICAL_CHANNEL = 2, /* Close Logical channel */
+    TRANSMIT_APDU_CHANNEL = 3 /* Transmit of APDU on channel */
 };
 
 class CardListener : public telux::tel::ICardChannelCallback,
@@ -120,9 +91,7 @@ class CardListener : public telux::tel::ICardChannelCallback,
 
         /* Step - 2 */
         cardMgr_ = phoneFactory.getCardManager(
-                [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+            [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!cardMgr_) {
             std::cout << "Can't get ICardManager" << std::endl;
@@ -132,8 +101,8 @@ class CardListener : public telux::tel::ICardChannelCallback,
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Card service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Card service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
@@ -149,8 +118,7 @@ class CardListener : public telux::tel::ICardChannelCallback,
         /* Step - 4 */
         status = cardMgr_->getSlotCount(slotCount);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't get slot count, status " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't get slot count, status " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -159,13 +127,12 @@ class CardListener : public telux::tel::ICardChannelCallback,
         /* Step - 5 */
         status = cardMgr_->getSlotIds(slotIds);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't get slot Ids, status " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't get slot Ids, status " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
         std::cout << "Slot Ids: { ";
-        for(auto id : slotIds) {
+        for (auto id : slotIds) {
             std::cout << id << " ";
         }
         std::cout << "}" << std::endl;
@@ -173,8 +140,7 @@ class CardListener : public telux::tel::ICardChannelCallback,
         /* Step - 6 */
         card_ = cardMgr_->getCard(slotIds.front(), &status);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't create card, status " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't create card, status " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -187,8 +153,8 @@ class CardListener : public telux::tel::ICardChannelCallback,
         /* Step - 7 */
         applications_ = card_->getApplications(&status);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't get supported application, status " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't get supported application, status " << static_cast<int>(status)
+                      << std::endl;
             return -EIO;
         }
 
@@ -209,7 +175,7 @@ class CardListener : public telux::tel::ICardChannelCallback,
         std::string aid;
         telux::common::Status status;
 
-        for(auto app : applications_) {
+        for (auto app : applications_) {
             if (app->getAppType() == telux::tel::AppType::APPTYPE_USIM) {
                 aid = app->getAppId();
                 break;
@@ -219,13 +185,12 @@ class CardListener : public telux::tel::ICardChannelCallback,
         /* Step - 8 */
         status = card_->openLogicalChannel(aid, shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't open channel, status " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't open channel, status " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
-        if (!waitForCardEvent(CardEvent::OPEN_LOGICAL_CHANNEL) ||
-            (errorCode_ != telux::common::ErrorCode::SUCCESS)) {
+        if (!waitForCardEvent(CardEvent::OPEN_LOGICAL_CHANNEL)
+            || (errorCode_ != telux::common::ErrorCode::SUCCESS)) {
             std::cout << "Failed to open channel" << std::endl;
             return -EIO;
         }
@@ -240,13 +205,12 @@ class CardListener : public telux::tel::ICardChannelCallback,
         /* Step - 10 */
         status = card_->closeLogicalChannel(openedChannel_, shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't close channel, status " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't close channel, status " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
-        if (!waitForCardEvent(CardEvent::CLOSE_LOGICAL_CHANNEL) ||
-            (errorCode_ != telux::common::ErrorCode::SUCCESS)) {
+        if (!waitForCardEvent(CardEvent::CLOSE_LOGICAL_CHANNEL)
+            || (errorCode_ != telux::common::ErrorCode::SUCCESS)) {
             std::cout << "Failed to close channel" << std::endl;
             return -EIO;
         }
@@ -260,24 +224,24 @@ class CardListener : public telux::tel::ICardChannelCallback,
 
         /* Sample SAP APDU to open master file */
         /* APDU Command - 00 A4 00 04 02 3F 00 */
-        const uint8_t CLA = 0;
-        const uint8_t INSTRUCTION = 164;
-        const uint8_t P1 = 0;
-        const uint8_t P2 = 4;
-        const uint8_t P3 = 2;
+        const uint8_t CLA               = 0;
+        const uint8_t INSTRUCTION       = 164;
+        const uint8_t P1                = 0;
+        const uint8_t P2                = 4;
+        const uint8_t P3                = 2;
         const std::vector<uint8_t> DATA = {63, 0};
 
         /* Step - 9 */
         status = card_->transmitApduLogicalChannel(
             openedChannel_, CLA, INSTRUCTION, P1, P2, P3, DATA, shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't transmit logical APDU, status " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't transmit logical APDU, status " << static_cast<int>(status)
+                      << std::endl;
             return -EIO;
         }
 
-        if (!waitForCardEvent(CardEvent::TRANSMIT_APDU_CHANNEL) ||
-            (errorCode_ != telux::common::ErrorCode::SUCCESS)) {
+        if (!waitForCardEvent(CardEvent::TRANSMIT_APDU_CHANNEL)
+            || (errorCode_ != telux::common::ErrorCode::SUCCESS)) {
             std::cout << "Failed to transmit logical APDU" << std::endl;
             return -EIO;
         }
@@ -291,24 +255,24 @@ class CardListener : public telux::tel::ICardChannelCallback,
 
         /* Sample SAP APDU to open Master File */
         /* APDU Command - 00 A4 00 04 02 3F 00 */
-        const uint8_t CLA = 0;
-        const uint8_t INSTRUCTION = 164;
-        const uint8_t P1 = 0;
-        const uint8_t P2 = 4;
-        const uint8_t P3 = 2;
+        const uint8_t CLA               = 0;
+        const uint8_t INSTRUCTION       = 164;
+        const uint8_t P1                = 0;
+        const uint8_t P2                = 4;
+        const uint8_t P3                = 2;
         const std::vector<uint8_t> DATA = {63, 0};
 
         /* Step - 11 */
         status = card_->transmitApduBasicChannel(
             CLA, INSTRUCTION, P1, P2, P3, DATA, shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't transmit basic APDU, status " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't transmit basic APDU, status " << static_cast<int>(status)
+                      << std::endl;
             return -EIO;
         }
 
-        if (!waitForCardEvent(CardEvent::TRANSMIT_APDU_CHANNEL) ||
-            (errorCode_ != telux::common::ErrorCode::SUCCESS)) {
+        if (!waitForCardEvent(CardEvent::TRANSMIT_APDU_CHANNEL)
+            || (errorCode_ != telux::common::ErrorCode::SUCCESS)) {
             std::cout << "Failed to transmit basic APDU" << std::endl;
             return -EIO;
         }
@@ -321,8 +285,7 @@ class CardListener : public telux::tel::ICardChannelCallback,
         int const DEFAULT_TIMEOUT_SECONDS = 5;
         std::unique_lock<std::mutex> lock(eventMutex_);
 
-        auto cvStatus = eventCV_.wait_for(lock,
-            std::chrono::seconds(DEFAULT_TIMEOUT_SECONDS));
+        auto cvStatus = eventCV_.wait_for(lock, std::chrono::seconds(DEFAULT_TIMEOUT_SECONDS));
 
         if (cvStatus == std::cv_status::timeout) {
             std::cout << "Timedout" << std::endl;
@@ -333,15 +296,15 @@ class CardListener : public telux::tel::ICardChannelCallback,
         return true;
     }
 
-    void onChannelResponse(int channel, telux::tel::IccResult result,
-            telux::common::ErrorCode error) override {
+    void onChannelResponse(
+        int channel, telux::tel::IccResult result, telux::common::ErrorCode error) override {
         std::lock_guard<std::mutex> lock(eventMutex_);
         std::cout << "onChannelResponse()" << std::endl;
         std::cout << "Error: " << static_cast<int>(error) << std::endl;
         std::cout << "ICC result: " << result.toString() << std::endl;
         std::cout << "Channel: " << channel << std::endl;
         openedChannel_ = channel;
-        errorCode_ = error;
+        errorCode_     = error;
         eventCV_.notify_one();
     }
 
@@ -380,7 +343,7 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<CardListener>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate CardListener" << std::endl;
         return -ENOMEM;
     }

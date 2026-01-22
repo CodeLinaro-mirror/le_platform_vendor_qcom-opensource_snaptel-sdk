@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_RoutAdvertExt_H_
-#define	_RoutAdvertExt_H_
-
+#ifndef _RoutAdvertExt_H_
+#define _RoutAdvertExt_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* RoutAdvertExt */
-typedef Extension_22P3_t	 RoutAdvertExt_t;
+typedef Extension_22P3_t RoutAdvertExt_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_RoutAdvertExt;
@@ -37,5 +36,5 @@ per_type_encoder_f RoutAdvertExt_encode_uper;
 }
 #endif
 
-#endif	/* _RoutAdvertExt_H_ */
+#endif /* _RoutAdvertExt_H_ */
 #include <asn_internal.h>

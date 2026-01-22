@@ -1,36 +1,8 @@
 /*
-// Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted (subject to the limitations in the
-// disclaimer below) provided that the following conditions are met:
-
-//     * Redistributions of source code must retain the above copyright
-//       notice, this list of conditions and the following disclaimer.
-
-//     * Redistributions in binary form must reproduce the above
-//       copyright notice, this list of conditions and the following
-//       disclaimer in the documentation and/or other materials provided
-//       with the distribution.
-
-//     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
-//       contributors may be used to endorse or promote products derived
-//       from this software without specific prior written permission.
-
-// NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
-// GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
-// HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
-// WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-// MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-// ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
-// GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-// IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
-// IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
 /**
  * @file: qMonitor.hpp
  *
@@ -56,8 +28,8 @@
 // Local Includes
 
 using std::map;
-using std::thread;
 using std::string;
+using std::thread;
 
 // Local Defines
 
@@ -72,12 +44,11 @@ using std::string;
 // Version defines
 
 #define JSON_VERSION "0.1"
-#define QITS_VERSION "7.0" // Fix to right version
-#define TELSDK_VERSION "46.66" // Change version based on telSDK
+#define QITS_VERSION "7.0"  // Fix to right version
+#define TELSDK_VERSION "46.66"  // Change version based on telSDK
 #define QMON_VERSION "1.0"
 
-enum Alert
-{
+enum Alert {
     NO_ALERT,
     LOW_ALERT,
     MED_ALERT,
@@ -102,16 +73,15 @@ enum Alert
 
 */
 
-struct QMClientValOptions
-{
+struct QMClientValOptions {
     //** Monitor Variables
     bool totalRx;
     bool totalTx;
     bool decodeFails;
     bool securityFails;
-    bool mbdAlerts; // Misbehavior detections alerts
+    bool mbdAlerts;  // Misbehavior detections alerts
     bool totalRVs;  // Total Remote Vehicles
-    bool totalRSUs; // Total Road Side Units
+    bool totalRSUs;  // Total Road Side Units
     bool rxFails;
     //** Per Protocol
     // BSMs
@@ -123,41 +93,37 @@ struct QMClientValOptions
     //** TODO others per protocol
 };
 
-struct QMClientMetaOptions
-{
-    uint8_t monitorRate; // in milliseconds
-    int timeFrame;       // for json stream, delete if not.
+struct QMClientMetaOptions {
+    uint8_t monitorRate;  // in milliseconds
+    int timeFrame;  // for json stream, delete if not.
     bool timestamp;
     bool jsonVersion;
     bool qitsVersion;
     bool telsdkVersion;
     bool qMonVersion;
-    int blob; // Size of blob to reply back
+    int blob;  // Size of blob to reply back
     bool close;
     // Add more options here that don't involve data requests, for that parse jsonObject
 };
 
-struct QMClientOptions
-{
+struct QMClientOptions {
     QMClientValOptions valueOptions;
     QMClientMetaOptions metaOptions;
 };
 
-struct QMClientData
-{
+struct QMClientData {
     int sock;
     int handling;
     struct sockaddr_in address;
     thread *cThread;
-    char *buffer; // Using only json_objects for now
+    char *buffer;  // Using only json_objects for now
     int bufferSize;
     QMClientOptions options;
     struct json_object *res, *req;
     // add mutex here for changes in client requests
 };
 
-struct QMonitorData
-{
+struct QMonitorData {
     //** Monitor Variables
     long long totalRx;
     long long totalTx;
@@ -203,48 +169,42 @@ struct QMonitorData
 };
 
 template <typename T>
-struct AlertInfo
-{
+struct AlertInfo {
     const char *data;
     T value;
     T errorValue;
 };
 
-class QMonitor
-{
+class QMonitor {
 
-public:
+ public:
     /**
      * @brief Basic configuration class for QMonitor.
      *
      */
-    class Configuration
-    {
-    public:
+    class Configuration {
+     public:
         // TCP IP4 Server Options
-        int sockDomain = AF_INET;
-        int sockType = SOCK_STREAM;
+        int sockDomain   = AF_INET;
+        int sockType     = SOCK_STREAM;
         int sockProtocol = IPPROTO_TCP;
-        int sockLevel = SOL_SOCKET;
-        int sockOptName = SO_REUSEADDR | SO_REUSEPORT;
-        int sockOpt = DEFAULT_SOCK_OPT;
+        int sockLevel    = SOL_SOCKET;
+        int sockOptName  = SO_REUSEADDR | SO_REUSEPORT;
+        int sockOpt      = DEFAULT_SOCK_OPT;
         struct sockaddr_in sockAddress;
-        int bufferSize = MAX_BUFFER_SIZE;
-        int connBacklog = BACKLOG_LENGTH;
-        int blocking = false; // Detaches connection handler if false.
+        int bufferSize   = MAX_BUFFER_SIZE;
+        int connBacklog  = BACKLOG_LENGTH;
+        int blocking     = false;  // Detaches connection handler if false.
         Alert debugLevel = NO_ALERT;
-        Alert logLevel = NO_ALERT;
+        Alert logLevel   = NO_ALERT;
 
-        Configuration(const char charAddr[] = DEFAULT_ADDRESS,
-                      const int port = DEFAULT_PORT)
-        {
+        Configuration(const char charAddr[] = DEFAULT_ADDRESS, const int port = DEFAULT_PORT) {
             this->sockAddress.sin_family = this->sockDomain;
-            this->sockAddress.sin_port = htons(port);
+            this->sockAddress.sin_port   = htons(port);
             inet_aton(charAddr, &sockAddress.sin_addr);
         }
 
-        ~Configuration()
-        {
+        ~Configuration() {
         }
     };
 
@@ -272,7 +232,7 @@ public:
     static void stop();
     static map<thread::id, QMonitorData> tData;
 
-private:
+ private:
     // Local variables
     static bool isMonitoring;
     static thread *connHandlerThread;

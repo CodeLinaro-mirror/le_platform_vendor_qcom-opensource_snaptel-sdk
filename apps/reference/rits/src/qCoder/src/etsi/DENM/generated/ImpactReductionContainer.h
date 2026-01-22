@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_ImpactReductionContainer_H_
-#define	_ImpactReductionContainer_H_
-
+#ifndef _ImpactReductionContainer_H_
+#define _ImpactReductionContainer_H_
 
 #include <asn_application.h>
 
@@ -30,21 +29,21 @@ extern "C" {
 
 /* ImpactReductionContainer */
 typedef struct ImpactReductionContainer {
-	HeightLonCarr_t	 heightLonCarrLeft;
-	HeightLonCarr_t	 heightLonCarrRight;
-	PosLonCarr_t	 posLonCarrLeft;
-	PosLonCarr_t	 posLonCarrRight;
-	PositionOfPillars_t	 positionOfPillars;
-	PosCentMass_t	 posCentMass;
-	WheelBaseVehicle_t	 wheelBaseVehicle;
-	TurningRadius_t	 turningRadius;
-	PosFrontAx_t	 posFrontAx;
-	PositionOfOccupants_t	 positionOfOccupants;
-	VehicleMass_t	 vehicleMass;
-	RequestResponseIndication_t	 requestResponseIndication;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    HeightLonCarr_t heightLonCarrLeft;
+    HeightLonCarr_t heightLonCarrRight;
+    PosLonCarr_t posLonCarrLeft;
+    PosLonCarr_t posLonCarrRight;
+    PositionOfPillars_t positionOfPillars;
+    PosCentMass_t posCentMass;
+    WheelBaseVehicle_t wheelBaseVehicle;
+    TurningRadius_t turningRadius;
+    PosFrontAx_t posFrontAx;
+    PositionOfOccupants_t positionOfOccupants;
+    VehicleMass_t vehicleMass;
+    RequestResponseIndication_t requestResponseIndication;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } ImpactReductionContainer_t;
 
 /* Implementation */
@@ -54,5 +53,5 @@ extern asn_TYPE_descriptor_t asn_DEF_ImpactReductionContainer;
 }
 #endif
 
-#endif	/* _ImpactReductionContainer_H_ */
+#endif /* _ImpactReductionContainer_H_ */
 #include <asn_internal.h>

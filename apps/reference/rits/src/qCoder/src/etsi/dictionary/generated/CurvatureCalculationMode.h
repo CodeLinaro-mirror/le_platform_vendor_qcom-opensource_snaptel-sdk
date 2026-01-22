@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_CurvatureCalculationMode_H_
-#define	_CurvatureCalculationMode_H_
-
+#ifndef _CurvatureCalculationMode_H_
+#define _CurvatureCalculationMode_H_
 
 #include <asn_application.h>
 
@@ -20,16 +19,16 @@ extern "C" {
 
 /* Dependencies */
 typedef enum CurvatureCalculationMode {
-	CurvatureCalculationMode_yawRateUsed	= 0,
-	CurvatureCalculationMode_yawRateNotUsed	= 1,
-	CurvatureCalculationMode_unavailable	= 2
-	/*
-	 * Enumeration is extensible
-	 */
+    CurvatureCalculationMode_yawRateUsed    = 0,
+    CurvatureCalculationMode_yawRateNotUsed = 1,
+    CurvatureCalculationMode_unavailable    = 2
+    /*
+     * Enumeration is extensible
+     */
 } e_CurvatureCalculationMode;
 
 /* CurvatureCalculationMode */
-typedef long	 CurvatureCalculationMode_t;
+typedef long CurvatureCalculationMode_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_CurvatureCalculationMode;
@@ -47,5 +46,5 @@ per_type_encoder_f CurvatureCalculationMode_encode_uper;
 }
 #endif
 
-#endif	/* _CurvatureCalculationMode_H_ */
+#endif /* _CurvatureCalculationMode_H_ */
 #include <asn_internal.h>

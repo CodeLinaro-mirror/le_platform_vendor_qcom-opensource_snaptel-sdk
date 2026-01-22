@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_WsaCountThresholdInterval_H_
-#define	_WsaCountThresholdInterval_H_
-
+#ifndef _WsaCountThresholdInterval_H_
+#define _WsaCountThresholdInterval_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* WsaCountThresholdInterval */
-typedef long	 WsaCountThresholdInterval_t;
+typedef long WsaCountThresholdInterval_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_WsaCountThresholdInterval;
@@ -37,5 +36,5 @@ per_type_encoder_f WsaCountThresholdInterval_encode_uper;
 }
 #endif
 
-#endif	/* _WsaCountThresholdInterval_H_ */
+#endif /* _WsaCountThresholdInterval_H_ */
 #include <asn_internal.h>

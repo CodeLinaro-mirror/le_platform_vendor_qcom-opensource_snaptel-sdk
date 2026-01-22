@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_ProtectedZoneType_H_
-#define	_ProtectedZoneType_H_
-
+#ifndef _ProtectedZoneType_H_
+#define _ProtectedZoneType_H_
 
 #include <asn_application.h>
 
@@ -20,14 +19,14 @@ extern "C" {
 
 /* Dependencies */
 typedef enum ProtectedZoneType {
-	ProtectedZoneType_cenDsrcTolling	= 0
-	/*
-	 * Enumeration is extensible
-	 */
+    ProtectedZoneType_cenDsrcTolling = 0
+    /*
+     * Enumeration is extensible
+     */
 } e_ProtectedZoneType;
 
 /* ProtectedZoneType */
-typedef long	 ProtectedZoneType_t;
+typedef long ProtectedZoneType_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_ProtectedZoneType;
@@ -45,5 +44,5 @@ per_type_encoder_f ProtectedZoneType_encode_uper;
 }
 #endif
 
-#endif	/* _ProtectedZoneType_H_ */
+#endif /* _ProtectedZoneType_H_ */
 #include <asn_internal.h>

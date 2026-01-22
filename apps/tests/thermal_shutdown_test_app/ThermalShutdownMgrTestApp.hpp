@@ -26,9 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -53,21 +54,19 @@
 using namespace telux::therm;
 using namespace telux::common;
 
-class ThermalShutdownTestApp : public IThermalShutdownListener,
-                         public ConsoleApp {
-public:
-
+class ThermalShutdownTestApp : public IThermalShutdownListener, public ConsoleApp {
+ public:
     ~ThermalShutdownTestApp();
 
     std::mutex mtx_;
     std::condition_variable cv_;
 
-    static ThermalShutdownTestApp & getInstance();
-    //static std::shared_ptr<ThermalShutdownTestApp> & getInstance();
+    static ThermalShutdownTestApp &getInstance();
+    // static std::shared_ptr<ThermalShutdownTestApp> & getInstance();
     int init();
 
     void printHelp();
-    void signalHandler( int signum );
+    void signalHandler(int signum);
     Status parseArguments(int argc, char **argv);
     void handleArguments();
     void consoleinit();
@@ -75,14 +74,14 @@ public:
 
     // Member variable to keep the command manager object alive till application ends.
     std::shared_ptr<ThermalCommandMgr> myThermCmdMgr_;
-private:
+
+ private:
     ThermalShutdownTestApp();
     bool exiting_;
     bool listenerEnabled_;
     AutoShutdownMode setCommand_;
     bool getCommand_;
     bool isConsole_;
-
 };
 
 #endif  // THERMALSHUTDOWNTEST_HPP

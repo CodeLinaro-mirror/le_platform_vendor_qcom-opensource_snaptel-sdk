@@ -26,6 +26,7 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
  * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
@@ -91,11 +92,8 @@ class DataFilter : public telux::data::IDataConnectionListener,
         auto &dataFactory = telux::data::DataFactory::getInstance();
 
         /* Step - 2 */
-        dataConMgr_ = dataFactory.getDataConnectionManager(
-                DEFAULT_SLOT_ID,
-                [&pConnection](telux::common::ServiceStatus status) {
-            pConnection.set_value(status);
-        });
+        dataConMgr_ = dataFactory.getDataConnectionManager(DEFAULT_SLOT_ID,
+            [&pConnection](telux::common::ServiceStatus status) { pConnection.set_value(status); });
 
         if (!dataConMgr_) {
             std::cout << "Can't get IDataConnectionManager" << std::endl;
@@ -105,25 +103,22 @@ class DataFilter : public telux::data::IDataConnectionListener,
         /* Step - 3 */
         serviceStatus = pConnection.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Data connection service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Data connection service unavailable, status "
+                      << static_cast<int>(serviceStatus) << std::endl;
             return -EIO;
         }
 
         /* Step - 4 */
         status = dataConMgr_->registerListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't register listener for connection, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't register listener for connection, err " << static_cast<int>(status)
+                      << std::endl;
             return -EIO;
         }
 
         /* Step - 5 */
-        dataFilterMgr_ = dataFactory.getDataFilterManager(
-                DEFAULT_SLOT_ID,
-                [&pFilter](telux::common::ServiceStatus status) {
-            pFilter.set_value(status);
-        });
+        dataFilterMgr_ = dataFactory.getDataFilterManager(DEFAULT_SLOT_ID,
+            [&pFilter](telux::common::ServiceStatus status) { pFilter.set_value(status); });
 
         if (!dataFilterMgr_) {
             std::cout << "Can't get IDataFilterManager" << std::endl;
@@ -133,16 +128,16 @@ class DataFilter : public telux::data::IDataConnectionListener,
         /* Step - 6 */
         serviceStatus = pFilter.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Data filter service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Data filter service unavailable, status "
+                      << static_cast<int>(serviceStatus) << std::endl;
             return -EIO;
         }
 
         /* Step - 7 */
         status = dataFilterMgr_->registerListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't register listener for filter, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't register listener for filter, err " << static_cast<int>(status)
+                      << std::endl;
             dataConMgr_->deregisterListener(shared_from_this());
             return -EIO;
         }
@@ -160,16 +155,16 @@ class DataFilter : public telux::data::IDataConnectionListener,
         /* Step - 13 */
         status = dataConMgr_->deregisterListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't deregister connection listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't deregister connection listener, err " << static_cast<int>(status)
+                      << std::endl;
             dataFilterMgr_->deregisterListener(shared_from_this());
             return -EIO;
         }
 
         status = dataFilterMgr_->deregisterListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't deregister filter listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't deregister filter listener, err " << static_cast<int>(status)
+                      << std::endl;
             return -EIO;
         }
 
@@ -179,15 +174,13 @@ class DataFilter : public telux::data::IDataConnectionListener,
     int triggerDataCall(int profileId) {
         telux::common::Status status;
 
-        auto responseCb = std::bind(&DataFilter::onDataCallResponseAvailable,
-            this, std::placeholders::_1, std::placeholders::_2);
+        auto responseCb = std::bind(&DataFilter::onDataCallResponseAvailable, this,
+            std::placeholders::_1, std::placeholders::_2);
 
         /* Step - 9 */
-        status = dataConMgr_->startDataCall(
-            profileId, telux::data::IpFamilyType::IPV4, responseCb);
+        status = dataConMgr_->startDataCall(profileId, telux::data::IpFamilyType::IPV4, responseCb);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't make call, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't make call, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -204,16 +197,14 @@ class DataFilter : public telux::data::IDataConnectionListener,
         std::shared_ptr<telux::data::IUdpFilter> udpFilter;
 
         /* Step - 10 */
-        enableMode.filterMode = telux::data::DataRestrictModeType::ENABLE;
+        enableMode.filterMode     = telux::data::DataRestrictModeType::ENABLE;
         enableMode.filterAutoExit = telux::data::DataRestrictModeType::DISABLE;
-        auto restrictionResponseCb = std::bind(
-            &DataFilter::restrictionResponseReceiver, this, std::placeholders::_1);
+        auto restrictionResponseCb
+            = std::bind(&DataFilter::restrictionResponseReceiver, this, std::placeholders::_1);
 
-        status = dataFilterMgr_->setDataRestrictMode(
-            enableMode,restrictionResponseCb);
+        status = dataFilterMgr_->setDataRestrictMode(enableMode, restrictionResponseCb);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't set restrict mode, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't set restrict mode, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -221,18 +212,17 @@ class DataFilter : public telux::data::IDataConnectionListener,
         ipv4Info.srcAddr = ipAddress;
         dataFilter_->setIPv4Info(ipv4Info);
 
-        srcPort.port = port;
+        srcPort.port  = port;
         srcPort.range = 0;
-        udpInfo.src = srcPort;
-        udpFilter = std::dynamic_pointer_cast<telux::data::IUdpFilter>(dataFilter_);
+        udpInfo.src   = srcPort;
+        udpFilter     = std::dynamic_pointer_cast<telux::data::IUdpFilter>(dataFilter_);
         udpFilter->setUdpInfo(udpInfo);
 
         /* Step - 12 */
-        status = dataFilterMgr_->addDataRestrictFilter(
-            dataFilter_, restrictionResponseCb);
+        status = dataFilterMgr_->addDataRestrictFilter(dataFilter_, restrictionResponseCb);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't add restriction filter, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't add restriction filter, err " << static_cast<int>(status)
+                      << std::endl;
             return -EIO;
         }
 
@@ -241,8 +231,7 @@ class DataFilter : public telux::data::IDataConnectionListener,
 
     /* Receives response of the startDataCall() request */
     void onDataCallResponseAvailable(
-        const std::shared_ptr<telux::data::IDataCall> &dataCall,
-        telux::common::ErrorCode ec) {
+        const std::shared_ptr<telux::data::IDataCall> &dataCall, telux::common::ErrorCode ec) {
         std::cout << "\nonDataCallResponseAvailable(), err " << static_cast<int>(ec) << std::endl;
     }
 
@@ -251,32 +240,30 @@ class DataFilter : public telux::data::IDataConnectionListener,
         std::cout << "\nrestrictionResponseReceiver(), err " << static_cast<int>(ec) << std::endl;
     }
 
-    void onDataCallInfoChanged(
-        const std::shared_ptr<telux::data::IDataCall> &dataCall) override {
-            std::cout << "onDataCallInfoChanged()" << std::endl;
+    void onDataCallInfoChanged(const std::shared_ptr<telux::data::IDataCall> &dataCall) override {
+        std::cout << "onDataCallInfoChanged()" << std::endl;
         std::list<telux::data::IpAddrInfo> ipAddrList;
 
         std::cout << "Data call details" << std::endl;
         std::cout << "Slot ID " << dataCall->getSlotId() << std::endl;
         std::cout << "Profile ID " << dataCall->getProfileId() << std::endl;
         std::cout << "Interface name " << dataCall->getInterfaceName() << std::endl;
-        std::cout << "Call status " <<
-            static_cast<int>(dataCall->getDataCallStatus()) << std::endl;
-        std::cout << "Call end reason " <<
-            static_cast<int>(dataCall->getDataCallEndReason().type) << std::endl;
+        std::cout << "Call status " << static_cast<int>(dataCall->getDataCallStatus()) << std::endl;
+        std::cout << "Call end reason " << static_cast<int>(dataCall->getDataCallEndReason().type)
+                  << std::endl;
 
         ipAddrList = dataCall->getIpAddressInfo();
         for (auto &addr : ipAddrList) {
-            std::cout << "\n ifAddress: " << addr.ifAddress <<
-            "\n primaryDnsAddress: " << addr.primaryDnsAddress <<
-            "\n secondaryDnsAddress: " << addr.secondaryDnsAddress <<
-            "\n mtuValue: " << addr.mtu << std::endl;
+            std::cout << "\n ifAddress: " << addr.ifAddress
+                      << "\n primaryDnsAddress: " << addr.primaryDnsAddress
+                      << "\n secondaryDnsAddress: " << addr.secondaryDnsAddress
+                      << "\n mtuValue: " << addr.mtu << std::endl;
         }
 
-        std::cout << "IP family type " <<
-            static_cast<int>(dataCall->getIpFamilyType()) << std::endl;
-        std::cout << "Tech preference " <<
-            static_cast<int>(dataCall->getTechPreference()) << std::endl;
+        std::cout << "IP family type " << static_cast<int>(dataCall->getIpFamilyType())
+                  << std::endl;
+        std::cout << "Tech preference " << static_cast<int>(dataCall->getTechPreference())
+                  << std::endl;
     }
 
  private:
@@ -301,11 +288,11 @@ int main(int argc, char *argv[]) {
 
     profileId = std::atoi(argv[1]);
     ipAddress = std::string(argv[2]);
-    port = std::atoi(argv[3]);
+    port      = std::atoi(argv[3]);
 
     try {
         app = std::make_shared<DataFilter>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate DataFilter" << std::endl;
         return -ENOMEM;
     }

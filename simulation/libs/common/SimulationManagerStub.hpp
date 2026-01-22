@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef SIMULATION_MANAGER_STUB_HPP
@@ -20,13 +20,13 @@ using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
 
-template<typename T>
+template <typename T>
 class SimulationManagerStub {
  public:
     SimulationManagerStub(std::string manager)
-        : stub_(CommonUtils::getGrpcStub<T>()) {
-            LOG(DEBUG, __FUNCTION__, ":: ", manager);
-            exiting_ = false;
+       : stub_(CommonUtils::getGrpcStub<T>()) {
+        LOG(DEBUG, __FUNCTION__, ":: ", manager);
+        exiting_ = false;
     }
 
     virtual ~SimulationManagerStub() {
@@ -38,30 +38,27 @@ class SimulationManagerStub {
     telux::common::Status init(InitResponseCb callback) {
         LOG(DEBUG, __FUNCTION__);
         telux::common::Status status = telux::common::Status::SUCCESS;
-        initCb_ = callback;
-        status = init();
-        if ((status != telux::common::Status::SUCCESS) &&
-            (status != telux::common::Status::ALREADY)) {
+        initCb_                      = callback;
+        status                       = init();
+        if ((status != telux::common::Status::SUCCESS)
+            && (status != telux::common::Status::ALREADY)) {
             cleanup();
             return status;
         }
 
-        auto f = std::async(std::launch::async, [this]() {
-                this->initSync();
-        }).share();
+        auto f = std::async(std::launch::async, [this]() { this->initSync(); }).share();
         taskQ_.add(f);
 
         return status;
     }
 
  protected:
-    virtual telux::common::Status init() = 0;
-    virtual void cleanup() = 0;
-    virtual uint32_t getInitCbDelay() = 0;
-    virtual telux::common::Status initSyncComplete(
-            telux::common::ServiceStatus srvcStatus) = 0;
-    virtual void notifyServiceStatus(telux::common::ServiceStatus srvcStatus) = 0;
-    virtual void setInitCbDelay(uint32_t cbDelay) = 0;
+    virtual telux::common::Status init()                                                    = 0;
+    virtual void cleanup()                                                                  = 0;
+    virtual uint32_t getInitCbDelay()                                                       = 0;
+    virtual telux::common::Status initSyncComplete(telux::common::ServiceStatus srvcStatus) = 0;
+    virtual void notifyServiceStatus(telux::common::ServiceStatus srvcStatus)               = 0;
+    virtual void setInitCbDelay(uint32_t cbDelay)                                           = 0;
 
     telux::common::ServiceStatus getServiceStatus() {
         LOG(DEBUG, __FUNCTION__);
@@ -108,7 +105,7 @@ class SimulationManagerStub {
 
     void initSync() {
         LOG(DEBUG, __FUNCTION__);
-        uint32_t cbDelay = 0;
+        uint32_t cbDelay                           = 0;
         telux::common::ServiceStatus serviceStatus = ServiceStatus::SERVICE_FAILED;
         {
             std::lock_guard<std::mutex> lock(srvcStatusMtx_);
@@ -136,16 +133,15 @@ class SimulationManagerStub {
  private:
     bool waitForInitialization() {
         std::unique_lock<std::mutex> cvLock(srvcReadyMtx_);
-        //TODO:  shall NOT block if notified by setServiceStatus(SERVICE_UNAVAILABLE)
-        while(serviceReady_ == telux::common::ServiceStatus::SERVICE_UNAVAILABLE && !exiting_) {
+        // TODO:  shall NOT block if notified by setServiceStatus(SERVICE_UNAVAILABLE)
+        while (serviceReady_ == telux::common::ServiceStatus::SERVICE_UNAVAILABLE && !exiting_) {
             cv_.wait(cvLock);
         }
 
         return (serviceReady_ == telux::common::ServiceStatus::SERVICE_AVAILABLE);
     }
 
-    void waitForServiceReady(telux::common::ServiceStatus &srvcStatus,
-            uint32_t &cbDelay) {
+    void waitForServiceReady(telux::common::ServiceStatus &srvcStatus, uint32_t &cbDelay) {
         LOG(DEBUG, __FUNCTION__);
 
         ::commonStub::GetServiceStatusReply response;
@@ -163,14 +159,14 @@ class SimulationManagerStub {
                     if (!isReady() && !onReady().get()) {
                         LOG(ERROR, __FUNCTION__, ":: failed to initialize");
                         srvcStatus = telux::common::ServiceStatus::SERVICE_FAILED;
-                        cbDelay = DELAY;
+                        cbDelay    = DELAY;
                         return;
                     }
                     srvcStatus = telux::common::ServiceStatus::SERVICE_AVAILABLE;
                 }
             } else {
                 srvcStatus = telux::common::ServiceStatus::SERVICE_FAILED;
-                cbDelay = DELAY;
+                cbDelay    = DELAY;
                 LOG(ERROR, __FUNCTION__, ":: failed to initialize");
                 return;
             }
@@ -184,20 +180,18 @@ class SimulationManagerStub {
         ClientContext context;
 
         grpc::Status status = stub_->GetServiceStatus(&context, request, &response);
-        telux::common::ServiceStatus serviceStatus =
-            static_cast<telux::common::ServiceStatus>(response.service_status());
+        telux::common::ServiceStatus serviceStatus
+            = static_cast<telux::common::ServiceStatus>(response.service_status());
         cbDelay = static_cast<uint32_t>(response.delay());
         LOG(INFO, __FUNCTION__, ", serviceStatus: ", static_cast<int>(serviceStatus),
-                ", Init cbDelay:: ", cbDelay);
+            ", Init cbDelay:: ", cbDelay);
 
         return serviceStatus;
     }
 
-    telux::common::ServiceStatus serviceStatus_ =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    telux::common::ServiceStatus serviceStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
     std::mutex srvcStatusMtx_;
-    telux::common::ServiceStatus serviceReady_ =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    telux::common::ServiceStatus serviceReady_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
     std::mutex srvcReadyMtx_;
     std::condition_variable cv_;
     bool isInitsyncTriggered_ = false;

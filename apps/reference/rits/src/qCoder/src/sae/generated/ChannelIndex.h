@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_ChannelIndex_H_
-#define	_ChannelIndex_H_
-
+#ifndef _ChannelIndex_H_
+#define _ChannelIndex_H_
 
 #include <asn_application.h>
 
@@ -20,12 +19,12 @@ extern "C" {
 
 /* Dependencies */
 typedef enum ChannelIndex {
-	ChannelIndex_notUsed	= 0,
-	ChannelIndex_firstEntry	= 1
+    ChannelIndex_notUsed    = 0,
+    ChannelIndex_firstEntry = 1
 } e_ChannelIndex;
 
 /* ChannelIndex */
-typedef long	 ChannelIndex_t;
+typedef long ChannelIndex_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_ChannelIndex;
@@ -43,5 +42,5 @@ per_type_encoder_f ChannelIndex_encode_uper;
 }
 #endif
 
-#endif	/* _ChannelIndex_H_ */
+#endif /* _ChannelIndex_H_ */
 #include <asn_internal.h>

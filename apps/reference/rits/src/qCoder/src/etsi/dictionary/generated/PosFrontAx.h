@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_PosFrontAx_H_
-#define	_PosFrontAx_H_
-
+#ifndef _PosFrontAx_H_
+#define _PosFrontAx_H_
 
 #include <asn_application.h>
 
@@ -20,12 +19,12 @@ extern "C" {
 
 /* Dependencies */
 typedef enum PosFrontAx {
-	PosFrontAx_tenCentimeters	= 1,
-	PosFrontAx_unavailable	= 20
+    PosFrontAx_tenCentimeters = 1,
+    PosFrontAx_unavailable    = 20
 } e_PosFrontAx;
 
 /* PosFrontAx */
-typedef long	 PosFrontAx_t;
+typedef long PosFrontAx_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_PosFrontAx;
@@ -43,5 +42,5 @@ per_type_encoder_f PosFrontAx_encode_uper;
 }
 #endif
 
-#endif	/* _PosFrontAx_H_ */
+#endif /* _PosFrontAx_H_ */
 #include <asn_internal.h>

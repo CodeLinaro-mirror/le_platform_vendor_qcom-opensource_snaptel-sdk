@@ -1,5 +1,5 @@
-/* Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -30,30 +30,31 @@ class IDataSettingsListener;
  * Set priority between N79 5G and Wlan 5GHz Band
  */
 enum class BandPriority {
-    N79  = 0 ,              /**< N79 has higher priority  */
-    WLAN = 1 ,              /**< Wlan has higher priority */
+    N79  = 0, /**< N79 has higher priority  */
+    WLAN = 1, /**< Wlan has higher priority */
 };
 
 /**
  * N79 5G/Wlan 5GHz interference avoidance configuration
  */
 struct BandInterferenceConfig {
-    BandPriority priority      ;        /**< Priority settings for N79/Wlan 5G */
-    uint32_t wlanWaitTimeInSec = 30 ;   /**< If Wlan 5GHz has higher priority and suffers signal
-                                            drop, modem will wait for period of time specified here
-                                            for Wlan signal to recover before enabeling N79 5G.  */
-    uint32_t n79WaitTimeInSec  = 30 ;   /**< If N79 has higher priority and suffers signal drop,
-                                            modem will wait for period of time specified here for
-                                            N79 5G signal to recover before switching Wlan to
-                                            5GHz. */
+    BandPriority priority; /**< Priority settings for N79/Wlan 5G */
+    uint32_t wlanWaitTimeInSec = 30; /**< If Wlan 5GHz has higher priority and suffers signal
+                                         drop, modem will wait for period of time specified here
+                                         for Wlan signal to recover before enabeling N79 5G.  */
+    uint32_t n79WaitTimeInSec = 30; /**< If N79 has higher priority and suffers signal drop,
+                                        modem will wait for period of time specified here for
+                                        N79 5G signal to recover before switching Wlan to
+                                        5GHz. */
 };
 
 /**
  * Specifies the IP passthrough parameters.
  */
 struct IpptParams {
-    int profileId  = -1;             /**< Profile ID to apply the ippt configuration on */
-    int16_t vlanId = -1;             /**< Vlan ID associated with network interface for @ref telux::data::IpptDeviceConfig */
+    int profileId  = -1; /**< Profile ID to apply the ippt configuration on */
+    int16_t vlanId = -1; /**< Vlan ID associated with network interface for @ref
+                            telux::data::IpptDeviceConfig */
     SlotId slotId = DEFAULT_SLOT_ID; /**< Slot ID on which the profile ID is available */
 };
 
@@ -61,8 +62,9 @@ struct IpptParams {
  * Specifies the IP passthrough device configuration.
  */
 struct IpptDeviceConfig {
-    InterfaceType nwInterface = InterfaceType::UNKNOWN;  /**< Network interface on which peer device is connected */
-    std::string macAddr;                                 /**< Device MAC address */
+    InterfaceType nwInterface
+        = InterfaceType::UNKNOWN; /**< Network interface on which peer device is connected */
+    std::string macAddr; /**< Device MAC address */
 };
 
 /**
@@ -70,7 +72,7 @@ struct IpptDeviceConfig {
  */
 struct IpptConfig {
     Operation ipptOpr = Operation::UNKNOWN; /**< Ippt operation */
-    IpptDeviceConfig devConfig;             /**< Ippt device configuration */
+    IpptDeviceConfig devConfig; /**< Ippt device configuration */
 };
 
 /**
@@ -113,8 +115,8 @@ using RequestBandInterferenceConfigResponseCb = std::function<void(bool isEnable
  * @param [in] enabled          True: MacSec is enabled, False: MacSec is disabled.
  * @param [in] error            Return code for whether the operation succeeded or failed.
  */
-using RequestMacSecSateResponseCb = std::function<void(bool enabled,
-    telux::common::ErrorCode error)>;
+using RequestMacSecSateResponseCb
+    = std::function<void(bool enabled, telux::common::ErrorCode error)>;
 
 /**
  * This function is called with the response to requestWwanConnectivityConfig API.
@@ -126,8 +128,8 @@ using RequestMacSecSateResponseCb = std::function<void(bool enabled,
  * @param [in] isAllowed        True: connectivity allowed, False: connectivity disallowed.
  * @param [in] error            Return code for whether the operation succeeded or failed.
  */
-using requestWwanConnectivityConfigResponseCb = std::function<void(SlotId slotId,
-    bool isAllowed, telux::common::ErrorCode error)>;
+using requestWwanConnectivityConfigResponseCb
+    = std::function<void(SlotId slotId, bool isAllowed, telux::common::ErrorCode error)>;
 
 /**
  * This function is called in response to requestCurrentDds API.
@@ -139,8 +141,8 @@ using requestWwanConnectivityConfigResponseCb = std::function<void(SlotId slotId
  * @param [in] error         Return code for whether the operation succeeded or failed.
  *
  */
-using RequestCurrentDdsResponseCb = std::function<void(DdsInfo currentState,
-    telux::common::ErrorCode error)>;
+using RequestCurrentDdsResponseCb
+    = std::function<void(DdsInfo currentState, telux::common::ErrorCode error)>;
 
 /**
  * @brief Data Settings Manager class provides APIs related to the data subsystem settings.
@@ -148,7 +150,7 @@ using RequestCurrentDdsResponseCb = std::function<void(DdsInfo currentState,
  *        backhaul priority, and enabling roaming per PDN.
  */
 class IDataSettingsManager {
-public:
+ public:
     /**
      * Checks the status of Data Settings manager object and returns the result.
      *
@@ -176,7 +178,8 @@ public:
      *
      */
     virtual telux::common::Status restoreFactorySettings(OperationType operationType,
-        telux::common::ResponseCallback callback = nullptr, bool isRebootNeeded = true) = 0;
+        telux::common::ResponseCallback callback = nullptr, bool isRebootNeeded = true)
+        = 0;
 
     /**
      * Set backhaul preference for bridge0 (default bridge) traffic. Bridge0 Traffic routing to
@@ -198,8 +201,9 @@ public:
      * @returns Status of setBackhaulPreference i.e. success or suitable status code.
      *
      */
-    virtual telux::common::Status setBackhaulPreference(std::vector<BackhaulType> backhaulPref,
-        telux::common::ResponseCallback callback = nullptr) = 0;
+    virtual telux::common::Status setBackhaulPreference(
+        std::vector<BackhaulType> backhaulPref, telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Request current backhaul preference for bridge0 (default bridge) traffic.
@@ -209,8 +213,8 @@ public:
      * @returns Status of requestBackhaulPreference i.e. success or suitable status code.
      *
      */
-    virtual telux::common::Status requestBackhaulPreference(
-        RequestBackhaulPrefResponseCb callback) = 0;
+    virtual telux::common::Status requestBackhaulPreference(RequestBackhaulPrefResponseCb callback)
+        = 0;
 
     /**
      * Configure N79 5G and Wlan 5GHz band priority.
@@ -241,8 +245,9 @@ public:
      *
      */
     virtual telux::common::Status setBandInterferenceConfig(bool enable,
-        std::shared_ptr<BandInterferenceConfig> config = nullptr ,
-        telux::common::ResponseCallback callback = nullptr) = 0;
+        std::shared_ptr<BandInterferenceConfig> config = nullptr,
+        telux::common::ResponseCallback callback       = nullptr)
+        = 0;
 
     /**
      * Request N79 5G and Wlan 5GHz band priority settings.
@@ -254,7 +259,8 @@ public:
      *
      */
     virtual telux::common::Status requestBandInterferenceConfig(
-        RequestBandInterferenceConfigResponseCb callback) = 0;
+        RequestBandInterferenceConfigResponseCb callback)
+        = 0;
 
     /**
      * Allow/Disallow WWAN connectivity.
@@ -281,8 +287,9 @@ public:
      * @returns Status of setWwanConnectivityConfig i.e. success or suitable status code.
      *
      */
-    virtual telux::common::Status setWwanConnectivityConfig(SlotId slotId, bool allow,
-        telux::common::ResponseCallback callback = nullptr) = 0;
+    virtual telux::common::Status setWwanConnectivityConfig(
+        SlotId slotId, bool allow, telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Request current WWAN connectivity Configuration.
@@ -294,9 +301,9 @@ public:
      *
      *
      */
-    virtual telux::common::Status requestWwanConnectivityConfig(SlotId slotId,
-        requestWwanConnectivityConfigResponseCb callback) = 0;
-
+    virtual telux::common::Status requestWwanConnectivityConfig(
+        SlotId slotId, requestWwanConnectivityConfigResponseCb callback)
+        = 0;
 
     /**
      * Request device data usage monitoring status
@@ -322,8 +329,9 @@ public:
      * @returns Status of setMacSecState, i.e., success or suitable status code.
      *
      */
-    virtual telux::common::Status setMacSecState(bool enable,
-        telux::common::ResponseCallback callback = nullptr) = 0;
+    virtual telux::common::Status setMacSecState(
+        bool enable, telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Requests the current MacSec state.
@@ -372,7 +380,8 @@ public:
      *
      */
     virtual telux::common::Status switchBackHaul(BackhaulInfo source, BackhaulInfo dest,
-        bool applyToAll = false, telux::common::ResponseCallback callback = nullptr) = 0;
+        bool applyToAll = false, telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Allows the client to set the IP passthrough configuration for a specific profile and vlan ID.
@@ -402,8 +411,9 @@ public:
      *         Eval: This is a new API and is being evaluated. It is subject to change and could
      *         break backwards compatibility.
      */
-    virtual telux::common::ErrorCode setIpPassThroughConfig(const IpptParams &ipptParms,
-            const IpptConfig &config) = 0;
+    virtual telux::common::ErrorCode setIpPassThroughConfig(
+        const IpptParams &ipptParms, const IpptConfig &config)
+        = 0;
 
     /**
      * Allows the client to configure the Network Address Translation (NAT) for IP passthrough
@@ -454,8 +464,9 @@ public:
      * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
      *         break backwards compatibility.
      */
-    virtual telux::common::ErrorCode getIpPassThroughConfig(const IpptParams &ipptParms,
-            IpptConfig &config) = 0;
+    virtual telux::common::ErrorCode getIpPassThroughConfig(
+        const IpptParams &ipptParms, IpptConfig &config)
+        = 0;
 
     /**
      * Set the IP configuration for an interface.
@@ -500,8 +511,9 @@ public:
      * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
      *         break backwards compatibility.
      */
-    virtual telux::common::ErrorCode setIpConfig(const IpConfigParams &ipConfigParams,
-            const IpConfig &ipConfig) = 0;
+    virtual telux::common::ErrorCode setIpConfig(
+        const IpConfigParams &ipConfigParams, const IpConfig &ipConfig)
+        = 0;
 
     /**
      * Get the IP configuration for an interface.
@@ -527,8 +539,9 @@ public:
      * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
      *         break backwards compatibility.
      */
-    virtual telux::common::ErrorCode getIpConfig(const IpConfigParams &ipConfigParams,
-            IpConfig &ipConfig) = 0;
+    virtual telux::common::ErrorCode getIpConfig(
+        const IpConfigParams &ipConfigParams, IpConfig &ipConfig)
+        = 0;
 
     /**
      * Register Data Settings Manager as listener for Data Service heath events like data service
@@ -540,8 +553,8 @@ public:
      * @returns Status of registerListener success or suitable status code
      *
      */
-    virtual telux::common::Status registerListener(
-        std::weak_ptr<IDataSettingsListener> listener) = 0;
+    virtual telux::common::Status registerListener(std::weak_ptr<IDataSettingsListener> listener)
+        = 0;
 
     /**
      * Removes a previously added listener.
@@ -551,8 +564,8 @@ public:
      * @returns Status of deregisterListener success or suitable status code
      *
      */
-    virtual telux::common::Status deregisterListener(
-        std::weak_ptr<IDataSettingsListener> listener) = 0;
+    virtual telux::common::Status deregisterListener(std::weak_ptr<IDataSettingsListener> listener)
+        = 0;
 
     /**
      * Allows the client to perform the DDS switch. Client has the option
@@ -580,8 +593,9 @@ public:
      *
      * @deprecated Use IDualDataManager::requestDdsSwitch API.
      */
-    virtual telux::common::Status requestDdsSwitch(DdsInfo request,
-        telux::common::ResponseCallback callback = nullptr) = 0;
+    virtual telux::common::Status requestDdsSwitch(
+        DdsInfo request, telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Request the current DDS slot information.
@@ -610,7 +624,8 @@ class IDataSettingsListener : public telux::common::ISDKListener {
      *
      * @param [in] status - @ref ServiceStatus
      */
-    virtual void onServiceStatusChange(telux::common::ServiceStatus status) {}
+    virtual void onServiceStatusChange(telux::common::ServiceStatus status) {
+    }
 
     /**
      * This function is called when WWAN backhaul connectivity config changes.
@@ -619,7 +634,8 @@ class IDataSettingsListener : public telux::common::ISDKListener {
      * @param [in] isConnectivityAllowed - Connectivity status allowed/disallowed.
      *
      */
-    virtual void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) {}
+    virtual void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) {
+    }
 
     /**
      * Provides the current DDS state and is called whenever a DDS switch occurs.
@@ -630,7 +646,8 @@ class IDataSettingsListener : public telux::common::ISDKListener {
      *
      * @deprecated Use IDualDataListener::onDdsChange indication.
      */
-    virtual void onDdsChange(DdsInfo currentState) {}
+    virtual void onDdsChange(DdsInfo currentState) {
+    }
 
     /**
      * Destructor for IDataSettingsListener
@@ -639,7 +656,7 @@ class IDataSettingsListener : public telux::common::ISDKListener {
 };
 
 /** @} */ /* end_addtogroup telematics_data */
-}
-}
+}  // namespace data
+}  // namespace telux
 
-#endif // TELUX_DATA_DATASETTINGSMANAGER_HPP
+#endif  // TELUX_DATA_DATASETTINGSMANAGER_HPP

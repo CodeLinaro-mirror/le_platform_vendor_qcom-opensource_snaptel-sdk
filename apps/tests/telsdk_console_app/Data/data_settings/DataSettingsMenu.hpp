@@ -1,7 +1,7 @@
-/* Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
-*/
+ */
 
 /**
  * This is Data Settings Manager Sample Application using Telematics SDK.
@@ -17,7 +17,6 @@
 #include <string>
 #include <map>
 
-
 #include "console_app_framework/ConsoleApp.hpp"
 
 #include <telux/data/DataDefines.hpp>
@@ -26,7 +25,7 @@
 using namespace telux::data;
 using namespace telux::common;
 
-class DataSettingsMenu : public ConsoleApp ,
+class DataSettingsMenu : public ConsoleApp,
                          public IDataSettingsListener,
                          public std::enable_shared_from_this<DataSettingsMenu> {
  public:
@@ -58,16 +57,17 @@ class DataSettingsMenu : public ConsoleApp ,
     void setIPPTNatConfig(std::vector<std::string> inputCommand);
     void getIPPTNatConfig(std::vector<std::string> inputCommand);
 
-    //Initialization callback
+    // Initialization callback
     void onInitComplete(telux::common::ServiceStatus status);
 
     DataSettingsMenu(std::string appName, std::string cursor);
     ~DataSettingsMenu();
+
  private:
     bool menuOptionsAdded_;
     bool subSystemStatusUpdated_;
-    std::map<telux::data::OperationType,
-      std::shared_ptr<telux::data::IDataSettingsManager>> dataSettingsManagerMap_;
+    std::map<telux::data::OperationType, std::shared_ptr<telux::data::IDataSettingsManager>>
+        dataSettingsManagerMap_;
     std::mutex mtx_;
     std::condition_variable cv_;
     bool initDataSettingsManager(telux::data::OperationType opType);

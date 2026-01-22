@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <memory>
@@ -50,7 +50,8 @@ telux::common::ErrorCode CryptoManagerImpl::deinit() {
 
     ec = static_cast<telux::common::ErrorCode>(response.ec());
     if (ec != telux::common::ErrorCode::SUCCESS) {
-        LOG(ERROR, __FUNCTION__, "can't deregister with server, error code: ", static_cast<int>(ec));
+        LOG(ERROR, __FUNCTION__,
+            "can't deregister with server, error code: ", static_cast<int>(ec));
         return ec;
     }
 
@@ -80,7 +81,6 @@ telux::common::ErrorCode CryptoManagerImpl::init() {
     }
 
     return telux::common::ErrorCode::SUCCESS;
-
 }
 
 /**
@@ -199,8 +199,8 @@ telux::common::ErrorCode CryptoManagerImpl::upgradeKey(std::shared_ptr<ICryptoPa
         return ec;
     }
 
-    std::vector<unsigned char> newKeyBlobRes(response.new_key_blob().begin(),
-        response.new_key_blob().end());
+    std::vector<unsigned char> newKeyBlobRes(
+        response.new_key_blob().begin(), response.new_key_blob().end());
     newKeyBlob.assign(newKeyBlobRes.begin(), newKeyBlobRes.end());
     return telux::common::ErrorCode::SUCCESS;
 }
@@ -230,8 +230,8 @@ telux::common::ErrorCode CryptoManagerImpl::signData(std::shared_ptr<ICryptoPara
         return ec;
     }
 
-    std::vector<unsigned char> signatureRes(response.signature().begin(),
-        response.signature().end());
+    std::vector<unsigned char> signatureRes(
+        response.signature().begin(), response.signature().end());
     signature.assign(signatureRes.begin(), signatureRes.end());
 
     return telux::common::ErrorCode::SUCCESS;
@@ -297,8 +297,8 @@ telux::common::ErrorCode CryptoManagerImpl::encryptData(std::shared_ptr<ICryptoP
         return telux::common::ErrorCode::NO_MEMORY;
     }
 
-    std::vector<uint8_t> encryptedTextVec(response.encrypted_text().begin(),
-        response.encrypted_text().end());
+    std::vector<uint8_t> encryptedTextVec(
+        response.encrypted_text().begin(), response.encrypted_text().end());
     encryptedData->encryptedText.assign(encryptedTextVec.begin(), encryptedTextVec.end());
 
     return telux::common::ErrorCode::SUCCESS;
@@ -329,8 +329,8 @@ telux::common::ErrorCode CryptoManagerImpl::decryptData(std::shared_ptr<ICryptoP
         return ec;
     }
 
-    std::vector<uint8_t> decryptedTextVec(response.decrypted_text().begin(),
-        response.decrypted_text().end());
+    std::vector<uint8_t> decryptedTextVec(
+        response.decrypted_text().begin(), response.decrypted_text().end());
     decryptedText.assign(decryptedTextVec.begin(), decryptedTextVec.end());
     return telux::common::ErrorCode::SUCCESS;
 }

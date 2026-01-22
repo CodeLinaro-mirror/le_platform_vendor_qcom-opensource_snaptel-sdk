@@ -1,10 +1,7 @@
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 
 /**
  * This is a test application to register and receive Antenna related events
@@ -48,7 +45,7 @@ int AntennaTestApp::init() {
     auto &platFormFactory = PlatformFactory::getInstance();
     // Get antenna manager object
     std::promise<telux::common::ServiceStatus> prom = std::promise<telux::common::ServiceStatus>();
-    antMgr_ = platFormFactory.getAntennaManager(
+    antMgr_                                         = platFormFactory.getAntennaManager(
         [&](telux::common::ServiceStatus status) { prom.set_value(status); });
     if (antMgr_ == NULL) {
         std::cout << APP_NAME << " *** ERROR - Failed to get antenna manager" << std::endl;
@@ -60,14 +57,12 @@ int AntennaTestApp::init() {
     if (serviceStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << APP_NAME << " antenna manager is ready !" << std::endl;
     } else {
-        std::cout << APP_NAME << " *** ERROR - Unable to initialize antenna manager"
-                  << std::endl;
+        std::cout << APP_NAME << " *** ERROR - Unable to initialize antenna manager" << std::endl;
         return -1;
     }
     antListener_ = std::make_shared<MyAntennaListener>();
     if (!antMgr_) {
-        std::cout << APP_NAME << "*** ERROR - Invalid instance of antenna manager !"
-                  << std::endl;
+        std::cout << APP_NAME << "*** ERROR - Invalid instance of antenna manager !" << std::endl;
         return -1;
     }
     telux::common::Status status = antMgr_->registerListener(antListener_);
@@ -83,8 +78,7 @@ int AntennaTestApp::init() {
 void AntennaTestApp::cleanup() {
     // De-registering a listener from antenna operation updates
     if (!antMgr_) {
-        std::cout << APP_NAME << "*** ERROR - Invalid instance of antenna manager !"
-                  << std::endl;
+        std::cout << APP_NAME << "*** ERROR - Invalid instance of antenna manager !" << std::endl;
         return;
     }
     telux::common::Status status = antMgr_->deregisterListener(antListener_);
@@ -98,13 +92,13 @@ void AntennaTestApp::cleanup() {
 }
 
 void AntennaTestApp::consoleinit() {
-   std::shared_ptr<ConsoleAppCommand> setAntConfigCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("1", "Set_antenna_config", {},
-                        std::bind(&AntennaTestApp::setAntConfig, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> setAntConfigCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "Set_antenna_config", {},
+            std::bind(&AntennaTestApp::setAntConfig, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> getAntConfigCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("2", "Get_antenna_config", {},
-                        std::bind(&AntennaTestApp::getAntConfig, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> getAntConfigCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "Get_antenna_config", {},
+            std::bind(&AntennaTestApp::getAntConfig, this, std::placeholders::_1)));
     std::vector<std::shared_ptr<ConsoleAppCommand>> antTestAppCommands
         = {setAntConfigCommand, getAntConfigCommand};
 
@@ -113,16 +107,16 @@ void AntennaTestApp::consoleinit() {
 }
 
 void AntennaTestApp::setAntConfig(std::vector<std::string> userInput) {
-    if(antMgr_) {
-        int antIndex = -1;
-        char delimiter = '\n';
+    if (antMgr_) {
+        int antIndex     = -1;
+        char delimiter   = '\n';
         std::string temp = "";
         std::cout << "Enter antenna index: ";
         std::getline(std::cin, temp, delimiter);
-        if(!temp.empty()) {
+        if (!temp.empty()) {
             try {
                 antIndex = std::stoi(temp);
-            } catch(const std::exception &e) {
+            } catch (const std::exception &e) {
                 std::cout << "ERROR: invalid input, please enter numerical values." << std::endl;
             }
         } else {
@@ -136,7 +130,7 @@ void AntennaTestApp::setAntConfig(std::vector<std::string> userInput) {
             std::cout << APP_NAME << "Set antenna config sent successfully\n";
             telux::common::ErrorCode error = p.get_future().get();
             std::cout << "Set antenna config request executed with result: "
-                << Utils::getErrorCodeAsString(error) << std::endl;
+                      << Utils::getErrorCodeAsString(error) << std::endl;
         } else {
             std::cout << APP_NAME << "ERROR - Failed to set antenna config,"
                       << "Status:" << static_cast<int>(status) << "\n";
@@ -148,18 +142,20 @@ void AntennaTestApp::setAntConfig(std::vector<std::string> userInput) {
 }
 
 void AntennaTestApp::getAntConfig(std::vector<std::string> userInput) {
-    if(antMgr_) {
+    if (antMgr_) {
         std::promise<telux::common::ErrorCode> p;
-        int index = -1;
+        int index   = -1;
         auto status = antMgr_->getActiveAntenna(
-            [&p, &index, this](int antIndex, telux::common::ErrorCode error)
-            { index = antIndex; p.set_value(error); });
+            [&p, &index, this](int antIndex, telux::common::ErrorCode error) {
+                index = antIndex;
+                p.set_value(error);
+            });
         if (status == Status::SUCCESS) {
             std::cout << APP_NAME << "Get antenna config sent successfully\n";
             telux::common::ErrorCode error = p.get_future().get();
             std::cout << "Get antenna config request executed with result: "
-                << Utils::getErrorCodeAsString(error)
-                << ", current active antenna index: " << index << std::endl;
+                      << Utils::getErrorCodeAsString(error)
+                      << ", current active antenna index: " << index << std::endl;
         } else {
             std::cout << APP_NAME << "ERROR - Failed to get antenna config,"
                       << "Status:" << static_cast<int>(status) << "\n";

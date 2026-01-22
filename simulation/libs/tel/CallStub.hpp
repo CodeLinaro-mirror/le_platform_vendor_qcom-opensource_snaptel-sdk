@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -32,30 +32,29 @@ namespace telux {
 namespace tel {
 
 struct CallInfo {
-   int index = INVALID;                                // Connection Index
-   CallDirection callDirection = CallDirection::NONE;  // enumeration for MO / MT call
-   std::string remotePartyNumber = "";                 // Remote party number
-   bool transmitMsd = false;
-   CallState callState = CallState::CALL_IDLE;
-   CallEndCause callEndCause = CallEndCause::NORMAL;
-   int sipErrorCode = 0;
-   bool isMultiPartyCall = false;
-   bool isMpty = false;
-   RttMode mode = RttMode::DISABLED;                // RTT mode of the call
-   RttMode localRttCapability = RttMode::DISABLED;  // RTT capability of local device
-   RttMode peerRttCapability  = RttMode::DISABLED;  // RTT capability of peer device
-   CallType callType          = CallType::UNKNOWN;
-   std::string callReason     = "";
+    int index                     = INVALID;  // Connection Index
+    CallDirection callDirection   = CallDirection::NONE;  // enumeration for MO / MT call
+    std::string remotePartyNumber = "";  // Remote party number
+    bool transmitMsd              = false;
+    CallState callState           = CallState::CALL_IDLE;
+    CallEndCause callEndCause     = CallEndCause::NORMAL;
+    int sipErrorCode              = 0;
+    bool isMultiPartyCall         = false;
+    bool isMpty                   = false;
+    RttMode mode                  = RttMode::DISABLED;  // RTT mode of the call
+    RttMode localRttCapability    = RttMode::DISABLED;  // RTT capability of local device
+    RttMode peerRttCapability     = RttMode::DISABLED;  // RTT capability of peer device
+    CallType callType             = CallType::UNKNOWN;
+    std::string callReason        = "";
 };
 
 class CallStub : public ICall {
-public:
-
+ public:
     CallStub(int phoneId, CallInfo callInfo);
 
     telux::common::Status answer(
         std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr,
-        RttMode mode = RttMode::DISABLED);
+        RttMode mode                                                      = RttMode::DISABLED);
 
     telux::common::Status hold(
         std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
@@ -80,8 +79,8 @@ public:
     RttMode getLocalRttCapability();
     RttMode getPeerRttCapability();
     CallType getCallType();
-    telux::common::Status modify(RttMode mode,
-        std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
+    telux::common::Status modify(
+        RttMode mode, std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
     telux::common::Status respondToModifyRequest(bool modifyResponseType,
         std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
     CallState getCallState();
@@ -102,19 +101,20 @@ public:
     bool isInfoStale(const std::shared_ptr<CallStub> &ci);
     telux::common::Status updateCallInfo(std::shared_ptr<CallStub> &callInfo);
     void logCallDetails();
-private:
+
+ private:
     std::unique_ptr<::telStub::DialerService::Stub> stub_;
     int phoneId_;
     CallInfo callInfo_;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
-    void invokeCommandCallback(std::shared_ptr<ICommandResponseCallback> callback,
-        ErrorCode error, int cbDelay);
+    void invokeCommandCallback(
+        std::shared_ptr<ICommandResponseCallback> callback, ErrorCode error, int cbDelay);
     telux::common::Status modifyOrRespondToModifyCall(RttMode mode, std::string api,
         std::shared_ptr<telux::common::ICommandResponseCallback> callback);
 };
 
-} // end of namespace tel
+}  // end of namespace tel
 
-} // end of namespace telux
+}  // end of namespace telux
 
-#endif // CALL_STUB_HPP
+#endif  // CALL_STUB_HPP

@@ -26,8 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -71,7 +73,7 @@ class SMSSentStatusReceiver : public telux::common::ICommandResponseCallback {
  public:
     /* Step - 5 */
     void commandResponse(telux::common::ErrorCode ec) override {
-        if(ec == telux::common::ErrorCode::SUCCESS) {
+        if (ec == telux::common::ErrorCode::SUCCESS) {
             std::cout << "Message sent successfully" << std::endl;
             return;
         }
@@ -83,7 +85,7 @@ class SMSDeliveryStatusReceiver : public telux::common::ICommandResponseCallback
  public:
     /* Step - 6 */
     void commandResponse(telux::common::ErrorCode ec) override {
-        if(ec == telux::common::ErrorCode::SUCCESS) {
+        if (ec == telux::common::ErrorCode::SUCCESS) {
             std::cout << "Message delivered successfully" << std::endl;
             return;
         }
@@ -101,10 +103,8 @@ class SMSSender : public std::enable_shared_from_this<SMSSender> {
         auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
 
         /* Step - 2 */
-        smsManager_ = phoneFactory.getSmsManager(DEFAULT_SLOT_ID,
-                [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+        smsManager_ = phoneFactory.getSmsManager(
+            DEFAULT_SLOT_ID, [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!smsManager_) {
             std::cout << "Can't get ISMSManager" << std::endl;
@@ -114,8 +114,8 @@ class SMSSender : public std::enable_shared_from_this<SMSSender> {
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "SMS service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "SMS service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
@@ -131,27 +131,26 @@ class SMSSender : public std::enable_shared_from_this<SMSSender> {
         std::shared_ptr<telux::common::ICommandResponseCallback> smsDeliveryCb;
 
         try {
-            smsSentCb = std::make_shared<SMSSentStatusReceiver>();
+            smsSentCb     = std::make_shared<SMSSentStatusReceiver>();
             smsDeliveryCb = std::make_shared<SMSDeliveryStatusReceiver>();
-        } catch (const std::exception& e) {
+        } catch (const std::exception &e) {
             std::cout << "Can't allocate msg status receiver" << std::endl;
             return -ENOMEM;
         }
 
-        message = configParser->getValue(std::string("MESSAGE"));
+        message         = configParser->getValue(std::string("MESSAGE"));
         receiverAddress = configParser->getValue(std::string("RECEIVER_NUMBER"));
 
         if (receiverAddress.empty() || message.empty()) {
             receiverAddress = DEFAULT_RECEIVER_PHONE_NUMBER;
-            message = DEFAULT_MESSAGE;
+            message         = DEFAULT_MESSAGE;
             std::cout << "Using default phone number" << std::endl;
         }
 
         /* Step - 4 */
         status = smsManager_->sendSms(message, receiverAddress, smsSentCb, smsDeliveryCb);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't send message, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't send message, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -174,7 +173,7 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<SMSSender>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate SMSSender" << std::endl;
         return -ENOMEM;
     }

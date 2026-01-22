@@ -26,6 +26,7 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
  * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
@@ -43,97 +44,96 @@
 #include <telux/tel/ServingSystemManager.hpp>
 
 class MyRatPreferenceResponseCallback {
-public:
-   static void ratPreferenceResponse(telux::tel::RatPreference preference,
-                                     telux::common::ErrorCode error);
+ public:
+    static void ratPreferenceResponse(
+        telux::tel::RatPreference preference, telux::common::ErrorCode error);
 };
 
 class MyServiceDomainPrefResponseCallback {
-public:
-   static void serviceDomainPrefResponse(telux::tel::ServiceDomainPreference preference,
-                                     telux::common::ErrorCode error);
+ public:
+    static void serviceDomainPrefResponse(
+        telux::tel::ServiceDomainPreference preference, telux::common::ErrorCode error);
 };
 
 class NetworkTimeResponseCallback {
-public:
-   static void networkTimeResponse(telux::tel::NetworkTimeInfo info,
-      telux::common::ErrorCode error);
+ public:
+    static void networkTimeResponse(
+        telux::tel::NetworkTimeInfo info, telux::common::ErrorCode error);
 };
 
 class RFBandInfoResponseCallback {
-public:
-   static void rfBandInfoResponse(telux::tel::RFBandInfo bandInfo,
-      telux::common::ErrorCode error);
+ public:
+    static void rfBandInfoResponse(telux::tel::RFBandInfo bandInfo, telux::common::ErrorCode error);
 };
 
 class MyServingSystemResponsecallback {
-public:
-   static void servingSystemResponse(telux::common::ErrorCode error);
+ public:
+    static void servingSystemResponse(telux::common::ErrorCode error);
 };
 
 class RFBandPrefResponseCallback {
-public:
-   static void rfBandPrefResponse(std::shared_ptr<telux::tel::IRFBandList> prefList,
-      telux::common::ErrorCode error);
-   static void setRFBandPrefResponse(telux::common::ErrorCode error);
+ public:
+    static void rfBandPrefResponse(
+        std::shared_ptr<telux::tel::IRFBandList> prefList, telux::common::ErrorCode error);
+    static void setRFBandPrefResponse(telux::common::ErrorCode error);
 };
 
 class RFBandCapabilityResponseCallback {
-public:
-   static void rfBandCapabilityResponse(
-       std::shared_ptr<telux::tel::IRFBandList> capabilityList,
-       telux::common::ErrorCode error);
+ public:
+    static void rfBandCapabilityResponse(
+        std::shared_ptr<telux::tel::IRFBandList> capabilityList, telux::common::ErrorCode error);
 };
 
 class RrcStateResponseCallback {
-public:
-   static void rrcStateResponse(telux::tel::RrcState rrcState, telux::common::ErrorCode error);
+ public:
+    static void rrcStateResponse(telux::tel::RrcState rrcState, telux::common::ErrorCode error);
 };
 
 class MyServingSystemHelper {
-public:
-   static std::string getRatPreference(telux::tel::RatPreference preference);
-   static std::string getServiceDomainPref(telux::tel::ServiceDomainPreference preference);
-   static std::string getServiceDomain(telux::tel::ServiceDomain domain);
-   static std::string getRadioTechnology(telux::tel::RadioTechnology radioTech);
-   static std::string getServiceState(telux::tel::ServiceRegistrationState state);
-   static std::string getEndcAvailability(telux::tel::EndcAvailability isAvailable);
-   static std::string getDcnrRestriction(telux::tel::DcnrRestriction isRestricted);
-   static void logNetworkInfo(telux::tel::NetworkTimeInfo info);
-   static std::string RFBandtoString(telux::tel::RFBand band);
-   static std::string RFBandWidthtoString(telux::tel::RFBandWidth bandWidth);
-   static void logRFBandInfo(telux::tel::RFBandInfo info);
-   static std::string getCallBarringType(telux::tel::CallsAllowedInCell type);
-   static std::string getSmsDomain(telux::tel::SmsDomain domain);
-   static std::string getNtnSmsStatus(telux::tel::NtnSmsStatus status);
-   static std::string getLteCsCapability(telux::tel::LteCsCapability capability);
-   static std::string gsmRFBandtoString(telux::tel::GsmRFBand gsmBand);
-   static std::string wcdmaRFBandtoString(telux::tel::WcdmaRFBand wcdmaBand);
-   static void logRFBandList(std::shared_ptr<telux::tel::IRFBandList> list, bool isPref);
-   static std::string wcdmaRrcStateToString(telux::tel::WcdmaRrcState rrcState);
-   static std::string lteRrcStateToString(telux::tel::LteRrcState rrcState);
-   static std::string nr5gRrcStateToString(telux::tel::Nr5gRrcState rrcState);
-   static std::string rrcRatToString(telux::tel::NetworkMode rrcRat);
-   static void printRrcStateInfo(telux::tel::RrcState rrcState);
+ public:
+    static std::string getRatPreference(telux::tel::RatPreference preference);
+    static std::string getServiceDomainPref(telux::tel::ServiceDomainPreference preference);
+    static std::string getServiceDomain(telux::tel::ServiceDomain domain);
+    static std::string getRadioTechnology(telux::tel::RadioTechnology radioTech);
+    static std::string getServiceState(telux::tel::ServiceRegistrationState state);
+    static std::string getEndcAvailability(telux::tel::EndcAvailability isAvailable);
+    static std::string getDcnrRestriction(telux::tel::DcnrRestriction isRestricted);
+    static void logNetworkInfo(telux::tel::NetworkTimeInfo info);
+    static std::string RFBandtoString(telux::tel::RFBand band);
+    static std::string RFBandWidthtoString(telux::tel::RFBandWidth bandWidth);
+    static void logRFBandInfo(telux::tel::RFBandInfo info);
+    static std::string getCallBarringType(telux::tel::CallsAllowedInCell type);
+    static std::string getSmsDomain(telux::tel::SmsDomain domain);
+    static std::string getNtnSmsStatus(telux::tel::NtnSmsStatus status);
+    static std::string getLteCsCapability(telux::tel::LteCsCapability capability);
+    static std::string gsmRFBandtoString(telux::tel::GsmRFBand gsmBand);
+    static std::string wcdmaRFBandtoString(telux::tel::WcdmaRFBand wcdmaBand);
+    static void logRFBandList(std::shared_ptr<telux::tel::IRFBandList> list, bool isPref);
+    static std::string wcdmaRrcStateToString(telux::tel::WcdmaRrcState rrcState);
+    static std::string lteRrcStateToString(telux::tel::LteRrcState rrcState);
+    static std::string nr5gRrcStateToString(telux::tel::Nr5gRrcState rrcState);
+    static std::string rrcRatToString(telux::tel::NetworkMode rrcRat);
+    static void printRrcStateInfo(telux::tel::RrcState rrcState);
 };
 
 class MyServingSystemListener : public telux::tel::IServingSystemListener {
-public:
-   void onServiceStatusChange(telux::common::ServiceStatus status) override;
-   void onRatPreferenceChanged(telux::tel::RatPreference preference) override;
-   void onServiceDomainPreferenceChanged(telux::tel::ServiceDomainPreference preference) override;
-   void onSystemInfoChanged(telux::tel::ServingSystemInfo sysInfo) override;
-   void onDcStatusChanged(telux::tel::DcStatus dcStatus) override;
-   void onNetworkTimeChanged(telux::tel::NetworkTimeInfo info) override;
-   void onNetworkTimeChanged(telux::tel::RadioTechnology radioTech,
-       telux::tel::NetworkTimeInfo info) override;
-   void onRFBandInfoChanged(telux::tel::RFBandInfo bandInfo) override;
-   void onNetworkRejection(telux::tel::NetworkRejectInfo rejectInfo) override;
-   void onCallBarringInfoChanged(std::vector<telux::tel::CallBarringInfo> barringInfo) override;
-   void onSmsCapabilityChanged(telux::tel::SmsCapability smsCapability) override;
-   void onLteCsCapabilityChanged(telux::tel::LteCsCapability lteCapability) override;
-   void onRFBandPreferenceChanged(std::shared_ptr<telux::tel::IRFBandList> capabilityList) override;
-   void onRrcStateChanged(telux::tel::RrcState rrcState) override;
+ public:
+    void onServiceStatusChange(telux::common::ServiceStatus status) override;
+    void onRatPreferenceChanged(telux::tel::RatPreference preference) override;
+    void onServiceDomainPreferenceChanged(telux::tel::ServiceDomainPreference preference) override;
+    void onSystemInfoChanged(telux::tel::ServingSystemInfo sysInfo) override;
+    void onDcStatusChanged(telux::tel::DcStatus dcStatus) override;
+    void onNetworkTimeChanged(telux::tel::NetworkTimeInfo info) override;
+    void onNetworkTimeChanged(
+        telux::tel::RadioTechnology radioTech, telux::tel::NetworkTimeInfo info) override;
+    void onRFBandInfoChanged(telux::tel::RFBandInfo bandInfo) override;
+    void onNetworkRejection(telux::tel::NetworkRejectInfo rejectInfo) override;
+    void onCallBarringInfoChanged(std::vector<telux::tel::CallBarringInfo> barringInfo) override;
+    void onSmsCapabilityChanged(telux::tel::SmsCapability smsCapability) override;
+    void onLteCsCapabilityChanged(telux::tel::LteCsCapability lteCapability) override;
+    void onRFBandPreferenceChanged(
+        std::shared_ptr<telux::tel::IRFBandList> capabilityList) override;
+    void onRrcStateChanged(telux::tel::RrcState rrcState) override;
 };
 
 #endif  // MYSERVINGSYSTEMHANDLER_HPP

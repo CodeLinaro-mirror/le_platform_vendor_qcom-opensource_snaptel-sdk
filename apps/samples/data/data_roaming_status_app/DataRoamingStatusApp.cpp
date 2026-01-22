@@ -26,10 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -80,9 +80,7 @@ class RoamingStatus : public telux::data::IServingSystemListener,
 
         /* Step - 2 */
         dataServingSystemMgr_ = dataFactory.getServingSystemManager(
-                slotId, [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+            slotId, [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!dataServingSystemMgr_) {
             std::cout << "Can't get IServingSystemManager" << std::endl;
@@ -92,16 +90,15 @@ class RoamingStatus : public telux::data::IServingSystemListener,
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Serving system service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Serving system service unavailable, status "
+                      << static_cast<int>(serviceStatus) << std::endl;
             return -EIO;
         }
 
         /* Step - 4 */
         status = dataServingSystemMgr_->registerListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't register listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't register listener, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -115,8 +112,7 @@ class RoamingStatus : public telux::data::IServingSystemListener,
         /* Step - 7 */
         status = dataServingSystemMgr_->deregisterListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't deregister listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't deregister listener, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -126,14 +122,14 @@ class RoamingStatus : public telux::data::IServingSystemListener,
     int getRoamingStatus() {
         telux::common::Status status;
 
-        auto respCb = std::bind(&RoamingStatus::onRoamingStatusAvailable,
-            this, std::placeholders::_1, std::placeholders::_2);
+        auto respCb = std::bind(&RoamingStatus::onRoamingStatusAvailable, this,
+            std::placeholders::_1, std::placeholders::_2);
 
         /* Step - 6 */
         status = dataServingSystemMgr_->requestRoamingStatus(respCb);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't request roaming status, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't request roaming status, err " << static_cast<int>(status)
+                      << std::endl;
             return -EIO;
         }
 
@@ -142,13 +138,13 @@ class RoamingStatus : public telux::data::IServingSystemListener,
     }
 
     /* Called as a response to requestRoamingStatus() request */
-    void onRoamingStatusAvailable(telux::data::RoamingStatus roamingStatus,
-            telux::common::ErrorCode error) {
+    void onRoamingStatusAvailable(
+        telux::data::RoamingStatus roamingStatus, telux::common::ErrorCode error) {
         std::cout << "\nonRoamingStatusAvailable()" << std::endl;
 
         if (error != telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Failed to get roaming status, err" <<
-                static_cast<int>(error) << std::endl;
+            std::cout << "Failed to get roaming status, err" << static_cast<int>(error)
+                      << std::endl;
             return;
         }
 
@@ -165,19 +161,19 @@ class RoamingStatus : public telux::data::IServingSystemListener,
  private:
     std::shared_ptr<telux::data::IServingSystemManager> dataServingSystemMgr_;
 
-    void logRoamingStatusDetails(const telux::data::RoamingStatus& status) {
+    void logRoamingStatusDetails(const telux::data::RoamingStatus &status) {
         std::cout << " ** Roaming Status Details **\n";
         bool isRoaming = status.isRoaming;
-        if(isRoaming) {
+        if (isRoaming) {
             std::cout << "System is in Roaming State" << std::endl;
             std::cout << "Roaming Type: ";
-            switch(status.type)  {
+            switch (status.type) {
                 case telux::data::RoamingType::INTERNATIONAL:
                     std::cout << "International" << std::endl;
-                break;
+                    break;
                 case telux::data::RoamingType::DOMESTIC:
                     std::cout << "Domestic" << std::endl;
-                break;
+                    break;
                 default:
                     std::cout << "Unknown" << std::endl;
             }
@@ -204,7 +200,7 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<RoamingStatus>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate RoamingStatus" << std::endl;
         return -ENOMEM;
     }

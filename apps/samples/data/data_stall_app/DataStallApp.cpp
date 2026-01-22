@@ -1,7 +1,8 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 /*
  * This application demonstrates how to set data stall parameters. The steps are as follows:
  *
@@ -35,9 +36,8 @@
 #include <telux/data/DataFactory.hpp>
 #include <telux/data/DataControlManager.hpp>
 
-
 class DataStallApp : public telux::data::IDataControlListener,
-                      public std::enable_shared_from_this<DataStallApp> {
+                     public std::enable_shared_from_this<DataStallApp> {
  public:
     int initDataControlManager() {
         telux::common::Status status;
@@ -46,10 +46,8 @@ class DataStallApp : public telux::data::IDataControlListener,
 
         auto &dataFactory = telux::data::DataFactory::getInstance();
 
-        dataControlMgr_  = dataFactory.getDataControlManager(
-                [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+        dataControlMgr_ = dataFactory.getDataControlManager(
+            [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!dataControlMgr_) {
             std::cout << "Can't get IDataControlManager" << std::endl;
@@ -58,15 +56,14 @@ class DataStallApp : public telux::data::IDataControlListener,
 
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Data service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Data service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
         status = dataControlMgr_->registerListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't register listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't register listener, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -79,8 +76,8 @@ class DataStallApp : public telux::data::IDataControlListener,
 
         errCode = dataControlMgr_->setDataStallParams(slotId, params);
         if (errCode != telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Can't set  data stall params, err " <<
-                static_cast<int>(errCode) << std::endl;
+            std::cout << "Can't set  data stall params, err " << static_cast<int>(errCode)
+                      << std::endl;
             return -EIO;
         }
 
@@ -93,8 +90,7 @@ class DataStallApp : public telux::data::IDataControlListener,
 
         status = dataControlMgr_->deregisterListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't deregister listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't deregister listener, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -115,7 +111,7 @@ int main(int argc, char *argv[]) {
 
     if (argc != 5) {
         std::cout << "./data_stall_app <SlotId> <Direction> <ApplicationType> <DataStallStatus>"
-            << std::endl;
+                  << std::endl;
         return -EINVAL;
     }
 
@@ -125,21 +121,21 @@ int main(int argc, char *argv[]) {
     }
     slotId = static_cast<SlotId>(std::atoi(argv[1]));
 
-    if ((std::atoi(argv[2]) != static_cast<int>(telux::data::Direction::UPLINK)) ||
-        (std::atoi(argv[2]) != static_cast<int>(telux::data::Direction::DOWNLINK))) {
+    if ((std::atoi(argv[2]) != static_cast<int>(telux::data::Direction::UPLINK))
+        || (std::atoi(argv[2]) != static_cast<int>(telux::data::Direction::DOWNLINK))) {
         std::cout << " Invalid direction, valid values: 1/2" << std::endl;
         return -EINVAL;
     }
     params.trafficDir = static_cast<telux::data::Direction>(std::atoi(argv[2]));
 
-    if ((std::atoi(argv[3]) != static_cast<int>(telux::data::ApplicationType::UNSPECIFIED))      ||
-        (std::atoi(argv[3]) != static_cast<int>(telux::data::ApplicationType::CONV_AUDIO))       ||
-        (std::atoi(argv[3]) != static_cast<int>(telux::data::ApplicationType::CONV_VIDEO))       ||
-        (std::atoi(argv[3]) != static_cast<int>(telux::data::ApplicationType::STREAMING_AUDIO))  ||
-        (std::atoi(argv[3]) != static_cast<int>(telux::data::ApplicationType::STREAMING_VIDEO))  ||
-        (std::atoi(argv[3]) != static_cast<int>(telux::data::ApplicationType::TYPE_GAMING))      ||
-        (std::atoi(argv[3]) != static_cast<int>(telux::data::ApplicationType::WEB_BROWSING))     ||
-        (std::atoi(argv[3]) != static_cast<int>(telux::data::ApplicationType::FILE_TRANSFER))) {
+    if ((std::atoi(argv[3]) != static_cast<int>(telux::data::ApplicationType::UNSPECIFIED))
+        || (std::atoi(argv[3]) != static_cast<int>(telux::data::ApplicationType::CONV_AUDIO))
+        || (std::atoi(argv[3]) != static_cast<int>(telux::data::ApplicationType::CONV_VIDEO))
+        || (std::atoi(argv[3]) != static_cast<int>(telux::data::ApplicationType::STREAMING_AUDIO))
+        || (std::atoi(argv[3]) != static_cast<int>(telux::data::ApplicationType::STREAMING_VIDEO))
+        || (std::atoi(argv[3]) != static_cast<int>(telux::data::ApplicationType::TYPE_GAMING))
+        || (std::atoi(argv[3]) != static_cast<int>(telux::data::ApplicationType::WEB_BROWSING))
+        || (std::atoi(argv[3]) != static_cast<int>(telux::data::ApplicationType::FILE_TRANSFER))) {
         std::cout << " Invalid application, valid values: 0/1/2/3/4/5/6/7" << std::endl;
         return -EINVAL;
     }
@@ -153,28 +149,28 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<DataStallApp>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate DataStallApp" << std::endl;
         return -ENOMEM;
     }
 
-        /** Step - 1 */
-        ret = app->initDataControlManager();
-        if (ret < 0) {
-            return ret;
-        }
+    /** Step - 1 */
+    ret = app->initDataControlManager();
+    if (ret < 0) {
+        return ret;
+    }
 
-        /** Step - 2 */
-        ret = app->setdataStallParams(slotId, params);
-        if (ret < 0) {
-            return ret;
-        }
+    /** Step - 2 */
+    ret = app->setdataStallParams(slotId, params);
+    if (ret < 0) {
+        return ret;
+    }
 
-        /** Step - 3 */
-        ret = app->deinit();
-        if (ret < 0) {
-            return ret;
-        }
+    /** Step - 3 */
+    ret = app->deinit();
+    if (ret < 0) {
+        return ret;
+    }
 
     std::cout << "\nData-Stall app exiting" << std::endl;
     return 0;

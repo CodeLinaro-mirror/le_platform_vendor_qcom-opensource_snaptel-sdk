@@ -28,9 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -51,34 +51,34 @@
 #include "Audio/AudioClient.hpp"
 
 class TelSdkConsoleApp : public ConsoleApp {
-public:
-   TelSdkConsoleApp(std::string appName, std::string cursor);
-   ~TelSdkConsoleApp();
+ public:
+    TelSdkConsoleApp(std::string appName, std::string cursor);
+    ~TelSdkConsoleApp();
 
-   /**
-    * Used for creating a menus of high level features
-    */
-   void init();
+    /**
+     * Used for creating a menus of high level features
+     */
+    void init();
 
-   // Displays main menu
-   void displayMenu();
+    // Displays main menu
+    void displayMenu();
 
-   // Check Modem availability for Telephony
+    // Check Modem availability for Telephony
     void onModemAvailable();
 
-private:
-   void phoneMenu(std::vector<std::string> userInput);
-   void callMenu(std::vector<std::string> userInput);
-   void eCallMenu(std::vector<std::string> userInput);
-   void smsMenu(std::vector<std::string> userInput);
-   void simCardMenu(std::vector<std::string> userInput);
-   void dataMenu(std::vector<std::string> userInput);
-   void multiSimMenu(std::vector<std::string> userInput);
-   void cellbroadcastMenu(std::vector<std::string> userInput);
-   void rspMenu(std::vector<std::string> userInput);
-   void imsSettingsMenu(std::vector<std::string> userInput);
-   void imsServingSystemMenu(std::vector<std::string> userInput);
-   void apSimProfileMenu(std::vector<std::string> userInput);
+ private:
+    void phoneMenu(std::vector<std::string> userInput);
+    void callMenu(std::vector<std::string> userInput);
+    void eCallMenu(std::vector<std::string> userInput);
+    void smsMenu(std::vector<std::string> userInput);
+    void simCardMenu(std::vector<std::string> userInput);
+    void dataMenu(std::vector<std::string> userInput);
+    void multiSimMenu(std::vector<std::string> userInput);
+    void cellbroadcastMenu(std::vector<std::string> userInput);
+    void rspMenu(std::vector<std::string> userInput);
+    void imsSettingsMenu(std::vector<std::string> userInput);
+    void imsServingSystemMenu(std::vector<std::string> userInput);
+    void apSimProfileMenu(std::vector<std::string> userInput);
 };
 
 #endif  // TELSDKCONSOLEAPP_HPP

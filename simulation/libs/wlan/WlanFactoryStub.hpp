@@ -28,34 +28,32 @@ namespace wlan {
  * @brief WlanFactoryStub is the singleton factory class for WLAN management in
  * simulation.
  */
-class WlanFactoryStub : public WlanFactory,
-                        public telux::common::FactoryHelper {
-public:
-  static WlanFactory &getInstance();
+class WlanFactoryStub : public WlanFactory, public telux::common::FactoryHelper {
+ public:
+    static WlanFactory &getInstance();
 
-  virtual std::shared_ptr<IWlanDeviceManager>
-  getWlanDeviceManager(telux::common::InitResponseCb clientCallback) override;
+    virtual std::shared_ptr<IWlanDeviceManager> getWlanDeviceManager(
+        telux::common::InitResponseCb clientCallback) override;
 
-  virtual std::shared_ptr<IApInterfaceManager> getApInterfaceManager() override;
+    virtual std::shared_ptr<IApInterfaceManager> getApInterfaceManager() override;
 
-  virtual std::shared_ptr<IStaInterfaceManager>
-  getStaInterfaceManager() override;
+    virtual std::shared_ptr<IStaInterfaceManager> getStaInterfaceManager() override;
 
-private:
-  WlanFactoryStub();
-  ~WlanFactoryStub();
+ private:
+    WlanFactoryStub();
+    ~WlanFactoryStub();
 
-  // Deleted copy constructor and assignment operator to prevent copying.
-  WlanFactoryStub(const WlanFactoryStub &) = delete;
-  WlanFactoryStub &operator=(const WlanFactoryStub &) = delete;
+    // Deleted copy constructor and assignment operator to prevent copying.
+    WlanFactoryStub(const WlanFactoryStub &)            = delete;
+    WlanFactoryStub &operator=(const WlanFactoryStub &) = delete;
 
-  std::weak_ptr<IWlanDeviceManager> wlanDeviceManager_;
-  std::vector<telux::common::InitResponseCb> wlanDeviceManagerCallbacks_;
-  std::weak_ptr<IApInterfaceManager> apInterfaceManager_;
-  std::weak_ptr<IStaInterfaceManager> staInterfaceManager_;
+    std::weak_ptr<IWlanDeviceManager> wlanDeviceManager_;
+    std::vector<telux::common::InitResponseCb> wlanDeviceManagerCallbacks_;
+    std::weak_ptr<IApInterfaceManager> apInterfaceManager_;
+    std::weak_ptr<IStaInterfaceManager> staInterfaceManager_;
 };
 
-} // namespace wlan
-} // namespace telux
+}  // namespace wlan
+}  // namespace telux
 
-#endif // WLANFACTORYIMPL_HPP
+#endif  // WLANFACTORYIMPL_HPP

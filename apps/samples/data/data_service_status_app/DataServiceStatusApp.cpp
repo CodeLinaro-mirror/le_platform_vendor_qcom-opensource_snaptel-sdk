@@ -26,10 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -80,9 +80,7 @@ class ServingNetworkStatus : public telux::data::IServingSystemListener,
 
         /* Step - 2 */
         dataServingSystemMgr_ = dataFactory.getServingSystemManager(
-                slotId, [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+            slotId, [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!dataServingSystemMgr_) {
             std::cout << "Can't get IServingSystemManager" << std::endl;
@@ -92,16 +90,15 @@ class ServingNetworkStatus : public telux::data::IServingSystemListener,
         /* Step - 3 */
         status = dataServingSystemMgr_->registerListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't register listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't register listener, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
         /* Step - 4 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Serving system service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Serving system service unavailable, status "
+                      << static_cast<int>(serviceStatus) << std::endl;
             return -EIO;
         }
 
@@ -115,8 +112,7 @@ class ServingNetworkStatus : public telux::data::IServingSystemListener,
         /* Step - 7 */
         status = dataServingSystemMgr_->deregisterListener(shared_from_this());
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't deregister listener, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't deregister listener, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -126,14 +122,14 @@ class ServingNetworkStatus : public telux::data::IServingSystemListener,
     int getServingNetworkStatus() {
         telux::common::Status status;
 
-        auto respCb = std::bind(&ServingNetworkStatus::onNetworkStatusAvailable,
-            this, std::placeholders::_1, std::placeholders::_2);
+        auto respCb = std::bind(&ServingNetworkStatus::onNetworkStatusAvailable, this,
+            std::placeholders::_1, std::placeholders::_2);
 
         /* Step - 6 */
         status = dataServingSystemMgr_->requestServiceStatus(respCb);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't request roaming status, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't request roaming status, err " << static_cast<int>(status)
+                      << std::endl;
             return -EIO;
         }
 
@@ -142,13 +138,12 @@ class ServingNetworkStatus : public telux::data::IServingSystemListener,
     }
 
     /* Called as a response to requestServiceStatus() request */
-    void onNetworkStatusAvailable(telux::data::ServiceStatus serviceStatus,
-            telux::common::ErrorCode error) {
+    void onNetworkStatusAvailable(
+        telux::data::ServiceStatus serviceStatus, telux::common::ErrorCode error) {
         std::cout << "\nonNetworkStatusAvailable()" << std::endl;
 
         if (error != telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Failed to get servie status, err" <<
-                static_cast<int>(error) << std::endl;
+            std::cout << "Failed to get servie status, err" << static_cast<int>(error) << std::endl;
             return;
         }
 
@@ -162,8 +157,9 @@ class ServingNetworkStatus : public telux::data::IServingSystemListener,
     }
 
     void onLteAttachFailure(const telux::data::LteAttachFailureInfo info) override {
-        std::cout << " rejectReason.type " << static_cast<int>(info.rejectReason.type) <<
-            ", rejectReason.code " << static_cast<int>(info.rejectReason.IpCode) << std::endl;
+        std::cout << " rejectReason.type " << static_cast<int>(info.rejectReason.type)
+                  << ", rejectReason.code " << static_cast<int>(info.rejectReason.IpCode)
+                  << std::endl;
         std::cout << " PLMN:";
         for (unsigned int i = 0; i < info.plmnId.size(); ++i) {
             std::cout << std::setfill('0') << std::setw(2) << std::hex << info.plmnId[i];
@@ -235,7 +231,7 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<ServingNetworkStatus>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate ServingNetworkStatus" << std::endl;
         return -ENOMEM;
     }

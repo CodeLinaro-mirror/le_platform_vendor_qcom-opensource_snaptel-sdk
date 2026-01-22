@@ -28,39 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -146,14 +116,14 @@ std::string SensorUtils::getBatchCountLimits(SensorInfo info) {
 SensorConfiguration SensorUtils::getSensorConfig(std::shared_ptr<SensorClient> s) {
     // If sensor type == GYRO | ACCELERO, get sampling rate and batch count
     std::shared_ptr<ISensorClient> sensor = s->getSensorClient();
-    SensorType type = sensor->getSensorInfo().type;
+    SensorType type                       = sensor->getSensorInfo().type;
     if ((type == SensorType::GYROSCOPE) || (type == SensorType::ACCELEROMETER)
         || ((type == SensorType::GYROSCOPE_UNCALIBRATED)
             || (type == SensorType::ACCELEROMETER_UNCALIBRATED))) {
-        float samplingRate = 0;
-        uint32_t batchCount = 0;
-        bool isRotated = true;
-        std::string supportedRates = getSupportedRates(sensor->getSensorInfo());
+        float samplingRate           = 0;
+        uint32_t batchCount          = 0;
+        bool isRotated               = true;
+        std::string supportedRates   = getSupportedRates(sensor->getSensorInfo());
         std::string batchCountLimits = getBatchCountLimits(sensor->getSensorInfo());
         SensorUtils::getInput("Enter sampling rate " + supportedRates + ": ", samplingRate);
         SensorUtils::getInput("Enter batch count " + batchCountLimits + ": ", batchCount);
@@ -162,8 +132,8 @@ SensorConfiguration SensorUtils::getSensorConfig(std::shared_ptr<SensorClient> s
         // Set the sensor configuration
         SensorConfiguration s;
         s.samplingRate = samplingRate;
-        s.batchCount = batchCount;
-        s.isRotated = isRotated;
+        s.batchCount   = batchCount;
+        s.isRotated    = isRotated;
         s.validityMask.set(SensorConfigParams::SAMPLING_RATE);
         s.validityMask.set(SensorConfigParams::BATCH_COUNT);
         s.validityMask.set(SensorConfigParams::ROTATE);
@@ -173,17 +143,17 @@ SensorConfiguration SensorUtils::getSensorConfig(std::shared_ptr<SensorClient> s
 }
 
 telux::sensor::EulerAngleConfig SensorUtils::getEulerAngleConfig() {
-        telux::sensor::EulerAngleConfig EulerAngleConfig = {0, 0, 0};
-        SensorUtils::getInput("Enter roll angle: ", EulerAngleConfig.roll);
-        SensorUtils::getInput("Enter pitch angle: ", EulerAngleConfig.pitch);
-        SensorUtils::getInput("Enter yaw angle: ", EulerAngleConfig.yaw);
+    telux::sensor::EulerAngleConfig EulerAngleConfig = {0, 0, 0};
+    SensorUtils::getInput("Enter roll angle: ", EulerAngleConfig.roll);
+    SensorUtils::getInput("Enter pitch angle: ", EulerAngleConfig.pitch);
+    SensorUtils::getInput("Enter yaw angle: ", EulerAngleConfig.yaw);
 
-        // Set the sensor Euler angle configuration
-        telux::sensor::EulerAngleConfig e;
-        e.roll = EulerAngleConfig.roll;
-        e.pitch = EulerAngleConfig.pitch;
-        e.yaw = EulerAngleConfig.yaw;
-        return e;
+    // Set the sensor Euler angle configuration
+    telux::sensor::EulerAngleConfig e;
+    e.roll  = EulerAngleConfig.roll;
+    e.pitch = EulerAngleConfig.pitch;
+    e.yaw   = EulerAngleConfig.yaw;
+    return e;
 }
 
 std::shared_ptr<SensorClient> SensorUtils::getSensorClient(
@@ -249,9 +219,12 @@ void SensorUtils::printTcuActivityState(telux::power::TcuActivityState state) {
 }
 
 std::string SensorUtils::sensorResultTypeToString(SensorResultType sensorResultType) {
-    switch(sensorResultType) {
-        case SensorResultType::HISTORICAL : return "HISTORICAL";
-        case SensorResultType::CURRENT    : return "CURRENT";
-        default : return "UNKNOWN";
+    switch (sensorResultType) {
+        case SensorResultType::HISTORICAL:
+            return "HISTORICAL";
+        case SensorResultType::CURRENT:
+            return "CURRENT";
+        default:
+            return "UNKNOWN";
     }
 }

@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "common/Logger.hpp"
@@ -11,14 +11,14 @@ namespace telux {
 namespace audio {
 
 AudioBufferImpl::AudioBufferImpl(uint32_t minBufferSize, uint32_t maxBufferSize,
-        uint32_t actualDataoffset, uint32_t bufferWrapperSize) {
+    uint32_t actualDataoffset, uint32_t bufferWrapperSize) {
 
-    minBufferSize_ = minBufferSize;
-    maxBufferSize_ = maxBufferSize;
+    minBufferSize_    = minBufferSize;
+    maxBufferSize_    = maxBufferSize;
     actualDataoffset_ = actualDataoffset;
 
     /* If exception happens, let it propagate to the caller */
-    bufferWrapper_ = new uint8_t[bufferWrapperSize]{};
+    bufferWrapper_     = new uint8_t[bufferWrapperSize]{};
     bufferWrapperSize_ = bufferWrapperSize;
 }
 

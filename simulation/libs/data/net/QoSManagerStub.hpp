@@ -1,10 +1,10 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
- #ifndef QOS_MANAGER_STUB_HPP
- #define QOS_MANAGER_STUB_HPP
+#ifndef QOS_MANAGER_STUB_HPP
+#define QOS_MANAGER_STUB_HPP
 
 #include <telux/data/net/QoSManager.hpp>
 #include <telux/common/CommonDefines.hpp>
@@ -31,13 +31,12 @@ class QoSFilterImpl : public IQoSFilter {
     void setStatus(QoSFilterStatus status);
 
  private:
-    uint32_t handle_ = 0;
-    TrafficClass trafficClass_ = -1;
+    uint32_t handle_                               = 0;
+    TrafficClass trafficClass_                     = -1;
     std::shared_ptr<ITrafficFilter> trafficFilter_ = nullptr;
-    QoSFilterStatus status_ = {FilterInstallationStatus::NOT_APPLICABLE,
-        FilterInstallationStatus::NOT_APPLICABLE, FilterInstallationStatus::NOT_APPLICABLE};
-    std::string filterInstallationStatusToString(
-        FilterInstallationStatus filterInstallationStatus);
+    QoSFilterStatus status_                        = {FilterInstallationStatus::NOT_APPLICABLE,
+                               FilterInstallationStatus::NOT_APPLICABLE, FilterInstallationStatus::NOT_APPLICABLE};
+    std::string filterInstallationStatusToString(FilterInstallationStatus filterInstallationStatus);
 };
 
 class TcConfigImpl : public ITcConfig {
@@ -63,8 +62,8 @@ class TcConfigImpl : public ITcConfig {
 };
 
 class QoSManagerStub : public IQoSManager {
-public:
-    QoSManagerStub ();
+ public:
+    QoSManagerStub();
     ~QoSManagerStub();
 
     telux::common::Status init(telux::common::InitResponseCb callback);
@@ -77,8 +76,8 @@ public:
     telux::common::ErrorCode addQoSFilter(QoSFilterConfig qosFilterConfig,
         QoSFilterHandle &filterHandle, QoSFilterErrorCode &QoSFilterErrorCode) override;
 
-    telux::common::ErrorCode getQosFilter(QoSFilterHandle filterHandle,
-        std::shared_ptr<IQoSFilter> &qosFilter) override;
+    telux::common::ErrorCode getQosFilter(
+        QoSFilterHandle filterHandle, std::shared_ptr<IQoSFilter> &qosFilter) override;
 
     telux::common::ErrorCode getQosFilters(
         std::vector<std::shared_ptr<IQoSFilter>> &qosFilter) override;
@@ -95,7 +94,7 @@ public:
 
     telux::common::ErrorCode deleteTrafficClass(std::shared_ptr<ITcConfig> tcConfig) override;
 
-private:
+ private:
     std::mutex mtx_;
     std::mutex initMtx_;
 
@@ -111,8 +110,8 @@ private:
     void onServiceStatusChange(ServiceStatus status);
 };
 
-} // end of namespace net
-} // end of namespace data
-} // end of namespace telux
+}  // end of namespace net
+}  // end of namespace data
+}  // end of namespace telux
 
- #endif //QOS_MANAGER_STUB_HPP
+#endif  // QOS_MANAGER_STUB_HPP

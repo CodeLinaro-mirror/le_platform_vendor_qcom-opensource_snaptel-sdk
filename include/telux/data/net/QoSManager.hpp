@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef TELUX_DATA_NET_QOSMANAGER_HPP
@@ -30,7 +30,8 @@ struct BandwidthRange {
 };
 
 union BandwidthValue {
-    BandwidthRange bandwidthRange; /**< Bandwidth in range The sum of the minimum bandwidths across all traffic classes should not exceed the link capacity. */
+    BandwidthRange bandwidthRange; /**< Bandwidth in range The sum of the minimum bandwidths across
+                                      all traffic classes should not exceed the link capacity. */
 };
 
 /**
@@ -38,10 +39,10 @@ union BandwidthValue {
  */
 struct BandwidthConfig {
     BandwidthConfigType dlBandwidthConfigType; /**< Type of DL bandwidth */
-    BandwidthValue dlBandwidthValue;           /**< Value of DL bandwidth */
+    BandwidthValue dlBandwidthValue; /**< Value of DL bandwidth */
 
     void setDlBandwidthRange(uint32_t minBandwidth, uint32_t maxBandwidth) {
-        dlBandwidthConfigType = BandwidthConfigType::BW_RANGE;
+        dlBandwidthConfigType                        = BandwidthConfigType::BW_RANGE;
         dlBandwidthValue.bandwidthRange.minBandwidth = minBandwidth;
         dlBandwidthValue.bandwidthRange.maxBandwidth = maxBandwidth;
     }
@@ -52,9 +53,11 @@ struct BandwidthConfig {
  */
 enum class QoSFilterErrorCode {
     SUCCESS = 0,
-    MISSING_DIRECTION,                 /**< The mandatory 'data traffic direction' field is missing */
-    INVALID_MULTIPLE_SOURCE_INFO,     /**< If traffic descriptor is set, only one of the following sources is expected: IPv4, IPv6, or VLAN */
-    INVALID_MULTIPLE_DESTINATION_INFO /**< If traffic descriptor is set, only one of the following destinations is expected: IPv4, IPv6, or VLAN */
+    MISSING_DIRECTION, /**< The mandatory 'data traffic direction' field is missing */
+    INVALID_MULTIPLE_SOURCE_INFO, /**< If traffic descriptor is set, only one of the following
+                                     sources is expected: IPv4, IPv6, or VLAN */
+    INVALID_MULTIPLE_DESTINATION_INFO /**< If traffic descriptor is set, only one of the following
+                                         destinations is expected: IPv4, IPv6, or VLAN */
 };
 
 /**
@@ -63,36 +66,40 @@ enum class QoSFilterErrorCode {
 enum class TcConfigErrorCode {
     SUCCESS = 0,
     MISSING_TRAFFIC_CLASS, /**< The mandatory 'traffic class' field is missing */
-    MISSING_DATA_PATH,     /**< The mandatory 'data path' field is missing */
-    MISSING_DIRECTION,     /**< The mandatory 'data traffic direction' field is missing */
+    MISSING_DATA_PATH, /**< The mandatory 'data path' field is missing */
+    MISSING_DIRECTION, /**< The mandatory 'data traffic direction' field is missing */
 };
 
 /**
  * @brief Possible QoS filter 'installation status'.
  */
 enum class FilterInstallationStatus {
-    SUCCESS = 0,    /** QoS filter installed successfully. */
-    FAILED,         /** QoS filter installation failed. */
-    PENDING,        /** QoS filter is saved and will be installed when necessary conditions are met. For example, if no data calls are active and the QoS filter installation is requested on the modem, the status would be PENDING until a data call is brought up. */
-    NOT_APPLICABLE, /** QoS filter is not applicable for the module. For example, in the case of @ref DataPath::TETHERED_TO_APPS_SW, filters will not be applicable for the modem. */
+    SUCCESS = 0, /** QoS filter installed successfully. */
+    FAILED, /** QoS filter installation failed. */
+    PENDING, /** QoS filter is saved and will be installed when necessary conditions are met. For
+                example, if no data calls are active and the QoS filter installation is requested on
+                the modem, the status would be PENDING until a data call is brought up. */
+    NOT_APPLICABLE, /** QoS filter is not applicable for the module. For example, in the case of
+                       @ref DataPath::TETHERED_TO_APPS_SW, filters will not be applicable for the
+                       modem. */
 };
 
 /**
  * @brief QoS filter status at different modules.
  */
 struct QoSFilterStatus {
-    FilterInstallationStatus ethStatus;   /** QoS filter installation status at the Eth. */
+    FilterInstallationStatus ethStatus; /** QoS filter installation status at the Eth. */
     FilterInstallationStatus modemStatus; /** QoS filter installation status at the modem. */
-    FilterInstallationStatus ipaStatus;   /** QoS filter installation status at the IPA. */
+    FilterInstallationStatus ipaStatus; /** QoS filter installation status at the IPA. */
 };
 
 /**
  * @brief Provide valid parameters in @ref TcConfig
  */
 enum TcConfigValidField {
-    TC_TRAFFIC_CLASS_VALID = (1 << 0),
-    TC_DIRECTION_VALID = (1 << 1),
-    TC_DATA_PATH_VALID = (1 << 2),
+    TC_TRAFFIC_CLASS_VALID    = (1 << 0),
+    TC_DIRECTION_VALID        = (1 << 1),
+    TC_DATA_PATH_VALID        = (1 << 2),
     TC_BANDWIDTH_CONFIG_VALID = (1 << 3),
 };
 
@@ -555,8 +562,9 @@ class IQoSManager {
      * @note Eval: This is a new API and is being evaluated. It is subject to
      * change and could break backwards compatibility.
      */
-    virtual telux::common::ErrorCode getQosFilter(QoSFilterHandle filterHandle,
-        std::shared_ptr<IQoSFilter> &qosFilter) = 0;
+    virtual telux::common::ErrorCode getQosFilter(
+        QoSFilterHandle filterHandle, std::shared_ptr<IQoSFilter> &qosFilter)
+        = 0;
 
     /**
      * @brief Retrieves information about existing QoS filters.

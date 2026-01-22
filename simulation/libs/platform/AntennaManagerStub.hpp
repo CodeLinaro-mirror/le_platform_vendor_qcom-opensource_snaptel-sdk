@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -32,7 +32,6 @@ class AntennaManagerStub : public IAntennaManager,
                            public SimulationManagerStub<AntennaManagerService>,
                            public std::enable_shared_from_this<AntennaManagerStub> {
  public:
-
     using SimulationManagerStub::init;
 
     AntennaManagerStub();
@@ -46,8 +45,7 @@ class AntennaManagerStub : public IAntennaManager,
         int antIndex, telux::common::ResponseCallback callback = nullptr) override;
     telux::common::Status getActiveAntenna(GetActiveAntCb callback) override;
 
-    telux::common::Status initSyncComplete(
-            telux::common::ServiceStatus srvcStatus) override;
+    telux::common::Status initSyncComplete(telux::common::ServiceStatus srvcStatus) override;
 
  protected:
     telux::common::Status init() override;

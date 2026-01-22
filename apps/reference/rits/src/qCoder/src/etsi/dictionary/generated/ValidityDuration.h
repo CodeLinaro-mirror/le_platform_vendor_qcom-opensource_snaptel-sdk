@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_ValidityDuration_H_
-#define	_ValidityDuration_H_
-
+#ifndef _ValidityDuration_H_
+#define _ValidityDuration_H_
 
 #include <asn_application.h>
 
@@ -20,12 +19,12 @@ extern "C" {
 
 /* Dependencies */
 typedef enum ValidityDuration {
-	ValidityDuration_timeOfDetection	= 0,
-	ValidityDuration_oneSecondAfterDetection	= 1
+    ValidityDuration_timeOfDetection         = 0,
+    ValidityDuration_oneSecondAfterDetection = 1
 } e_ValidityDuration;
 
 /* ValidityDuration */
-typedef long	 ValidityDuration_t;
+typedef long ValidityDuration_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_ValidityDuration;
@@ -43,5 +42,5 @@ per_type_encoder_f ValidityDuration_encode_uper;
 }
 #endif
 
-#endif	/* _ValidityDuration_H_ */
+#endif /* _ValidityDuration_H_ */
 #include <asn_internal.h>

@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_HeightLonCarr_H_
-#define	_HeightLonCarr_H_
-
+#ifndef _HeightLonCarr_H_
+#define _HeightLonCarr_H_
 
 #include <asn_application.h>
 
@@ -20,12 +19,12 @@ extern "C" {
 
 /* Dependencies */
 typedef enum HeightLonCarr {
-	HeightLonCarr_oneCentimeter	= 1,
-	HeightLonCarr_unavailable	= 100
+    HeightLonCarr_oneCentimeter = 1,
+    HeightLonCarr_unavailable   = 100
 } e_HeightLonCarr;
 
 /* HeightLonCarr */
-typedef long	 HeightLonCarr_t;
+typedef long HeightLonCarr_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_HeightLonCarr;
@@ -43,5 +42,5 @@ per_type_encoder_f HeightLonCarr_encode_uper;
 }
 #endif
 
-#endif	/* _HeightLonCarr_H_ */
+#endif /* _HeightLonCarr_H_ */
 #include <asn_internal.h>

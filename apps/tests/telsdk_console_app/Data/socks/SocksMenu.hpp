@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * This is a Socks Manager Sample Application using Telematics SDK.
  * It is used to demonstrate API to enable/disable Socks Feature.
@@ -40,7 +46,6 @@
 #include <memory>
 #include <string>
 #include <iomanip>
-
 
 #include "console_app_framework/ConsoleApp.hpp"
 
@@ -62,11 +67,12 @@ class SocksMenu : public ConsoleApp,
     // Socks Manager APIs
     void enableSocks(std::vector<std::string> inputCommand);
 
-   //Initialization callback
+    // Initialization callback
     SocksMenu(std::string appName, std::string cursor);
     void onInitComplete(telux::common::ServiceStatus status);
 
     ~SocksMenu();
+
  private:
     bool menuOptionsAdded_;
     bool subSystemStatusUpdated_;

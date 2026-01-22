@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -17,7 +17,7 @@ bool UserUtils::getYesNoFromUser(std::string choiceToDisplay) {
     std::string usrInput = "";
     size_t choiceLength;
 
-    while(1) {
+    while (1) {
         std::cout << choiceToDisplay + " (yes/no): ";
 
         if ((!std::getline(std::cin, usrInput)) || usrInput.empty()) {
@@ -48,7 +48,7 @@ bool UserUtils::getLocalRemoteFromUser() {
     uint32_t numFromUsr;
     std::string usrInput = "";
 
-    while(1) {
+    while (1) {
         std::cout << "Enter location (0-local, 1-remote) : ";
 
         if ((!std::getline(std::cin, usrInput)) || usrInput.empty()) {
@@ -58,7 +58,7 @@ bool UserUtils::getLocalRemoteFromUser() {
 
         try {
             numFromUsr = (std::stoul(usrInput) & 0xFFFFFFFF);
-        } catch (const std::exception& e) {
+        } catch (const std::exception &e) {
             std::cout << "invalid input " << usrInput << std::endl;
             continue;
         }

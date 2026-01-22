@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "iostream"
@@ -13,9 +13,8 @@ void MyApSimProfileCallback::onResponseCallback(telux::common::ErrorCode error) 
     std::cout << std::endl;
     if (error != telux::common::ErrorCode::SUCCESS) {
         PRINT_CB << "Request failed with errorCode: " << static_cast<int>(error)
-                 << " Description : " << Utils::getErrorCodeAsString(error)<< std::endl;
+                 << " Description : " << Utils::getErrorCodeAsString(error) << std::endl;
     } else {
         PRINT_CB << "Request processed successfully \n";
     }
 }
-

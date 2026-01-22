@@ -26,11 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef SMSMENU_HPP
@@ -45,37 +45,37 @@
 #include "telux/tel/SmsManager.hpp"
 
 class SmsMenu : public ConsoleApp {
-public:
-   SmsMenu(std::string appName, std::string cursor);
-   ~SmsMenu();
-   bool init();
+ public:
+    SmsMenu(std::string appName, std::string cursor);
+    ~SmsMenu();
+    bool init();
 
-private:
-   void sendSms(std::vector<std::string> userInput);
-   void sendEnhancedSms(std::vector<std::string> userInput);
-   void sendRawSms(std::vector<std::string> userInput);
-   void getSmscAddr(std::vector<std::string> userInput);
-   void setSmscAddr(std::vector<std::string> userInput);
-   void sendRequestMessageList(std::vector<std::string> userInput);
-   void sendReadMessage(std::vector<std::string> userInput);
-   void deleteMessage(std::vector<std::string> userInput);
-   void requestPreferredStorage(std::vector<std::string> userInput);
-   void setPreferredStorage(std::vector<std::string> userInput);
-   void setTag(std::vector<std::string> userInput);
-   void requestStorageDetails(std::vector<std::string> userInput);
-   void calculateMessageAttributes(std::vector<std::string> userInput);
-   void selectSimSlot(std::vector<std::string> userInput);
-   std::string smsEncodingTypeToString(telux::tel::SmsEncoding format);
+ private:
+    void sendSms(std::vector<std::string> userInput);
+    void sendEnhancedSms(std::vector<std::string> userInput);
+    void sendRawSms(std::vector<std::string> userInput);
+    void getSmscAddr(std::vector<std::string> userInput);
+    void setSmscAddr(std::vector<std::string> userInput);
+    void sendRequestMessageList(std::vector<std::string> userInput);
+    void sendReadMessage(std::vector<std::string> userInput);
+    void deleteMessage(std::vector<std::string> userInput);
+    void requestPreferredStorage(std::vector<std::string> userInput);
+    void setPreferredStorage(std::vector<std::string> userInput);
+    void setTag(std::vector<std::string> userInput);
+    void requestStorageDetails(std::vector<std::string> userInput);
+    void calculateMessageAttributes(std::vector<std::string> userInput);
+    void selectSimSlot(std::vector<std::string> userInput);
+    std::string smsEncodingTypeToString(telux::tel::SmsEncoding format);
 
-   std::shared_ptr<MySmsCommandCallback> mySmsCmdCb_ = nullptr;
-   std::shared_ptr<MySmscAddressCallback> mySmscAddrCb_ = nullptr;
-   std::shared_ptr<MySmsDeliveryCallback> mySmsDeliveryCb_ = nullptr;
-   std::shared_ptr<telux::tel::ISmsListener> smsListener_ = nullptr;
-   int slot_ = DEFAULT_SLOT_ID;
-   std::vector<std::shared_ptr<telux::tel::ISmsManager>> smsManagers_;
+    std::shared_ptr<MySmsCommandCallback> mySmsCmdCb_       = nullptr;
+    std::shared_ptr<MySmscAddressCallback> mySmscAddrCb_    = nullptr;
+    std::shared_ptr<MySmsDeliveryCallback> mySmsDeliveryCb_ = nullptr;
+    std::shared_ptr<telux::tel::ISmsListener> smsListener_  = nullptr;
+    int slot_                                               = DEFAULT_SLOT_ID;
+    std::vector<std::shared_ptr<telux::tel::ISmsManager>> smsManagers_;
 
-   bool isDialable (char ch);
-   bool isValidPhoneNumber(std::string address);
+    bool isDialable(char ch);
+    bool isValidPhoneNumber(std::string address);
 };
 
 #endif  // SMSMENU_HPP

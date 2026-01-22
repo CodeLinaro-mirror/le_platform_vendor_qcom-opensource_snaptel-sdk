@@ -12,7 +12,7 @@ using namespace telux::tel;
 ApSimProfileManagerStub::ApSimProfileManagerStub() {
     LOG(DEBUG, __FUNCTION__);
     subSystemStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
-    cbDelay_ = DEFAULT_DELAY;
+    cbDelay_         = DEFAULT_DELAY;
 }
 
 void ApSimProfileManagerStub::setServiceStatus(telux::common::ServiceStatus status) {
@@ -22,10 +22,9 @@ void ApSimProfileManagerStub::setServiceStatus(telux::common::ServiceStatus stat
         subSystemStatus_ = status;
     }
     if (initCb_) {
-        auto f1 = std::async(std::launch::async,
-        [this, status]() {
+        auto f1 = std::async(std::launch::async, [this, status]() {
             std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay_));
-                initCb_(status);
+            initCb_(status);
         }).share();
         taskQ_->add(f1);
     } else {
@@ -50,11 +49,8 @@ telux::common::Status ApSimProfileManagerStub::init(telux::common::InitResponseC
         LOG(ERROR, __FUNCTION__, " unable to instantiate AsyncTaskQueue");
         return telux::common::Status::FAILED;
     }
-    initCb_ = callback;
-    auto f = std::async(std::launch::async,
-        [this]() {
-            this->initSync();
-        }).share();
+    initCb_     = callback;
+    auto f      = std::async(std::launch::async, [this]() { this->initSync(); }).share();
     auto status = taskQ_->add(f);
     if (status != telux::common::Status::SUCCESS) {
         LOG(ERROR, __FUNCTION__, " Failed to add task to queue");
@@ -73,7 +69,7 @@ void ApSimProfileManagerStub::initSync() {
     }
     LOG(DEBUG, __FUNCTION__, " SlotCount: ", noOfSlots_);
 
-    grpc::Status reqStatus = stub_->InitService(&context, request, &response);
+    grpc::Status reqStatus                = stub_->InitService(&context, request, &response);
     telux::common::ServiceStatus cbStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
     if (!reqStatus.ok()) {
         LOG(ERROR, __FUNCTION__, " InitService request failed");
@@ -118,7 +114,7 @@ telux::common::Status ApSimProfileManagerStub::registerListener(
     LOG(DEBUG, __FUNCTION__);
     telux::common::Status status = telux::common::Status::FAILED;
     if (listenerMgr_) {
-        status = listenerMgr_->registerListener(listener);
+        status                           = listenerMgr_->registerListener(listener);
         std::vector<std::string> filters = {TEL_AP_SIM_PROFILE_FILTER};
         std::vector<std::weak_ptr<IApSimProfileListener>> applisteners;
         listenerMgr_->getAvailableListeners(applisteners);
@@ -126,8 +122,7 @@ telux::common::Status ApSimProfileManagerStub::registerListener(
             auto &clientEventManager = telux::common::ClientEventManager::getInstance();
             clientEventManager.registerListener(shared_from_this(), filters);
         } else {
-            LOG(DEBUG, __FUNCTION__,
-                " Not registering to client event manager already registered");
+            LOG(DEBUG, __FUNCTION__, " Not registering to client event manager already registered");
         }
     }
     return status;
@@ -143,7 +138,7 @@ telux::common::Status ApSimProfileManagerStub::deregisterListener(
         listenerMgr_->getAvailableListeners(applisteners);
         if (applisteners.size() == 0) {
             std::vector<std::string> filters = {TEL_AP_SIM_PROFILE_FILTER};
-            auto &clientEventManager = telux::common::ClientEventManager::getInstance();
+            auto &clientEventManager         = telux::common::ClientEventManager::getInstance();
             clientEventManager.deregisterListener(shared_from_this(), filters);
         }
     }
@@ -196,13 +191,12 @@ telux::common::Status ApSimProfileManagerStub::sendRetrieveProfileListResponse(S
         return telux::common::Status::FAILED;
     }
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    bool isCallbackNeeded = static_cast<bool>(response.is_callback());
-    int delay = static_cast<int>(response.delay());
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
+    bool isCallbackNeeded          = static_cast<bool>(response.is_callback());
+    int delay                      = static_cast<int>(response.delay());
 
-    if ((status == telux::common::Status::SUCCESS ) && (isCallbackNeeded)) {
-        auto f1 = std::async(std::launch::async,
-            [this, error, callback, delay]() {
+    if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+        auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
             if (callback) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(delay));
                 callback(error);
@@ -235,8 +229,7 @@ telux::common::Status ApSimProfileManagerStub::sendProfileOperationResponse(Slot
     request.set_reference_id(referenceId);
     request.set_result(static_cast<telStub::ApduExchangeStatus>(result));
 
-    grpc::Status reqstatus = stub_->SendProfileOperationResponse(&context, request,
-        &response);
+    grpc::Status reqstatus = stub_->SendProfileOperationResponse(&context, request, &response);
 
     if (!reqstatus.ok()) {
         LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
@@ -244,17 +237,16 @@ telux::common::Status ApSimProfileManagerStub::sendProfileOperationResponse(Slot
     }
 
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    bool isCallbackNeeded = static_cast<bool>(response.is_callback());
-    int delay = static_cast<int>(response.delay());
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
+    bool isCallbackNeeded          = static_cast<bool>(response.is_callback());
+    int delay                      = static_cast<int>(response.delay());
 
-    if ((status == telux::common::Status::SUCCESS ) && (isCallbackNeeded)) {
-        auto f1 = std::async(std::launch::async,
-            [this, error, callback, delay]() {
+    if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+        auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
             if (callback) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(delay));
                 callback(error);
-            }  else {
+            } else {
                 LOG(ERROR, __FUNCTION__, " Callback is null");
             }
         }).share();
@@ -266,7 +258,7 @@ telux::common::Status ApSimProfileManagerStub::sendProfileOperationResponse(Slot
 void ApSimProfileManagerStub::handleRetrieveProfileListRequest(
     ::telStub::ProfileListRequestEvent event) {
     LOG(INFO, __FUNCTION__);
-    int phoneId = event.slot_id();
+    int phoneId          = event.slot_id();
     uint32_t referenceId = event.reference_id();
 
     std::vector<std::weak_ptr<IApSimProfileListener>> applisteners;
@@ -286,10 +278,10 @@ void ApSimProfileManagerStub::handleRetrieveProfileListRequest(
 void ApSimProfileManagerStub::handleProfileOperationRequest(
     ::telStub::ProfileOperationRequestEvent event) {
     LOG(INFO, __FUNCTION__);
-    int phoneId = event.slot_id();
+    int phoneId          = event.slot_id();
     uint32_t referenceId = event.reference_id();
-    std::string iccid = event.iccid();
-    int isEnable = event.is_enable();
+    std::string iccid    = event.iccid();
+    int isEnable         = event.is_enable();
 
     std::vector<std::weak_ptr<IApSimProfileListener>> applisteners;
     if (listenerMgr_) {
@@ -297,8 +289,8 @@ void ApSimProfileManagerStub::handleProfileOperationRequest(
         // Notify respective events
         for (auto &wp : applisteners) {
             if (auto sp = wp.lock()) {
-                sp->onProfileOperationRequest(static_cast<SlotId>(phoneId), referenceId, iccid,
-                    isEnable);
+                sp->onProfileOperationRequest(
+                    static_cast<SlotId>(phoneId), referenceId, iccid, isEnable);
             }
         }
     } else {

@@ -28,16 +28,15 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2023,2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef AUDIOCLIENT_HPP
 #define AUDIOCLIENT_HPP
 
-#include<map>
+#include <map>
 #include <memory>
 
 #include <telux/audio/AudioManager.hpp>
@@ -51,9 +50,9 @@ using namespace telux::common;
 using namespace telux::audio;
 
 /** AudioClient class provides methods to start and stop a voice session */
-class AudioClient: public telux::audio::IAudioListener,
-                   public std::enable_shared_from_this<AudioClient> {
-public:
+class AudioClient : public telux::audio::IAudioListener,
+                    public std::enable_shared_from_this<AudioClient> {
+ public:
     static std::shared_ptr<AudioClient> getInstance();
 
     /**
@@ -96,7 +95,7 @@ public:
     void cleanup();
     void setSystemReady();
 
-private:
+ private:
     AudioClient();
     /** Member variables to hold Audio Manager and voice stream objects */
     void setActiveSession(SlotId slotId);

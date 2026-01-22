@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_PtActivationData_H_
-#define	_PtActivationData_H_
-
+#ifndef _PtActivationData_H_
+#define _PtActivationData_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* PtActivationData */
-typedef OCTET_STRING_t	 PtActivationData_t;
+typedef OCTET_STRING_t PtActivationData_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_PtActivationData;
@@ -37,5 +36,5 @@ per_type_encoder_f PtActivationData_encode_uper;
 }
 #endif
 
-#endif	/* _PtActivationData_H_ */
+#endif /* _PtActivationData_H_ */
 #include <asn_internal.h>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -36,42 +36,43 @@ using grpc::Status;
 
 using locStub::LocationManagerService;
 
-class LocationManagerServerImpl final : public locStub::LocationManagerService::Service,
-    public IServerEventListener,
-    public std::enable_shared_from_this<LocationManagerServerImpl> {
+class LocationManagerServerImpl final
+   : public locStub::LocationManagerService::Service,
+     public IServerEventListener,
+     public std::enable_shared_from_this<LocationManagerServerImpl> {
  public:
     LocationManagerServerImpl();
     ~LocationManagerServerImpl();
-    grpc::Status InitService(ServerContext* context, const google::protobuf::Empty* request,
-        locStub::GetServiceStatusReply* response);
-    grpc::Status StartBasicReports(ServerContext* context, const google::protobuf::Empty* request,
-        locStub::LocManagerCommandReply* response);
-    grpc::Status StartDetailedReports(ServerContext* context,
-        const google::protobuf::Empty* request, locStub::LocManagerCommandReply* response);
-    grpc::Status StartDetailedEngineReports(ServerContext* context,
-        const google::protobuf::Empty* request, locStub::LocManagerCommandReply* response);
-    grpc::Status StopReports(ServerContext* context, const google::protobuf::Empty* request,
-        google::protobuf::Empty* response);
-    grpc::Status RegisterLocationSystemInfo(ServerContext* context,
-        const google::protobuf::Empty* request, locStub::LocManagerCommandReply* response);
-    grpc::Status DeregisterLocationSystemInfo(ServerContext* context,
-        const google::protobuf::Empty* request, locStub::LocManagerCommandReply* response);
-    grpc::Status RequestEnergyConsumedInfo(ServerContext* context,
-        const google::protobuf::Empty* request, locStub::RequestEnergyConsumedInfoReply* response);
-    grpc::Status GetYearOfHw(ServerContext* context,
-        const google::protobuf::Empty* request, locStub::GetYearOfHwReply* response);
-    grpc::Status GetCapabilities(ServerContext* context,
-        const google::protobuf::Empty* request, locStub::GetCapabilitiesReply* response);
-    grpc::Status GetTerrestrialPosition(ServerContext* context,
-        const google::protobuf::Empty* request, locStub::LocManagerCommandReply* response);
-    grpc::Status CancelTerrestrialPosition(ServerContext* context,
-        const google::protobuf::Empty* request, locStub::LocManagerCommandReply* response);
-    grpc::Status GetLastLocation(ServerContext* context,
-        const google::protobuf::Empty* request, locStub::LastLocationInfo* response);
+    grpc::Status InitService(ServerContext *context, const google::protobuf::Empty *request,
+        locStub::GetServiceStatusReply *response);
+    grpc::Status StartBasicReports(ServerContext *context, const google::protobuf::Empty *request,
+        locStub::LocManagerCommandReply *response);
+    grpc::Status StartDetailedReports(ServerContext *context,
+        const google::protobuf::Empty *request, locStub::LocManagerCommandReply *response);
+    grpc::Status StartDetailedEngineReports(ServerContext *context,
+        const google::protobuf::Empty *request, locStub::LocManagerCommandReply *response);
+    grpc::Status StopReports(ServerContext *context, const google::protobuf::Empty *request,
+        google::protobuf::Empty *response);
+    grpc::Status RegisterLocationSystemInfo(ServerContext *context,
+        const google::protobuf::Empty *request, locStub::LocManagerCommandReply *response);
+    grpc::Status DeregisterLocationSystemInfo(ServerContext *context,
+        const google::protobuf::Empty *request, locStub::LocManagerCommandReply *response);
+    grpc::Status RequestEnergyConsumedInfo(ServerContext *context,
+        const google::protobuf::Empty *request, locStub::RequestEnergyConsumedInfoReply *response);
+    grpc::Status GetYearOfHw(ServerContext *context, const google::protobuf::Empty *request,
+        locStub::GetYearOfHwReply *response);
+    grpc::Status GetCapabilities(ServerContext *context, const google::protobuf::Empty *request,
+        locStub::GetCapabilitiesReply *response);
+    grpc::Status GetTerrestrialPosition(ServerContext *context,
+        const google::protobuf::Empty *request, locStub::LocManagerCommandReply *response);
+    grpc::Status CancelTerrestrialPosition(ServerContext *context,
+        const google::protobuf::Empty *request, locStub::LocManagerCommandReply *response);
+    grpc::Status GetLastLocation(ServerContext *context, const google::protobuf::Empty *request,
+        locStub::LastLocationInfo *response);
     void onEventUpdate(::eventService::UnsolicitedEvent event) override;
 
  private:
-    void apiJsonReader(std::string apiName, locStub::LocManagerCommandReply* response);
+    void apiJsonReader(std::string apiName, locStub::LocManagerCommandReply *response);
     bool init();
     void startStreaming();
     void updateStreamRequest();
@@ -88,24 +89,24 @@ class LocationManagerServerImpl final : public locStub::LocationManagerService::
     std::shared_ptr<FileBuffer> fileBuffer_ = nullptr;
     std::vector<std::string> requestBuffer_;
     telux::common::AsyncTaskQueue<void> taskQ_;
-    bool bufferingInitialized_ = false;
-    bool stopStreamingData_ = false;
-    bool replayCsv_ = false;
-    uint64_t previousTimestamp_ = 0;
-    std::string lastLocInfo_ = "";
+    bool bufferingInitialized_                = false;
+    bool stopStreamingData_                   = false;
+    bool replayCsv_                           = false;
+    uint64_t previousTimestamp_               = 0;
+    std::string lastLocInfo_                  = "";
     telux::loc::LocCapability capabilityMask_ = 0;
-    uint32_t sysinfoValidity_ = 0x01;
-    uint32_t leapsecondValidity_ = 0x03;
-    uint32_t current_ = 18;
-    uint32_t leapSecondsBeforeChange_ = 0;
-    uint32_t leapSecondsAfterChange_ = 0;
-    uint32_t gnssValidity_ = 0x3F;
-    uint32_t systemWeek_ = 0;
-    uint32_t systemMsec_ = 0;
-    float systemClkTimeBias_ = 0.0;
-    float systemClkTimeUncMs_ = 0.0;
-    uint32_t refFCount_ = 0;
-    uint32_t clockResets_ = 0;
+    uint32_t sysinfoValidity_                 = 0x01;
+    uint32_t leapsecondValidity_              = 0x03;
+    uint32_t current_                         = 18;
+    uint32_t leapSecondsBeforeChange_         = 0;
+    uint32_t leapSecondsAfterChange_          = 0;
+    uint32_t gnssValidity_                    = 0x3F;
+    uint32_t systemWeek_                      = 0;
+    uint32_t systemMsec_                      = 0;
+    float systemClkTimeBias_                  = 0.0;
+    float systemClkTimeUncMs_                 = 0.0;
+    uint32_t refFCount_                       = 0;
+    uint32_t clockResets_                     = 0;
 };
 
-#endif // LOC_MANAGER_SERVER_HPP
+#endif  // LOC_MANAGER_SERVER_HPP

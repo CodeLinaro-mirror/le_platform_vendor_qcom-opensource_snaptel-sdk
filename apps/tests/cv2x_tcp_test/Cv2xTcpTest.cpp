@@ -28,9 +28,8 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -59,34 +58,33 @@
 #include "../../common/utils/Utils.hpp"
 
 using std::array;
-using std::string;
+using std::atomic;
 using std::cerr;
+using std::condition_variable;
 using std::cout;
 using std::endl;
+using std::lock_guard;
+using std::mutex;
 using std::promise;
 using std::shared_ptr;
-using std::atomic;
-using std::mutex;
-using std::lock_guard;
+using std::string;
 using std::unique_lock;
-using std::condition_variable;
 using telux::common::ErrorCode;
-using telux::common::Status;
 using telux::common::ServiceStatus;
+using telux::common::Status;
 using telux::cv2x::Cv2xFactory;
 using telux::cv2x::Cv2xStatus;
 using telux::cv2x::Cv2xStatusType;
+using telux::cv2x::EventFlowInfo;
+using telux::cv2x::ICv2xListener;
 using telux::cv2x::ICv2xRadio;
+using telux::cv2x::ICv2xRadioListener;
+using telux::cv2x::ICv2xRadioManager;
 using telux::cv2x::ICv2xTxRxSocket;
 using telux::cv2x::Periodicity;
 using telux::cv2x::Priority;
-using telux::cv2x::TrafficCategory;
 using telux::cv2x::SocketInfo;
-using telux::cv2x::EventFlowInfo;
-using telux::cv2x::ICv2xRadio;
-using telux::cv2x::ICv2xRadioListener;
-using telux::cv2x::ICv2xListener;
-using telux::cv2x::ICv2xRadioManager;
+using telux::cv2x::TrafficCategory;
 
 // In TCP_CLIENT mode, this tool connects to TCP server via V2X-IP iface,
 // sends and recvs pkts from TCP server.
@@ -103,38 +101,38 @@ static constexpr uint8_t TCP_TEST = 2u;
 // and port, accepts connection request from TCP server and echoes back each received pkt.
 static constexpr uint8_t SCMS_SERVER = 3u;
 
-static constexpr uint32_t SERVIC_ID = 1u;
-static constexpr uint16_t DEFAULT_PORT = 5000u;
-static constexpr int      PRIORITY = 5;
-static constexpr uint32_t PACKET_LEN = 128u;
+static constexpr uint32_t SERVIC_ID            = 1u;
+static constexpr uint16_t DEFAULT_PORT         = 5000u;
+static constexpr int PRIORITY                  = 5;
+static constexpr uint32_t PACKET_LEN           = 128u;
 static constexpr uint32_t MAX_DUMMY_PACKET_LEN = 10000;
-static constexpr uint16_t DEFAULT_PROXY_PORT = 9000u;
+static constexpr uint16_t DEFAULT_PROXY_PORT   = 9000u;
 
 static constexpr char TEST_VERNO_MAGIC = 'Q';
-static constexpr char CLIENT_UEID = 1;
-static constexpr char SERVER_UEID = 2;
+static constexpr char CLIENT_UEID      = 1;
+static constexpr char SERVER_UEID      = 2;
 
-static shared_ptr<ICv2xRadioManager> gCv2xRadioMgr = nullptr;
-static shared_ptr<ICv2xRadio> gCv2xRadio = nullptr;
+static shared_ptr<ICv2xRadioManager> gCv2xRadioMgr   = nullptr;
+static shared_ptr<ICv2xRadio> gCv2xRadio             = nullptr;
 static shared_ptr<ICv2xRadioListener> gRadioListener = nullptr;
-static shared_ptr<ICv2xListener> gStatusListener = nullptr;
-static shared_ptr<ICv2xTxRxSocket> gTcpSockInfo = nullptr;
-static int32_t gTcpSocket = -1;
-static int32_t gAcceptedSock = -1;
+static shared_ptr<ICv2xListener> gStatusListener     = nullptr;
+static shared_ptr<ICv2xTxRxSocket> gTcpSockInfo      = nullptr;
+static int32_t gTcpSocket                            = -1;
+static int32_t gAcceptedSock                         = -1;
 static Cv2xStatus gCv2xStatus;
 static mutex gCv2xStatusMutex;
 static condition_variable gStatusCv;
 static promise<ErrorCode> gCallbackPromise;
 static array<char, MAX_DUMMY_PACKET_LEN> gBuf;
-static uint8_t gTcpMode = TCP_CLIENT;
+static uint8_t gTcpMode  = TCP_CLIENT;
 static uint16_t gSrcPort = DEFAULT_PORT;
 static uint16_t gDstPort = DEFAULT_PORT;
 static string gDstAddr;
 static uint32_t gServiceId = SERVIC_ID;
 static uint32_t gPacketLen = PACKET_LEN;
 static uint32_t gPacketNum = 0;
-static uint32_t gTxCount = 0u;
-static uint32_t gRxCount = 0u;
+static uint32_t gTxCount   = 0u;
+static uint32_t gRxCount   = 0u;
 static atomic<bool> gTcpConnected{false};
 static atomic<int> gTerminate{0};
 static int gTerminatePipe[2];
@@ -148,13 +146,13 @@ static bool gEnableProxy = false;
 static string gProxyAddr;
 static uint16_t gProxyPort = DEFAULT_PROXY_PORT;
 static string gRemoteAddr;
-static uint16_t gRemotePort = DEFAULT_PROXY_PORT;
-static int32_t gProxySock = -1;
+static uint16_t gRemotePort       = DEFAULT_PROXY_PORT;
+static int32_t gProxySock         = -1;
 static int32_t gProxyAcceptedSock = -1;
-static int32_t gProxyFamily = AF_INET6;
+static int32_t gProxyFamily       = AF_INET6;
 
 class RadioListener : public ICv2xRadioListener {
-public:
+ public:
     void onL2AddrChanged(uint32_t newL2Address) {
         cout << "source L2 address changed to:" << newL2Address << endl;
         // local-link address has changed after TCP connection establishment,
@@ -169,17 +167,16 @@ public:
 };
 
 class Cv2xStatusListener : public ICv2xListener {
-public:
+ public:
     void onStatusChanged(Cv2xStatus status) override {
         lock_guard<mutex> lock(gCv2xStatusMutex);
-        if (status.rxStatus != gCv2xStatus.rxStatus
-            or status.txStatus != gCv2xStatus.txStatus) {
+        if (status.rxStatus != gCv2xStatus.rxStatus or status.txStatus != gCv2xStatus.txStatus) {
             cout << "cv2x status changed, Tx: " << static_cast<int>(status.txStatus);
             cout << ", Rx: " << static_cast<int>(status.rxStatus) << endl;
             gCv2xStatus = status;
 
-            if (status.rxStatus == Cv2xStatusType::ACTIVE and
-                status.txStatus == Cv2xStatusType::ACTIVE) {
+            if (status.rxStatus == Cv2xStatusType::ACTIVE
+                and status.txStatus == Cv2xStatusType::ACTIVE) {
                 gStatusCv.notify_all();
             }
         }
@@ -188,8 +185,8 @@ public:
 
 static bool isV2xReady() {
     lock_guard<mutex> lock(gCv2xStatusMutex);
-    if (Cv2xStatusType::ACTIVE == gCv2xStatus.rxStatus and
-        Cv2xStatusType::ACTIVE == gCv2xStatus.txStatus) {
+    if (Cv2xStatusType::ACTIVE == gCv2xStatus.rxStatus
+        and Cv2xStatusType::ACTIVE == gCv2xStatus.txStatus) {
         return true;
     }
 
@@ -199,9 +196,9 @@ static bool isV2xReady() {
 
 static void waitV2xStatusActive() {
     std::unique_lock<std::mutex> cvLock(gCv2xStatusMutex);
-    while (!gTerminate and
-           (Cv2xStatusType::ACTIVE != gCv2xStatus.rxStatus or
-            Cv2xStatusType::ACTIVE != gCv2xStatus.txStatus)) {
+    while (!gTerminate
+           and (Cv2xStatusType::ACTIVE != gCv2xStatus.rxStatus
+                or Cv2xStatusType::ACTIVE != gCv2xStatus.txStatus)) {
         cout << "wait for Cv2x status active." << endl;
         gStatusCv.wait(cvLock);
     }
@@ -221,8 +218,7 @@ static void cv2xStatusCallback(Cv2xStatus status, ErrorCode error) {
 }
 
 // Callback function for ICv2xRadio->createCv2xTcpSocket()
-static void createTcpSocketCallback(shared_ptr<ICv2xTxRxSocket> sock,
-                                    ErrorCode error) {
+static void createTcpSocketCallback(shared_ptr<ICv2xTxRxSocket> sock, ErrorCode error) {
     if (ErrorCode::SUCCESS == error) {
         gTcpSockInfo = sock;
     }
@@ -244,7 +240,7 @@ static uint64_t getCurrentTimestamp(void) {
 // Fills buffer with dummy data
 static void fillBuffer(void) {
     static uint16_t seq_num = 0u;
-    auto timestamp = getCurrentTimestamp();
+    auto timestamp          = getCurrentTimestamp();
 
     // Very first payload is test Magic number, this is  where V2X Family ID would normally be.
     gBuf[0] = TEST_VERNO_MAGIC;
@@ -263,12 +259,12 @@ static void fillBuffer(void) {
     dataPtr += sizeof(uint16_t);
 
     // Timestamp
-    dataPtr += snprintf(dataPtr, gPacketLen - (2 + sizeof(uint16_t)),
-                        "<%llu> ", static_cast<long long unsigned>(timestamp));
+    dataPtr += snprintf(dataPtr, gPacketLen - (2 + sizeof(uint16_t)), "<%llu> ",
+        static_cast<long long unsigned>(timestamp));
 
     // Dummy payload
     constexpr int NUM_LETTERS = 26;
-    auto i = 2 + sizeof(uint16_t) + sizeof(long long unsigned);
+    auto i                    = 2 + sizeof(uint16_t) + sizeof(long long unsigned);
     for (; i < gPacketLen; ++i) {
         gBuf[i] = 'a' + ((seq_num + i) % NUM_LETTERS);
     }
@@ -282,25 +278,25 @@ static int sampleTx(int32_t sock) {
         return EXIT_FAILURE;
     }
 
-    struct msghdr message = {0};
-    struct iovec iov[1] = {0};
-    struct cmsghdr * cmsghp = NULL;
+    struct msghdr message  = {0};
+    struct iovec iov[1]    = {0};
+    struct cmsghdr *cmsghp = NULL;
     char control[CMSG_SPACE(sizeof(int))];
 
     // Send data using sendmsg to provide IPV6_TCLASS per packet
-    iov[0].iov_base = gBuf.data();
-    iov[0].iov_len = gPacketLen;
-    message.msg_iov = iov;
-    message.msg_iovlen = 1;
-    message.msg_control = control;
+    iov[0].iov_base        = gBuf.data();
+    iov[0].iov_len         = gPacketLen;
+    message.msg_iov        = iov;
+    message.msg_iovlen     = 1;
+    message.msg_control    = control;
     message.msg_controllen = sizeof(control);
 
     // Fill ancillary data
-    int priority = PRIORITY;
-    cmsghp = CMSG_FIRSTHDR(&message);
+    int priority       = PRIORITY;
+    cmsghp             = CMSG_FIRSTHDR(&message);
     cmsghp->cmsg_level = IPPROTO_IPV6;
-    cmsghp->cmsg_type = IPV6_TCLASS;
-    cmsghp->cmsg_len = CMSG_LEN(sizeof(int));
+    cmsghp->cmsg_type  = IPV6_TCLASS;
+    cmsghp->cmsg_len   = CMSG_LEN(sizeof(int));
     memcpy(CMSG_DATA(cmsghp), &priority, sizeof(int));
 
     // Send data
@@ -366,8 +362,8 @@ static void printUsage(const char *Opt) {
     cout << "-t <dstPort>       Destination port used for connecting, default is 5000" << endl;
     cout << "-p <service ID>    Service ID used for Tx and Rx flows, default is ";
     cout << gServiceId << endl;
-    cout << "-l <packet length> Tx Packet length, default is " << gPacketLen <<endl;
-    cout << "-n <packet number> Tx Packet number" <<endl;
+    cout << "-l <packet length> Tx Packet length, default is " << gPacketLen << endl;
+    cout << "-n <packet number> Tx Packet number" << endl;
     cout << "-g<global IP prefix> Set global IP prefix, default is " << gGlobalIpPrefix << endl;
     cout << "-x <proxy_addr> Proxy addr for TCP_SERVER or local addr for SCMS_SERVER" << endl;
     cout << "-X <proxy_port> Proxy port, default is " << gProxyPort << endl;
@@ -382,89 +378,89 @@ static int parseOpts(int argc, char *argv[]) {
     int c;
     while ((c = getopt(argc, argv, "?d:m:s:t:p:l:n:g::x:X:y:Y:F")) != -1) {
         switch (c) {
-        case 'd':
-            if (optarg) {
-                gDstAddr = optarg;
-                cout << "dstAddr: " << gDstAddr << endl;
-            }
-            break;
-        case 'm':
-            if (optarg) {
-                gTcpMode = atoi(optarg);
-                cout << "tcpMode: " << +gTcpMode << endl;
-            }
-            break;
-        case 's':
-            if (optarg) {
-                gSrcPort = atoi(optarg);
-                cout << "srcPort: " << gSrcPort << endl;
-            }
-            break;
-        case 't':
-            if (optarg) {
-                gDstPort = atoi(optarg);
-                cout << "dstPort: " << gDstPort << endl;
-            }
-            break;
-        case 'p':
-            if (optarg) {
-                gServiceId = atoi(optarg);
-                cout << "service ID: " << gServiceId << endl;
-            }
-            break;
-        case 'l':
-            if (optarg) {
-                gPacketLen = atoi(optarg);
-                cout << "packet length: " << gPacketLen << endl;
-            }
-            break;
-        case 'n':
-            if (optarg) {
-                gPacketNum = atoi(optarg);
-                cout << "packet number: " << gPacketNum << endl;
-            }
-            break;
-        case 'g':
-            gSetGlobalIp = true;
-            if (optarg) {
-                gGlobalIpPrefix = optarg;
-            }
-            cout << "global IP prefix: " << gGlobalIpPrefix << endl;
-            break;
-        case 'x':
-            if (optarg) {
-                gEnableProxy = true;
-                gProxyAddr = optarg;
-                cout << "Set proxy addr:" << gProxyAddr << endl;
-            }
-            break;
-        case 'X':
-            if (optarg) {
-                gProxyPort = atoi(optarg);
-                cout << "Set proxy port:" << gProxyPort << endl;
-            }
-            break;
-        case 'y':
-            if (optarg) {
-                gRemoteAddr = optarg;
-                cout << "Set proxy remote addr:" << gRemoteAddr << endl;
-            }
-            break;
-        case 'Y':
-            if (optarg) {
-                gRemotePort = atoi(optarg);
-                cout << "Set proxy remote port:" << gRemotePort << endl;
-            }
-            break;
-        case 'F':
-            gProxyFamily = AF_INET;
-            cout << "Use IPV4 addr for proxy" << endl;
-            break;
-        case '?':
-        default:
-            rc = -1;
-            printUsage(argv[0]);
-            return rc;
+            case 'd':
+                if (optarg) {
+                    gDstAddr = optarg;
+                    cout << "dstAddr: " << gDstAddr << endl;
+                }
+                break;
+            case 'm':
+                if (optarg) {
+                    gTcpMode = atoi(optarg);
+                    cout << "tcpMode: " << +gTcpMode << endl;
+                }
+                break;
+            case 's':
+                if (optarg) {
+                    gSrcPort = atoi(optarg);
+                    cout << "srcPort: " << gSrcPort << endl;
+                }
+                break;
+            case 't':
+                if (optarg) {
+                    gDstPort = atoi(optarg);
+                    cout << "dstPort: " << gDstPort << endl;
+                }
+                break;
+            case 'p':
+                if (optarg) {
+                    gServiceId = atoi(optarg);
+                    cout << "service ID: " << gServiceId << endl;
+                }
+                break;
+            case 'l':
+                if (optarg) {
+                    gPacketLen = atoi(optarg);
+                    cout << "packet length: " << gPacketLen << endl;
+                }
+                break;
+            case 'n':
+                if (optarg) {
+                    gPacketNum = atoi(optarg);
+                    cout << "packet number: " << gPacketNum << endl;
+                }
+                break;
+            case 'g':
+                gSetGlobalIp = true;
+                if (optarg) {
+                    gGlobalIpPrefix = optarg;
+                }
+                cout << "global IP prefix: " << gGlobalIpPrefix << endl;
+                break;
+            case 'x':
+                if (optarg) {
+                    gEnableProxy = true;
+                    gProxyAddr   = optarg;
+                    cout << "Set proxy addr:" << gProxyAddr << endl;
+                }
+                break;
+            case 'X':
+                if (optarg) {
+                    gProxyPort = atoi(optarg);
+                    cout << "Set proxy port:" << gProxyPort << endl;
+                }
+                break;
+            case 'y':
+                if (optarg) {
+                    gRemoteAddr = optarg;
+                    cout << "Set proxy remote addr:" << gRemoteAddr << endl;
+                }
+                break;
+            case 'Y':
+                if (optarg) {
+                    gRemotePort = atoi(optarg);
+                    cout << "Set proxy remote port:" << gRemotePort << endl;
+                }
+                break;
+            case 'F':
+                gProxyFamily = AF_INET;
+                cout << "Use IPV4 addr for proxy" << endl;
+                break;
+            case '?':
+            default:
+                rc = -1;
+                printUsage(argv[0]);
+                return rc;
         }
     }
 
@@ -473,10 +469,9 @@ static int parseOpts(int argc, char *argv[]) {
         rc = -1;
     }
 
-    if (gEnableProxy and
-        (gProxyAddr.empty() or (gTcpMode == TCP_SERVER and gRemoteAddr.empty()))) {
-       cerr << "Error proxy parameters!" << endl;
-       rc = -1;
+    if (gEnableProxy and (gProxyAddr.empty() or (gTcpMode == TCP_SERVER and gRemoteAddr.empty()))) {
+        cerr << "Error proxy parameters!" << endl;
+        rc = -1;
     }
 
     return rc;
@@ -487,19 +482,19 @@ static int cv2xInit() {
 
     // Get handle to Cv2xRadioManager
     bool cv2xRadioManagerStatusUpdated = false;
-    telux::common::ServiceStatus cv2xRadioManagerStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    telux::common::ServiceStatus cv2xRadioManagerStatus
+        = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
     std::condition_variable cv;
     std::mutex mtx;
     auto statusCb = [&](telux::common::ServiceStatus status) {
         std::lock_guard<std::mutex> lock(mtx);
         cv2xRadioManagerStatusUpdated = true;
-        cv2xRadioManagerStatus = status;
+        cv2xRadioManagerStatus        = status;
         cv.notify_all();
     };
 
-    auto & cv2xFactory = Cv2xFactory::getInstance();
-    gCv2xRadioMgr = cv2xFactory.getCv2xRadioManager(statusCb);
+    auto &cv2xFactory = Cv2xFactory::getInstance();
+    gCv2xRadioMgr     = cv2xFactory.getCv2xRadioManager(statusCb);
     if (!gCv2xRadioMgr) {
         cout << "Error: failed to get Cv2xRadioManager." << endl;
         return EXIT_FAILURE;
@@ -507,8 +502,7 @@ static int cv2xInit() {
     {
         std::unique_lock<std::mutex> lck(mtx);
         cv.wait(lck, [&] { return cv2xRadioManagerStatusUpdated; });
-        if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
-            cv2xRadioManagerStatus) {
+        if (telux::common::ServiceStatus::SERVICE_AVAILABLE != cv2xRadioManagerStatus) {
             cerr << "C-V2X Radio Manager initialization failed, exiting" << endl;
             return EXIT_FAILURE;
         }
@@ -518,7 +512,7 @@ static int cv2xInit() {
     resetCallbackPromise();
     if (Status::SUCCESS != gCv2xRadioMgr->requestCv2xStatus(cv2xStatusCallback)
         or ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
-        cerr << "Failed to get cv2x radio status"<< endl;
+        cerr << "Failed to get cv2x radio status" << endl;
         return EXIT_FAILURE;
     }
 
@@ -530,13 +524,13 @@ static int cv2xInit() {
     }
 
     bool cv2x_radio_status_updated = false;
-    telux::common::ServiceStatus cv2xRadioStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    telux::common::ServiceStatus cv2xRadioStatus
+        = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
 
     auto cb = [&](ServiceStatus status) {
         std::lock_guard<std::mutex> lock(mtx);
         cv2x_radio_status_updated = true;
-        cv2xRadioStatus = status;
+        cv2xRadioStatus           = status;
         cv.notify_all();
     };
 
@@ -576,13 +570,12 @@ static int cv2xInit() {
     return EXIT_SUCCESS;
 }
 
-
 static int connectTcpSocketClient(int sock, string dstAddr, uint16_t dstPort, int32_t family) {
     // For TCP client, establish connection with the created sock
     if (family == AF_INET6) {
         // dest addr is IPV6 type
-        struct sockaddr_in6 dstSockAddr = {0}; //must reset the sockaddr
-        dstSockAddr.sin6_port = htons(dstPort);
+        struct sockaddr_in6 dstSockAddr = {0};  // must reset the sockaddr
+        dstSockAddr.sin6_port           = htons(dstPort);
         inet_pton(AF_INET6, dstAddr.c_str(), (void *)&dstSockAddr.sin6_addr);
         dstSockAddr.sin6_family = AF_INET6;
 
@@ -593,8 +586,8 @@ static int connectTcpSocketClient(int sock, string dstAddr, uint16_t dstPort, in
         }
     } else {
         // dest addr is IPV4 type
-        struct sockaddr_in dstSockAddr = {0}; //must reset the sockaddr
-        dstSockAddr.sin_port = htons(dstPort);
+        struct sockaddr_in dstSockAddr = {0};  // must reset the sockaddr
+        dstSockAddr.sin_port           = htons(dstPort);
         inet_pton(AF_INET, dstAddr.c_str(), (void *)&dstSockAddr.sin_addr);
         dstSockAddr.sin_family = AF_INET;
 
@@ -608,7 +601,7 @@ static int connectTcpSocketClient(int sock, string dstAddr, uint16_t dstPort, in
     return EXIT_SUCCESS;
 }
 
-static int acceptTcpSocketServer(int listenSock, int32_t& acceptSock) {
+static int acceptTcpSocketServer(int listenSock, int32_t &acceptSock) {
     // mark the created socket as listening sock
     cout << "listening sock" << listenSock << endl;
     if (listen(listenSock, 5) < 0) {
@@ -619,8 +612,8 @@ static int acceptTcpSocketServer(int listenSock, int32_t& acceptSock) {
     // accept connection request
     cout << "accepting connection..." << endl;
     struct sockaddr_in6 tmpAddr = {0};
-    socklen_t socklen = sizeof(tmpAddr);
-    acceptSock = accept(listenSock, (struct sockaddr *)&tmpAddr, &socklen);
+    socklen_t socklen           = sizeof(tmpAddr);
+    acceptSock                  = accept(listenSock, (struct sockaddr *)&tmpAddr, &socklen);
     if (acceptSock < 0) {
         cout << "accept err:" << strerror(errno) << endl;
         return EXIT_FAILURE;
@@ -644,23 +637,23 @@ static int createTcpSocket() {
     }
 
     resetCallbackPromise();
-    if (Status::SUCCESS != gCv2xRadio->createCv2xTcpSocket(eventInfo, tcpInfo,
-                                                           createTcpSocketCallback) ||
-        ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
+    if (Status::SUCCESS
+            != gCv2xRadio->createCv2xTcpSocket(eventInfo, tcpInfo, createTcpSocketCallback)
+        || ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
         cout << "Tcp Socket creation failed." << endl;
         return EXIT_FAILURE;
     }
 
-    //get created TCP socket
+    // get created TCP socket
     gTcpSocket = gTcpSockInfo->getSocket();
 
     cout << "create TCP socket successfully, port: "
-        << static_cast<int>(ntohs(gTcpSockInfo->getSocketAddr().sin6_port)) << endl;
+         << static_cast<int>(ntohs(gTcpSockInfo->getSocketAddr().sin6_port)) << endl;
     // add 1s Tx/Rx timeout to remove the possibility for indefinite wait
     struct timeval tv;
-    tv.tv_sec = 1;
+    tv.tv_sec  = 1;
     tv.tv_usec = 0;
-    if (setsockopt(gTcpSocket, SOL_SOCKET, SO_RCVTIMEO|SO_SNDTIMEO, &tv, sizeof(tv)) < 0) {
+    if (setsockopt(gTcpSocket, SOL_SOCKET, SO_RCVTIMEO | SO_SNDTIMEO, &tv, sizeof(tv)) < 0) {
         cout << "set sock timeout err:" << strerror(errno) << endl;
         return EXIT_FAILURE;
     }
@@ -669,7 +662,7 @@ static int createTcpSocket() {
 }
 
 static int parseIPv6Prefix(char *ipPrefix) {
-    int i = 0;
+    int i                      = 0;
     std::string::size_type pos = 0, prev = 0;
     string prefixStr = gGlobalIpPrefix + ":";
     do {
@@ -679,13 +672,13 @@ static int parseIPv6Prefix(char *ipPrefix) {
         }
         pos = prefixStr.find(":", prev);
         if (pos != std::string::npos) {
-            uint16_t val = stoi(prefixStr.substr(prev, pos), 0, 16);
-            ipPrefix[i] = (val >> 8);
+            uint16_t val    = stoi(prefixStr.substr(prev, pos), 0, 16);
+            ipPrefix[i]     = (val >> 8);
             ipPrefix[i + 1] = (val & 0xFF);
         }
         prev = pos + 1;
         i += 2;
-    } while(pos != std::string::npos);
+    } while (pos != std::string::npos);
 
     return EXIT_SUCCESS;
 }
@@ -696,7 +689,7 @@ static int setGlobalIpPrefix() {
     // parse global IP prefix
     char ipPrefix[CV2X_IPV6_ADDR_ARRAY_LEN] = {0};
     if (EXIT_FAILURE == parseIPv6Prefix(ipPrefix)) {
-        cerr << "parse global IP prefix err!"<< endl;
+        cerr << "parse global IP prefix err!" << endl;
         return EXIT_FAILURE;
     }
 
@@ -770,9 +763,9 @@ static void closeAcceptedSocket() {
     if (gAcceptedSock < 0) {
         return;
     }
-    cout << "closing client socket:"<< gAcceptedSock << endl;
-    //call shutdown to send out FIN
-    shutdown(gAcceptedSock, SHUT_WR|SHUT_RD);
+    cout << "closing client socket:" << gAcceptedSock << endl;
+    // call shutdown to send out FIN
+    shutdown(gAcceptedSock, SHUT_WR | SHUT_RD);
     close(gAcceptedSock);
     gAcceptedSock = -1;
     usleep(500000);
@@ -785,11 +778,11 @@ static void closeTcpSocket() {
 
     cout << "closing Tcp socket, fd:" << gTcpSockInfo->getSocket() << endl;
     resetCallbackPromise();
-    if(Status::SUCCESS != gCv2xRadio->closeCv2xTcpSocket(gTcpSockInfo, closeTcpSocketCallback) ||
-       ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
+    if (Status::SUCCESS != gCv2xRadio->closeCv2xTcpSocket(gTcpSockInfo, closeTcpSocketCallback)
+        || ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
         cout << "close Tcp socket err" << endl;
     }
-    gTcpSocket = -1;
+    gTcpSocket   = -1;
     gTcpSockInfo = nullptr;
 }
 
@@ -904,8 +897,9 @@ static int createProxySock() {
     // allow multiple clients to bind to the same IP address with different port,
     // and allow binding a socket in TIME_WAIT state
     int option = 1;
-    if (setsockopt(gProxySock, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<void *>(&option),
-                   sizeof(option)) < 0) {
+    if (setsockopt(
+            gProxySock, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<void *>(&option), sizeof(option))
+        < 0) {
         cerr << "Set SO_REUSEADDR to proxy sock failed, errno:" << strerror(errno) << endl;
         return EXIT_FAILURE;
     }
@@ -913,23 +907,25 @@ static int createProxySock() {
     // bind to proxy iface and port
     if (gProxyFamily == AF_INET6) {
         // proxy addr is IPV6 type
-        struct sockaddr_in6 proxySockAddr = {0}; //must reset the sockaddr
-        proxySockAddr.sin6_port = htons(gProxyPort);
+        struct sockaddr_in6 proxySockAddr = {0};  // must reset the sockaddr
+        proxySockAddr.sin6_port           = htons(gProxyPort);
         inet_pton(AF_INET6, gProxyAddr.c_str(), (void *)&proxySockAddr.sin6_addr);
         proxySockAddr.sin6_family = AF_INET6;
         if (bind(gProxySock, reinterpret_cast<struct sockaddr *>(&proxySockAddr),
-                 sizeof(struct sockaddr_in6)) < 0) {
+                sizeof(struct sockaddr_in6))
+            < 0) {
             cerr << "Bind proxy sock failed, errno:" << strerror(errno) << endl;
             return EXIT_FAILURE;
         }
     } else {
         // proxy addr is IPV4 type
-        struct sockaddr_in proxySockAddr = {0}; //must reset the sockaddr
-        proxySockAddr.sin_port = htons(gProxyPort);
+        struct sockaddr_in proxySockAddr = {0};  // must reset the sockaddr
+        proxySockAddr.sin_port           = htons(gProxyPort);
         inet_pton(AF_INET, gProxyAddr.c_str(), (void *)&proxySockAddr.sin_addr);
         proxySockAddr.sin_family = AF_INET;
         if (bind(gProxySock, reinterpret_cast<struct sockaddr *>(&proxySockAddr),
-                 sizeof(struct sockaddr_in)) < 0) {
+                sizeof(struct sockaddr_in))
+            < 0) {
             cerr << "Bind proxy sock failed, errno:" << strerror(errno) << endl;
             return EXIT_FAILURE;
         }
@@ -1053,7 +1049,7 @@ int main(int argc, char *argv[]) {
 
     std::vector<std::string> groups{"system", "diag", "radio", "logd", "dlt"};
     int rc = Utils::setSupplementaryGroups(groups);
-    if (rc == -1){
+    if (rc == -1) {
         cout << "Adding supplementary group failed!" << std::endl;
     }
 

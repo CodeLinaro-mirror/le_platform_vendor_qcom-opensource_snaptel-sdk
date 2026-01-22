@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_Heading_H_
-#define	_Heading_H_
-
+#ifndef _Heading_H_
+#define _Heading_H_
 
 #include <asn_application.h>
 
@@ -22,11 +21,11 @@ extern "C" {
 
 /* Heading */
 typedef struct Heading {
-	HeadingValue_t	 headingValue;
-	HeadingConfidence_t	 headingConfidence;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    HeadingValue_t headingValue;
+    HeadingConfidence_t headingConfidence;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } Heading_t;
 
 /* Implementation */
@@ -36,5 +35,5 @@ extern asn_TYPE_descriptor_t asn_DEF_Heading;
 }
 #endif
 
-#endif	/* _Heading_H_ */
+#endif /* _Heading_H_ */
 #include <asn_internal.h>

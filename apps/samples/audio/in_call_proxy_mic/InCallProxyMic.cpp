@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -53,8 +53,7 @@ int InCallProxyMic::init() {
     auto &audioFactory = telux::audio::AudioFactory::getInstance();
 
     /* Step - 2 */
-    audioManager_ = audioFactory.getAudioManager(
-            [&p](telux::common::ServiceStatus status) {
+    audioManager_ = audioFactory.getAudioManager([&p](telux::common::ServiceStatus status) {
         if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             p.set_value(telux::common::ServiceStatus::SERVICE_AVAILABLE);
         } else {
@@ -70,8 +69,8 @@ int InCallProxyMic::init() {
     /* Step - 3 */
     serviceStatus = p.get_future().get();
     if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "Audio service unavailable, status " <<
-            static_cast<int>(serviceStatus) << std::endl;
+        std::cout << "Audio service unavailable, status " << static_cast<int>(serviceStatus)
+                  << std::endl;
         return -EIO;
     }
 
@@ -89,9 +88,9 @@ int InCallProxyMic::createVoiceStream() {
     telux::audio::StreamConfig sc{};
     std::promise<telux::common::ErrorCode> p{};
 
-    sc.type = telux::audio::StreamType::VOICE_CALL;
-    sc.slotId = DEFAULT_SLOT_ID;
-    sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
+    sc.type            = telux::audio::StreamType::VOICE_CALL;
+    sc.slotId          = DEFAULT_SLOT_ID;
+    sc.format          = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
     sc.channelTypeMask = telux::audio::ChannelType::LEFT;
     sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
 
@@ -99,15 +98,15 @@ int InCallProxyMic::createVoiceStream() {
     sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_PROXY_MIC);
     sc.sampleRate = 8000;
 
-    status = audioManager_->createStream(sc, [&p, this] (
-            std::shared_ptr<telux::audio::IAudioStream> &audioStream,
-            telux::common::ErrorCode result) {
-        if (result == telux::common::ErrorCode::SUCCESS) {
-            audioVoiceStream_ = std::dynamic_pointer_cast<
-                telux::audio::IAudioVoiceStream>(audioStream);
-        }
-        p.set_value(result);
-    });
+    status = audioManager_->createStream(
+        sc, [&p, this](std::shared_ptr<telux::audio::IAudioStream> &audioStream,
+                telux::common::ErrorCode result) {
+            if (result == telux::common::ErrorCode::SUCCESS) {
+                audioVoiceStream_
+                    = std::dynamic_pointer_cast<telux::audio::IAudioVoiceStream>(audioStream);
+            }
+            p.set_value(result);
+        });
 
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "can't create voice stream, err " << static_cast<int>(status) << std::endl;
@@ -132,10 +131,8 @@ int InCallProxyMic::deleteVoiceStream() {
     telux::common::ErrorCode ec;
     std::promise<telux::common::ErrorCode> p{};
 
-    status = audioManager_->deleteStream(audioVoiceStream_, [&p, this] (
-            telux::common::ErrorCode result) {
-        p.set_value(result);
-    });
+    status = audioManager_->deleteStream(
+        audioVoiceStream_, [&p, this](telux::common::ErrorCode result) { p.set_value(result); });
 
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "can't delete voice stream, err " << static_cast<int>(status) << std::endl;
@@ -160,9 +157,8 @@ int InCallProxyMic::startVoiceStream() {
     telux::common::ErrorCode ec;
     std::promise<telux::common::ErrorCode> p{};
 
-    status = audioVoiceStream_->startAudio([&p] (telux::common::ErrorCode result) {
-        p.set_value(result);
-    });
+    status = audioVoiceStream_->startAudio(
+        [&p](telux::common::ErrorCode result) { p.set_value(result); });
 
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "can't start voice stream, err " << static_cast<int>(status) << std::endl;
@@ -187,9 +183,8 @@ int InCallProxyMic::stopVoiceStream() {
     telux::common::ErrorCode ec;
     std::promise<telux::common::ErrorCode> p{};
 
-    status = audioVoiceStream_->stopAudio([&p] (telux::common::ErrorCode result) {
-        p.set_value(result);
-    });
+    status = audioVoiceStream_->stopAudio(
+        [&p](telux::common::ErrorCode result) { p.set_value(result); });
 
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "can't stop voice stream, err " << static_cast<int>(status) << std::endl;
@@ -216,23 +211,23 @@ int InCallProxyMic::createIncallPlayStream() {
     telux::audio::StreamConfig sc{};
     std::promise<telux::common::ErrorCode> p{};
 
-    sc.type = telux::audio::StreamType::PLAY;
-    sc.sampleRate = 8000;
-    sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
+    sc.type            = telux::audio::StreamType::PLAY;
+    sc.sampleRate      = 8000;
+    sc.format          = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
     sc.channelTypeMask = telux::audio::ChannelType::LEFT;
 
     /* Use proxy device */
     sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_PROXY_SPEAKER);
 
-    status = audioManager_->createStream(sc, [&p, this] (
-            std::shared_ptr<telux::audio::IAudioStream> &audioStream,
-            telux::common::ErrorCode result) {
-        if (result == telux::common::ErrorCode::SUCCESS) {
-            audioPlayStream_ = std::dynamic_pointer_cast<
-                telux::audio::IAudioPlayStream>(audioStream);
-        }
-        p.set_value(result);
-    });
+    status = audioManager_->createStream(
+        sc, [&p, this](std::shared_ptr<telux::audio::IAudioStream> &audioStream,
+                telux::common::ErrorCode result) {
+            if (result == telux::common::ErrorCode::SUCCESS) {
+                audioPlayStream_
+                    = std::dynamic_pointer_cast<telux::audio::IAudioPlayStream>(audioStream);
+            }
+            p.set_value(result);
+        });
 
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "can't create playback stream, err " << static_cast<int>(status) << std::endl;
@@ -257,10 +252,8 @@ int InCallProxyMic::deleteIncallPlayStream() {
     telux::common::ErrorCode ec;
     std::promise<telux::common::ErrorCode> p{};
 
-    status = audioManager_->deleteStream(audioPlayStream_, [&p, this] (
-            telux::common::ErrorCode result) {
-        p.set_value(result);
-    });
+    status = audioManager_->deleteStream(
+        audioPlayStream_, [&p, this](telux::common::ErrorCode result) { p.set_value(result); });
 
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "can't delete playback stream, err " << static_cast<int>(status) << std::endl;
@@ -280,7 +273,7 @@ int InCallProxyMic::deleteIncallPlayStream() {
  *  Gets called to confirm how many bytes were actually written to the playback stream.
  */
 void InCallProxyMic::writeComplete(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
-        uint32_t bytesWritten, telux::common::ErrorCode error) {
+    uint32_t bytesWritten, telux::common::ErrorCode error) {
 
     long offset;
 
@@ -307,9 +300,9 @@ void InCallProxyMic::writeComplete(std::shared_ptr<telux::audio::IStreamBuffer> 
  */
 void InCallProxyMic::play() {
 
-    uint32_t size = 0;
+    uint32_t size     = 0;
     uint32_t numBytes = 0;
-    bool waitResult = false;
+    bool waitResult   = false;
     telux::common::Status status;
     std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer;
 
@@ -335,14 +328,14 @@ void InCallProxyMic::play() {
 
         size = streamBuffer->getMinSize();
         if (!size) {
-            size =  streamBuffer->getMaxSize();
+            size = streamBuffer->getMaxSize();
         }
 
         streamBuffer->setDataSize(size);
     }
 
-    auto writeCb = std::bind(&InCallProxyMic::writeComplete, this,
-        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    auto writeCb = std::bind(&InCallProxyMic::writeComplete, this, std::placeholders::_1,
+        std::placeholders::_2, std::placeholders::_3);
 
     std::cout << "playback started" << std::endl;
 
@@ -370,8 +363,7 @@ void InCallProxyMic::play() {
         }
 
         waitResult = false;
-        waitResult = cv_.wait_for(lock,
-            std::chrono::seconds(TIME_10_SECONDS),
+        waitResult = cv_.wait_for(lock, std::chrono::seconds(TIME_10_SECONDS),
             [=] { return (!bufferPool_.empty() || errorOccurred_); });
 
         if (!waitResult) {
@@ -409,7 +401,7 @@ int main(int argc, char **argv) {
 
     try {
         app = std::make_shared<InCallProxyMic>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "can't allocate InCallProxyMic" << std::endl;
         return -ENOMEM;
     }

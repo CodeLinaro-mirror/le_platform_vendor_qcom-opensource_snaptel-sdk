@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_SteeringWheelAngleValue_H_
-#define	_SteeringWheelAngleValue_H_
-
+#ifndef _SteeringWheelAngleValue_H_
+#define _SteeringWheelAngleValue_H_
 
 #include <asn_application.h>
 
@@ -20,14 +19,14 @@ extern "C" {
 
 /* Dependencies */
 typedef enum SteeringWheelAngleValue {
-	SteeringWheelAngleValue_straight	= 0,
-	SteeringWheelAngleValue_onePointFiveDegreesToRight	= -1,
-	SteeringWheelAngleValue_onePointFiveDegreesToLeft	= 1,
-	SteeringWheelAngleValue_unavailable	= 512
+    SteeringWheelAngleValue_straight                   = 0,
+    SteeringWheelAngleValue_onePointFiveDegreesToRight = -1,
+    SteeringWheelAngleValue_onePointFiveDegreesToLeft  = 1,
+    SteeringWheelAngleValue_unavailable                = 512
 } e_SteeringWheelAngleValue;
 
 /* SteeringWheelAngleValue */
-typedef long	 SteeringWheelAngleValue_t;
+typedef long SteeringWheelAngleValue_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_SteeringWheelAngleValue;
@@ -45,5 +44,5 @@ per_type_encoder_f SteeringWheelAngleValue_encode_uper;
 }
 #endif
 
-#endif	/* _SteeringWheelAngleValue_H_ */
+#endif /* _SteeringWheelAngleValue_H_ */
 #include <asn_internal.h>

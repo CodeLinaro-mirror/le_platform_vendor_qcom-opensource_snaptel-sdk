@@ -26,22 +26,24 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 #ifndef MYSUBSCRIPTIONLISTENER_HPP
 #define MYSUBSCRIPTIONLISTENER_HPP
 
 #include <telux/tel/SubscriptionListener.hpp>
 
 class MySubscriptionListener : public telux::tel::ISubscriptionListener {
-public:
-   void onServiceStatusChange(telux::common::ServiceStatus status) override;
-   void onSubscriptionInfoChanged(std::shared_ptr<telux::tel::ISubscription> subscription) override;
-   void onNumberOfSubscriptionsChanged(int count) override;
+ public:
+    void onServiceStatusChange(telux::common::ServiceStatus status) override;
+    void onSubscriptionInfoChanged(
+        std::shared_ptr<telux::tel::ISubscription> subscription) override;
+    void onNumberOfSubscriptionsChanged(int count) override;
 };
 
 #endif

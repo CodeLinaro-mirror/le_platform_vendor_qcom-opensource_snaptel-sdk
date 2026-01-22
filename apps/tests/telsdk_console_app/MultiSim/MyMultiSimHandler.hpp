@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef MYMULTISIMHANDLER_HPP
 #define MYMULTISIMHANDLER_HPP
 
@@ -36,20 +42,22 @@
 #include <telux/tel/MultiSimDefines.hpp>
 
 class MyMultiSimCallback {
-public:
+ public:
     static void requestHighCapabilityResponse(int slotId, telux::common::ErrorCode error);
     static void setHighCapabilityResponse(telux::common::ErrorCode error);
     static void setActiveSlotResponse(telux::common::ErrorCode error);
-    static void requestsSlotsStatusResponse(std::map<SlotId, telux::tel::SlotStatus> slotStatus,
-                                           telux::common::ErrorCode error);
+    static void requestsSlotsStatusResponse(
+        std::map<SlotId, telux::tel::SlotStatus> slotStatus, telux::common::ErrorCode error);
+    static void configureLogicalSlotMappingResponse(telux::common::ErrorCode error);
 };
 
 class MyMultiSimHelper {
-public:
-   static std::string slotStateToString(telux::tel::SlotState slotState);
-   static std::string cardStateToString(telux::tel::CardState cardState);
-   static std::string cardErrorToString(telux::tel::CardError cardError);
+ public:
+    static std::string slotStateToString(telux::tel::SlotState slotState);
+    static std::string cardStateToString(telux::tel::CardState cardState);
+    static std::string cardErrorToString(telux::tel::CardError cardError);
+   static std::string portStateToString(telux::tel::PortState state);
+   static std::string mepModeToString(telux::tel::Mode mode);
 };
 
 #endif  // MYMULTISIMHANDLER_HPP
-

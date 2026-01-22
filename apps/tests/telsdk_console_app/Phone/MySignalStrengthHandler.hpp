@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef MYSIGNALSTRENGTHHANDLER_HPP
 #define MYSIGNALSTRENGTHHANDLER_HPP
 
@@ -38,11 +44,11 @@
 #include <telux/tel/SignalStrength.hpp>
 
 class MySignalStrengthCallback : public telux::tel::ISignalStrengthCallback {
-public:
-   MySignalStrengthCallback();
-   void signalStrengthResponse(std::shared_ptr<telux::tel::SignalStrength> signalStrength,
-                               telux::common::ErrorCode error) override;
-   std::string signalLevelToString(telux::tel::SignalStrengthLevel level);
+ public:
+    MySignalStrengthCallback();
+    void signalStrengthResponse(std::shared_ptr<telux::tel::SignalStrength> signalStrength,
+        telux::common::ErrorCode error) override;
+    std::string signalLevelToString(telux::tel::SignalStrengthLevel level);
 };
 
 #endif  // MYSIGNALSTRENGTHHANDLER_HPP

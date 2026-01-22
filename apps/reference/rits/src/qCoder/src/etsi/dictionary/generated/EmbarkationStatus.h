@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_EmbarkationStatus_H_
-#define	_EmbarkationStatus_H_
-
+#ifndef _EmbarkationStatus_H_
+#define _EmbarkationStatus_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* EmbarkationStatus */
-typedef BOOLEAN_t	 EmbarkationStatus_t;
+typedef BOOLEAN_t EmbarkationStatus_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_EmbarkationStatus;
@@ -37,5 +36,5 @@ per_type_encoder_f EmbarkationStatus_encode_uper;
 }
 #endif
 
-#endif	/* _EmbarkationStatus_H_ */
+#endif /* _EmbarkationStatus_H_ */
 #include <asn_internal.h>

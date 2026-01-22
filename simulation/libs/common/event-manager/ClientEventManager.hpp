@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef CLIENT_EVENT_MANAGER_HPP
@@ -11,18 +11,17 @@
 namespace telux {
 namespace common {
 
-class ClientEventManager :
-    public EventManager<::eventService::EventDispatcherService> {
+class ClientEventManager : public EventManager<::eventService::EventDispatcherService> {
 
-public:
+ public:
     static ClientEventManager &getInstance();
 
-private:
+ private:
     ClientEventManager();
     virtual ~ClientEventManager();
 };
 
-} // end of namespace common
-} // end of namespace telux
+}  // end of namespace common
+}  // end of namespace telux
 
-#endif //CLIENT_EVENT_MANAGER_HPP
+#endif  // CLIENT_EVENT_MANAGER_HPP

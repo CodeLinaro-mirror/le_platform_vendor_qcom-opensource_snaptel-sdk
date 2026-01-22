@@ -1,8 +1,7 @@
- /*
-  *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
-  *  SPDX-License-Identifier: BSD-3-Clause-Clear
-  */
-
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /*
  * @file       SDKListener.hpp
@@ -13,7 +12,6 @@
 #ifndef TELUX_COMMON_SDKLISTENER_HPP
 #define TELUX_COMMON_SDKLISTENER_HPP
 
-
 namespace telux {
 namespace common {
 
@@ -23,7 +21,7 @@ class ISDKListener {
     }
 };
 
-}
-}
+}  // namespace common
+}  // namespace telux
 
-#endif //TELUX_COMMON_SDKLISTENER_HPP
+#endif  // TELUX_COMMON_SDKLISTENER_HPP

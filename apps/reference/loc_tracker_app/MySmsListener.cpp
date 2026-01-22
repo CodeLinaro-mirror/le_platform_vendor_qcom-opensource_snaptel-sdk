@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <iostream>
 #include <memory>
 #include <chrono>
@@ -42,55 +48,57 @@ extern "C" {
 
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
-const std::string keyword = "location";
+const std::string keyword  = "location";
 const std::string keyword2 = "Location";
 
-const std::string GREEN = "\033[0;32m";
-const std::string RED = "\033[0;31m";
+const std::string GREEN    = "\033[0;32m";
+const std::string RED      = "\033[0;31m";
 const std::string BOLD_RED = "\033[1;31m";
-const std::string DONE = "\033[0m";  // No color
+const std::string DONE     = "\033[0m";  // No color
 
 void MySmsListener::onIncomingSms(int phoneId, std::shared_ptr<telux::tel::SmsMessage> smsMsg) {
-   PRINT_NOTIFICATION << std::endl
-                      << "Received SMS from " << smsMsg->getSender()
-                      << ", Message: " << smsMsg->getText() << std::endl;
-   std::string senderNumber = smsMsg->getSender();
+    PRINT_NOTIFICATION << std::endl
+                       << "Received SMS from " << smsMsg->getSender()
+                       << ", Message: " << smsMsg->getText() << std::endl;
+    std::string senderNumber = smsMsg->getSender();
 
-   std::string::size_type kwPos = smsMsg->toString().find(keyword);
-   std::string::size_type kwPos2 = smsMsg->toString().find(keyword2);
-   std::string::size_type kwToken = smsMsg->toString().find(std::to_string(token_));
-   if(kwPos != std::string::npos || kwPos2 != std::string::npos) {
-      if(kwToken != std::string::npos) {
-         std::cout << std::endl << "SMS Token matched" << std::endl;
-         std::cout << "Sending updated location to the sender " << std::endl;
-         myLocationListener_->setRequestReceived(true, senderNumber);
-         setSecureToken();
-      } else {
-         std::cout << std::endl
-                   << "SMS Token mismatch, Token to be sent is: " << token_ << std::endl;
-      }
-   }
+    std::string::size_type kwPos   = smsMsg->toString().find(keyword);
+    std::string::size_type kwPos2  = smsMsg->toString().find(keyword2);
+    std::string::size_type kwToken = smsMsg->toString().find(std::to_string(token_));
+    if (kwPos != std::string::npos || kwPos2 != std::string::npos) {
+        if (kwToken != std::string::npos) {
+            std::cout << std::endl << "SMS Token matched" << std::endl;
+            std::cout << "Sending updated location to the sender " << std::endl;
+            myLocationListener_->setRequestReceived(true, senderNumber);
+            setSecureToken();
+        } else {
+            std::cout << std::endl
+                      << "SMS Token mismatch, Token to be sent is: " << token_ << std::endl;
+        }
+    }
 }
 
 MySmsListener::MySmsListener() {
-   setSecureToken();
+    setSecureToken();
 }
 
 void MySmsListener::setLocationListener(std::shared_ptr<MyLocationListener> myLocationListener) {
-   myLocationListener_ = myLocationListener;
+    myLocationListener_ = myLocationListener;
 }
 
 void MySmsListener::setSecureToken() {
-   srand((unsigned)time(0));
-   token_ = (rand() % 9000) + 1000;  // Generate 4 Digit random number
-   std::cout << std::endl << "New SMS Token: " << GREEN << token_ << DONE << std::endl << std::endl;
+    srand((unsigned)time(0));
+    token_ = (rand() % 9000) + 1000;  // Generate 4 Digit random number
+    std::cout << std::endl
+              << "New SMS Token: " << GREEN << token_ << DONE << std::endl
+              << std::endl;
 }
 
 void SmsCallback::commandResponse(telux::common::ErrorCode error) {
-   if(error == telux::common::ErrorCode::SUCCESS) {
-      std::cout << "onSmsSent successfully" << std::endl;
-   } else {
-      std::cout << "onSmsSent failed" << std::endl;
-   }
-   std::cout << "onSmsSent error = " << static_cast<int>(error) << std::endl;
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        std::cout << "onSmsSent successfully" << std::endl;
+    } else {
+        std::cout << "onSmsSent failed" << std::endl;
+    }
+    std::cout << "onSmsSent error = " << static_cast<int>(error) << std::endl;
 }

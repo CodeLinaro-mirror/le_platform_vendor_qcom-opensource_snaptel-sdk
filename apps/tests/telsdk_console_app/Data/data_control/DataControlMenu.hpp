@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef DATACONTROLMENU_HPP
@@ -40,4 +40,4 @@ class DataControlMenu : public ConsoleApp,
     std::shared_ptr<telux::data::IDataControlManager> dataControlManager_;
 };
 
-#endif //DATACONTROLMENU_HPP
+#endif  // DATACONTROLMENU_HPP

@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_LanePosition_H_
-#define	_LanePosition_H_
-
+#ifndef _LanePosition_H_
+#define _LanePosition_H_
 
 #include <asn_application.h>
 
@@ -20,14 +19,14 @@ extern "C" {
 
 /* Dependencies */
 typedef enum LanePosition {
-	LanePosition_offTheRoad	= -1,
-	LanePosition_hardShoulder	= 0,
-	LanePosition_outermostDrivingLane	= 1,
-	LanePosition_secondLaneFromOutside	= 2
+    LanePosition_offTheRoad            = -1,
+    LanePosition_hardShoulder          = 0,
+    LanePosition_outermostDrivingLane  = 1,
+    LanePosition_secondLaneFromOutside = 2
 } e_LanePosition;
 
 /* LanePosition */
-typedef long	 LanePosition_t;
+typedef long LanePosition_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_LanePosition;
@@ -45,5 +44,5 @@ per_type_encoder_f LanePosition_encode_uper;
 }
 #endif
 
-#endif	/* _LanePosition_H_ */
+#endif /* _LanePosition_H_ */
 #include <asn_internal.h>

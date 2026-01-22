@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_SafetyCarContainer_H_
-#define	_SafetyCarContainer_H_
-
+#ifndef _SafetyCarContainer_H_
+#define _SafetyCarContainer_H_
 
 #include <asn_application.h>
 
@@ -26,13 +25,13 @@ struct CauseCode;
 
 /* SafetyCarContainer */
 typedef struct SafetyCarContainer {
-	LightBarSirenInUse_t	 lightBarSirenInUse;
-	struct CauseCode	*incidentIndication	/* OPTIONAL */;
-	TrafficRule_t	*trafficRule	/* OPTIONAL */;
-	SpeedLimit_t	*speedLimit	/* OPTIONAL */;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+    LightBarSirenInUse_t lightBarSirenInUse;
+    struct CauseCode *incidentIndication /* OPTIONAL */;
+    TrafficRule_t *trafficRule /* OPTIONAL */;
+    SpeedLimit_t *speedLimit /* OPTIONAL */;
+
+    /* Context for parsing across buffer boundaries */
+    asn_struct_ctx_t _asn_ctx;
 } SafetyCarContainer_t;
 
 /* Implementation */
@@ -45,5 +44,5 @@ extern asn_TYPE_descriptor_t asn_DEF_SafetyCarContainer;
 /* Referred external types */
 #include "CauseCode.h"
 
-#endif	/* _SafetyCarContainer_H_ */
+#endif /* _SafetyCarContainer_H_ */
 #include <asn_internal.h>

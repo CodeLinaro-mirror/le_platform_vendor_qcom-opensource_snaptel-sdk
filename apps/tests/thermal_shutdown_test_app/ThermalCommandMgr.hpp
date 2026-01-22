@@ -26,15 +26,17 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 #ifndef THERMALCOMMANDMGR_HPP
 #define THERMALCOMMANDMGR_HPP
 
-#include<memory>
+#include <memory>
 #include <condition_variable>
 #include <mutex>
 
@@ -50,31 +52,30 @@
 #define APP_NAME "\033[1;32mThermal_shutdown_test_app\033[0m"
 
 class ThermalCommandMgr : public std::enable_shared_from_this<ThermalCommandMgr> {
-public:
-   ThermalCommandMgr();
-   ~ThermalCommandMgr();
+ public:
+    ThermalCommandMgr();
+    ~ThermalCommandMgr();
 
-   int init();
-   void registerForUpdates();
-   void deregisterForUpdates();
-   void sendAutoShutdownModeCommand(telux::therm::AutoShutdownMode state);
-   void sendRecurringDisableCommand();
-   std::future<bool> getAutoShutdownModeCommand();
-   void setAutoDisableFlag(bool disable);
-   bool getAutoDisableFlag();
-   void waitForAsyncTaskToComplete();
+    int init();
+    void registerForUpdates();
+    void deregisterForUpdates();
+    void sendAutoShutdownModeCommand(telux::therm::AutoShutdownMode state);
+    void sendRecurringDisableCommand();
+    std::future<bool> getAutoShutdownModeCommand();
+    void setAutoDisableFlag(bool disable);
+    bool getAutoDisableFlag();
+    void waitForAsyncTaskToComplete();
 
-   std::mutex mgrMtx_;
-   std::condition_variable mgrCv_;
-   bool taskCompleted_ = false;
-   std::shared_ptr<ThermalCommandCallback> cmdRspCb_ = nullptr;
+    std::mutex mgrMtx_;
+    std::condition_variable mgrCv_;
+    bool taskCompleted_                               = false;
+    std::shared_ptr<ThermalCommandCallback> cmdRspCb_ = nullptr;
 
-   std::shared_ptr<ThermalListener> myThermListener_;
-private:
+    std::shared_ptr<ThermalListener> myThermListener_;
 
-   std::atomic<bool> autoDisable_;
-   std::shared_ptr<telux::therm::IThermalShutdownManager> thermShutdownMgr_;
-
+ private:
+    std::atomic<bool> autoDisable_;
+    std::shared_ptr<telux::therm::IThermalShutdownManager> thermShutdownMgr_;
 };
 
 #endif  // THERMALCOMMANDMGR_HPP

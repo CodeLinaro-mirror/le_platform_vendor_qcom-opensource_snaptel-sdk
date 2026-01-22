@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_RefExt_H_
-#define	_RefExt_H_
-
+#ifndef _RefExt_H_
+#define _RefExt_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* RefExt */
-typedef long	 RefExt_t;
+typedef long RefExt_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_RefExt;
@@ -37,5 +36,5 @@ per_type_encoder_f RefExt_encode_uper;
 }
 #endif
 
-#endif	/* _RefExt_H_ */
+#endif /* _RefExt_H_ */
 #include <asn_internal.h>

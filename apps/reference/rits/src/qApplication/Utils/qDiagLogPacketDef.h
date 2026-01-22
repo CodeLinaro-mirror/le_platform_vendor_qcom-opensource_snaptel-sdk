@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -184,7 +184,8 @@ typedef struct {
     /// @QC_synthetic_Unit %
     /// @QC_synthetic_internal
     /// @QC_synthetic_format %.2f
-    /// @qc_synthetic_formula double channel_quality_indication, (."channel_quality_indication"/100.0)
+    /// @qc_synthetic_formula double channel_quality_indication,
+    /// (."channel_quality_indication"/100.0)
     /// @QC_internal
     /// @QC_hidden
     uint32_t channel_quality_indication;

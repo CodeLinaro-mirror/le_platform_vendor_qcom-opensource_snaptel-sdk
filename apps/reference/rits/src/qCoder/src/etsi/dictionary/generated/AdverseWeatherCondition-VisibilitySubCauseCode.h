@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_AdverseWeatherCondition_VisibilitySubCauseCode_H_
-#define	_AdverseWeatherCondition_VisibilitySubCauseCode_H_
-
+#ifndef _AdverseWeatherCondition_VisibilitySubCauseCode_H_
+#define _AdverseWeatherCondition_VisibilitySubCauseCode_H_
 
 #include <asn_application.h>
 
@@ -20,19 +19,19 @@ extern "C" {
 
 /* Dependencies */
 typedef enum AdverseWeatherCondition_VisibilitySubCauseCode {
-	AdverseWeatherCondition_VisibilitySubCauseCode_unavailable	= 0,
-	AdverseWeatherCondition_VisibilitySubCauseCode_fog	= 1,
-	AdverseWeatherCondition_VisibilitySubCauseCode_smoke	= 2,
-	AdverseWeatherCondition_VisibilitySubCauseCode_heavySnowfall	= 3,
-	AdverseWeatherCondition_VisibilitySubCauseCode_heavyRain	= 4,
-	AdverseWeatherCondition_VisibilitySubCauseCode_heavyHail	= 5,
-	AdverseWeatherCondition_VisibilitySubCauseCode_lowSunGlare	= 6,
-	AdverseWeatherCondition_VisibilitySubCauseCode_sandstorms	= 7,
-	AdverseWeatherCondition_VisibilitySubCauseCode_swarmsOfInsects	= 8
+    AdverseWeatherCondition_VisibilitySubCauseCode_unavailable     = 0,
+    AdverseWeatherCondition_VisibilitySubCauseCode_fog             = 1,
+    AdverseWeatherCondition_VisibilitySubCauseCode_smoke           = 2,
+    AdverseWeatherCondition_VisibilitySubCauseCode_heavySnowfall   = 3,
+    AdverseWeatherCondition_VisibilitySubCauseCode_heavyRain       = 4,
+    AdverseWeatherCondition_VisibilitySubCauseCode_heavyHail       = 5,
+    AdverseWeatherCondition_VisibilitySubCauseCode_lowSunGlare     = 6,
+    AdverseWeatherCondition_VisibilitySubCauseCode_sandstorms      = 7,
+    AdverseWeatherCondition_VisibilitySubCauseCode_swarmsOfInsects = 8
 } e_AdverseWeatherCondition_VisibilitySubCauseCode;
 
 /* AdverseWeatherCondition-VisibilitySubCauseCode */
-typedef long	 AdverseWeatherCondition_VisibilitySubCauseCode_t;
+typedef long AdverseWeatherCondition_VisibilitySubCauseCode_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_AdverseWeatherCondition_VisibilitySubCauseCode;
@@ -50,5 +49,5 @@ per_type_encoder_f AdverseWeatherCondition_VisibilitySubCauseCode_encode_uper;
 }
 #endif
 
-#endif	/* _AdverseWeatherCondition_VisibilitySubCauseCode_H_ */
+#endif /* _AdverseWeatherCondition_VisibilitySubCauseCode_H_ */
 #include <asn_internal.h>

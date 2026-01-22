@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "DataSettingsManagerStub.hpp"
@@ -19,11 +19,10 @@ using grpc::Status;
 namespace telux {
 namespace data {
 
-DataSettingsManagerStub::DataSettingsManagerStub(
-    OperationType oprType)
-    : oprType_(oprType){
+DataSettingsManagerStub::DataSettingsManagerStub(OperationType oprType)
+   : oprType_(oprType) {
     LOG(DEBUG, __FUNCTION__);
-    taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
+    taskQ_           = std::make_shared<AsyncTaskQueue<void>>();
     subSystemStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
 }
 
@@ -37,10 +36,8 @@ DataSettingsManagerStub::~DataSettingsManagerStub() {
 telux::common::Status DataSettingsManagerStub::init(telux::common::InitResponseCb callback) {
     LOG(INFO, __FUNCTION__);
     initCb_ = callback;
-    auto f = std::async(std::launch::async,
-            [this, callback]() {
-                this->initSync(callback);
-            }).share();
+    auto f
+        = std::async(std::launch::async, [this, callback]() { this->initSync(callback); }).share();
     taskQ_->add(f);
 
     return telux::common::Status::SUCCESS;
@@ -56,10 +53,9 @@ void DataSettingsManagerStub::initSync(telux::common::InitResponseCb callback) {
     ClientContext context;
 
     request.set_operation_type(::dataStub::OperationType(oprType_));
-    grpc::Status reqStatus = stub_->InitService(&context, request, &response);
-    telux::common::ServiceStatus cbStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
-    int cbDelay = DEFAULT_DELAY;
+    grpc::Status reqStatus                = stub_->InitService(&context, request, &response);
+    telux::common::ServiceStatus cbStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    int cbDelay                           = DEFAULT_DELAY;
 
     do {
         if (!reqStatus.ok()) {
@@ -67,9 +63,8 @@ void DataSettingsManagerStub::initSync(telux::common::InitResponseCb callback) {
             break;
         }
 
-        cbStatus =
-            static_cast<telux::common::ServiceStatus>(response.service_status());
-        cbDelay = static_cast<int>(response.delay());
+        cbStatus = static_cast<telux::common::ServiceStatus>(response.service_status());
+        cbDelay  = static_cast<int>(response.delay());
 
         this->onServiceStatusChange(cbStatus);
         LOG(DEBUG, __FUNCTION__, " ServiceStatus: ", static_cast<int>(cbStatus));
@@ -79,8 +74,7 @@ void DataSettingsManagerStub::initSync(telux::common::InitResponseCb callback) {
 
     if (callback && (cbDelay != SKIP_CALLBACK)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay,
-            " cbStatus::", static_cast<int>(cbStatus));
+        LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", static_cast<int>(cbStatus));
         invokeInitCallback(cbStatus);
     }
 }
@@ -103,15 +97,12 @@ void DataSettingsManagerStub::invokeInitCallback(telux::common::ServiceStatus st
     }
 }
 
-void DataSettingsManagerStub::invokeCallback(telux::common::ResponseCallback callback,
-    telux::common::ErrorCode error, int cbDelay ) {
+void DataSettingsManagerStub::invokeCallback(
+    telux::common::ResponseCallback callback, telux::common::ErrorCode error, int cbDelay) {
     LOG(DEBUG, __FUNCTION__);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-    auto f = std::async(std::launch::async,
-        [this, error , callback]() {
-            callback(error);
-        }).share();
+    auto f = std::async(std::launch::async, [this, error, callback]() { callback(error); }).share();
     taskQ_->add(f);
 }
 
@@ -125,7 +116,7 @@ telux::common::Status DataSettingsManagerStub::requestDdsSwitch(
     }
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
     ::dataStub::SetDdsSwitchRequest request;
@@ -137,9 +128,9 @@ telux::common::Status DataSettingsManagerStub::requestDdsSwitch(
     request.set_operation_type(::dataStub::OperationType(oprType_));
     grpc::Status reqStatus = stub_->SetDdsSwitch(&context, request, &response);
 
-    error = static_cast<telux::common::ErrorCode>(response.error());
+    error  = static_cast<telux::common::ErrorCode>(response.error());
     status = static_cast<telux::common::Status>(response.status());
-    delay = static_cast<int>(response.delay());
+    delay  = static_cast<int>(response.delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -148,10 +139,9 @@ telux::common::Status DataSettingsManagerStub::requestDdsSwitch(
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCallback(callback, error, delay);
-                }).share();
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
 
@@ -172,7 +162,7 @@ telux::common::Status DataSettingsManagerStub::requestCurrentDds(
     }
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
     ::dataStub::CurrentDdsSwitchRequest request;
@@ -182,13 +172,13 @@ telux::common::Status DataSettingsManagerStub::requestCurrentDds(
     request.set_operation_type(::dataStub::OperationType(oprType_));
     grpc::Status reqStatus = stub_->RequestCurrentDdsSwitch(&context, request, &response);
 
-    error = static_cast<telux::common::ErrorCode>(response.reply().error());
+    error  = static_cast<telux::common::ErrorCode>(response.reply().error());
     status = static_cast<telux::common::Status>(response.reply().status());
-    delay = static_cast<int>(response.reply().delay());
+    delay  = static_cast<int>(response.reply().delay());
 
     DdsInfo ddsResponse;
     ddsResponse.slotId = static_cast<SlotId>(response.slot_id());
-    ddsResponse.type = static_cast<DdsType>(response.current_switch());
+    ddsResponse.type   = static_cast<DdsType>(response.current_switch());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -198,10 +188,9 @@ telux::common::Status DataSettingsManagerStub::requestCurrentDds(
 
         if (callback && (delay != SKIP_CALLBACK)) {
             std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-            auto f = std::async(std::launch::async,
-                [this, error, ddsResponse, callback]() {
-                   callback(ddsResponse, error);
-                }).share();
+            auto f = std::async(std::launch::async, [this, error, ddsResponse, callback]() {
+                callback(ddsResponse, error);
+            }).share();
             taskQ_->add(f);
         }
     }
@@ -210,12 +199,11 @@ telux::common::Status DataSettingsManagerStub::requestCurrentDds(
 }
 
 telux::common::Status DataSettingsManagerStub::restoreFactorySettings(
-    OperationType operationType, telux::common::ResponseCallback callback,
-    bool isRebootNeeded) {
+    OperationType operationType, telux::common::ResponseCallback callback, bool isRebootNeeded) {
 
     LOG(INFO, __FUNCTION__);
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        LOG(ERROR,__FUNCTION__, " Data settings manager not ready");
+        LOG(ERROR, __FUNCTION__, " Data settings manager not ready");
         return telux::common::Status::NOTREADY;
     }
 
@@ -223,13 +211,12 @@ telux::common::Status DataSettingsManagerStub::restoreFactorySettings(
     ::dataStub::DefaultReply response;
     ClientContext context;
 
-
-
     grpc::Status reqStatus = stub_->RestoreFactorySettings(&context, request, &response);
 
     if (!reqStatus.ok()) {
-        LOG(ERROR, __FUNCTION__, " RestoreFactorySettings gRPC request failed. Code: ",
-            reqStatus.error_code(), ", message: ", reqStatus.error_message());
+        LOG(ERROR, __FUNCTION__,
+            " RestoreFactorySettings gRPC request failed. Code: ", reqStatus.error_code(),
+            ", message: ", reqStatus.error_message());
         if (callback) {
             callback(telux::common::ErrorCode::INTERNAL_ERROR);
         }
@@ -237,18 +224,18 @@ telux::common::Status DataSettingsManagerStub::restoreFactorySettings(
     }
 
     telux::common::ErrorCode serverError = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status serverStatus = static_cast<telux::common::Status>(response.status());
-    int delay = static_cast<int>(response.delay());
+    telux::common::Status serverStatus   = static_cast<telux::common::Status>(response.status());
+    int delay                            = static_cast<int>(response.delay());
 
     if (callback) {
-        auto f = std::async(std::launch::async,
-            [this, serverError, callback, delay]() {
-                if (delay != SKIP_CALLBACK) {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-                }
-                LOG(DEBUG, __FUNCTION__, " Invoking callback with error: ", static_cast<int>(serverError));
-                callback(serverError);
-            }).share();
+        auto f = std::async(std::launch::async, [this, serverError, callback, delay]() {
+            if (delay != SKIP_CALLBACK) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+            }
+            LOG(DEBUG, __FUNCTION__,
+                " Invoking callback with error: ", static_cast<int>(serverError));
+            callback(serverError);
+        }).share();
         taskQ_->add(f);
     }
 
@@ -265,24 +252,22 @@ telux::common::Status DataSettingsManagerStub::setBackhaulPreference(
     }
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
     ::dataStub::setBackhaulPreferenceRequest request;
     ::dataStub::DefaultReply response;
     ClientContext context;
 
-    for(size_t i=0; i<backhaulPref.size(); ++i) {
-        request.add_backhaul_pref(
-            static_cast<::dataStub::BackhaulPreference>(
-            backhaulPref[i]));
+    for (size_t i = 0; i < backhaulPref.size(); ++i) {
+        request.add_backhaul_pref(static_cast<::dataStub::BackhaulPreference>(backhaulPref[i]));
     }
     request.set_operation_type(::dataStub::OperationType(oprType_));
     grpc::Status reqStatus = stub_->setBackhaulPreference(&context, request, &response);
 
-    error = static_cast<telux::common::ErrorCode>(response.error());
+    error  = static_cast<telux::common::ErrorCode>(response.error());
     status = static_cast<telux::common::Status>(response.status());
-    delay = static_cast<int>(response.delay());
+    delay  = static_cast<int>(response.delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -291,10 +276,9 @@ telux::common::Status DataSettingsManagerStub::setBackhaulPreference(
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCallback(callback, error, delay);
-                }).share();
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     }
@@ -312,7 +296,7 @@ telux::common::Status DataSettingsManagerStub::requestBackhaulPreference(
     }
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
     ::dataStub::RequestBackhaulPreference request;
@@ -322,12 +306,12 @@ telux::common::Status DataSettingsManagerStub::requestBackhaulPreference(
     request.set_operation_type(::dataStub::OperationType(oprType_));
     grpc::Status reqStatus = stub_->requestBackhaulPreference(&context, request, &response);
 
-    error = static_cast<telux::common::ErrorCode>(response.reply().error());
+    error  = static_cast<telux::common::ErrorCode>(response.reply().error());
     status = static_cast<telux::common::Status>(response.reply().status());
-    delay = static_cast<int>(response.reply().delay());
+    delay  = static_cast<int>(response.reply().delay());
 
     std::vector<BackhaulType> backhaulPref;
-    for (auto& pref: response.backhaul_pref()) {
+    for (auto &pref : response.backhaul_pref()) {
         backhaulPref.emplace_back(static_cast<BackhaulType>(pref));
     }
 
@@ -339,10 +323,9 @@ telux::common::Status DataSettingsManagerStub::requestBackhaulPreference(
 
         if (callback && (delay != SKIP_CALLBACK)) {
             std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-            auto f = std::async(std::launch::async,
-                [this, error, backhaulPref, callback]() {
-                   callback(backhaulPref, error);
-                }).share();
+            auto f = std::async(std::launch::async, [this, error, backhaulPref, callback]() {
+                callback(backhaulPref, error);
+            }).share();
             taskQ_->add(f);
         }
     }
@@ -360,7 +343,7 @@ telux::common::Status DataSettingsManagerStub::setBandInterferenceConfig(bool en
     }
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
     ::dataStub::BandInterferenceConfig request;
@@ -368,7 +351,7 @@ telux::common::Status DataSettingsManagerStub::setBandInterferenceConfig(bool en
     ClientContext context;
 
     request.set_enable(enable);
-    if(enable) {
+    if (enable) {
         request.set_priority(static_cast<int>(config->priority));
         request.set_wlan_wait_time_in_sec(config->wlanWaitTimeInSec);
         request.set_n79_wait_time_in_sec(config->n79WaitTimeInSec);
@@ -377,9 +360,9 @@ telux::common::Status DataSettingsManagerStub::setBandInterferenceConfig(bool en
 
     grpc::Status reqStatus = stub_->setBandInterferenceConfig(&context, request, &response);
 
-    error = static_cast<telux::common::ErrorCode>(response.error());
+    error  = static_cast<telux::common::ErrorCode>(response.error());
     status = static_cast<telux::common::Status>(response.status());
-    delay = static_cast<int>(response.delay());
+    delay  = static_cast<int>(response.delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -388,10 +371,9 @@ telux::common::Status DataSettingsManagerStub::setBandInterferenceConfig(bool en
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCallback(callback, error, delay);
-                }).share();
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     }
@@ -409,7 +391,7 @@ telux::common::Status DataSettingsManagerStub::requestBandInterferenceConfig(
     }
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
     ::dataStub::BandInterferenceRequest request;
@@ -417,20 +399,18 @@ telux::common::Status DataSettingsManagerStub::requestBandInterferenceConfig(
     ClientContext context;
 
     request.set_operation_type(::dataStub::OperationType(oprType_));
-    grpc::Status reqStatus =
-        stub_->requestBandInterferenceConfig(&context, request, &response);
+    grpc::Status reqStatus = stub_->requestBandInterferenceConfig(&context, request, &response);
 
-    error = static_cast<telux::common::ErrorCode>(response.reply().error());
+    error  = static_cast<telux::common::ErrorCode>(response.reply().error());
     status = static_cast<telux::common::Status>(response.reply().status());
-    delay = static_cast<int>(response.reply().delay());
+    delay  = static_cast<int>(response.reply().delay());
 
-
-    bool enabled = response.config().enable();
+    bool enabled                                   = response.config().enable();
     std::shared_ptr<BandInterferenceConfig> config = nullptr;
     if (enabled) {
-        config = std::make_shared<BandInterferenceConfig>();
-        config->priority = static_cast<BandPriority>(response.config().priority());
-        config->n79WaitTimeInSec = response.config().wlan_wait_time_in_sec();
+        config                    = std::make_shared<BandInterferenceConfig>();
+        config->priority          = static_cast<BandPriority>(response.config().priority());
+        config->n79WaitTimeInSec  = response.config().wlan_wait_time_in_sec();
         config->wlanWaitTimeInSec = response.config().n79_wait_time_in_sec();
     }
 
@@ -442,10 +422,9 @@ telux::common::Status DataSettingsManagerStub::requestBandInterferenceConfig(
 
         if (callback && (delay != SKIP_CALLBACK)) {
             std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-            auto f = std::async(std::launch::async,
-                [this, error, enabled, config, callback]() {
-                   callback(enabled, config, error);
-                }).share();
+            auto f = std::async(std::launch::async, [this, error, enabled, config, callback]() {
+                callback(enabled, config, error);
+            }).share();
             taskQ_->add(f);
         }
     }
@@ -453,8 +432,8 @@ telux::common::Status DataSettingsManagerStub::requestBandInterferenceConfig(
     return status;
 }
 
-telux::common::Status DataSettingsManagerStub::setWwanConnectivityConfig(SlotId slotId,
-    bool allow, telux::common::ResponseCallback callback) {
+telux::common::Status DataSettingsManagerStub::setWwanConnectivityConfig(
+    SlotId slotId, bool allow, telux::common::ResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__);
 
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
@@ -463,7 +442,7 @@ telux::common::Status DataSettingsManagerStub::setWwanConnectivityConfig(SlotId 
     }
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
     ::dataStub::SetWwanConnectivityConfigRequest request;
@@ -475,9 +454,9 @@ telux::common::Status DataSettingsManagerStub::setWwanConnectivityConfig(SlotId 
     request.set_operation_type(::dataStub::OperationType(oprType_));
     grpc::Status reqStatus = stub_->SetWwanConnectivityConfig(&context, request, &response);
 
-    error = static_cast<telux::common::ErrorCode>(response.error());
+    error  = static_cast<telux::common::ErrorCode>(response.error());
     status = static_cast<telux::common::Status>(response.status());
-    delay = static_cast<int>(response.delay());
+    delay  = static_cast<int>(response.delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -486,10 +465,9 @@ telux::common::Status DataSettingsManagerStub::setWwanConnectivityConfig(SlotId 
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCallback(callback, error, delay);
-                }).share();
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     }
@@ -501,8 +479,8 @@ telux::common::Status DataSettingsManagerStub::setWwanConnectivityConfig(SlotId 
     return status;
 }
 
-telux::common::Status DataSettingsManagerStub::requestWwanConnectivityConfig(SlotId slotId,
-    requestWwanConnectivityConfigResponseCb callback) {
+telux::common::Status DataSettingsManagerStub::requestWwanConnectivityConfig(
+    SlotId slotId, requestWwanConnectivityConfigResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
 
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
@@ -511,7 +489,7 @@ telux::common::Status DataSettingsManagerStub::requestWwanConnectivityConfig(Slo
     }
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
     ::dataStub::WwanConnectivityConfigRequest request;
@@ -522,9 +500,9 @@ telux::common::Status DataSettingsManagerStub::requestWwanConnectivityConfig(Slo
     request.set_operation_type(::dataStub::OperationType(oprType_));
     grpc::Status reqStatus = stub_->RequestWwanConnectivityConfig(&context, request, &response);
 
-    error = static_cast<telux::common::ErrorCode>(response.reply().error());
+    error  = static_cast<telux::common::ErrorCode>(response.reply().error());
     status = static_cast<telux::common::Status>(response.reply().status());
-    delay = static_cast<int>(response.reply().delay());
+    delay  = static_cast<int>(response.reply().delay());
 
     bool isallowed = response.is_wwan_connectivity_allowed();
 
@@ -536,10 +514,9 @@ telux::common::Status DataSettingsManagerStub::requestWwanConnectivityConfig(Slo
 
         if (callback && (delay != SKIP_CALLBACK)) {
             std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-            auto f = std::async(std::launch::async,
-                [this, error, slotId, isallowed, callback]() {
-                   callback(slotId, isallowed, error);
-                }).share();
+            auto f = std::async(std::launch::async, [this, error, slotId, isallowed, callback]() {
+                callback(slotId, isallowed, error);
+            }).share();
             taskQ_->add(f);
         }
     }
@@ -549,14 +526,14 @@ telux::common::Status DataSettingsManagerStub::requestWwanConnectivityConfig(Slo
 
 telux::common::Status DataSettingsManagerStub::switchBackHaul(BackhaulInfo source,
     BackhaulInfo dest, bool applyToAll, telux::common::ResponseCallback callback) {
-    LOG(DEBUG,__FUNCTION__);
+    LOG(DEBUG, __FUNCTION__);
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, " Data settings manager not ready");
         return telux::common::Status::NOTREADY;
     }
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
     ::dataStub::switchBackHaulRequest request;
@@ -569,9 +546,9 @@ telux::common::Status DataSettingsManagerStub::switchBackHaul(BackhaulInfo sourc
     request.set_operation_type(::dataStub::OperationType(oprType_));
     grpc::Status reqStatus = stub_->switchBackHaul(&context, request, &response);
 
-    error = static_cast<telux::common::ErrorCode>(response.error());
+    error  = static_cast<telux::common::ErrorCode>(response.error());
     status = static_cast<telux::common::Status>(response.status());
-    delay = static_cast<int>(response.delay());
+    delay  = static_cast<int>(response.delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -580,10 +557,9 @@ telux::common::Status DataSettingsManagerStub::switchBackHaul(BackhaulInfo sourc
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCallback(callback, error, delay);
-                }).share();
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     }
@@ -591,9 +567,9 @@ telux::common::Status DataSettingsManagerStub::switchBackHaul(BackhaulInfo sourc
     return status;
 }
 
-telux::common::ErrorCode DataSettingsManagerStub::getIpPassThroughConfig(const IpptParams
-        &ipptParms, IpptConfig &config) {
-    LOG(DEBUG,__FUNCTION__);
+telux::common::ErrorCode DataSettingsManagerStub::getIpPassThroughConfig(
+    const IpptParams &ipptParms, IpptConfig &config) {
+    LOG(DEBUG, __FUNCTION__);
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, " Data settings manager not ready");
         return telux::common::ErrorCode::INVALID_STATE;
@@ -607,7 +583,7 @@ telux::common::ErrorCode DataSettingsManagerStub::getIpPassThroughConfig(const I
     request.set_slot_id(ipptParms.slotId);
 
     grpc::Status reqStatus = stub_->getIpPassThroughConfig(&context, request, &response);
-    auto error = static_cast<telux::common::ErrorCode>(response.error());
+    auto error             = static_cast<telux::common::ErrorCode>(response.error());
 
     if (error == telux::common::ErrorCode::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -616,17 +592,17 @@ telux::common::ErrorCode DataSettingsManagerStub::getIpPassThroughConfig(const I
         }
 
         config.ipptOpr = DataUtilsStub::convertIpptOprToStruct(response.ippt_opr());
-        config.devConfig.nwInterface =
-            DataUtilsStub::convertInterfaceTypeToStruct(response.interface_type());
+        config.devConfig.nwInterface
+            = DataUtilsStub::convertInterfaceTypeToStruct(response.interface_type());
         config.devConfig.macAddr = response.mac_address();
     }
 
     return error;
 }
 
-telux::common::ErrorCode DataSettingsManagerStub::setIpPassThroughConfig(const IpptParams
-        &ipptParms, const IpptConfig &config) {
-    LOG(DEBUG,__FUNCTION__);
+telux::common::ErrorCode DataSettingsManagerStub::setIpPassThroughConfig(
+    const IpptParams &ipptParms, const IpptConfig &config) {
+    LOG(DEBUG, __FUNCTION__);
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, " Data settings manager not ready");
         return telux::common::ErrorCode::INVALID_STATE;
@@ -638,13 +614,13 @@ telux::common::ErrorCode DataSettingsManagerStub::setIpPassThroughConfig(const I
     request.set_profile_id(ipptParms.profileId);
     request.set_vlan_id(ipptParms.vlanId);
     request.set_slot_id(ipptParms.slotId);
-    request.set_interface_type(DataUtilsStub::convertInterfaceTypeToGrpc(
-                config.devConfig.nwInterface));
+    request.set_interface_type(
+        DataUtilsStub::convertInterfaceTypeToGrpc(config.devConfig.nwInterface));
     request.mutable_ippt_opr()->set_ippt_opr(DataUtilsStub::convertIpptOprToGrpc(config.ipptOpr));
     request.set_mac_address(config.devConfig.macAddr);
 
     grpc::Status reqStatus = stub_->setIpPassThroughConfig(&context, request, &response);
-    auto error = static_cast<telux::common::ErrorCode>(response.error());
+    auto error             = static_cast<telux::common::ErrorCode>(response.error());
 
     if (error == telux::common::ErrorCode::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -656,7 +632,7 @@ telux::common::ErrorCode DataSettingsManagerStub::setIpPassThroughConfig(const I
 }
 
 telux::common::ErrorCode DataSettingsManagerStub::getIpPassThroughNatConfig(bool &isNatEnabled) {
-    LOG(DEBUG,__FUNCTION__);
+    LOG(DEBUG, __FUNCTION__);
 
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, " Data settings manager not ready");
@@ -668,7 +644,7 @@ telux::common::ErrorCode DataSettingsManagerStub::getIpPassThroughNatConfig(bool
     ClientContext context;
 
     grpc::Status reqStatus = stub_->GetIpPassThroughNatConfig(&context, request, &response);
-    auto error = static_cast<telux::common::ErrorCode>(response.error());
+    auto error             = static_cast<telux::common::ErrorCode>(response.error());
 
     if (error == telux::common::ErrorCode::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -682,7 +658,7 @@ telux::common::ErrorCode DataSettingsManagerStub::getIpPassThroughNatConfig(bool
 }
 
 telux::common::ErrorCode DataSettingsManagerStub::setIpPassThroughNatConfig(bool enableNat) {
-    LOG(DEBUG,__FUNCTION__);
+    LOG(DEBUG, __FUNCTION__);
 
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, " Data settings manager not ready");
@@ -696,7 +672,7 @@ telux::common::ErrorCode DataSettingsManagerStub::setIpPassThroughNatConfig(bool
     request.set_enable_nat(enableNat);
 
     grpc::Status reqStatus = stub_->SetIpPassThroughNatConfig(&context, request, &response);
-    auto error = static_cast<telux::common::ErrorCode>(response.error());
+    auto error             = static_cast<telux::common::ErrorCode>(response.error());
 
     if (error == telux::common::ErrorCode::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -707,9 +683,9 @@ telux::common::ErrorCode DataSettingsManagerStub::setIpPassThroughNatConfig(bool
     return error;
 }
 
-telux::common::ErrorCode DataSettingsManagerStub::getIpConfig(const IpConfigParams &ipConfigParams,
-        IpConfig &ipConfig) {
-    LOG(DEBUG,__FUNCTION__);
+telux::common::ErrorCode DataSettingsManagerStub::getIpConfig(
+    const IpConfigParams &ipConfigParams, IpConfig &ipConfig) {
+    LOG(DEBUG, __FUNCTION__);
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, " Data settings manager not ready");
         return telux::common::ErrorCode::INVALID_STATE;
@@ -720,11 +696,11 @@ telux::common::ErrorCode DataSettingsManagerStub::getIpConfig(const IpConfigPara
     ClientContext context;
     request.set_interface_type(DataUtilsStub::convertInterfaceTypeToGrpc(ipConfigParams.ifType));
     request.mutable_ip_family_type()->set_ip_family_type(
-            DataUtilsStub::convertIpFamilyTypeToGrpc(ipConfigParams.ipFamilyType));
+        DataUtilsStub::convertIpFamilyTypeToGrpc(ipConfigParams.ipFamilyType));
     request.set_vlan_id(ipConfigParams.vlanId);
 
     grpc::Status reqStatus = stub_->getIpConfig(&context, request, &response);
-    auto error = static_cast<telux::common::ErrorCode>(response.error());
+    auto error             = static_cast<telux::common::ErrorCode>(response.error());
 
     if (error == telux::common::ErrorCode::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -739,9 +715,9 @@ telux::common::ErrorCode DataSettingsManagerStub::getIpConfig(const IpConfigPara
     return error;
 }
 
-telux::common::ErrorCode DataSettingsManagerStub::setIpConfig(const IpConfigParams &ipConfigParams,
-        const IpConfig &ipConfig) {
-    LOG(DEBUG,__FUNCTION__);
+telux::common::ErrorCode DataSettingsManagerStub::setIpConfig(
+    const IpConfigParams &ipConfigParams, const IpConfig &ipConfig) {
+    LOG(DEBUG, __FUNCTION__);
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, " Data settings manager not ready");
         return telux::common::ErrorCode::INVALID_STATE;
@@ -752,21 +728,20 @@ telux::common::ErrorCode DataSettingsManagerStub::setIpConfig(const IpConfigPara
     ClientContext context;
     request.set_interface_type(DataUtilsStub::convertInterfaceTypeToGrpc(ipConfigParams.ifType));
     request.set_vlan_id(ipConfigParams.vlanId);
-    request.mutable_ip_type()->set_ip_type(
-            DataUtilsStub::convertIpTypeToGrpc(ipConfig.ipType));
+    request.mutable_ip_type()->set_ip_type(DataUtilsStub::convertIpTypeToGrpc(ipConfig.ipType));
     request.mutable_ip_assign()->set_ip_assign(
-            DataUtilsStub::convertIpAssignToGrpc(ipConfig.ipOpr));
+        DataUtilsStub::convertIpAssignToGrpc(ipConfig.ipOpr));
     request.mutable_ip_family_type()->set_ip_family_type(
-            DataUtilsStub::convertIpFamilyTypeToGrpc(ipConfigParams.ipFamilyType));
-    if ((ipConfig.ipType == telux::data::IpAssignType::STATIC_IP) && (ipConfig.ipOpr
-                == telux::data::IpAssignOperation::DISABLE)) {
+        DataUtilsStub::convertIpFamilyTypeToGrpc(ipConfigParams.ipFamilyType));
+    if ((ipConfig.ipType == telux::data::IpAssignType::STATIC_IP)
+        && (ipConfig.ipOpr == telux::data::IpAssignOperation::DISABLE)) {
         request.mutable_ip_family_type()->set_ip_family_type(::dataStub::IpFamilyType_Type_IPV4);
     }
     auto *ipAddrInfo = request.mutable_ip_addr_info();
     DataUtilsStub::convertIpAddrInfoToGrpc(ipConfig.ipAddr, ipAddrInfo);
 
     grpc::Status reqStatus = stub_->setIpConfig(&context, request, &response);
-    auto error = static_cast<telux::common::ErrorCode>(response.error());
+    auto error             = static_cast<telux::common::ErrorCode>(response.error());
 
     if (error == telux::common::ErrorCode::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -788,10 +763,10 @@ telux::common::Status DataSettingsManagerStub::registerListener(
 
     std::lock_guard<std::mutex> listenerLock(mutex_);
     telux::common::Status status = telux::common::Status::SUCCESS;
-    auto spt = listener.lock();
+    auto spt                     = listener.lock();
     if (spt != nullptr) {
         bool existing = 0;
-        for (auto iter=listeners_.begin(); iter<listeners_.end();++iter) {
+        for (auto iter = listeners_.begin(); iter < listeners_.end(); ++iter) {
             if (spt == (*iter).lock()) {
                 existing = 1;
                 LOG(DEBUG, __FUNCTION__, "Register Listener : Existing");
@@ -815,11 +790,11 @@ telux::common::Status DataSettingsManagerStub::deregisterListener(
     std::lock_guard<std::mutex> listenerLock(mutex_);
     auto spt = listener.lock();
     if (spt != nullptr) {
-        for (auto iter=listeners_.begin(); iter<listeners_.end();++iter) {
+        for (auto iter = listeners_.begin(); iter < listeners_.end(); ++iter) {
             if (spt == (*iter).lock()) {
                 iter = listeners_.erase(iter);
                 LOG(DEBUG, __FUNCTION__, " In deRegister Listener : Removing");
-                retVal=telux::common::Status::SUCCESS;
+                retVal = telux::common::Status::SUCCESS;
                 break;
             }
         }
@@ -838,7 +813,7 @@ telux::common::Status DataSettingsManagerStub::setMacSecState(
     }
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
     ::dataStub::SetMacSecStateRequest request;
@@ -849,9 +824,9 @@ telux::common::Status DataSettingsManagerStub::setMacSecState(
     request.set_operation_type(::dataStub::OperationType(oprType_));
     grpc::Status reqStatus = stub_->SetMacSecState(&context, request, &response);
 
-    error = static_cast<telux::common::ErrorCode>(response.error());
+    error  = static_cast<telux::common::ErrorCode>(response.error());
     status = static_cast<telux::common::Status>(response.status());
-    delay = static_cast<int>(response.delay());
+    delay  = static_cast<int>(response.delay());
 
     if (status == telux::common::Status::SUCCESS) {
         if (!reqStatus.ok()) {
@@ -860,10 +835,9 @@ telux::common::Status DataSettingsManagerStub::setMacSecState(
         }
 
         if (callback && (delay != SKIP_CALLBACK)) {
-            auto f1 = std::async(std::launch::async,
-                [this, error, callback, delay]() {
-                    this->invokeCallback(callback, error, delay);
-                }).share();
+            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
+                this->invokeCallback(callback, error, delay);
+            }).share();
             taskQ_->add(f1);
         }
     }
@@ -881,7 +855,7 @@ telux::common::Status DataSettingsManagerStub::requestMacSecState(
     }
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
-    telux::common::Status status = telux::common::Status::SUCCESS;
+    telux::common::Status status   = telux::common::Status::SUCCESS;
     int delay;
 
     ::dataStub::MacSecStateRequest request;
@@ -891,9 +865,9 @@ telux::common::Status DataSettingsManagerStub::requestMacSecState(
     request.set_operation_type(::dataStub::OperationType(oprType_));
     grpc::Status reqStatus = stub_->RequestMacSecState(&context, request, &response);
 
-    error = static_cast<telux::common::ErrorCode>(response.reply().error());
+    error  = static_cast<telux::common::ErrorCode>(response.reply().error());
     status = static_cast<telux::common::Status>(response.reply().status());
-    delay = static_cast<int>(response.reply().delay());
+    delay  = static_cast<int>(response.reply().delay());
 
     bool isenabled = static_cast<SlotId>(response.enabled());
 
@@ -905,10 +879,9 @@ telux::common::Status DataSettingsManagerStub::requestMacSecState(
 
         if (callback && (delay != SKIP_CALLBACK)) {
             std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-            auto f = std::async(std::launch::async,
-                [this, error, isenabled, callback]() {
-                   callback(isenabled, error);
-                }).share();
+            auto f = std::async(std::launch::async, [this, error, isenabled, callback]() {
+                callback(isenabled, error);
+            }).share();
             taskQ_->add(f);
         }
     }
@@ -940,7 +913,7 @@ void DataSettingsManagerStub::onServiceStatusChange(telux::common::ServiceStatus
 
     std::vector<std::shared_ptr<IDataSettingsListener>> applisteners;
     this->getAvailableListeners(applisteners);
-    for (auto& listener : applisteners) {
+    for (auto &listener : applisteners) {
         listener->onServiceStatusChange(status);
     }
 }
@@ -951,7 +924,7 @@ void DataSettingsManagerStub::onWwanConnectivityConfigChange(
 
     std::vector<std::shared_ptr<IDataSettingsListener>> listeners;
     this->getAvailableListeners(listeners);
-    for(auto& listener : listeners) {
+    for (auto &listener : listeners) {
         listener->onWwanConnectivityConfigChange(slotId, isConnectivityAllowed);
     }
 }
@@ -961,11 +934,10 @@ void DataSettingsManagerStub::onDdsChange(DdsInfo currentState) {
 
     std::vector<std::shared_ptr<IDataSettingsListener>> listeners;
     this->getAvailableListeners(listeners);
-    for(auto& listener : listeners) {
+    for (auto &listener : listeners) {
         listener->onDdsChange(currentState);
     }
 }
 
 }  // namespace data
 }  // namespace telux
-

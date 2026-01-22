@@ -26,11 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef MULTISIMMENU_HPP
@@ -41,13 +41,13 @@
 #include <vector>
 
 #include "telux/tel/MultiSimManager.hpp"
-
+#include "telux/common/CommonDefines.hpp"
 #include "console_app_framework/ConsoleApp.hpp"
 
 #define PRINT_NOTIFICATION std::cout << std::endl << "\033[1;35mNOTIFICATION: \033[0m" << std::endl
 
 class MultiSimMenu : public ConsoleApp {
-public:
+ public:
     /**
      * Initialize commands and SDK
      */
@@ -61,12 +61,15 @@ public:
     void requestHighCapability(std::vector<std::string> userInput);
     void setHighCapability(std::vector<std::string> userInput);
     void switchActiveSlot(std::vector<std::string> userInput);
-    void requestsSlotStatus(std::vector<std::string> userInput);
+    void configureLogicalSlotMapping(std::vector<std::string> userInput);
+    void getLogicalSlotMapping(std::vector<std::string> userInput);
+    void getPhysicalSlotStatus(std::vector<std::string> userInput);
 
-private:
+ private:
     // Member variable to keep the Listener object alive till application ends.
     std::shared_ptr<telux::tel::IMultiSimListener> multiSimListener_;
     std::shared_ptr<telux::tel::IMultiSimManager> multiSimMgr_;
+    LogicalSlotId logicalIdFromIndex(int idx);
 };
 
 #endif  // MULTISIMMENU_HPP

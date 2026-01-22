@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_SubCauseCodeType_H_
-#define	_SubCauseCodeType_H_
-
+#ifndef _SubCauseCodeType_H_
+#define _SubCauseCodeType_H_
 
 #include <asn_application.h>
 
@@ -19,7 +18,7 @@ extern "C" {
 #endif
 
 /* SubCauseCodeType */
-typedef long	 SubCauseCodeType_t;
+typedef long SubCauseCodeType_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_SubCauseCodeType;
@@ -37,5 +36,5 @@ per_type_encoder_f SubCauseCodeType_encode_uper;
 }
 #endif
 
-#endif	/* _SubCauseCodeType_H_ */
+#endif /* _SubCauseCodeType_H_ */
 #include <asn_internal.h>

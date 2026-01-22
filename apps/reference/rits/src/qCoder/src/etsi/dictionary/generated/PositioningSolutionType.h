@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_PositioningSolutionType_H_
-#define	_PositioningSolutionType_H_
-
+#ifndef _PositioningSolutionType_H_
+#define _PositioningSolutionType_H_
 
 #include <asn_application.h>
 
@@ -20,19 +19,19 @@ extern "C" {
 
 /* Dependencies */
 typedef enum PositioningSolutionType {
-	PositioningSolutionType_noPositioningSolution	= 0,
-	PositioningSolutionType_sGNSS	= 1,
-	PositioningSolutionType_dGNSS	= 2,
-	PositioningSolutionType_sGNSSplusDR	= 3,
-	PositioningSolutionType_dGNSSplusDR	= 4,
-	PositioningSolutionType_dR	= 5
-	/*
-	 * Enumeration is extensible
-	 */
+    PositioningSolutionType_noPositioningSolution = 0,
+    PositioningSolutionType_sGNSS                 = 1,
+    PositioningSolutionType_dGNSS                 = 2,
+    PositioningSolutionType_sGNSSplusDR           = 3,
+    PositioningSolutionType_dGNSSplusDR           = 4,
+    PositioningSolutionType_dR                    = 5
+    /*
+     * Enumeration is extensible
+     */
 } e_PositioningSolutionType;
 
 /* PositioningSolutionType */
-typedef long	 PositioningSolutionType_t;
+typedef long PositioningSolutionType_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_PositioningSolutionType;
@@ -50,5 +49,5 @@ per_type_encoder_f PositioningSolutionType_encode_uper;
 }
 #endif
 
-#endif	/* _PositioningSolutionType_H_ */
+#endif /* _PositioningSolutionType_H_ */
 #include <asn_internal.h>

@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef RANDOMNUMBERMANAGERIMPL_HPP
@@ -26,15 +26,15 @@ class RandomNumberManagerImpl : public IRandomNumberManager {
 
     telux::common::ErrorCode getRandomNumber(uint64_t &generatedNumber) override;
 
-    telux::common::ErrorCode getRandomData(std::vector<uint8_t> &generatedData,
-        size_t &dataLength) override;
+    telux::common::ErrorCode getRandomData(
+        std::vector<uint8_t> &generatedData, size_t &dataLength) override;
 
-    RandomNumberManagerImpl(const RandomNumberManagerImpl &) = delete;
+    RandomNumberManagerImpl(const RandomNumberManagerImpl &)            = delete;
     RandomNumberManagerImpl &operator=(const RandomNumberManagerImpl &) = delete;
 
  private:
     const int32_t UNINITIALIZED = -1;
-    int rngFd_ = UNINITIALIZED;
+    int rngFd_                  = UNINITIALIZED;
     std::unique_ptr<::securityStub::RandomNumberGeneratorService::Stub> stub_;
 };
 

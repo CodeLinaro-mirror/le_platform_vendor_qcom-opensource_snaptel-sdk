@@ -28,9 +28,8 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -81,7 +80,8 @@ class ITcuActivityListener : public telux::common::ISDKListener {
      *
      * @param[in] machineName Machine changing the state; @ref LOCAL_MACHINE or @ref ALL_MACHINES
      */
-    virtual void onTcuActivityStateUpdate(TcuActivityState newState, std::string machineName) {}
+    virtual void onTcuActivityStateUpdate(TcuActivityState newState, std::string machineName) {
+    }
 
     /**
      * Called only for the master client, provides consolidated responses from the slave clients.
@@ -108,7 +108,8 @@ class ITcuActivityListener : public telux::common::ISDKListener {
      */
     virtual void onSlaveAckStatusUpdate(const telux::common::Status status,
         const std::string machineName, const std::vector<ClientInfo> unresponsiveClients,
-        const std::vector<ClientInfo> nackResponseClients) {}
+        const std::vector<ClientInfo> nackResponseClients) {
+    }
 
     /**
      * Called when a machine registers/unregisters with the power management framework to
@@ -121,7 +122,8 @@ class ITcuActivityListener : public telux::common::ISDKListener {
      * @param[in] machineEvent @ref MachineEvent::AVAILABLE if the machine is registered
      *                         @ref MachineEvent::UNAVAILABLE if the machine is unregistered
      */
-    virtual void onMachineUpdate(const std::string machineName, const MachineEvent machineEvent) {}
+    virtual void onMachineUpdate(const std::string machineName, const MachineEvent machineEvent) {
+    }
 
     /**
      * Called only for the master client, provides consolidated responses from the slave clients.
@@ -142,7 +144,8 @@ class ITcuActivityListener : public telux::common::ISDKListener {
      *              const std::vector<std::pair<std::string, std::string>> nackResponseClients)
      *              instead.
      */
-    virtual void onSlaveAckStatusUpdate(telux::common::Status status) {}
+    virtual void onSlaveAckStatusUpdate(telux::common::Status status) {
+    }
 
     /**
      * Called when the power state is going to change.
@@ -152,12 +155,14 @@ class ITcuActivityListener : public telux::common::ISDKListener {
      * @deprecated Use @ref onTcuActivityStateUpdate(TcuActivityState newState,
      *             bool isGlobalStateChange) instead.
      */
-    virtual void onTcuActivityStateUpdate(TcuActivityState newState) {}
+    virtual void onTcuActivityStateUpdate(TcuActivityState newState) {
+    }
 
     /**
      * Destructor of ITcuActivityListener.
      */
-    virtual ~ITcuActivityListener() {}
+    virtual ~ITcuActivityListener() {
+    }
 };
 
 /** @} */ /* end_addtogroup telematics_power_manager */
@@ -165,4 +170,4 @@ class ITcuActivityListener : public telux::common::ISDKListener {
 }  // end of namespace power
 }  // end of namespace telux
 
-#endif // TELUX_POWER_TCUACTIVITYLISTENER_HPP
+#endif  // TELUX_POWER_TCUACTIVITYLISTENER_HPP

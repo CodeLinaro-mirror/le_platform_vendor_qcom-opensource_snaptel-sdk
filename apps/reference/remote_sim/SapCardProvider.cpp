@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file    SapCardProvider.cpp
  * @brief   This client connects to a remote SIM daemon via TCP and exchanges
@@ -39,7 +45,7 @@
 #include <iostream>
 
 extern "C" {
-    #include <unistd.h>
+#include <unistd.h>
 }
 
 #include "RemoteSimUtils.hpp"
@@ -48,14 +54,12 @@ extern "C" {
 using namespace telux::common;
 using namespace telux::tel;
 
-SapCardProvider & SapCardProvider::getInstance()
-{
+SapCardProvider &SapCardProvider::getInstance() {
     static SapCardProvider instance;
     return instance;
 }
 
-int SapCardProvider::runClient(int argc, char **argv)
-{
+int SapCardProvider::runClient(int argc, char **argv) {
     std::signal(SIGHUP, signalHandler);
     std::signal(SIGINT, signalHandler);
     std::signal(SIGTERM, signalHandler);
@@ -94,21 +98,18 @@ int SapCardProvider::runClient(int argc, char **argv)
     return EXIT_SUCCESS;
 }
 
-void SapCardProvider::signalHandler(int signum)
-{
+void SapCardProvider::signalHandler(int signum) {
     LOGI("Received signal %d, terminating program.\n", signum);
     SapCardProvider::getInstance().cleanup();
     exit(EXIT_SUCCESS);
 }
 
-void SapCardProvider::cleanup()
-{
+void SapCardProvider::cleanup() {
     cardControl_.disconnectFromCard();
     simConnection_.tearDownDaemonConnection();
 }
 
-void SapCardProvider::printUsage(char **argv)
-{
+void SapCardProvider::printUsage(char **argv) {
     std::cout << std::endl;
     std::cout << "\tUsage: " << argv[0] << " -i <Daemon IP address> [-flag]" << std::endl;
     std::cout << std::endl;
@@ -116,13 +117,12 @@ void SapCardProvider::printUsage(char **argv)
     std::cout << "\t-i <Daemon IP> \tThe IP address of the remote SIM daemon" << std::endl;
     std::cout << "\t-d \t\tEnables debug-level log messages" << std::endl;
     std::cout << "\t-s \t\tEnables the printing of log messages to console (instead of syslog)"
-        << std::endl;
+              << std::endl;
     std::cout << "\t-h \t\tPrints these usage instructions" << std::endl;
     std::cout << std::endl;
 }
 
-Status SapCardProvider::readArguments(int argc, char **argv, std::string &daemonIp)
-{
+Status SapCardProvider::readArguments(int argc, char **argv, std::string &daemonIp) {
     while (1) {
         switch (getopt(argc, argv, "i:dsh")) {
             case -1:
@@ -144,8 +144,7 @@ Status SapCardProvider::readArguments(int argc, char **argv, std::string &daemon
     }
 }
 
-void SapCardProvider::handleDaemonMsg(uint8_t *buf, int bytes)
-{
+void SapCardProvider::handleDaemonMsg(uint8_t *buf, int bytes) {
     switch (buf[0]) {
         case APDU_TRANSFER_MSG:
             cardControl_.sendApduToSim(buf, bytes);
@@ -174,7 +173,6 @@ void SapCardProvider::handleDaemonMsg(uint8_t *buf, int bytes)
     }
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     return SapCardProvider::getInstance().runClient(argc, argv);
 }

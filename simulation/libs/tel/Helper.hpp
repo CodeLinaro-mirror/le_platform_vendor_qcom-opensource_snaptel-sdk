@@ -1,8 +1,7 @@
 /*
- *  Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 
 /**
  * @file       Helper.hpp
@@ -24,24 +23,24 @@ enum TelEventType {
 };
 
 enum CallApi {
-    makeECallWithMsd = 0,
-    makeTpsECallOverCSWithMsd = 1,
-    makeTpsECallOverIMS = 2,
-    makeECallWithRawMsd = 3,
-    makeTpsECallOverCSWithRawMsd = 4,
-    makeECallWithoutMsd = 5,
-    makeTpsECallOverCSWithoutMsd = 6,
-    updateEcallMsd = 7,
-    updateECallRawMsd = 8,
-    makeVoiceCall = 9,
-    makeRttVoiceCall = 10,
+    makeECallWithMsd                      = 0,
+    makeTpsECallOverCSWithMsd             = 1,
+    makeTpsECallOverIMS                   = 2,
+    makeECallWithRawMsd                   = 3,
+    makeTpsECallOverCSWithRawMsd          = 4,
+    makeECallWithoutMsd                   = 5,
+    makeTpsECallOverCSWithoutMsd          = 6,
+    updateEcallMsd                        = 7,
+    updateECallRawMsd                     = 8,
+    makeVoiceCall                         = 9,
+    makeRttVoiceCall                      = 10,
     makeSelfTestERAGLONASSECallWithRawMsd = 11
 };
 
-class Helper  {
-public:
-    static telux::tel::SmsTagType getTagType(std::string tagType ) {
-        if(tagType == "MT_READ") {
+class Helper {
+ public:
+    static telux::tel::SmsTagType getTagType(std::string tagType) {
+        if (tagType == "MT_READ") {
             return telux::tel::SmsTagType::MT_READ;
         } else if (tagType == "MT_NOT_READ") {
             return telux::tel::SmsTagType::MT_NOT_READ;
@@ -50,8 +49,8 @@ public:
         }
     }
 
-    static telux::tel::SmsEncoding getencodingMethod(std::string encoding ) {
-        if(encoding == "GSM7") {
+    static telux::tel::SmsEncoding getencodingMethod(std::string encoding) {
+        if (encoding == "GSM7") {
             return telux::tel::SmsEncoding::GSM7;
         } else if (encoding == "GSM8") {
             return telux::tel::SmsEncoding::GSM8;
@@ -63,7 +62,7 @@ public:
     }
 
     static std::string tagTypeToString(telux::tel::SmsTagType type) {
-        switch(type) {
+        switch (type) {
             case telux::tel::SmsTagType::MT_READ:
                 return "MT_READ";
             case telux::tel::SmsTagType::MT_NOT_READ:
@@ -74,8 +73,8 @@ public:
         return "UNKNOWN";
     }
 
-    static telux::tel::StorageType getstorageType(std::string storageType ) {
-        if(storageType == "SIM") {
+    static telux::tel::StorageType getstorageType(std::string storageType) {
+        if (storageType == "SIM") {
             return telux::tel::StorageType::SIM;
         } else if (storageType == "NV") {
             return telux::tel::StorageType::NV;
@@ -87,7 +86,7 @@ public:
     }
 
     static std::string storageTypeToString(telux::tel::StorageType type) {
-        switch(type) {
+        switch (type) {
             case telux::tel::StorageType::SIM:
                 return "SIM";
             case telux::tel::StorageType::NV:
@@ -101,7 +100,7 @@ public:
     }
 
     static std::string encodingToString(telux::tel::SmsEncoding encoding) {
-        switch(encoding) {
+        switch (encoding) {
             case telux::tel::SmsEncoding::GSM7:
                 return "GSM7";
             case telux::tel::SmsEncoding::GSM8:
@@ -114,8 +113,8 @@ public:
         return "UNKNOWN";
     }
 
-    static telux::tel::CallState getCallState(std::string callState ) {
-        if(callState == "CALL_IDLE") {
+    static telux::tel::CallState getCallState(std::string callState) {
+        if (callState == "CALL_IDLE") {
             return telux::tel::CallState::CALL_IDLE;
         } else if (callState == "CALL_ACTIVE") {
             return telux::tel::CallState::CALL_ACTIVE;
@@ -137,7 +136,7 @@ public:
     }
 
     static std::string getCallStateInString(telux::tel::CallState callState) {
-        if(callState == telux::tel::CallState::CALL_IDLE) {
+        if (callState == telux::tel::CallState::CALL_IDLE) {
             return "CALL_IDLE";
         } else if (callState == telux::tel::CallState::CALL_ACTIVE) {
             return "CALL_ACTIVE";
@@ -159,4 +158,4 @@ public:
     }
 };
 
-#endif // HELPER_HPP
+#endif  // HELPER_HPP

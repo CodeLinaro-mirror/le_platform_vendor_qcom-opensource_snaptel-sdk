@@ -26,10 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -68,10 +68,8 @@ class ServingSystemInfo : public std::enable_shared_from_this<ServingSystemInfo>
         auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
 
         /* Step - 2 */
-        auto servingSystemMgr_ = phoneFactory.getServingSystemManager(DEFAULT_SLOT_ID,
-                [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+        auto servingSystemMgr_ = phoneFactory.getServingSystemManager(
+            DEFAULT_SLOT_ID, [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!servingSystemMgr_) {
             std::cout << "Can't get IServingSystemManager" << std::endl;
@@ -81,8 +79,8 @@ class ServingSystemInfo : public std::enable_shared_from_this<ServingSystemInfo>
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Serving system service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Serving system service unavailable, status "
+                      << static_cast<int>(serviceStatus) << std::endl;
             return -EIO;
         }
 
@@ -93,14 +91,13 @@ class ServingSystemInfo : public std::enable_shared_from_this<ServingSystemInfo>
     int getServingSystemInfo() {
         telux::common::Status status;
 
-        auto responseCb = std::bind(&ServingSystemInfo::serviceDomainResponse,
-            this, std::placeholders::_1, std::placeholders::_2);
+        auto responseCb = std::bind(&ServingSystemInfo::serviceDomainResponse, this,
+            std::placeholders::_1, std::placeholders::_2);
 
         /* Step - 4 */
         status = servingSystemMgr_->requestServiceDomainPreference(responseCb);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't request preference, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't request preference, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -108,8 +105,8 @@ class ServingSystemInfo : public std::enable_shared_from_this<ServingSystemInfo>
     }
 
     /* Step - 5 */
-    void serviceDomainResponse(telux::tel::ServiceDomainPreference preference,
-        telux::common::ErrorCode errorCode) {
+    void serviceDomainResponse(
+        telux::tel::ServiceDomainPreference preference, telux::common::ErrorCode errorCode) {
 
         if (errorCode != telux::common::ErrorCode::SUCCESS) {
             std::cout << "Failed to get preference" << std::endl;
@@ -121,7 +118,7 @@ class ServingSystemInfo : public std::enable_shared_from_this<ServingSystemInfo>
 
  private:
     std::string getServiceDomain(telux::tel::ServiceDomainPreference preference) {
-        switch(preference) {
+        switch (preference) {
             case telux::tel::ServiceDomainPreference::CS_ONLY:
                 return " Circuit Switched(CS) only";
             case telux::tel::ServiceDomainPreference::PS_ONLY:
@@ -143,7 +140,7 @@ int main(int argc, char *argv[]) {
 
     try {
         app = std::make_shared<ServingSystemInfo>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate ServingSystemInfo" << std::endl;
         return -ENOMEM;
     }

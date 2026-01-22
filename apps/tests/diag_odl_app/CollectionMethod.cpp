@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <iostream>
@@ -14,7 +14,7 @@
  */
 CollectionMethod::CollectionMethod(std::string menuTitle, std::string cursor,
     std::shared_ptr<telux::platform::diag::IDiagLogManager> diagMgr)
-    : ConsoleApp(menuTitle, cursor) {
+   : ConsoleApp(menuTitle, cursor) {
 
     diagMgr_ = diagMgr;
 }
@@ -57,12 +57,11 @@ void CollectionMethod::getConfig() {
 
     conf += "source type : " + std::to_string(static_cast<int>(config.srcType));
 
-    if(config.srcType == telux::platform::diag::SourceType::DEVICE) {
-        conf += "\nsource info device : " +
-            std::to_string(static_cast<int>(config.srcInfo.device));
+    if (config.srcType == telux::platform::diag::SourceType::DEVICE) {
+        conf += "\nsource info device : " + std::to_string(static_cast<int>(config.srcInfo.device));
     } else {
-        conf += "\nsource info peripheral : " +
-            std::to_string(static_cast<int>(config.srcInfo.peripheral));
+        conf += "\nsource info peripheral : "
+                + std::to_string(static_cast<int>(config.srcInfo.peripheral));
     }
 
     conf += "\nmdm mask path : " + config.mdmLogMaskFile;
@@ -113,7 +112,7 @@ void CollectionMethod::getServiceStatus() {
 
     srvStatus = diagMgr_->getServiceStatus();
 
-    switch(srvStatus) {
+    switch (srvStatus) {
         case telux::common::ServiceStatus::SERVICE_AVAILABLE:
             std::cout << "Service status : available" << std::endl;
             break;

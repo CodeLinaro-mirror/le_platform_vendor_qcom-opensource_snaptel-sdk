@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_StationarySince_H_
-#define	_StationarySince_H_
-
+#ifndef _StationarySince_H_
+#define _StationarySince_H_
 
 #include <asn_application.h>
 
@@ -20,14 +19,14 @@ extern "C" {
 
 /* Dependencies */
 typedef enum StationarySince {
-	StationarySince_lessThan1Minute	= 0,
-	StationarySince_lessThan2Minutes	= 1,
-	StationarySince_lessThan15Minutes	= 2,
-	StationarySince_equalOrGreater15Minutes	= 3
+    StationarySince_lessThan1Minute         = 0,
+    StationarySince_lessThan2Minutes        = 1,
+    StationarySince_lessThan15Minutes       = 2,
+    StationarySince_equalOrGreater15Minutes = 3
 } e_StationarySince;
 
 /* StationarySince */
-typedef long	 StationarySince_t;
+typedef long StationarySince_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_StationarySince;
@@ -45,5 +44,5 @@ per_type_encoder_f StationarySince_encode_uper;
 }
 #endif
 
-#endif	/* _StationarySince_H_ */
+#endif /* _StationarySince_H_ */
 #include <asn_internal.h>

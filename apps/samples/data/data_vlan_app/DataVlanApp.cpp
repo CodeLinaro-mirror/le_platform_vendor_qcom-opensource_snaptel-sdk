@@ -26,10 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -45,7 +45,8 @@
  * 6. Bind the VLAN with a particular profile id and slot id.
  *
  * Usage:
- * # ./vlan_sample_app <operation-type> <interface-type> <vlan-id> <slot-id> <profile-id> <is-accelerated>
+ * # ./vlan_sample_app <operation-type> <interface-type> <vlan-id> <slot-id> <profile-id>
+ * <is-accelerated>
  *
  * Example - ./vlan_sample_app 1 3 5 1 1 0
  * Creates remote VLAN with id 5 ECM interface with slot 1,
@@ -75,9 +76,7 @@ class VLANCreator : public std::enable_shared_from_this<VLANCreator> {
 
         /* Step - 2 */
         dataVlanMgr_ = dataFactory.getVlanManager(
-                opType, [&p](telux::common::ServiceStatus status) {
-            p.set_value(status);
-        });
+            opType, [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
         if (!dataVlanMgr_) {
             std::cout << "Can't get IVlanManager" << std::endl;
@@ -87,8 +86,8 @@ class VLANCreator : public std::enable_shared_from_this<VLANCreator> {
         /* Step - 3 */
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "VLAN service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "VLAN service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             return -EIO;
         }
 
@@ -96,23 +95,21 @@ class VLANCreator : public std::enable_shared_from_this<VLANCreator> {
         return 0;
     }
 
-    int vlanCreate(telux::data::InterfaceType ifaceType,
-        int vlanId, bool isAccelerated) {
+    int vlanCreate(telux::data::InterfaceType ifaceType, int vlanId, bool isAccelerated) {
         telux::common::Status status;
         telux::data::VlanConfig config{};
 
-        auto respCb = std::bind(&VLANCreator::onVLANCreateStatusAvailable,
-            this, std::placeholders::_1, std::placeholders::_2);
+        auto respCb = std::bind(&VLANCreator::onVLANCreateStatusAvailable, this,
+            std::placeholders::_1, std::placeholders::_2);
 
-        config.iface = ifaceType;
-        config.vlanId = vlanId;
+        config.iface         = ifaceType;
+        config.vlanId        = vlanId;
         config.isAccelerated = isAccelerated;
 
         /* Step - 5 */
         status = dataVlanMgr_->createVlan(config, respCb);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't create VLAN, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't create VLAN, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -123,14 +120,12 @@ class VLANCreator : public std::enable_shared_from_this<VLANCreator> {
     int profileBind(int profileId, int vlanId, SlotId slotId) {
         telux::common::Status status;
 
-        auto respCb = std::bind(&VLANCreator::onBindStatusAvailable,
-            this, std::placeholders::_1);
+        auto respCb = std::bind(&VLANCreator::onBindStatusAvailable, this, std::placeholders::_1);
 
         /* Step - 6 */
         status = dataVlanMgr_->bindWithProfile(profileId, vlanId, respCb, slotId);
         if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Can't bind VLAN, err " <<
-                static_cast<int>(status) << std::endl;
+            std::cout << "Can't bind VLAN, err " << static_cast<int>(status) << std::endl;
             return -EIO;
         }
 
@@ -139,13 +134,11 @@ class VLANCreator : public std::enable_shared_from_this<VLANCreator> {
     }
 
     /* Called as a response to createVlan() request */
-    void onVLANCreateStatusAvailable(
-        bool isAccelerated, telux::common::ErrorCode error) {
+    void onVLANCreateStatusAvailable(bool isAccelerated, telux::common::ErrorCode error) {
         std::cout << "onVLANCreateStatusAvailable()" << std::endl;
 
         if (error != telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Failed to create VLAN, err" <<
-                static_cast<int>(error) << std::endl;
+            std::cout << "Failed to create VLAN, err" << static_cast<int>(error) << std::endl;
             return;
         }
 
@@ -157,8 +150,7 @@ class VLANCreator : public std::enable_shared_from_this<VLANCreator> {
         std::cout << "onBindStatusAvailable()" << std::endl;
 
         if (error != telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Failed to bind VLAN, err" <<
-                static_cast<int>(error) << std::endl;
+            std::cout << "Failed to bind VLAN, err" << static_cast<int>(error) << std::endl;
             return;
         }
 
@@ -182,22 +174,22 @@ int main(int argc, char *argv[]) {
     telux::data::InterfaceType ifaceType;
 
     if (argc != 7) {
-        std::cout << "Usage: ./vlan_sample_app <operation-type> <interface-type> " <<
-            "<vlan-id> <slot-id> <profile-id> <is-accelerated>" << std::endl;
+        std::cout << "Usage: ./vlan_sample_app <operation-type> <interface-type> "
+                  << "<vlan-id> <slot-id> <profile-id> <is-accelerated>" << std::endl;
         return -EINVAL;
     }
 
     /* Step - 4 */
-    opType = static_cast<telux::data::OperationType>(std::atoi(argv[1]));
-    ifaceType = static_cast<telux::data::InterfaceType>(std::atoi(argv[2]));
-    vlanId = std::atoi(argv[3]);
-    slotId = static_cast<SlotId>(std::atoi(argv[4]));
-    profileId = std::atoi(argv[5]);
+    opType        = static_cast<telux::data::OperationType>(std::atoi(argv[1]));
+    ifaceType     = static_cast<telux::data::InterfaceType>(std::atoi(argv[2]));
+    vlanId        = std::atoi(argv[3]);
+    slotId        = static_cast<SlotId>(std::atoi(argv[4]));
+    profileId     = std::atoi(argv[5]);
     isAccelerated = static_cast<bool>(std::atoi(argv[6]));
 
     try {
         app = std::make_shared<VLANCreator>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate VLANCreator" << std::endl;
         return -ENOMEM;
     }

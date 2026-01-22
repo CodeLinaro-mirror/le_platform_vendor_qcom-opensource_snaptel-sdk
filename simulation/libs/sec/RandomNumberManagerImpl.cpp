@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "libs/common/CommonUtils.hpp"
@@ -62,8 +62,7 @@ telux::common::ErrorCode RandomNumberManagerImpl::init(RNGSource generatorSource
 /*
  * Generate a 32 bit random number.
  */
-telux::common::ErrorCode RandomNumberManagerImpl::getRandomNumber(
-        uint32_t &generatedNumber) {
+telux::common::ErrorCode RandomNumberManagerImpl::getRandomNumber(uint32_t &generatedNumber) {
 
     grpc::Status reqStatus{};
     grpc::ClientContext clientCtx{};
@@ -94,8 +93,7 @@ telux::common::ErrorCode RandomNumberManagerImpl::getRandomNumber(
 /*
  * Generate a 64 bit random number.
  */
-telux::common::ErrorCode RandomNumberManagerImpl::getRandomNumber(
-        uint64_t &generatedNumber) {
+telux::common::ErrorCode RandomNumberManagerImpl::getRandomNumber(uint64_t &generatedNumber) {
 
     grpc::Status reqStatus{};
     grpc::ClientContext clientCtx{};
@@ -128,7 +126,7 @@ telux::common::ErrorCode RandomNumberManagerImpl::getRandomNumber(
  * bytes is defined by platform implementation.
  */
 telux::common::ErrorCode RandomNumberManagerImpl::getRandomData(
-        std::vector<uint8_t> &generatedData, size_t &dataLength) {
+    std::vector<uint8_t> &generatedData, size_t &dataLength) {
 
     grpc::Status reqStatus{};
     grpc::ClientContext clientCtx{};
@@ -154,8 +152,8 @@ telux::common::ErrorCode RandomNumberManagerImpl::getRandomData(
 
     dataLength = response.length();
 
-    generatedData = std::vector<uint8_t>(&(response.data(0)[0]),
-        &(response.data(0)[0]) + dataLength);
+    generatedData
+        = std::vector<uint8_t>(&(response.data(0)[0]), &(response.data(0)[0]) + dataLength);
 
     return telux::common::ErrorCode::SUCCESS;
 }

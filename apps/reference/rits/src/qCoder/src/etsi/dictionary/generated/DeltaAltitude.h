@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_DeltaAltitude_H_
-#define	_DeltaAltitude_H_
-
+#ifndef _DeltaAltitude_H_
+#define _DeltaAltitude_H_
 
 #include <asn_application.h>
 
@@ -20,13 +19,13 @@ extern "C" {
 
 /* Dependencies */
 typedef enum DeltaAltitude {
-	DeltaAltitude_oneCentimeterUp	= 1,
-	DeltaAltitude_oneCentimeterDown	= -1,
-	DeltaAltitude_unavailable	= 12800
+    DeltaAltitude_oneCentimeterUp   = 1,
+    DeltaAltitude_oneCentimeterDown = -1,
+    DeltaAltitude_unavailable       = 12800
 } e_DeltaAltitude;
 
 /* DeltaAltitude */
-typedef long	 DeltaAltitude_t;
+typedef long DeltaAltitude_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_DeltaAltitude;
@@ -44,5 +43,5 @@ per_type_encoder_f DeltaAltitude_encode_uper;
 }
 #endif
 
-#endif	/* _DeltaAltitude_H_ */
+#endif /* _DeltaAltitude_H_ */
 #include <asn_internal.h>

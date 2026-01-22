@@ -26,9 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -54,22 +55,71 @@ namespace tel {
  * Represents state of the physical SIM slot
  */
 enum class SlotState {
-   UNKNOWN = -1,
-   INACTIVE,   /**< Slot is inactive */
-   ACTIVE,     /**< Slot is active */
+    UNKNOWN = -1,
+    INACTIVE, /**< Slot is inactive */
+    ACTIVE, /**< Slot is active */
 };
 
 /**
- * Represents status of a physical SIM slot
+ * Represents the state of the port associated with a physical SIM slot.
+ */
+enum class PortState {
+   UNKNOWN = -1,    /**< Port state is unknown */
+   INACTIVE,        /**< Port is inactive */
+   ACTIVE,          /**< Port is active */
+};
+
+/**
+ * Represents the mapping of logical slot to physical SIM slot and portId.
+ */
+struct LogicalSlotMapInfo {
+    PhysicalSlotId physicalSlot;        /**< Physical slot identifier */
+    int portId;                         /**< Port identifier for the mapped physical slot  */
+};
+
+/**
+ * Represents the port information on a physical SIM slot.
+ */
+struct PortInfo {
+    PortState state;    /**< State of the port associated with a physical SIM slot */
+    std::string iccId;  /**< Integrated circuit card identifier (ICCID) of the profile mapped on
+                             the port */
+    LogicalSlotId slotId; /**< Logical slot identifier associated with the port */
+};
+
+/**
+ * Represents MEP mode and port information of a physical SIM slot.
+ */
+struct MepSlotInfo{
+    Mode mode;                  /**< MEP mode of the SIM card */
+    std::vector<PortInfo> port; /**< Port information of various ports for the physical slot */
+};
+
+/**
+ * Represents the status of a physical SIM slot, which may contain either a MEP or non-MEP card.
+ */
+struct SimSlotStatus {
+    bool isMep;                     /**< Indicates whether the SIM card is a MEP card */
+    MepSlotInfo mepSlotInfo;        /**< Provides MEP information of the physical SIM slot */
+    SlotState slotState;            /**< State of the physical SIM slot */
+    CardState cardState;            /**< Status of the card in the physical slot */
+    CardError cardError;            /**< Indicates the reason for the card error, and is valid only
+                                         when the card state is CARDSTATE_ERROR. */
+};
+
+/**
+ * Represents status of a physical SIM slot with a non MEP SIM card.
+ * @deprecated - Use telux::tel::SimSlotStatus instead.
  */
 struct SlotStatus {
    SlotState slotState;         /**< State of the physical SIM slot */
    CardState cardState;         /**< Status of the card in the physical slot */
-   CardError cardError;         /**< Indicates the reason for the card error, and is valid only when the card state is CARDSTATE_ERROR. */
+   CardError cardError;         /**< Indicates the reason for the card error, and is valid only
+                                     when the card state is CARDSTATE_ERROR. */
 };
 
 /** @} */ /* end_addtogroup telematics_multi_sim */
-}
-}
+}  // namespace tel
+}  // namespace telux
 
-#endif // TELUX_TEL_MULTISIMDEFINES_HPP
+#endif  // TELUX_TEL_MULTISIMDEFINES_HPP

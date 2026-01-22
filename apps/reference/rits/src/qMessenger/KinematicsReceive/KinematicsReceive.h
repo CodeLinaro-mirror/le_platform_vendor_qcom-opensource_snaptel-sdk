@@ -27,17 +27,18 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- /*
- * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
- /**
-  * @file: KinematicsReceive.h
-  *
-  * @brief: Application that abstracts and handles the Kinematics SDK.
-  *
-  */
+/**
+ * @file: KinematicsReceive.h
+ *
+ * @brief: Application that abstracts and handles the Kinematics SDK.
+ *
+ */
 
 #ifndef __KINEMATICS_RECEIVE_H__
 #define __KINEMATICS_RECEIVE_H__
@@ -52,99 +53,95 @@
 #include <mutex>
 #include <vector>
 
-
 using std::cout;
-using std::shared_ptr;
+using std::lock_guard;
 using std::make_shared;
 using std::mutex;
+using std::shared_ptr;
+using telux::common::ErrorCode;
 using telux::loc::ILocationInfoEx;
 using telux::loc::ILocationListener;
-using telux::loc::LocationFactory;
 using telux::loc::ILocationManager;
-using telux::common::ErrorCode;
-using std::lock_guard;
+using telux::loc::LocationFactory;
 
 class KinematicsReceive;
 class LocListener : public ILocationListener {
-public:
+ public:
     /**
-    * Method that gets the most up to date location.
-    * @return a shared pointer of IlocationInfoEx structure that holds
-    * all location data.
-    * @see ILocationInfoEx in Snaptel SDK.
-    */
+     * Method that gets the most up to date location.
+     * @return a shared pointer of IlocationInfoEx structure that holds
+     * all location data.
+     * @see ILocationInfoEx in Snaptel SDK.
+     */
     shared_ptr<ILocationInfoEx> getLocation();
     void close();
-    void setLocCbFn(void(*locCbFn_)(shared_ptr<ILocationInfoEx> &locationInfo));
+    void setLocCbFn(void (*locCbFn_)(shared_ptr<ILocationInfoEx> &locationInfo));
     LocListener();
     ~LocListener();
 
-private:
+ private:
     void onDetailedLocationUpdate(const shared_ptr<ILocationInfoEx> &locationInfo) override;
     /**
-    * Object that holds all location information.
-    */
-   shared_ptr<ILocationInfoEx> locationInfo_ = nullptr;
-   mutex locInfoMtx_;
-   std::condition_variable locInfoCv_;
-   bool exit_ = false;
-   void(* locCbFunction_)(shared_ptr<ILocationInfoEx> &locationInfo); // pointer to data to pass to aerolink upon update
+     * Object that holds all location information.
+     */
+    shared_ptr<ILocationInfoEx> locationInfo_ = nullptr;
+    mutex locInfoMtx_;
+    std::condition_variable locInfoCv_;
+    bool exit_ = false;
+    void (*locCbFunction_)(shared_ptr<ILocationInfoEx> &locationInfo);  // pointer to data to pass
+                                                                        // to aerolink upon update
 };
 
 class KinematicsReceive : public std::enable_shared_from_this<KinematicsReceive> {
-private:
-   static shared_ptr<KinematicsReceive> instance;
-   static mutex sync;
-   uint16_t interval = 100;
-   std::shared_ptr<ILocationManager> locationManager_ = nullptr;
-   std::shared_ptr<LocListener> locListener_ = nullptr;
-   std::vector<std::weak_ptr<ILocationListener>> locListeners_;
-   void startDetailsCallback(ErrorCode eventError);
-   void responseCallback(ErrorCode errorCode);
-protected:
+ private:
+    static shared_ptr<KinematicsReceive> instance;
+    static mutex sync;
+    uint16_t interval                                  = 100;
+    std::shared_ptr<ILocationManager> locationManager_ = nullptr;
+    std::shared_ptr<LocListener> locListener_          = nullptr;
+    std::vector<std::weak_ptr<ILocationListener>> locListeners_;
+    void startDetailsCallback(ErrorCode eventError);
+    void responseCallback(ErrorCode errorCode);
 
-public:
-
-   /**
-    * Default Constructor. Uses default interval of 100 ms. if you use
-   * get method.
-    */
-   KinematicsReceive();
-   ~KinematicsReceive();
+ protected:
+ public:
+    /**
+     * Default Constructor. Uses default interval of 100 ms. if you use
+     * get method.
+     */
+    KinematicsReceive();
+    ~KinematicsReceive();
 
     /**
-    * Constructor that creates a KinematicsReceive Object
-    * @param interval - Minimum time interval between two consecutive
-    * reports in milliseconds. It can be interval or more.
-    */
-   KinematicsReceive(uint16_t interval);
+     * Constructor that creates a KinematicsReceive Object
+     * @param interval - Minimum time interval between two consecutive
+     * reports in milliseconds. It can be interval or more.
+     */
+    KinematicsReceive(uint16_t interval);
 
-
-   // external listeners that want the data right away
-   // we want them to get the updated location info data from onGnssLocationCb
-   // we can add these listeners with a set function
-   // perhaps it could just be a list of valid pointers to memory addresses that listeners use
-   // eg applicationBase, aerolink, squish
-    KinematicsReceive(std::vector<std::shared_ptr<ILocationListener>> locListeners,
-                                                            uint16_t interval);
-
-
-   /**
-    * Method that gets the most up to date location.
-    * @return a shared pointer of IlocationInfoEx structure that holds
-    * all location data.
-    * @see ILocationInfoEx in Snaptel SDK.
-    */
-   shared_ptr<ILocationInfoEx> getLocation();
+    // external listeners that want the data right away
+    // we want them to get the updated location info data from onGnssLocationCb
+    // we can add these listeners with a set function
+    // perhaps it could just be a list of valid pointers to memory addresses that listeners use
+    // eg applicationBase, aerolink, squish
+    KinematicsReceive(
+        std::vector<std::shared_ptr<ILocationListener>> locListeners, uint16_t interval);
 
     /**
-    * Destructor that closes listener to Location SDK. This method closes
-    * the listener for all object singleton owners as well as nulls all
-    * pointer data. If other owners have an instance of this class, then
-    * on getLocation(), singleton will handle itself again to get new fixes.
-    */
-   void close();
+     * Method that gets the most up to date location.
+     * @return a shared pointer of IlocationInfoEx structure that holds
+     * all location data.
+     * @see ILocationInfoEx in Snaptel SDK.
+     */
+    shared_ptr<ILocationInfoEx> getLocation();
 
+    /**
+     * Destructor that closes listener to Location SDK. This method closes
+     * the listener for all object singleton owners as well as nulls all
+     * pointer data. If other owners have an instance of this class, then
+     * on getLocation(), singleton will handle itself again to get new fixes.
+     */
+    void close();
 };
 
 #endif

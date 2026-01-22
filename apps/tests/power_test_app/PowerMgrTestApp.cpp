@@ -26,10 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -63,22 +63,22 @@ static std::condition_variable cv;
 
 static void printTcuActivityState(TcuActivityState state, std::string machineName = "") {
 
-    if(state == TcuActivityState::SUSPEND) {
+    if (state == TcuActivityState::SUSPEND) {
         PRINT_NOTIFICATION << " TCU-activity State : SUSPEND for " << machineName << std::endl;
-    } else if(state == TcuActivityState::RESUME) {
+    } else if (state == TcuActivityState::RESUME) {
         PRINT_NOTIFICATION << " TCU-activity State : RESUME for " << machineName << std::endl;
-    } else if(state == TcuActivityState::SHUTDOWN) {
+    } else if (state == TcuActivityState::SHUTDOWN) {
         PRINT_NOTIFICATION << " TCU-activity State : SHUTDOWN for " << machineName << std::endl;
-    } else if(state == TcuActivityState::UNKNOWN) {
+    } else if (state == TcuActivityState::UNKNOWN) {
         PRINT_NOTIFICATION << " TCU-activity State : UNKNOWN for " << machineName << std::endl;
     } else {
-        std::cout << APP_NAME << " ERROR: Invalid TCU-activity state notified for "
-            << machineName << std::endl;
+        std::cout << APP_NAME << " ERROR: Invalid TCU-activity state notified for " << machineName
+                  << std::endl;
     }
 }
 
 static void printHelp() {
-std::cout << "-----------------------------------------------" << std::endl;
+    std::cout << "-----------------------------------------------" << std::endl;
     std::cout << "./telux_power_test_app <-l> <-s> <-r> <-p> <-c> <-t> <-T> <-h>" << std::endl;
     std::cout << "Operations: " << std::endl;
     std::cout << "   -l : listen to TCU-activity state updates (as SLAVE)" << std::endl;
@@ -87,57 +87,57 @@ std::cout << "-----------------------------------------------" << std::endl;
     std::cout << "   -p : send SHUT-DOWN command (as MASTER)" << std::endl << std::endl;
 
     std::cout << "Scope of the operation: " << std::endl;
-    std::cout << "   -M : Name of the machine on which the operation is expected to be performed" <<
-                 "        Applicable only to MASTER while sending SUSPEND/RESUME/SHUTDOWN \n" <<
-                 "        commands. '-M <machine_name>' \n" <<
-                 "        e.g. telux_power_test_app -s -M qcom,televm" << std::endl;
-    std::cout << "   -L : carry out operation on LOCAL machine" << std::endl <<
-                 "        e.g. telux_power_test_app -l -L " << std::endl;
-    std::cout << "   -A : carry out operation on ALL machine" << std::endl <<
-                 "        e.g. telux_power_test_app -l -A " << std::endl <<
-                 "             telux_power_test_app -s -A " << std::endl << std::endl;
+    std::cout << "   -M : Name of the machine on which the operation is expected to be performed"
+              << "        Applicable only to MASTER while sending SUSPEND/RESUME/SHUTDOWN \n"
+              << "        commands. '-M <machine_name>' \n"
+              << "        e.g. telux_power_test_app -s -M qcom,televm" << std::endl;
+    std::cout << "   -L : carry out operation on LOCAL machine" << std::endl
+              << "        e.g. telux_power_test_app -l -L " << std::endl;
+    std::cout << "   -A : carry out operation on ALL machine" << std::endl
+              << "        e.g. telux_power_test_app -l -A " << std::endl
+              << "             telux_power_test_app -s -A " << std::endl
+              << std::endl;
 
     std::cout << "Additional: " << std::endl;
     std::cout << "   -m : get LOCAL machine name" << std::endl;
     std::cout << "   -a : get list of all machine names " << std::endl;
-    std::cout << "   -n : set client name (recommended mainly for SLAVE)" << std::endl <<
-                 "        e.g. telux_power_test_app -l -A -n testApp_123 " << std::endl;
-    std::cout << "   -t : get Tcu activity state for the local machine as a slave" << std::endl <<
-                 "        e.g. If PVM is local machine-" <<
-                 "        telux_power_test_app -t " << std::endl;
-    std::cout << "   -T : get Tcu activity state for any machine as a master" << std::endl <<
-                 "        e.g. telux_power_test_app -T qcom,mdm" << std::endl <<
-                 "             telux_power_test_app -T qcom,televm" << std::endl;
+    std::cout << "   -n : set client name (recommended mainly for SLAVE)" << std::endl
+              << "        e.g. telux_power_test_app -l -A -n testApp_123 " << std::endl;
+    std::cout << "   -t : get Tcu activity state for the local machine as a slave" << std::endl
+              << "        e.g. If PVM is local machine-"
+              << "        telux_power_test_app -t " << std::endl;
+    std::cout << "   -T : get Tcu activity state for any machine as a master" << std::endl
+              << "        e.g. telux_power_test_app -T qcom,mdm" << std::endl
+              << "             telux_power_test_app -T qcom,televm" << std::endl;
     std::cout << "   -c : open interactive console (as MASTER)" << std::endl;
     std::cout << "   -h : print the help menu" << std::endl;
 }
 
 PowerMgmtTestApp::PowerMgmtTestApp()
-    : ConsoleApp("System Power-Management Menu", "power-mgmt> ")
-    , tcuActivityMgr_(nullptr) {
+   : ConsoleApp("System Power-Management Menu", "power-mgmt> ")
+   , tcuActivityMgr_(nullptr) {
 }
 
 PowerMgmtTestApp::~PowerMgmtTestApp() {
     tcuActivityMgr_ = nullptr;
 }
 
-void PowerMgmtTestApp::onTcuActivityStateUpdate(TcuActivityState tcuState,
-    std::string machineName) {
-    std::cout << " TCU Activity state changed for machine "
-        << machineName << std::endl;
+void PowerMgmtTestApp::onTcuActivityStateUpdate(
+    TcuActivityState tcuState, std::string machineName) {
+    std::cout << " TCU Activity state changed for machine " << machineName << std::endl;
     printTcuActivityState(tcuState, machineName);
-    if(tcuState == TcuActivityState::SUSPEND) {
-        Status ackStatus = tcuActivityMgr_->sendActivityStateAck(StateChangeResponse::ACK,
-            tcuState);
-        if(ackStatus == Status::SUCCESS) {
+    if (tcuState == TcuActivityState::SUSPEND) {
+        Status ackStatus
+            = tcuActivityMgr_->sendActivityStateAck(StateChangeResponse::ACK, tcuState);
+        if (ackStatus == Status::SUCCESS) {
             std::cout << APP_NAME << " Sent SUSPEND acknowledgement" << std::endl;
         } else {
             std::cout << APP_NAME << " Failed to send SUSPEND acknowledgement !" << std::endl;
         }
-    } else if(tcuState == TcuActivityState::SHUTDOWN) {
-        Status ackStatus = tcuActivityMgr_->sendActivityStateAck(StateChangeResponse::ACK,
-            tcuState);
-        if(ackStatus == Status::SUCCESS) {
+    } else if (tcuState == TcuActivityState::SHUTDOWN) {
+        Status ackStatus
+            = tcuActivityMgr_->sendActivityStateAck(StateChangeResponse::ACK, tcuState);
+        if (ackStatus == Status::SUCCESS) {
             std::cout << APP_NAME << " Sent SHUTDOWN acknowledgement" << std::endl;
         } else {
             std::cout << APP_NAME << " Failed to send SHUTDOWN acknowledgement !" << std::endl;
@@ -145,63 +145,64 @@ void PowerMgmtTestApp::onTcuActivityStateUpdate(TcuActivityState tcuState,
     }
 }
 
-void PowerMgmtTestApp::onMachineUpdate(const std::string machineName,
-    const MachineEvent machineEvent) {
-    if(machineEvent == MachineEvent::AVAILABLE) {
+void PowerMgmtTestApp::onMachineUpdate(
+    const std::string machineName, const MachineEvent machineEvent) {
+    if (machineEvent == MachineEvent::AVAILABLE) {
         std::cout << APP_NAME << " Machine: " << machineName << " Event : AVAILABLE" << std::endl;
-    } else if(machineEvent == MachineEvent::UNAVAILABLE){
+    } else if (machineEvent == MachineEvent::UNAVAILABLE) {
         std::cout << APP_NAME << " Machine: " << machineName << " Event : UNAVAILABLE" << std::endl;
     }
 }
 
 void PowerMgmtTestApp::onSlaveAckStatusUpdate(const telux::common::Status status,
-        const std::string machineName, const std::vector<ClientInfo> unresponsiveClients,
-        const std::vector<ClientInfo> nackResponseClients) {
-    std::cout << " Consolidated acknowledgement status for machine: "<< machineName << std::endl;
-    if(status == telux::common::Status::SUCCESS) {
-        std::cout << APP_NAME << " Slave applications successfully acknowledged the state" <<
-                                 " transition" << std::endl;
-    } else if(status == telux::common::Status::EXPIRED) {
+    const std::string machineName, const std::vector<ClientInfo> unresponsiveClients,
+    const std::vector<ClientInfo> nackResponseClients) {
+    std::cout << " Consolidated acknowledgement status for machine: " << machineName << std::endl;
+    if (status == telux::common::Status::SUCCESS) {
+        std::cout << APP_NAME << " Slave applications successfully acknowledged the state"
+                  << " transition" << std::endl;
+    } else if (status == telux::common::Status::EXPIRED) {
         std::cout << APP_NAME << " Timeout occurred while waiting for acknowledgements from slave"
-                              << " applications" << std::endl;
-    } else if(status == telux::common::Status::NOTREADY) {
+                  << " applications" << std::endl;
+    } else if (status == telux::common::Status::NOTREADY) {
         std::cout << APP_NAME << " Received NACK from slave applications" << std::endl;
     } else {
         std::cout << APP_NAME << " Failed to receive acknowledgements from slave applications"
-                              << std::endl;
+                  << std::endl;
     }
-    if(unresponsiveClients.size() > 0) {
-        std::cout << " Number of unresponsive clients : "<< unresponsiveClients.size() << std::endl;
+    if (unresponsiveClients.size() > 0) {
+        std::cout << " Number of unresponsive clients : " << unresponsiveClients.size()
+                  << std::endl;
         for (size_t i = 0; i < unresponsiveClients.size(); i++) {
-            std::cout << " client name : "<< unresponsiveClients[i].first
-                      << " , machine name : "<< unresponsiveClients[i].second << std::endl;
+            std::cout << " client name : " << unresponsiveClients[i].first
+                      << " , machine name : " << unresponsiveClients[i].second << std::endl;
         }
     }
 
-    if(nackResponseClients.size() > 0) {
-        std::cout << " Number of clients responded with NACK : "<< nackResponseClients.size()
-            << std::endl;
+    if (nackResponseClients.size() > 0) {
+        std::cout << " Number of clients responded with NACK : " << nackResponseClients.size()
+                  << std::endl;
         for (size_t i = 0; i < nackResponseClients.size(); i++) {
-            std::cout << " client name : "<< nackResponseClients[i].first
-                      << " , machine name : "<< nackResponseClients[i].second << std::endl;
+            std::cout << " client name : " << nackResponseClients[i].first
+                      << " , machine name : " << nackResponseClients[i].second << std::endl;
         }
     }
-    if(!listenerEnabled) {
-        std::unique_lock<std::mutex> lock(mutex);// To make sure cv.notify happens after cv.wait
+    if (!listenerEnabled) {
+        std::unique_lock<std::mutex> lock(mutex);  // To make sure cv.notify happens after cv.wait
         cv.notify_all();
     }
 }
 
 void PowerMgmtTestApp::onServiceStatusChange(ServiceStatus status) {
     std::cout << std::endl;
-    if(status == ServiceStatus::SERVICE_UNAVAILABLE) {
+    if (status == ServiceStatus::SERVICE_UNAVAILABLE) {
         PRINT_NOTIFICATION << " Service Status : UNAVAILABLE" << std::endl;
-    } else if(status == ServiceStatus::SERVICE_AVAILABLE) {
+    } else if (status == ServiceStatus::SERVICE_AVAILABLE) {
         PRINT_NOTIFICATION << " Service Status : AVAILABLE" << std::endl;
     }
 }
 
-static void signalHandler( int signum ) {
+static void signalHandler(int signum) {
     std::unique_lock<std::mutex> lock(mutex);
     std::cout << APP_NAME << " Interrupt signal (" << signum << ") received.." << std::endl;
     cv.notify_all();
@@ -209,41 +210,40 @@ static void signalHandler( int signum ) {
 
 void PowerMgmtTestApp::sendActivityStateCommand(TcuActivityState state) {
     std::string machineName;
-    if(!userInputMachineName(machineName)){
+    if (!userInputMachineName(machineName)) {
         std::cout << " Unable to get machine name, try again " << std::endl;
         return;
     }
     sendActivityStateCommandEx(machineName, state);
 }
 
-void PowerMgmtTestApp::sendActivityStateCommandEx( std::string machineName,
-    TcuActivityState state) {
-    if(state == TcuActivityState::SUSPEND) {
+void PowerMgmtTestApp::sendActivityStateCommandEx(std::string machineName, TcuActivityState state) {
+    if (state == TcuActivityState::SUSPEND) {
         std::cout << APP_NAME << " Sending SUSPEND command to " << machineName << std::endl;
-    } else if(state == TcuActivityState::SHUTDOWN) {
+    } else if (state == TcuActivityState::SHUTDOWN) {
         std::cout << APP_NAME << " Sending SHUTDOWN command to " << machineName << std::endl;
-    } else if((state == TcuActivityState::RESUME)) {
+    } else if ((state == TcuActivityState::RESUME)) {
         std::cout << APP_NAME << " Sending RESUME command to " << machineName << std::endl;
     }
-    telux::common::Status status =
-        tcuActivityMgr_->setActivityState(state, machineName, [&, state](ErrorCode errorCode){
-            if(errorCode == telux::common::ErrorCode::SUCCESS) {
-                std::cout << APP_NAME << " Command initiated successfully " << std::endl;
-            } else {
-                std::cout << APP_NAME << " Command failed !!!" <<
-                    "  ErrorCode : " << Utils::getErrorCodeAsString(errorCode) << std::endl;
-            }
-            if(!listenerEnabled) {
-                if((errorCode != telux::common::ErrorCode::SUCCESS)
-                    || (state == TcuActivityState::RESUME)) {
-                    // To make sure cv.notify happens after cv.wait
-                    std::unique_lock<std::mutex> lock(mutex);
-                    cv.notify_all();
-                }
-            }
-        }
-    );
-    if(status != telux::common::Status::SUCCESS) {
+    telux::common::Status status
+        = tcuActivityMgr_->setActivityState(state, machineName, [&, state](ErrorCode errorCode) {
+              if (errorCode == telux::common::ErrorCode::SUCCESS) {
+                  std::cout << APP_NAME << " Command initiated successfully " << std::endl;
+              } else {
+                  std::cout << APP_NAME << " Command failed !!!"
+                            << "  ErrorCode : " << Utils::getErrorCodeAsString(errorCode)
+                            << std::endl;
+              }
+              if (!listenerEnabled) {
+                  if ((errorCode != telux::common::ErrorCode::SUCCESS)
+                      || (state == TcuActivityState::RESUME)) {
+                      // To make sure cv.notify happens after cv.wait
+                      std::unique_lock<std::mutex> lock(mutex);
+                      cv.notify_all();
+                  }
+              }
+          });
+    if (status != telux::common::Status::SUCCESS) {
         std::cout << APP_NAME << " ERROR - Failed to send TCU-activity state command" << std::endl;
     }
 }
@@ -251,7 +251,7 @@ void PowerMgmtTestApp::sendActivityStateCommandEx( std::string machineName,
 std::string PowerMgmtTestApp::getMachineName() {
     std::string machineName;
     telux::common::Status status = tcuActivityMgr_->getMachineName(machineName);
-    if(status != telux::common::Status::SUCCESS) {
+    if (status != telux::common::Status::SUCCESS) {
         std::cout << APP_NAME << " ERROR - Failed to get local machine name " << std::endl;
     } else {
         std::cout << APP_NAME << " Local machine name = " << machineName << std::endl;
@@ -259,16 +259,15 @@ std::string PowerMgmtTestApp::getMachineName() {
     return machineName;
 }
 
-
 std::vector<std::string> PowerMgmtTestApp::getAllMachineNames() {
     std::vector<std::string> machineNames;
     telux::common::Status status = tcuActivityMgr_->getAllMachineNames(machineNames);
-    if(status != telux::common::Status::SUCCESS) {
+    if (status != telux::common::Status::SUCCESS) {
         std::cout << APP_NAME << " ERROR - Failed to get all machine names " << std::endl;
     } else {
         std::cout << APP_NAME << " Number of available machines " << machineNames.size()
-            << std::endl;
-        for (size_t i = 0; i < machineNames.size(); i++){
+                  << std::endl;
+        for (size_t i = 0; i < machineNames.size(); i++) {
             std::cout << machineNames[i] << std::endl;
         }
     }
@@ -276,28 +275,28 @@ std::vector<std::string> PowerMgmtTestApp::getAllMachineNames() {
 }
 
 bool PowerMgmtTestApp::userInputMachineName(std::string &machineName) {
-    char delimiter = '\n';
+    char delimiter    = '\n';
     std::string input = "";
     std::vector<std::string> machineNames;
     telux::common::Status status = tcuActivityMgr_->getAllMachineNames(machineNames);
-    if(status != telux::common::Status::SUCCESS) {
+    if (status != telux::common::Status::SUCCESS) {
         std::cout << APP_NAME << " ERROR - Failed to get all machine name " << std::endl;
     }
-    std::cout << "Select machine from "<< machineNames.size()+2 << " available machines: "
-        << std::endl;
+    std::cout << "Select machine from " << machineNames.size() + 2
+              << " available machines: " << std::endl;
 
     std::cout << "1 : LOCAL_MACHINE" << std::endl;
     std::cout << "2 : ALL_MACHINES" << std::endl;
-    for (size_t i = 0; i < machineNames.size(); i++){
-        std::cout << i+3 << " : " << machineNames[i] << std::endl;
+    for (size_t i = 0; i < machineNames.size(); i++) {
+        std::cout << i + 3 << " : " << machineNames[i] << std::endl;
     }
 
     std::getline(std::cin, input, delimiter);
     int opt = -1;
-    if(!input.empty()) {
+    if (!input.empty()) {
         try {
             opt = std::stoi(input);
-        } catch(const std::exception &e) {
+        } catch (const std::exception &e) {
             std::cout << " ERROR: Invalid input, Enter numerical value " << opt << std::endl;
             return false;
         }
@@ -314,8 +313,8 @@ bool PowerMgmtTestApp::userInputMachineName(std::string &machineName) {
             machineName = ALL_MACHINES;
             break;
         default:
-            if((opt - 3 < (int)machineNames.size()) && (opt - 3) >= 0) {
-                machineName = machineNames[opt-3];
+            if ((opt - 3 < (int)machineNames.size()) && (opt - 3) >= 0) {
+                machineName = machineNames[opt - 3];
             } else {
                 std::cout << " Invalid option, try again " << std::endl;
                 return false;
@@ -326,51 +325,53 @@ bool PowerMgmtTestApp::userInputMachineName(std::string &machineName) {
 }
 
 TcuActivityState PowerMgmtTestApp::getTcuActivityState() {
-    TcuActivityState state = tcuActivityMgr_->getActivityState();
+    TcuActivityState state  = tcuActivityMgr_->getActivityState();
     std::string machineName = getMachineName();
     printTcuActivityState(state, machineName);
     return state;
 }
 
 void PowerMgmtTestApp::getTcuActivityStateEx(std::string machineName) {
-    if(machineName.empty()) {
+    if (machineName.empty()) {
         char delimiter = '\n';
         std::cout << "Enter Machine Name : ";
         std::getline(std::cin, machineName, delimiter);
     }
     TcuActivityState state;
     telux::common::ErrorCode ec = tcuActivityMgr_->getActivityState(machineName, state);
-    if(ec == telux::common::ErrorCode::SUCCESS) {
+    if (ec == telux::common::ErrorCode::SUCCESS) {
         printTcuActivityState(state, machineName);
     } else {
-        std::cout << "Failed to retrieve power state, errorcode: " << Utils::getErrorCodeAsString(ec) << "\n";
+        std::cout
+            << "Failed to retrieve power state, errorcode: " << Utils::getErrorCodeAsString(ec)
+            << "\n";
     }
 }
 
 void PowerMgmtTestApp::setModemActivityState() {
     TcuActivityState state = TcuActivityState::UNKNOWN;
-    char delimiter = '\n';
+    char delimiter         = '\n';
     std::string input;
     std::cout << "Select modem activity state(1-Suspend/2-Resume): ";
     std::getline(std::cin, input, delimiter);
     int opt = -1;
-    if(!input.empty()) {
+    if (!input.empty()) {
         try {
             opt = std::stoi(input);
-        } catch(const std::exception &e) {
+        } catch (const std::exception &e) {
             std::cout << " ERROR: Invalid input, Enter numerical value " << opt << std::endl;
         }
     } else {
         std::cout << " No input, try again " << std::endl;
         return;
     }
-    if(opt == 1) {
+    if (opt == 1) {
         state = TcuActivityState::SUSPEND;
-    } else if(opt == 2) {
+    } else if (opt == 2) {
         state = TcuActivityState::RESUME;
     }
     telux::common::Status status = tcuActivityMgr_->setModemActivityState(state);
-    if(status == telux::common::Status::SUCCESS) {
+    if (status == telux::common::Status::SUCCESS) {
         std::cout << APP_NAME << " Modem activity state is set successfully" << std::endl;
     } else {
         std::cout << APP_NAME << " Failed to set Modem activity state" << std::endl;
@@ -379,32 +380,29 @@ void PowerMgmtTestApp::setModemActivityState() {
 }
 
 int PowerMgmtTestApp::start(ClientInstanceConfig config) {
-    if(config.clientType == ClientType::MASTER) {
+    if (config.clientType == ClientType::MASTER) {
         std::cout << APP_NAME << " Initializing the client as a MASTER "
-            << ", Machine name: " << config.machineName
-            << ", Client name: " << config.clientName << std::endl;
+                  << ", Machine name: " << config.machineName
+                  << ", Client name: " << config.clientName << std::endl;
     } else {
         std::cout << APP_NAME << " Initializing the client as a SLAVE "
-            << ", Machine name: " << config.machineName
-            << ", Client name: " << config.clientName << std::endl;
+                  << ", Machine name: " << config.machineName
+                  << ", Client name: " << config.clientName << std::endl;
     }
     // Get power factory instance
     auto &powerFactory = PowerFactory::getInstance();
     // Get TCU-activity manager object
     std::promise<telux::common::ServiceStatus> prom = std::promise<telux::common::ServiceStatus>();
-    tcuActivityMgr_ = powerFactory.getTcuActivityManager(config,
-                        [&](telux::common::ServiceStatus status) {
-                             prom.set_value(status);
-                        });
-    if(tcuActivityMgr_ == nullptr)
-    {
+    tcuActivityMgr_                                 = powerFactory.getTcuActivityManager(
+        config, [&](telux::common::ServiceStatus status) { prom.set_value(status); });
+    if (tcuActivityMgr_ == nullptr) {
         std::cout << APP_NAME << " ERROR - Failed to get manager instance" << std::endl;
         return -1;
     }
     // Wait for TCU-activity manager to be ready
     std::cout << " Waiting for TCU Activity Manager to be ready " << std::endl;
     telux::common::ServiceStatus serviceStatus = prom.get_future().get();
-    if(serviceStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+    if (serviceStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << APP_NAME << " TCU-activity manager is ready" << std::endl;
     } else {
         std::cout << APP_NAME << " Failed to initialize TCU-activity manager" << std::endl;
@@ -417,101 +415,95 @@ int PowerMgmtTestApp::start(ClientInstanceConfig config) {
 void PowerMgmtTestApp::registerForUpdates() {
     // Registering a listener for TCU-activity state updates
     telux::common::Status status = tcuActivityMgr_->registerListener(shared_from_this());
-    if(status != telux::common::Status::SUCCESS) {
+    if (status != telux::common::Status::SUCCESS) {
         std::cout << APP_NAME << " ERROR - Failed to register for TCU-activity state updates"
-                << std::endl;
+                  << std::endl;
     } else {
         std::cout << APP_NAME << " Registered Listener for TCU-activity state updates" << std::endl;
     }
     // Registering a listener for TCU-activity management service status updates
     status = tcuActivityMgr_->registerServiceStateListener(shared_from_this());
-    if(status != telux::common::Status::SUCCESS) {
+    if (status != telux::common::Status::SUCCESS) {
         std::cout << APP_NAME << " ERROR - Failed to register for Service status updates"
-                << std::endl;
+                  << std::endl;
     }
 }
 
 void PowerMgmtTestApp::deregisterForUpdates() {
     // De-registering a listener for TCU-activity state updates
     telux::common::Status status = tcuActivityMgr_->deregisterListener(shared_from_this());
-    if(status != telux::common::Status::SUCCESS) {
+    if (status != telux::common::Status::SUCCESS) {
         std::cout << APP_NAME << " ERROR - Failed to de-register for TCU-activity state updates"
-                << std::endl;
+                  << std::endl;
     } else {
         std::cout << APP_NAME << " De-registered listener" << std::endl;
     }
     // De-registering a listener for TCU-activity management service status updates
     status = tcuActivityMgr_->deregisterServiceStateListener(shared_from_this());
-    if(status != telux::common::Status::SUCCESS) {
+    if (status != telux::common::Status::SUCCESS) {
         std::cout << APP_NAME << " ERROR - Failed to de-register for Service status updates"
-                << std::endl;
+                  << std::endl;
     }
 }
 
 void PowerMgmtTestApp::consoleinit() {
-   std::shared_ptr<ConsoleAppCommand> suspendSytemCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "1", "Suspend_System", {},
-         std::bind(&PowerMgmtTestApp::sendActivityStateCommand, this, TcuActivityState::SUSPEND)));
-   std::shared_ptr<ConsoleAppCommand> resumeSytemCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "2", "Resume_System", {},
-         std::bind(&PowerMgmtTestApp::sendActivityStateCommand, this, TcuActivityState::RESUME)));
-   std::shared_ptr<ConsoleAppCommand> shutdownSytemCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "3", "Shutdown_System", {},
-         std::bind(&PowerMgmtTestApp::sendActivityStateCommand, this, TcuActivityState::SHUTDOWN)));
-   std::shared_ptr<ConsoleAppCommand> getTcuStateCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "4", "Get_System_State", {},
-         std::bind(&PowerMgmtTestApp::getTcuActivityState, this)));
-   std::shared_ptr<ConsoleAppCommand> setModemActivityStateCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "5", "Set_Modem_Activity_State", {},
-         std::bind(&PowerMgmtTestApp::setModemActivityState, this)));
+    std::shared_ptr<ConsoleAppCommand> suspendSytemCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "Suspend_System", {},
+            std::bind(
+                &PowerMgmtTestApp::sendActivityStateCommand, this, TcuActivityState::SUSPEND)));
+    std::shared_ptr<ConsoleAppCommand> resumeSytemCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "Resume_System", {},
+            std::bind(
+                &PowerMgmtTestApp::sendActivityStateCommand, this, TcuActivityState::RESUME)));
+    std::shared_ptr<ConsoleAppCommand> shutdownSytemCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "Shutdown_System", {},
+            std::bind(
+                &PowerMgmtTestApp::sendActivityStateCommand, this, TcuActivityState::SHUTDOWN)));
+    std::shared_ptr<ConsoleAppCommand> getTcuStateCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "4", "Get_System_State", {}, std::bind(&PowerMgmtTestApp::getTcuActivityState, this)));
+    std::shared_ptr<ConsoleAppCommand> setModemActivityStateCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "Set_Modem_Activity_State", {},
+            std::bind(&PowerMgmtTestApp::setModemActivityState, this)));
     std::shared_ptr<ConsoleAppCommand> getMachineNameCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "6", "Get_Local_Machine_Name", {},
-         std::bind(&PowerMgmtTestApp::getMachineName, this)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "6", "Get_Local_Machine_Name", {}, std::bind(&PowerMgmtTestApp::getMachineName, this)));
     std::shared_ptr<ConsoleAppCommand> getAllMachineNamesCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "7", "Get_All_Machine_Names", {},
-         std::bind(&PowerMgmtTestApp::getAllMachineNames, this)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "Get_All_Machine_Names", {},
+            std::bind(&PowerMgmtTestApp::getAllMachineNames, this)));
     std::shared_ptr<ConsoleAppCommand> getTcuActivityStateExCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "8", "Get_Machine_State", {},
-         std::bind(&PowerMgmtTestApp::getTcuActivityStateEx, this, "")));
-   std::shared_ptr<ConsoleAppCommand> regWakeupReasonCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "9", "Start_Listening_Wakeup_Details", {},
-         std::bind(&PowerMgmtTestApp::regForWakeupReason, this)));
-   std::shared_ptr<ConsoleAppCommand> deregWakeupReasonCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "10", "Stop_Listening_Wakeup_Details", {},
-         std::bind(&PowerMgmtTestApp::deregForWakeupReason, this)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8", "Get_Machine_State", {},
+            std::bind(&PowerMgmtTestApp::getTcuActivityStateEx, this, "")));
+    std::shared_ptr<ConsoleAppCommand> regWakeupReasonCommand = std::make_shared<ConsoleAppCommand>(
+        ConsoleAppCommand("9", "Start_Listening_Wakeup_Details", {},
+            std::bind(&PowerMgmtTestApp::regForWakeupReason, this)));
+    std::shared_ptr<ConsoleAppCommand> deregWakeupReasonCommand
+        = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand("10", "Stop_Listening_Wakeup_Details", {},
+                std::bind(&PowerMgmtTestApp::deregForWakeupReason, this)));
 
-   std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListPowerMenu
-      = {suspendSytemCommand, resumeSytemCommand, shutdownSytemCommand, getTcuStateCommand,
-         setModemActivityStateCommand, getMachineNameCommand, getAllMachineNamesCommand,
-         getTcuActivityStateExCommand, regWakeupReasonCommand, deregWakeupReasonCommand};
-   ConsoleApp::addCommands(commandsListPowerMenu);
-   ConsoleApp::displayMenu();
+    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListPowerMenu
+        = {suspendSytemCommand, resumeSytemCommand, shutdownSytemCommand, getTcuStateCommand,
+            setModemActivityStateCommand, getMachineNameCommand, getAllMachineNamesCommand,
+            getTcuActivityStateExCommand, regWakeupReasonCommand, deregWakeupReasonCommand};
+    ConsoleApp::addCommands(commandsListPowerMenu);
+    ConsoleApp::displayMenu();
 }
 
-std::shared_ptr<PowerMgmtTestApp> init(ClientType clientType, std::string clientName,
-    std::string machineName) {
+std::shared_ptr<PowerMgmtTestApp> init(
+    ClientType clientType, std::string clientName, std::string machineName) {
     std::shared_ptr<PowerMgmtTestApp> powerMgmtTest = std::make_shared<PowerMgmtTestApp>();
     if (!powerMgmtTest) {
         std::cout << "Failed to instantiate PowerMgmtTestApp" << std::endl;
         return nullptr;
     }
     ClientInstanceConfig config;
-    config.clientType = clientType;
-    config.clientName = clientName;
-    config.machineName =  machineName;
-    if( 0 != powerMgmtTest->start(config)) {
+    config.clientType  = clientType;
+    config.clientName  = clientName;
+    config.machineName = machineName;
+    if (0 != powerMgmtTest->start(config)) {
         std::cout << APP_NAME << " Failed to initialize the TCU-activity management service"
-            << std::endl;
+                  << std::endl;
         return nullptr;
     }
     return powerMgmtTest;
@@ -568,10 +560,8 @@ void PowerMgmtTestApp::regForWakeupReason() {
 
     if (!wakeupMgr_) {
         auto &powerFactory = telux::power::PowerFactory::getInstance();
-        wakeupMgr_ = powerFactory.getWakeupManager(
-            [&p](telux::common::ServiceStatus srvStatus) {
-            p.set_value(srvStatus);
-        });
+        wakeupMgr_         = powerFactory.getWakeupManager(
+            [&p](telux::common::ServiceStatus srvStatus) { p.set_value(srvStatus); });
         if (!wakeupMgr_) {
             std::cout << "Can't get IWakeupManager" << std::endl;
             return;
@@ -579,8 +569,8 @@ void PowerMgmtTestApp::regForWakeupReason() {
 
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Power service unavailable, status " <<
-                static_cast<int>(serviceStatus) << std::endl;
+            std::cout << "Power service unavailable, status " << static_cast<int>(serviceStatus)
+                      << std::endl;
             wakeupMgr_ = nullptr;
             return;
         }
@@ -588,7 +578,7 @@ void PowerMgmtTestApp::regForWakeupReason() {
 
     try {
         wakeupReasonListener_ = std::make_shared<WakeupReasonListener>();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << "Can't allocate WakeupReasonListener" << std::endl;
         return;
     }
@@ -635,26 +625,26 @@ void PowerMgmtTestApp::deregForWakeupReason() {
 /**
  * Main routine
  */
-int main(int argc, char ** argv) {
+int main(int argc, char **argv) {
 
-    bool inputCommand = false;
-    TcuActivityState state = TcuActivityState::UNKNOWN;
-    ClientType clientType = ClientType::SLAVE;
-    std::string clientName = "telux_power_test_app_"+std::to_string(getpid());
-    std::string machineName = ALL_MACHINES;
-    bool isGetAllMachineNames = false;
-    bool isGetMachineName = false;
-    bool isGetActivityState = false;
+    bool inputCommand                       = false;
+    TcuActivityState state                  = TcuActivityState::UNKNOWN;
+    ClientType clientType                   = ClientType::SLAVE;
+    std::string clientName                  = "telux_power_test_app_" + std::to_string(getpid());
+    std::string machineName                 = ALL_MACHINES;
+    bool isGetAllMachineNames               = false;
+    bool isGetMachineName                   = false;
+    bool isGetActivityState                 = false;
     std::string machineNameTcuActivityState = "";
 
-    if(argc <= 1) {
+    if (argc <= 1) {
         printHelp();
         return -1;
     }
     // Setting required secondary groups for SDK file/diag logging
     std::vector<std::string> supplementaryGrps{"system", "diag", "logd", "dlt"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
-    if (rc == -1){
+    if (rc == -1) {
         std::cout << APP_NAME << "Adding supplementary groups failed!" << std::endl;
     }
 
@@ -663,26 +653,26 @@ int main(int argc, char ** argv) {
             listenerEnabled = true;
         } else if (std::string(argv[i]) == "-n") {
             ++i;
-            if(i >= argc) {
+            if (i >= argc) {
                 std::cout << APP_NAME << " Please provide client name" << std::endl;
                 return -1;
             }
             clientName = std::string(argv[i]);
-        } else  if (std::string(argv[i]) == "-s") {
-            clientType = ClientType::MASTER;
-            inputCommand=true;
-            state=TcuActivityState::SUSPEND;
+        } else if (std::string(argv[i]) == "-s") {
+            clientType   = ClientType::MASTER;
+            inputCommand = true;
+            state        = TcuActivityState::SUSPEND;
         } else if (std::string(argv[i]) == "-r") {
-            clientType = ClientType::MASTER;
-            inputCommand=true;
-            state=TcuActivityState::RESUME;
+            clientType   = ClientType::MASTER;
+            inputCommand = true;
+            state        = TcuActivityState::RESUME;
         } else if (std::string(argv[i]) == "-p") {
-            clientType = ClientType::MASTER;
-            inputCommand=true;
-            state=TcuActivityState::SHUTDOWN;
+            clientType   = ClientType::MASTER;
+            inputCommand = true;
+            state        = TcuActivityState::SHUTDOWN;
         } else if (std::string(argv[i]) == "-M") {
             ++i;
-            if(i >= argc) {
+            if (i >= argc) {
                 std::cout << APP_NAME << " Please provide machine name" << std::endl;
                 return -1;
             }
@@ -695,22 +685,22 @@ int main(int argc, char ** argv) {
             machineName = ALL_MACHINES;
         } else if (std::string(argv[i]) == "-a") {
             isGetAllMachineNames = true;
-        }  else if (std::string(argv[i]) == "-T") {
+        } else if (std::string(argv[i]) == "-T") {
             isGetActivityState = true;
-            clientType = ClientType::MASTER;
+            clientType         = ClientType::MASTER;
             ++i;
-            if(i >= argc) {
+            if (i >= argc) {
                 std::cout << APP_NAME << " Please provide machine name" << std::endl;
                 return -1;
             }
             machineNameTcuActivityState = std::string(argv[i]);
-        }  else if (std::string(argv[i]) == "-t") {
+        } else if (std::string(argv[i]) == "-t") {
             isGetActivityState = true;
         } else if (std::string(argv[i]) == "-c") {
             clientType = ClientType::MASTER;
-            std::shared_ptr<PowerMgmtTestApp> myPowerMgmtTest =
-                init(clientType, clientName, machineName);
-            if(myPowerMgmtTest == nullptr) {
+            std::shared_ptr<PowerMgmtTestApp> myPowerMgmtTest
+                = init(clientType, clientName, machineName);
+            if (myPowerMgmtTest == nullptr) {
                 std::cout << "Exiting application..." << std::endl;
                 return 0;
             }
@@ -728,11 +718,11 @@ int main(int argc, char ** argv) {
         }
     }
     std::shared_ptr<PowerMgmtTestApp> myPowerMgmtTest = init(clientType, clientName, machineName);
-    if(myPowerMgmtTest == nullptr) {
+    if (myPowerMgmtTest == nullptr) {
         std::cout << "Exiting application..." << std::endl;
         return 0;
     }
-    if(listenerEnabled) {
+    if (listenerEnabled) {
         myPowerMgmtTest->registerForUpdates();
     }
     if (listenForWakeup) {
@@ -740,24 +730,24 @@ int main(int argc, char ** argv) {
     }
     signal(SIGINT, signalHandler);
     std::unique_lock<std::mutex> lock(mutex);
-    if(inputCommand) {
+    if (inputCommand) {
         myPowerMgmtTest->registerForUpdates();
         myPowerMgmtTest->sendActivityStateCommandEx(machineName, state);
     }
-    if(isGetAllMachineNames) {
+    if (isGetAllMachineNames) {
         myPowerMgmtTest->getAllMachineNames();
         return 0;
     }
-    if(isGetMachineName) {
+    if (isGetMachineName) {
         myPowerMgmtTest->getMachineName();
         return 0;
     }
-    if(isGetActivityState) {
+    if (isGetActivityState) {
         /**
          * For slave, already TcuActivityState is invoked during init
          * of PowerTestApp class for Local machine.
          */
-        if(clientType == ClientType::MASTER) {
+        if (clientType == ClientType::MASTER) {
             myPowerMgmtTest->getTcuActivityStateEx(machineNameTcuActivityState);
         }
         return 0;
@@ -765,7 +755,7 @@ int main(int argc, char ** argv) {
 
     std::cout << APP_NAME << " Press CTRL+C to exit" << std::endl;
     cv.wait(lock);
-    if(listenerEnabled || inputCommand) {
+    if (listenerEnabled || inputCommand) {
         myPowerMgmtTest->deregisterForUpdates();
     }
     if (listenForWakeup) {

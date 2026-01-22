@@ -26,41 +26,13 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 /**
  * @file       RemoteSimManager.hpp
  * @brief      Remote SIM Manager is a primary interface for remote card operations.
@@ -101,7 +73,7 @@ namespace tel {
  *        a SIM card to the modem.
  */
 class IRemoteSimManager {
-public:
+ public:
     /**
      * Checks the status of remote SIM subsystem and returns the result.
      *
@@ -123,14 +95,14 @@ public:
     virtual std::future<bool> onSubsystemReady() = 0;
 
     /**
-    * This status indicates whether the IRemoteSimManager object is in a usable state.
-    *
-    * @returns SERVICE_AVAILABLE    - If Remote Sim Manager is ready for service.
-    *          SERVICE_UNAVAILABLE  - If Remote Sim Manager is temporarily unavailable.
-    *          SERVICE_FAILED       - If Remote Sim Manager encountered an irrecoverable
-    *                                 failure.
-    *
-    */
+     * This status indicates whether the IRemoteSimManager object is in a usable state.
+     *
+     * @returns SERVICE_AVAILABLE    - If Remote Sim Manager is ready for service.
+     *          SERVICE_UNAVAILABLE  - If Remote Sim Manager is temporarily unavailable.
+     *          SERVICE_FAILED       - If Remote Sim Manager encountered an irrecoverable
+     *                                 failure.
+     *
+     */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
@@ -150,7 +122,8 @@ public:
      * @returns Status of sendConnectionAvailable i.e. success or suitable status code.
      */
     virtual telux::common::Status sendConnectionAvailable(
-        telux::common::ResponseCallback callback = nullptr) = 0;
+        telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Send connection unavailable event to the modem.
@@ -160,7 +133,8 @@ public:
      * @returns Status of sendConnectionUnavailable i.e. success or suitable status code.
      */
     virtual telux::common::Status sendConnectionUnavailable(
-        telux::common::ResponseCallback callback = nullptr) = 0;
+        telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Send card reset event to the modem.
@@ -171,8 +145,8 @@ public:
      *
      * @returns Status of sendCardReset i.e. success or suitable status code.
      */
-    virtual telux::common::Status sendCardReset(const std::vector<uint8_t> &atr,
-                                                telux::common::ResponseCallback callback = nullptr)
+    virtual telux::common::Status sendCardReset(
+        const std::vector<uint8_t> &atr, telux::common::ResponseCallback callback = nullptr)
         = 0;
 
     /**
@@ -184,8 +158,9 @@ public:
      * @returns Status of sendCardError i.e. success or suitable status code.
      */
     virtual telux::common::Status sendCardError(
-        const CardErrorCause cause = CardErrorCause::INVALID,
-        telux::common::ResponseCallback callback = nullptr) = 0;
+        const CardErrorCause cause               = CardErrorCause::INVALID,
+        telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Send card inserted event to the modem.
@@ -196,8 +171,9 @@ public:
      *
      * @returns Status of sendCardInserted i.e. success or suitable status code.
      */
-    virtual telux::common::Status sendCardInserted(const std::vector<uint8_t> &atr,
-        telux::common::ResponseCallback callback = nullptr) = 0;
+    virtual telux::common::Status sendCardInserted(
+        const std::vector<uint8_t> &atr, telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Send card removed event to the modem.
@@ -207,7 +183,8 @@ public:
      * @returns Status of sendCardRemoved i.e. success or suitable status code.
      */
     virtual telux::common::Status sendCardRemoved(
-        telux::common::ResponseCallback callback = nullptr) = 0;
+        telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Send card wakeup event to the modem.
@@ -216,8 +193,8 @@ public:
      *
      * @returns Status of sendCardWakeup i.e. success or suitable status code.
      */
-    virtual telux::common::Status sendCardWakeup(
-        telux::common::ResponseCallback callback = nullptr) = 0;
+    virtual telux::common::Status sendCardWakeup(telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Sends an APDU message to the modem, in response to a previous APDU sent by the modem.
@@ -234,10 +211,9 @@ public:
      * @returns Status of sendApdu i.e. success or suitable status code.
      */
     virtual telux::common::Status sendApdu(const unsigned int id, const std::vector<uint8_t> &apdu,
-                                           const bool isSuccess = true,
-                                           const unsigned int totalSize = 0,
-                                           const unsigned int offset = 0,
-                                           telux::common::ResponseCallback callback = nullptr) = 0;
+        const bool isSuccess = true, const unsigned int totalSize = 0,
+        const unsigned int offset = 0, telux::common::ResponseCallback callback = nullptr)
+        = 0;
 
     /**
      * Register a listener for specific updates from the modem.
@@ -272,12 +248,12 @@ public:
      */
     virtual ~IRemoteSimManager(){};
 
-}; // End of IRemoteSimManager
+};  // End of IRemoteSimManager
 
 /** @} */ /* end_addtogroup telematics_remote_sim */
 
-} // End of namespace tel
+}  // End of namespace tel
 
-} // End of namespace telux
+}  // End of namespace telux
 
-#endif // TELUX_TEL_REMOTESIMMANAGER_HPP
+#endif  // TELUX_TEL_REMOTESIMMANAGER_HPP

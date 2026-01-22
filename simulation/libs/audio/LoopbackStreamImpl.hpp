@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef LOOPBACKSTREAMIMPL_HPP
@@ -20,8 +20,7 @@ class LoopbackStreamImpl : public IAudioLoopbackStream,
                            public IStopStreamCb {
 
  public:
-    LoopbackStreamImpl(uint32_t streamId,
-        std::shared_ptr<ICommunicator> transportClient);
+    LoopbackStreamImpl(uint32_t streamId, std::shared_ptr<ICommunicator> transportClient);
 
     ~LoopbackStreamImpl();
 
@@ -29,14 +28,12 @@ class LoopbackStreamImpl : public IAudioLoopbackStream,
 
     telux::common::Status stopLoopback(telux::common::ResponseCallback callback = nullptr);
 
-    void onStreamStartResult(telux::common::ErrorCode ec, uint32_t streamId,
-            int cmdId) override;
+    void onStreamStartResult(telux::common::ErrorCode ec, uint32_t streamId, int cmdId) override;
 
-    void onStreamStopResult(telux::common::ErrorCode ec, uint32_t streamId,
-            int cmdId) override;
+    void onStreamStopResult(telux::common::ErrorCode ec, uint32_t streamId, int cmdId) override;
 };
 
 }  // end of namespace audio
 }  // end of namespace telux
 
-#endif // LOOPBACKSTREAMIMPL_HPP
+#endif  // LOOPBACKSTREAMIMPL_HPP

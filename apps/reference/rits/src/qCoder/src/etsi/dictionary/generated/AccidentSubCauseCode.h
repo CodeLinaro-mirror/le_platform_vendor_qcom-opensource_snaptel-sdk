@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_AccidentSubCauseCode_H_
-#define	_AccidentSubCauseCode_H_
-
+#ifndef _AccidentSubCauseCode_H_
+#define _AccidentSubCauseCode_H_
 
 #include <asn_application.h>
 
@@ -20,19 +19,19 @@ extern "C" {
 
 /* Dependencies */
 typedef enum AccidentSubCauseCode {
-	AccidentSubCauseCode_unavailable	= 0,
-	AccidentSubCauseCode_multiVehicleAccident	= 1,
-	AccidentSubCauseCode_heavyAccident	= 2,
-	AccidentSubCauseCode_accidentInvolvingLorry	= 3,
-	AccidentSubCauseCode_accidentInvolvingBus	= 4,
-	AccidentSubCauseCode_accidentInvolvingHazardousMaterials	= 5,
-	AccidentSubCauseCode_accidentOnOppositeLane	= 6,
-	AccidentSubCauseCode_unsecuredAccident	= 7,
-	AccidentSubCauseCode_assistanceRequested	= 8
+    AccidentSubCauseCode_unavailable                         = 0,
+    AccidentSubCauseCode_multiVehicleAccident                = 1,
+    AccidentSubCauseCode_heavyAccident                       = 2,
+    AccidentSubCauseCode_accidentInvolvingLorry              = 3,
+    AccidentSubCauseCode_accidentInvolvingBus                = 4,
+    AccidentSubCauseCode_accidentInvolvingHazardousMaterials = 5,
+    AccidentSubCauseCode_accidentOnOppositeLane              = 6,
+    AccidentSubCauseCode_unsecuredAccident                   = 7,
+    AccidentSubCauseCode_assistanceRequested                 = 8
 } e_AccidentSubCauseCode;
 
 /* AccidentSubCauseCode */
-typedef long	 AccidentSubCauseCode_t;
+typedef long AccidentSubCauseCode_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_AccidentSubCauseCode;
@@ -50,5 +49,5 @@ per_type_encoder_f AccidentSubCauseCode_encode_uper;
 }
 #endif
 
-#endif	/* _AccidentSubCauseCode_H_ */
+#endif /* _AccidentSubCauseCode_H_ */
 #include <asn_internal.h>

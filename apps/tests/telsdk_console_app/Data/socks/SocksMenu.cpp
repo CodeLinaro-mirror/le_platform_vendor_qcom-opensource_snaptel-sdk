@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 extern "C" {
 #include "unistd.h"
 }
@@ -45,8 +51,8 @@ using namespace std;
 
 SocksMenu::SocksMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
-    socksManager_ = nullptr;
-    menuOptionsAdded_ = false;
+    socksManager_           = nullptr;
+    menuOptionsAdded_       = false;
     subSystemStatusUpdated_ = false;
 }
 
@@ -55,41 +61,40 @@ SocksMenu::~SocksMenu() {
 
 bool SocksMenu::init() {
     telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
-    subSystemStatusUpdated_ = false;
+    subSystemStatusUpdated_                      = false;
     if (socksManager_ == nullptr) {
-        auto initCb = std::bind(&SocksMenu::onInitComplete, this, std::placeholders::_1);
+        auto initCb       = std::bind(&SocksMenu::onInitComplete, this, std::placeholders::_1);
         auto &dataFactory = telux::data::DataFactory::getInstance();
-        auto localSocksMgr = dataFactory.getSocksManager(
-            telux::data::OperationType::DATA_LOCAL, initCb);
-        if(localSocksMgr) {
+        auto localSocksMgr
+            = dataFactory.getSocksManager(telux::data::OperationType::DATA_LOCAL, initCb);
+        if (localSocksMgr) {
             socksManager_ = localSocksMgr;
         }
-        auto remoteSocksMgr = dataFactory.getSocksManager(
-            telux::data::OperationType::DATA_REMOTE, initCb);
-        if(remoteSocksMgr) {
+        auto remoteSocksMgr
+            = dataFactory.getSocksManager(telux::data::OperationType::DATA_REMOTE, initCb);
+        if (remoteSocksMgr) {
             socksManager_ = remoteSocksMgr;
         }
-        if(socksManager_ == nullptr ) {
+        if (socksManager_ == nullptr) {
             std::cout << "\nUnable to create Socks Manager ... " << std::endl;
             return false;
         }
         socksManager_->registerListener(shared_from_this());
         {
             std::unique_lock<std::mutex> lck(mtx_);
-            //Socks Manager is guaranteed to be valid pointer at this point. If manager
-            //initialization fails and factory invalidated it's own pointer to Socks manager before
-            //reaching this point, reference count of Socks manager should still be 1
+            // Socks Manager is guaranteed to be valid pointer at this point. If manager
+            // initialization fails and factory invalidated it's own pointer to Socks manager before
+            // reaching this point, reference count of Socks manager should still be 1
             telux::common::ServiceStatus subSystemStatus = socksManager_->getServiceStatus();
             if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
                 std::cout << "\nInitializing Socks Manager, Please wait ..." << std::endl;
-                cv_.wait(lck, [this]{return this->subSystemStatusUpdated_;});
+                cv_.wait(lck, [this] { return this->subSystemStatusUpdated_; });
                 subSystemStatus = socksManager_->getServiceStatus();
             }
-            //At this point, initialization should be either AVAILABLE or FAIL
+            // At this point, initialization should be either AVAILABLE or FAIL
             if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
                 std::cout << "\nSocks Manager is ready" << std::endl;
-            }
-            else {
+            } else {
                 std::cout << "\nSocks Manager initialization failed" << std::endl;
                 socksManager_ = nullptr;
                 return false;
@@ -99,8 +104,8 @@ bool SocksMenu::init() {
     if (menuOptionsAdded_ == false) {
         menuOptionsAdded_ = true;
         std::shared_ptr<ConsoleAppCommand> enableSocks
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "socks_enablement",
-                {}, std::bind(&SocksMenu::enableSocks, this, std::placeholders::_1)));
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "socks_enablement", {},
+                std::bind(&SocksMenu::enableSocks, this, std::placeholders::_1)));
 
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {enableSocks};
 
@@ -126,7 +131,7 @@ void SocksMenu::enableSocks(std::vector<std::string> inputCommand) {
     std::cout << "Enter Enablement Type (0-Disable, 1-Enable): ";
     std::cin >> enableEntry;
     Utils::validateInput(enableEntry);
-    if (enableEntry < 0 || enableEntry >1) {
+    if (enableEntry < 0 || enableEntry > 1) {
         std::cout << "Invalid Entry. Please try again ...\n";
         return;
     }
@@ -141,6 +146,6 @@ void SocksMenu::enableSocks(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    retStat = socksManager_->enableSocks(enablement,respCb);
+    retStat = socksManager_->enableSocks(enablement, respCb);
     Utils::printStatus(retStat);
 }

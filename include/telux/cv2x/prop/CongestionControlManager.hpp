@@ -1,5 +1,4 @@
 /*
- * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -36,13 +35,13 @@ using CongestionControlMap = std::map<uint64_t, CongestionControlData>;
  * @brief Utility class for congestion control logging and testing purposes.
  */
 class CongestionControlUtility {
-private:
+ private:
     /**
      * uint8_t value for determining the verbosity level of congestion control manager
      */
     static uint8_t loggingLevel;
-public:
 
+ public:
     /**
      * Sets the logging level
      *
@@ -68,17 +67,19 @@ public:
      * @note -  Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
      */
-    static void addDensity(uint64_t density, uint64_t initDistance) {}
+    static void addDensity(uint64_t density, uint64_t initDistance) {
+    }
 };
 
 /**
  * @brief Congestion Control listeners implement this interface.
  */
 class ICongestionControlListener {
-public:
+ public:
     /**
      * Called when the new congestion control data is available.
-     *
+     * By default, this will be at a 100ms interval. However, this API may be called
+     * asynchronously if there is a tracking error event.
      * @param [in] congestionControlUserData - pointer to output user data
      *      which manager will fill. Lets the user know they should immediately
      *      send a new message. If SPS enhancements are enabled, they may
@@ -88,29 +89,31 @@ public:
      *          and could break backwards compatibility.
      */
     virtual void onCongestionControlDataReady(
-        std::shared_ptr<CongestionControlUserData> congestionControlUserData,
-        bool trackErrEvent) {}
+        std::shared_ptr<CongestionControlUserData> congestionControlUserData, bool trackErrEvent) {
+    }
 
     /** @param [in] newItt - updated inter-transmit time in milliseconds that the library computes
-    * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
-    */
+     * The Congestion Control Manager will call this Listener API when it computes a new
+     * inter-transmit time based on the smoothed density of vehicles within range of 
+     * the host vehicle.
+     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
     virtual void onIttUpdate (uint64_t newItt) {}
 
     /**
      * Destructor for ICongestionControlListener
      */
-    virtual ~ICongestionControlListener() {}
+    virtual ~ICongestionControlListener() {
+    }
 };
-
 
 /**
  * @brief CongestionControl Manager is a primary interface for
  *        CongestionControl related functionality.
  */
 class ICongestionControlManager {
-public:
-
+ public:
     /**
      * Called to update the internal config parameters with custom values
      *
@@ -121,7 +124,8 @@ public:
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
     virtual CCErrorCode updateCongestionControlConfig(
-        std::shared_ptr<CongestionControlConfig> congestionControlConfigIn) = 0;
+        std::shared_ptr<CongestionControlConfig> congestionControlConfigIn)
+        = 0;
 
     /**
      * Called to update the type of congestion control
@@ -131,8 +135,8 @@ public:
      *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
-    virtual CCErrorCode updateCongestionControlType(
-        CongestionControlType congestionControlType) = 0;
+    virtual CCErrorCode updateCongestionControlType(CongestionControlType congestionControlType)
+        = 0;
 
     /**
      * The primary congestion control driver to be called after initialization.
@@ -165,8 +169,8 @@ public:
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
 
-    virtual CCErrorCode registerListener(
-        std::weak_ptr<ICongestionControlListener> congCtrlListener) = 0;
+    virtual CCErrorCode registerListener(std::weak_ptr<ICongestionControlListener> congCtrlListener)
+        = 0;
 
     /**
      * Called to deregister a ICongestionControlListener implementation
@@ -174,15 +178,17 @@ public:
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
     virtual CCErrorCode deregisterListener(
-        std::weak_ptr<ICongestionControlListener> congCtrlListener) = 0;
+        std::weak_ptr<ICongestionControlListener> congCtrlListener)
+        = 0;
 
     /**
-    * Called to get a shared pointer to the results of the Congestion Control periodic calculations.
-    * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
-    * @returns std::shared_ptr<CongestionControlUserData> - shared pointer reference to the
-    *                          CongestionControlUserData that the manager will update.
-    */
+     * Called to get a shared pointer to the results of the Congestion Control periodic
+     * calculations.
+     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     * @returns std::shared_ptr<CongestionControlUserData> - shared pointer reference to the
+     *                          CongestionControlUserData that the manager will update.
+     */
     virtual std::shared_ptr<CongestionControlUserData> getCongestionControlUserData() = 0;
 
     /**
@@ -194,8 +200,7 @@ public:
      *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
-    virtual CCErrorCode updateCbpConfig(
-        double cbpWeightFactor, uint64_t cbpInterval) = 0;
+    virtual CCErrorCode updateCbpConfig(double cbpWeightFactor, uint64_t cbpInterval) = 0;
 
     /**
      * Update the packet error rate related configs
@@ -208,8 +213,8 @@ public:
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
     virtual CCErrorCode updatePERConfig(
-        double maxPacketErrorRate, int packetErrorRateInterval,
-        int packetErrorRateSubInterval) = 0;
+        double maxPacketErrorRate, int packetErrorRateInterval, int packetErrorRateSubInterval)
+        = 0;
 
     /**
      * Update the density related configs
@@ -221,8 +226,9 @@ public:
      *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
-    virtual CCErrorCode updateDensConfig(double densCoeff,
-        double densWeightFactor, uint64_t distThresh) = 0;
+    virtual CCErrorCode updateDensConfig(
+        double densCoeff, double densWeightFactor, uint64_t distThresh)
+        = 0;
 
     /**
      * Update the tracking error related configs
@@ -239,11 +245,10 @@ public:
      *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
-    virtual CCErrorCode updateTeConfig(uint64_t txCtrlInterval,
-        uint64_t hvMinTimeDiff, uint64_t hvMaxTimeDiff,
-        uint64_t rvMinTimeDiff, uint64_t rvMaxTimeDiff,
-        uint64_t teLowerThresh, uint64_t teUpperThresh,
-        uint64_t errSensitivity) = 0;
+    virtual CCErrorCode updateTeConfig(uint64_t txCtrlInterval, uint64_t hvMinTimeDiff,
+        uint64_t hvMaxTimeDiff, uint64_t rvMinTimeDiff, uint64_t rvMaxTimeDiff,
+        uint64_t teLowerThresh, uint64_t teUpperThresh, uint64_t errSensitivity)
+        = 0;
 
     /**
      * Update the inter-transmit time related configs
@@ -257,9 +262,9 @@ public:
      *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
-    virtual CCErrorCode updateIttConfig(uint64_t reschedThresh,
-        uint64_t timeAccuracy, uint64_t minIttThresh,
-        uint64_t maxIttThresh, uint64_t txRand) = 0;
+    virtual CCErrorCode updateIttConfig(uint64_t reschedThresh, uint64_t timeAccuracy,
+        uint64_t minIttThresh, uint64_t maxIttThresh, uint64_t txRand)
+        = 0;
 
     /**
      * Update the transmit rate control related configs
@@ -284,8 +289,9 @@ public:
      *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
-    virtual CCErrorCode updateSpsEnhanceConfig(uint64_t spsPeriodicity,
-        uint64_t changeFrequency, double hysterPercent) = 0;
+    virtual CCErrorCode updateSpsEnhanceConfig(
+        uint64_t spsPeriodicity, uint64_t changeFrequency, double hysterPercent)
+        = 0;
 
     /**
      * Enables sps ennhancements
@@ -314,7 +320,7 @@ public:
      *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
-    virtual CCErrorCode updateHostVehicleData(Position& pos, double speed) = 0;
+    virtual CCErrorCode updateHostVehicleData(Position &pos, double speed) = 0;
 
     /**
      * Used whenever the user needs to update latest host vehicle information to manager
@@ -368,7 +374,8 @@ public:
 
     /**
      * Called whenever there is a packet received from new vehicle nearby
-     *
+     * For a new vehicle's data to be added, the host vehicle needs to be within 100m
+     * of the new vehicle. This is calculated based on their latitudes and longitudes.
      * @param [in] id - A remote vehicle identity
      * @param [in]  - latitude - latitude of the vehicle
      * @param [in]  - longitude - longitude of the vehicle
@@ -380,10 +387,9 @@ public:
      *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
-    virtual CCErrorCode addCongestionControlData(uint64_t id,
-        double latitude, double longitude,
-        double heading, double speed,
-        uint64_t timestamp, uint64_t msgCount) = 0;
+    virtual CCErrorCode addCongestionControlData(uint64_t id, double latitude, double longitude,
+        double heading, double speed, uint64_t timestamp, uint64_t msgCount)
+        = 0;
 
     /**
      * Called when we need to remove data related to a vehicle
@@ -406,16 +412,14 @@ public:
      * @returns CongestionControlData copy of the data the manager has and uses
      *          for a given vehicle id, if any.
      */
-    virtual std::shared_ptr<CongestionControlData> getCongestionControlData(
-        uint64_t id) = 0;
+    virtual std::shared_ptr<CongestionControlData> getCongestionControlData(uint64_t id) = 0;
 
     ICongestionControlManager();
     ~ICongestionControlManager();
-
 };
 /** @} */ /* end_addtogroup telematics_cv2x_cpp */
 
 }  // End of namespace prop
 }  // End of namespace cv2x
 }  // End of namespace telux
-#endif // TELUX_CV2X_PROP_CONGESTIONCONTROLMANAGER_HPP
+#endif  // TELUX_CV2X_PROP_CONGESTIONCONTROLMANAGER_HPP

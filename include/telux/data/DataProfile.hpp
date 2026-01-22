@@ -55,125 +55,125 @@ namespace data {
  *
  */
 class DataProfile {
-public:
-   static constexpr int PROFILE_ID_INVALID = -1;
+ public:
+    static constexpr int PROFILE_ID_INVALID = -1;
 
-   DataProfile(int id, const std::string &name, const std::string &apn, const std::string &username,
-               const std::string &password, IpFamilyType ipFamilyType, TechPreference techPref,
-               AuthProtocolType authType, ApnTypes apnTypes,
-               EmergencyCapability emergencyAllowed, bool clatEnabled);
+    DataProfile(int id, const std::string &name, const std::string &apn,
+        const std::string &username, const std::string &password, IpFamilyType ipFamilyType,
+        TechPreference techPref, AuthProtocolType authType, ApnTypes apnTypes,
+        EmergencyCapability emergencyAllowed, bool clatEnabled);
 
-   /**
-    * Get profile identifier.
-    *
-    * @returns profile id
-    *
-    */
-   int getId();
+    /**
+     * Get profile identifier.
+     *
+     * @returns profile id
+     *
+     */
+    int getId();
 
-   /**
-    * Get profile name.
-    *
-    * @returns profile name
-    *
-    */
-   std::string getName();
+    /**
+     * Get profile name.
+     *
+     * @returns profile name
+     *
+     */
+    std::string getName();
 
-   /**
-    * Get Access Point Name (APN) name.
-    *
-    * @returns APN name
-    *
-    */
-   std::string getApn();
+    /**
+     * Get Access Point Name (APN) name.
+     *
+     * @returns APN name
+     *
+     */
+    std::string getApn();
 
-   /**
-    * Get profile user name.
-    *
-    * @returns user name
-    *
-    */
-   std::string getUserName();
+    /**
+     * Get profile user name.
+     *
+     * @returns user name
+     *
+     */
+    std::string getUserName();
 
-   /**
-    * Get profile password.
-    *
-    * @returns profile password
-    *
-    */
-   std::string getPassword();
+    /**
+     * Get profile password.
+     *
+     * @returns profile password
+     *
+     */
+    std::string getPassword();
 
-   /**
-    * Get technology preference.
-    *
-    * @returns TechPreference @ref TechPreference
-    *
-    */
-   TechPreference getTechPreference();
+    /**
+     * Get technology preference.
+     *
+     * @returns TechPreference @ref TechPreference
+     *
+     */
+    TechPreference getTechPreference();
 
-   /**
-    * Get authentication preference.
-    *
-    * @returns AuthProtocolType @ref AuthProtocolType
-    *
-    */
-   AuthProtocolType getAuthProtocolType();
+    /**
+     * Get authentication preference.
+     *
+     * @returns AuthProtocolType @ref AuthProtocolType
+     *
+     */
+    AuthProtocolType getAuthProtocolType();
 
-   /**
-    * Get IP Family type.
-    *
-    * @returns IpFamilyType @ref IpFamilyType
-    *
-    */
-   IpFamilyType getIpFamilyType();
+    /**
+     * Get IP Family type.
+     *
+     * @returns IpFamilyType @ref IpFamilyType
+     *
+     */
+    IpFamilyType getIpFamilyType();
 
-   /**
-    * Get Apn type mask.
-    *
-    * @returns ApnTypes @ref ApnTypes
-    *
-    */
-   ApnTypes getApnTypes();
+    /**
+     * Get Apn type mask.
+     *
+     * @returns ApnTypes @ref ApnTypes
+     *
+     */
+    ApnTypes getApnTypes();
 
-   /**
-    * Get Emergency call capability.
-    *
-    * @returns EmergencyCapability @ref EmergencyCapability
-    *
-    */
-   EmergencyCapability getIsEmergencyAllowed();
+    /**
+     * Get Emergency call capability.
+     *
+     * @returns EmergencyCapability @ref EmergencyCapability
+     *
+     */
+    EmergencyCapability getIsEmergencyAllowed();
 
-   /**
-    * Get status of CLAT.
-    *
-    * @returns true if CLAT is enabled, false otherwise.
-    */
-   bool isClatEnabled();
+    /**
+     * Get status of CLAT.
+     *
+     * @returns true if CLAT is enabled, false otherwise.
+     */
+    bool isClatEnabled();
 
-   /**
-    * Get the text related informative representation of this object.
-    *
-    * @returns String containing informative string.
-    *
-    */
-   std::string toString();
+    /**
+     * Get the text related informative representation of this object.
+     *
+     * @returns String containing informative string.
+     *
+     */
+    std::string toString();
 
-private:
-   int id_;
-   std::string name_;
-   std::string apn_;
-   std::string username_;
-   std::string password_;
-   IpFamilyType ipFamilyType_;
-   TechPreference techPref_;
-   AuthProtocolType authType_;
-   ApnTypes apnTypes_;
-   EmergencyCapability emergencyAllowed_;
-   bool clatEnabled_;
+ private:
+    int id_;
+    std::string name_;
+    std::string apn_;
+    std::string username_;
+    std::string password_;
+    IpFamilyType ipFamilyType_;
+    TechPreference techPref_;
+    AuthProtocolType authType_;
+    ApnTypes apnTypes_;
+    EmergencyCapability emergencyAllowed_;
+    bool clatEnabled_;
 };
 
 /** @} */ /* end_addtogroup telematics_data */
-}
-}
+}  // namespace data
+}  // namespace telux
 
-#endif // TELUX_DATA_DATAPROFILE_HPP
+#endif  // TELUX_DATA_DATAPROFILE_HPP

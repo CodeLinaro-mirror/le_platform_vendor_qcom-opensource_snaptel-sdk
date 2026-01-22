@@ -28,9 +28,8 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -80,7 +79,8 @@ class PowerFactory {
      * @note Recommended for both hypervisor and non-hypervisor based systems.
      */
     virtual std::shared_ptr<ITcuActivityManager> getTcuActivityManager(
-        ClientInstanceConfig config, telux::common::InitResponseCb callback = nullptr) = 0;
+        ClientInstanceConfig config, telux::common::InitResponseCb callback = nullptr)
+        = 0;
 
     /**
      * Gets the IWakeupManager instance.
@@ -90,7 +90,8 @@ class PowerFactory {
      * @returns IWakeupManager instance
      */
     virtual std::shared_ptr<IWakeupManager> getWakeupManager(
-        telux::common::InitResponseCb callback = nullptr) = 0;
+        telux::common::InitResponseCb callback = nullptr)
+        = 0;
 
     /**
      * Gets the ITcuActivityManager instance.
@@ -112,9 +113,10 @@ class PowerFactory {
      *              telux::common::InitResponseCb callback) instead.
      */
     virtual std::shared_ptr<ITcuActivityManager> getTcuActivityManager(
-        ClientType clientType = ClientType::SLAVE,
-        common::ProcType procType = common::ProcType::LOCAL_PROC,
-        telux::common::InitResponseCb callback = nullptr) = 0;
+        ClientType clientType                  = ClientType::SLAVE,
+        common::ProcType procType              = common::ProcType::LOCAL_PROC,
+        telux::common::InitResponseCb callback = nullptr)
+        = 0;
 
 #ifndef TELUX_DOXY_SKIP
  protected:
@@ -123,7 +125,7 @@ class PowerFactory {
 #endif
 
  private:
-    PowerFactory(const PowerFactory &) = delete;
+    PowerFactory(const PowerFactory &)            = delete;
     PowerFactory &operator=(const PowerFactory &) = delete;
 };
 
@@ -132,4 +134,4 @@ class PowerFactory {
 }  // end of namespace power
 }  // end of namespace telux
 
-#endif // TELUX_POWER_POWERFACTORY_HPP
+#endif  // TELUX_POWER_POWERFACTORY_HPP

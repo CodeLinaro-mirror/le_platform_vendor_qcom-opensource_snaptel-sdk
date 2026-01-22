@@ -5,7 +5,7 @@
 
 #include "MyUtils.hpp"
 
-bool enableDebug = false;
+bool enableDebug  = false;
 bool enableSyslog = false;
 
 void chronylog(int level, const char *fmt, ...) {

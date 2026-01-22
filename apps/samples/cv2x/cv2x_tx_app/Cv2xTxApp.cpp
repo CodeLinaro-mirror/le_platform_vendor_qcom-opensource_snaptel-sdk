@@ -28,9 +28,8 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -61,30 +60,30 @@ using std::endl;
 using std::promise;
 using std::shared_ptr;
 using telux::common::ErrorCode;
-using telux::common::Status;
 using telux::common::ServiceStatus;
+using telux::common::Status;
 using telux::cv2x::Cv2xFactory;
 using telux::cv2x::Cv2xStatus;
 using telux::cv2x::Cv2xStatusType;
+using telux::cv2x::Cv2xUtil;
+using telux::cv2x::DataSessionSettings;
+using telux::cv2x::EventFlowInfo;
 using telux::cv2x::ICv2xTxFlow;
 using telux::cv2x::Periodicity;
 using telux::cv2x::Priority;
+using telux::cv2x::SpsFlowInfo;
 using telux::cv2x::TrafficCategory;
 using telux::cv2x::TrafficIpType;
-using telux::cv2x::EventFlowInfo;
-using telux::cv2x::SpsFlowInfo;
-using telux::cv2x::DataSessionSettings;
-using telux::cv2x::Cv2xUtil;
 
 static constexpr uint32_t TX_SERVICE_ID = 1u;
-static constexpr uint16_t SPS_PORT_NUM = 2500u;
-static uint16_t EVENT_PORT_NUM = 2600u;
-static constexpr uint32_t G_BUF_LEN = 128;
-static uint32_t NUM_TEST_ITERATIONS = 1;
-static constexpr int      PRIORITY = 3;
+static constexpr uint16_t SPS_PORT_NUM  = 2500u;
+static uint16_t EVENT_PORT_NUM          = 2600u;
+static constexpr uint32_t G_BUF_LEN     = 128;
+static uint32_t NUM_TEST_ITERATIONS     = 1;
+static constexpr int PRIORITY           = 3;
 
 static constexpr char TEST_VERNO_MAGIC = 'Q';
-static constexpr char UEID = 1;
+static constexpr char UEID             = 1;
 
 enum class TxFlowType {
     SpsOnly,
@@ -98,7 +97,7 @@ static shared_ptr<ICv2xTxFlow> gSpsFlow = nullptr;
 static shared_ptr<ICv2xTxFlow> gEvtFlow = nullptr;
 static std::weak_ptr<ICv2xTxFlow> gTxFlow;
 static array<char, G_BUF_LEN> gBuf;
-static TxFlowType gFlowType = TxFlowType::SpsOnly;
+static TxFlowType gFlowType  = TxFlowType::SpsOnly;
 static bool gAutoRetransMode = true;
 
 // Resets the global callback promise
@@ -116,23 +115,21 @@ static void cv2xStatusCallback(Cv2xStatus status, ErrorCode error) {
 
 // Callback function for ICv2xRadio->createTxSpsFlow()
 static void createSpsFlowCallback(shared_ptr<ICv2xTxFlow> txSpsFlow,
-                                  shared_ptr<ICv2xTxFlow> evtFlow,
-                                  ErrorCode spsError,
-                                  ErrorCode evtError) {
+    shared_ptr<ICv2xTxFlow> evtFlow, ErrorCode spsError, ErrorCode evtError) {
     if (ErrorCode::SUCCESS == spsError) {
         gSpsFlow = txSpsFlow;
     }
     if (ErrorCode::SUCCESS == evtError) {
         gEvtFlow = evtFlow;
     }
-    auto ec = (ErrorCode::SUCCESS == spsError || ErrorCode::SUCCESS == evtError) ?
-        ErrorCode::SUCCESS : ErrorCode::GENERIC_FAILURE;
+    auto ec = (ErrorCode::SUCCESS == spsError || ErrorCode::SUCCESS == evtError)
+                  ? ErrorCode::SUCCESS
+                  : ErrorCode::GENERIC_FAILURE;
     gCallbackPromise.set_value(ec);
 }
 
 // Callback function for ICv2xRadio->createTxEventFlow()
-static void createEventFlowCallback(shared_ptr<ICv2xTxFlow> txEventFlow,
-                                  ErrorCode eventError) {
+static void createEventFlowCallback(shared_ptr<ICv2xTxFlow> txEventFlow, ErrorCode eventError) {
     if (ErrorCode::SUCCESS == eventError) {
         gEvtFlow = txEventFlow;
     }
@@ -140,8 +137,7 @@ static void createEventFlowCallback(shared_ptr<ICv2xTxFlow> txEventFlow,
 }
 
 // Callback function for ICv2xRadio->changeEventFlowInfo()
-static void changeEventFlowInfoCallback(shared_ptr<ICv2xTxFlow> txEventFlow,
-                                  ErrorCode eventError) {
+static void changeEventFlowInfoCallback(shared_ptr<ICv2xTxFlow> txEventFlow, ErrorCode eventError) {
     if (ErrorCode::SUCCESS == eventError) {
         gEvtFlow = txEventFlow;
     }
@@ -149,8 +145,7 @@ static void changeEventFlowInfoCallback(shared_ptr<ICv2xTxFlow> txEventFlow,
 }
 
 // Callback function for ICv2xRadio->changeSpsFlowInfo()
-static void changeSpsFlowInfoCallback(shared_ptr<ICv2xTxFlow> txSpsFlow,
-                                  ErrorCode spsError) {
+static void changeSpsFlowInfoCallback(shared_ptr<ICv2xTxFlow> txSpsFlow, ErrorCode spsError) {
     if (ErrorCode::SUCCESS == spsError) {
         gSpsFlow = txSpsFlow;
     }
@@ -158,22 +153,20 @@ static void changeSpsFlowInfoCallback(shared_ptr<ICv2xTxFlow> txSpsFlow,
 }
 
 // Callback function for ICv2xRadio->requestSpsFlowInfo()
-static void requestSpsFlowInfoCallback(shared_ptr<ICv2xTxFlow> txSpsFlow,
-                                  const SpsFlowInfo & spsInfo,
-                                  ErrorCode spsError) {
+static void requestSpsFlowInfoCallback(
+    shared_ptr<ICv2xTxFlow> txSpsFlow, const SpsFlowInfo &spsInfo, ErrorCode spsError) {
     if (ErrorCode::SUCCESS == spsError) {
         cout << "Priority: " << static_cast<int>(spsInfo.priority)
-            << ", Periodicity: " << static_cast<int>(spsInfo.periodicity)
-            << ", NbytesReserved: "<< spsInfo.nbytesReserved
-            << ", Traffic class:"
-            << static_cast<int>(Cv2xUtil::priorityToTrafficClass(spsInfo.priority)) << endl;
+             << ", Periodicity: " << static_cast<int>(spsInfo.periodicity)
+             << ", NbytesReserved: " << spsInfo.nbytesReserved << ", Traffic class:"
+             << static_cast<int>(Cv2xUtil::priorityToTrafficClass(spsInfo.priority)) << endl;
     }
     gCallbackPromise.set_value(spsError);
 }
 
 // Callback function for ICv2xRadio->requestDataSessionSettings()
-static void requestDataSessionSettingsCallback(const DataSessionSettings & settings,
-                                  ErrorCode spsError) {
+static void requestDataSessionSettingsCallback(
+    const DataSessionSettings &settings, ErrorCode spsError) {
     if (ErrorCode::SUCCESS == spsError) {
         if (settings.mtuValid) {
             cout << "MTU size: " << settings.mtu << endl;
@@ -193,7 +186,7 @@ static uint64_t getCurrentTimestamp(void) {
 static void fillBuffer(void) {
 
     static uint16_t seq_num = 0u;
-    auto timestamp = getCurrentTimestamp();
+    auto timestamp          = getCurrentTimestamp();
 
     // Very first payload is test Magic number, this is  where V2X Family ID would normally be.
     gBuf[0] = TEST_VERNO_MAGIC;
@@ -208,12 +201,12 @@ static void fillBuffer(void) {
     dataPtr += sizeof(uint16_t);
 
     // Timestamp
-    dataPtr += snprintf(dataPtr, G_BUF_LEN - (2 + sizeof(uint16_t)),
-                        "<%llu> ", static_cast<long long unsigned>(timestamp));
+    dataPtr += snprintf(dataPtr, G_BUF_LEN - (2 + sizeof(uint16_t)), "<%llu> ",
+        static_cast<long long unsigned>(timestamp));
 
     // Dummy payload
     constexpr int NUM_LETTERS = 26;
-    auto i = 2 + sizeof(uint16_t) - sizeof(long long unsigned);
+    auto i                    = 2 + sizeof(uint16_t) - sizeof(long long unsigned);
     for (; i < G_BUF_LEN; ++i) {
         gBuf[i] = 'a' + ((seq_num + i) % NUM_LETTERS);
     }
@@ -230,25 +223,25 @@ static void sampleTx(shared_ptr<ICv2xTxFlow> txFlow) {
 
     cout << "sampleSpsTx(" << sock << ")" << endl;
 
-    struct msghdr message = {0};
-    struct iovec iov[1] = {0};
-    struct cmsghdr * cmsghp = NULL;
+    struct msghdr message  = {0};
+    struct iovec iov[1]    = {0};
+    struct cmsghdr *cmsghp = NULL;
     char control[CMSG_SPACE(sizeof(int))];
 
     // Send data using sendmsg to provide IPV6_TCLASS per packet
-    iov[0].iov_base = gBuf.data();
-    iov[0].iov_len = G_BUF_LEN;
-    message.msg_iov = iov;
-    message.msg_iovlen = 1;
-    message.msg_control = control;
+    iov[0].iov_base        = gBuf.data();
+    iov[0].iov_len         = G_BUF_LEN;
+    message.msg_iov        = iov;
+    message.msg_iovlen     = 1;
+    message.msg_control    = control;
     message.msg_controllen = sizeof(control);
 
     // Fill ancillary data
-    int priority = PRIORITY;
-    cmsghp = CMSG_FIRSTHDR(&message);
+    int priority       = PRIORITY;
+    cmsghp             = CMSG_FIRSTHDR(&message);
     cmsghp->cmsg_level = IPPROTO_IPV6;
-    cmsghp->cmsg_type = IPV6_TCLASS;
-    cmsghp->cmsg_len = CMSG_LEN(sizeof(int));
+    cmsghp->cmsg_type  = IPV6_TCLASS;
+    cmsghp->cmsg_len   = CMSG_LEN(sizeof(int));
     memcpy(CMSG_DATA(cmsghp), &priority, sizeof(int));
 
     // Send data
@@ -261,7 +254,7 @@ static void sampleTx(shared_ptr<ICv2xTxFlow> txFlow) {
         bytes_sent = -1;
     } else {
         if (bytes_sent == G_BUF_LEN) {
-           ++txCount;
+            ++txCount;
         } else {
             cerr << "Error : " << bytes_sent << " bytes sent." << endl;
         }
@@ -291,47 +284,47 @@ static int parseOpts(int argc, char *argv[]) {
     int c;
     while ((c = getopt(argc, argv, "?cei:r:t:")) != -1) {
         switch (c) {
-        case 'c':
-            gFlowType = TxFlowType::Combine;
-            cout << "Create Combine flow" << endl;
-            break;
-        case 'e':
-            gFlowType = TxFlowType::EventOnly;
-            cout << "Create Tx event flow" << endl;
-            break;
-        case 'i':
-            if (optarg) {
-                auto iterations = atoi(optarg);
-                if (iterations >= 0) {
-                    NUM_TEST_ITERATIONS = static_cast<uint32_t>(iterations);
-                } else {
-                    std::cerr << "Ignore iterations " << static_cast<int>(iterations) << endl;
+            case 'c':
+                gFlowType = TxFlowType::Combine;
+                cout << "Create Combine flow" << endl;
+                break;
+            case 'e':
+                gFlowType = TxFlowType::EventOnly;
+                cout << "Create Tx event flow" << endl;
+                break;
+            case 'i':
+                if (optarg) {
+                    auto iterations = atoi(optarg);
+                    if (iterations >= 0) {
+                        NUM_TEST_ITERATIONS = static_cast<uint32_t>(iterations);
+                    } else {
+                        std::cerr << "Ignore iterations " << static_cast<int>(iterations) << endl;
+                    }
+                    cout << "NUM_TEST_ITERATIONS: " << NUM_TEST_ITERATIONS << endl;
                 }
-                cout << "NUM_TEST_ITERATIONS: " << NUM_TEST_ITERATIONS << endl;
-            }
-            break;
-        case 'r':
-            if (optarg) {
-               gAutoRetransMode = static_cast<bool>(atoi(optarg));
-               cout << "auto retrans mode: " << static_cast<int>(gAutoRetransMode) << endl;
-               }
-           break;
-        case 't':
-            if (optarg) {
-               auto eventPort = atoi(optarg);
-               if (eventPort >= 1024) {
-                   EVENT_PORT_NUM = static_cast<uint16_t>(eventPort);
-               } else {
-                   std::cerr << "Ignore event portnum " << static_cast<int>(eventPort) << endl;
-               }
-               cout << "EVENT_PORT_NUM: " << static_cast<int>(EVENT_PORT_NUM) << endl;
-               }
-           break;
-        case '?':
-        default:
-            rc = -1;
-            printUsage(argv[0]);
-            return rc;
+                break;
+            case 'r':
+                if (optarg) {
+                    gAutoRetransMode = static_cast<bool>(atoi(optarg));
+                    cout << "auto retrans mode: " << static_cast<int>(gAutoRetransMode) << endl;
+                }
+                break;
+            case 't':
+                if (optarg) {
+                    auto eventPort = atoi(optarg);
+                    if (eventPort >= 1024) {
+                        EVENT_PORT_NUM = static_cast<uint16_t>(eventPort);
+                    } else {
+                        std::cerr << "Ignore event portnum " << static_cast<int>(eventPort) << endl;
+                    }
+                    cout << "EVENT_PORT_NUM: " << static_cast<int>(EVENT_PORT_NUM) << endl;
+                }
+                break;
+            case '?':
+            default:
+                rc = -1;
+                printUsage(argv[0]);
+                return rc;
         }
     }
 
@@ -341,19 +334,15 @@ static int parseOpts(int argc, char *argv[]) {
 static int createTxFlow(std::shared_ptr<telux::cv2x::ICv2xRadio> &radio) {
     if (gFlowType == TxFlowType::SpsOnly || gFlowType == TxFlowType::Combine) {
         SpsFlowInfo spsInfo;
-        spsInfo.priority = Priority::PRIORITY_2;
-        spsInfo.periodicity = Periodicity::PERIODICITY_100MS;
+        spsInfo.priority       = Priority::PRIORITY_2;
+        spsInfo.periodicity    = Periodicity::PERIODICITY_100MS;
         spsInfo.nbytesReserved = G_BUF_LEN;
-        auto createEvtFlow = (gFlowType == TxFlowType::Combine) ? true : false;
+        auto createEvtFlow     = (gFlowType == TxFlowType::Combine) ? true : false;
 
         resetCallbackPromise();
-        if(Status::SUCCESS != radio->createTxSpsFlow(TrafficIpType::TRAFFIC_NON_IP,
-                                                         TX_SERVICE_ID,
-                                                         spsInfo,
-                                                         SPS_PORT_NUM,
-                                                         createEvtFlow,
-                                                         EVENT_PORT_NUM,
-                                                         createSpsFlowCallback)
+        if (Status::SUCCESS
+                != radio->createTxSpsFlow(TrafficIpType::TRAFFIC_NON_IP, TX_SERVICE_ID, spsInfo,
+                    SPS_PORT_NUM, createEvtFlow, EVENT_PORT_NUM, createSpsFlowCallback)
             || ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
             cerr << "Failed to create tx sps flow" << endl;
             return EXIT_FAILURE;
@@ -362,19 +351,17 @@ static int createTxFlow(std::shared_ptr<telux::cv2x::ICv2xRadio> &radio) {
 
         resetCallbackPromise();
         if (gSpsFlow) {
-            if (Status::SUCCESS != radio->requestSpsFlowInfo(
-                                    gSpsFlow, requestSpsFlowInfoCallback)
+            if (Status::SUCCESS != radio->requestSpsFlowInfo(gSpsFlow, requestSpsFlowInfoCallback)
                 || ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
                 cerr << "Failed to request for sps flow info" << endl;
                 return EXIT_FAILURE;
             }
 
-            if(!gAutoRetransMode) {
+            if (!gAutoRetransMode) {
                 spsInfo.autoRetransEnabled = false;
                 resetCallbackPromise();
-                if(Status::SUCCESS != radio->changeSpsFlowInfo(gSpsFlow,
-                                                   spsInfo,
-                                                   changeSpsFlowInfoCallback)
+                if (Status::SUCCESS
+                        != radio->changeSpsFlowInfo(gSpsFlow, spsInfo, changeSpsFlowInfoCallback)
                     || ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
                     cerr << "Failed to request to change sps flow info" << endl;
                     return EXIT_FAILURE;
@@ -385,23 +372,20 @@ static int createTxFlow(std::shared_ptr<telux::cv2x::ICv2xRadio> &radio) {
         EventFlowInfo eventInfo;
 
         resetCallbackPromise();
-        if(Status::SUCCESS != radio->createTxEventFlow(TrafficIpType::TRAFFIC_NON_IP,
-                                               TX_SERVICE_ID,
-                                               eventInfo,
-                                               EVENT_PORT_NUM,
-                                               createEventFlowCallback)
+        if (Status::SUCCESS
+                != radio->createTxEventFlow(TrafficIpType::TRAFFIC_NON_IP, TX_SERVICE_ID, eventInfo,
+                    EVENT_PORT_NUM, createEventFlowCallback)
             || ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
             cerr << "Failed to create tx event flow" << endl;
             return EXIT_FAILURE;
         }
         gTxFlow = gEvtFlow;
 
-        if(!gAutoRetransMode) {
+        if (!gAutoRetransMode) {
             eventInfo.autoRetransEnabled = false;
             resetCallbackPromise();
-            if(Status::SUCCESS != radio->changeEventFlowInfo(gEvtFlow,
-                                                   eventInfo,
-                                                   changeEventFlowInfoCallback)
+            if (Status::SUCCESS
+                    != radio->changeEventFlowInfo(gEvtFlow, eventInfo, changeEventFlowInfoCallback)
                 || ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
                 cerr << "Failed to request to change event flow info" << endl;
                 return EXIT_FAILURE;
@@ -413,8 +397,8 @@ static int createTxFlow(std::shared_ptr<telux::cv2x::ICv2xRadio> &radio) {
     }
     if (auto flow = gTxFlow.lock()) {
         cout << "TX flow: ipType= " << static_cast<int>(flow->getIpType())
-            << ", ServiceId= " << flow->getServiceId()
-            << ", PortNum= " << flow->getPortNum() << endl;
+             << ", ServiceId= " << flow->getServiceId() << ", PortNum= " << flow->getPortNum()
+             << endl;
     }
     return EXIT_SUCCESS;
 }
@@ -427,24 +411,23 @@ int main(int argc, char *argv[]) {
     }
 
     std::vector<std::string> groups{"system", "diag", "radio", "logd"};
-    if (-1 == Utils::setSupplementaryGroups(groups)){
+    if (-1 == Utils::setSupplementaryGroups(groups)) {
         cout << "Adding supplementary group failed!" << std::endl;
     }
 
     // Get handle to Cv2xRadioManager
-    bool cv2xRadioManagerStatusUpdated = false;
-    telux::common::ServiceStatus cv2xRadioManagerStatus =
-            ServiceStatus::SERVICE_UNAVAILABLE;
+    bool cv2xRadioManagerStatusUpdated                  = false;
+    telux::common::ServiceStatus cv2xRadioManagerStatus = ServiceStatus::SERVICE_UNAVAILABLE;
     std::condition_variable cv;
     std::mutex mtx;
     auto statusCb = [&](ServiceStatus status) {
         std::lock_guard<std::mutex> lock(mtx);
         cv2xRadioManagerStatusUpdated = true;
-        cv2xRadioManagerStatus = status;
+        cv2xRadioManagerStatus        = status;
         cv.notify_all();
     };
     // Get handle to Cv2xRadioManager
-    auto & cv2xFactory = Cv2xFactory::getInstance();
+    auto &cv2xFactory     = Cv2xFactory::getInstance();
     auto cv2xRadioManager = cv2xFactory.getCv2xRadioManager(statusCb);
     if (!cv2xRadioManager) {
         cout << "Error: failed to get Cv2xRadioManager." << endl;
@@ -462,7 +445,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Get C-V2X status and make sure Tx is enabled
-    if(Status::SUCCESS != cv2xRadioManager->requestCv2xStatus(cv2xStatusCallback)
+    if (Status::SUCCESS != cv2xRadioManager->requestCv2xStatus(cv2xStatusCallback)
         || ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
         cerr << "Failed to request for Cv2x status" << endl;
         return EXIT_FAILURE;
@@ -470,21 +453,20 @@ int main(int argc, char *argv[]) {
 
     if (Cv2xStatusType::ACTIVE == gCv2xStatus.txStatus) {
         cout << "C-V2X TX status is active" << endl;
-    }
-    else {
+    } else {
         cerr << "C-V2X TX is inactive" << endl;
         return EXIT_FAILURE;
     }
 
     // Get handle to Cv2xRadio
     bool cv2x_radio_status_updated = false;
-    telux::common::ServiceStatus cv2xRadioStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    telux::common::ServiceStatus cv2xRadioStatus
+        = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
 
     auto cb = [&](ServiceStatus status) {
         std::lock_guard<std::mutex> lock(mtx);
         cv2x_radio_status_updated = true;
-        cv2xRadioStatus = status;
+        cv2xRadioStatus           = status;
         cv.notify_all();
     };
 
@@ -508,7 +490,7 @@ int main(int argc, char *argv[]) {
     }
 
     resetCallbackPromise();
-    if(Status::SUCCESS != radio->requestDataSessionSettings(requestDataSessionSettingsCallback)
+    if (Status::SUCCESS != radio->requestDataSessionSettings(requestDataSessionSettingsCallback)
         || ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
         cerr << "Failed to request for data session settings" << endl;
         return EXIT_FAILURE;
@@ -526,7 +508,7 @@ int main(int argc, char *argv[]) {
     // Deregister TX flow
     if (gSpsFlow) {
         resetCallbackPromise();
-        if(Status::SUCCESS != radio->closeTxFlow(gSpsFlow, closeFlowCallback)
+        if (Status::SUCCESS != radio->closeTxFlow(gSpsFlow, closeFlowCallback)
             || ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
             cerr << "Failed to request to close tx flow" << endl;
             return EXIT_FAILURE;
@@ -534,7 +516,7 @@ int main(int argc, char *argv[]) {
     }
     if (gEvtFlow) {
         resetCallbackPromise();
-        if(Status::SUCCESS != radio->closeTxFlow(gEvtFlow, closeFlowCallback)
+        if (Status::SUCCESS != radio->closeTxFlow(gEvtFlow, closeFlowCallback)
             || ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
             cerr << "Failed to request to close tx flow" << endl;
             return EXIT_FAILURE;

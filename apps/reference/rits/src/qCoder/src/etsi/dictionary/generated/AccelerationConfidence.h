@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_AccelerationConfidence_H_
-#define	_AccelerationConfidence_H_
-
+#ifndef _AccelerationConfidence_H_
+#define _AccelerationConfidence_H_
 
 #include <asn_application.h>
 
@@ -20,13 +19,13 @@ extern "C" {
 
 /* Dependencies */
 typedef enum AccelerationConfidence {
-	AccelerationConfidence_pointOneMeterPerSecSquared	= 1,
-	AccelerationConfidence_outOfRange	= 101,
-	AccelerationConfidence_unavailable	= 102
+    AccelerationConfidence_pointOneMeterPerSecSquared = 1,
+    AccelerationConfidence_outOfRange                 = 101,
+    AccelerationConfidence_unavailable                = 102
 } e_AccelerationConfidence;
 
 /* AccelerationConfidence */
-typedef long	 AccelerationConfidence_t;
+typedef long AccelerationConfidence_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_AccelerationConfidence;
@@ -44,5 +43,5 @@ per_type_encoder_f AccelerationConfidence_encode_uper;
 }
 #endif
 
-#endif	/* _AccelerationConfidence_H_ */
+#endif /* _AccelerationConfidence_H_ */
 #include <asn_internal.h>

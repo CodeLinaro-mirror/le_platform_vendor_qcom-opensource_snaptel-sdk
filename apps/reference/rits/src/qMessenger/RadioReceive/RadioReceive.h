@@ -28,47 +28,17 @@
  */
 
 /*
- *Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *Redistribution and use in source and binary forms, with or without
- *modification, are permitted (subject to the limitations in the
- *disclaimer below) provided that the following conditions are met:
- *
- *    * Redistributions of source code must retain the above copyright
- *      notice, this list of conditions and the following disclaimer.
- *
- *    * Redistributions in binary form must reproduce the above
- *      copyright notice, this list of conditions and the following
- *      disclaimer in the documentation and/or other materials provided
- *      with the distribution.
- *
- *    * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *      contributors may be used to endorse or promote products derived
- *      from this software without specific prior written permission.
- *
- *NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
- /**
-  * @file: RadioReceive.h
-  *
-  * @brief: Application that handles and abstracts CV2x SDK radio receiving
-  *
-  */
+/**
+ * @file: RadioReceive.h
+ *
+ * @brief: Application that handles and abstracts CV2x SDK radio receiving
+ *
+ */
 
 #pragma once
 
@@ -86,17 +56,17 @@
 
 using std::array;
 using std::make_shared;
+using telux::cv2x::EventFlowInfo;
 using telux::cv2x::ICv2xRxSubscription;
 using telux::cv2x::ICv2xTxRxSocket;
-using telux::cv2x::SocketInfo;
-using telux::cv2x::EventFlowInfo;
 using telux::cv2x::L2FilterInfo;
+using telux::cv2x::SocketInfo;
 
 class RadioReceive : public RadioInterface {
-private:
+ private:
     TrafficCategory category;
     void rxSubCallback(shared_ptr<ICv2xRxSubscription> rxSub, ErrorCode error);
-    bool isSim = false;
+    bool isSim    = false;
     int simRxSock = -1;
     struct sockaddr_in srcAddress;
     struct sockaddr_in serverAddress;
@@ -105,20 +75,19 @@ private:
     uint64_t lastRxMonotonicTime_ = 0;
     std::string logTag;
 
-protected:
-
-public:
+ protected:
+ public:
     shared_ptr<ICv2xRxSubscription> gRxSub = nullptr;
 
     v2x_priority_et priority = V2X_PRIO_BACKGROUND;
     /**
-    * Stores the value L2 source address for a received message
-    */
+     * Stores the value L2 source address for a received message
+     */
     uint32_t msgL2SrcAdrr = 0;
 
     /**
-    * Constant value of largest possible buffer length.
-    */
+     * Constant value of largest possible buffer length.
+     */
     static constexpr uint32_t MAX_BUF_LEN = 3000;
 
     /**
@@ -131,17 +100,17 @@ public:
     int removeL2Filters(std::vector<uint32_t> filterList);
 
     /**
-    * Constructor that creates a RadioReceive Object
-    * @param category a TrafficCategory.
-    * @param type a TrafficType.
-    * @param idList, Rx subscription id list.
-    */
+     * Constructor that creates a RadioReceive Object
+     * @param category a TrafficCategory.
+     * @param type a TrafficType.
+     * @param idList, Rx subscription id list.
+     */
     RadioReceive(const TrafficCategory category, const TrafficIpType trafficIpType,
-    const uint16_t port, std::shared_ptr<std::vector<uint32_t>> idList);
+        const uint16_t port, std::shared_ptr<std::vector<uint32_t>> idList);
 
     /**
-    * Constructor for Simulation of Radio Receives.
-    */
+     * Constructor for Simulation of Radio Receives.
+     */
     RadioReceive(const RadioOpt radioOpt, const string ipv4_dst, const uint16_t port);
     ~RadioReceive();
 
@@ -151,44 +120,42 @@ public:
      * @return 0 if wait for cv2x active success
      * @return -1 if error occurs
      */
-    int waitForCv2xToActivate(bool& restartFlow) override;
+    int waitForCv2xToActivate(bool &restartFlow) override;
 
     /**
-    * Blocking mehtod that receives from created flow's socket.
-    * @param buf - a char pointer to store the data received.
-    * @param len - the length of bytes to receive into buffer
-    * @return bytes received, -1 if error.
-    */
-    uint32_t receive(const char* buf, int len);
+     * Blocking mehtod that receives from created flow's socket.
+     * @param buf - a char pointer to store the data received.
+     * @param len - the length of bytes to receive into buffer
+     * @return bytes received, -1 if error.
+     */
+    uint32_t receive(const char *buf, int len);
 
     /**
-    * Blocking mehtod that receives from created flow's socket.
-    * @param buf - a char pointer to store the data received.
-    * @param len - length of bytes to receive into buffer
-    * @param sourceMacAddr source MAC address.
-    * @param macAddrLen source MAC address length.
-    * @return bytes received, -1 if error.
-    */
-    uint32_t receive(const char* buf, int len,
-            uint8_t *sourceMacAddr, int& macAddrLen);
+     * Blocking mehtod that receives from created flow's socket.
+     * @param buf - a char pointer to store the data received.
+     * @param len - length of bytes to receive into buffer
+     * @param sourceMacAddr source MAC address.
+     * @param macAddrLen source MAC address length.
+     * @return bytes received, -1 if error.
+     */
+    uint32_t receive(const char *buf, int len, uint8_t *sourceMacAddr, int &macAddrLen);
 
     int onReceiveWra(const telux::cv2x::IPv6AddrType &ipv6Addr);
 
     /**
-    * Method that closes Receive Subscription and returns fail or success
-    * @param buf a char pointer to store the data received.
-    * @return bytes received, -1 if error.
-    */
+     * Method that closes Receive Subscription and returns fail or success
+     * @param buf a char pointer to store the data received.
+     * @return bytes received, -1 if error.
+     */
     uint8_t closeFlow();
 
     uint64_t latestTxRxTimeMonotonic() override;
 
     /**
-    * Method that gets the priority from the Received Message object
-    * @param Pointer to store the Priority level of the Received Message .
-    * @param Received Message
-    * @return true if success , false if error.
-    */
-    bool get_priority_from_received_message(const struct msghdr* message, v2x_priority_et* prior);
+     * Method that gets the priority from the Received Message object
+     * @param Pointer to store the Priority level of the Received Message .
+     * @param Received Message
+     * @return true if success , false if error.
+     */
+    bool get_priority_from_received_message(const struct msghdr *message, v2x_priority_et *prior);
 };
-

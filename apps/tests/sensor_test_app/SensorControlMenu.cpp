@@ -28,9 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -69,7 +69,7 @@ telux::common::ServiceStatus SensorControlMenu::initSensorManager() {
     std::promise<ServiceStatus> prom;
     //  Get the SensorFactory and SensorManager instances.
     auto &sensorFactory = telux::sensor::SensorFactory::getInstance();
-    sensorManager_ = sensorFactory.getSensorManager(
+    sensorManager_      = sensorFactory.getSensorManager(
         [&prom](telux::common::ServiceStatus status) { prom.set_value(status); });
     if (!sensorManager_) {
         std::cout << "Failed to get SensorManager object" << std::endl;
@@ -84,7 +84,7 @@ telux::common::ServiceStatus SensorControlMenu::initSensorManager() {
     }
     //  Exit the application, if SDK is unable to initialize sensor subsystems
     if (managerStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        endTime = std::chrono::system_clock::now();
+        endTime                                   = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsedTime = endTime - startTime;
         std::cout << "Elapsed Time for Sensor Subsystems to ready : " << elapsedTime.count() << "s"
                   << std::endl;

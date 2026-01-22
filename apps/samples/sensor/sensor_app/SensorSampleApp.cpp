@@ -28,39 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <future>
@@ -119,9 +89,8 @@ class SensorEventListener : public telux::sensor::ISensorEventListener {
     virtual void onConfigurationUpdate(telux::sensor::SensorConfiguration configuration) override {
         PRINT_NOTIFICATION << "(" << name_ << "): Received configuration update from sensor: "
                            << sensorClient_->getSensorInfo().name << ": ["
-                           << configuration.samplingRate << ", " << configuration.batchCount <<
-                           "," << configuration.isRotated << " ]"
-                           << std::endl;
+                           << configuration.samplingRate << ", " << configuration.batchCount << ","
+                           << configuration.isRotated << " ]" << std::endl;
     }
 
  private:
@@ -228,7 +197,7 @@ void parseArgs(
     static const struct option long_options[]
         = {{"sensor name", required_argument, 0, 's'}, {"help", no_argument, 0, 'h'}, {0, 0, 0, 0}};
     int option_index = 0;
-    c = getopt_long(argc, argv, "s:h", long_options, &option_index);
+    c                = getopt_long(argc, argv, "s:h", long_options, &option_index);
     if (c == -1) {
         if (sensorInfo.size() > 0) {
             name = sensorInfo[0].name;
@@ -323,11 +292,11 @@ int main(int argc, char **argv) {
     // [8] Configure the sensor with the desired configuration, with the required validityMask set
     telux::sensor::SensorConfiguration lowRateConfig;
     lowRateConfig.samplingRate = getMinimumSamplingRate(lowRateSensorClient->getSensorInfo());
-    lowRateConfig.batchCount = lowRateSensorClient->getSensorInfo().maxBatchCountSupported;
-    lowRateConfig.isRotated = false;
+    lowRateConfig.batchCount   = lowRateSensorClient->getSensorInfo().maxBatchCountSupported;
+    lowRateConfig.isRotated    = false;
     std::cout << "Configuring sensor with samplingRate, batchCount [" << lowRateConfig.samplingRate
-              << ", " << lowRateConfig.batchCount << ", " << lowRateConfig.isRotated << "]" <<
-    std::endl;
+              << ", " << lowRateConfig.batchCount << ", " << lowRateConfig.isRotated << "]"
+              << std::endl;
     lowRateConfig.validityMask.set(telux::sensor::SensorConfigParams::SAMPLING_RATE);
     lowRateConfig.validityMask.set(telux::sensor::SensorConfigParams::BATCH_COUNT);
     lowRateConfig.validityMask.set(telux::sensor::SensorConfigParams::ROTATE);
@@ -359,11 +328,11 @@ int main(int argc, char **argv) {
     // [13] Configure this sensor client with a different configuration, as necessary
     telux::sensor::SensorConfiguration highRateConfig;
     highRateConfig.samplingRate = getMaximumSamplingRate(highRateSensorClient->getSensorInfo());
-    highRateConfig.batchCount = highRateSensorClient->getSensorInfo().maxBatchCountSupported;
-    highRateConfig.batchCount = true;
+    highRateConfig.batchCount   = highRateSensorClient->getSensorInfo().maxBatchCountSupported;
+    highRateConfig.batchCount   = true;
     std::cout << "Configuring sensor with samplingRate, batchCount [" << highRateConfig.samplingRate
-              << ", " << highRateConfig.batchCount << ", " << lowRateConfig.isRotated << "]" <<
-              std::endl;
+              << ", " << highRateConfig.batchCount << ", " << lowRateConfig.isRotated << "]"
+              << std::endl;
     highRateConfig.validityMask.set(telux::sensor::SensorConfigParams::SAMPLING_RATE);
     highRateConfig.validityMask.set(telux::sensor::SensorConfigParams::BATCH_COUNT);
     highRateConfig.validityMask.set(telux::sensor::SensorConfigParams::ROTATE);
@@ -396,7 +365,7 @@ int main(int argc, char **argv) {
     }
 
     // [16] Delete the sensor objects
-    lowRateSensorClient = nullptr;
+    lowRateSensorClient  = nullptr;
     highRateSensorClient = nullptr;
 
     // [17] When sensor manager is no longer required, delete the sensor manager object

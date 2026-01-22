@@ -67,11 +67,11 @@
 
 #include "ChronySock.hpp"
 
-using telux::common::Status;
 using telux::common::ErrorCode;
-using telux::platform::PlatformFactory;
-using telux::platform::ITimeManager;
+using telux::common::Status;
 using telux::platform::ITimeListener;
+using telux::platform::ITimeManager;
+using telux::platform::PlatformFactory;
 using telux::platform::SupportedTimeType;
 using telux::platform::TimeTypeMask;
 
@@ -141,52 +141,51 @@ void ChronySock::printUsage(char *app_name) {
     printf("\t-r: Enable updating the rtc file\n");
 }
 
-int ChronySock::parseArguments(int& argc, char **argv) {
+int ChronySock::parseArguments(int &argc, char **argv) {
     int opt;
 
     while ((opt = getopt(argc, argv, "dsrh")) != -1) {
         switch (opt) {
-        case 'd':
-            enableDebug = true;
-            break;
-        case 's':
-            enableSyslog = true;
-            break;
-        case 'r':
-            enableWriteRtc_ = true;
-            break;
-        case 'h':
-        default:
-            printUsage(argv[0]);
-            return -1;
+            case 'd':
+                enableDebug = true;
+                break;
+            case 's':
+                enableSyslog = true;
+                break;
+            case 'r':
+                enableWriteRtc_ = true;
+                break;
+            case 'h':
+            default:
+                printUsage(argv[0]);
+                return -1;
         }
     }
     return 0;
 }
 
 void ChronySock::getTeluxConfig() {
-    auto config = std::make_shared<ConfigParser>(std::string(CONFIG_FILE));
+    auto config    = std::make_shared<ConfigParser>(std::string(CONFIG_FILE));
     auto threshold = config->getValue(std::string(HYSTERESIS_THRESHOLD));
     if (not threshold.empty()) {
         offsetThreshold_ = std::stoull(threshold);
     }
 
-    auto enable = config->getValue(std::string(ENABLE_CV2X_TIME));
+    auto enable     = config->getValue(std::string(ENABLE_CV2X_TIME));
     enableCv2xTime_ = (enable == "TRUE") ? true : false;
 
-    enable = config->getValue(std::string(ENABLE_NETWORK_TIME));
+    enable        = config->getValue(std::string(ENABLE_NETWORK_TIME));
     enableNwTime_ = (enable == "TRUE") ? true : false;
 
-    enable = config->getValue(std::string(ENABLE_DELTA_UPDATE));
+    enable             = config->getValue(std::string(ENABLE_DELTA_UPDATE));
     enableDeltaUpdate_ = (enable == "TRUE") ? true : false;
 
     if (enableNwTime_) {
         auto slotId = atoi(config->getValue(std::string(NETWORK_TIME_SLOT)).c_str());
-        slotId_ = (slotId >= DEFAULT_SLOT_ID and slotId <= MAX_SLOT_ID) ?
-                   slotId : DEFAULT_SLOT_ID;
+        slotId_ = (slotId >= DEFAULT_SLOT_ID and slotId <= MAX_SLOT_ID) ? slotId : DEFAULT_SLOT_ID;
     }
     LOGI("threshold=%d, enableCv2xTime=%d, enableNwTime=%d, enableDeltaUpdate=%d, slotId=%d\n",
-         offsetThreshold_, enableCv2xTime_, enableNwTime_, enableDeltaUpdate_, slotId_);
+        offsetThreshold_, enableCv2xTime_, enableNwTime_, enableDeltaUpdate_, slotId_);
 }
 
 int ChronySock::init() {
@@ -267,8 +266,8 @@ int ChronySock::setupSocket(int &fd) {
 
 int ChronySock::systemCall(const char *command) {
     FILE *stream = NULL;
-    int result = -1;
-    stream = popen(command, "w");
+    int result   = -1;
+    stream       = popen(command, "w");
     if (stream == NULL) {
         LOGE("system call failed popen failed\n");
     } else {
@@ -297,7 +296,7 @@ int ChronySock::installRtcTimer() {
     struct itimerspec its = {0};
     struct sigaction sa;
 
-    sa.sa_flags = SA_SIGINFO;
+    sa.sa_flags     = SA_SIGINFO;
     sa.sa_sigaction = writeRtcFile;
     sigemptyset(&sa.sa_mask);
     if (sigaction(SIGRTMIN, &sa, NULL) == -1) {
@@ -305,8 +304,8 @@ int ChronySock::installRtcTimer() {
         goto error;
     }
 
-    sev.sigev_notify = SIGEV_SIGNAL;
-    sev.sigev_signo = SIGRTMIN;
+    sev.sigev_notify          = SIGEV_SIGNAL;
+    sev.sigev_signo           = SIGRTMIN;
     sev.sigev_value.sival_ptr = &timerid;
 
     if (timer_create(CLOCK_REALTIME, &sev, &timerid) == -1) {
@@ -314,7 +313,7 @@ int ChronySock::installRtcTimer() {
         goto error;
     }
 
-    its.it_value.tv_sec = RTC_TIMER_SEC;
+    its.it_value.tv_sec    = RTC_TIMER_SEC;
     its.it_interval.tv_sec = its.it_value.tv_sec;
 
     if (timer_settime(timerid, 0, &its, NULL) == -1) {
@@ -336,12 +335,12 @@ int ChronySock::registerPlatformTime() {
 
     // Initialize the TelSDK utc info manager
     auto &platformFactory = PlatformFactory::getInstance();
-    bool statusUpdated = false;
-    auto servicStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
-    auto statusCb = [&](telux::common::ServiceStatus status) {
+    bool statusUpdated    = false;
+    auto servicStatus     = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    auto statusCb         = [&](telux::common::ServiceStatus status) {
         std::lock_guard<std::mutex> lock(mtx_);
         statusUpdated = true;
-        servicStatus = status;
+        servicStatus  = status;
         cv_.notify_all();
     };
 
@@ -395,34 +394,32 @@ void ChronySock::handleTimeUpdate(MyTimeSrc src, uint64_t utc) {
         return;
     }
 
-    bool utcValid = (utc == 0) ? false : true;
-    bool setSysTime = false;
+    bool utcValid    = (utc == 0) ? false : true;
+    bool setSysTime  = false;
     bool deregNwTime = false;
     switch (src) {
-        case MyTimeSrc::GNSS:
-            {
-                std::lock_guard<std::mutex> lock(timeMtx_);
-                if (gnssTimeValid_ != utcValid) {
-                    LOGI("GNSS UTC valid:%d\n", utcValid);
-                    gnssTimeValid_ = utcValid;
-                }
-                if (!utcValid) {
-                    return;
-                }
-
-                // use CV2X time if it's avaialbe, it's more precise than propagated GNSS time
-                if (cv2xTimeValid_) {
-                    LOGD("GNSS report ignored with UTC = %" PRIu64 " due to CV2X UTC is valid\n",
-                        utc);
-                    return;
-                }
-
-                // update system time if it's the first valid GNSS/CV2X time
-                if (firstSample_) {
-                    firstSample_ = false;
-                    setSysTime = true;
-                }
+        case MyTimeSrc::GNSS: {
+            std::lock_guard<std::mutex> lock(timeMtx_);
+            if (gnssTimeValid_ != utcValid) {
+                LOGI("GNSS UTC valid:%d\n", utcValid);
+                gnssTimeValid_ = utcValid;
             }
+            if (!utcValid) {
+                return;
+            }
+
+            // use CV2X time if it's avaialbe, it's more precise than propagated GNSS time
+            if (cv2xTimeValid_) {
+                LOGD("GNSS report ignored with UTC = %" PRIu64 " due to CV2X UTC is valid\n", utc);
+                return;
+            }
+
+            // update system time if it's the first valid GNSS/CV2X time
+            if (firstSample_) {
+                firstSample_ = false;
+                setSysTime   = true;
+            }
+        }
 
             // forward time to chronyd if it's the first sample or the second boundary
             if (utc % 1000 == 0) {
@@ -437,24 +434,23 @@ void ChronySock::handleTimeUpdate(MyTimeSrc src, uint64_t utc) {
             deregNwTime = nwTimeEnabled_;
 #endif
             break;
-        case MyTimeSrc::CV2X:
-            {
-                std::lock_guard<std::mutex> lock(timeMtx_);
+        case MyTimeSrc::CV2X: {
+            std::lock_guard<std::mutex> lock(timeMtx_);
 
-                if (cv2xTimeValid_ != utcValid) {
-                    LOGI("CV2X UTC valid:%d\n", utcValid);
-                    cv2xTimeValid_ = utcValid;
-                }
-                if (!utcValid) {
-                    return;
-                }
-
-                // update system time if it's the first valid GNSS/CV2X time
-                if (firstSample_) {
-                    firstSample_ = false;
-                    setSysTime = true;
-                }
+            if (cv2xTimeValid_ != utcValid) {
+                LOGI("CV2X UTC valid:%d\n", utcValid);
+                cv2xTimeValid_ = utcValid;
             }
+            if (!utcValid) {
+                return;
+            }
+
+            // update system time if it's the first valid GNSS/CV2X time
+            if (firstSample_) {
+                firstSample_ = false;
+                setSysTime   = true;
+            }
+        }
 
             // forward time to chronyd
             sendUtcToChronyd(utc);
@@ -465,15 +461,14 @@ void ChronySock::handleTimeUpdate(MyTimeSrc src, uint64_t utc) {
             deregNwTime = nwTimeEnabled_;
 #endif
             break;
-        case MyTimeSrc::NETWORK:
-            {
-                std::lock_guard<std::mutex> lock(timeMtx_);
-                // ignore NW time if GNSS/CV2X time is available
-                if (!utcValid || gnssTimeValid_ || cv2xTimeValid_) {
-                    LOGD("NW time ignored with UTC = %" PRIu64 "\n", utc);
-                    return;
-                }
+        case MyTimeSrc::NETWORK: {
+            std::lock_guard<std::mutex> lock(timeMtx_);
+            // ignore NW time if GNSS/CV2X time is available
+            if (!utcValid || gnssTimeValid_ || cv2xTimeValid_) {
+                LOGD("NW time ignored with UTC = %" PRIu64 "\n", utc);
+                return;
             }
+        }
             // update system time according to each received NW time (rarely happen)
             setSysTime = true;
             break;
@@ -499,18 +494,17 @@ void ChronySock::handleTimeUpdate(MyTimeSrc src, uint64_t utc) {
         if (threads_) {
             threads_->addToQueue(f);
         }
-
     }
 }
 
 // set sys time according to the time sample if the time diff exceeds the threshold
 void ChronySock::setSystemTime(uint64_t utc) {
     struct timeval curTime, newTime;
-    newTime.tv_sec = (time_t)(utc / 1000);
+    newTime.tv_sec  = (time_t)(utc / 1000);
     newTime.tv_usec = (suseconds_t)((utc % 1000) * 1000);
     gettimeofday(&curTime, NULL);
-    uint64_t curUtc = static_cast<uint64_t>(curTime.tv_sec)*1000
-        + static_cast<uint64_t>(curTime.tv_usec)/1000;
+    uint64_t curUtc = static_cast<uint64_t>(curTime.tv_sec) * 1000
+                      + static_cast<uint64_t>(curTime.tv_usec) / 1000;
     if (utc > curUtc + offsetThreshold_ or curUtc > utc + offsetThreshold_) {
         if (settimeofday(&newTime, NULL) != 0) {
             LOGE("Failed to set sys time, errno:%d\n", errno);
@@ -527,28 +521,26 @@ void ChronySock::setSystemTime(uint64_t utc) {
 }
 
 void ChronySock::sendUtcToChronyd(uint64_t utc) {
-    struct TimeSample sample = { 0 };
+    struct TimeSample sample = {0};
     struct timeval gps_time, offset_time;
 
     sample.magic = SOCK_MAGIC;
     gettimeofday(&sample.tv, NULL);
-    gps_time.tv_sec = (time_t)(utc / 1000);
+    gps_time.tv_sec  = (time_t)(utc / 1000);
     gps_time.tv_usec = (suseconds_t)((utc % 1000) * 1000);
     timersub(&gps_time, &sample.tv, &offset_time);
-    sample.offset = (double)offset_time.tv_sec +
-                    ((double)offset_time.tv_usec / 1000000);
+    sample.offset = (double)offset_time.tv_sec + ((double)offset_time.tv_usec / 1000000);
 
     ssize_t bytesSent = send(chronyfd_, &sample, sizeof(sample), 0);
     // Checking if the socket was closed
     if (-1 == bytesSent) {
         LOGE("Failed to send sample to chrony, error = %d\n", errno);
     } else if (sizeof(sample) != bytesSent) {
-        LOGE("Failed to send sample to chrony, bytesSent = %d\n",
-             bytesSent);
+        LOGE("Failed to send sample to chrony, bytesSent = %d\n", bytesSent);
     }
 }
 
-int ChronySock::getInternalRtcTime(uint64_t& msec) {
+int ChronySock::getInternalRtcTime(uint64_t &msec) {
     struct tm rtcTime = {0};
 
     // read internal RTC
@@ -569,14 +561,13 @@ int ChronySock::getInternalRtcTime(uint64_t& msec) {
     // convert the time to milliseconds
     msec = timegm(&rtcTime) * 1000;
 
-    LOGD("Get RTC Time:%04d %02d %02d %02d:%02d:%02d, msec:%lld\n",
-         rtcTime.tm_year + 1900, rtcTime.tm_mon + 1, rtcTime.tm_mday,
-         rtcTime.tm_hour, rtcTime.tm_min, rtcTime.tm_sec, msec);
+    LOGD("Get RTC Time:%04d %02d %02d %02d:%02d:%02d, msec:%lld\n", rtcTime.tm_year + 1900,
+        rtcTime.tm_mon + 1, rtcTime.tm_mday, rtcTime.tm_hour, rtcTime.tm_min, rtcTime.tm_sec, msec);
 
     return 0;
 }
 
-int ChronySock::readDeltaTimeFromFile(int64_t& deltaMsecs) {
+int ChronySock::readDeltaTimeFromFile(int64_t &deltaMsecs) {
     int fd = open(DELTA_TIME_FILE, O_RDWR | O_CREAT, 0666);
     if (fd < 0) {
         LOGE("Open %s failed:%d\n", DELTA_TIME_FILE, errno);
@@ -610,7 +601,7 @@ int ChronySock::writeDeltaTimeToFile(int64_t deltaMsecs) {
 }
 
 void ChronySock::updateDeltaTime(uint64_t utc) {
-    int64_t deltaMsecs = 0;
+    int64_t deltaMsecs    = 0;
     int64_t newDeltaMsecs = 0;
 
     // get internal RTC time
@@ -659,11 +650,11 @@ int ChronySock::registerPwrNotification() {
 #endif
 
     bool tcuStatusUpdated = false;
-    auto tcuStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
-    auto statusCb = [&] (telux::common::ServiceStatus status) {
+    auto tcuStatus        = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    auto statusCb         = [&](telux::common::ServiceStatus status) {
         std::lock_guard<std::mutex> lock(mtx_);
         tcuStatusUpdated = true;
-        tcuStatus = status;
+        tcuStatus        = status;
         cv_.notify_all();
     };
 
@@ -727,17 +718,16 @@ void ChronySock::handleTcuStateUpdate(TcuActivityState tcuState) {
     // process TCU state in async thread
     auto f = std::async(std::launch::async, [this, tcuState] {
         switch (tcuState) {
-            case TcuActivityState::SUSPEND:
-                {
-                    LOGI("TCU SUSPEND\n");
-                    deregisterNetworkTime();
-                    auto tcuMgr = getTcuMgr();
-                    if (tcuMgr && tcuMgr->sendActivityStateAck(TcuActivityStateAck::SUSPEND_ACK)
-                        != Status::SUCCESS) {
-                        LOGE("Failed to send suspend ack\n");
-                    }
+            case TcuActivityState::SUSPEND: {
+                LOGI("TCU SUSPEND\n");
+                deregisterNetworkTime();
+                auto tcuMgr = getTcuMgr();
+                if (tcuMgr
+                    && tcuMgr->sendActivityStateAck(TcuActivityStateAck::SUSPEND_ACK)
+                           != Status::SUCCESS) {
+                    LOGE("Failed to send suspend ack\n");
                 }
-                break;
+            } break;
             case TcuActivityState::RESUME:
                 LOGI("TCU RESUME\n");
                 if (registerNetworkTime()) {
@@ -745,17 +735,16 @@ void ChronySock::handleTcuStateUpdate(TcuActivityState tcuState) {
                     deregisterPwrNotification();
                 }
                 break;
-            case TcuActivityState::SHUTDOWN:
-                {
-                    LOGI("TCU SHUTDOWN\n");
-                    deregisterNetworkTime();
-                    auto tcuMgr = getTcuMgr();
-                    if (tcuMgr && tcuMgr->sendActivityStateAck(TcuActivityStateAck::SHUTDOWN_ACK)
-                        != Status::SUCCESS) {
-                        LOGE("Failed to send shutdown ack\n");
-                    }
+            case TcuActivityState::SHUTDOWN: {
+                LOGI("TCU SHUTDOWN\n");
+                deregisterNetworkTime();
+                auto tcuMgr = getTcuMgr();
+                if (tcuMgr
+                    && tcuMgr->sendActivityStateAck(TcuActivityStateAck::SHUTDOWN_ACK)
+                           != Status::SUCCESS) {
+                    LOGE("Failed to send shutdown ack\n");
                 }
-                break;
+            } break;
             case TcuActivityState::UNKNOWN:
             default:
                 break;
@@ -767,14 +756,14 @@ void ChronySock::handleTcuStateUpdate(TcuActivityState tcuState) {
 }
 
 // convert NW time info to utc in milliseconds
-int ChronySock::convertNetworkTime(telux::tel::NetworkTimeInfo info, uint64_t& utc) {
+int ChronySock::convertNetworkTime(telux::tel::NetworkTimeInfo info, uint64_t &utc) {
     struct tm time;
-    time.tm_year = info.year - 1900; // number of year since 1900
-    time.tm_mon = info.month - 1; // month in a zero-based index
+    time.tm_year = info.year - 1900;  // number of year since 1900
+    time.tm_mon  = info.month - 1;  // month in a zero-based index
     time.tm_mday = info.day;
     time.tm_hour = info.hour;
-    time.tm_min = info.minute;
-    time.tm_sec = info.second;
+    time.tm_min  = info.minute;
+    time.tm_sec  = info.second;
 
     time_t secs = timegm(&time);
     if (secs < 0) {
@@ -790,8 +779,8 @@ int ChronySock::convertNetworkTime(telux::tel::NetworkTimeInfo info, uint64_t& u
 }
 
 // handle getting NW time response
-void ChronySock::onNetworkTimeResponse(telux::tel::NetworkTimeInfo info,
-    telux::common::ErrorCode error) {
+void ChronySock::onNetworkTimeResponse(
+    telux::tel::NetworkTimeInfo info, telux::common::ErrorCode error) {
     LOGD("Receive network time response:%d\n", static_cast<int>(error));
     uint64_t utc;
     if (ErrorCode::SUCCESS == error && (0 == convertNetworkTime(info, utc))) {
@@ -805,8 +794,7 @@ void ChronySock::onNetworkTimeResponse(telux::tel::NetworkTimeInfo info,
 // 3. not during exit
 bool ChronySock::registerNwTimeAllowed() {
     std::lock_guard<std::mutex> lock(timeMtx_);
-    if (enableNwTime_ && !exit_ &&
-        !gnssTimeValid_ && !cv2xTimeValid_) {
+    if (enableNwTime_ && !exit_ && !gnssTimeValid_ && !cv2xTimeValid_) {
         return true;
     }
     return false;
@@ -838,16 +826,16 @@ int ChronySock::registerNetworkTime() {
 
     // create instance of ServingSystemManager and wait for readiness
     bool srvStatusUpdated = false;
-    auto srvStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
-    auto statusCb = [&](telux::common::ServiceStatus status) {
+    auto srvStatus        = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    auto statusCb         = [&](telux::common::ServiceStatus status) {
         std::lock_guard<std::mutex> lock(mtx_);
         srvStatusUpdated = true;
-        srvStatus = status;
+        srvStatus        = status;
         cv_.notify_all();
     };
 
-    auto tmpMgr = telux::tel::PhoneFactory::getInstance().getServingSystemManager(
-        slotId_, statusCb);
+    auto tmpMgr
+        = telux::tel::PhoneFactory::getInstance().getServingSystemManager(slotId_, statusCb);
     if (!tmpMgr) {
         LOGE("Failed to get ServingSystemManager for slot:%d\n", slotId_);
         return -1;
@@ -864,10 +852,10 @@ int ChronySock::registerNetworkTime() {
     }
 
     // request current NW time, it might fail due to NW time is not yet available
-    tmpMgr->requestNetworkTime([this](
-        telux::tel::NetworkTimeInfo info, telux::common::ErrorCode error) {
-        this->onNetworkTimeResponse(info, error);
-    });
+    tmpMgr->requestNetworkTime(
+        [this](telux::tel::NetworkTimeInfo info, telux::common::ErrorCode error) {
+            this->onNetworkTimeResponse(info, error);
+        });
 
     // register for NW time updates
     if (Status::SUCCESS != tmpMgr->registerListener(myListener_)) {
@@ -875,7 +863,7 @@ int ChronySock::registerNetworkTime() {
         return -1;
     }
 
-    srvSysMgr_ = tmpMgr;
+    srvSysMgr_     = tmpMgr;
     nwTimeEnabled_ = true;
     return 0;
 }

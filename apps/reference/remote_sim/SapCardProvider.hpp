@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file    SapCardProvider.hpp
  * @brief   This file contains class and function declarations for the Sap Card Provider.
@@ -39,12 +45,12 @@
 #include "SimConnection.hpp"
 
 class SapCardProvider {
-public:
+ public:
     static SapCardProvider &getInstance();
 
     int runClient(int argc, char **argv);
 
-private:
+ private:
     static void signalHandler(int signum);
 
     void cleanup();
@@ -55,8 +61,8 @@ private:
 
     void handleDaemonMsg(uint8_t *buf, int bytes);
 
-    CardControl &cardControl_ = CardControl::getInstance();
+    CardControl &cardControl_     = CardControl::getInstance();
     SimConnection &simConnection_ = SimConnection::getInstance();
 };
 
-#endif // SAPCARDPROVIDER_HPP
+#endif  // SAPCARDPROVIDER_HPP

@@ -28,50 +28,19 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
-* @file       Cv2xRadio.hpp
-*
-* @brief      Cv2xRadio class encapsulates a CV2X radio (channel) resource.
-*/
+ * @file       Cv2xRadio.hpp
+ *
+ * @brief      Cv2xRadio class encapsulates a CV2X radio (channel) resource.
+ */
 
 #ifndef TELUX_CV2X_CV2XRADIO_HPP
 #define TELUX_CV2X_CV2XRADIO_HPP
-
 
 #include <telux/cv2x/Cv2xFactory.hpp>
 #include <telux/cv2x/Cv2xRadioManager.hpp>
@@ -94,7 +63,6 @@ class ICv2xRxSubscription;
 class ICv2xTxFlow;
 class ICv2xTxRxSocket;
 
-
 /**
  * This function is called as a response to @ref ICv2xRadio::createRxSubscription.
  *
@@ -103,9 +71,8 @@ class ICv2xTxRxSocket;
  *                         - SUCCESS
  *                         - GENERIC_FAILURE
  */
-using CreateRxSubscriptionCallback =
-    std::function<void (std::shared_ptr<ICv2xRxSubscription> rxSub,
-                        telux::common::ErrorCode error)>;
+using CreateRxSubscriptionCallback = std::function<void(
+    std::shared_ptr<ICv2xRxSubscription> rxSub, telux::common::ErrorCode error)>;
 
 /**
  * This function is called as a  response to @ref ICv2xRadio::createTxSpsFlow
@@ -121,10 +88,9 @@ using CreateRxSubscriptionCallback =
  *                            - GENERIC_FAILURE
  *
  */
-using CreateTxSpsFlowCallback = std::function<void (std::shared_ptr<ICv2xTxFlow> txSpsFlow,
-                                                    std::shared_ptr<ICv2xTxFlow> txEventFlow,
-                                                    telux::common::ErrorCode spsError,
-                                                    telux::common::ErrorCode eventError)>;
+using CreateTxSpsFlowCallback = std::function<void(std::shared_ptr<ICv2xTxFlow> txSpsFlow,
+    std::shared_ptr<ICv2xTxFlow> txEventFlow, telux::common::ErrorCode spsError,
+    telux::common::ErrorCode eventError)>;
 
 /**
  * This function is called with the response to @ref ICv2xRadio::createTxEventFlow
@@ -134,8 +100,8 @@ using CreateTxSpsFlowCallback = std::function<void (std::shared_ptr<ICv2xTxFlow>
  *                            - SUCCESS
  *                            - GENERIC_FAILURE
  */
-using CreateTxEventFlowCallback = std::function<void (std::shared_ptr<ICv2xTxFlow> txEventFlow,
-                                                      telux::common::ErrorCode error)>;
+using CreateTxEventFlowCallback
+    = std::function<void(std::shared_ptr<ICv2xTxFlow> txEventFlow, telux::common::ErrorCode error)>;
 
 /**
  * This function is called with the response to @ref ICv2xRadio::closeTxFlow.
@@ -145,8 +111,8 @@ using CreateTxEventFlowCallback = std::function<void (std::shared_ptr<ICv2xTxFlo
  *                       - SUCCESS
  *                       - GENERIC_FAILURE
  */
-using CloseTxFlowCallback = std::function<void (std::shared_ptr<ICv2xTxFlow> txFlow,
-                                                telux::common::ErrorCode error)>;
+using CloseTxFlowCallback
+    = std::function<void(std::shared_ptr<ICv2xTxFlow> txFlow, telux::common::ErrorCode error)>;
 
 /**
  * This function is called with the response to @ref ICv2xRadio::closeRxSubscription.
@@ -156,10 +122,8 @@ using CloseTxFlowCallback = std::function<void (std::shared_ptr<ICv2xTxFlow> txF
  *                       - SUCCESS
  *                       - GENERIC_FAILURE
  */
-using CloseRxSubscriptionCallback =
-    std::function<void (std::shared_ptr<ICv2xRxSubscription> rxSub,
-                        telux::common::ErrorCode error)>;
-
+using CloseRxSubscriptionCallback = std::function<void(
+    std::shared_ptr<ICv2xRxSubscription> rxSub, telux::common::ErrorCode error)>;
 
 /**
  * This function is called with the response to @ref ICv2xRadio::changeSpsFlowInfo.
@@ -169,8 +133,8 @@ using CloseRxSubscriptionCallback =
  *                       - SUCCESS
  *                       - GENERIC_FAILURE
  */
-using ChangeSpsFlowInfoCallback =
-    std::function<void (std::shared_ptr<ICv2xTxFlow> txFlow, telux::common::ErrorCode error)>;
+using ChangeSpsFlowInfoCallback
+    = std::function<void(std::shared_ptr<ICv2xTxFlow> txFlow, telux::common::ErrorCode error)>;
 
 /**
  * This function is called with the response to @ref ICv2xRadio::requestSpsFlowInfo.
@@ -181,10 +145,8 @@ using ChangeSpsFlowInfoCallback =
  *                         - SUCCESS
  *                         - GENERIC_FAILURE
  */
-using RequestSpsFlowInfoCallback =
-    std::function<void (std::shared_ptr<ICv2xTxFlow> txFlow,
-                        const SpsFlowInfo & spsInfo,
-                        telux::common::ErrorCode error)>;
+using RequestSpsFlowInfoCallback = std::function<void(std::shared_ptr<ICv2xTxFlow> txFlow,
+    const SpsFlowInfo &spsInfo, telux::common::ErrorCode error)>;
 /**
  * This function is called with the response to @ref ICv2xRadio::changeEventFlowInfo.
  *
@@ -193,8 +155,8 @@ using RequestSpsFlowInfoCallback =
  *                       - SUCCESS
  *                       - GENERIC_FAILURE
  */
-using ChangeEventFlowInfoCallback =
-    std::function<void (std::shared_ptr<ICv2xTxFlow> txFlow, telux::common::ErrorCode error)>;
+using ChangeEventFlowInfoCallback
+    = std::function<void(std::shared_ptr<ICv2xTxFlow> txFlow, telux::common::ErrorCode error)>;
 
 /**
  * This function is called with the response to @ref ICv2xRadio::requestCapabilities.
@@ -204,9 +166,8 @@ using ChangeEventFlowInfoCallback =
  *                         - SUCCESS
  *                         - GENERIC_FAILURE
  */
-using RequestCapabilitiesCallback =
-    std::function<void(const Cv2xRadioCapabilities & capabilities,
-                       telux::common::ErrorCode error)>;
+using RequestCapabilitiesCallback
+    = std::function<void(const Cv2xRadioCapabilities &capabilities, telux::common::ErrorCode error)>;
 
 /**
  * This function is called with the response to @ref ICv2xRadio::requestDataSessionSettings.
@@ -216,9 +177,8 @@ using RequestCapabilitiesCallback =
  *                         - SUCCESS
  *                         - GENERIC_FAILURE
  */
-using RequestDataSessionSettingsCallback =
-    std::function<void (const DataSessionSettings & settings,
-                        telux::common::ErrorCode error)>;
+using RequestDataSessionSettingsCallback
+    = std::function<void(const DataSessionSettings &settings, telux::common::ErrorCode error)>;
 /**
  * This function is called with the response to @ref ICv2xRadio::updateTrustedUEList.
  *
@@ -229,8 +189,7 @@ using RequestDataSessionSettingsCallback =
  *                         - GENERIC_FAILURE
  *                         - INVALID_ARGUMENTS
  */
-using UpdateTrustedUEListCallback =
-    std::function<void(telux::common::ErrorCode error)>;
+using UpdateTrustedUEListCallback = std::function<void(telux::common::ErrorCode error)>;
 
 /**
  * This function is called with the response to ICv2xRadio::updateSrcL2Info.
@@ -239,8 +198,7 @@ using UpdateTrustedUEListCallback =
  *                         - SUCCESS
  *                         - GENERIC_FAILURE
  */
-using UpdateSrcL2InfoCallback =
-    std::function<void (telux::common::ErrorCode error)>;
+using UpdateSrcL2InfoCallback = std::function<void(telux::common::ErrorCode error)>;
 
 /**
  * This function is called with the response to @ref ICv2xRadio::createCv2xTcpSocket.
@@ -250,9 +208,8 @@ using UpdateSrcL2InfoCallback =
  *                       - SUCCESS
  *                       - GENERIC_FAILUREs
  */
-using CreateTcpSocketCallback =
-    std::function<void (std::shared_ptr<ICv2xTxRxSocket> sock,
-                        telux::common::ErrorCode error)>;
+using CreateTcpSocketCallback
+    = std::function<void(std::shared_ptr<ICv2xTxRxSocket> sock, telux::common::ErrorCode error)>;
 
 /**
  * This function is called with the response to @ref ICv2xRadio::closeCv2xTcpSocket.
@@ -262,8 +219,8 @@ using CreateTcpSocketCallback =
  *                       - SUCCESS
  *                       - GENERIC_FAILURE
  */
-using CloseTcpSocketCallback = std::function<void (std::shared_ptr<ICv2xTxRxSocket> sock,
-                                             telux::common::ErrorCode error)>;
+using CloseTcpSocketCallback
+    = std::function<void(std::shared_ptr<ICv2xTxRxSocket> sock, telux::common::ErrorCode error)>;
 
 /** @addtogroup telematics_cv2x_cpp
  * @{ */
@@ -274,8 +231,7 @@ using CloseTcpSocketCallback = std::function<void (std::shared_ptr<ICv2xTxRxSock
  * Returned from @ref ICv2xRadioManager::getCv2xRadio
  */
 class ICv2xRadio {
-public:
-
+ public:
     /**
      * Returns true if the radio interface has completed initialization.
      *
@@ -289,8 +245,7 @@ public:
      * @param [in] listener - Listener that implements Cv2xRadioListener
      *                        interface.
      */
-    virtual telux::common::Status registerListener(
-        std::weak_ptr<ICv2xRadioListener> listener) = 0;
+    virtual telux::common::Status registerListener(std::weak_ptr<ICv2xRadioListener> listener) = 0;
 
     /**
      * Deregisters a listener from this Cv2xRadio.
@@ -298,8 +253,8 @@ public:
      * @param [in] listener - Previously registered Cv2xRadioListener that is
      *                        to be deregistered.
      */
-    virtual telux::common::Status deregisterListener(
-        std::weak_ptr<ICv2xRadioListener> listener) = 0;
+    virtual telux::common::Status deregisterListener(std::weak_ptr<ICv2xRadioListener> listener)
+        = 0;
 
     /**
      * Creates and initializes a new Rx subscription which will be returned
@@ -321,11 +276,9 @@ public:
      * @dependencies The interface must be pre-initialized with init().
      *
      */
-    virtual telux::common::Status createRxSubscription(
-        TrafficIpType ipType,
-        uint16_t port,
-        CreateRxSubscriptionCallback cb,
-        std::shared_ptr<std::vector<uint32_t>> idList = nullptr) = 0;
+    virtual telux::common::Status createRxSubscription(TrafficIpType ipType, uint16_t port,
+        CreateRxSubscriptionCallback cb, std::shared_ptr<std::vector<uint32_t>> idList = nullptr)
+        = 0;
 
     /**
      * This status indicates whether the Cv2xRadio is in a usable state.
@@ -359,11 +312,9 @@ public:
      * @par Meta data report for IP packets is not supported yet, it will return NOSUPPORTED.
      *
      */
-    virtual telux::common::Status enableRxMetaDataReport(
-        TrafficIpType ipType,
-        bool enable,
-        std::shared_ptr<std::vector<std::uint32_t>> idList,
-        telux::common::ResponseCallback cb) = 0;
+    virtual telux::common::Status enableRxMetaDataReport(TrafficIpType ipType, bool enable,
+        std::shared_ptr<std::vector<std::uint32_t>> idList, telux::common::ResponseCallback cb)
+        = 0;
 
     /**
      * Creates a Tx SPS flow with the specified IP type, serviceId, and other
@@ -397,14 +348,10 @@ public:
      *
      * @returns SUCCESS upon success. Error status otherwise.
      */
-    virtual telux::common::Status createTxSpsFlow(
-        TrafficIpType ipType,
-        uint32_t serviceId,
-        const SpsFlowInfo & spsInfo,
-        uint16_t spsSrcPort,
-        bool eventSrcPortValid,
-        uint16_t eventSrcPort,
-        CreateTxSpsFlowCallback cb) = 0;
+    virtual telux::common::Status createTxSpsFlow(TrafficIpType ipType, uint32_t serviceId,
+        const SpsFlowInfo &spsInfo, uint16_t spsSrcPort, bool eventSrcPortValid,
+        uint16_t eventSrcPort, CreateTxSpsFlowCallback cb)
+        = 0;
 
     /**
      * Creates an event flow. An associated Tx socket will be created and
@@ -432,11 +379,9 @@ public:
      *
      * @returns SUCCESS upon success. Error status otherwise.
      */
-    virtual telux::common::Status createTxEventFlow(
-        TrafficIpType ipType,
-        uint32_t serviceId,
-        uint16_t eventSrcPort,
-        CreateTxEventFlowCallback cb) = 0;
+    virtual telux::common::Status createTxEventFlow(TrafficIpType ipType, uint32_t serviceId,
+        uint16_t eventSrcPort, CreateTxEventFlowCallback cb)
+        = 0;
 
     /**
      * Creates an event flow. An associated Tx socket will be created and
@@ -465,12 +410,9 @@ public:
      *
      * @returns SUCCESS upon success. Error status otherwise.
      */
-    virtual telux::common::Status createTxEventFlow(
-        TrafficIpType ipType,
-        uint32_t serviceId,
-        const EventFlowInfo & flowInfo,
-        uint16_t eventSrcPort,
-        CreateTxEventFlowCallback cb) = 0;
+    virtual telux::common::Status createTxEventFlow(TrafficIpType ipType, uint32_t serviceId,
+        const EventFlowInfo &flowInfo, uint16_t eventSrcPort, CreateTxEventFlowCallback cb)
+        = 0;
 
     /**
      * Closes the RxSubscription and frees resources (such as the Rx socket) associated
@@ -482,8 +424,9 @@ public:
      *
      * @returns SUCCESS if no error occurred.
      */
-    virtual telux::common::Status closeRxSubscription(std::shared_ptr<ICv2xRxSubscription> rxSub,
-                                                      CloseRxSubscriptionCallback cb) = 0;
+    virtual telux::common::Status closeRxSubscription(
+        std::shared_ptr<ICv2xRxSubscription> rxSub, CloseRxSubscriptionCallback cb)
+        = 0;
 
     /**
      * Closes the TxFlow and frees resources associated with it (such as reserved
@@ -499,8 +442,9 @@ public:
      *
      * @returns SUCCESS if no error occurred.
      */
-    virtual telux::common::Status closeTxFlow(std::shared_ptr<ICv2xTxFlow> txFlow,
-                                              CloseTxFlowCallback cb) = 0;
+    virtual telux::common::Status closeTxFlow(
+        std::shared_ptr<ICv2xTxFlow> txFlow, CloseTxFlowCallback cb)
+        = 0;
 
     /**
      * Request to change TX SPS Flow reservation parameters.
@@ -512,10 +456,9 @@ public:
      *
      * @returns SUCCESS if no error occurred.
      */
-    virtual telux::common::Status changeSpsFlowInfo(
-        std::shared_ptr<ICv2xTxFlow> txFlow,
-        const SpsFlowInfo & spsInfo,
-        ChangeSpsFlowInfoCallback cb) = 0;
+    virtual telux::common::Status changeSpsFlowInfo(std::shared_ptr<ICv2xTxFlow> txFlow,
+        const SpsFlowInfo &spsInfo, ChangeSpsFlowInfoCallback cb)
+        = 0;
 
     /**
      * Request SPS flow info.
@@ -527,8 +470,8 @@ public:
      * @returns SUCCESS if no error occurred.
      */
     virtual telux::common::Status requestSpsFlowInfo(
-        std::shared_ptr<ICv2xTxFlow> txFlow,
-        RequestSpsFlowInfoCallback cb) = 0;
+        std::shared_ptr<ICv2xTxFlow> txFlow, RequestSpsFlowInfoCallback cb)
+        = 0;
 
     /**
      * Request to change TX Event Flow reservation parameters.
@@ -543,10 +486,9 @@ public:
      *
      * @returns SUCCESS if no error occurred.
      */
-    virtual telux::common::Status changeEventFlowInfo(
-        std::shared_ptr<ICv2xTxFlow> txFlow,
-        const EventFlowInfo & flowInfo,
-        ChangeEventFlowInfoCallback cb) = 0;
+    virtual telux::common::Status changeEventFlowInfo(std::shared_ptr<ICv2xTxFlow> txFlow,
+        const EventFlowInfo &flowInfo, ChangeEventFlowInfoCallback cb)
+        = 0;
 
     /**
      * Request modem Cv2x capability information.
@@ -556,8 +498,7 @@ public:
      *
      * @returns SUCCESS if no error occurred.
      */
-    virtual telux::common::Status requestCapabilities(
-        RequestCapabilitiesCallback cb) = 0;
+    virtual telux::common::Status requestCapabilities(RequestCapabilitiesCallback cb) = 0;
 
     /**
      * Request data session settings currently in use.
@@ -567,8 +508,8 @@ public:
      *
      * @returns SUCCESS if no error occurred.
      */
-    virtual telux::common::Status requestDataSessionSettings(
-        RequestDataSessionSettingsCallback cb) = 0;
+    virtual telux::common::Status requestDataSessionSettings(RequestDataSessionSettingsCallback cb)
+        = 0;
 
     /**
      * Requests modem to change L2 info.
@@ -597,13 +538,14 @@ public:
      * @returns SUCCESS if no error occurred.
      */
     virtual telux::common::Status updateTrustedUEList(
-        const TrustedUEInfoList & infoList,
-        UpdateTrustedUEListCallback cb) = 0;
+        const TrustedUEInfoList &infoList, UpdateTrustedUEListCallback cb)
+        = 0;
 
     /**
      * Destructor for ICv2xRadio
      */
-    virtual ~ICv2xRadio(){}
+    virtual ~ICv2xRadio() {
+    }
 
     /**
      * Get interface name based on ipType.
@@ -645,10 +587,8 @@ public:
      * @returns SUCCESS upon success. Error status otherwise.
      */
     virtual telux::common::Status createCv2xTcpSocket(
-        const EventFlowInfo &eventInfo,
-        const SocketInfo &sockInfo,
-        CreateTcpSocketCallback cb) = 0;
-
+        const EventFlowInfo &eventInfo, const SocketInfo &sockInfo, CreateTcpSocketCallback cb)
+        = 0;
 
     /**
      * Closes the CV2X TCP socket and frees resources associated with it (such as
@@ -663,8 +603,9 @@ public:
      *
      * @returns SUCCESS if no error occurred.
      */
-    virtual telux::common::Status closeCv2xTcpSocket(std::shared_ptr<ICv2xTxRxSocket> sock,
-                                                     CloseTcpSocketCallback cb) = 0;
+    virtual telux::common::Status closeCv2xTcpSocket(
+        std::shared_ptr<ICv2xTxRxSocket> sock, CloseTcpSocketCallback cb)
+        = 0;
 
     /**
      * Registers a listener for Tx status report.
@@ -678,10 +619,9 @@ public:
      * @param [in] cb       - Callback that is invoked when the registration of CV2X Tx
      *                        status report is complete.
      */
-    virtual telux::common::Status registerTxStatusReportListener(
-        uint16_t port,
-        std::shared_ptr<ICv2xTxStatusReportListener> listener,
-        telux::common::ResponseCallback cb) = 0;
+    virtual telux::common::Status registerTxStatusReportListener(uint16_t port,
+        std::shared_ptr<ICv2xTxStatusReportListener> listener, telux::common::ResponseCallback cb)
+        = 0;
 
     /**
      * Deregisters a listener for Tx status report.
@@ -693,8 +633,8 @@ public:
      *                        status report is complete.
      */
     virtual telux::common::Status deregisterTxStatusReportListener(
-        uint16_t port,
-        telux::common::ResponseCallback cb) = 0;
+        uint16_t port, telux::common::ResponseCallback cb)
+        = 0;
 
     /**
      * Set CV2X global IP address for the IP interface.
@@ -717,8 +657,9 @@ public:
      *
      * @returns SUCCESS if no error occurred.
      */
-    virtual telux::common::Status setGlobalIPInfo(const IPv6AddrType &ipv6Addr,
-        common::ResponseCallback cb) = 0;
+    virtual telux::common::Status setGlobalIPInfo(
+        const IPv6AddrType &ipv6Addr, common::ResponseCallback cb)
+        = 0;
 
     /**
      * Set CV2X IP interface global IP unicast routing information.
@@ -745,7 +686,8 @@ public:
      * @returns SUCCESS if no error occurred.
      */
     virtual telux::common::Status setGlobalIPUnicastRoutingInfo(
-        const GlobalIPUnicastRoutingInfo &destL2Addr, common::ResponseCallback cb) = 0;
+        const GlobalIPUnicastRoutingInfo &destL2Addr, common::ResponseCallback cb)
+        = 0;
 
     /**
      * Get the capabilities of this Cv2xRadio.
@@ -776,7 +718,8 @@ public:
      *
      */
     virtual telux::common::Status injectVehicleSpeed(
-        uint32_t speed, telux::common::ResponseCallback cb) = 0;
+        uint32_t speed, telux::common::ResponseCallback cb)
+        = 0;
 
     /**
      * Returns true if the radio interface was successfully initialized.
@@ -802,8 +745,8 @@ public:
 
 /** @} */ /* end_addtogroup telematics_cv2x_cpp */
 
-} // namespace cv2x
+}  // namespace cv2x
 
-} // namespace telux
+}  // namespace telux
 
-#endif // TELUX_CV2X_CV2XRADIO_HPP
+#endif  // TELUX_CV2X_CV2XRADIO_HPP

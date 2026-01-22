@@ -26,12 +26,13 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 #ifndef CELLBROADCASTLISTENER_HPP
 #define CELLBROADCASTLISTENER_HPP
 
@@ -42,13 +43,13 @@
 
 class CellbroadcastListener : public telux::tel::ICellBroadcastListener {
  public:
-    void onIncomingMessage(SlotId slotId,
-        const std::shared_ptr<telux::tel::CellBroadcastMessage> cbMessage) override;
-    void onMessageFilterChange(SlotId slotId,
-        std::vector<telux::tel::CellBroadcastFilter> filters) override;
+    void onIncomingMessage(
+        SlotId slotId, const std::shared_ptr<telux::tel::CellBroadcastMessage> cbMessage) override;
+    void onMessageFilterChange(
+        SlotId slotId, std::vector<telux::tel::CellBroadcastFilter> filters) override;
     void onServiceStatusChange(telux::common::ServiceStatus status) override;
 
-private:
+ private:
     std::string geograhicalScopeToString(telux::tel::GeographicalScope scope);
     std::string priorityToString(telux::tel::MessagePriority priority);
     std::string msgTypeToString(telux::tel::MessageType type);
@@ -57,7 +58,6 @@ private:
     std::string cmasUrgencyToString(telux::tel::CmasUrgency urgency);
     std::string cmasCertaintyToString(telux::tel::CmasCertainty certainity);
     std::string etwsWarningTypeToString(telux::tel::EtwsWarningType warningtype);
-
 };
 
 #endif  // CELLBROADCASTLISTENER_HPP

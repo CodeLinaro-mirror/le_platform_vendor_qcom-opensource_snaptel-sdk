@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "common/Logger.hpp"
@@ -10,11 +10,11 @@
 namespace telux {
 namespace audio {
 
-AudioStreamImpl::AudioStreamImpl(uint32_t streamId, StreamType streamType,
-        std::shared_ptr<ICommunicator> transportClient) {
+AudioStreamImpl::AudioStreamImpl(
+    uint32_t streamId, StreamType streamType, std::shared_ptr<ICommunicator> transportClient) {
 
-    streamId_ = streamId;
-    streamType_ = streamType;
+    streamId_        = streamId;
+    streamType_      = streamType;
     transportClient_ = transportClient;
 }
 
@@ -25,7 +25,7 @@ AudioStreamImpl::~AudioStreamImpl() {
 /*
  * Receives audio SSR updates.
  */
-void AudioStreamImpl::onServiceStatusChange(){
+void AudioStreamImpl::onServiceStatusChange() {
 
     /*
      * Playback & capture use cases uses ping-pong buffers (two buffers). When
@@ -84,8 +84,8 @@ StreamType AudioStreamImpl::getType() {
  * For capture, if invalid device is given, default mic will be used.
  * For voice call, stream must be started to make the set device effective.
  */
-telux::common::Status AudioStreamImpl::setDevice(std::vector<DeviceType> devices,
-        telux::common::ResponseCallback callback) {
+telux::common::Status AudioStreamImpl::setDevice(
+    std::vector<DeviceType> devices, telux::common::ResponseCallback callback) {
 
     intptr_t cmdId;
     telux::common::Status status;
@@ -113,8 +113,7 @@ telux::common::Status AudioStreamImpl::setDevice(std::vector<DeviceType> devices
  * If application provided a callback to receive the result of AudioStreamImpl::setDevice
  * invocation, it calls that callback method otherwise simply drops the result.
  */
-void AudioStreamImpl::onSetDeviceResult(telux::common::ErrorCode ec,
-        uint32_t streamId, int cmdId) {
+void AudioStreamImpl::onSetDeviceResult(telux::common::ErrorCode ec, uint32_t streamId, int cmdId) {
 
     std::shared_ptr<telux::common::ICommandCallback> resultListener;
 
@@ -152,8 +151,8 @@ telux::common::Status AudioStreamImpl::getDevice(GetStreamDeviceResponseCb callb
  * If application provided a callback to receive the result of AudioStreamImpl::getDevice
  * invocation, it calls that callback method otherwise simply drops the result.
  */
-void AudioStreamImpl::onGetDeviceResult(telux::common::ErrorCode ec,
-        uint32_t streamId, std::vector<DeviceType> devices, int cmdId) {
+void AudioStreamImpl::onGetDeviceResult(
+    telux::common::ErrorCode ec, uint32_t streamId, std::vector<DeviceType> devices, int cmdId) {
 
     std::shared_ptr<telux::common::ICommandCallback> resultListener;
 
@@ -188,8 +187,8 @@ void AudioStreamImpl::onGetDeviceResult(telux::common::ErrorCode ec,
  * This is because we use volume based on ACDB calibration as volume change needs to
  * change other PP parameters.
  */
-telux::common::Status AudioStreamImpl::setVolume(StreamVolume volume,
-        telux::common::ResponseCallback callback) {
+telux::common::Status AudioStreamImpl::setVolume(
+    StreamVolume volume, telux::common::ResponseCallback callback) {
 
     intptr_t cmdId;
     telux::common::Status status;
@@ -212,8 +211,7 @@ telux::common::Status AudioStreamImpl::setVolume(StreamVolume volume,
  * If application provided a callback to receive the result of AudioStreamImpl::setVolume
  * invocation, it calls that callback method otherwise simply drops the result.
  */
-void AudioStreamImpl::onSetVolumeResult(telux::common::ErrorCode ec,
-        uint32_t streamId, int cmdId) {
+void AudioStreamImpl::onSetVolumeResult(telux::common::ErrorCode ec, uint32_t streamId, int cmdId) {
 
     std::shared_ptr<telux::common::ICommandCallback> resultListener;
 
@@ -228,8 +226,8 @@ void AudioStreamImpl::onSetVolumeResult(telux::common::ErrorCode ec,
 /*
  * Gives volume level of the stream (audio device).
  */
-telux::common::Status AudioStreamImpl::getVolume(StreamDirection direction,
-        GetStreamVolumeResponseCb callback) {
+telux::common::Status AudioStreamImpl::getVolume(
+    StreamDirection direction, GetStreamVolumeResponseCb callback) {
 
     intptr_t cmdId;
     telux::common::Status status;
@@ -252,8 +250,8 @@ telux::common::Status AudioStreamImpl::getVolume(StreamDirection direction,
  * If application provided a callback to receive the result of AudioStreamImpl::getVolume
  * invocation, it calls that callback method otherwise simply drops the result.
  */
-void AudioStreamImpl::onGetVolumeResult(telux::common::ErrorCode ec,
-        uint32_t streamId, StreamVolume volume, int cmdId) {
+void AudioStreamImpl::onGetVolumeResult(
+    telux::common::ErrorCode ec, uint32_t streamId, StreamVolume volume, int cmdId) {
 
     std::shared_ptr<telux::common::ICommandCallback> resultListener;
 
@@ -284,8 +282,8 @@ void AudioStreamImpl::onGetVolumeResult(telux::common::ErrorCode ec,
  *  because mute information is fetched from lower layers, whereas for playback
  *  and capture, cached info is returned.
  */
-telux::common::Status AudioStreamImpl::setMute(StreamMute streamMute,
-        telux::common::ResponseCallback callback) {
+telux::common::Status AudioStreamImpl::setMute(
+    StreamMute streamMute, telux::common::ResponseCallback callback) {
 
     intptr_t cmdId;
     telux::common::Status status;
@@ -308,8 +306,7 @@ telux::common::Status AudioStreamImpl::setMute(StreamMute streamMute,
  * If application provided a callback to receive the result of AudioStreamImpl::setMute
  * invocation, it calls that callback method otherwise simply drops the result.
  */
-void AudioStreamImpl::onSetMuteResult(telux::common::ErrorCode ec,
-        uint32_t streamId, int cmdId) {
+void AudioStreamImpl::onSetMuteResult(telux::common::ErrorCode ec, uint32_t streamId, int cmdId) {
 
     std::shared_ptr<telux::common::ICommandCallback> resultListener;
 
@@ -324,8 +321,8 @@ void AudioStreamImpl::onSetMuteResult(telux::common::ErrorCode ec,
 /*
  * Gives current mute state of the audio stream/device.
  */
-telux::common::Status AudioStreamImpl::getMute(StreamDirection direction,
-        GetStreamMuteResponseCb callback) {
+telux::common::Status AudioStreamImpl::getMute(
+    StreamDirection direction, GetStreamMuteResponseCb callback) {
 
     intptr_t cmdId;
     telux::common::Status status;
@@ -348,11 +345,10 @@ telux::common::Status AudioStreamImpl::getMute(StreamDirection direction,
  * If application provided a callback to receive the result of AudioStreamImpl::getMute
  * invocation, it calls that callback method otherwise simply drops the result.
  */
-void AudioStreamImpl::onGetMuteResult(telux::common::ErrorCode ec,
-        uint32_t streamId, StreamMute streamMute, int cmdId) {
+void AudioStreamImpl::onGetMuteResult(
+    telux::common::ErrorCode ec, uint32_t streamId, StreamMute streamMute, int cmdId) {
 
     std::shared_ptr<telux::common::ICommandCallback> resultListener;
-
 
     resultListener = cmdCallbackMgr_.findAndRemoveCallback(cmdId);
     if (!resultListener) {

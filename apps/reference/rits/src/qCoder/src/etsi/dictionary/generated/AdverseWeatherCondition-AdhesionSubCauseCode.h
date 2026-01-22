@@ -5,9 +5,8 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#ifndef	_AdverseWeatherCondition_AdhesionSubCauseCode_H_
-#define	_AdverseWeatherCondition_AdhesionSubCauseCode_H_
-
+#ifndef _AdverseWeatherCondition_AdhesionSubCauseCode_H_
+#define _AdverseWeatherCondition_AdhesionSubCauseCode_H_
 
 #include <asn_application.h>
 
@@ -20,21 +19,21 @@ extern "C" {
 
 /* Dependencies */
 typedef enum AdverseWeatherCondition_AdhesionSubCauseCode {
-	AdverseWeatherCondition_AdhesionSubCauseCode_unavailable	= 0,
-	AdverseWeatherCondition_AdhesionSubCauseCode_heavyFrostOnRoad	= 1,
-	AdverseWeatherCondition_AdhesionSubCauseCode_fuelOnRoad	= 2,
-	AdverseWeatherCondition_AdhesionSubCauseCode_mudOnRoad	= 3,
-	AdverseWeatherCondition_AdhesionSubCauseCode_snowOnRoad	= 4,
-	AdverseWeatherCondition_AdhesionSubCauseCode_iceOnRoad	= 5,
-	AdverseWeatherCondition_AdhesionSubCauseCode_blackIceOnRoad	= 6,
-	AdverseWeatherCondition_AdhesionSubCauseCode_oilOnRoad	= 7,
-	AdverseWeatherCondition_AdhesionSubCauseCode_looseChippings	= 8,
-	AdverseWeatherCondition_AdhesionSubCauseCode_instantBlackIce	= 9,
-	AdverseWeatherCondition_AdhesionSubCauseCode_roadsSalted	= 10
+    AdverseWeatherCondition_AdhesionSubCauseCode_unavailable      = 0,
+    AdverseWeatherCondition_AdhesionSubCauseCode_heavyFrostOnRoad = 1,
+    AdverseWeatherCondition_AdhesionSubCauseCode_fuelOnRoad       = 2,
+    AdverseWeatherCondition_AdhesionSubCauseCode_mudOnRoad        = 3,
+    AdverseWeatherCondition_AdhesionSubCauseCode_snowOnRoad       = 4,
+    AdverseWeatherCondition_AdhesionSubCauseCode_iceOnRoad        = 5,
+    AdverseWeatherCondition_AdhesionSubCauseCode_blackIceOnRoad   = 6,
+    AdverseWeatherCondition_AdhesionSubCauseCode_oilOnRoad        = 7,
+    AdverseWeatherCondition_AdhesionSubCauseCode_looseChippings   = 8,
+    AdverseWeatherCondition_AdhesionSubCauseCode_instantBlackIce  = 9,
+    AdverseWeatherCondition_AdhesionSubCauseCode_roadsSalted      = 10
 } e_AdverseWeatherCondition_AdhesionSubCauseCode;
 
 /* AdverseWeatherCondition-AdhesionSubCauseCode */
-typedef long	 AdverseWeatherCondition_AdhesionSubCauseCode_t;
+typedef long AdverseWeatherCondition_AdhesionSubCauseCode_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_AdverseWeatherCondition_AdhesionSubCauseCode;
@@ -52,5 +51,5 @@ per_type_encoder_f AdverseWeatherCondition_AdhesionSubCauseCode_encode_uper;
 }
 #endif
 
-#endif	/* _AdverseWeatherCondition_AdhesionSubCauseCode_H_ */
+#endif /* _AdverseWeatherCondition_AdhesionSubCauseCode_H_ */
 #include <asn_internal.h>

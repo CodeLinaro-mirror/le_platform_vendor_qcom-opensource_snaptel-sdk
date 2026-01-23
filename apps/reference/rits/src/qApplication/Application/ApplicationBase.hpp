@@ -27,8 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
+ *  Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
  /**
@@ -94,6 +95,7 @@
 #define DECODE_SUCCESS 0
 #define DECODE_FAIL -1
 #define DECODE_SIGNED 1
+#define SEC_SHUTDOWN_SLEEP_TIME 800
 
 #define LOG_HEADER "TimeStamp,TimeStamp_ms,Time_monotonic,LogRecType,L2 ID,"\
                    "CBR Percent,CPU_Util,TXInterval,msgCnt,TempId,GPGSAMode,"\
@@ -629,6 +631,9 @@ public:
     virtual bool pendingTillEmergency();
     virtual bool pendingTillNoEmergency();
     virtual void prepareForExit();
+    void explicitSecurityShutdown();
+    void waitForSecurityShutdown();
+    void waitForWorkerThreads();
     std::shared_ptr<ICongestionControlListener> congCtrlListener;
     std::shared_ptr<CaControlManagerListener> cacMgrListr;
     std::shared_ptr<ICAControlManager> caControlMgr;
@@ -724,6 +729,38 @@ public:
      */
     void updateCongCtrlHvData();
 
+    /**
+     * Create and register a worker thread
+     * Template allows any callable with any arguments
+     */
+    template<typename Func, typename... Args>
+    void createWorkerThread(Func&& func, Args&&... args) {
+        std::lock_guard<std::mutex> lock(threadsMutex_);
+
+        try {
+            workerThreads_.emplace_back(
+                std::forward<Func>(func),
+                std::forward<Args>(args)...
+            );
+
+            if (appVerbosity > 7) {
+                std::cout << "Created worker thread. Total: "
+                          << workerThreads_.size() << std::endl;
+            }
+        } catch (const std::system_error& e) {
+            std::cerr << "Failed to create worker thread: " << e.what() << std::endl;
+            std::cerr << "Error code: " << e.code() << std::endl;
+            throw;
+        } catch (const std::exception& e) {
+            std::cerr << "Exception creating worker thread: " << e.what() << std::endl;
+            throw;
+        }
+    }
+
+    /**
+     * Get number of active worker threads
+     */
+    size_t getWorkerThreadCount() const;
     /**
      * Object that registers a listener to throttle manager
      * and allows to set load and get filter rate.
@@ -847,7 +884,11 @@ private:
     /* For local stored v2x IP rmnet address */
     std::mutex v2xIpAddrMtx_;
     string v2xIpAddr_;
-
+    std::vector<std::thread> workerThreads_;
+    mutable std::mutex threadsMutex_;
+    std::atomic<bool> threadsExited_{false};
+    std::once_flag exitOnce_;
+    std::atomic<bool> securityShutdownComplete_{false};
 
     /* method to retrieve V2X IP rmnet address from the system */
     int getSysV2xIpIfaceAddr(string& ipAddr);

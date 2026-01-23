@@ -27,8 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
+ *  Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <iostream>
@@ -69,7 +70,23 @@ static      sem_t idChangeSem;
 
 static AEROLINK_RESULT completeChangeId_status;
 static bool retChangeId_status; // tells thread if callback has completed
+std::atomic<bool> AerolinkSecurity::shutdownInProgress_{false};
+AerolinkSecurity::SemaphoreManager AerolinkSecurity::semaphoreManager_;
 
+void AerolinkSecurity::registerCallbackSemaphore(sem_t* callbackSemaphore) {
+    semaphoreManager_.registerSemaphore(callbackSemaphore);
+}
+
+void AerolinkSecurity::unregisterCallbackSemaphore(sem_t* callbackSemaphore) {
+    semaphoreManager_.unregisterSemaphore(callbackSemaphore);
+}
+
+bool AerolinkSecurity::isSemaphoreValid(sem_t* callbackSemaphore) {
+    return semaphoreManager_.isValid(callbackSemaphore);
+}
+bool AerolinkSecurity::postSemaphoreIfValid(sem_t* callbackSemaphore) {
+    return semaphoreManager_.postSemaphoreIfValid(callbackSemaphore);
+}
 /* LOGGING FUNCTIONS */
 // Function to set the verbosity of these security related functions
 // 0   -> Quiet
@@ -225,6 +242,12 @@ void printVerifStats(std::thread::id thrId){
 
 static void initIdChangeCbFn(void *userData, unsigned char numCerts, unsigned char *certIndxCb){
     // on call back, this function provides the new cert index for the complete id change cb fn
+    if (AerolinkSecurity::isShutdownInProgress()) {
+        if(secVerbosity > 5) {
+            printf("[CALLBACK] ID change init ignored (shutdown in progress)\n");
+        }
+        return;
+    }
     static uint8_t rng_data = 0;
     int rng_ret = -1;
     auto app = static_cast<QUtils*>(userData);
@@ -253,6 +276,12 @@ static void initIdChangeCbFn(void *userData, unsigned char numCerts, unsigned ch
  */
 static void completeIdChangeCbFn(AEROLINK_RESULT returnCode, void *userData, const unsigned char *certIdCb){
     // tells the user whether the id change was completed successfully or not.
+    if (AerolinkSecurity::isShutdownInProgress()) {
+        if(secVerbosity > 5) {
+            printf("[CALLBACK] ID change init ignored (shutdown in progress)\n");
+        }
+        return;
+    }
     completeChangeId_status = returnCode;
     if(returnCode == WS_SUCCESS){
         // cast userdata to the user data type struct
@@ -522,6 +551,8 @@ int AerolinkSecurity::init(void) {
 // Deinitialize aerolink services when process is finished
 void AerolinkSecurity::deinit(void) {
     fprintf(stdout,"Aerolink deinitializing\n");
+    semaphoreManager_.initiateShutdown();
+    AerolinkSecurity::setShutdownInProgress(true);
     if(lcmName_ && lcmName_[0] != '\0')
         securityServices_idChangeUnregister(secContext_,lcmName_);
     if (smg_ != nullptr)
@@ -534,10 +565,6 @@ void AerolinkSecurity::deinit(void) {
     }
     (void)sc_close(secContext_);
     (void)securityServices_shutdown();
-    if(pInstance != nullptr){
-        delete(pInstance);
-        pInstance = nullptr;
-    }
 }
 
 AerolinkSecurity::~AerolinkSecurity(){}
@@ -734,6 +761,32 @@ static void handle_verify_result(
     AEROLINK_RESULT returnCode,
     void           *userData)
 {
+    if (AerolinkSecurity::isShutdownInProgress()) {
+        if (secVerbosity > 5) {
+            fprintf(stdout, "[VERIFY_CB] Shutdown in progress, returning immediately\n");
+            fflush(stdout);
+        }
+        
+        //  Still post semaphore to unblock waiting threads
+        // This prevents deadlock where main thread waits forever
+        sem_t* cb_sem = (sem_t*)userData;
+        if (cb_sem != nullptr) {
+            // Use atomic post to safely post during shutdown
+            if (!AerolinkSecurity::postSemaphoreIfValid(cb_sem)) {
+                if (secVerbosity > 7) {
+                    fprintf(stdout, "[VERIFY_CB] Semaphore invalid, cannot unblock waiter\n");
+                    fflush(stdout);
+                }
+            } else {
+                if (secVerbosity > 7) {
+                    fprintf(stdout, "[VERIFY_CB] Posted semaphore to unblock waiter during shutdown\n");
+                    fflush(stdout);
+                }
+            }
+        }
+        return;
+    }
+
     sem_t* cb_sem = (sem_t*) userData;
     if(cb_sem == nullptr){
         fprintf(stderr,"Callback data was not properly set\n");
@@ -756,9 +809,22 @@ static void handle_verify_result(
     }
     printVerifStats(std::this_thread::get_id());
     sem_post(&verifLogSem);
-    sem_post(cb_sem);
+    if (!AerolinkSecurity::postSemaphoreIfValid(cb_sem)) {
+        // Semaphore was invalid (unregistered or shutdown in progress)
+        if (secVerbosity > 5) {
+            fprintf(stdout, "[VERIFY_CB] Semaphore invalid, cannot post result\n");
+            fflush(stdout);
+        }
+        // Note: Waiter may be blocked forever if semaphore is invalid
+        // This should only happen during shutdown when waiter has timed out
+    } else {
+        // Successfully posted to semaphore
+        if (secVerbosity > 5) {
+            fprintf(stdout, "[VERIFY_CB] Successfully posted to callback semaphore\n");
+            fflush(stdout);
+        }
+    }
 }
-
 void print_exception(std::exception& e){
     fprintf(stderr, "Exception caught : %s\n", e.what());
 }
@@ -1112,6 +1178,16 @@ void AerolinkSecurity::signCallback(
      * A real application may want to use a condition variable to signal that
      * the callback has occurred.
      */
+
+    if (AerolinkSecurity::isShutdownInProgress()) {
+        if(secVerbosity > 5) {
+            fprintf(stdout, "[CALLBACK] Sign callback ignored (shutdown in progress)\n");
+        }
+
+        // Set flag to unblock waiting code
+        signCallbackCalled = 1;
+        return;
+    }
     signCallbackStatus = returnCode;
     signCallbackUserData = userCallbackData;
     signCallbackData = cbSignedSpduData;

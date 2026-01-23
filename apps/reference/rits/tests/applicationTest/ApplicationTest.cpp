@@ -27,8 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
+ *  Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
  /**
@@ -78,7 +79,6 @@ using std::make_shared;
 
 // Global variables
 shared_ptr<ApplicationBase> application = nullptr;
-vector<thread> threads;
 bool csv = false;
 bool enableDiagLog = false;
 int timerFd = -1;
@@ -120,14 +120,6 @@ void signalHandler(int signum) {
     stopThreads();
 }
 
-// allow the main thread to wait on the threads to join
-void joinThreads() {
-    for (int i = 0; i < threads.size(); i++)
-    {
-        threads[i].join();
-    }
-}
-
 /**
  * Initialize timer
  * @param[in] intervalMs timer interval value in miliseconds
@@ -164,7 +156,7 @@ bool isL2SrcFilteringEnabled() {
 
 //Function to trigger L2 src filtering
 void rvL2SrcFiltering(shared_ptr<ApplicationBase> application) {
-    std::thread ([application]() {
+    application->createWorkerThread([application]() {
         while (!stopThread) {
             application->filterRate=application->cv2xTmListener->getFilterRate();
             if (application->filterRate)
@@ -178,7 +170,7 @@ void rvL2SrcFiltering(shared_ptr<ApplicationBase> application) {
             std::this_thread::sleep_for(std::chrono::milliseconds(
                                                         application->configuration.filterInterval));
         }
-    }).detach();
+    });
 }
 
 
@@ -186,7 +178,7 @@ void rvL2SrcFiltering(shared_ptr<ApplicationBase> application) {
 // evaluation interval. or for both?
 void l2FloodingMitigation(shared_ptr<ApplicationBase> application) {
     // do we want the states to be tracked in application base or here?
-    std::thread ([application]() {
+    application->createWorkerThread([application]() {
         struct timeval currTime;
         gettimeofday(&currTime, NULL);
         time_t startTime = currTime.tv_sec;
@@ -264,7 +256,7 @@ void l2FloodingMitigation(shared_ptr<ApplicationBase> application) {
                 commandIntervalCtr = 0;
             }
         }
-    }).detach();
+    });
 }
 
 // restart only the necessary flows or subscriptions needed
@@ -490,7 +482,7 @@ void onSrcL2AddrUpdate(uint32_t addr) {
         }
 
         // update local V2X-IP rmnet addr in a new thread
-        std::thread([]() {
+        application->createWorkerThread([]() {
             int i = 0;
             while (!stopThread and application) {
                 if (0 == application->updateCachedV2xIpIfaceAddr()) {
@@ -511,7 +503,7 @@ void onSrcL2AddrUpdate(uint32_t addr) {
                     break;
                 }
             }
-        }).detach();
+        });
     }
 }
 
@@ -1250,9 +1242,22 @@ int setup(const bool tx, const bool rx,
     }
 
     if (not application
-        or not application->configuration.isValid
-        or not application->init()) {
+        or not application->configuration.isValid) {
         cerr << "Initialization Failed" << endl;
+        return -1;
+    }
+
+    // Register semaphore before init
+    auto saeApp = dynamic_pointer_cast<SaeApplication>(application);
+    if (saeApp) {
+        saeApp->registerVerificationSemaphore();
+    }
+    // If init fails, unregister semaphore
+    if (!application->init()) {
+        cerr << "Initialization Failed" << endl;
+        if (saeApp) {
+            saeApp->unregisterVerificationSemaphore();
+        }
         return -1;
     }
 
@@ -1286,10 +1291,10 @@ int setup(const bool tx, const bool rx,
                 cout << "Tunnel Mode only supports BSM" << endl;
                 return -1;
             }
-            threads.push_back(thread(tunnelModeTx));
+            application->createWorkerThread(tunnelModeTx);
         } else {
-            threads.push_back(thread(transmit, msgType));
-            threads.push_back(thread(transmitEventMsg));
+            application->createWorkerThread(transmit, msgType);
+            application->createWorkerThread(transmitEventMsg);
             // wait some time for congestion control to activate (if enabled)
             if(application->configuration.enableCongCtrl){
                 usleep(500000);
@@ -1298,7 +1303,7 @@ int setup(const bool tx, const bool rx,
     }
 
     if(application->configuration.driverVerbosity > 4)
-        printf("Number of threads after tx is: %d\n", (int)threads.size());
+        printf("Number of threads after tx is: %d\n", (int)application->getWorkerThreadCount());
 
     if (csv) {
         application->openLogFile(csvFileName);
@@ -1343,7 +1348,7 @@ int setup(const bool tx, const bool rx,
                 application->setupLdm();
             }
             if (tunnelRx) {
-                threads.push_back(thread(tunnelModeRx));
+                application->createWorkerThread(tunnelModeRx);
             }
             else {
                 // TODO: Implement for CAM, DENM as well
@@ -1352,17 +1357,17 @@ int setup(const bool tx, const bool rx,
                             (int)application->configuration.numRxThreadsRadio << endl;
                 }
                 for (int i = 0; i < application->configuration.numRxThreadsRadio; i++) {
-                    threads.push_back(thread(ldmRx));
+                    application->createWorkerThread(ldmRx);
                 }
             }
         }
         else {
             if (cam) {
-                threads.push_back(thread(receive, MessageType::CAM, 0));
+                application->createWorkerThread(receive, MessageType::CAM, 0);
             }
             else if (denm)
             {
-                threads.push_back(thread(receive, MessageType::DENM, 0));
+                application->createWorkerThread(receive, MessageType::DENM, 0);
             }
             else {
                 // TODO: Implement for CAM, DENM as well
@@ -1371,14 +1376,14 @@ int setup(const bool tx, const bool rx,
                             (int)application->configuration.numRxThreadsRadio << endl;
                 }
                 for (int i = 0; i < application->configuration.numRxThreadsRadio; i++) {
-                    threads.push_back(thread(receive, msgType, 0));
+                    application->createWorkerThread(receive, msgType, 0);
                 }
             }
         }
     }
 
     if(application->configuration.driverVerbosity > 4)
-        printf("Number of threads after rx is: %d\n", (int)threads.size());
+        printf("Number of threads after rx is: %d\n", (int)application->getWorkerThreadCount());
 
     if (txSim && rxSim) {
         cout <<
@@ -1397,14 +1402,14 @@ int setup(const bool tx, const bool rx,
                         "Transmit from pre-recorded file only supports BSM" << endl;
                 return -1;
             }
-            threads.push_back(thread(simTxRecorded, preRecordedFile));
+            application->createWorkerThread(simTxRecorded, preRecordedFile);
         }
         else {
-          threads.push_back(thread(transmit, msgType));
+          application->createWorkerThread(transmit, msgType);
         }
     }
     if(application->configuration.driverVerbosity > 4)
-        printf("Number of threads after simtransmit is: %d\n", (int)threads.size());
+        printf("Number of threads after simtransmit is: %d\n", (int)application->getWorkerThreadCount());
 
     if (rxSim)
     {
@@ -1423,17 +1428,17 @@ int setup(const bool tx, const bool rx,
                         (int)application->configuration.numRxThreadsEth << endl;
             }
             for (int i = 0; i < application->configuration.numRxThreadsEth; i++) {
-                threads.push_back(thread(ldmRx));
+                application->createWorkerThread(ldmRx);
             }
         }
         else {
 
             if (cam) {
-                threads.push_back(thread(receive, MessageType::CAM, 0));
+                application->createWorkerThread(receive, MessageType::CAM, 0);
             }
             else if (denm)
             {
-                threads.push_back(thread(receive, MessageType::DENM, 0));
+                application->createWorkerThread(receive, MessageType::DENM, 0);
             }
             else {
                 // Multi-Threading Capability for RxSim
@@ -1442,14 +1447,14 @@ int setup(const bool tx, const bool rx,
                             (int)application->configuration.numRxThreadsEth << endl;
                 }
                 for(int i = 0; i < application->configuration.numRxThreadsEth; i++){
-                    threads.push_back(thread(receive, msgType, 0));
+                    application->createWorkerThread(receive, msgType, 0);
                 }
             }
         }
     }
 
     if(application->configuration.driverVerbosity > 4)
-        printf("Number of threads after simreceive is %d\n", (int)threads.size());
+        printf("Number of threads after simreceive is %d\n", (int)application->getWorkerThreadCount());
 
     if (preRecorded && !txSim)
     {
@@ -1457,7 +1462,7 @@ int setup(const bool tx, const bool rx,
             cout << "Only BSM is supported for pre-recorded transmit" << endl;
             return -1;
         }
-        threads.push_back(thread(txRecorded, preRecordedFile));
+        application->createWorkerThread(txRecorded, preRecordedFile);
     }
 
     if (safetyApps)
@@ -1466,12 +1471,12 @@ int setup(const bool tx, const bool rx,
             cout << "Only BSM is supported for safetyApp demo" << endl;
             return -1;
         }
-        threads.push_back(thread(runApps));
+        application->createWorkerThread(runApps);
     }
 
     if (enableDiagLog) {
         RadioInterface::enableDiagLog(enableDiagLog);
-        threads.push_back(thread(periodicDiagLog));
+        application->createWorkerThread(periodicDiagLog);
     }
 
     return 0;
@@ -1578,9 +1583,32 @@ int main(int argc, char** argv) {
         preRecordedFile, txSim, rxSim, tunnelTx, tunnelRx, txSimIp, rxSimIp,
         txSimPort, rxSimPort, (char*)configFile.data()) < 0) {
         cout << "Failed to launch program" << endl;
+        if (application) {
+            cout << "[MAIN] Cleaning up after setup failure..." << endl;
+            application->prepareForExit();
+
+            auto saeApp = dynamic_pointer_cast<SaeApplication>(application);
+            if (saeApp) {
+                try {
+                    saeApp->unregisterVerificationSemaphore();
+                    cout << "[MAIN] Unregistered semaphore" << endl;
+                } catch (...) {
+                    cerr << "[MAIN] Error during cleanup" << endl;
+                }
+            }
+            cout << "[MAIN] Cleanup complete" << endl;
+        }
+
+        return -1;
     }
 
-    joinThreads();
+    if (application) {
+        application->waitForWorkerThreads();
+    }
+    auto saeApp = dynamic_pointer_cast<SaeApplication>(application);
+    if (saeApp) {
+        saeApp->unregisterVerificationSemaphore();
+    }
 
     if(!rxSim && !txSim && application){
         application->closeAllRadio();

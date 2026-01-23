@@ -27,8 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
+ *  Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
  /**
@@ -733,12 +734,16 @@ ApplicationBase::~ApplicationBase() {
 
     // call prepare for exit here again in case it wasn't called previously
     prepareForExit();
-
-    if(SecService){
-        SecService->lockIdChange();
-        SecService->deinit();
-        SecService.reset();
+    if (!threadsExited_) {
+            if (appVerbosity > 3) {
+                std::cout << "Warning: Threads not yet joined, waiting..." << std::endl;
+            }
+        waitForWorkerThreads();
     }
+    explicitSecurityShutdown();
+    //  Wait for security to fully shut down
+    waitForSecurityShutdown();
+
     if (enableDiagLog_ && utility_) {
         utility_->deInitDiagLog();
     }
@@ -767,6 +772,119 @@ ApplicationBase::~ApplicationBase() {
             }
             fclose(csvfp);
             csvfp = nullptr;
+        }
+    }
+}
+/**
+ * Wait for all worker threads to exit
+ */
+void ApplicationBase::waitForWorkerThreads() {
+    if (appVerbosity > 5) {
+        std::cout << "Waiting for " << workerThreads_.size()
+                  << " worker threads to exit..." << std::endl;
+    }
+    std::lock_guard<std::mutex> lock(threadsMutex_);
+    for (size_t i = 0; i < workerThreads_.size(); i++) {
+        auto& t = workerThreads_[i];
+        if (t.joinable()) {
+            try {
+                if (appVerbosity > 7) {
+                    std::cout << "Joining thread " << (i+1) << "/"
+                              << workerThreads_.size() << "..." << std::endl;
+                }
+                t.join();
+                if (appVerbosity > 7) {
+                    std::cout << "Thread " << (i+1) << " joined" << std::endl;
+                }
+            } catch (const std::exception& e) {
+                std::cerr << "Exception joining thread " << (i+1) << ": "
+                          << e.what() << std::endl;
+            } catch (...) {
+                std::cerr << "Unknown exception joining thread " << (i+1) << std::endl;
+            }
+        }
+    }
+    workerThreads_.clear();
+    threadsExited_ = true;
+
+    if (appVerbosity > 5) {
+        std::cout << "All worker threads have exited" << std::endl;
+    }
+}
+
+size_t ApplicationBase::getWorkerThreadCount() const {
+    std::lock_guard<std::mutex> lock(threadsMutex_);
+    return workerThreads_.size();
+}
+
+void ApplicationBase::explicitSecurityShutdown() {
+    if (SecService) {
+        try {
+             // ---------------------------------------------------------------
+                // SHUTDOWN STRATEGY:
+                // ---------------------------------------------------------------
+                // 1. Try to lock ID change to prevent new certificate operations
+                // 2. Wait 800ms for in-progress operations to complete
+                // 3. Call deinit() REGARDLESS of lock result
+                //
+                // RATIONALE:
+                // - If lock succeeds: Clean shutdown with no races
+                // - If lock fails: We still proceed with shutdown after wait period
+                //   - This is better than skipping deinit() which would cause:
+                //     * Memory leaks (unreleased security resources)
+                //     * Dangling callbacks (accessing destroyed objects)
+                //     * Application crashes during termination
+                //   - The 800ms wait gives any in-progress ID change operations
+                //     time to complete, minimizing race condition risk
+                //   - Proceeding with deinit() ensures proper resource cleanup
+                //     even if there's a small risk of racing with ID change
+                //
+                // DESIGN DECISION:
+                // "It's better to risk a race condition during shutdown than to
+                //  guarantee resource leaks and crashes by skipping cleanup"
+                // ---------------------------------------------------------------
+            if (SecService->lockIdChange() != 0) {
+                std::cerr << "FATAL: Failed to lock ID change during shutdown" << std::endl;
+                std::cerr << "Cannot safely shutdown security service" << std::endl;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(SEC_SHUTDOWN_SLEEP_TIME));
+            SecService->deinit();
+
+        } catch (const std::exception& e) {
+            std::cerr << "Exception during security shutdown: " << e.what() << std::endl;
+        } catch (...) {
+            std::cerr << "Unknown exception during security shutdown" << std::endl;
+        }
+    }
+
+    securityShutdownComplete_ = true;
+
+    if (appVerbosity > 5) {
+        std::cout << "Security shutdown completed" << std::endl;
+    }
+}
+
+void ApplicationBase::waitForSecurityShutdown() {
+    auto start = std::chrono::steady_clock::now();
+
+    while (!securityShutdownComplete_) {
+        if (std::chrono::steady_clock::now() - start >
+            std::chrono::seconds(2)) {
+            std::cerr << "FATAL: Security shutdown timed out after 2 seconds!" << std::endl;
+            std::cerr << "Application cannot continue safely - terminating" << std::endl;
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    // Normal case: security shutdown completed successfully
+    if (SecService) {
+        if (appVerbosity > 5) {
+            std::cout << "Destroying security service..." << std::endl;
+        }
+        SecService.reset();
+        if (appVerbosity > 5) {
+            std::cout << "Security service destroyed" << std::endl;
         }
     }
 }
@@ -965,10 +1083,17 @@ void ApplicationBase::vehicleEventReport(bool emergent,
     }
 }
 void ApplicationBase::prepareForExit() {
-    exitApp = true;
-    sem_post(&this->rx_sem);
-    sem_post(&this->log_sem);
-    sem_post(&idChangeData.idSem);
+    std::call_once(exitOnce_, [&]{
+        exitApp = true;
+        sem_post(&this->rx_sem);
+        sem_post(&this->log_sem);
+
+        // Only post if security with LCM is enabled
+        if (configuration.enableSecurity &&
+            !configuration.lcmName.empty() &&
+            configuration.idChangeInterval) {
+            sem_post(&idChangeData.idSem);
+        }
 
     if(configuration.enableCongCtrl &&
                 congestionControlManager && congCtrlInitialized){
@@ -1003,6 +1128,7 @@ void ApplicationBase::prepareForExit() {
     if (kinematicsReceive != nullptr) {
         kinematicsReceive->close();
     }
+    });
 }
 
 bool ApplicationBase::pendingTillEmergency() {

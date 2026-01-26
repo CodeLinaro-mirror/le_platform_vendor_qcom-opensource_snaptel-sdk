@@ -413,7 +413,7 @@ struct StreamConfig {
     std::vector<Direction> voicePaths;
 
     /** @ref FormatParams - defines compressed playback format */
-    FormatParams *formatParams;
+    FormatParams *formatParams = nullptr;
 
     /** @ref EcnrMode - true to enable ECNR on an ecall */
     EcnrMode ecnrMode = EcnrMode::DISABLE;

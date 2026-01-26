@@ -360,7 +360,7 @@ int start_tx_timer(uint32_t interval_ms) {
 
     /* Start the timer */
     its.it_value.tv_sec = interval_ms / 1000;
-    its.it_value.tv_nsec = interval_ms % 1000;
+    its.it_value.tv_nsec = interval_ms % 1000 * 1000000;
     its.it_interval = its.it_value;
 
     if (timerfd_settime(timerfd, 0, &its, NULL) < 0) {

@@ -1174,11 +1174,13 @@ int ApplicationBase::encodeAndSignMsg(std::shared_ptr<msg_contents> mc){
             sopt.hvKine.elevation = (locationInfo->getAltitude() * 10);
         }
         std::thread::id tid = std::this_thread::get_id();
-        if (thrSignLatencies[tid].size() > signStatIdx[tid]) {
-            sopt.signStat = &thrSignLatencies[tid].at(signStatIdx[tid]);
-        }else{
-            signStatIdx[tid] = 0;
-            sopt.signStat = &thrSignLatencies[tid].at(signStatIdx[tid]);
+        if(configuration.enableSignStatLog){
+            if (thrSignLatencies[tid].size() > signStatIdx[tid]) {
+                sopt.signStat = &thrSignLatencies[tid].at(signStatIdx[tid]);
+            }else{
+                signStatIdx[tid] = 0;
+                sopt.signStat = &thrSignLatencies[tid].at(signStatIdx[tid]);
+            }
         }
         auto encLength = 0;
         if (mc->abuf.tail_bits_left != 8)
@@ -1192,9 +1194,11 @@ int ApplicationBase::encodeAndSignMsg(std::shared_ptr<msg_contents> mc){
                     encLength, signedSpdu, signedSpduLen) < 0) {
             return -1;
         }
-        // successful verification, increment the sign stat idx
-        signStatIdx[tid]++;
-        signStatIdx[tid]%=thrSignLatencies[tid].size();
+        if(configuration.enableSignStatLog){
+            // successful signing, increment the sign stat idx
+            signStatIdx[tid]++;
+            signStatIdx[tid]%=thrSignLatencies[tid].size();
+        }
 
         abuf_purge(&mc->abuf, abuf_headroom(&mc->abuf));
         asn_ncat(&mc->abuf, (char *)signedSpdu, signedSpduLen);

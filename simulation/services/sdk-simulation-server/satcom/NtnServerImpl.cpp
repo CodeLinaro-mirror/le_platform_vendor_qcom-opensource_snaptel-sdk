@@ -102,6 +102,16 @@ grpc::Status NtnServerImpl::EnableNtn(ServerContext *context,
     bool enable = request->enable();
 
     std::thread([this, enable] {
+        telux::satcom::NtnState targetState
+            = enable ? telux::satcom::NtnState::IN_SERVICE : telux::satcom::NtnState::DISABLED;
+        if (ntnState_ == targetState) {
+            LOG(DEBUG, __FUNCTION__,
+                " NTN already in target state: ", static_cast<int>(targetState));
+            return;
+        }
+        LOG(DEBUG, __FUNCTION__, " Changing NTN state from ", static_cast<int>(ntnState_), " to ",
+            static_cast<int>(targetState));
+
         if (enable) {
             handleStateChangeRequest(NTN_IN_SERVICE);
         } else {
@@ -175,6 +185,14 @@ grpc::Status NtnServerImpl::AbortData(ServerContext *context,
     }
 
     response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    if (data.error == telux::common::ErrorCode::SUCCESS) {
+        std::thread([this] {
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            // transactionId = 0 indicates all pending transactions aborted
+            handleDataAck(
+                "0 " + std::to_string(static_cast<int>(telux::common::ErrorCode::ABORTED)));
+        }).detach();
+    }
 
     return grpc::Status::OK;
 }
@@ -364,6 +382,8 @@ void NtnServerImpl::onEventUpdate(std::string event) {
         handleLocationFixRequest(event);
     } else if (token == "incomingData") {
         handleIncomingData(event);
+    } else if (token == "dataAck") {
+        handleDataAck(event);
     } else {
         LOG(ERROR, __FUNCTION__, "The event flag is not set!");
     }
@@ -485,5 +505,32 @@ void NtnServerImpl::handleIncomingData(std::string event) {
     } catch (const std::exception &ex) {
         LOG(ERROR, __FUNCTION__, "Exception occurred: ", ex.what());
         return;
+    }
+}
+
+void NtnServerImpl::handleDataAck(std::string event) {
+    LOG(DEBUG, __FUNCTION__, " event:", event);
+    std::string transactionIdStr = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
+    std::string errorCodeStr     = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
+
+    try {
+        uint32_t transactionId = std::stoul(transactionIdStr);
+        int errorCode          = std::stoi(errorCodeStr);
+
+        LOG(DEBUG, __FUNCTION__, " transactionId:", transactionId, " errorCode:", errorCode);
+
+        // Post the event to EventService event queue
+        ::eventService::EventResponse anyResponse;
+        satcomStub::DataAckEvent eventResponse;
+        eventResponse.set_transaction_id(transactionId);
+        eventResponse.set_error(static_cast<commonStub::ErrorCode>(errorCode));
+
+        anyResponse.set_filter(NTN_FILTER);
+        anyResponse.mutable_any()->PackFrom(eventResponse);
+
+        auto &eventImpl = EventService::getInstance();
+        eventImpl.updateEventQueue(anyResponse);
+    } catch (const std::exception &ex) {
+        LOG(ERROR, __FUNCTION__, "Exception occurred: ", ex.what());
     }
 }

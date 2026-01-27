@@ -553,6 +553,10 @@ void NtnManagerStub::onEventUpdate(google::protobuf::Any event) {
         ::satcomStub::IncomingDataEvent incomingDataEvent;
         event.UnpackTo(&incomingDataEvent);
         this->handleIncomingDataEvent(incomingDataEvent);
+    } else if (event.Is<::satcomStub::DataAckEvent>()) {
+        ::satcomStub::DataAckEvent dataAckEvent;
+        event.UnpackTo(&dataAckEvent);
+        this->handleDataAckEvent(dataAckEvent);
     }
 }
 
@@ -594,6 +598,17 @@ void NtnManagerStub::handleIncomingDataEvent(::satcomStub::IncomingDataEvent inc
     uint8_t *dataArray = new uint8_t[data.size()];
     std::copy(data.begin(), data.end(), dataArray);
     onIncomingData(std::unique_ptr<uint8_t[]>(dataArray), data.size());
+}
+
+void NtnManagerStub::handleDataAckEvent(::satcomStub::DataAckEvent dataAckEvent) {
+    LOG(DEBUG, __FUNCTION__);
+
+    uint32_t transactionId         = dataAckEvent.transaction_id();
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(dataAckEvent.error());
+
+    LOG(DEBUG, __FUNCTION__, " transactionId:", transactionId, " error:", static_cast<int>(error));
+
+    onDataAck(error, transactionId);
 }
 
 }  // namespace satcom

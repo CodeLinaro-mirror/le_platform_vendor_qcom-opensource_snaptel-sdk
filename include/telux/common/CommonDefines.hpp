@@ -600,6 +600,22 @@ enum class ErrorCode {
    OPERATION_NOT_POSSIBLE_DUE_TO_RFKILL = 6132, /**< Operation not possible due to
                                                      RF-kill.*/
    MEMORY_PAGE_HAS_HARDWARE_ERROR = 6133,       /**< Memory page has hardware error.*/
+   VOICECALL_PREPOST_CREATE_OR_CONFIG_FAILED = 7000,   /**< Failed to create or configure voice
+                                                            pre/post Tx/Rx operation.*/
+   VOICECALL_CODEC_CREATE_OR_CONFIG_FAILED = 7001,     /**< Failed to create or configure voice
+                                                            encoder/decoder (codec) operation.*/
+   VOICECALL_PREPOST_SESSION_ALREADY_EXISTS = 7002,    /**< Session already exists for voice
+                                                            pre/post Tx/Rx operation.*/
+   VOICECALL_CODEC_SESSION_ALREADY_EXISTS = 7003,      /**< Session already exists for voice
+                                                            encoder/decoder (codec) operation.*/
+   VOICECALL_PREPOST_INSUFFICIENT_MEMORY = 7004,       /**< Insufficient memory for voice pre/post
+                                                            Tx/Rx operation.*/
+   VOICECALL_CODEC_INSUFFICIENT_MEMORY = 7005,         /**< Insufficient memory for voice
+                                                            encoder/decoder (codec) operation.*/
+   VOICECALL_PREPOST_INVALID_CALIBRATION_PARAM = 7006, /**< Invalid calibration parameter for
+                                                            voice pre/post Tx/Rx operation.*/
+   VOICECALL_CODEC_INVALID_CALIBRATION_PARAM = 7007,   /**< Invalid calibration parameter for voice
+                                                            encoder/decoder (codec) operation.*/
 };
 
 /**

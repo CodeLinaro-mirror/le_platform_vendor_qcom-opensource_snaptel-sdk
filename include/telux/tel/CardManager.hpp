@@ -613,6 +613,16 @@ class ICard {
      */
     virtual void getMepInfo(MepInfo &info) = 0;
 
+    /**
+     * Retrieve the physical slot identifier associated with a given logical slot.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_TEL_PRIVATE_INFO_READ
+     * permission to invoke this API successfully.
+     *
+     * @param [out] slotId  slotId of the physical slot.
+     */
+    virtual void getPhysicalSlotId(PhysicalSlotId &slotId) = 0;
+
     virtual ~ICard(){};
 };
 

@@ -246,8 +246,11 @@ bool CardServicesMenu::init() {
     std::shared_ptr<ConsoleAppCommand> getMepInformationCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("17", "Get_MEP_information", {},
             std::bind(&CardServicesMenu::getMepInformation, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> checkPhysicalSlotCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("18", "Check_Physical_Slot", {},
+            std::bind(&CardServicesMenu::checkPhysicalSlot, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> selectCardSlotCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("18", "Select_card_slot", {},
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("19", "Select_card_slot", {},
             std::bind(&CardServicesMenu::selectCardSlot, this, std::placeholders::_1)));
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListCardServicesSubMenu
         = {getCardStateCommand, getSupportedAppsCommand, openLogicalChannelCommand,
@@ -255,7 +258,7 @@ bool CardServicesMenu::init() {
             changeCardPinCommand, unlockCardByPinCommand, unlockCardByPukCommand,
             queryPin1LockStateCommand, queryFdnLockStateCommand, setCardLockCommand,
             cardPowerCommand, cardFileHandlerMenuCommand, cardRefreshMenuCommand,
-            checkNtnProfileActiveCommand, getMepInformationCommand};
+            checkNtnProfileActiveCommand, getMepInformationCommand, checkPhysicalSlotCommand};
 
     if (cards_.size() > 1) {
         commandsListCardServicesSubMenu.emplace_back(selectCardSlotCommand);
@@ -891,6 +894,18 @@ void CardServicesMenu::checkNtnProfileActive(std::vector<std::string> userInput)
         } else {
             std::cout << "No active NTN profile" << std::endl;
         }
+    }
+}
+
+void CardServicesMenu::checkPhysicalSlot(std::vector<std::string> userInput) {
+    auto card = cards_[slot_ - 1];
+    std::cout << "Logical SlotId: " << slot_ << std::endl;
+    if (card) {
+        PhysicalSlotId slotId = PhysicalSlotId::INVALID_SLOT_ID;
+        card->getPhysicalSlotId(slotId);
+        std::cout << " Physical slot id: " << static_cast<int>(slotId) << std::endl;
+    } else {
+        std::cout << " Card is nullptr " << std::endl;
     }
 }
 

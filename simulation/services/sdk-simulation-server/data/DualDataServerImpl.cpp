@@ -76,11 +76,26 @@ grpc::Status DualDataServerImpl::GetDualDataCapability(ServerContext *context,
         = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
 
     if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Json read failed");
+        response->set_capability(false);  // Default to false if JSON read fails
+        response->set_error(
+            static_cast<commonStub::ErrorCode>(telux::common::ErrorCode::INTERNAL_ERROR));
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
     }
 
     if (data.error == telux::common::ErrorCode::SUCCESS) {
-        response->set_capability(data.stateRootObj[subsystem]["dppdCapability"].asBool());
+
+        if (data.stateRootObj[subsystem].isMember("dppdCapability")
+            && data.stateRootObj[subsystem]["dppdCapability"].isBool()) {
+            bool capability = data.stateRootObj[subsystem]["dppdCapability"].asBool();
+            response->set_capability(capability);
+            LOG(DEBUG, __FUNCTION__, " Dual data capability: ", capability ? "true" : "false");
+        } else {
+            response->set_capability(false);
+        }
+    } else {
+        LOG(DEBUG, __FUNCTION__, " Error reading dual data capability, defaulting to false");
+        response->set_capability(false);
     }
 
     response->set_error(static_cast<commonStub::ErrorCode>(data.error));

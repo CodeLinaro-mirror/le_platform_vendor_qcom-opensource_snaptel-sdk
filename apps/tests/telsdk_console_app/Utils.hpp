@@ -45,6 +45,40 @@
 
 class Utils {
 public:
+
+   // Validate the input and in case of invalid input request
+   // for proper input from user.
+   template <typename T>
+   static bool isInputValid(T input, std::initializer_list<T> list) {
+      for (auto elem = list.begin(); elem != list.end(); ++elem) {
+         if (*elem == input) {
+               return true;
+         }
+      }
+      return false;
+   }
+
+   template <typename T>
+   static void validateInput(T &input, std::initializer_list<T> list) {
+      bool valid = false;
+      do {
+         // If user input is within the list, just exist
+         if ((std::cin.good()) && (isInputValid(input, list))) {
+               valid = true;
+         } else {
+               // User input does not match any of the possible entries
+               std::cin.clear();
+               // Extracts characters from the previous input sequence and discards them,
+               // until entire stream have been extracted, or one compares equal to newline.
+               std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+               std::cout << "ERROR: Invalid input, please re-enter." << std::endl;
+               std::cin >> input;
+         }
+      } while (!valid);
+      std::cin.clear();
+      std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+   }
+
    // Validate the input and in case of invalid input request
    // for proper input from user.
    template <typename T>

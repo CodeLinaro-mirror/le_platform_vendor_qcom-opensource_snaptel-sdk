@@ -27,40 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "iostream"
@@ -136,6 +105,14 @@ void MyCellInfoCallback::cellInfoListResponse(
                    << gsmCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
             }
 
+            if(gsmCellInfo->getSignalStrengthInfo().getRssi() == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "GSM Received Signal Strength Indicator(in dBm): " << "UNAVAILABLE"
+                   << std::endl;
+            } else {
+               PRINT_CB << "GSM Received Signal Strength Indicator(in dBm): "
+                   << gsmCellInfo->getSignalStrengthInfo().getRssi() << std::endl;
+            }
+
             if(gsmCellInfo->getSignalStrengthInfo().getTimingAdvance()
                 == INVALID_SIGNAL_STRENGTH_VALUE) {
                PRINT_CB << "GSM Timing Advance(in bit periods): " << "UNAVAILABLE" << std::endl;
@@ -186,6 +163,14 @@ void MyCellInfoCallback::cellInfoListResponse(
             } else {
                PRINT_CB << "LTE Signal Strength(in dBm): "
                     << lteCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
+            }
+
+            if(lteCellInfo->getSignalStrengthInfo().getRssi() == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "LTE Received Signal Strength Indicator(in dBm): " << "UNAVAILABLE"
+                   << std::endl;
+            } else {
+               PRINT_CB << "LTE Received Signal Strength Indicator(in dBm): "
+                   << lteCellInfo->getSignalStrengthInfo().getRssi() << std::endl;
             }
 
             if(lteCellInfo->getSignalStrengthInfo().getDbm() == INVALID_SIGNAL_STRENGTH_VALUE) {
@@ -257,6 +242,14 @@ void MyCellInfoCallback::cellInfoListResponse(
                     << wcdmaCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
             }
 
+            if(wcdmaCellInfo->getSignalStrengthInfo().getRssi() == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "WCDMA Received Signal Strength Indicator(in dBm): " << "UNAVAILABLE"
+                   << std::endl;
+            } else {
+               PRINT_CB << "WCDMA Received Signal Strength Indicator(in dBm): "
+                   << wcdmaCellInfo->getSignalStrengthInfo().getRssi() << std::endl;
+            }
+
             if(wcdmaCellInfo->getSignalStrengthInfo().getBitErrorRate()
                 == INVALID_SIGNAL_STRENGTH_VALUE) {
                PRINT_CB << "WCDMA Bit Error Rate: "<< "UNAVAILABLE" << std::endl;
@@ -264,6 +257,25 @@ void MyCellInfoCallback::cellInfoListResponse(
                PRINT_CB << "WCDMA Bit Error Rate: "
                     << wcdmaCellInfo->getSignalStrengthInfo().getBitErrorRate() << std::endl;
             }
+
+            if (wcdmaCellInfo->getSignalStrengthInfo().getEcio()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+                PRINT_CB << "WCDMA Energy per chip to Interference Power Ratio(in dB): "
+                    << "UNAVAILABLE" << std::endl;
+            } else {
+                PRINT_CB << "WCDMA Energy per chip to Interference Power Ratio(in dB): "
+                    << wcdmaCellInfo->getSignalStrengthInfo().getEcio() << std::endl;
+            }
+
+            if (wcdmaCellInfo->getSignalStrengthInfo().getRscp()
+                 == INVALID_SIGNAL_STRENGTH_VALUE) {
+                PRINT_CB << "WCDMA Reference Signal Code Power(in dBm): "
+                    << "UNAVAILABLE" << std::endl;
+            } else {
+                PRINT_CB << "WCDMA Reference Signal Code Power(in dBm): "
+                    << wcdmaCellInfo->getSignalStrengthInfo().getRscp() << std::endl;
+            }
+
             PRINT_CB
                << "WCDMA Signal Level: "
                << signalLevelToString(wcdmaCellInfo->getSignalStrengthInfo().getLevel())
@@ -293,6 +305,13 @@ void MyCellInfoCallback::cellInfoListResponse(
             }
             PRINT_CB << "NR5G arfcn: " << nr5gCellInfo->getCellIdentity().getArfcn() << std::endl;
             // NR5G Signal Strength
+            if(nr5gCellInfo->getSignalStrengthInfo().getNr5gSignalStrength()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "NR5G Signal Strength: "<< "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_CB << "NR5G Signal Strength: "
+                    << nr5gCellInfo->getSignalStrengthInfo().getNr5gSignalStrength() << std::endl;
+            }
 
             if(nr5gCellInfo->getSignalStrengthInfo().getDbm() == INVALID_SIGNAL_STRENGTH_VALUE) {
                PRINT_CB << "NR5G Signal Strength(in dBm): "<< "UNAVAILABLE" << std::endl;

@@ -301,6 +301,8 @@ message GetCardStateRequest {
  message GetInProgressCallsData {
     int32 phone_id = 1;
     repeated Call calls = 2;
+    CallEndCause.Cause cause_code = 3;
+    AecsCallEndReason reason = 4;
 }
 
  message MsdPullRequestEvent {
@@ -1283,6 +1285,15 @@ enum EcallHlapTimerId {
     HlapTimerEvent action = 2;
     string timer = 3;
  }
+
+ enum AecsCallEndReason {
+     AECS_DUMMY = 0;
+     AECS_DROPPED = 2;          /* AECS call connected and failed unexpectedly */
+     AECS_ORIG_FAILED = 4;      /* AECS call origination fails */
+     AECS_FAILED = 5;           /* AECS call failed permanently */
+     AECS_COMPLETED = 6;        /* AECS call ended or disconnected */
+     AECS_UNSPECIFIED = 0xffff; /* AECS call fail reason is not available */
+ };
 
  message ECallRedialInfoEvent {
     int32 phone_id = 1;

@@ -446,14 +446,6 @@ NetworkMode CallStub::getNetworkMode() {
     return callInfo_.networkMode;
 }
 
-bool CallStub::isAecsCallDrop() {
-    return false;
-}
-
-telux::tel::RedialState CallStub::getRedialState() {
-    return telux::tel::RedialState::UNKNOWN;
-}
-
 telux::common::Status CallStub::modify(
     RttMode mode, std::shared_ptr<telux::common::ICommandResponseCallback> callback) {
     LOG(DEBUG, __FUNCTION__, " RTT mode is : ", static_cast<int>(mode));
@@ -514,4 +506,43 @@ telux::common::Status CallStub::modifyOrRespondToModifyCall(RttMode mode, std::s
         taskQ_->add(f1);
     }
     return status;
+}
+
+/**
+ * Set the cause of call termination
+ */
+void CallStub::setCallEndCause(CallEndCause causeCode) {
+    LOG(DEBUG, "Call end cause is ", (int)causeCode);
+    callInfo_.callEndCause = causeCode;
+}
+
+bool CallStub::isAecsCallDrop() {
+    LOG(DEBUG, " isAecsCallDrop: ", callInfo_.isAecsCallDrop);
+    return callInfo_.isAecsCallDrop;
+}
+
+telux::tel::RedialState CallStub::getRedialState() {
+    LOG(DEBUG, " Aecs redialState: ", static_cast<int>(callInfo_.redialState));
+    return callInfo_.redialState;
+}
+
+void CallStub::setAecsCallEndReason(AecsCallEndReason reason) {
+    callInfo_.isAecsCallDrop = false;
+    callInfo_.redialState    = RedialState::UNKNOWN;
+    LOG(DEBUG, " Aecs call end reason ", static_cast<int>(reason));
+    switch (reason) {
+        case AecsCallEndReason::DROPPED:
+            callInfo_.isAecsCallDrop = true;
+            break;
+        case AecsCallEndReason::ORIG_FAILED:
+            callInfo_.redialState = RedialState::MODEM_RETRY_END;
+            break;
+        case AecsCallEndReason::COMPLETED:
+        case AecsCallEndReason::FAILED:
+            break;
+        case AecsCallEndReason::UNSPECIFIED:
+        default:
+            LOG(DEBUG, " Aecs call end reason is not specified ");
+            break;
+    }
 }

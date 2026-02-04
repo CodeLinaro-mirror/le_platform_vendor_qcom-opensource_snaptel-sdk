@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -575,4 +575,43 @@ telux::common::Status CallStub::modifyOrRespondToModifyCall(
     taskQ_->add(f1);
   }
   return status;
+}
+
+/**
+ * Set the cause of call termination
+ */
+void CallStub::setCallEndCause(CallEndCause causeCode) {
+    LOG(DEBUG, "Call end cause is ", (int)causeCode);
+    callInfo_.callEndCause = causeCode;
+}
+
+bool CallStub::isAecsCallDrop() {
+    LOG(DEBUG, " isAecsCallDrop: ", callInfo_.isAecsCallDrop);
+    return callInfo_.isAecsCallDrop;
+}
+
+telux::tel::RedialState CallStub::getRedialState() {
+    LOG(DEBUG, " Aecs redialState: ", static_cast<int>(callInfo_.redialState));
+    return callInfo_.redialState;
+}
+
+void CallStub::setAecsCallEndReason(AecsCallEndReason reason) {
+    callInfo_.isAecsCallDrop = false;
+    callInfo_.redialState = RedialState::UNKNOWN;
+    LOG(DEBUG, " Aecs call end reason ", static_cast<int>(reason));
+    switch(reason) {
+        case AecsCallEndReason::DROPPED:
+            callInfo_.isAecsCallDrop = true;
+            break;
+        case AecsCallEndReason::ORIG_FAILED:
+            callInfo_.redialState = RedialState::MODEM_RETRY_END;
+            break;
+        case AecsCallEndReason::COMPLETED:
+        case AecsCallEndReason::FAILED:
+            break;
+        case AecsCallEndReason::UNSPECIFIED:
+        default:
+             LOG(DEBUG, " Aecs call end reason is not specified ");
+             break;
+    }
 }

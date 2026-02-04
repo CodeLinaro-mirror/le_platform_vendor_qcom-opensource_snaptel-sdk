@@ -349,6 +349,8 @@ message SubscriptionEvent { int32 phone_id = 1; }
 message GetInProgressCallsData {
   int32 phone_id = 1;
   repeated Call calls = 2;
+    CallEndCause.Cause cause_code = 3;
+    AecsCallEndReason reason = 4;
 }
 
 message MsdPullRequestEvent { int32 phone_id = 1; }
@@ -1289,6 +1291,15 @@ enum EcallHlapTimerId {
       6; /**< Timer ID for T10 timer for a regulatory eCall or test
               eCall. Applicable for eCall only operating mode. */
 };
+
+ enum AecsCallEndReason {
+     AECS_DUMMY = 0;
+     AECS_DROPPED = 2;          /* AECS call connected and failed unexpectedly */
+     AECS_ORIG_FAILED = 4;      /* AECS call origination fails */
+     AECS_FAILED = 5;           /* AECS call failed permanently */
+     AECS_COMPLETED = 6;        /* AECS call ended or disconnected */
+     AECS_UNSPECIFIED = 0xffff; /* AECS call fail reason is not available */
+ };
 
 message ECallInfoEvent {
   int32 phone_id = 1;

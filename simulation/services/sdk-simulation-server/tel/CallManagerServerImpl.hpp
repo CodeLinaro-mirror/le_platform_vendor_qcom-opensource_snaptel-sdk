@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -47,12 +47,12 @@
 #include "../../../protos/proto-src/tel_simulation.grpc.pb.h"
 #include "../event/EventService.hpp"
 #include "../event/ServerEventManager.hpp"
+#include <telux/tel/ECallDefines.hpp>
 #include "EcallStateMachine.hpp"
 #include "TelUtil.hpp"
 #include <condition_variable>
 #include <mutex>
 #include <telux/common/CommonDefines.hpp>
-#include <telux/tel/ECallDefines.hpp>
 #include <telux/tel/ImsServingSystemManager.hpp>
 #include <telux/tel/PhoneDefines.hpp>
 
@@ -65,6 +65,14 @@ class EcallStateMachine;
 #define CALL_INDEX_INVALID -1
 
 using namespace telux::tel;
+
+enum class AecsCallEndReason {
+   DROPPED = 2,          /* AECS call connected and failed unexpectedly */
+   ORIG_FAILED = 4,      /* AECS call origination fails */
+   FAILED = 5,           /* AECS call failed permanently */
+   COMPLETED = 6,        /* AECS call ended or disconnected */
+   UNSPECIFIED = 0xffff, /* AECS call fail reason is not available */
+};
 
 struct CallInfo {
   CallState callState;
@@ -86,6 +94,7 @@ struct CallInfo {
   CallType callType = CallType::UNKNOWN;
   NetworkMode networkMode = NetworkMode::UNKNOWN;
   bool isEraGlonassSelfTestECall = false;
+  AecsCallEndReason aecsReason = AecsCallEndReason::UNSPECIFIED;
 };
 
 class CallManagerServerImpl final
@@ -254,7 +263,8 @@ private:
   void triggerMsdPullrequestEvent(int phoneId);
   void triggerCallStateChangeEvent(int phoneId, std::string action,
                                    std::string remotepartyNumber);
-  void triggerCallListAfterCallEnd(int phoneId);
+  void triggerCallListAfterCallEnd(int phoneId, CallEndCause causeCode,
+        AecsCallEndReason reason);
   std::vector<std::shared_ptr<CallInfo>> fetchSlotIdCalls(int phoneId);
   void triggerModifyCallRequestEvent(int phoneId, int callIndex);
   void triggerRttMessageEvent(int phoneId, std::string message);
@@ -283,7 +293,8 @@ private:
   std::shared_ptr<CallInfo> findMatchingCall(int slotId, int callIndex);
   bool find(std::shared_ptr<CallInfo> call, int index, int phoneId);
   void onEventUpdate(std::string event);
-  void handleCallMachine(int phoneId, int callIndex);
+  void handleCallMachine(int phoneId, int callIndex, bool isAecsCall,
+      telux::common::ErrorCode error);
   void changeCallStateofActiveCalls(int phoneId, int callIndex);
   void changeRttModeOfCall(RttMode mode, int index, int phoneId);
   void resumeBackgroundCalls(int phoneId);
@@ -302,6 +313,9 @@ private:
   void fillCallInformation(int phoneId,
                            ::telStub::GetInProgressCallsData *data);
   std::string getUserConfiguredCallMode(int phoneId);
+  std::string getUserConfiguredAecsCallStatusConfig();
+  int getUserConfiguredCallEndCauseConfig();
+
   template <typename T> int addNewCallDetails(const T *request) {
     CallInfo callInfo;
     callInfo.phoneId = request->phone_id();

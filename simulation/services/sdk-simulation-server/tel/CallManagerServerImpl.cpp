@@ -8,6 +8,7 @@
 #include "SimulationServer.hpp"
 #include <telux/common/DeviceConfig.hpp>
 #include <thread>
+
 #define CALL_MANAGER "ICallManager"
 #define MSD_UPDATE_EVENT "msdUpdateRequest"
 #define HANGUP_CALL_EVENT "hangupCall"
@@ -154,6 +155,9 @@ grpc::Status CallManagerServerImpl::MakeCall(ServerContext* context,
     telux::common::Status status;
     bool isCallback = true;
     int cbDelay;
+    bool isAecsCall = false;
+    Json::Value rootObj;
+    std::string jsonfilename = "";
     std::string jsonObjApiResponseFileName = "";
     Json::Value jsonObjApiResponse;
     int phoneId = request->phone_id();
@@ -161,11 +165,15 @@ grpc::Status CallManagerServerImpl::MakeCall(ServerContext* context,
     std::string apiInput = "";
     if(makecallApiType == CallApi::makeRttVoiceCall) {
         apiInput = "makeRttCall";
+    } else if (makecallApiType == CallApi::makeAecsVoiceCall) {
+        apiInput = "makeAecsCall";
+        isAecsCall = true;
     } else {
         apiInput = "makeCall";
     }
     grpc::Status readStatus = readJson();
     if(readStatus.ok()) {
+        getJsonForSystemData(phoneId, jsonfilename, rootObj);
         getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
         CommonUtils::getValues(jsonObjApiResponse, CALL_MANAGER, apiInput, status,
             error, cbDelay );
@@ -173,44 +181,129 @@ grpc::Status CallManagerServerImpl::MakeCall(ServerContext* context,
         if(cbDelay == -1) {
             isCallback = false;
         }
-        int callIndex = addNewCallDetails<telStub::MakeCallRequest>(request);
-        if(callIndex != CALL_INDEX_INVALID) {
-            auto f = std::async(std::launch::async,
-            [this, phoneId, callIndex]() {
-                    handleCallMachine(phoneId, callIndex);
-            }).share();
-            taskQ_->add(f);
-        }
-        telStub::Call call_;
-        call_.set_call_direction
-                (static_cast<telStub::CallDirection_Direction>(callInfo_.callDirection));
-        call_.set_remote_party_number(static_cast<std::string>(callInfo_.remotePartyNumber));
-        call_.set_call_index(static_cast<int>(callInfo_.index));
+        if (status == telux::common::Status::SUCCESS) {
+            int emergencyModeEnabled =
+               (rootObj[CALL_MANAGER]["emergencyMode"]["emergencyModeEnabled"].asInt() == 1);
+            if (isAecsCall) {
+                // Validate emergency mode is enabled for AECS call
+                if (!emergencyModeEnabled) {
+                    LOG(ERROR, __FUNCTION__, " Emergency mode must be enabled for AECS call");
+                    response->set_status(static_cast<commonStub::Status>
+                        (telux::common::Status::NOTALLOWED));
+                    response->set_error(static_cast<commonStub::ErrorCode>
+                        (telux::common::ErrorCode::INVALID_STATE));
+                    return readStatus;
+                }
+                int size = -1;
+                {
+                    std::lock_guard<std::mutex> lock(callManagerMutex_);
+                    size = calls_.size();
+                }
+                LOG(DEBUG, " calls size: ", size);
+                if (size >= 1) {
+                    LOG(ERROR, __FUNCTION__, " more than one AECS call is not possible");
+                    response->set_status(static_cast<commonStub::Status>
+                        (telux::common::Status::NOTALLOWED));
+                    response->set_error(static_cast<commonStub::ErrorCode>
+                        (telux::common::ErrorCode::OP_IN_PROGRESS));
+                    return readStatus;
+                }
+            }
+            int callIndex = addNewCallDetails<telStub::MakeCallRequest>(request);
+            if (callIndex != CALL_INDEX_INVALID) {
+                auto f = std::async(std::launch::async,
+                    [this, phoneId, callIndex, isAecsCall, error]() {
+                        handleCallMachine(phoneId, callIndex, isAecsCall, error);
+                }).share();
+                taskQ_->add(f);
+             }
+             telStub::Call call_;
+             call_.set_call_direction
+                  (static_cast<telStub::CallDirection_Direction>(callInfo_.callDirection));
+              call_.set_remote_party_number(static_cast<std::string>(callInfo_.remotePartyNumber));
+             call_.set_call_index(static_cast<int>(callInfo_.index));
 
-        response->set_iscallback(isCallback);
-        response->set_delay(cbDelay);
-        response->set_status(static_cast<commonStub::Status>(status));
-        response->set_error(static_cast<commonStub::ErrorCode>(error));
-        *response->mutable_call() = call_;
+             response->set_iscallback(isCallback);
+             response->set_delay(cbDelay);
+             response->set_status(static_cast<commonStub::Status>(status));
+             response->set_error(static_cast<commonStub::ErrorCode>(error));
+             *response->mutable_call() = call_;
+        } else {
+            response->set_status(static_cast<commonStub::Status>(status));
+            response->set_error(static_cast<commonStub::ErrorCode>(error));
+            LOG(ERROR, __FUNCTION__, " API failed");
+        }
     }
     return readStatus;
 }
 
-void CallManagerServerImpl::handleCallMachine(int phoneId, int callIndex) {
+void CallManagerServerImpl::handleCallMachine(int phoneId, int callIndex, bool isAecsCall,
+    telux::common::ErrorCode error) {
+    LOG(DEBUG, __FUNCTION__);
     int size = -1;
     {
         std::lock_guard<std::mutex> lock(callManagerMutex_);
         size = calls_.size();
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    if(size == 1) {
-        changeCallState(phoneId , "CALL_DIALING", callIndex);
-        changeCallState(phoneId ,"CALL_ALERTING", callIndex);
-        changeCallState(phoneId ,"CALL_ACTIVE", callIndex);
+    std::shared_ptr<CallInfo> info = findMatchingCall(phoneId, callIndex);
+    int callEndCauseConfig = getUserConfiguredCallEndCauseConfig();
+    if (info == nullptr) {
+        LOG(ERROR, __FUNCTION__, " matching call not found for phoneId ", phoneId,
+            " and callIndex ", callIndex);
+        return;
+    }
+    info->aecsReason = AecsCallEndReason::UNSPECIFIED;
+    // update call end cause for normal and AECS calls
+    info->callEndCause = static_cast<CallEndCause>(callEndCauseConfig);
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        if (size == 1) {
+            if (isAecsCall) {
+                changeCallState(phoneId , "CALL_DIALING", callIndex);
+                // AECS call status config from user is applicable only during AECS call.
+                std::string aecsCallStatusConfig = getUserConfiguredAecsCallStatusConfig();
+                if (aecsCallStatusConfig == "CALLORIG") {
+                    // check for 45 seconds for modem silent retry
+                    std::this_thread::sleep_for(std::chrono::seconds(45));
+                    info->aecsReason = AecsCallEndReason::ORIG_FAILED;
+                    changeCallState(phoneId ,"CALL_ENDED", callIndex);
+                } else if (aecsCallStatusConfig  == "CALLDROP") {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+                    changeCallState(phoneId ,"CALL_ALERTING", callIndex);
+                    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+                    changeCallState(phoneId ,"CALL_ACTIVE", callIndex);
+                    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+                     info->aecsReason = AecsCallEndReason::DROPPED;
+                  std::this_thread::sleep_for(std::chrono::milliseconds(300));
+                    changeCallState(phoneId ,"CALL_ENDED", callIndex);
+                } else if (aecsCallStatusConfig  == "CALLFAIL") {
+                     std::this_thread::sleep_for(std::chrono::milliseconds(300));
+                      info->aecsReason = AecsCallEndReason::FAILED;
+                     changeCallState(phoneId ,"CALL_ENDED", callIndex);
+                } else {
+                     std::this_thread::sleep_for(std::chrono::milliseconds(300));
+                     changeCallState(phoneId ,"CALL_ALERTING", callIndex);
+                     std::this_thread::sleep_for(std::chrono::milliseconds(300));
+                     changeCallState(phoneId ,"CALL_ACTIVE", callIndex);
+                }
+             } else {
+                changeCallState(phoneId , "CALL_DIALING", callIndex);
+                 std::this_thread::sleep_for(std::chrono::milliseconds(300));
+                 changeCallState(phoneId ,"CALL_ALERTING", callIndex);
+                 std::this_thread::sleep_for(std::chrono::milliseconds(300));
+                 changeCallState(phoneId ,"CALL_ACTIVE", callIndex);
+             }
+         } else {
+             std::this_thread::sleep_for(std::chrono::milliseconds(300));
+             changeCallState(phoneId ,"CALL_DIALING", callIndex);
+             std::this_thread::sleep_for(std::chrono::milliseconds(300));
+             changeCallState(phoneId ,"CALL_ALERTING", callIndex);
+             changeCallStateofActiveCalls(phoneId, callIndex);
+         }
     } else {
-        changeCallState(phoneId ,"CALL_DIALING", callIndex);
-        changeCallState(phoneId ,"CALL_ALERTING", callIndex);
-        changeCallStateofActiveCalls(phoneId, callIndex);
+        // if make call fails, update call end notification
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+        changeCallState(phoneId ,"CALL_ENDED", callIndex);
     }
 }
 
@@ -290,6 +383,22 @@ int CallManagerServerImpl::setCallIndexForNewCall() {
         LOG(DEBUG, __FUNCTION__, " new call index ", index);
     }
     return index;
+}
+
+void CallManagerServerImpl::setCallEndReasons(
+    int phoneId, telux::tel::CallEndCause &callEndCause) {
+  std::string jsonfilename = "";
+  Json::Value rootObj;
+  grpc::Status readStatus = readJson();
+  if (readStatus.ok()) {
+    getJsonForApiResponseSlot(phoneId, jsonfilename, rootObj);
+    callEndCause = static_cast<telux::tel::CallEndCause>(
+        rootObj[CALL_MANAGER]["configureCallEndCause"].asInt());
+    LOG(DEBUG, __FUNCTION__, " CallConfig callEndCause is ",
+        static_cast<int>(callEndCause));
+  } else {
+    LOG(ERROR, __FUNCTION__, " CallConfig read failed ");
+  }
 }
 
 grpc::Status CallManagerServerImpl::MakeECall(ServerContext* context,
@@ -701,7 +810,8 @@ void CallManagerServerImpl::logCallDetails(std::shared_ptr<CallInfo> call) {
         ", localRttCapability = ", static_cast<int>(call->localRttCapability),
         ", peerRttCapability = ", static_cast<int>(call->peerRttCapability),
         ", callType = ", static_cast<int>(call->callType),
-        ", isEraGlonassSelfTestECall = ", static_cast<bool>(call->isEraGlonassSelfTestECall));
+        ", isEraGlonassSelfTestECall = ", static_cast<bool>(call->isEraGlonassSelfTestECall),
+        ", AECS call end reason = ", static_cast<int>(call->aecsReason));
 }
 
 std::shared_ptr<CallInfo> CallManagerServerImpl::findMatchingCall(int slotId, int callIndex) {
@@ -761,6 +871,8 @@ void CallManagerServerImpl::hangupForegroundgroundCalls(int phoneId) {
         if((*callIterator)->phoneId == phoneId) {
             if(((*callIterator)->callState == CallState::CALL_ACTIVE)
                 ||((*callIterator)->callState == CallState::CALL_INCOMING)) {
+            (*callIterator)->callEndCause =
+                     static_cast<CallEndCause>(telux::tel::CallEndCause::NORMAL);
             changeCallState((*callIterator)->phoneId, "CALL_ENDED",
             (*callIterator)->index);
         }
@@ -1005,6 +1117,7 @@ grpc::Status CallManagerServerImpl::Hangup(ServerContext* context,
         }
         std::shared_ptr<CallInfo> info = findMatchingCall(phoneId, callIndex);
         if(info != nullptr) {
+            info->callEndCause = static_cast<CallEndCause>(telux::tel::CallEndCause::NORMAL);
             if((info->isRegulatoryeCall) ||
                 (!(info->isRegulatoryeCall) && (!(info->isTpseCallOverIms))
                 && (info->isMsdTransmitted))) {
@@ -2054,27 +2167,34 @@ void CallManagerServerImpl::triggerECallInfoChangeEvent(int phoneId, std::string
 }
 
 void CallManagerServerImpl::triggerCallInfoChangeEvent(int phoneId, int callIndex,
-    bool retainCache ) {
+    bool retainCache) {
     std::shared_ptr<CallInfo> call = findMatchingCall(phoneId, callIndex);
     if(call != nullptr) {
+        LOG(ERROR, __FUNCTION__, " aecs call end reason = ", static_cast<int>(call->aecsReason),
+            " call end cause = ", static_cast<int>(call->callEndCause));
         if(call->callState == CallState::CALL_ENDED ) {
+            // update call end cause and reason
+            CallEndCause causeCode = call->callEndCause;
+            AecsCallEndReason reason = call->aecsReason;
             //Clear call cache in server
-            auto f = std::async(std::launch::async, [this, phoneId, callIndex, retainCache]() {
+            auto f = std::async(std::launch::async, [this, phoneId, callIndex, causeCode, reason,
+                retainCache]() {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                 bool isCallRemoved = findAndRemoveMatchingCall(callIndex, retainCache);
                 if(isCallRemoved) {
+                    LOG(ERROR, __FUNCTION__, " call is cleared");
                     // Event to update the call cache for clients.
-                    triggerCallListAfterCallEnd(phoneId);
+                    triggerCallListAfterCallEnd(phoneId, causeCode, reason);
                 }
             }).share();
             taskQ_->add(f);
         } else {
             triggerCallInfoChange(call->phoneId);
         }
-    } else {
-        LOG(ERROR, __FUNCTION__, " Call not found for phoneId ", phoneId, " and callIndex ",
-            callIndex);
-    }
+  } else {
+    LOG(ERROR, __FUNCTION__, " Call not found for phoneId ", phoneId,
+        " and callIndex ", callIndex);
+  }
 }
 
 void CallManagerServerImpl::onECallRedial(int phoneId, bool willECallRedial,
@@ -2512,8 +2632,10 @@ void CallManagerServerImpl::changeCallState(int phoneId, std::string action, int
     }
 }
 
-void CallManagerServerImpl::triggerCallListAfterCallEnd(int phoneId) {
-    LOG(DEBUG, __FUNCTION__, " PhoneId ", phoneId);
+void CallManagerServerImpl::triggerCallListAfterCallEnd(int phoneId, CallEndCause causeCode,
+    AecsCallEndReason reason) {
+    LOG(DEBUG, __FUNCTION__, " PhoneId ", phoneId, " CauseCode: ", static_cast<int>(causeCode),
+        " reason: ", static_cast<int>(reason));
     ::telStub::GetInProgressCallsData callStateChangeEvent;
     ::eventService::EventResponse anyResponse;
     std::vector<std::shared_ptr<CallInfo>> calls = calls_;
@@ -2531,11 +2653,15 @@ void CallManagerServerImpl::triggerCallListAfterCallEnd(int phoneId) {
         LOG(DEBUG, "CallMgr - ", __FUNCTION__,"remotePartyNumber is ",
         static_cast<std::string>(it->remotePartyNumber));
         result->set_call_end_cause(static_cast<telStub::CallEndCause_Cause>(it->callEndCause));
+        LOG(DEBUG, "CallMgr - ", __FUNCTION__, "callEndCause is ",
+        static_cast<int>(it->callEndCause));
         result->set_sip_error_code(it->sipErrorCode);
         result->set_is_multi_party_call(it->isMultiPartyCall);
         result->set_is_mpty(it->isMpty);
         result->set_call_reason("");
     }
+    callStateChangeEvent.set_cause_code(static_cast<telStub::CallEndCause_Cause>(causeCode));
+    callStateChangeEvent.set_reason(static_cast<telStub::AecsCallEndReason>(reason));
     callStateChangeEvent.set_phone_id(phoneId);
     anyResponse.set_filter(TEL_CALL_FILTER);
     anyResponse.mutable_any()->PackFrom(callStateChangeEvent);
@@ -2629,3 +2755,42 @@ bool CallManagerServerImpl::findAndRemoveMatchingCall(int callIndex, bool retain
         return false;
     }
 }
+
+
+std::string CallManagerServerImpl::getUserConfiguredAecsCallStatusConfig() {
+    LOG(DEBUG, __FUNCTION__);
+    std::string jsonObjFileName = "";
+    Json::Value rootObj;
+    grpc::Status readStatus = readJson();
+    if(readStatus.ok()) {
+        getJsonForApiResponseSlot(callInfo_.phoneId, jsonObjFileName, rootObj);
+        std::string input = rootObj[CALL_MANAGER]["configureAecsCallStatus"].asString();
+        // Validate the input
+        if (input != "SUCCESS" && input != "CALLORIG" && input != "CALLDROP"
+            && input != "CALLFAIL") {
+            LOG(ERROR, __FUNCTION__, " Invalid AECS call status config: ", input);
+            return "SUCCESS";
+        }
+        LOG(DEBUG, __FUNCTION__, " Aecs call status config is ", input);
+        return input;
+    } else {
+        LOG(ERROR, __FUNCTION__, " Failed to read JSON. Defaulting to SUCCESS");
+        return "SUCCESS";
+    }
+}
+
+int CallManagerServerImpl::getUserConfiguredCallEndCauseConfig() {
+    LOG(DEBUG, __FUNCTION__);
+    std::string jsonObjFileName = "";
+    Json::Value rootObj;
+    grpc::Status readStatus = readJson();
+    if(readStatus.ok()) {
+        getJsonForApiResponseSlot(callInfo_.phoneId, jsonObjFileName, rootObj);
+        int input = rootObj[CALL_MANAGER]["configureCallEndCause"].asInt();
+        LOG(DEBUG, __FUNCTION__, " Call end cause is ", input);
+        return input;
+    } else {
+        return static_cast<int>(telux::tel::CallEndCause::NORMAL);
+    }
+}
+

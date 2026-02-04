@@ -10,6 +10,10 @@
         "_comment_configureECallRedialFailure" : "Valid Inputs SUCCESS, CALLORIG, CALLDROP",
         "enableALACKWithClearDown" : false,
         "_comment_enableALACKWithClearDown" : "Valid Inputs true, false",
+        "configureCallEndCause" : 16,
+        "_comment_configureCallEndCause" : "Refer telux::tel::CallEndCause for cause codes",
+        "configureAecsCallStatus" : "SUCCESS",
+        "_comment_configureAecsCallStatus" : "Valid Inputs SUCCESS, CALLORIG, CALLDROP, CALLFAIL",
         "makeCall" :
         {
             "status" : "SUCCESS",
@@ -175,6 +179,11 @@
             "error" : "SUCCESS"
         },
         "setEmergencyMode" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
+        "makeAecsCall" :
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS"

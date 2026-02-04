@@ -136,7 +136,7 @@ void AecsCallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call)
 
 bool AecsCallListener::isAecsCallFailReason(telux::tel::CallEndCause endCause) {
     return ((endCause != telux::tel::CallEndCause::RADIO_OFF) &&
-        (endCause != telux::tel::CallEndCause::CLIENT_END) &&
+         //TODO: Add Client end cause later
         (endCause != telux::tel::CallEndCause::NORMAL) &&
         (endCause != telux::tel::CallEndCause::ERROR_UNSPECIFIED));
 }
@@ -533,14 +533,15 @@ std::string AecsCallListener::getCallEndCauseString(telux::tel::CallEndCause cal
 }
 
 std::string AecsCallListener::getCurrentTime() {
-    timeval tod;
-    gettimeofday(&tod, NULL);
-    std::stringstream ss;
+    timeval tod{};
+    gettimeofday(&tod, nullptr);
     time_t tt = tod.tv_sec;
+    tm tm_local{};
+    localtime_r(&tt, &tm_local);
     char buffer[100];
-    std::strftime(buffer, 100, "%Y-%m-%d %H:%M:%S", localtime(&tt));
+    std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tm_local);
     char currTime[120];
-    snprintf(currTime, 120, "%s.%ld", buffer, tod.tv_usec / 1000);
+    snprintf(currTime, sizeof(currTime),"%s.%03d", buffer, static_cast<int>(tod.tv_usec / 1000));
     return std::string(currTime);
 }
 

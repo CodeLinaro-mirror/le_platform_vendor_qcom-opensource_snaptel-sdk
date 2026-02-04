@@ -284,6 +284,8 @@ message GetCardStateRequest {
  message GetInProgressCallsData {
     int32 phone_id = 1;
     repeated Call calls = 2;
+    CallEndCause.Cause cause_code = 3;
+    AecsCallEndReason reason = 4;
 }
 
  message MsdPullRequestEvent {
@@ -1239,114 +1241,123 @@ enum EcallHlapTimerId {
                                            eCall. Applicable for eCall only operating mode. */
 };
 
- message ECallInfoEvent {
+ enum AecsCallEndReason {
+     AECS_DUMMY = 0;
+     AECS_DROPPED = 2;          /* AECS call connected and failed unexpectedly */
+     AECS_ORIG_FAILED = 4;      /* AECS call origination fails */
+     AECS_FAILED = 5;           /* AECS call failed permanently */
+     AECS_COMPLETED = 6;        /* AECS call ended or disconnected */
+     AECS_UNSPECIFIED = 0xffff; /* AECS call fail reason is not available */
+ };
+
+message ECallInfoEvent {
+  int32 phone_id = 1;
+  HlapTimerEvent action = 2;
+  string timer = 3;
+}
+
+message ECallRedialInfoEvent {
+  int32 phone_id = 1;
+  bool will_ecall_redial = 2;
+  ReasonType reason = 3;
+}
+
+message ConfigureECallRedialRequest {
+  repeated int32 time_gap = 1;
+  RedialConfigType config = 2;
+}
+
+message ConfigureECallRedialResponse {
+  commonStub.Status status = 1;
+  commonStub.ErrorCode error = 2;
+  int32 delay = 3;
+  bool iscallback = 4;
+}
+
+message GetECallRedialResponse {
+  repeated int32 call_orig_time_gap = 1;
+  repeated int32 call_drop_time_gap = 2;
+  commonStub.ErrorCode error = 3;
+}
+
+message UpdateECallPostTestRegistrationTimerRequest {
+  int32 phone_id = 1;
+  int32 timer = 2;
+}
+
+message UpdateECallPostTestRegistrationTimerResponse {
+  commonStub.Status status = 1;
+  commonStub.ErrorCode error = 2;
+  int32 delay = 3;
+  bool iscallback = 4;
+}
+
+message GetECallPostTestRegistrationTimerRequest {
     int32 phone_id = 1;
-    HlapTimerEvent action = 2;
-    string timer = 3;
- }
+}
 
- message ECallRedialInfoEvent {
-    int32 phone_id = 1;
-    bool will_ecall_redial = 2;
-    ReasonType reason = 3;
- }
+message GetECallPostTestRegistrationTimerResponse {
+  int32 timer_duration = 1;
+  commonStub.ErrorCode error = 2;
+}
 
- message ConfigureECallRedialRequest {
-    repeated int32 time_gap = 1;
-    RedialConfigType config = 2;
- }
+message RestartECallHlapTimerRequest {
+  int32 phone_id = 1;
+  EcallHlapTimerId timer_id = 2;
+  int32 timer_duration = 3;
+}
 
- message ConfigureECallRedialResponse {
-    commonStub.Status status = 1;
-    commonStub.ErrorCode error = 2;
-    int32 delay = 3;
-    bool iscallback = 4;
- }
+message RestartECallHlapTimerResponse {
+  commonStub.Status status = 1;
+  commonStub.ErrorCode error = 2;
+  int32 delay = 3;
+  bool iscallback = 4;
+}
 
- message GetECallRedialResponse {
-    repeated int32 call_orig_time_gap = 1;
-    repeated int32 call_drop_time_gap = 2;
-    commonStub.ErrorCode error = 3;
- }
+message SetEmergencyModeRequest {
+  int32 phone_id = 1;
+  int32 emergency_mode_enabled = 2;
+  int32 antenna_switch_enabled = 3;
+}
 
- message UpdateECallPostTestRegistrationTimerRequest {
-    int32 phone_id = 1;
-    int32 timer = 2;
- }
+message SetEmergencyModeResponse {
+  commonStub.Status status = 1;
+  commonStub.ErrorCode error = 2;
+  int32 delay = 3;
+  bool iscallback = 4;
+}
 
- message UpdateECallPostTestRegistrationTimerResponse {
-    commonStub.Status status = 1;
-    commonStub.ErrorCode error = 2;
-    int32 delay = 3;
-    bool iscallback = 4;
- }
+message Call {
+  CallState call_state = 1;
+  int32 call_index = 2;
+  CallDirection.Direction call_direction = 3;
+  string remote_party_number = 4;
+  CallEndCause.Cause call_end_cause = 5;
+  bool is_multi_party_call = 6;
+  bool is_mpty = 7;
+  RttMode mode = 8;
+  RttMode local_rtt_capability = 9;
+  RttMode peer_rtt_capability = 10;
+  CallType call_type = 11;
+  int32 sip_error_code = 12;
+  string call_reason = 13;
+}
 
- message GetECallPostTestRegistrationTimerRequest {
-    int32 phone_id = 1;
- }
+message MakeECallRequest {
+  int32 phone_id = 1;
+  string remote_party_number = 2;
+  bool is_msd_transmitted = 3;
+  int32 api = 4;
+}
 
- message GetECallPostTestRegistrationTimerResponse {
-    int32 timer_duration = 1;
-    commonStub.ErrorCode error = 2;
- }
-
- message RestartECallHlapTimerRequest {
-    int32 phone_id = 1;
-    EcallHlapTimerId timer_id = 2;
-    int32 timer_duration = 3;
- }
-
- message RestartECallHlapTimerResponse {
-    commonStub.Status status = 1;
-    commonStub.ErrorCode error = 2;
-    int32 delay = 3;
-    bool iscallback = 4;
- }
-
- message SetEmergencyModeRequest {
-    int32 phone_id = 1;
-    int32 emergency_mode_enabled = 2;
-    int32 antenna_switch_enabled = 3;
- }
-
- message SetEmergencyModeResponse {
-   commonStub.Status status = 1;
-   commonStub.ErrorCode error = 2;
-   int32 delay = 3;
-   bool iscallback = 4;
- }
-
- message Call {
-     CallState call_state = 1;
-     int32 call_index = 2;
-     CallDirection.Direction call_direction = 3;
-     string remote_party_number = 4;
-     CallEndCause.Cause call_end_cause = 5;
-     bool is_multi_party_call = 6;
-     bool is_mpty = 7;
-     RttMode mode = 8;
-     RttMode local_rtt_capability = 9;
-     RttMode peer_rtt_capability = 10;
-     CallType call_type = 11;
-     int32 sip_error_code = 12;
-     string call_reason = 13;
- }
-
- message MakeECallRequest {
-     int32 phone_id = 1;
-     string remote_party_number = 2;
-     bool is_msd_transmitted = 3;
-     int32 api = 4;
- }
-
- message MakeECallReply {
-     int32 phone_id = 1;
-     commonStub.Status status = 2;
-     commonStub.ErrorCode error = 3;
-     int32 delay = 4;
-     bool iscallback = 5;
-     Call call = 6;
- }
+message MakeECallReply {
+  int32 phone_id = 1;
+  commonStub.Status status = 2;
+  commonStub.ErrorCode error = 3;
+  int32 delay = 4;
+  bool iscallback = 5;
+  Call call = 6;
+}
 
 message HangupRequest {
      int32 call_index = 1;

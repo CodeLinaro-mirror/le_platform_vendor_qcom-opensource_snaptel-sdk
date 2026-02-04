@@ -1,7 +1,7 @@
 .. #=============================================================================
    #
-   #  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
-   #  SPDX-License-Identifier: BSD-3-Clause-Clear
+   # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+   # SPDX-License-Identifier: BSD-3-Clause-Clear
    #
    #=============================================================================
 
@@ -550,11 +550,68 @@ The table explains the configuration for API response parameters of *simulation/
 |                                  |                                                            |
 +----------------------------------+------------------------------------------------------------+
 
+Example for API command response for telux::tel::ISmsManager::sendRawSms
+
+.. code-block::
+
+  "sendRawSms" :
+       [
+           {   "receiverAddress" : "0909999994587",
+                "status" : "SUCCESS"
+           },
+           {
+                "smsResponseCbErrorCode" : "SUCCESS",
+                "smsResponseCbDelay" : 1000,
+                "smsResponseCbMsgRefs" : "1 2"
+           },
+           {
+                "onDeliveryReportErrorCode" : "SUCCESS",
+                "onDeliveryReportMsgRef" : 1,
+                "onDeliveryReportCallbackDelay" : 1000
+           },
+           {
+                "onDeliveryReportErrorCode" : "SUCCESS",
+                "onDeliveryReportMsgRef" : 2,
+                "onDeliveryReportCallbackDelay" : 1000
+           }
+       ]
+
+Here, clients are expected to provide the inputs for JSON attributes of API according to an encoded message.
+
+The table explains the configuration for API response parameters of *simulation/json/api/tel/ISmsManagerSlot1.json and simulation/json/api/tel/ISmsManagerSlot2.json*
+
++----------------------------------+------------------------------------------------------------+
+|  JSON attribute                  |  Description                                               |
++==================================+============================================================+
+|  receiverAddress                 |  Input receiver address according to encoded pdu.          |
+|                                  |                                                            |
++----------------------------------+------------------------------------------------------------+
+|  status                          |  Status of request.                                        |
+|                                  |                                                            |
++----------------------------------+------------------------------------------------------------+
+|  smsResponseCbErrorCode          |  Response callback errorcode.                              |
+|                                  |                                                            |
++----------------------------------+------------------------------------------------------------+
+|  smsResponseCbDelay              |  Response callback delay.                                  |
+|                                  |                                                            |
++----------------------------------+------------------------------------------------------------+
+|  smsResponseCbMsgRefs            |  Add reference number for every message segment according  |
+|                                  |  to numberOfSegments with one space between the digits.    |
++----------------------------------+------------------------------------------------------------+
+|  onDeliveryReportCallbackDelay   |  Delivery report for individual segment is invoked using   |
+|                                  |  delivery callback delay.                                  |
++----------------------------------+------------------------------------------------------------+
+|  onDeliveryReportErrorCode       |  Delivery callback errorcode.                              |
+|                                  |                                                            |
++----------------------------------+------------------------------------------------------------+
+|  onDeliveryReportMsgRef          |  Delivery report for message reference of a segment.       |
+|                                  |                                                            |
++----------------------------------+------------------------------------------------------------+
 
 Call
 '''''
 
-Currently the simulation framework supports outgoing, incoming voice calls and regulatory ECalls.It provides the flexibility to configure ECall HLAP timer failures maintained by NAD device.
+Currently the simulation framework supports outgoing, incoming voice calls, regulatory ECalls and AECS calls. It provides the flexibility to configure ECall HLAP timer failures maintained by NAD device.
 Support for conference calls will be added in upcoming releases.
 
 Details of parameters that can be configured in the Simulation framework.
@@ -590,11 +647,37 @@ Details of parameters that can be configured in the Simulation framework.
 
   Supported Values: SUCCESS, CALLORIG, CALLDROP.
 
+- "configurecallEndCause" : To configure call end reason for call.
+
+  Supported Values: refer to telux::tel::CallEndCause.
+
 These parameters can be configured via *simulation/json/api/tel/ICallManagerSlot1.json and simulation/json/api/tel/ICallManagerSlot2.json*.
 
 Retrieve eCall MSD payload or encoded optional additional data content
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 To simulate retrieval of eCall MSD payload or optional additional data content, msdsettings.txt is copied to the application(ecall_app) launching path in "out/bin/". To modify MSD information, goto "out/bin/" and edit msdsettings.txt file.
+
+Emergency Mode
+''''''''''''''
+Enables or disables the emergency mode configuration for the Automated Emergency Call System (AECS). When emergency mode is enabled refer ``telux::tel::setEmergencyMode`` on one subscription, the other subscription in DSDS (non-DSDA) mode will be suspended on the actual target device.
+
+Limitation: In the current simulation environment, emergency mode behavior is limited to the subscription on which it is enabled. When refer ``telux::tel::setEmergencyMode`` is set on one subscription, the other subscription is not suspended. As a result, services such as outgoing and incoming calls and SMS on the other subscription continue to operate normally.
+Guidance: Applications shall not perform any operations on the other subscription while an AECS call is active or while retrying a failed AECS call.
+
+AECS Call
+'''''''''
+Emergency mode shall be enabled before triggering an MO AECS call or accepting an MT AECS call. Upon completion of the AECS call and MSD transmission, emergency mode shall be disabled. During an ongoing AECS call, the application shall not initiate any additional AECS or normal voice calls.
+
+Configuration of AECS call status (origination failure, call drop, success, or failure) and call end reasons shall be completed prior to initiating an AECS call for correct call handling.
+
+- "configureAecsCallStatus" : To configure AECS call status.
+
+  Supported Values: SUCCESS, CALLORIG, CALLDROP, CALLFAIL.
+
+- "configureCallEndCause" : To configure call end reasons for call failure.
+  Refer telux::tel::CallEndCause for cause codes.
+
+- The receiver number or URN, along with the SMS send state and delivery report state for MSD transmission over SMS, must be configured in the ``simulation/json/api/tel/ISmsManagerSlot1.json`` and ``simulation/json/api/tel/ISmsManagerSlot2.json`` JSON file before sending the SMS. Refer "sendRawSms" example in the `Telephony APIs Response handling` section.
 
 Telephony data handling
 """"""""""""""""""""""""

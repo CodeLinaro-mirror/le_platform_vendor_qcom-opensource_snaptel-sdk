@@ -36,6 +36,14 @@ namespace tel {
 
 using namespace telux::tel;
 
+enum class AecsCallEndReason {
+   DROPPED = 2,          /* AECS call connected and failed unexpectedly */
+   ORIG_FAILED = 4,      /* AECS call origination fails */
+   FAILED = 5,           /* AECS call failed permanently */
+   COMPLETED = 6,        /* AECS call ended or disconnected */
+   UNSPECIFIED = 0xffff, /* AECS call fail reason is not available */
+};
+
 struct CallInfo {
    CallState callState;
    int index = CALL_INDEX_INVALID;
@@ -55,6 +63,7 @@ struct CallInfo {
    CallType callType  = CallType::UNKNOWN;
    bool isEraGlonassSelfTestECall = false;
    std::string callReason = "";
+   AecsCallEndReason aecsReason = AecsCallEndReason::UNSPECIFIED;
 };
 
 
@@ -189,7 +198,8 @@ private:
     void triggerMsdPullrequestEvent(int phoneId);
     void triggerCallStateChangeEvent(int phoneId, std::string action,
         std::string remotepartyNumber);
-    void triggerCallListAfterCallEnd(int phoneId);
+    void triggerCallListAfterCallEnd(int phoneId, CallEndCause causeCode,
+        AecsCallEndReason reason);
     std::vector<std::shared_ptr<CallInfo>> fetchSlotIdCalls(int phoneId);
     void triggerModifyCallRequestEvent(int phoneId, int callIndex);
     void triggerRttMessageEvent(int phoneId, std::string message);
@@ -198,6 +208,8 @@ private:
     std::vector<std::string> parseUserInput();
     bool getUserConfiguredeCallRat();
     std::string getUserConfiguredECallRedialConfig();
+    std::string getUserConfiguredAecsCallStatusConfig();
+    int getUserConfiguredCallEndCauseConfig();
     std::string getRemotePartyNumber(int phoneId);
     std::string fetchNextToken(std::string& inputString, std::string delimiter);
     std::vector<std::shared_ptr<CallInfo>> calls_;
@@ -217,7 +229,8 @@ private:
     std::shared_ptr<CallInfo> findMatchingCall(int slotId, int callIndex);
     bool find(std::shared_ptr<CallInfo> call, int index, int phoneId);
     void onEventUpdate(std::string event);
-    void handleCallMachine(int phoneId, int callIndex);
+    void handleCallMachine(int phoneId, int callIndex, bool isAecsCall,
+      telux::common::ErrorCode error);
     void changeCallStateofActiveCalls(int phoneId, int callIndex);
     void changeRttModeOfCall(RttMode mode, int index, int phoneId);
     void resumeBackgroundCalls(int phoneId);
@@ -228,6 +241,7 @@ private:
     int getCallIndexOfActiveCall(int phoneId);
     // Find the lowest unfilled index in the call list.
     int setCallIndexForNewCall();
+    void setCallEndReasons(int phoneId, telux::tel::CallEndCause &callEndCause);
     bool getUserConfiguredALACKParameter();
     void restartTimer(int phoneId, std::string timer, int timerDuration);
     telux::tel::ECallMode getEcallOperatingMode(int phoneId);
@@ -240,6 +254,7 @@ private:
         callInfo.callDirection = CallDirection::OUTGOING;
         callInfo.callState = CallState::CALL_IDLE;
         callInfo.isMultiPartyCall = true;
+        setCallEndReasons(callInfo.phoneId, callInfo.callEndCause);
         CallApi makeCallApiType = static_cast<CallApi>(request->api());
         if((makeCallApiType == CallApi::makeECallWithMsd) ||
             (makeCallApiType == CallApi::makeECallWithRawMsd) ||

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -412,7 +412,8 @@ void CallStub::logCallDetails() {
         ", localRttCapability = ", static_cast<int>(callInfo_.localRttCapability),
         ", peerRttCapability = ", static_cast<int>(callInfo_.peerRttCapability),
         ", callType = ", static_cast<int>(callInfo_.callType),
-        ", callReason = ", callInfo_.callReason);
+        ", callReason = ", callInfo_.callReason,
+        ", callEndCause = ", static_cast<int>(callInfo_.callEndCause));
 }
 
 /**
@@ -430,6 +431,7 @@ telux::common::Status CallStub::updateCallInfo(std::shared_ptr<CallStub> &callIn
     callInfo_.peerRttCapability = callInfo->getPeerRttCapability();
     callInfo_.callType = callInfo->getCallType();
     callInfo_.callReason = callInfo->getCallReason();
+    callInfo_.callEndCause = callInfo->getCallEndCause();
     LOG(DEBUG, "Updated call details");
     logCallDetails();
     return telux::common::Status::SUCCESS;
@@ -534,4 +536,43 @@ telux::common::Status CallStub::modifyOrRespondToModifyCall(RttMode mode, std::s
         taskQ_->add(f1);
     }
     return status;
+}
+
+/**
+ * Set the cause of call termination
+ */
+void CallStub::setCallEndCause(CallEndCause causeCode) {
+    LOG(DEBUG, "Call end cause is ", (int)causeCode);
+    callInfo_.callEndCause = causeCode;
+}
+
+bool CallStub::isAecsCallDrop() {
+    LOG(DEBUG, " isAecsCallDrop: ", callInfo_.isAecsCallDrop);
+    return callInfo_.isAecsCallDrop;
+}
+
+telux::tel::RedialState CallStub::getRedialState() {
+    LOG(DEBUG, " Aecs redialState: ", static_cast<int>(callInfo_.redialState));
+    return callInfo_.redialState;
+}
+
+void CallStub::setAecsCallEndReason(AecsCallEndReason reason) {
+    callInfo_.isAecsCallDrop = false;
+    callInfo_.redialState = RedialState::UNKNOWN;
+    LOG(DEBUG, " Aecs call end reason ", static_cast<int>(reason));
+    switch(reason) {
+        case AecsCallEndReason::DROPPED:
+            callInfo_.isAecsCallDrop = true;
+            break;
+        case AecsCallEndReason::ORIG_FAILED:
+            callInfo_.redialState = RedialState::MODEM_RETRY_END;
+            break;
+        case AecsCallEndReason::COMPLETED:
+        case AecsCallEndReason::FAILED:
+            break;
+        case AecsCallEndReason::UNSPECIFIED:
+        default:
+             LOG(DEBUG, " Aecs call end reason is not specified ");
+             break;
+    }
 }

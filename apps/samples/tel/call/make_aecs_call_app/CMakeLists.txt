@@ -10,10 +10,12 @@ set(CALL_APP_SOURCES
 # set global variables
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 
+find_package(Threads REQUIRED)
+
 add_executable (${TARGET_CALL_APP} ${CALL_APP_SOURCES})
 target_include_directories(${TARGET_CALL_APP} BEFORE PUBLIC
                            "${telematics-apps_SOURCE_DIR}/common" )
-target_link_libraries(${TARGET_CALL_APP} telux_tel telux_common)
+target_link_libraries(${TARGET_CALL_APP} telux_tel telux_common Threads::Threads)
 
 # install to target
 install ( TARGETS ${TARGET_CALL_APP}

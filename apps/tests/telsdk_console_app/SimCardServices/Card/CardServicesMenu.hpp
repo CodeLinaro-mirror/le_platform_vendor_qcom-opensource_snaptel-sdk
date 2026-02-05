@@ -70,6 +70,7 @@ class CardServicesMenu : public ConsoleApp {
     std::string appTypeToString(telux::tel::AppType appType);
     std::string appStateToString(telux::tel::AppState appState);
     std::string cardStateToString(telux::tel::CardState state);
+    void checkPhysicalSlot(std::vector<std::string> userInput);
     void getMepInformation(std::vector<std::string> userInput);
 
     std::shared_ptr<telux::tel::ICardListener> cardListener_;

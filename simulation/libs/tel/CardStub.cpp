@@ -57,6 +57,10 @@ void CardStub::getMepInfo(MepInfo &info) {
     info.negotiatedMepMode = Mode::NONE;
 }
 
+void CardStub::getPhysicalSlotId(PhysicalSlotId &slotId) {
+    slotId = PhysicalSlotId::INVALID_SLOT_ID;
+}
+
 std::vector<std::shared_ptr<ICardApp>> CardStub::getApplications(telux::common::Status *status) {
     LOG(DEBUG, __FUNCTION__);
     std::vector<std::shared_ptr<ICardApp>> applications;

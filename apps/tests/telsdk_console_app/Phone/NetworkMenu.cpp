@@ -156,6 +156,10 @@ bool NetworkMenu::init() {
                 ConsoleAppCommand("10", "remove_all_nr_dubious_cell", {},
                     std::bind(&NetworkMenu::removeAllNrDubiousCell, this, std::placeholders::_1)));
 
+        std::shared_ptr<ConsoleAppCommand> abortNetworkScanCommand
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("11", "abort_network_scan", {},
+                std::bind(&NetworkMenu::abortNetworkScan, this, std::placeholders::_1)));
+
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListNetworkSubMenu = {
             selectSimSlotCommand, getNetworkSelectionModeCommand, setNetworkSelectionModeCommand,
             getPreferredNetworksCommand, setPreferredNetworksCommand, performNetworkScanCommand};
@@ -164,6 +168,7 @@ bool NetworkMenu::init() {
         commandsListNetworkSubMenu.emplace_back(setNrDubiousCellCommand);
         commandsListNetworkSubMenu.emplace_back(removeAllLteDubiousCellCommand);
         commandsListNetworkSubMenu.emplace_back(removeAllNrDubiousCellCommand);
+        commandsListNetworkSubMenu.emplace_back(abortNetworkScanCommand);
 
         addCommands(commandsListNetworkSubMenu);
         ConsoleApp::displayMenu();
@@ -381,6 +386,21 @@ void NetworkMenu::performNetworkScan(std::vector<std::string> userInput) {
             std::cout << "\nPerform network scan request sent successfully\n";
         } else {
             std::cout << "\nPerform network scan request failed \n";
+        }
+    } else {
+        std::cout << " ERROR - Network manager is NULL\n";
+    }
+}
+
+void NetworkMenu::abortNetworkScan(std::vector<std::string> userInput) {
+    auto networkManager = networkManagers_[slot_ - 1];
+    if (networkManager) {
+        auto ret = networkManager->abortNetworkScan();
+        if (ret == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "\nAborting network scan is successful\n";
+        } else {
+            std::cout << "\nAborting network scan failed, errorCode: " << static_cast<int>(ret)
+                      << ", description: " << Utils::getErrorCodeAsString(ret) << std::endl;
         }
     } else {
         std::cout << " ERROR - Network manager is NULL\n";

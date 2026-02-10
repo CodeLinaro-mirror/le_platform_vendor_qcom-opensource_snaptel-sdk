@@ -196,6 +196,7 @@
      rpc PerformNetworkScan (PerformNetworkScanRequest) returns (PerformNetworkScanReply) {}
      rpc SetLteDubiousCell (SetLteDubiousCellRequest) returns (SetLteDubiousCellReply) {}
      rpc SetNrDubiousCell (SetNrDubiousCellRequest) returns (SetNrDubiousCellReply) {}
+     rpc AbortNetworkScan (AbortNetworkScanRequest) returns (AbortNetworkScanReply) {}
  }
 
  service ImsService {
@@ -2453,6 +2454,16 @@ enum NrRFBand {
      commonStub.Status status = 2;
      int32 delay = 3;
      bool is_callback = 4;
+ }
+
+ message AbortNetworkScanRequest {
+     int32 phone_id = 1;
+ }
+
+ message AbortNetworkScanReply {
+     commonStub.ErrorCode error = 1;
+     int32 delay = 2;
+     bool is_callback = 3;
  }
 
  message InUseStatus{

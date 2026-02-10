@@ -522,6 +522,29 @@ public:
    virtual telux::common::ErrorCode setNrDubiousCell(const std::vector<NrDubiousCell>
            &nrDbCellList) = 0;
 
+    /**
+     * Abort an ongoing network scan operation that was previously initiated using
+     * telux::tel::INetworkSelectionManager::performNetworkScan(NetworkScanInfo info,
+     * common::ResponseCallback callback).
+     * If no network scan has been initiated prior to this call, the API returns
+     * telux::common::ErrorCode::INVALID_OPERATION, indicating that there is no active
+     * scan to abort.
+     *
+     * If this API is invoked after calling the deprecated
+     * telux::tel::INetworkSelectionManager::performNetworkScan(NetworkScanCallback callback),
+     * the deprecated API will receive a callback with telux::common::ErrorCode::ABORTED,
+     * indicating that the ongoing operation has been successfully aborted.
+     *
+     * On platforms with access control enabled, the caller needs to have the
+     * TELUX_TEL_NETWORK_SELECTION_OPS permission to successfully invoke this API.
+     *
+     * @returns Status of abortNetworkScan i.e. success or suitable error code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+   virtual telux::common::ErrorCode abortNetworkScan() = 0;
+
    /**
     * Register a listener for specific updates from network access service.
     *

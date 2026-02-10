@@ -61,6 +61,9 @@ public:
     grpc::Status SetNrDubiousCell(ServerContext* context,
             const ::telStub::SetNrDubiousCellRequest* request,
             ::telStub::SetNrDubiousCellReply* response) override;
+    grpc::Status AbortNetworkScan(ServerContext *context,
+            const ::telStub::AbortNetworkScanRequest *request,
+            ::telStub::AbortNetworkScanReply *response) override;
 
 private:
     void createPreferredNetworkInfo(telux::tel::PreferredNetworkInfo input,

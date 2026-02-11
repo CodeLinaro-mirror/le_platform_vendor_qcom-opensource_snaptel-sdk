@@ -1146,7 +1146,7 @@ telux::common::Status DataConnectionManagerStub::stopDataCall(int profileId,
 }
 
 telux::common::Status DataConnectionManagerStub::registerListener(
-    std::weak_ptr<IDataConnectionListener> listener) {
+    std::weak_ptr<IDataConnectionListener> listener, DataConnectionIndications indicationList) {
 
     LOG(DEBUG, __FUNCTION__);
 
@@ -1171,7 +1171,7 @@ telux::common::Status DataConnectionManagerStub::registerListener(
 }
 
 telux::common::Status DataConnectionManagerStub::deregisterListener(
-    std::weak_ptr<telux::data::IDataConnectionListener> listener) {
+    std::weak_ptr<IDataConnectionListener> listener, DataConnectionIndications indicationList) {
 
     LOG(DEBUG, __FUNCTION__);
 
@@ -1380,6 +1380,17 @@ void DataConnectionManagerStub::onServiceStatusChange(telux::common::ServiceStat
     for (auto &listener : applisteners) {
         listener->onServiceStatusChange(status);
     }
+}
+
+telux::common::ErrorCode DataConnectionManagerStub::setThroughputInterval(uint32_t reportInterval) {
+    LOG(ERROR, __FUNCTION__);
+    return telux::common::ErrorCode::NOT_SUPPORTED;
+}
+
+telux::common::ErrorCode DataConnectionManagerStub::getLastThroughputInfo(
+    std::vector<ThroughputInfo> &info) {
+    LOG(ERROR, __FUNCTION__);
+    return telux::common::ErrorCode::NOT_SUPPORTED;
 }
 
 } // end of namespace data

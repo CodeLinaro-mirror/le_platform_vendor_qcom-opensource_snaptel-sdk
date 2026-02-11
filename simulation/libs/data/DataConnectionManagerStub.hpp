@@ -60,10 +60,15 @@ public:
 
     telux::common::Status requestThrottledApnInfo(ThrottleInfoCb callback) override;
 
-    telux::common::Status registerListener(std::weak_ptr<IDataConnectionListener> listener)
-        override;
-    telux::common::Status deregisterListener(std::weak_ptr<IDataConnectionListener> listener)
-        override;
+    telux::common::Status registerListener(std::weak_ptr<IDataConnectionListener> listener,
+        DataConnectionIndications indicationList = DEFAULT_INDICATIONS) override;
+
+    telux::common::Status deregisterListener(std::weak_ptr<IDataConnectionListener> listener,
+        DataConnectionIndications indicationList = DEFAULT_INDICATIONS) override;
+
+    telux::common::ErrorCode setThroughputInterval(uint32_t reportInterval) override;
+
+    telux::common::ErrorCode getLastThroughputInfo(std::vector<ThroughputInfo> &info) override;
 
     int getSlotId() override;
     void onServiceStatusChange(common::ServiceStatus status) override;

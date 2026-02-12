@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+ /*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file       DataFilterManager.hpp
  *
@@ -79,6 +85,9 @@ using DataRestrictModeCb =
  *
  *          In contrary to when DataRestrict mode is disabled, modem will forward all the
  *          incoming data packets to AP and might wake up AP unnecessarily.
+ *
+ *          @note @ref IDataFilterManager does not restrict packets in the uplink direction; it only
+ *          restricts packets in the downlink direction.
  *
  * @note    Eval: This is a new API and is being evaluated. It is subject to change and could break
  *          backwards compatibility.
@@ -135,6 +144,74 @@ public:
     /**
      * Changes the Data Powersave filter mode and auto exit feature.
      *
+     * This API enables or disables the powersave filtering mode for all the active data calls.
+     * The mode setting will be reset to @ref DataRestrictMode::DISABLE when all data calls are
+     * disconnected.
+     *
+     * @param [in] mode     - Enable or disable the powersave filtering mode.
+     * @param [in] callback - Optional callback to get the response for the change in filter mode.
+     *
+     * @returns Status of setDataRestrictMode i.e. success or suitable status code.
+     *
+     */
+    virtual telux::common::Status setDataRestrictMode(
+        DataRestrictMode mode, telux::common::ResponseCallback callback = nullptr)
+        = 0;
+
+    /**
+     * Get the current Data Powersave filter mode
+     *
+     * @param [in]  callback - callback function to get the result of API.
+     *
+     * @returns Status of requestDataRestrictMode i.e. success or suitable status code.
+     *
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status requestDataRestrictMode(DataRestrictModeCb callback) = 0;
+
+    /**
+     * This API allows the addition of up to five filter rules at a time, for all the active data
+     * calls. When DataRestrict mode is enabled, the modem filters all the incoming data packets and
+     * forwards them, only if they match the criteria specified by the filter rules added via the
+     * @ref addDataRestrictFilters API. Otherwise, the packets are dropped at the modem and not
+     * forwarded.
+     * When all data calls terminate, the data filter is automatically disabled. For any new
+     * data call, you must re-enable Data Restrict mode and reapply the filter rules.
+     *
+     * @param [in] filters  - Filter rules.
+     * @param [in] callback - Optional callback to get the response.
+     *
+     * @returns Status of addDataRestrictFilters i.e. success or suitable status
+     * code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     *
+     */
+    virtual telux::common::Status addDataRestrictFilters(
+        std::vector<std::shared_ptr<IIpFilter>> &filters,
+        telux::common::ResponseCallback callback = nullptr)
+        = 0;
+
+    /**
+     * This API removes all the previously added powersave filters.
+     *
+     * @param [in] callback - Optional callback to get the response.
+     *
+     * @returns Status of removeAllDataRestrictFilters i.e. success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status removeAllDataRestrictFilters(
+        telux::common::ResponseCallback callback = nullptr)
+        = 0;
+
+    /**
+     * Changes the Data Powersave filter mode and auto exit feature.
+     *
      * This API enables or disables the powersave filtering mode of the running packet data
      * session. If a data connection is torn down and brought up again, then previous filter
      * mode setting does not persist for that data call session, and requires to be enabled again.
@@ -152,13 +229,14 @@ public:
      *
      * @returns Status of setDataRestrictMode i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
+     *
+     * @deprecated because NAO IP filters are global (not per profile) filters. Use
+     *      @ref setDataRestrictMode(DataRestrictMode, telux::common::ResponseCallback)
      */
     virtual telux::common::Status
     setDataRestrictMode(DataRestrictMode mode,
-                        telux::common::ResponseCallback callback = nullptr,
-                        int profileId = PROFILE_ID_MAX,
+                        telux::common::ResponseCallback callback,
+                        int profileId,
                         IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN) = 0;
     /**
      * Get the current Data Powersave filter mode
@@ -168,8 +246,8 @@ public:
      *
      * @returns Status of requestDataRestrictMode i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
+     * @deprecated because NAO IP filters are global (not per profile) filters. Use
+     *      @ref requestDataRestrictMode(DataRestrictModeCb)
      */
     virtual telux::common::Status
     requestDataRestrictMode(std::string ifaceName,
@@ -195,8 +273,8 @@ public:
      *
      * @returns Status of addDataRestrictFilter i.e. success or suitable status code.
      *
-     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
-     *           break backwards compatibility.
+     * @deprecated because NAO IP filters are global (not per profile) filters. Use
+     *      @ref addDataRestrictFilter(std::shared_ptr<IIpFilter>&, telux::common::ResponseCallback)
      */
     virtual telux::common::Status
     addDataRestrictFilter(std::shared_ptr<IIpFilter> &filter,
@@ -219,12 +297,12 @@ public:
      *
      * @returns Status of removeAllDataRestrictFilters i.e. success or suitable status code.
      *
-     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
-     *           break backwards compatibility.
+     * @deprecated because NAO IP filters are global (not per profile) filters. Use
+     *      @ref removeAllDataRestrictFilters(telux::common::ResponseCallback)
      */
     virtual telux::common::Status
-    removeAllDataRestrictFilters(telux::common::ResponseCallback callback = nullptr,
-                                 int profileId = PROFILE_ID_MAX,
+    removeAllDataRestrictFilters(telux::common::ResponseCallback callback,
+                                 int profileId,
                                  IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN) = 0;
     /**
      * Get associated slot id for the Data Filter Manager.

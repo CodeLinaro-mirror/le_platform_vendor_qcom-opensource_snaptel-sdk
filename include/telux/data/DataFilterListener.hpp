@@ -70,8 +70,7 @@ public:
      *
      * @param [in] state the current data filter mode
      *
-     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
-     *           break backwards compatibility.
+     * @note Currently this API is unsupported.
      */
     virtual void onDataRestrictModeChange(DataRestrictMode mode) {}
 

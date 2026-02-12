@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+ /*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * Data Filter Manager Sample Application using Telematics SDK
  * This is used to demonstrate data filter manager APIs like enable/disable data
@@ -85,11 +91,18 @@ class DataFilterMenu : public IDataFilterListener, public ConsoleApp {
     ResponseCallback responseCb;
     void commandCallback(ErrorCode errorCode);
 
-
     DataFilterMenu(std::string appName, std::string cursor);
     ~DataFilterMenu();
 
  private:
+    bool getDataFiltersConfig(std::string filePath,
+        std::vector<std::shared_ptr<telux::data::IIpFilter>> &dataFilters);
+    void getIPInfo(std::shared_ptr<telux::data::IIpFilter> &dataFilter);
+    void getPortInfo(int &srcPort, int &srcRange, int &destPort, int &destRange);
+    bool getDataFiltersInput(std::vector<std::shared_ptr<telux::data::IIpFilter>> &dataFilters);
+    int getPortInfo(DataConfigParser cfgParser, std::map<std::string, std::string> pairMap,
+        std::string key, std::string errorStr);
+
     std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
     std::shared_ptr<telux::data::IDataConnectionManager> dataConnectionManager_;
     telux::data::ProfileParams params_;

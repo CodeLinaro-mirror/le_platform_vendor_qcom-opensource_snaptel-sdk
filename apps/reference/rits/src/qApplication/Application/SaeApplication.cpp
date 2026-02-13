@@ -92,6 +92,12 @@ thread_local int totalSimLossPkts = 0;
 thread_local std::shared_ptr<msg_contents> threadMc = nullptr;
 thread_local std::shared_ptr<msg_contents> hostMc = nullptr;
 static int64_t async_index = SHARED_BUFFER_MAX_SIZE;
+
+static std::atomic<uint64_t> async_write_index{0};
+static std::atomic<uint64_t> async_read_index{0};
+static std::atomic<uint64_t> async_slots_in_use{0};
+static std::atomic<uint64_t> queue_full_count{0};
+
 static bool overridePsidCheck = false;
 static bool enableCongCtrl = false;
 static bool enableMbd = false;
@@ -102,8 +108,6 @@ static bsm_data bs;
 static std::mutex AsyncMtx;
 static SecurityService* asyncSecService;
 static std::condition_variable* writeMutexCvSae;
-static int shared_index = 0;
-static int start_index = 0;
 static std::atomic<int> rxSuccess{0};
 static std::atomic<int> asyncVerifFail{0};
 static std::atomic<int> asyncVerifSuccess{0};
@@ -114,9 +118,6 @@ static int asyncCallbackVerifSuccess = 0;
 static int asyncCallbackVerifFail = 0;
 static int prevVerifSuccess = 0;
 static int prevVerifFail = 0;
-int PostProcessingCbData[PP_BUFFER_MAX_SIZE] ={0};
-static int begin_flag = true;
-static int buffer_full = false;
 static struct timeval currTime;
 static double prevTimeStamp, prevBatchTimeStamp;
 static double LogstartTime, avgRate, minBatchTime, avgBatchTime, maxBatchTime;
@@ -908,25 +909,8 @@ static void AsyncCallbackFunction (AEROLINK_RESULT returnCode,
         }
         asyncCallbackVerifSuccess++;
     }
-    if(shared_index < PP_BUFFER_MAX_SIZE)
-    {
-        if(begin_flag)
-        {
-            begin_flag = false;
-            start_index = shared_index;
-        }
-        // this part may need to be protected
-        PostProcessingCbData[shared_index] = cb_data->indexToData;
-        shared_index++;
-    }
-    else
-    {
-        // Post processing cleanup function will update the index and this
-        // index will update the start index also based on this flag
-        buffer_full = true;
-        shared_index = 0;
-        begin_flag = true;
-    }
+    // Release lock BEFORE sem_post
+    lock.unlock();
     // wake up post processing thread
     if (!AerolinkSecurity::postSemaphoreIfValid(&verificationSem)) {
         if (secVerbosity > 5) {
@@ -1027,145 +1011,130 @@ void SaeApplication::AsyncPostProcessing(bool overridePsidCheck, bool enableCong
         congCtrlInitialized = true;
     }
     thread::id thrId = std::this_thread::get_id();
+
     while((!exitAsync)){
-        sem_wait(&verificationSem);
-
-        int i = 0 ;
-        for(i = start_index; PostProcessingCbData[i]!=0;++i)
-        {
-            if(exitAsync){
-                return;
-            }
-            if(asyncCbData[PostProcessingCbData[i]].AsyncState != PP_DONE){
-                if((asyncCbData[PostProcessingCbData[i]].verifSuccess))
-                {
-                    asyncVerifSuccess++;
-                    asyncCbData[PostProcessingCbData[i]].AsyncState = PP_DONE;
-                    if(asyncCbData[PostProcessingCbData[i]].psid == PSID_BSM){
-                        if(enableCongCtrl &&
-                            (congestionControlManager != NULL))
-                        {
-                            congestionControlManager->addCongestionControlData(
-                                asyncCbData[PostProcessingCbData[i]].asyncBs.id,
-                                (asyncCbData[PostProcessingCbData[i]].asyncBs.Latitude)/10000000.0,
-                                (asyncCbData[PostProcessingCbData[i]].asyncBs.Longitude)/10000000.0,
-                                asyncCbData[PostProcessingCbData[i]].asyncBs.Heading_degrees * 0.0125,
-                                asyncCbData[PostProcessingCbData[i]].asyncBs.Speed * (250/18),
-                                asyncCbData[PostProcessingCbData[i]].asyncBs.timestamp_ms,
-                                asyncCbData[PostProcessingCbData[i]].asyncBs.MsgCount);
-                        }
-                        #ifdef AEROLINK
-                        if(enableMisbehavior){
-                            if(asyncSecService){
-                                // start time for mbd here
-                                AerolinkSecurity* tmpAeroSecurity =
-                                    static_cast<AerolinkSecurity*>(asyncSecService);
-                                    AEROLINK_RESULT ret = tmpAeroSecurity->mbdCheck(
-                                        &asyncCbData[PostProcessingCbData[i]].rvKine,
-                                        asyncCbData[PostProcessingCbData[i]].misbehaviorStat,
-                                        (SecuredMessageParserC*)
-                                            asyncCbData[PostProcessingCbData[i]].msgParseContext);
-                                if (ret == WS_ERR_MISBEHAVIOR_DETECTED){
-                                    asyncMbdDetected++;
-                                }else{
-                                    asyncMbdUndetected++;
-                                }
-                            }
-                        }
-                        #endif
-                    }
-                    // log number of received packets per msg
-                    if(qMon){
-                        if(overridePsidCheck){
-                            // we override the PSID and treat this packet as a BSM
-                            qMon->tData[thrId].rxBSMs++;
-                        }else{
-                            switch(asyncCbData[PostProcessingCbData[i]].psid){
-                                case PSID_BSM:
-                                    qMon->tData[thrId].rxBSMs++;
-                                    qMon->tData[thrId].rxSignedBSMs++;
-                                    break;
-                                case PSID_SPAT:
-                                    qMon->tData[thrId].rxSPATs++;
-                                    qMon->tData[thrId].rxSignedSPATs++;
-                                    break;
-                                case PSID_MAP:
-                                    qMon->tData[thrId].rxMAPs++;
-                                    qMon->tData[thrId].rxSignedMAPs++;
-                                    break;
-                            }
-                        }
-                    }
-                }
-                else if(!(asyncCbData[PostProcessingCbData[i]].verifSuccess))
-                {
-                    asyncVerifFail++;
-                    asyncCbData[PostProcessingCbData[i]].AsyncState = PP_DONE;
-                }
-                if (asyncCbData[PostProcessingCbData[i]].psid == PSID_BSM ||
-                    overridePsidCheck)
-                {
-                    if(radioReceive){
-                        monotonicTime = radioReceive->latestTxRxTimeMonotonic();
-                        cbr = radioReceive->getCBRValue();
-                    }
-                    // write the log here for this tx now. using tx timestamp made before sendto
-                    ApplicationBase::writeLog(asyncCbData[PostProcessingCbData[i]].msg_index,
-                        asyncCbData[PostProcessingCbData[i]].l2SrcAddr, false, TransmitType::SPS,
-                        asyncCbData[PostProcessingCbData[i]].verifSuccess,
-                        asyncCbData[PostProcessingCbData[i]].timestamp, PSID_BSM,
-                        monotonicTime, 0.0, 0, 0, cbr,
-                        &(asyncCbData[PostProcessingCbData[i]].asyncBs),
-                        asyncCbData[PostProcessingCbData[i]].distFromRV,
-                        asyncCbData[PostProcessingCbData[i]].RVsInRange,
-                        asyncCbData[PostProcessingCbData[i]].txInterval,
-                        enableCongCtrl, congCtrlInitialized, writeMutexCvSae);
-                    if (enableDiagLog_) {
-                        DiagLogData logData = {0};
-                        logData.validPkt = asyncCbData[PostProcessingCbData[i]].verifSuccess;
-                        logData.currTime = asyncCbData[PostProcessingCbData[i]].timestamp;
-                        logData.cbr = cbr;
-                        logData.monotonicTime = monotonicTime;
-                        logData.txInterval = asyncCbData[PostProcessingCbData[i]].txInterval;
-                        logData.enableCongCtrl = enableCongCtrl;
-                        logData.monotonicTime = congCtrlInitialized;
-                        diagLogPktTxRx(false, TransmitType::SPS, &logData,
-                            &(asyncCbData[PostProcessingCbData[i]].asyncBs));
-                    }
-                }
-            }
+        // AsyncPostProcessing Never block forever
+        struct timespec ts;
+        clock_gettime(CLOCK_REALTIME, &ts);
+        ts.tv_nsec += 10000000;  // 10ms timeout
+        if (ts.tv_nsec >= 1000000000) {
+            ts.tv_sec++;
+            ts.tv_nsec -= 1000000000;
         }
+        sem_timedwait(&verificationSem, &ts);
+        uint64_t read_idx = async_read_index.load();
+        uint64_t write_idx = async_write_index.load();
 
-        // Since the thread is running in while loop updating the
-        // loop index to the last successful value
-        start_index = i;
-        if(buffer_full)
+        // Process all slots between read and write pointers
+        while(read_idx < write_idx && !exitAsync)
         {
-            postprocessing_cleanup();
+            uint64_t slot_idx = read_idx % SHARED_BUFFER_MAX_SIZE;
+
+            // Check for VERIF_DONE
+            if(asyncCbData[slot_idx].AsyncState != VERIF_DONE){
+                // Not done yet, wait for next sem_post
+                break;
+            }
+
+            // Process the verification result
+            if((asyncCbData[slot_idx].verifSuccess))
+            {
+                asyncVerifSuccess++;
+
+                if(asyncCbData[slot_idx].psid == PSID_BSM){
+                    if(enableCongCtrl && (congestionControlManager != NULL))
+                    {
+                        congestionControlManager->addCongestionControlData(
+                            asyncCbData[slot_idx].asyncBs.id,
+                            (asyncCbData[slot_idx].asyncBs.Latitude)/10000000.0,
+                            (asyncCbData[slot_idx].asyncBs.Longitude)/10000000.0,
+                            asyncCbData[slot_idx].asyncBs.Heading_degrees * 0.0125,
+                            asyncCbData[slot_idx].asyncBs.Speed * (250/18),
+                            asyncCbData[slot_idx].asyncBs.timestamp_ms,
+                            asyncCbData[slot_idx].asyncBs.MsgCount);
+                    }
+#ifdef AEROLINK
+                    if(enableMisbehavior){
+                        if(asyncSecService){
+                            AerolinkSecurity* tmpAeroSecurity =
+                                static_cast<AerolinkSecurity*>(asyncSecService);
+                            AEROLINK_RESULT ret = tmpAeroSecurity->mbdCheck(
+                                &asyncCbData[slot_idx].rvKine,
+                                asyncCbData[slot_idx].misbehaviorStat,
+                                (SecuredMessageParserC*)
+                                asyncCbData[slot_idx].msgParseContext);
+                            if (ret == WS_ERR_MISBEHAVIOR_DETECTED){
+                                asyncMbdDetected++;
+                            }else{
+                                asyncMbdUndetected++;
+                            }
+                        }
+                    }
+#endif
+                }
+                // log number of received packets per msg
+                if(qMon){
+                    if(overridePsidCheck){
+                        qMon->tData[thrId].rxBSMs++;
+                    }else{
+                        switch(asyncCbData[slot_idx].psid){
+                            case PSID_BSM:
+                                qMon->tData[thrId].rxBSMs++;
+                                qMon->tData[thrId].rxSignedBSMs++;
+                                break;
+                            case PSID_SPAT:
+                                qMon->tData[thrId].rxSPATs++;
+                                qMon->tData[thrId].rxSignedSPATs++;
+                                break;
+                            case PSID_MAP:
+                                qMon->tData[thrId].rxMAPs++;
+                                qMon->tData[thrId].rxSignedMAPs++;
+                                break;
+                        }
+                    }
+                }
+            }
+            else if(!(asyncCbData[slot_idx].verifSuccess))
+            {
+                asyncVerifFail++;
+            }
+            if (asyncCbData[slot_idx].psid == PSID_BSM || overridePsidCheck)
+            {
+                if(radioReceive){
+                    monotonicTime = radioReceive->latestTxRxTimeMonotonic();
+                    cbr = radioReceive->getCBRValue();
+                }
+                ApplicationBase::writeLog(asyncCbData[slot_idx].msg_index,
+                    asyncCbData[slot_idx].l2SrcAddr, false, TransmitType::SPS,
+                    asyncCbData[slot_idx].verifSuccess,
+                    asyncCbData[slot_idx].timestamp, PSID_BSM,
+                    monotonicTime, 0.0, 0, 0, cbr,
+                    &(asyncCbData[slot_idx].asyncBs),
+                    asyncCbData[slot_idx].distFromRV,
+                    asyncCbData[slot_idx].RVsInRange,
+                    asyncCbData[slot_idx].txInterval,
+                    enableCongCtrl, congCtrlInitialized, writeMutexCvSae);
+                if (enableDiagLog_) {
+                    DiagLogData logData = {0};
+                    logData.validPkt = asyncCbData[slot_idx].verifSuccess;
+                    logData.currTime = asyncCbData[slot_idx].timestamp;
+                    logData.cbr = cbr;
+                    logData.monotonicTime = monotonicTime;
+                    logData.txInterval = asyncCbData[slot_idx].txInterval;
+                    logData.enableCongCtrl = enableCongCtrl;
+                    logData.monotonicTime = congCtrlInitialized;
+                    diagLogPktTxRx(false, TransmitType::SPS, &logData,
+                        &(asyncCbData[slot_idx].asyncBs));
+                }
+            }
+            // Mark slot as FREE
+            asyncCbData[slot_idx].AsyncState = FREE;
+            // Advance read pointer
+            async_read_index.fetch_add(1);
+            read_idx++;
         }
         if(secVerbosity > 0 ){
             printStats(thrId, secVerbosity);
-        }
-    }
-}
-
-void SaeApplication::postprocessing_cleanup()
-{
-    std::unique_lock<std::mutex> lock(AsyncMtx);
-    for(int j =0;j<PP_BUFFER_MAX_SIZE;j++)
-    {
-        //If there is any pending elements to be post processed which is
-        // currently in VERIFY State , find that entry
-        if((asyncCbData[PostProcessingCbData[j]].AsyncState != PP_DONE) ||
-        ( asyncCbData[PostProcessingCbData[j]].AsyncState != FREE))
-        {
-            shared_index = j ;
-            // This will make the post processing loop to
-            //run from this particular index
-        }
-        else
-        {
-            asyncCbData[PostProcessingCbData[j]].AsyncState = FREE;
         }
     }
 }
@@ -1217,11 +1186,10 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
             if(tmpSecService){
                 AerolinkSecurity* tmpAeroSecurity =
                     static_cast<AerolinkSecurity*>(tmpSecService);
-                if(async_index < (SHARED_BUFFER_MAX_SIZE / 5)){
-                    async_index = SHARED_BUFFER_MAX_SIZE-1;
-                    begin_flag = true;
-                }
-                smp = (SecuredMessageParserC*)(asyncCbData[async_index].msgParseContext);
+                // Use write pointer to get message parsing context
+                uint64_t temp_write_idx = async_write_index.load();
+                uint64_t temp_slot_index = temp_write_idx % SHARED_BUFFER_MAX_SIZE;
+                smp = (SecuredMessageParserC*)(asyncCbData[temp_slot_index].msgParseContext);
             }
         }
         // extract the PDU from the secured packet
@@ -1418,96 +1386,141 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr,
     }
     else
     {
-        if(async_index >= 0)
-        {
-            asyncCbData[async_index].indexToData = async_index;
-            memcpy(&asyncCbData[async_index].asyncBs, &bs, sizeof(bsm_data));
-            if(configuration.fakeRVTempIds){
-               fakeTmpId = fakeTmpId % configuration.totalFakeRVTempIds;
-               asyncCbData[async_index].asyncBs.id = fakeTmpId;
-               fakeTmpId++;
+        // Get write/read pointers and calculate slots in use
+        uint64_t write_idx = async_write_index.load();
+        uint64_t read_idx = async_read_index.load();
+        uint64_t slots_used = write_idx - read_idx;
+        // Check if buffer is full
+        if (slots_used >= SHARED_BUFFER_MAX_SIZE) {
+            queue_full_count++;
+            // Wake up post-processing to drain buffer
+            sem_post(&verificationSem);
+            if (queue_full_count % 100 == 0) {
+                printf("[QUEUE_FULL] Count: %lu, Write: %lu, Read: %lu, Used: %lu/%d\n",
+                       queue_full_count.load(), write_idx, read_idx,
+                       slots_used, SHARED_BUFFER_MAX_SIZE);
             }
-            asyncCbData[async_index].msg_index = index;
-            asyncCbData[async_index].l2SrcAddr = l2SrcAddr;
-            asyncCbData[async_index].timestamp = timestamp;
-            asyncCbData[async_index].distFromRV = distFromRV;
-            asyncCbData[async_index].psid = PSID_BSM;
-
-            //RVsInRange
-            //txInterval
-            //call to AsyncVerify
-            if((asyncCbData[async_index].AsyncState != VERIF_DONE)){
-                SecurityService* tmpSecService = SecService.get();
-                if(tmpSecService){
-                    AerolinkSecurity* tmpAeroSecurity =
-                        static_cast<AerolinkSecurity*>(tmpSecService);
-                    ret = tmpAeroSecurity->checkConsistencyandRelevancy(
-                        (SecuredMessageParserC*)(asyncCbData[async_index].msgParseContext), sopt);
-                    if(ret != DECODE_FAIL && tmpAeroSecurity){
-                        asyncCbData[async_index].asyncVerifStat = nullptr;
-                        if(configuration.enableVerifStatLog){
-                            if(thrVerifLatencies.find(tid) == thrVerifLatencies.end()){
-                                std::vector<VerifStats> tmp;
-                                thrVerifLatencies.insert(std::pair<std::thread::id,
-                                    std::vector<VerifStats>>(tid, tmp));
-                                for(int i = 0 ; i < configuration.verifStatsSize; i++){
-                                    VerifStats tmpVerifStat = {0};
-                                    thrVerifLatencies[tid].push_back(tmpVerifStat);
-                                }
-                            }
-                            if (thrVerifLatencies[tid].size() > verifStatIdx[tid]){
-                                asyncCbData[async_index].asyncVerifStat =
-                                    &thrVerifLatencies[tid].at(verifStatIdx[tid]);
-                            }else{
-                                verifStatIdx[tid] = 0;
-                                asyncCbData[async_index].asyncVerifStat =
-                                    &thrVerifLatencies[tid].at(verifStatIdx[tid]);
-                            }
-                            verifStatIdx[tid]++;
-                            verifStatIdx[tid]%=thrVerifLatencies[tid].size();
-                        }
-                        asyncCbData[async_index].misbehaviorStat = nullptr;
-                        if(configuration.enableMbdStatLog){
-                            if(thrMisbehaviorLatencies.find(tid) == thrMisbehaviorLatencies.end()){
-                                std::vector<MisbehaviorStats> tmp;
-                                thrMisbehaviorLatencies.insert(std::pair<std::thread::id,
-                                std::vector<MisbehaviorStats>>(tid, tmp));
-                                for(int i = 0 ; i < configuration.mbdStatLogListSize; i++){
-                                    MisbehaviorStats tmpMbdStat;
-                                    thrMisbehaviorLatencies[tid].push_back(tmpMbdStat);
-                                }
-                            }
-                            if (thrMisbehaviorLatencies[tid].size() > misbehaviorStatIdx[tid]){
-                                asyncCbData[async_index].misbehaviorStat =
-                                    &thrMisbehaviorLatencies[tid].at(misbehaviorStatIdx[tid]);
-                            }else{
-                                misbehaviorStatIdx[tid] = 0;
-                                asyncCbData[async_index].misbehaviorStat =
-                                    &thrMisbehaviorLatencies[tid].at(misbehaviorStatIdx[tid]);
-                            }
-                            misbehaviorStatIdx[tid]++;
-                            misbehaviorStatIdx[tid]%=thrMisbehaviorLatencies[tid].size();
-                        }
-                        gettimeofday(&currTime, NULL);
-                        asyncCbData[async_index].startLatencyTime =
-                               (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
-                        memcpy(&asyncCbData[async_index].rvKine,
-                            &sopt.rvKine, sizeof(Kinematics));
-                        // returns nonzero value if success, otherwise -1
-                        ret = tmpAeroSecurity->asyncVerify(
-                                sopt.rvKine, sopt.misbehaviorStat,
-                                (void *)&(asyncCbData[async_index]), sopt.priority,
-                                AsyncCallbackFunction,
-                                (SecuredMessageParserC*)
-                                    asyncCbData[async_index].msgParseContext);
-                    }
-                }
-                async_index--;
-            }else{
-               async_index--;
-            }
+            asyncVerifFail++;
+            return -1;
         }
 
+        // Calculate slot index (circular mapping)
+        uint64_t slot_index = write_idx % SHARED_BUFFER_MAX_SIZE;
+
+        // Mark slot as QUEUED (reserve it temporarily)
+        asyncCbData[slot_index].AsyncState = QUEUED;
+
+        // Setup verification context
+        asyncCbData[slot_index].indexToData = slot_index;
+        memcpy(&asyncCbData[slot_index].asyncBs, &bs, sizeof(bsm_data));
+        if(configuration.fakeRVTempIds){
+            fakeTmpId = fakeTmpId % configuration.totalFakeRVTempIds;
+            asyncCbData[slot_index].asyncBs.id = fakeTmpId;
+            fakeTmpId++;
+        }
+        asyncCbData[slot_index].msg_index = index;
+        asyncCbData[slot_index].l2SrcAddr = l2SrcAddr;
+        asyncCbData[slot_index].timestamp = timestamp;
+        asyncCbData[slot_index].distFromRV = distFromRV;
+        asyncCbData[slot_index].psid = PSID_BSM;
+
+        // Get security service and check consistency
+        SecurityService* tmpSecService = SecService.get();
+        if(!tmpSecService){
+            // Security service not available
+            asyncCbData[slot_index].AsyncState = FREE;
+            asyncVerifFail++;
+            return -1;
+        }
+
+        AerolinkSecurity* tmpAeroSecurity = static_cast<AerolinkSecurity*>(tmpSecService);
+        if(!tmpAeroSecurity){
+            // Aerolink security not available
+            asyncCbData[slot_index].AsyncState = FREE;
+            asyncVerifFail++;
+            return -1;
+        }
+
+        ret = tmpAeroSecurity->checkConsistencyandRelevancy(
+            (SecuredMessageParserC*)(asyncCbData[slot_index].msgParseContext), sopt);
+
+        if(ret == DECODE_FAIL){
+            // Consistency check failed
+            asyncCbData[slot_index].AsyncState = FREE;
+            asyncVerifFail++;
+            return -1;
+        }
+
+        // Setup verification statistics
+        asyncCbData[slot_index].asyncVerifStat = nullptr;
+        if(configuration.enableVerifStatLog){
+            if(thrVerifLatencies.find(tid) == thrVerifLatencies.end()){
+                std::vector<VerifStats> tmp;
+                thrVerifLatencies.insert(std::pair<std::thread::id,
+                    std::vector<VerifStats>>(tid, tmp));
+                for(int i = 0 ; i < configuration.verifStatsSize; i++){
+                    VerifStats tmpVerifStat = {0};
+                    thrVerifLatencies[tid].push_back(tmpVerifStat);
+                }
+            }
+            if (thrVerifLatencies[tid].size() > verifStatIdx[tid]){
+                asyncCbData[slot_index].asyncVerifStat =
+                    &thrVerifLatencies[tid].at(verifStatIdx[tid]);
+            }else{
+                verifStatIdx[tid] = 0;
+                asyncCbData[slot_index].asyncVerifStat =
+                    &thrVerifLatencies[tid].at(verifStatIdx[tid]);
+            }
+            verifStatIdx[tid]++;
+            verifStatIdx[tid]%=thrVerifLatencies[tid].size();
+        }
+
+        asyncCbData[slot_index].misbehaviorStat = nullptr;
+        if(configuration.enableMbdStatLog){
+            if(thrMisbehaviorLatencies.find(tid) == thrMisbehaviorLatencies.end()){
+                std::vector<MisbehaviorStats> tmp;
+                thrMisbehaviorLatencies.insert(std::pair<std::thread::id,
+                    std::vector<MisbehaviorStats>>(tid, tmp));
+                for(int i = 0 ; i < configuration.mbdStatLogListSize; i++){
+                    MisbehaviorStats tmpMbdStat;
+                    thrMisbehaviorLatencies[tid].push_back(tmpMbdStat);
+                }
+            }
+            if (thrMisbehaviorLatencies[tid].size() > misbehaviorStatIdx[tid]){
+                asyncCbData[slot_index].misbehaviorStat =
+                    &thrMisbehaviorLatencies[tid].at(misbehaviorStatIdx[tid]);
+            }else{
+                misbehaviorStatIdx[tid] = 0;
+                asyncCbData[slot_index].misbehaviorStat =
+                    &thrMisbehaviorLatencies[tid].at(misbehaviorStatIdx[tid]);
+            }
+            misbehaviorStatIdx[tid]++;
+            misbehaviorStatIdx[tid]%=thrMisbehaviorLatencies[tid].size();
+        }
+
+        gettimeofday(&currTime, NULL);
+        asyncCbData[slot_index].startLatencyTime =
+            (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
+        memcpy(&asyncCbData[slot_index].rvKine,
+            &sopt.rvKine, sizeof(Kinematics));
+
+        // Call asyncVerify
+        ret = tmpAeroSecurity->asyncVerify(
+            sopt.rvKine, sopt.misbehaviorStat,
+            (void *)&(asyncCbData[slot_index]), sopt.priority,
+            AsyncCallbackFunction,
+            (SecuredMessageParserC*)asyncCbData[slot_index].msgParseContext);
+
+        // Advance write pointer ONLY if asyncVerify succeeded
+        if(ret == -1) {
+            // asyncVerify failed - free the slot
+            asyncCbData[slot_index].AsyncState = FREE;
+            asyncVerifFail++;
+            return -1;
+        }
+
+        // Success! Advance write pointer to commit the slot
+        async_write_index.fetch_add(1);
     }
 
     // this will override the actual result for testing purposes

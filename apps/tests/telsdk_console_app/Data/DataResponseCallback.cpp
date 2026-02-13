@@ -28,39 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
-
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <iostream>
@@ -82,22 +52,25 @@ void MyDataProfilesCallback::onProfileListResponse(
       PRINT_CB << " ** onProfileListResponse **" << std::endl;
       std::cout << std::setw(2)
                 << "+------------------------------------------------------------------------------"
-                << "----+"
+                << "------------------------------------------+"
                 << std::endl;
       std::cout << std::setw(14) << "| Profile # | " << std::setw(11) << "TechPref | "
                 << std::setw(15) << "      APN      " << std::setw(17) << "|  ProfileName  |"
                 << std::setw(10) << " IP Type |" << std::setw(16) << "    APN Type    |"
+                << std::setw(20) << "   Request PCSCF Addr   |"
                 << std::endl;
       std::cout << std::setw(2)
                 << "+------------------------------------------------------------------------------"
-                << "----+"
+                << "------------------------------------------+"
                 << std::endl;
       for(auto it : profiles) {
          std::cout << std::left << std::setw(4) << "  " << std::setw(10) << it->getId()
                    << std::setw(11) << DataUtils::techPreferenceToString(it->getTechPreference())
                    << std::setw(15) << it->getApn() << std::setw(17) << it->getName()
                    << std::setw(10) << DataUtils::ipFamilyTypeToString(it->getIpFamilyType())
-                   << std::setw(16) << it->getApnTypes().to_string() << std::endl;
+                   << std::setw(20) << it->getApnTypes().to_string()
+                   << std::setw(20) << (it->isPcscfViaPcoEnabled() ? "Yes" : "No")
+                   << std::endl;
       }
       std::cout << std::endl << std::endl;
    } else {
@@ -118,6 +91,7 @@ void MyDataProfileCallback::onResponse(const std::shared_ptr<telux::data::DataPr
          << ", Password : " << profile->getPassword()
          << ", AuthPreference : " << (int)profile->getAuthProtocolType()
          << ", IpFamilyType : " << DataUtils::ipFamilyTypeToString(profile->getIpFamilyType())
+         << ", Obtain PCSCF address: " << profile->isPcscfViaPcoEnabled()
          << std::endl;
    } else {
       PRINT_CB << "Unable to create profile or request profile by ID, errorCode: "

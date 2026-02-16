@@ -227,6 +227,12 @@ class IStaInterfaceManager {
     /**
      * Initiates a scan for available Wi-Fi access points in the vicinity.
      * Scan results are notified via @ref telux::wlan::IStaListener::onScanResultUpdated.
+     *
+     * The scan process internally generates five batches of result notifications, providing
+     * progressive updates as access points are discovered, unless the station is stopped
+     * before scan completion. If a scan is already in progress, any subsequent request will
+     * be returned with @ref telux::common::ErrorCode::DEVICE_IN_USE.
+     *
      * This API should be called only after WLAN is enabled using
      * @ref telux::wlan::IWlanDeviceManager::enable API and required number of STAs are
      * configured using @ref telux::wlan::IDeviceManager::setMode

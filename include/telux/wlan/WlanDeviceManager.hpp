@@ -218,11 +218,12 @@ class IWlanDeviceManager {
      * power settings only when the interface is fully initialized and actively handling traffic.
      *
      * To restore the default transmit power as defined by the regulatory domain associated with
-     * the active country set by telux::wlan::IWlanDeviceManager::setActiveCountry, either hostapd or
-     * wpa_supplicant daemons need to be restarted via telux::wlan::IApInterfaceManager::manageApService or
-     * telux::wlan::IStaInterfaceManager::manageStaService
+     * the active country set by @ref telux::wlan::IWlanDeviceManager::setActiveCountry, either hostapd or
+     * wpa_supplicant daemons need to be restarted via
+     * @ref telux::wlan::IApInterfaceManager::manageApService or
+     * @ref telux::wlan::IStaInterfaceManager::manageStaService.
      *
-     * @param [in] txPower              Transmit Power to be set in mutiple of 100 milliwatts.
+     * @param [in] txPower              Transmit Power to be set in multiple of 100 milliwatts.
      *                                  For instance, if txPower equals 15, transmit power will be
      *                                  set to 1500 milliwatts.
      *
@@ -235,8 +236,16 @@ class IWlanDeviceManager {
      *           break backwards compatibility.
      */
     virtual telux::common::ErrorCode setTxPower(uint32_t txPowerMw) = 0;
+
     /**
      * Request Transmit Power
+     *
+     * The transmit power value retrieved may not always match the value set using
+     * @ref telux::wlan::IWlanDeviceManager::setTxPower. This is expected behaviour, as the actual
+     * transmit power is determined based on multiple internal constraints.
+     * These constraints ensure compliance with platform specific and regulatory requirements.
+     * As a result, the value returned by the API will always be less than or equal to the value
+     * set using the @ref telux::wlan::IWlanDeviceManager::setTxPower API.
      *
      * This API can only be successfully invoked when at least one WLAN interface is in operational
      * state. Specifically, when at least one of the configured access point is active, or the
@@ -245,7 +254,7 @@ class IWlanDeviceManager {
      * This restriction exists because the driver or firmware provides transmit power information
      * only when an interface is fully initialized and actively transmitting or receiving data.
      *
-     * @param [out] txPowerMw           Current Transmit Power in mutiple of 100 milliwatts.
+     * @param [out] txPowerMw           Current Transmit Power in multiple of 100 milliwatts.
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *

@@ -190,6 +190,12 @@ class IApInterfaceManager {
      * Configurations will take effect after hostapd service is restarted by calling
      * @ref telux::wlan::IApInterfaceManager::manageApService.
      *
+     * @details The primary access point, identified by @ref telux::wlan::Id::PRIMARY, has specific
+     * configuration restrictions. It can only be configured with the following attributes:
+     * @ref telux::wlan::ApType::PRIVATE and @ref telux::wlan::ApInterworking::FULL_ACCESS.
+     * In contrast, all other access points are expected to be configured with
+     * @ref telux::wlan::ApType::GUEST.
+     *
      * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_CONFIG
      * permission to invoke this API successfully.
      *
@@ -211,10 +217,7 @@ class IApInterfaceManager {
      * @param [in] apSecurity       AP security settings. @ref telux::wlan::ApSecurity
 
      * @returns operation error code (if any). @ref telux::common::ErrorCode
-
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::ErrorCode setSecurityConfig(Id apId, ApSecurity apSecurity) = 0;
 
@@ -229,8 +232,6 @@ class IApInterfaceManager {
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
      virtual telux::common::ErrorCode setSsid(Id apId, std::string ssid) = 0;
 
@@ -245,8 +246,6 @@ class IApInterfaceManager {
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
      virtual telux::common::ErrorCode setVisibility(Id apId, bool isVisible) = 0;
 
@@ -269,8 +268,6 @@ class IApInterfaceManager {
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
      virtual telux::common::ErrorCode setElementInfoConfig(Id apId, ApElementInfoConfig config) = 0;
 
@@ -285,8 +282,6 @@ class IApInterfaceManager {
      *
      * @returns Immediate status of setPassPhrase() request i.e. success or suitable status.
      *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
      virtual telux::common::ErrorCode setPassPhrase(Id apId, std::string passPhrase) = 0;
 
@@ -300,7 +295,7 @@ class IApInterfaceManager {
      * @ref telux::wlan::IApInterfaceManager::setVisibility,
      * @ref telux::wlan::IApInterfaceManager::setElementInfoConfig,
      * or @ref telux::wlan::IApInterfaceManager::setPassPhrase,
-     * it is essential to wait for the @ref telux::wlan::IApConfigListener::onApConfigChanged
+     * it is essential to wait for the @ref telux::wlan::IApListener::onApConfigChanged
      * notification before invoking getConfig(). This ensures that all configuration changes
      * have been fully applied and synchronised internally.
      *
@@ -347,12 +342,11 @@ class IApInterfaceManager {
      * access point.
      * Access points selected to execute operation on, will temporarily go out of service when this
      * API is called.
-     * This API should be called only when access point is configured through
+     * This API should be called only when access point is configured using
+     * @ref telux::wlan::IDeviceManager::setMode.
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_CONFIG
      * permission to invoke this API successfully.
-     *
-     * @ref telux::wlan::IDeviceManager::setMode
      *
      * @param [in] apId          AP identifier to execute operation on. @ref telux::wlan::Id
      * @param [in] opr           Operation to be performed on hostapd

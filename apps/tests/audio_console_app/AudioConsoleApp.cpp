@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file       AudioConsoleApp.cpp
  *
@@ -109,6 +115,7 @@ void AudioConsoleApp::init() {
     auto status = audioManager_->registerListener(shared_from_this());
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "Audio Listener Registeration failed" <<std::endl;
+        return;
     }
     initConsole();
 }
@@ -138,9 +145,19 @@ void AudioConsoleApp::initConsole() {
     = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6", "TransCode", {},
         std::bind(&AudioConsoleApp::transCodeMenu, this, std::placeholders::_1)));
 
-     std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
-        = {voiceMenuCommand, playMenuCommand, captureMenuCommand, loopbackMenuCommand,
-            toneMenuCommand, transCodeMenuCommand};
+    std::shared_ptr<ConsoleAppCommand> getSupportedStreamsCommand
+    = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "Get Supported Streams", {},
+        std::bind(&AudioConsoleApp::getSupportedStreams, this, std::placeholders::_1)));
+
+    std::shared_ptr<ConsoleAppCommand> getSupportedDevicesCommand
+    = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8", "Get Supported Devices", {},
+        std::bind(&AudioConsoleApp::getSupportedDevices, this, std::placeholders::_1)));
+
+
+    std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
+    = {voiceMenuCommand, playMenuCommand, captureMenuCommand, loopbackMenuCommand,
+        toneMenuCommand, transCodeMenuCommand, getSupportedStreamsCommand,
+        getSupportedDevicesCommand };
 
     voiceMenu_ = std::make_shared<VoiceMenu>("Voice Menu", "voice> ", audioClient_);
     voiceMenu_->init();
@@ -187,6 +204,68 @@ void AudioConsoleApp::toneMenu(std::vector<std::string> userInput) {
 void AudioConsoleApp::transCodeMenu(std::vector<std::string> userInput) {
     transCodeMenu_->displayMenu();
     transCodeMenu_->mainLoop();
+}
+
+void AudioConsoleApp::getSupportedDevices(std::vector<std::string> userInput) {
+    if (audioManager_) {
+        std::promise<bool> p;
+        auto status = audioManager_->getDevices([&p, this](
+            std::vector<std::shared_ptr<IAudioDevice>> devices, telux::common::ErrorCode error) {
+            if (error == telux::common::ErrorCode::SUCCESS) {
+                for (auto &it : devices) {
+                    if (it != nullptr) {
+                        std::cout << "DeviceType: " << static_cast<int>(it->getType()) << std::endl;
+                        if (it->getDirection() == DeviceDirection::TX) {
+                            std::cout << "Direction : TX " << std::endl;
+                        } else if (it->getDirection() == DeviceDirection::RX) {
+                            std::cout << "Direction : RX " << std::endl;
+                        } else {
+                            std::cout << "Direction : NONE" << std::endl;
+                        }
+                    }
+                }
+                p.set_value(true);
+            } else {
+                p.set_value(false);
+                std::cout << "failed to get supported devices" << std::endl;
+            }
+        });
+        if (status == telux::common::Status::SUCCESS){
+            std::cout << "Request to get supported devices sent" << std::endl;
+        } else {
+            std::cout << "Request to get supported devices failed" << std::endl;
+        }
+        p.get_future().get();
+    } else {
+        std::cout << "Invalid Audio Manager" << std::endl;
+    }
+}
+
+void AudioConsoleApp::getSupportedStreams(std::vector<std::string> userInput) {
+    if (audioManager_) {
+        std::promise<bool> p;
+        auto status = audioManager_->getStreamTypes(
+            [&p, this](std::vector<StreamType> streamTypes, telux::common::ErrorCode error) {
+            if (error == telux::common::ErrorCode::SUCCESS) {
+                for (auto it : streamTypes) {
+                    auto streamName = getStreamName(it);
+                    std::cout << "Stream Type : " << streamName << std::endl;
+                }
+                p.set_value(true);
+            } else {
+                p.set_value(false);
+                std::cout << "failed to get supported stream types" << std::endl;
+            }
+        });
+        if (status == telux::common::Status::SUCCESS){
+            std::cout << "Request to get supported stream sent" << std::endl;
+        } else {
+            std::cout << "Request to get supported stream failed" << std::endl;
+        }
+        p.get_future().get();
+    } else {
+        std::cout << "Invalid Audio Manager" << std::endl;
+    }
 }
 
 void AudioConsoleApp::cleanup() {
@@ -248,5 +327,22 @@ void AudioConsoleApp::onServiceStatusChange(telux::common::ServiceStatus status)
     if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "Audio Service AVAILABLE" << std::endl;
         setSystemReady();
+    }
+}
+
+std::string AudioConsoleApp::getStreamName(StreamType type) {
+    switch (type){
+        case StreamType::VOICE_CALL:
+        return "VOICE_CALL";
+        case StreamType::PLAY:
+        return "PLAY";
+        case StreamType::CAPTURE:
+        return "CAPTURE";
+        case StreamType::LOOPBACK:
+        return "LOOPBACK";
+        case StreamType::TONE_GENERATOR:
+        return "TONE_GENERATOR";
+        default:
+        return "NONE";
     }
 }

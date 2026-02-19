@@ -252,9 +252,9 @@ void WlanStaInterfaceManagerMenu::addNetworkConfig(std::vector<std::string> user
 
     telux::wlan::StaNetworkConfigEntry staNetConfigEntry = {};
     std::string ssid = "";
+    char delimiter = '\n';
     std::cout << "Enter SSID (Without Quotes): ";
-    std::cin >> ssid;
-    Utils::validateInput(ssid);
+    std::getline(std::cin, ssid, delimiter);
     staNetConfigEntry.ssid = ssid;
 
     int input = 0;
@@ -265,11 +265,9 @@ void WlanStaInterfaceManagerMenu::addNetworkConfig(std::vector<std::string> user
     if(input) {
         std::string passPhrase = "";
         std::cout << "Enter passphrase (Without Quotes): ";
-        std::cin >> passPhrase;
-        Utils::validateInput(passPhrase);
+        std::getline(std::cin, passPhrase, delimiter);
         staNetConfigEntry.passPhrase = passPhrase;
     }
-
 
     int userResp = 0;
     std::cout << "Enter STA operational band type \
@@ -277,7 +275,6 @@ void WlanStaInterfaceManagerMenu::addNetworkConfig(std::vector<std::string> user
     std::cin >> userResp;
     WlanUtils::validateInput(userResp, {1, 2, 3});
     std::cout << std::endl;
-    telux::wlan::ApNetConfig apNetConfig = {};
     if(userResp == 1) {
         staNetConfigEntry.band = telux::wlan::BandType::BAND_2GHZ;
     } else if (userResp == 2) {
@@ -286,7 +283,6 @@ void WlanStaInterfaceManagerMenu::addNetworkConfig(std::vector<std::string> user
         staNetConfigEntry.band = telux::wlan::BandType::BAND_6GHZ;
     }
 
-    char delimiter = '\n';
     std::string priority;
     std::cout << "Enter priority (optional) : ";
     std::getline(std::cin, priority, delimiter);

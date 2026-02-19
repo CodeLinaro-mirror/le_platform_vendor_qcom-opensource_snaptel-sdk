@@ -28,10 +28,11 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the
+ * following license:
  *
- * Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights
+ * reserved. SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef TELCLIENTUTILS_HPP
@@ -42,56 +43,63 @@
 using namespace telux::common;
 using namespace telux::tel;
 
-/** TelClientUtils class provides helper functions to convert various parameters to strings */
+/** TelClientUtils class provides helper functions to convert various parameters
+ * to strings */
 class TelClientUtils {
 public:
-    /*
-     * Get the call state in string format
-     */
-    static std::string callStateToString(CallState cs);
-    /*
-     * Get the call direction in string format
-     */
-    static std::string callDirectionToString(CallDirection cd);
-    /**
-     * Get the call end cause in string format from call end cause code
-     */
-    static std::string callEndCauseToString(CallEndCause callEndCause);
-    /*
-     * Get ECallMsdTransmissionStatus in string
-     */
-    static std::string eCallMsdTransmissionStatusToString(ECallMsdTransmissionStatus status);
-    /*
-     * Get eCall HLAP timer status in string
-     */
-    static std::string eCallHlapTimerStatusToString(HlapTimerStatus status);
-    /*
-     * Get eCall HLAP timer event in string
-     */
-    static std::string eCallHlapTimerEventToString(HlapTimerEvent event);
+  /*
+   * Get the call state in string format
+   */
+  static std::string callStateToString(CallState cs);
+  /*
+   * Get the call direction in string format
+   */
+  static std::string callDirectionToString(CallDirection cd);
+  /*
+   * Get the network mode in string format
+   */
+  static std::string networkModeToString(NetworkMode mode);
+  /**
+   * Get the call end cause in string format from call end cause code
+   */
+  static std::string callEndCauseToString(CallEndCause callEndCause);
+  /*
+   * Get ECallMsdTransmissionStatus in string
+   */
+  static std::string
+  eCallMsdTransmissionStatusToString(ECallMsdTransmissionStatus status);
+  /*
+   * Get eCall HLAP timer status in string
+   */
+  static std::string eCallHlapTimerStatusToString(HlapTimerStatus status);
+  /*
+   * Get eCall HLAP timer event in string
+   */
+  static std::string eCallHlapTimerEventToString(HlapTimerEvent event);
 
-    /*
-     * Print the eCall configuration to stdout
-     */
-    static void printEcallConfig(EcallConfig config);
+  /*
+   * Print the eCall configuration to stdout
+   */
+  static void printEcallConfig(EcallConfig config);
 
-    /*
-     * Prints the encoded optional additional data content.
-     */
-    static void printEncodedOptionalAdditionalDataContent(std::string encodedString);
+  /*
+   * Prints the encoded optional additional data content.
+   */
+  static void
+  printEncodedOptionalAdditionalDataContent(std::string encodedString);
 
-    /*
-     * Prints the encoded eCall MSD payload.
-     */
-    static void printECallMsdPayload(std::string encodedPdu);
+  /*
+   * Prints the encoded eCall MSD payload.
+   */
+  static void printECallMsdPayload(std::string encodedPdu);
 
-    /*
-     * Prints the reason to redial eCall or not.
-     */
-    static std::string eCallRedialReasonToString(ReasonType reason);
+  /*
+   * Prints the reason to redial eCall or not.
+   */
+  static std::string eCallRedialReasonToString(ReasonType reason);
 
-    TelClientUtils();
-    ~TelClientUtils();
+  TelClientUtils();
+  ~TelClientUtils();
 };
 
-#endif  // TELCLIENTUTILS_HPP
+#endif // TELCLIENTUTILS_HPP

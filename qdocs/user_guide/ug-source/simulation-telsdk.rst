@@ -1,9 +1,10 @@
 .. #=============================================================================
-   #
-   # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
-   # SPDX-License-Identifier: BSD-3-Clause-Clear
-   #
-   #=============================================================================
+#
+#Copyright(c) Qualcomm Technologies, Inc.and / or its subsidiaries.
+#SPDX - License - Identifier : BSD - 3 - Clause - Clear
+#
+#== == == == == == == == == == == == == == == == == == == == == == == == == == \
+    == == == == == == == == == == == == =
 
 =======================
 Simulation with TelSDK
@@ -92,7 +93,7 @@ The commit_hash can be obtained from the latest tag for the corresponding SI. Ta
 
 .. code-block::
 
-  #Install jsoncpp, cmake 3.15.3, gRPC.
+#Install jsoncpp, cmake 3.15.3, gRPC.
   $ ./build_sim.sh setup <DESTINATION_FOLDER_ROOT_PATH>
 
 3. Build simulation libraries, TelSDK sample apps, and test apps
@@ -139,7 +140,9 @@ To run applications within the docker container:
 
   .. code-block::
 
-    $ sudo usermod -aG docker ${USER}
+    $ sudo usermod -aG docker ${
+  USER
+}
 
 2. Build docker image
 
@@ -238,7 +241,7 @@ The commit_hash can be obtained from the latest tag for the corresponding SI. TA
 
 .. code-block::
 
-  #Install jsoncpp, cmake 3.15.3, gRPC.
+#Install jsoncpp, cmake 3.15.3, gRPC.
   $ ./build_sim.sh setup <DESTINATION_FOLDER_ROOT_PATH>
 
 5. Build simulation libraries, TelSDK sample apps, and test apps
@@ -596,6 +599,10 @@ Details of parameters that can be configured in the Simulation framework.
 - "configureECallRedialFailure" : To configure redial failures for regulatory ECall.
 
   Supported Values: SUCCESS, CALLORIG, CALLDROP.
+
+- "callMode" : To configure network mode for call.
+
+  Supported Values: NR5G, LTE, UMTS, GSM.
 
 These parameters can be configured via *simulation/json/api/tel/ICallManagerSlot1.json and simulation/json/api/tel/ICallManagerSlot2.json*.
 
@@ -1469,14 +1476,14 @@ Tests should be performed to make sure both ALSA and PulseAudio are properly rec
 
 .. code-block::
 
- # Start the pulseaudio server
+#Start the pulseaudio server
  pulseaudio -D --exit-idle-time=-1
 
- # Load the virtual sink and set it as default
+#Load the virtual sink and set it as default
  pacmd load-module module-virtual-sink sink_name=v1
  pacmd set-default-sink v1
 
- # set the monitor of v1 sink to be the default source
+#set the monitor of v1 sink to be the default source
  pacmd set-default-source v1.monitor
 
 ALSA devices
@@ -2424,4 +2431,3 @@ Sample input:
 
  telsdk_event_injector -f ntn -e stateChange <state>
  telsdk_event_injector -f ntn -e stateChange 2
-

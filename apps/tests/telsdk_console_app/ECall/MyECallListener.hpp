@@ -27,7 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the
+ * following license:
  *
  *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
@@ -43,51 +44,57 @@
 #include <telux/tel/CallListener.hpp>
 
 class MyECallListener : public telux::tel::ICallListener {
-   void onIncomingCall(std::shared_ptr<telux::tel::ICall> call) override;
-   void onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) override;
-   void onECallMsdTransmissionStatus(int phoneId, telux::common::ErrorCode errorCode) override;
-   void onECallMsdTransmissionStatus(
-      int phoneId, telux::tel::ECallMsdTransmissionStatus msdTransmissionStatus) override;
-   void onEmergencyNetworkScanFail(int phoneId) override;
-   void onEcbmChange(telux::tel::EcbMode mode) override;
-   void onServiceStatusChange(telux::common::ServiceStatus status) override;
-   /**
-    * Get current time
-    */
-   std::string getCurrentTime();
+  void onIncomingCall(std::shared_ptr<telux::tel::ICall> call) override;
+  void onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) override;
+  void
+  onECallMsdTransmissionStatus(int phoneId,
+                               telux::common::ErrorCode errorCode) override;
+  void onECallMsdTransmissionStatus(
+      int phoneId,
+      telux::tel::ECallMsdTransmissionStatus msdTransmissionStatus) override;
+  void onEmergencyNetworkScanFail(int phoneId) override;
+  void onEcbmChange(telux::tel::EcbMode mode) override;
+  void onServiceStatusChange(telux::common::ServiceStatus status) override;
+  /**
+   * Get current time
+   */
+  std::string getCurrentTime();
 
-   /*
-    * Get the call state in string format
-    */
-   std::string callStateToString(telux::tel::CallState cs);
+  /*
+   * Get the call state in string format
+   */
+  std::string callStateToString(telux::tel::CallState cs);
 
-   std::string callDirectionToString(telux::tel::CallDirection cd);
-   /**
-    * Get the call end cause in string format from call end cause code
-    */
-   std::string callEndCauseToString(telux::tel::CallEndCause callEndCause);
-   /*
-    * Get ECallMsdTransmissionStatus in string
-    */
-   std::string eCallMsdTransmissionStatusToString(telux::tel::ECallMsdTransmissionStatus status);
-   /*
+  std::string callDirectionToString(telux::tel::CallDirection cd);
+
+  std::string networkModeToString(telux::tel::NetworkMode mode);
+  /**
+   * Get the call end cause in string format from call end cause code
+   */
+  std::string callEndCauseToString(telux::tel::CallEndCause callEndCause);
+  /*
+   * Get ECallMsdTransmissionStatus in string
+   */
+  std::string eCallMsdTransmissionStatusToString(
+      telux::tel::ECallMsdTransmissionStatus status);
+  /*
    * Get count of active calls on a slotId.
    */
-   int getCallsOnSlot(SlotId slotId);
+  int getCallsOnSlot(SlotId slotId);
 };
 
 class MyEcbmCallback {
 public:
-   static void onRequestEcbmResponseCallback(telux::tel::EcbMode ecbMode,
-       telux::common::ErrorCode error);
-   static void onResponseCallback(telux::common::ErrorCode error);
+  static void onRequestEcbmResponseCallback(telux::tel::EcbMode ecbMode,
+                                            telux::common::ErrorCode error);
+  static void onResponseCallback(telux::common::ErrorCode error);
 };
 class MyCallCommandCallback : public telux::common::ICommandResponseCallback {
 public:
-   MyCallCommandCallback(std::string commandName);
-   void commandResponse(telux::common::ErrorCode error) override;
+  MyCallCommandCallback(std::string commandName);
+  void commandResponse(telux::common::ErrorCode error) override;
 
 private:
-   std::string commandName_;
+  std::string commandName_;
 };
-#endif  // MYCALLLISTENER_HPP
+#endif // MYCALLLISTENER_HPP

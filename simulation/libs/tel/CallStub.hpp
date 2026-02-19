@@ -13,9 +13,9 @@
  *       disclaimer in the documentation and/or other materials provided
  *       with the distribution.
  *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of
+ * its contributors may be used to endorse or promote products derived from this
+ * software without specific prior written permission.
  *
  * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
  * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
@@ -32,7 +32,6 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 /**
  * @file       CallStub.hpp
  *
@@ -43,13 +42,13 @@
 #ifndef CALL_STUB_HPP
 #define CALL_STUB_HPP
 
-#include <telux/tel/CallManager.hpp>
-#include <telux/tel/CallListener.hpp>
-#include <telux/tel/PhoneDefines.hpp>
-#include <telux/common/CommonDefines.hpp>
+#include "../../protos/proto-src/tel_simulation.grpc.pb.h"
 #include "../common/AsyncTaskQueue.hpp"
 #include <grpcpp/grpcpp.h>
-#include "../../protos/proto-src/tel_simulation.grpc.pb.h"
+#include <telux/common/CommonDefines.hpp>
+#include <telux/tel/CallListener.hpp>
+#include <telux/tel/CallManager.hpp>
+#include <telux/tel/PhoneDefines.hpp>
 
 #define INVALID -1
 
@@ -62,82 +61,104 @@ namespace telux {
 namespace tel {
 
 struct CallInfo {
-   int index = INVALID;                                // Connection Index
-   CallDirection callDirection = CallDirection::NONE;  // enumeration for MO / MT call
-   std::string remotePartyNumber = "";                 // Remote party number
-   bool transmitMsd = false;
-   CallState callState = CallState::CALL_IDLE;
-   CallEndCause callEndCause = CallEndCause::NORMAL;
-   int sipErrorCode = 0;
-   bool isMultiPartyCall = false;
-   bool isMpty = false;
-   RttMode mode = RttMode::DISABLED;                // RTT mode of the call
-   RttMode localRttCapability = RttMode::DISABLED;  // RTT capability of local device
-   RttMode peerRttCapability  = RttMode::DISABLED;  // RTT capability of peer device
-   CallType callType          = CallType::UNKNOWN;
+  int index = INVALID; // Connection Index
+  CallDirection callDirection =
+      CallDirection::NONE;            // enumeration for MO / MT call
+  std::string remotePartyNumber = ""; // Remote party number
+  bool transmitMsd = false;
+  CallState callState = CallState::CALL_IDLE;
+  CallEndCause callEndCause = CallEndCause::NORMAL;
+  int sipErrorCode = 0;
+  bool isMultiPartyCall = false;
+  bool isMpty = false;
+  RttMode mode = RttMode::DISABLED; // RTT mode of the call
+  RttMode localRttCapability =
+      RttMode::DISABLED; // RTT capability of local device
+  RttMode peerRttCapability =
+      RttMode::DISABLED; // RTT capability of peer device
+  CallType callType = CallType::UNKNOWN;
+  NetworkMode networkMode = NetworkMode::UNKNOWN;
 };
 
 class CallStub : public ICall {
 public:
+  CallStub(int phoneId, CallInfo callInfo);
 
-    CallStub(int phoneId, CallInfo callInfo);
+  telux::common::Status
+  answer(std::shared_ptr<telux::common::ICommandResponseCallback> callback =
+             nullptr,
+         RttMode mode = RttMode::DISABLED);
 
-    telux::common::Status answer(
-        std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr,
-        RttMode mode = RttMode::DISABLED);
+  telux::common::Status
+  hold(std::shared_ptr<telux::common::ICommandResponseCallback> callback =
+           nullptr);
 
-    telux::common::Status hold(
-        std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
+  telux::common::Status
+  resume(std::shared_ptr<telux::common::ICommandResponseCallback> callback =
+             nullptr);
 
-    telux::common::Status resume(
-        std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
+  telux::common::Status
+  reject(std::shared_ptr<telux::common::ICommandResponseCallback> callback =
+             nullptr);
 
-    telux::common::Status reject(
-        std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
+  telux::common::Status
+  reject(const std::string &rejectSMS,
+         std::shared_ptr<telux::common::ICommandResponseCallback> callback =
+             nullptr);
+  telux::common::Status
+  hangup(std::shared_ptr<telux::common::ICommandResponseCallback> callback =
+             nullptr);
+  telux::common::Status playDtmfTone(
+      char tone,
+      std::shared_ptr<telux::common::ICommandResponseCallback> callback =
+          nullptr);
+  telux::common::Status startDtmfTone(
+      char tone,
+      std::shared_ptr<telux::common::ICommandResponseCallback> callback =
+          nullptr);
+  telux::common::Status stopDtmfTone(
+      std::shared_ptr<telux::common::ICommandResponseCallback> callback =
+          nullptr);
+  RttMode getRttMode();
+  RttMode getLocalRttCapability();
+  RttMode getPeerRttCapability();
+  CallType getCallType();
+  telux::common::Status
+  modify(RttMode mode,
+         std::shared_ptr<telux::common::ICommandResponseCallback> callback =
+             nullptr);
+  NetworkMode getNetworkMode();
+  telux::common::Status respondToModifyRequest(
+      bool modifyResponseType,
+      std::shared_ptr<telux::common::ICommandResponseCallback> callback =
+          nullptr);
+  CallState getCallState();
+  int getCallIndex();
+  CallEndCause getCallEndCause();
+  int getSipErrorCode();
+  CallDirection getCallDirection();
+  std::string getRemotePartyNumber();
+  int getPhoneId();
+  bool isMultiPartyCall();
+  void updateCallState(CallState callState);
+  void updateCallDirection(CallDirection callDirection);
+  void setCallIndex(int index);
+  void setCallState(CallState callState);
+  bool match(std::shared_ptr<CallStub> &ci);
+  bool isInfoStale(const std::shared_ptr<CallStub> &ci);
+  telux::common::Status updateCallInfo(std::shared_ptr<CallStub> &callInfo);
+  void logCallDetails();
 
-    telux::common::Status reject(const std::string &rejectSMS,
-        std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
-    telux::common::Status hangup(
-        std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
-    telux::common::Status playDtmfTone(
-        char tone, std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
-    telux::common::Status startDtmfTone(
-        char tone, std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
-    telux::common::Status stopDtmfTone(
-        std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
-    RttMode getRttMode();
-    RttMode getLocalRttCapability();
-    RttMode getPeerRttCapability();
-    CallType getCallType();
-    telux::common::Status modify(RttMode mode,
-        std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
-    telux::common::Status respondToModifyRequest(bool modifyResponseType,
-        std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
-    CallState getCallState();
-    int getCallIndex();
-    CallEndCause getCallEndCause();
-    int getSipErrorCode();
-    CallDirection getCallDirection();
-    std::string getRemotePartyNumber();
-    int getPhoneId();
-    bool isMultiPartyCall();
-    void updateCallState(CallState callState);
-    void updateCallDirection(CallDirection callDirection);
-    void setCallIndex(int index);
-    void setCallState(CallState callState);
-    bool match(std::shared_ptr<CallStub> &ci);
-    bool isInfoStale(const std::shared_ptr<CallStub> &ci);
-    telux::common::Status updateCallInfo(std::shared_ptr<CallStub> &callInfo);
-    void logCallDetails();
 private:
-    std::unique_ptr<::telStub::DialerService::Stub> stub_;
-    int phoneId_;
-    CallInfo callInfo_;
-    std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
-    void invokeCommandCallback(std::shared_ptr<ICommandResponseCallback> callback,
-        ErrorCode error, int cbDelay);
-    telux::common::Status modifyOrRespondToModifyCall(RttMode mode, std::string api,
-        std::shared_ptr<telux::common::ICommandResponseCallback> callback);
+  std::unique_ptr<::telStub::DialerService::Stub> stub_;
+  int phoneId_;
+  CallInfo callInfo_;
+  std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
+  void invokeCommandCallback(std::shared_ptr<ICommandResponseCallback> callback,
+                             ErrorCode error, int cbDelay);
+  telux::common::Status modifyOrRespondToModifyCall(
+      RttMode mode, std::string api,
+      std::shared_ptr<telux::common::ICommandResponseCallback> callback);
 };
 
 } // end of namespace tel

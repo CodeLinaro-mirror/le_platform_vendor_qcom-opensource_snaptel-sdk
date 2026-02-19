@@ -28,74 +28,78 @@
  */
 
 /*
- * ​​​​​Changes from Qualcomm Technologies, Inc. are provided under the following license:
- * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
+ * ​​​​​Changes from Qualcomm Technologies, Inc. are provided under
+ * the following license: Copyright (c) Qualcomm Technologies, Inc. and/or its
+ * subsidiaries. SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef MYCALLLISTENER_HPP
 #define MYCALLLISTENER_HPP
 
-#include <telux/tel/CallManager.hpp>
-#include <telux/tel/CallListener.hpp>
 #include <telux/common/CommonDefines.hpp>
+#include <telux/tel/CallListener.hpp>
+#include <telux/tel/CallManager.hpp>
 #include <telux/tel/PhoneDefines.hpp>
 
 #include "../Audio/AudioClient.hpp"
 
 class MyCallListener : public telux::tel::ICallListener {
 public:
-   void onIncomingCall(std::shared_ptr<telux::tel::ICall> call) override;
-   void onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) override;
-   void onECallMsdTransmissionStatus(int phoneId, telux::common::ErrorCode errorCode) override;
-   void onRingbackTone(bool isAlerting, int phoneId) override;
-   void onServiceStatusChange(telux::common::ServiceStatus status) override;
-   void onModifyCallRequest(telux::tel::RttMode rttMode, int callId , int phoneId) override;
-   void onRttMessage(int phoneId, std::string text) override;
-   void onDtmfReceived(int phoneId, char dtmfTone) override;
+  void onIncomingCall(std::shared_ptr<telux::tel::ICall> call) override;
+  void onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) override;
+  void
+  onECallMsdTransmissionStatus(int phoneId,
+                               telux::common::ErrorCode errorCode) override;
+  void onRingbackTone(bool isAlerting, int phoneId) override;
+  void onServiceStatusChange(telux::common::ServiceStatus status) override;
+  void onModifyCallRequest(telux::tel::RttMode rttMode, int callId,
+                           int phoneId) override;
+  void onRttMessage(int phoneId, std::string text) override;
+  void onDtmfReceived(int phoneId, char dtmfTone) override;
 
-   std::string getCallStateString(telux::tel::CallState cs);
-   std::string getCallEndCauseString(telux::tel::CallEndCause causeCode);
-   std::string getRttModeString(telux::tel::RttMode mode);
-   std::string getCurrentTime();
-   std::string getCallTypeString(telux::tel::CallType type);
+  std::string getCallStateString(telux::tel::CallState cs);
+  std::string getCallEndCauseString(telux::tel::CallEndCause causeCode);
+  std::string getRttModeString(telux::tel::RttMode mode);
+  std::string getCurrentTime();
+  std::string getCallTypeString(telux::tel::CallType type);
+  std::string getNetworkModeString(telux::tel::NetworkMode mode);
 
-   ~MyCallListener() {
-   }
+  ~MyCallListener() {}
+
 private:
-    int getCallsOnSlot(SlotId slotId);
+  int getCallsOnSlot(SlotId slotId);
 };
 
 class MyDialCallback : public telux::tel::IMakeCallCallback {
 public:
-   void makeCallResponse(telux::common::ErrorCode error,
-                         std::shared_ptr<telux::tel::ICall> call) override;
-   void waitForResponse(int seconds);
-   std::shared_ptr<telux::tel::ICall> getCallObj();
+  void makeCallResponse(telux::common::ErrorCode error,
+                        std::shared_ptr<telux::tel::ICall> call) override;
+  void waitForResponse(int seconds);
+  std::shared_ptr<telux::tel::ICall> getCallObj();
 
 private:
-   bool commndCallbackFound_ = false;
-   std::shared_ptr<telux::tel::ICall> callObj_;
+  bool commndCallbackFound_ = false;
+  std::shared_ptr<telux::tel::ICall> callObj_;
 };
 
 class MyCallCommandCallback : public telux::common::ICommandResponseCallback {
 public:
-   MyCallCommandCallback(std::string commandName);
-   void commandResponse(telux::common::ErrorCode error) override;
+  MyCallCommandCallback(std::string commandName);
+  void commandResponse(telux::common::ErrorCode error) override;
 
 private:
-   std::string commandName_;
+  std::string commandName_;
 };
 
 class MyHangupCallback {
 public:
-   static void hangupFgResumeBgResponse(telux::common::ErrorCode error);
-   static void hangupWaitingOrBgResponse(telux::common::ErrorCode error);
+  static void hangupFgResumeBgResponse(telux::common::ErrorCode error);
+  static void hangupWaitingOrBgResponse(telux::common::ErrorCode error);
 };
 
 class MyRttMessageCallback {
 public:
-    static void sendRttMessageResponse(telux::common::ErrorCode error);
+  static void sendRttMessageResponse(telux::common::ErrorCode error);
 };
 
-#endif  // MYCALLLISTENER_HPP
+#endif // MYCALLLISTENER_HPP

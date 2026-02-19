@@ -28,9 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *  Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -368,6 +368,20 @@ enum class RadioTechnology {
    RADIO_TECH_LTE_CA,   /**< Network type is LTE CA */
    RADIO_TECH_NR5G,     /**< Network type is NR5G */
    RADIO_TECH_NB1_NTN,  /**< Network type is NB-IoT(NB1) Non Terrestrial Network(NTN) */
+};
+
+/**
+ * Defines network types.
+ */
+enum class NetworkMode {
+    UNKNOWN = -1, /**< Network mode is unknown */
+    GSM,          /**< Network mode is GSM */
+    WCDMA,        /**< Network mode is WCDMA */
+    LTE,          /**< Network mode is LTE */
+    NR5G,         /**< Network mode is NR5G SA and NSA */
+    NR5G_SA,      /**< Network mode is NR5G SA */
+    NR5G_NSA,     /**< Network mode is NR5G NSA */
+    NB1_NTN,      /**< Network mode is NB-IoT(NB1) Non Terrestrial Network(NTN) */
 };
 
 /**

@@ -27,8 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
+ *  Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
  /**
@@ -103,6 +104,8 @@ public:
         int secVerbosity, RadioReceive* radioReceive);
     static void postprocessing_cleanup();
     void PostProcessingThread();
+    void registerVerificationSemaphore();
+    void unregisterVerificationSemaphore();
 private:
     uint32_t fakeTmpId = 0;
     bool exit_ = false;

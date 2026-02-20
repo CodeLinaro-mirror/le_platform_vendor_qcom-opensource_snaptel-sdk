@@ -27,8 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
+ *  Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
  /**
@@ -213,6 +214,18 @@ SaeApplication::~SaeApplication() {
         for (auto mc : receivedContents) {
             freeMsg(mc);
         }
+    }
+}
+
+void SaeApplication::registerVerificationSemaphore() {
+    if (configuration.enableAsync) {
+        AerolinkSecurity::registerCallbackSemaphore(&verificationSem);
+    }
+}
+
+void SaeApplication::unregisterVerificationSemaphore() {
+    if (configuration.enableAsync) {
+        AerolinkSecurity::unregisterCallbackSemaphore(&verificationSem);
     }
 }
 
@@ -783,9 +796,23 @@ void SaeApplication::prepareForSecurityChecks(bsm_value_t* bsm, SecurityOpt_t* s
 static void AsyncCallbackFunction (AEROLINK_RESULT returnCode,
     void *userData)
 {
+    if (AerolinkSecurity::isShutdownInProgress()) {
+        if (secVerbosity > 5) {
+            fprintf(stdout, "[ASYNC_CB] Shutdown in progress, returning immediately\n");
+            fflush(stdout);
+        }
+        return;  // Safe - no semaphore access
+    }
     // need to make sure this function is completed before closing qits
 
     std::unique_lock<std::mutex> lock(AsyncMtx);
+    // Recheck after acquiring lock
+    if (AerolinkSecurity::isShutdownInProgress()) {
+        if (secVerbosity > 5) {
+            fprintf(stdout, "[ASYNC_CB] Shutdown detected after lock\n");
+        }
+        return;
+    }
     asyncCbData_t* cb_data = (asyncCbData_t*) userData;
     if(cb_data == nullptr){
         printf("cb_data is a null pointer\n");
@@ -830,7 +857,14 @@ static void AsyncCallbackFunction (AEROLINK_RESULT returnCode,
         begin_flag = true;
     }
     // wake up post processing thread
-    sem_post(&verificationSem);
+    if (!AerolinkSecurity::postSemaphoreIfValid(&verificationSem)) {
+        if (secVerbosity > 5) {
+            fprintf(stdout, "[ASYNC_CB] Semaphore invalid, skipping post\n");
+            fflush(stdout);
+        }
+        // Mark this callback data as processed to prevent post-processing thread deadlock
+        cb_data->AsyncState = FREE;
+    }
 }
 #endif
 

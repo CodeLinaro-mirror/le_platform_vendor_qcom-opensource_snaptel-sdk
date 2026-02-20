@@ -27,8 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
+ *  Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -101,7 +102,17 @@ class AerolinkSecurity : public SecurityService {
             MisbehaviorStats* misbehaviorStat,
             SecuredMessageParserC* smp);
         void fillBsmDataForMbd(Kinematics* rvBsmData);
+        static void registerCallbackSemaphore(sem_t* sem);
+        static void unregisterCallbackSemaphore(sem_t* sem);
+        static bool isSemaphoreValid(sem_t* sem);
+        static bool postSemaphoreIfValid(sem_t* sem);
+        static bool isShutdownInProgress() {
+            return shutdownInProgress_.load(std::memory_order_acquire);
+        }
 
+        static void setShutdownInProgress(bool value) {
+            shutdownInProgress_.store(value, std::memory_order_release);
+        }
     private:
        // ctor for aerolink w/o encryption
        AerolinkSecurity(const std::string ctxName, uint16_t countryCode);
@@ -153,6 +164,59 @@ class AerolinkSecurity : public SecurityService {
         uint8_t keyGenMethod_;
         char lcmName_[50] = "\0";
         IDChangeData* idChangeData_;
+        // Semaphore manager - tracks valid semaphores
+        struct SemaphoreManager {
+            std::set<sem_t*> activeSemaphores;
+            std::mutex semaphoreManagerMutex;
+            std::atomic<bool> shutdownInitiated{false};
+            void registerSemaphore(sem_t* callbackSemaphore) {
+                std::lock_guard<std::mutex> setGuard(semaphoreManagerMutex);
+                activeSemaphores.insert(callbackSemaphore);
+            }
+
+            void unregisterSemaphore(sem_t* callbackSemaphore) {
+                std::lock_guard<std::mutex> setGuard(semaphoreManagerMutex);
+                activeSemaphores.erase(callbackSemaphore);
+            }
+
+            bool isValid(sem_t* callbackSemaphore) {
+                std::lock_guard<std::mutex> setGuard(semaphoreManagerMutex);
+                return activeSemaphores.find(callbackSemaphore) != activeSemaphores.end();
+            }
+
+            void clear() {
+                std::lock_guard<std::mutex> setGuard(semaphoreManagerMutex);
+                activeSemaphores.clear();
+            }
+            bool postSemaphoreIfValid(sem_t* callbackSemaphore) {
+                if (callbackSemaphore == nullptr) {
+                    return false;
+                }
+
+                // Check shutdown flag first
+                if (shutdownInitiated.load(std::memory_order_acquire)) {
+                    // Safe path: Use mutex validation
+                    std::lock_guard<std::mutex> setGuard(semaphoreManagerMutex);
+
+                    if (activeSemaphores.find(callbackSemaphore) == activeSemaphores.end()) {
+                        return false;
+                    }
+
+                    sem_post(callbackSemaphore);
+                    return true;
+                }
+
+                // Fast path: Direct post (no lock)
+                sem_post(callbackSemaphore);
+                return true;
+            }
+            void initiateShutdown() {
+                shutdownInitiated.store(true, std::memory_order_release);
+            }
+        };
+
+        static SemaphoreManager semaphoreManager_;
+        static std::atomic<bool> shutdownInProgress_;
         bool enableMisbehavior;
         bool enableConsistency;
         bool enableRelevance;

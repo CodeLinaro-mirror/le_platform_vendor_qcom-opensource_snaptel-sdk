@@ -1,35 +1,6 @@
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "WlanDeviceManagerMenu.hpp"
@@ -98,9 +69,15 @@ bool WlanDeviceManagerMenu::init() {
         std::shared_ptr<ConsoleAppCommand> getStatus
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "get_status", {},
                 std::bind(&WlanDeviceManagerMenu::getStatus, this, std::placeholders::_1)));
+         std::shared_ptr<ConsoleAppCommand> setDynamicMode
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "set_dynamic_mode", {},
+                std::bind(&WlanDeviceManagerMenu::setDynamicMode, this, std::placeholders::_1)));
+         std::shared_ptr<ConsoleAppCommand> getCurrentConfig
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6", "get_current_config", {},
+                std::bind(&WlanDeviceManagerMenu::getCurrentConfig, this, std::placeholders::_1)));
 
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {
-            enableWlan, setMode, getConfig, getStatus};
+            enableWlan, setMode, getConfig, getStatus, setDynamicMode, getCurrentConfig};
         addCommands(commandsList);
     }
     ConsoleApp::displayMenu();
@@ -135,7 +112,7 @@ void WlanDeviceManagerMenu::setMode(std::vector<std::string> userInput) {
 
     std::cout << "Enter Number of Stations to be enabled: ";
     std::cin >> numSta;
-    WlanUtils::validateInput(numSta, {0, 1, 2});
+    WlanUtils::validateInput(numSta, {0, 1});
     std::cout << std::endl;
 
     telux::common::ErrorCode retCode = wlanDeviceManager_->setMode(numAps, numSta);
@@ -221,4 +198,60 @@ void WlanDeviceManagerMenu::onEnableChanged(bool enable) {
    } else {
        std::cout << "Wlan is disabled" << std::endl;
    }
+}
+
+void WlanDeviceManagerMenu::setDynamicMode(std::vector<std::string> userInput)
+{
+    int numAps;
+    int numSta;
+    int isPersistent;
+    int updateDynamically;
+
+    std::cout << "Setting Wlan Mode Dynamically\n";
+    std::cout << "Enter Number of APs to be enabled: ";
+    std::cin >> numAps;
+    WlanUtils::validateInput(numAps, {0, 1, 2, 3});
+    std::cout << std::endl;
+
+    std::cout << "Enter Number of Stations to be enabled: ";
+    std::cin >> numSta;
+    WlanUtils::validateInput(numSta, {0, 1});
+    std::cout << std::endl;
+
+    std::cout << "Make configuration persistent across reboots? (1-yes, 0-no): ";
+    std::cin >> isPersistent;
+    WlanUtils::validateInput(isPersistent, {0, 1});
+    std::cout << std::endl;
+
+    std::cout << "Update mode dynamically without restarting WLAN? (1-yes, 0-no): ";
+    std::cin >> updateDynamically;
+    WlanUtils::validateInput(updateDynamically, {0, 1});
+    std::cout << std::endl;
+
+    telux::wlan::ModeConfig config;
+    config.numOfAp = numAps;
+    config.numOfSta = numSta;
+    config.isPersistent = (isPersistent == 1);
+    config.updateImmediately = (updateDynamically == 1);
+
+    telux::common::ErrorCode retCode = wlanDeviceManager_->setMode(config);
+    std::cout << "\nSetting Wlan Mode Dynamically Response"
+              << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(retCode)
+              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+}
+
+void WlanDeviceManagerMenu::getCurrentConfig(std::vector<std::string> userInput) {
+    int numAp, numSta;
+
+    telux::common::ErrorCode retCode = wlanDeviceManager_->getCurrentConfig(numAp, numSta);
+    std::cout << "\nrequest Wlan Current Config Response"
+              << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(retCode)
+              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+
+    if(retCode == telux::common::ErrorCode::SUCCESS) {
+        std::cout << "Current configured APs: " << numAp << std::endl;
+        std::cout << "Current configured Stations: " << numSta << std::endl;
+    }
 }

@@ -62,7 +62,7 @@ public:
    static std::string getWlanApType(telux::wlan::ApType apType);
    static std::string getWlanId(telux::wlan::Id id);
    static std::string getStaConnectionStatus(telux::wlan::StaInterfaceStatus status);
-   static void printAPStatus(std::vector<telux::wlan::ApStatus>& apStatus);
+   static void printAPStatus(const std::vector<telux::wlan::ApStatus> &apStatus);
    static void printStaStatus(std::vector<telux::wlan::StaStatus>& staStatus);
    static void printDeviceInfo(std::vector<telux::wlan::DeviceInfo>& info);
 };

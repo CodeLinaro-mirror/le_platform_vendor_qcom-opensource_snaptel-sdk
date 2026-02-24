@@ -4,10 +4,19 @@
  */
 
 #include "CryptoAcceleratorManagerImpl.hpp"
+#include "CryptoAcceleratorUtils.hpp"
 #include <grpc/grpc.h>
 #include <grpcpp/channel.h>
 #include <grpcpp/client_context.h>
 #include <grpcpp/impl/codegen/async_unary_call.h>
+
+namespace {
+constexpr uint32_t RESERVED_MASK = 0xFU;  // 4-bit reserved field
+constexpr uint32_t ID_MASK       = 0xFFFU;  // 12-bit unique ID
+constexpr uint32_t OP_TYPE_MASK  = 0x7U;  // 3-bit operation type
+constexpr uint32_t RESULT_MASK   = 0xFU;  // 4-bit result field
+constexpr uint32_t ERR_CODE_MASK = 0x1FFU;  // 9-bit error code
+}  // namespace
 
 namespace telux {
 namespace sec {
@@ -242,13 +251,27 @@ void CryptoAcceleratorManagerImpl::onEventUpdate(google::protobuf::Any event) {
 void CryptoAcceleratorManagerImpl::deliverResultAsync(
     securityStub::OperationResult result, int cbDelay) {
 
-    uint32_t uniqueId           = result.id();
-    telux::common::ErrorCode ec = static_cast<telux::common::ErrorCode>(result.error_code());
+    uint32_t uniqueId = result.id();
+    telux::common::ErrorCode ec;
+    uint32_t mainResult = result.result();
+    uint32_t subErrCode = result.errcode();
+
+    if (mainResult == 0) {
+        ec = telux::common::ErrorCode::SUCCESS;
+    } else if (subErrCode == 0) {
+        ec = telux::common::ErrorCode::VERIFICATION_FAILED;
+    } else {
+        ec = mapPkeErrorToTelux(subErrCode);
+    }
     std::vector<uint8_t> resultData(result.data().begin(), result.data().end());  // Copy bytes
     std::vector<std::weak_ptr<ICryptoAcceleratorListener>> eccListener;
+    if (!caListenerMgr_) {
+        LOG(ERROR, __FUNCTION__, " Listener manager not initialized, result dropped, unique id ",
+            uniqueId);
+        return;
+    }
 
     caListenerMgr_->getAvailableListeners(eccListener);
-
     if (eccListener.empty()) {
         LOG(ERROR, __FUNCTION__, " Can't find listener, result dropped, unique id ", uniqueId);
         return;
@@ -326,11 +349,21 @@ telux::common::ErrorCode CryptoAcceleratorManagerImpl::eccPostDigestForVerificat
     if (resultDeliveryMode_ == Mode::MODE_ASYNC_LISTENER) {
         opResult.set_id(uniqueId);
         opResult.set_operationtype(securityStub::OperationType::OP_TYPE_VERIFY);
-        opResult.set_error_code(static_cast<commonStub::ErrorCode>(ec));
+        opResult.set_reserved(0);
+
+        if (ec == telux::common::ErrorCode::SUCCESS) {
+            opResult.set_result(0);
+            opResult.set_errcode(0);
+        } else {
+            opResult.set_result(1);
+            uint32_t pkeError = mapTeluxErrorToPke(ec);
+            opResult.set_errcode(pkeError & 0x1FFU);
+        }
         opResult.set_data(response.resultdata());
 
+        auto self = shared_from_this();
         asyncResultAndSsrDispatcher_->submitTask(
-            [this, opResult, delay]() { this->deliverResultAsync(opResult, delay); });
+            [self, opResult, delay]() { self->deliverResultAsync(opResult, delay); });
     }
 
     return telux::common::ErrorCode::SUCCESS;
@@ -440,7 +473,15 @@ telux::common::ErrorCode CryptoAcceleratorManagerImpl::ecqvPostDataForMultiplyAn
     if (resultDeliveryMode_ == Mode::MODE_ASYNC_LISTENER) {
         opResult.set_id(uniqueId);
         opResult.set_operationtype(securityStub::OperationType::OP_TYPE_CALCULATE);
-        opResult.set_error_code(static_cast<commonStub::ErrorCode>(ec));
+        opResult.set_reserved(0);
+
+        if (ec == telux::common::ErrorCode::SUCCESS) {
+            opResult.set_result(0);
+            opResult.set_errcode(0);
+        } else {
+            opResult.set_result(1);
+            opResult.set_errcode(0);
+        }
         opResult.set_data(response.resultdata());
 
         asyncResultAndSsrDispatcher_->submitTask(
@@ -553,10 +594,11 @@ telux::common::ErrorCode CryptoAcceleratorManagerImpl::getAsyncResults(
 
     for (int i = 0; i < response.results_size(); ++i) {
         const auto &grpc_op_result    = response.results(i);
-        telux_op_result.id            = grpc_op_result.id();
-        telux_op_result.operationType = static_cast<uint32_t>(grpc_op_result.operationtype());
-        telux_op_result.errCode       = grpc_op_result.error_code();
-
+        telux_op_result.reserved      = grpc_op_result.reserved() & RESERVED_MASK;
+        telux_op_result.id            = grpc_op_result.id() & ID_MASK;
+        telux_op_result.operationType = grpc_op_result.operationtype() & OP_TYPE_MASK;
+        telux_op_result.result        = grpc_op_result.result() & RESULT_MASK;
+        telux_op_result.errCode       = grpc_op_result.errcode() & ERR_CODE_MASK;
         data_len = std::min((size_t)CA_RESULT_DATA_LENGTH, (size_t)grpc_op_result.data().length());
         memcpy(telux_op_result.data, grpc_op_result.data().data(), data_len);
         if (data_len < CA_RESULT_DATA_LENGTH) {

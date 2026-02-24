@@ -6,6 +6,8 @@
         "_comment_configureFailureForRegulatoryECall" : "Valid inputs SUCCESS, T5FAILED, T6FAILED, T7FAILED" ,
         "eCallType" : "NGeCall" ,
         "_comment_eCallType" : "Valid Inputs NGeCall or CSeCall",
+        "callMode" : "LTE" ,
+        "_comment_callMode" : "Valid Inputs NR5G, LTE, UMTS, GSM",
         "configureECallRedialFailure" : "SUCCESS",
         "_comment_configureECallRedialFailure" : "Valid Inputs SUCCESS, CALLORIG, CALLDROP",
         "enableALACKWithClearDown" : false,

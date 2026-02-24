@@ -27,10 +27,10 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  *
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef MYECALLLISTENER_HPP
@@ -61,19 +61,22 @@ class MyECallListener : public telux::tel::ICallListener {
     */
    std::string callStateToString(telux::tel::CallState cs);
 
-   std::string callDirectionToString(telux::tel::CallDirection cd);
-   /**
-    * Get the call end cause in string format from call end cause code
-    */
-   std::string callEndCauseToString(telux::tel::CallEndCause callEndCause);
-   /*
-    * Get ECallMsdTransmissionStatus in string
-    */
-   std::string eCallMsdTransmissionStatusToString(telux::tel::ECallMsdTransmissionStatus status);
-   /*
-   * Get count of active calls on a slotId.
-   */
-   int getCallsOnSlot(SlotId slotId);
+    std::string callDirectionToString(telux::tel::CallDirection cd);
+
+    std::string networkModeToString(telux::tel::NetworkMode mode);
+
+    /**
+     * Get the call end cause in string format from call end cause code
+     */
+    std::string callEndCauseToString(telux::tel::CallEndCause callEndCause);
+    /*
+     * Get ECallMsdTransmissionStatus in string
+     */
+    std::string eCallMsdTransmissionStatusToString(telux::tel::ECallMsdTransmissionStatus status);
+    /*
+     * Get count of active calls on a slotId.
+     */
+    int getCallsOnSlot(SlotId slotId);
 };
 
 class MyEcbmCallback {

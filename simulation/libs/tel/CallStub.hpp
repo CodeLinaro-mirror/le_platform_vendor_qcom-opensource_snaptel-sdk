@@ -40,22 +40,23 @@ enum class AecsCallEndReason {
 };
 
 struct CallInfo {
-   int index = INVALID;                                // Connection Index
-   CallDirection callDirection = CallDirection::NONE;  // enumeration for MO / MT call
-   std::string remotePartyNumber = "";                 // Remote party number
-   bool transmitMsd = false;
-   CallState callState = CallState::CALL_IDLE;
-   CallEndCause callEndCause = CallEndCause::NORMAL;
-   int sipErrorCode = 0;
-   bool isMultiPartyCall = false;
-   bool isMpty = false;
-   RttMode mode = RttMode::DISABLED;                // RTT mode of the call
-   RttMode localRttCapability = RttMode::DISABLED;  // RTT capability of local device
-   RttMode peerRttCapability  = RttMode::DISABLED;  // RTT capability of peer device
-   CallType callType          = CallType::UNKNOWN;
-   std::string callReason     = "";
-   bool isAecsCallDrop        = false;
-   RedialState redialState    = RedialState::UNKNOWN;
+    int index                     = INVALID;  // Connection Index
+    CallDirection callDirection   = CallDirection::NONE;  // enumeration for MO / MT call
+    std::string remotePartyNumber = "";  // Remote party number
+    bool transmitMsd              = false;
+    CallState callState           = CallState::CALL_IDLE;
+    CallEndCause callEndCause     = CallEndCause::NORMAL;
+    int sipErrorCode              = 0;
+    bool isMultiPartyCall         = false;
+    bool isMpty                   = false;
+    RttMode mode                  = RttMode::DISABLED;  // RTT mode of the call
+    RttMode localRttCapability    = RttMode::DISABLED;  // RTT capability of local device
+    RttMode peerRttCapability     = RttMode::DISABLED;  // RTT capability of peer device
+    CallType callType             = CallType::UNKNOWN;
+    std::string callReason        = "";
+    bool isAecsCallDrop           = false;
+    RedialState redialState       = RedialState::UNKNOWN;
+    NetworkMode networkMode       = NetworkMode::UNKNOWN;
 };
 
 class CallStub : public ICall {
@@ -90,8 +91,9 @@ public:
     RttMode getLocalRttCapability();
     RttMode getPeerRttCapability();
     CallType getCallType();
-    telux::common::Status modify(RttMode mode,
-        std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
+    telux::common::Status modify(
+        RttMode mode, std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
+    NetworkMode getNetworkMode();
     telux::common::Status respondToModifyRequest(bool modifyResponseType,
         std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
     CallState getCallState();

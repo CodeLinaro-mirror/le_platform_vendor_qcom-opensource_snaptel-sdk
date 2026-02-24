@@ -229,6 +229,7 @@ void TelClient::onCallInfoChange(std::shared_ptr<ICall> call) {
         << " Call State: " << TelClientUtils::callStateToString(call->getCallState())
         << "\n Call Index: " << (int)call->getCallIndex()
         << ", Call Direction: " << TelClientUtils::callDirectionToString(call->getCallDirection())
+        << ", Network Mode: " << TelClientUtils::networkModeToString(call->getNetworkMode())
         << ", Phone Number: " << call->getRemotePartyNumber() << std::endl;
     if(isEraGlonassEnabled()) {
         std::cout << CLIENT_NAME << " willECallRedial_:" << willECallRedial_<< std::endl;
@@ -1030,6 +1031,8 @@ telux::common::Status TelClient::getCurrentCalls() {
                   << TelClientUtils::callStateToString((*callIterator)->getCallState())
                   << ", Call Direction: "
                   << TelClientUtils::callDirectionToString((*callIterator)->getCallDirection())
+                  << ", Network Mode: "
+                  << TelClientUtils::networkModeToString((*callIterator)->getNetworkMode())
                   << ", Phone Number: " << (*callIterator)->getRemotePartyNumber() << std::endl;
     }
     return telux::common::Status::SUCCESS;

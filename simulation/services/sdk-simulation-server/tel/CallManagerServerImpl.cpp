@@ -682,6 +682,7 @@ void CallManagerServerImpl::logCallDetails(std::shared_ptr<CallInfo> call) {
         ", localRttCapability = ", static_cast<int>(call->localRttCapability),
         ", peerRttCapability = ", static_cast<int>(call->peerRttCapability),
         ", callType = ", static_cast<int>(call->callType),
+        ", networkMode = ", static_cast<int>(call->networkMode),
         ", isEraGlonassSelfTestECall = ", static_cast<bool>(call->isEraGlonassSelfTestECall));
 }
 
@@ -2371,6 +2372,7 @@ void CallManagerServerImpl::fillCallInformation(
         } else {
             result->set_call_reason("");
         }
+        result->set_network_mode(static_cast<telStub::NetworkMode>(it->networkMode));
         LOG(DEBUG, __FUNCTION__, " CallState: ", static_cast<int>(it->callState),
             " CallIndex: ", static_cast<int>(it->index),
             " Calldirection: ", static_cast<int>(it->callDirection),
@@ -2378,7 +2380,8 @@ void CallManagerServerImpl::fillCallInformation(
             " Rtt mode: ", static_cast<int>(it->mode),
             " Local capability: ", static_cast<int>(it->localRttCapability),
             " Peer capability: ", static_cast<int>(it->peerRttCapability),
-            " Call type: ", static_cast<int>(it->callType), " Call Reason: ", it->callReason);
+            " Call type: ", static_cast<int>(it->callType), " Call Reason: ", it->callReason,
+            " Network Mode: ", static_cast<int>(it->networkMode));
     }
 }
 
@@ -2521,4 +2524,18 @@ bool CallManagerServerImpl::findAndRemoveMatchingCall(int callIndex, bool retain
     } else {
         return false;
     }
+}
+
+std::string CallManagerServerImpl::getUserConfiguredCallMode(int phoneId) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string jsonObjFileName = "";
+    Json::Value rootObj;
+    grpc::Status readStatus = readJson();
+    if (readStatus.ok()) {
+        getJsonForApiResponseSlot(phoneId, jsonObjFileName, rootObj);
+        std::string input = rootObj[CALL_MANAGER]["callMode"].asString();
+        LOG(DEBUG, __FUNCTION__, " input ", input);
+        return input;
+    }
+    return "";
 }

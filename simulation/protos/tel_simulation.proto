@@ -1239,6 +1239,17 @@ enum CallType {
    UNKNOWN_CALL = -1;      /**< Unknown, when the information is not available */
 }
 
+enum NetworkMode {
+    GSM_MODE = 0;        /**< Network mode is GSM */
+    WCDMA_MODE = 1;      /**< Network mode is WCDMA */
+    LTE_MODE = 2;        /**< Network mode is LTE */
+    NR5G_MODE = 3;       /**< Network mode is NR5G SA and NSA */
+    NR5G_SA_MODE = 4;    /**< Network mode is NR5G SA */
+    NR5G_NSA_MODE = 5;   /**< Network mode is NR5G NSA */
+    NB1_NTN_MODE = 6;    /**< Network mode is NB-IoT(NB1) Non Terrestrial Network(NTN) */
+    UNKNOWN_MODE = -1;   /**< Network mode is unknown */
+}
+
 enum ReasonType {
     REASON_NONE = 0;            /**< Redial reason is NONE */
     CALL_ORIG_FAILURE = 1;      /**< Redial will be attempted due to eCall origination failure */
@@ -1343,6 +1354,7 @@ enum EcallHlapTimerId {
      CallType call_type = 11;
      int32 sip_error_code = 12;
      string call_reason = 13;
+     NetworkMode network_mode = 14;
  }
 
  message MakeECallRequest {

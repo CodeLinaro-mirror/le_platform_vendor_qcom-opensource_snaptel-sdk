@@ -60,6 +60,21 @@ std::string TelClientUtils::callDirectionToString(telux::tel::CallDirection cd) 
     }
 }
 
+std::string TelClientUtils::networkModeToString(telux::tel::NetworkMode mode) {
+    switch (mode) {
+        case telux::tel::NetworkMode::GSM:
+            return std::string("GSM mode");
+        case telux::tel::NetworkMode::WCDMA:
+            return std::string("WCDMA mode");
+        case telux::tel::NetworkMode::LTE:
+            return std::string("LTE mode");
+        case telux::tel::NetworkMode::NR5G:
+            return std::string("NR5G mode");
+        default:
+            return std::string("unknown");
+    }
+}
+
 std::string TelClientUtils::callStateToString(telux::tel::CallState cs) {
     switch (cs) {
         case telux::tel::CallState::CALL_IDLE:

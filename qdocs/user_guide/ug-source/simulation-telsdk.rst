@@ -598,6 +598,10 @@ Details of parameters that can be configured in the Simulation framework.
 
   Supported Values: SUCCESS, CALLORIG, CALLDROP.
 
+- "callMode" : To configure network mode for call.
+
+  Supported Values: NR5G, LTE, UMTS, GSM.
+
 These parameters can be configured via *simulation/json/api/tel/ICallManagerSlot1.json and simulation/json/api/tel/ICallManagerSlot2.json*.
 
 Retrieve eCall MSD payload or encoded optional additional data content

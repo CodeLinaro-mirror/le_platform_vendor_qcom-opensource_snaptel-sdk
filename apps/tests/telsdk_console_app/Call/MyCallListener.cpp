@@ -72,6 +72,7 @@ void MyCallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) {
         << "\n Call Index: " << (int)call->getCallIndex()
         << ", Call Direction: " << (int)call->getCallDirection()
         << ", Call Type: " << getCallTypeString(call->getCallType())
+        << ", Network Mode: " << getNetworkModeString(call->getNetworkMode())
         << ", Phone Number: " << call->getRemotePartyNumber() << ", Slot Id: " << call->getPhoneId()
         << ", RTT mode of the call: " << getRttModeString(call->getRttMode())
         << ", Local capability of call: " << getRttModeString(call->getLocalRttCapability())
@@ -179,6 +180,21 @@ std::string MyCallListener::getCallTypeString(telux::tel::CallType type) {
             return std::string("Emergency call");
         case telux::tel::CallType::EMERGENCY_IP_CALL:
             return std::string("Emergency IP call");
+        default:
+            return std::string("unknown");
+    }
+}
+
+std::string MyCallListener::getNetworkModeString(telux::tel::NetworkMode mode) {
+    switch (mode) {
+        case telux::tel::NetworkMode::GSM:
+            return std::string("GSM mode");
+        case telux::tel::NetworkMode::WCDMA:
+            return std::string("WCDMA mode");
+        case telux::tel::NetworkMode::LTE:
+            return std::string("LTE mode");
+        case telux::tel::NetworkMode::NR5G:
+            return std::string("NR5G mode");
         default:
             return std::string("unknown");
     }

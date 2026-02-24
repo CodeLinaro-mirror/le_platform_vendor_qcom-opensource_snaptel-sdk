@@ -519,8 +519,9 @@ void CallManagerStub::handleCallInfoChanged(::telStub::GetInProgressCallsData ev
             = static_cast<telux::tel::RttMode>(event.calls(i).local_rtt_capability());
         callInfo.peerRttCapability
             = static_cast<telux::tel::RttMode>(event.calls(i).peer_rtt_capability());
-        callInfo.callType   = static_cast<telux::tel::CallType>(event.calls(i).call_type());
-        callInfo.callReason = static_cast<std::string>(event.calls(i).call_reason());
+        callInfo.callType    = static_cast<telux::tel::CallType>(event.calls(i).call_type());
+        callInfo.callReason  = static_cast<std::string>(event.calls(i).call_reason());
+        callInfo.networkMode = static_cast<telux::tel::NetworkMode>(event.calls(i).network_mode());
         LOG(DEBUG, __FUNCTION__, " CallState: ", static_cast<int>(callInfo.callState),
             " CallIndex: ", static_cast<int>(callInfo.index),
             " Calldirection: ", static_cast<int>(callInfo.callDirection),
@@ -532,7 +533,8 @@ void CallManagerStub::handleCallInfoChanged(::telStub::GetInProgressCallsData ev
             " Local Rtt capability: ", static_cast<int>(callInfo.localRttCapability),
             " Peer Rtt capability: ", static_cast<int>(callInfo.peerRttCapability),
             " Call Type: ", static_cast<int>(callInfo.callType),
-            " Call Reason: ", callInfo.callReason);
+            " Call Reason: ", callInfo.callReason,
+            " Network Mode: ", static_cast<int>(callInfo.networkMode));
         auto Info = std::make_shared<CallStub>(phoneId, callInfo);
         { calls.emplace_back(Info); }
     }

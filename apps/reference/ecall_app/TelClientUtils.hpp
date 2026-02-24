@@ -52,6 +52,10 @@ class TelClientUtils {
      * Get the call direction in string format
      */
     static std::string callDirectionToString(CallDirection cd);
+    /*
+     * Get the network mode in string format
+     */
+    static std::string networkModeToString(NetworkMode mode);
     /**
      * Get the call end cause in string format from call end cause code
      */

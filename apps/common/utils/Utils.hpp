@@ -140,6 +140,10 @@ class Utils {
     // telux::common::Status.
     static void printStatus(telux::common::Status status);
 
+    // Print status message that corresponds to specified telux::common::ServiceStatus srv.
+    static void printServiceStatus(const std::string &prefix, const std::string &mgr,
+        const telux::common::ServiceStatus srv, const bool hasfeature = true);
+
     // return current UTC time in microseconds
     static uint64_t getCurrentTimestamp(void);
 

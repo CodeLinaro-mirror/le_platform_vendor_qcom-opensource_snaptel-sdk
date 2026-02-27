@@ -325,9 +325,7 @@ void PlayMenu::play() {
         return;
     }
 
-    std::unique_lock<std::mutex> lock(mutex_);
-
-    for(int i = 0; i < TOTAL_BUFFERS; i++) {
+    for (int i = 0; i < TOTAL_BUFFERS; i++) {
         streamBuffer = audioPlayStream_->getStreamBuffer();
         if(streamBuffer != nullptr) {
             size = streamBuffer->getMinSize();
@@ -355,6 +353,7 @@ void PlayMenu::play() {
 
     while (playStatus_)
     {
+        std::unique_lock<std::mutex> lock(mutex_);
         if (!firstPlay) {
             if(feof(file_) && freeBuffers_.empty()) {
                 cv_.wait(lock);
@@ -431,7 +430,8 @@ void PlayMenu::play() {
                 std::cout << "Request to stop playback after pending buffers failed" << std::endl;
             }
         } else {
-            while(freeBuffers_.size() != TOTAL_BUFFERS) {
+            while (freeBuffers_.size() != TOTAL_BUFFERS) {
+                std::unique_lock<std::mutex> lock(mutex_);
                 cv_.wait(lock);
             }
         }

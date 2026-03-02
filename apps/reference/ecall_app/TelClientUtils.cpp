@@ -888,7 +888,7 @@ std::string TelClientUtils::callEndCauseToString(telux::tel::CallEndCause callEn
       case telux::tel::CallEndCause::ONE_X_COLLISION:
          return std::string("CDMA collision");
       case telux::tel::CallEndCause::UI_NOT_READY:
-         return std::string("UI is not reay for incomg call");
+         return std::string("UI is not ready for incoming call");
       case telux::tel::CallEndCause::CS_CALL_ONGOING:
          return std::string("CS call is ongoing");
       case telux::tel::CallEndCause::REJECTED_ELSEWHERE:

@@ -26,7 +26,6 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 /*
  * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
@@ -44,6 +43,7 @@
 
 #include <string>
 #include <sstream>
+#include <cstdarg>
 
 /**
  * Double-Macro-Stringy Technique
@@ -79,9 +79,66 @@
 #define TELUX_TECH_AREA 0
 #endif
 
+// Core helper macro for all logging
+#define LOG_BASIC(lvl, fmt, ...)                                                            \
+    do {                                                                                    \
+        if (telux::common::Log::isLoggingEnabled((lvl), TELUX_TECH_AREA)) {                 \
+            telux::common::Log::logMessageVarArgs(                                          \
+                (lvl), __FILE__, LINE_NO(__LINE__), TELUX_TECH_AREA, (fmt), ##__VA_ARGS__); \
+        }                                                                                   \
+    } while (0)
+
+#define LOG_BASIC_FUNC(lvl, fmt, ...)                                                 \
+    do {                                                                              \
+        if (telux::common::Log::isLoggingEnabled((lvl), TELUX_TECH_AREA)) {           \
+            telux::common::Log::logMessageVarArgs((lvl), __FILE__, LINE_NO(__LINE__), \
+                TELUX_TECH_AREA, "%s: " fmt, __FUNCTION__, ##__VA_ARGS__);            \
+        }                                                                             \
+    } while (0)
+
 /**
- * Public utility macro for logging at different log level(i.e INFO, DEBUG) with variable argument
+ * @brief Logging macros without function name prefix
+ *
+ * These macros provide printf-style logging at different levels.
+ * File name and line number are automatically included.
+ *
+ * @param fmt Printf-style format string
+ * @param ... Variable arguments matching the format string
+ *
+ * Example: LOGI("Processing %d items", count);
+ */
+
+#define LOGI(fmt, ...) LOG_BASIC(telux::common::LogLevel::LEVEL_INFO, (fmt), ##__VA_ARGS__)
+#define LOGW(fmt, ...) LOG_BASIC(telux::common::LogLevel::LEVEL_WARNING, (fmt), ##__VA_ARGS__)
+#define LOGE(fmt, ...) LOG_BASIC(telux::common::LogLevel::LEVEL_ERROR, (fmt), ##__VA_ARGS__)
+#define LOGD(fmt, ...) LOG_BASIC(telux::common::LogLevel::LEVEL_DEBUG, (fmt), ##__VA_ARGS__)
+
+/**
+ * @brief Logging macros with function name prefix
+ *
+ * These macros automatically prepend the function name to the log message.
+ * Useful for debugging and tracing function execution.
+ *
+ * @param fmt Printf-style format string
+ * @param ... Variable arguments matching the format string
+ *
+ * Example: LOGFI("Processing %d items", count);
+ * Output: "MyFunction Processing 5 items"
+ */
+
+#define LOGFI(fmt, ...) LOG_BASIC_FUNC(telux::common::LogLevel::LEVEL_INFO, fmt, ##__VA_ARGS__)
+#define LOGFW(fmt, ...) LOG_BASIC_FUNC(telux::common::LogLevel::LEVEL_WARNING, fmt, ##__VA_ARGS__)
+#define LOGFE(fmt, ...) LOG_BASIC_FUNC(telux::common::LogLevel::LEVEL_ERROR, fmt, ##__VA_ARGS__)
+#define LOGFD(fmt, ...) LOG_BASIC_FUNC(telux::common::LogLevel::LEVEL_DEBUG, fmt, ##__VA_ARGS__)
+
+/**
+ * @brief Legacy logging macro for backward compatibility
+ *
+ * Public utility macro for logging at different log level (i.e INFO, DEBUG) with variable argument
  * list. More information like file name, line number are automatically added to each logs.
+ *
+ * Use LOGI, LOGD, LOGW, LOGE or their function-prefixed variants for C-Style logging
+ *
  * Example for using Macro: LOG(DEBUG, "Message").
  */
 #define LOG(logLevel, args...) \
@@ -108,7 +165,26 @@ enum class LogLevel {
 class Log {
  public:
     /**
+     * @brief Printf-style variadic logging function
+     *
+     * @param [in] logLevel         Severity level of the log message
+     * @param [in] fileName         Source file name (automatically provided by macros)
+     * @param [in] lineNo           Line number (automatically provided by macros)
+     * @param [in] component        Technology area component ID
+     * @param [in] fmt              Printf-style format string
+     * @param [in] ...              Variable arguments matching the format string
+     */
+    static void logMessageVarArgs(LogLevel logLevel, const char *fileName, const char *lineNo,
+        const int &component, const char *fmt, ...) __attribute__((format(printf, 5, 6))) {
+        va_list args;
+        va_start(args, fmt);
+        logStreamVarArgs(logLevel, fileName, lineNo, component, fmt, args);
+        va_end(args);
+    }
+
+    /**
      * Public API to log a message
+     * @brief Legacy template-based logging API for backward compatibility
      *
      * @param [in] logLevel             Log level @ref LogLevel
      * @param [in] fileName             File name from where log is getting printed
@@ -127,7 +203,7 @@ class Log {
     }
 
     /**
-     * Public API to log a string stream
+     * @brief Public API to log a string stream
      *
      * @param [in] outputStream         String stream which will be logged
      * @param [in] logLevel             Log level @ref LogLevel
@@ -138,7 +214,12 @@ class Log {
     static void logStream(std::ostringstream &outputStream, LogLevel logLevel,
         const std::string &fileName, const std::string &lineNo, const int &component);
 
+    static bool isLoggingEnabled(LogLevel logLevel, const int &component);
+
  private:
+    static void logStreamVarArgs(LogLevel logLevel, const char *fileName, const char *lineNo,
+        const int &component, const char *fmt, va_list args) __attribute__((format(printf, 5, 0)));
+
     /*
      * Recursive helper methods to construct the complete log message
      * from input arguments
@@ -153,8 +234,6 @@ class Log {
         os << param;
         return constructMessage(os, params...);
     }
-
-    static bool isLoggingEnabled(LogLevel logLevel, const int &component);
 };
 
 /** @} */ /* end_addtogroup telematics_common */

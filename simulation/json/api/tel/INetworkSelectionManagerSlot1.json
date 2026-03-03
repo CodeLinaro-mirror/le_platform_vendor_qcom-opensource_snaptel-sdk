@@ -40,6 +40,9 @@
         "abortNetworkScan" :
         {
             "error" : "SUCCESS"
+        },
+        "setCoverageState": {
+            "error": "SUCCESS"
         }
     }
 }

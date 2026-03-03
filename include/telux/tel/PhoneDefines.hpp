@@ -70,6 +70,15 @@ enum class CallDirection {
 };
 
 /**
+ * Coverage state of the device, as determined by a client, based on other information
+ * (e.g. location of the device).
+ */
+enum class CoverageState {
+    IN_5G_COVERAGE, /**< Device is expected to be within 5G coverage */
+    OUT_OF_5G_COVERAGE /**< Device is expected to be outside 5G coverage */
+};
+
+/**
  * Defines the states a call can be in
  */
 enum class CallState {

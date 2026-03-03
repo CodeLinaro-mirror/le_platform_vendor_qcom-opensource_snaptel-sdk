@@ -27,10 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
+
 /**
  * @file       NetworkSelectionManager.hpp
  *
@@ -521,6 +523,34 @@ public:
     */
    virtual telux::common::ErrorCode setNrDubiousCell(const std::vector<NrDubiousCell>
            &nrDbCellList) = 0;
+
+   /**
+    * Sets the coverage state to enable faster 5G recovery when the device returns
+    * from out‑of‑5G‑coverage.
+    *
+    * This API allows a client to inform the modem when the device is expected to be
+    * outside 5G coverage (for example, in an underground parking garage) and when it
+    * returns to a 5G-covered area. Based on this indication, the modem may expedite
+    * 5G recovery and restore normal 5G operation more quickly upon exit from the
+    * out‑of‑5G‑coverage.
+    *
+    * A request to set @ref telux::tel::CoverageState::IN_5G_COVERAGE is usually
+    * ignored unless a request to set @ref telux::tel::CoverageState::OUT_OF_5G_COVERAGE
+    * was received previously.
+    *
+    * This setting is not persistent. Clients must call this API again after an SSR or reboot.
+    *
+    * On platforms with access control enabled, Caller needs to have TELUX_TEL_SNS_CONFIG
+    * permission to invoke this API successfully.
+    *
+    * @param [in] state  The @ref telux::tel::CoverageState value to apply.
+    *
+    * @returns An error code indicating success or failure.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change
+    *          and could break backwards compatibility.
+    */
+    virtual telux::common::ErrorCode setCoverageState(CoverageState state) = 0;
 
     /**
      * Abort an ongoing network scan operation that was previously initiated using

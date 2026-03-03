@@ -20,13 +20,13 @@ Event::Event(TcuActivityState triggeredState, std::string machineName, TriggerTy
    , machineName_(machineName)
    , triggerType_(triggerType)
    , status_(EventStatus::INITIALIZED) {
-    LOG(DEBUG, __FUNCTION__, toString());
+    LOGFD("%s", toString().c_str());
     timeStamps_.insert({EventStatus::INITIALIZED,
         std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())});
 }
 
 Event::~Event() {
-    LOG(DEBUG, __FUNCTION__, toString());
+    LOGFD("%s", toString().c_str());
 }
 
 // getter setter
@@ -60,7 +60,7 @@ EventStatus Event::getEventStatus() {
 }
 
 void Event::setEventStatus(EventStatus status) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     status_ = status;
     timeStamps_.insert(
         {status, std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())});

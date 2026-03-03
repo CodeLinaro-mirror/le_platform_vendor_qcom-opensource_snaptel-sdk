@@ -27,31 +27,31 @@
 class TCPClient : public IIPConnection {
  public:
     TCPClient() {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
     }
     ~TCPClient() {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         cleanup();
     }
 
     bool isStarted() override {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         return !receivedStopClient_;
     }
 
     bool isConnected() override {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         return isConnected_;
     }
 
     std::shared_ptr<Connection> getConnectionParams() override {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         std::unique_lock<std::mutex> lock(mtx_);
         return connectionConfig_;
     }
 
     bool updateConnectionParams() {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         char ip_str[INET6_ADDRSTRLEN];
         uint16_t port;
 
@@ -59,7 +59,7 @@ class TCPClient : public IIPConnection {
         struct sockaddr_storage local_addr;
         socklen_t addr_len = sizeof(local_addr);
         if (getsockname(clientSocket_, (struct sockaddr *)&local_addr, &addr_len) < 0) {
-            LOG(ERROR, __FUNCTION__, "Error getting local address");
+            LOGFE("Error getting local address");
             close(clientSocket_);
             isConnected_ = false;
             return false;
@@ -84,7 +84,7 @@ class TCPClient : public IIPConnection {
         struct sockaddr_storage remote_addr;
         addr_len = sizeof(remote_addr);
         if (getpeername(clientSocket_, (struct sockaddr *)&remote_addr, &addr_len) < 0) {
-            LOG(ERROR, __FUNCTION__, "Error getting remote address");
+            LOGFE("Error getting remote address");
             close(clientSocket_);
             isConnected_ = false;
             return false;
@@ -107,7 +107,7 @@ class TCPClient : public IIPConnection {
             listener->onConnect(connectionConfig_);
         }
 
-        LOG(DEBUG, __FUNCTION__, connectionConfig_->toString());
+        LOGFD("%s", (connectionConfig_->toString()).c_str());
 
         IPMessage msg{};
         std::string messageStr
@@ -118,9 +118,9 @@ class TCPClient : public IIPConnection {
     }
 
     bool readLoop() {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         if (clientSocket_ < 0) {
-            LOG(ERROR, __FUNCTION__, " Invalid socket descriptor");
+            LOGFE("Invalid socket descriptor");
             return false;
         }
 
@@ -132,13 +132,12 @@ class TCPClient : public IIPConnection {
                 n         = recv(clientSocket_, static_cast<void *>(&msg), sizeof(msg), 0);
 
                 if (n <= 0) {
-                    LOG(ERROR, __FUNCTION__, " connection interrupted or closed");
+                    LOGFE("connection interrupted or closed");
                     isConnected_ = false;
                     break;
                 }
 
-                LOG(DEBUG, __FUNCTION__, " length = ", n,
-                    " current listeners: ", listeners_.size());
+                LOGFD("length = %zd current listeners: %zu", n, listeners_.size());
                 for (auto listener : listeners_) {
                     listener->messageReceived(msg, n, connectionConfig_);
                 }
@@ -151,26 +150,25 @@ class TCPClient : public IIPConnection {
 
             if (connectionConfig_->protocol == Protocol::TCP) {
                 if (shutdown(clientSocket_, SHUT_RDWR) == -1) {
-                    LOG(ERROR, __FUNCTION__,
-                        "shutdown failed errno = ", std::string(strerror(errno)));
+                    LOGFE("shutdown failed errno = %s", strerror(errno));
                 }
             }
 
             if (close(clientSocket_) == -1) {
-                LOG(ERROR, __FUNCTION__, "close failed errno = ", std::string(strerror(errno)));
+                LOGFE("close failed errno = %s", strerror(errno));
             }
 
         } catch (const std::exception &e) {
             isConnected_ = false;
-            LOG(ERROR, __FUNCTION__, " exception: ", std::string(e.what()));
+            LOGFE("exception: %s", e.what());
         }
 
-        LOG(DEBUG, __FUNCTION__, " exit ");
+        LOGFD("exit");
         return true;
     }
 
     bool start(std::shared_ptr<Connection> connectionConfig) override {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         receivedStopClient_ = false;
         connectionConfig_   = connectionConfig;
         std::lock_guard<std::mutex> lk(mtx_);
@@ -182,11 +180,11 @@ class TCPClient : public IIPConnection {
     }
 
     void startTcp() {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         std::thread([=]() {
             do {
                 isConnected_ = false;
-                LOG(DEBUG, __FUNCTION__, " TCP client starting...");
+                LOGFD("TCP client starting...");
 
                 if (!setupSocketAndBind()) {
                     usleep(4000000);  // Retry delay
@@ -201,8 +199,7 @@ class TCPClient : public IIPConnection {
                 isConnected_ = true;
                 int no       = 1;
                 if (setsockopt(clientSocket_, SOL_SOCKET, SO_KEEPALIVE, &no, sizeof(int)) != 0) {
-                    LOG(ERROR, __FUNCTION__,
-                        "Failed to bind to device: ", std::string(strerror(errno)));
+                    LOGFE(, "Failed to bind to device: %s", strerror(errno));
                     usleep(4000000);  // Retry delay
                     continue;
                 }
@@ -213,24 +210,24 @@ class TCPClient : public IIPConnection {
     }
 
     bool bindToDevice(int clientSocket, std::string deviceName) {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         if (setsockopt(
                 clientSocket, SOL_SOCKET, SO_BINDTODEVICE, deviceName.c_str(), deviceName.size())
             != 0) {
-            LOG(ERROR, __FUNCTION__, "Failed to bind to device: ", strerror(errno));
+            LOGFE("Failed to bind to device: %s", strerror(errno));
             return false;
         }
         return true;
     }
 
     bool setupSocketAndBind() {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         int domain
             = (connectionConfig_->ipFamily == telux::data::IpFamilyType::IPV6) ? AF_INET6 : AF_INET;
 
         clientSocket_ = socket(domain, SOCK_STREAM, 0);
         if (clientSocket_ < 0) {
-            LOG(ERROR, __FUNCTION__, " socket : ", std::string(strerror(errno)));
+            LOGFE("socket : %s", strerror(errno));
             return false;
         }
 
@@ -240,26 +237,23 @@ class TCPClient : public IIPConnection {
 
         if (!connectionConfig_->configuredInterfaceName.empty()) {
             if (!bindToDevice(clientSocket_, connectionConfig_->configuredInterfaceName)) {
-                LOG(ERROR, __FUNCTION__, " bind : ", connectionConfig_->configuredInterfaceName,
-                    " ", std::string(strerror(errno)));
+                LOGFE(" bind %s , %s", connectionConfig_->configuredInterfaceName, strerror(errno));
             }
         } else {
             // Prepare bind address
             if (!prepareBindAddress(sockAddrBind, sockSize)) {
-                LOG(ERROR, __FUNCTION__,
-                    " prepareBindAddress bind : ", std::string(strerror(errno)));
+                LOGFE(" prepareBindAddress bind : ", strerror(errno));
             }
 
             if (!bindToDevice(clientSocket_, connectionConfig_->dataCall->getInterfaceName())) {
-                LOG(ERROR, __FUNCTION__,
-                    " bind : ", connectionConfig_->dataCall->getInterfaceName(), " ",
-                    std::string(strerror(errno)));
+                LOGFE(" bind : %s %s", connectionConfig_->dataCall->getInterfaceName().c_str(),
+                    strerror(errno));
             }
             if (sockAddrBind != nullptr) {
                 setsockopt(clientSocket_, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
                 setsockopt(clientSocket_, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse));
                 if (bind(clientSocket_, sockAddrBind, sockSize) < 0) {
-                    LOG(ERROR, __FUNCTION__, " bind : ", std::string(strerror(errno)));
+                    LOGFE(" bind : %s", strerror(errno));
                 }
             }
         }
@@ -267,7 +261,7 @@ class TCPClient : public IIPConnection {
     }
 
     bool connectToServer() {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         struct sockaddr *sockAddrConnect = nullptr;
         socklen_t sockSize               = 0;
 
@@ -275,7 +269,7 @@ class TCPClient : public IIPConnection {
             struct sockaddr_in v4ServerAddr = {};
             if (!inet_pton(
                     AF_INET, connectionConfig_->serverIpAddr.c_str(), &(v4ServerAddr.sin_addr))) {
-                LOG(ERROR, __FUNCTION__, " failed destination IPv4 parsing");
+                LOGFE("failed destination IPv4 parsing");
                 return false;
             }
             v4ServerAddr.sin_family = AF_INET;
@@ -283,15 +277,15 @@ class TCPClient : public IIPConnection {
             sockAddrConnect         = reinterpret_cast<struct sockaddr *>(&v4ServerAddr);
             sockSize                = sizeof(sockaddr_in);
             if (connect(clientSocket_, sockAddrConnect, sockSize) == -1) {
-                LOG(ERROR, __FUNCTION__, " connect : ", std::string(strerror(errno)),
-                    "; Connection config: ", connectionConfig_->toString());
+                LOGFE(" connect %s ; Connection config %s", strerror(errno),
+                    connectionConfig_->toString().c_str());
                 return false;
             }
         } else {
             struct sockaddr_in6 v6ServerAddr = {};
             if (!inet_pton(
                     AF_INET6, connectionConfig_->serverIpAddr.c_str(), &(v6ServerAddr.sin6_addr))) {
-                LOG(ERROR, __FUNCTION__, " failed destination IPv6 parsing");
+                LOGFE("failed destination IPv6 parsing");
                 return false;
             }
             v6ServerAddr.sin6_family = AF_INET6;
@@ -299,8 +293,8 @@ class TCPClient : public IIPConnection {
             sockAddrConnect          = reinterpret_cast<struct sockaddr *>(&v6ServerAddr);
             sockSize                 = sizeof(sockaddr_in6);
             if (connect(clientSocket_, sockAddrConnect, sockSize) == -1) {
-                LOG(ERROR, __FUNCTION__, " connect : ", std::string(strerror(errno)),
-                    "; Connection config: ", connectionConfig_->toString());
+                LOGFE(" connect %s ; Connection config %s", strerror(errno),
+                    connectionConfig_->toString().c_str());
                 return false;
             }
         }
@@ -308,15 +302,14 @@ class TCPClient : public IIPConnection {
     }
 
     bool prepareBindAddress(struct sockaddr *&sockAddrBind, socklen_t &sockSize) {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         if (connectionConfig_->ipFamily == telux::data::IpFamilyType::IPV4) {
             static struct sockaddr_in v4ClientAddr = {};
             if (!connectionConfig_->dataCall->getIpv4Info().addr.ifAddress.empty()) {
                 if (!inet_pton(AF_INET,
                         connectionConfig_->dataCall->getIpv4Info().addr.ifAddress.c_str(),
                         &(v4ClientAddr.sin_addr))) {
-                    LOG(ERROR, __FUNCTION__, " failed source IPv4 parsing ",
-                        std::string(strerror(errno)));
+                    LOGFE("failed source IPv4 parsing %s", strerror(errno));
                     return false;
                 }
             }
@@ -332,8 +325,7 @@ class TCPClient : public IIPConnection {
                 if (!inet_pton(AF_INET6,
                         connectionConfig_->dataCall->getIpv6Info().addr.ifAddress.c_str(),
                         &(v6ClientAddr.sin6_addr))) {
-                    LOG(ERROR, __FUNCTION__, " failed source IPv6 parsing ",
-                        std::string(strerror(errno)));
+                    LOGFE("failed source IPv6 parsing %s", strerror(errno));
                     return false;
                 }
             }
@@ -348,27 +340,27 @@ class TCPClient : public IIPConnection {
     }
 
     void cleanup() override {
-        LOG(ERROR, __FUNCTION__, " Stopping  client ");
+        LOGFE("Stopping client");
         receivedStopClient_ = true;
         isConnected_        = false;
         if (clientSocket_ != -1) {
             if (shutdown(clientSocket_, SHUT_RDWR) == -1) {
-                LOG(ERROR, __FUNCTION__, " shutdown : ", std::string(strerror(errno)));
+                LOGFE("shutdown : %s", strerror(errno));
             }
             if (close(clientSocket_) == -1) {
-                LOG(ERROR, __FUNCTION__, " close : ", std::string(strerror(errno)));
+                LOGFE("close : %s", strerror(errno));
             }
         }
         clientSocket_ = -1;
     }
 
     bool sendMessage(IPMessage &msg) override {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         size_t expected   = strnlen(msg.msg, sizeof(msg.msg)) + 1;
         ssize_t sentBytes = send(clientSocket_, msg.msg, expected, 0);
-        LOG(DEBUG, __FUNCTION__, " sentBytes : ", sentBytes);
+        LOGFD(" sentBytes : %zd", sentBytes);
         if (sentBytes != (ssize_t)expected) {
-            LOG(ERROR, __FUNCTION__, " send : ", std::string(strerror(errno)));
+            LOGFE(" send : %s", strerror(errno));
             for (auto listener : listeners_) {
                 listener->onDisconnect(connectionConfig_);
             }
@@ -380,7 +372,7 @@ class TCPClient : public IIPConnection {
     }
 
     bool ensureAllPacketsAcknowledged() {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         if (connectionConfig_->protocol == Protocol::TCP) {
             // Wait until all unacknowledged packets are acknowledged to avoid acks
             // disrupting TCP KA or other configuration
@@ -392,7 +384,7 @@ class TCPClient : public IIPConnection {
                         break;  // All ACKs received
                     }
                 } else {
-                    LOG(ERROR, __FUNCTION__, " getsockopt : ", std::string(strerror(errno)));
+                    LOGFE("getsockopt : %s", strerror(errno));
                     return false;
                 }
                 usleep(100000);  // Sleep 100ms to avoid busy-waiting
@@ -402,7 +394,7 @@ class TCPClient : public IIPConnection {
     }
 
     void registerListener(std::shared_ptr<ISocketConnectionListener> listener) override {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         listeners_.push_back(listener);
     }
 

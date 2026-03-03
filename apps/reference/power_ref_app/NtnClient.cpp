@@ -12,6 +12,7 @@
 #include <ios>
 #include <sstream>
 #include <thread>
+#include <inttypes.h>
 
 #include "NtnClient.hpp"
 #include <telux/satcom/SatcomFactory.hpp>
@@ -36,23 +37,23 @@ NtnClient::~NtnClient() {
 }
 
 telux::common::Status NtnClient::init() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     if (ntnMgr_ == nullptr) {
         if (!initSatcom()) {
-            LOG(ERROR, __FUNCTION__, " Ntn manager init failed");
+            LOGFE("Ntn manager init failed");
             return telux::common::Status::FAILED;
         } else {
-            LOG(DEBUG, __FUNCTION__, " Ntn manager init success");
+            LOGFD("Ntn manager init success");
         }
     }
 
 #ifdef TELSDK_FEATURE_LOC_ENABLED
     if (locationManager_ == nullptr) {
         if (!initLocationManager()) {
-            LOG(ERROR, __FUNCTION__, " Location manager init failed");
+            LOGFE("Location manager init failed");
             return telux::common::Status::FAILED;
         } else {
-            LOG(DEBUG, __FUNCTION__, " Location manager init success");
+            LOGFD("Location manager init success");
         }
     }
 #endif
@@ -66,18 +67,18 @@ bool NtnClient::initSatcom() {
         ntnMgr_                          = satcomFactory.getNtnManager(
             [&](telux::common::ServiceStatus status) { prom.set_value(status); });
         if (ntnMgr_ == nullptr) {
-            LOG(ERROR, __FUNCTION__, " satcomFactory.getNtnManager returned nullptr");
+            LOGFE("satcomFactory.getNtnManager returned nullptr");
             return false;
         }
         ServiceStatus ntnMgrStatus = ntnMgr_->getServiceStatus();
         if (ntnMgrStatus != ServiceStatus::SERVICE_AVAILABLE) {
-            LOG(DEBUG, __FUNCTION__, " Ntn subsystem is not ready, Please wait");
+            LOGFD("Ntn subsystem is not ready, Please wait");
         }
         ntnMgrStatus = prom.get_future().get();
         if (ntnMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            LOG(DEBUG, __FUNCTION__, " *** Ntn subsystem is ready ***");
+            LOGFD("*** Ntn subsystem is ready ***");
         } else {
-            LOG(ERROR, __FUNCTION__, " *** Ntn subsystem is not ready ***");
+            LOGFE("*** Ntn subsystem is not ready ***");
             return false;
         }
     }
@@ -101,16 +102,15 @@ bool NtnClient::initLocationManager() {
         startTime                  = std::chrono::system_clock::now();
         ServiceStatus locMgrStatus = locationManager_->getServiceStatus();
         if (locMgrStatus != ServiceStatus::SERVICE_AVAILABLE) {
-            LOG(DEBUG, __FUNCTION__, " Location subsystem is not ready, Please wait");
+            LOGFD("Location subsystem is not ready, Please wait");
         }
         locMgrStatus = prom.get_future().get();
         if (locMgrStatus == ServiceStatus::SERVICE_AVAILABLE) {
             endTime                                   = std::chrono::system_clock::now();
             std::chrono::duration<double> elapsedTime = endTime - startTime;
-            LOG(DEBUG, __FUNCTION__,
-                " Elapsed Time for Subsystems to ready : ", elapsedTime.count());
+            LOGFD("Elapsed Time for Subsystems to ready: %f", elapsedTime.count());
         } else {
-            LOG(ERROR, __FUNCTION__, " ERROR - Unable to initialize Location subsystem");
+            LOGFE("ERROR - Unable to initialize Location subsystem");
             locSubsystemReady = false;
         }
 
@@ -122,27 +122,27 @@ bool NtnClient::initLocationManager() {
 #endif
 
 void NtnClient::registerForUpdates() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     Status status = ntnMgr_->registerListener(shared_from_this());
     if (status != Status::SUCCESS) {
-        LOG(DEBUG, __FUNCTION__, " ERROR - Failed to register for ntn notification");
+        LOGFE("Failed to register for ntn notification");
     } else {
-        LOG(DEBUG, __FUNCTION__, " Registered Listener for ntn notification");
+        LOGFD("Registered Listener for ntn notification");
     }
 }
 
 void NtnClient::deregisterForUpdates() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     Status status = ntnMgr_->deregisterListener(shared_from_this());
     if (status != Status::SUCCESS) {
-        LOG(DEBUG, __FUNCTION__, " ERROR - Failed to deregister for ntn notification");
+        LOGFE("Failed to deregister for ntn notification");
     } else {
-        LOG(DEBUG, __FUNCTION__, " Deregistered Listener");
+        LOGFD("Deregistered Listener");
     }
 }
 
 telux::common::ErrorCode NtnClient::enableNtn() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     int emergency        = 0;
     std::string iccid    = "";
     ConfigParser *config = ConfigParser::getInstance();
@@ -154,7 +154,7 @@ telux::common::ErrorCode NtnClient::enableNtn() {
 }
 
 void NtnClient::onNtnStateChange(NtnState state) {
-    LOG(DEBUG, __FUNCTION__, "**** onNtnStateChange = ", toString(state));
+    LOGFD("**** onNtnStateChange = %s", toString(state).c_str());
 }
 
 std::string NtnClient::toString(NtnState state) {
@@ -170,7 +170,7 @@ std::string NtnClient::toString(NtnState state) {
 }
 
 void NtnClient::onSignalStrengthChange(SignalStrength newStrength) {
-    LOG(DEBUG, __FUNCTION__, "**** onSignalStrengthChange = ", toString(newStrength));
+    LOGFD("**** onSignalStrengthChange = %s", toString(newStrength).c_str());
 }
 
 std::string NtnClient::toString(SignalStrength ss) {
@@ -190,7 +190,7 @@ std::string NtnClient::toString(SignalStrength ss) {
 }
 
 void NtnClient::onCapabilitiesChange(NtnCapabilities capabilities) {
-    LOG(DEBUG, __FUNCTION__, "**** onCapabilitiesChange = ", toString(capabilities));
+    LOGFD("**** onCapabilitiesChange maxDataSize = %s", toString(capabilities).c_str());
 }
 
 std::string NtnClient::toString(NtnCapabilities cap) {
@@ -198,11 +198,11 @@ std::string NtnClient::toString(NtnCapabilities cap) {
 }
 
 void NtnClient::onNtnBandUpdate(uint32_t bandValue) {
-    LOG(DEBUG, __FUNCTION__, "**** onNtnBandUpdate BandValue = ", bandValue);
+    LOGFD("**** onNtnBandUpdate BandValue = %" PRIu32, bandValue);
 }
 
 void NtnClient::onLocationFixRequest(LocationFixRequestReason reqReason) {
-    LOG(DEBUG, __FUNCTION__, "**** onLocationFixRequest Reason = ", toString(reqReason));
+    LOGFD("**** onLocationFixRequest Reason = %s", toString(reqReason).c_str());
 
     std::thread([this] {
 #ifdef TELSDK_FEATURE_LOC_ENABLED
@@ -225,18 +225,18 @@ std::string NtnClient::toString(LocationFixRequestReason reqReason) {
 
 #ifdef TELSDK_FEATURE_LOC_ENABLED
 void NtnClient::triggerLocationReports() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     if (locationManager_ && posListener_) {
         GnssReportTypeMask reportMask = DEFAULT_REPORT_MASK;
         reportMask |= LOCATION;
         auto startStatus
             = locationManager_->startDetailedReports(DEFAULT_REPORT_INTERVAL, nullptr, reportMask);
         if (startStatus != telux::common::Status::SUCCESS) {
-            LOG(ERROR, __FUNCTION__, " Failed to start location reports");
+            LOGFE("Failed to start location reports");
             return;
         }
         {
-            LOG(DEBUG, __FUNCTION__, " Waiting for location reports");
+            LOGFD("Waiting for location reports");
             std::unique_lock<std::mutex> lck(posListener_->getLocationMutex());
             posListener_->getLocationCV().wait(
                 lck, [this] { return posListener_->isReportReceived_; });
@@ -247,12 +247,12 @@ void NtnClient::triggerLocationReports() {
             posListener_->isReportReceived_ = false;
             posListener_->reportCount_      = 0;
         }
-        LOG(DEBUG, __FUNCTION__, " Stopping reports");
+        LOGFD("Stopping reports");
         auto err = ntnMgr_->locationFixResponse(telux::satcom::LocationStatus::SUCCESS, 0);
-        LOG(DEBUG, __FUNCTION__, " locationFixResponse err = ", Utils::getErrorCodeAsString(err));
+        LOGFD("locationFixResponse err = %s", Utils::getErrorCodeAsString(err).c_str());
 
         err = ntnMgr_->setLocationFix(posListener_->locFix_);
-        LOG(DEBUG, __FUNCTION__, " setLocationFix err = ", Utils::getErrorCodeAsString(err));
+        LOGFD("setLocationFix err = %s", Utils::getErrorCodeAsString(err).c_str());
     }
 }
 
@@ -262,7 +262,7 @@ void NtnClientLocationListener::onDetailedLocationUpdate(
         return;
     }
     std::cout << " Detailed reports received" << std::endl;
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     locFix_.lat           = locationInfo->getLatitude();
     locFix_.lon           = locationInfo->getLongitude();
     locFix_.alt           = locationInfo->getAltitude();
@@ -325,7 +325,7 @@ void NtnClientLocationListener::onDetailedLocationUpdate(
 #endif
 
 telux::common::Status NtnClient::sendDataString(std::string text) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     int emergency        = 0;
     ConfigParser *config = ConfigParser::getInstance();
     if (config->getValue("NTN_CONFIGS", "IS_EMERGENCY_DATA") == "TRUE") {
@@ -336,25 +336,25 @@ telux::common::Status NtnClient::sendDataString(std::string text) {
         data.push_back((uint8_t)c);
     }
     TransactionId tId;
-    LOG(DEBUG, __FUNCTION__, " Data of size : ", data.size());
+    LOGFD("Data of size: %zu", data.size());
     auto ret = ntnMgr_->sendData(data.data(), text.size(), emergency, tId);
-    LOG(DEBUG, __FUNCTION__, " sendData tId = ", tId);
+    LOGFD("sendData tId = %" PRIu32, tId);
     return ret;
 }
 
 void NtnClient::onDataAck(ErrorCode err, TransactionId id) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     if (err == ErrorCode::SUCCESS) {
-        LOG(DEBUG, __FUNCTION__, " **** onDataAck ack received for id = ", id);
+        LOGFD("**** onDataAck ack received for id = %" PRIu32, id);
     } else {
-        LOG(DEBUG, __FUNCTION__, " **** onDataAck error = ", Utils::getErrorCodeAsString(err),
-            " id = ", id);
+        LOGFD("**** onDataAck error = %s id = %" PRIu32, Utils::getErrorCodeAsString(err).c_str(),
+            id);
     }
 }
 
 void NtnClient::cleanup() {
     deregisterForUpdates();
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     if (ntnMgr_) {
         ntnMgr_ = nullptr;
     }

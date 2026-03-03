@@ -7,12 +7,12 @@
 #include "common/RefAppUtils.hpp"
 
 NAOIpTrigger::NAOIpTrigger(std::shared_ptr<EventManager> eventManager) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     eventManager_ = eventManager;
 }
 
 NAOIpTrigger::~NAOIpTrigger() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     eventManager_         = nullptr;
     dataFilterController_ = nullptr;
     if (connectionHandler_) {
@@ -23,7 +23,7 @@ NAOIpTrigger::~NAOIpTrigger() {
 }
 
 bool NAOIpTrigger::init() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     config_          = ConfigParser::getInstance();
     bool returnValue = false;
     do {
@@ -32,7 +32,7 @@ bool NAOIpTrigger::init() {
         }
         weak_ptr<NAOIpTrigger> weakFromThis = shared_from_this();
         if (!eventManager_) {
-            LOG(ERROR, __FUNCTION__, "  event manager is not available ");
+            LOGFE("event manager is not available");
             break;
         }
         // Connection handler initialisation
@@ -50,15 +50,15 @@ bool NAOIpTrigger::init() {
                 connection->socketConnection->registerListener(shared_from_this());
                 connection->dataConnectionManager->registerListener(shared_from_this());
             } else {
-                LOG(ERROR, __FUNCTION__, " error on connection");
+                LOGFE("error on connection");
                 return false;
             }
         }
         tcpKeepAliveHandler_ = TCPKeepAliveHandler::getInstance(eventManager_);
         if (tcpKeepAliveHandler_ && tcpKeepAliveHandler_->init()) {
-            LOG(DEBUG, __FUNCTION__, " naoIpTrigger init succeed");
+            LOGFD(" naoIpTrigger init succeed");
         } else {
-            LOG(ERROR, __FUNCTION__, " naoIpTrigger init failed");
+            LOGFE(" naoIpTrigger init failed");
             return false;
         }
 
@@ -75,7 +75,7 @@ bool NAOIpTrigger::init() {
                 std::this_thread::sleep_for(std::chrono::milliseconds(2000));
             }
         } else {
-            LOG(ERROR, __FUNCTION__, "  Unable to instantiate data controller ");
+            LOGFE("Unable to instantiate data controller");
         }
 
     } while (0);
@@ -84,10 +84,10 @@ bool NAOIpTrigger::init() {
 }
 
 bool NAOIpTrigger::enableFilter() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     if (dataFilterController_) {
         if (!dataFilterController_->addFilter(connectionHandler_->getConnectionList())) {
-            LOG(ERROR, __FUNCTION__, " addFilter failed");
+            LOGFE("addFilter failed");
         }
         DataRestrictMode mode;
         // Note: If filter auto exit is enabled, it will disable the filter if any packets pass
@@ -104,30 +104,30 @@ bool NAOIpTrigger::enableFilter() {
         if (dataFilterController_->sendSetDataRestrictMode(mode)) {
             return true;
         }
-        LOG(ERROR, __FUNCTION__, " sendSetDataRestrictMode failed");
+        LOGFE("sendSetDataRestrictMode failed");
     } else {
-        LOG(ERROR, __FUNCTION__, " dataFilterController is not ready");
+        LOGFE("dataFilterController is not ready");
     }
     return false;
 }
 
 bool NAOIpTrigger::disableFilter() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     if (dataFilterController_) {
         DataRestrictMode mode;
         mode.filterMode = DataRestrictModeType::DISABLE;
         if (!dataFilterController_->sendSetDataRestrictMode(mode)) {
-            LOG(ERROR, __FUNCTION__, " sendSetDataRestrictMode is failed");
+            LOGFE("sendSetDataRestrictMode is failed");
         }
         return true;
     } else {
-        LOG(ERROR, __FUNCTION__, " dataFilterController is not ready");
+        LOGFE("dataFilterController is not ready");
     }
     return false;
 }
 
 void NAOIpTrigger::onEventRejected(shared_ptr<Event> event, EventStatus reason) {
-    LOG(DEBUG, __FUNCTION__, " reason = ", (int)reason);
+    LOGFD("reason = %d", (int)reason);
     if (event->getTriggeredState() == TcuActivityState::SUSPEND
         && reason == EventStatus::REJECTED_INVALID_STATE_TRANSITION) {
         if (tcpKeepAliveHandler_) {
@@ -144,7 +144,7 @@ void NAOIpTrigger::onEventRejected(shared_ptr<Event> event, EventStatus reason) 
 }
 
 void NAOIpTrigger::onEventProcessed(shared_ptr<Event> event, bool success) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
 
     if (success) {
         if (event->getTriggeredState() == TcuActivityState::SUSPEND) {
@@ -162,7 +162,7 @@ void NAOIpTrigger::onEventProcessed(shared_ptr<Event> event, bool success) {
 }
 
 void NAOIpTrigger::preProcessEvent(shared_ptr<Event> event) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     if (event->getTriggeredState() == TcuActivityState::RESUME) {
         disableFilter();
         RefAppUtils::logKpiFile("disabled filter");
@@ -170,7 +170,7 @@ void NAOIpTrigger::preProcessEvent(shared_ptr<Event> event) {
 }
 
 void NAOIpTrigger::triggerEvent(TcuActivityState eventState, std::string machineName) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     std::shared_ptr<Event> event
         = std::make_shared<Event>(eventState, machineName, TriggerType::NAOIP_TRIGGER);
     if (event) {
@@ -178,20 +178,20 @@ void NAOIpTrigger::triggerEvent(TcuActivityState eventState, std::string machine
             RefAppUtils::logKpiFile(event);
             eventManager_->pushEvent(event);
         } else {
-            LOG(ERROR, __FUNCTION__, "  event manager is not available ");
+            LOGFE("event manager is not available");
         }
     } else {
-        LOG(ERROR, __FUNCTION__, " unable to create event");
+        LOGFE("unable to create event");
     }
 }
 
 bool NAOIpTrigger::validateTrigger(
     char *buffer, int length, TcuActivityState &tcuActivityState, std::string &machineName) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     string text(buffer, length);
     // to avoid \n in a string which might lead to not matching trigger text
     text.erase(std::remove(text.begin(), text.end(), '\n'), text.cend());
-    LOG(DEBUG, __FUNCTION__, text);
+    LOGFD("%s", text.c_str());
     size_t deliminatorPosition = 0;
     if ((deliminatorPosition = text.find(MACHINE_NAME_DELIMINATOR)) != std::string::npos) {
         machineName
@@ -199,9 +199,9 @@ bool NAOIpTrigger::validateTrigger(
         text = text.substr(0, deliminatorPosition);
     }
     if (triggerText_.find(text) == triggerText_.end()) {
-        LOG(ERROR, __FUNCTION__, " invalid trigger text, text = ", text);
+        LOGFE("invalid trigger text, text = %s", text.c_str());
     } else {
-        LOG(INFO, __FUNCTION__, " valid trigger text, text = ", text);
+        LOGFI("valid trigger text, text = %s", text.c_str());
         tcuActivityState = triggerText_[text];
         return true;
     }
@@ -209,7 +209,7 @@ bool NAOIpTrigger::validateTrigger(
 }
 
 void NAOIpTrigger::onDataRestrictModeChange(DataRestrictMode mode) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     if (mode.filterMode == DataRestrictModeType::DISABLE) {
         eventManager_->holdWakeLock("DataFilterDisabled");
         std::unique_lock<std::mutex> lock(messageMtx_);
@@ -229,14 +229,14 @@ void NAOIpTrigger::onDataRestrictModeChange(DataRestrictMode mode) {
 void NAOIpTrigger::messageReceived(
     IPMessage msg, int length, std::shared_ptr<Connection> connection) {
     eventManager_->holdWakeLock("MessageReceived");
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     TcuActivityState triggerState = TcuActivityState::UNKNOWN;
     std::string machineName       = ALL_MACHINES;
     if (validateTrigger(msg.msg, length, triggerState, machineName)) {
         triggerEvent(triggerState, machineName);
     } else {
         RefAppUtils::logKpiFile("received TCP");
-        LOG(ERROR, __FUNCTION__, " trigger not match ");
+        LOGFE("trigger not match");
         if (eventManager_->getActivityState() == TcuActivityState::SUSPEND) {
             if (tcpKeepAliveHandler_) {
                 tcpKeepAliveHandler_->stopKAOffload();
@@ -251,7 +251,7 @@ void NAOIpTrigger::messageReceived(
 }
 
 bool NAOIpTrigger::loadConfig() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     std::map<std::string, TcuActivityState> expectedTrigger{
         {TRIGGER_SUSPEND, TcuActivityState::SUSPEND}, {TRIGGER_RESUME, TcuActivityState::RESUME},
         {TRIGGER_SHUTDOWN, TcuActivityState::SHUTDOWN}};
@@ -261,14 +261,14 @@ bool NAOIpTrigger::loadConfig() {
             configTriggerText = config_->getValue("NAOIP_TRIGGER", itr->first);
             if (!configTriggerText.empty()) {
                 if (triggerText_.find(configTriggerText) != triggerText_.end()) {
-                    LOG(ERROR, __FUNCTION__, " Error : same trigger for multiple state");
+                    LOGFE("Error : same trigger for multiple state");
                     return false;
                 }
                 triggerText_.insert({configTriggerText, itr->second});
             }
         }
     } catch (const std::invalid_argument &ia) {
-        LOG(ERROR, __FUNCTION__, " Error : invalid argument");
+        LOGFE("Error : invalid argument");
         return false;
     }
     return true;

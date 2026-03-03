@@ -9,17 +9,17 @@
 std::shared_ptr<CANTrigger> CANTrigger::canTrigger_ = nullptr;
 
 CANTrigger::CANTrigger(std::shared_ptr<EventManager> eventManager) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     eventManager_ = eventManager;
 }
 
 CANTrigger::~CANTrigger() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     deRegisterCanListener();
 }
 
 bool CANTrigger::init() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     config_ = ConfigParser::getInstance();
     loadTrigger();
     canWrapper_ = CanWrapper::getInstance();
@@ -27,7 +27,7 @@ bool CANTrigger::init() {
 }
 
 void CANTrigger::deRegisterCanListener() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     for (auto trigger : triggers_) {
         if (trigger.second.second) {
             canWrapper_->unregisterListener(trigger.second.second);
@@ -36,49 +36,49 @@ void CANTrigger::deRegisterCanListener() {
 }
 
 bool CANTrigger::registerCanListener() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     bool status = true;
     for (auto trigger : triggers_) {
         if (trigger.first) {
-            LOG(INFO, __FUNCTION__, " trigger id ", trigger.first);
-            // registering for CAN trigger to receive notifications when new CAN messages arrive 
+            LOGFI("trigger id %u", trigger.first);
+            // registering for CAN trigger to receive notifications when new CAN messages arrive
             RegistrationToken token = canWrapper_->registerListener(trigger.first, CwBase::MASK29,
                 CANTrigger::triggerEvent, this, 0, CwBase::IFACE_ANY);
             if (token) {
                 trigger.second.second = token;
-                LOG(DEBUG, __FUNCTION__, " registered for  id ", trigger.first);
+                LOGFD("registered for id %u", trigger.first);
             } else {
                 status = false;
-                LOG(ERROR, __FUNCTION__, " unable to register for ", trigger.first);
+                LOGFE("unable to register for %u", trigger.first);
             }
         } else {
-            LOG(ERROR, __FUNCTION__, " could not register for ", trigger.first);
+            LOGFE("could not register for %u", trigger.first);
         }
     }
     return status;
 }
 
 void CANTrigger::onEventRejected(shared_ptr<Event> event, EventStatus reason) {
-    LOG(DEBUG, __FUNCTION__, " ", event->toString());
+    LOGFD("%s", event->toString().c_str());
 }
 
 void CANTrigger::onEventProcessed(shared_ptr<Event> event, bool success) {
-    LOG(DEBUG, __FUNCTION__, " ", event->toString());
+    LOGFD("%s", event->toString().c_str());
 }
 
 void CANTrigger::triggerEvent(CwFrame *pf, void *userData, int ifNo) {
     CANTrigger *canTriggerPtr = (CANTrigger *)userData;
     if (!canTriggerPtr) {
-        LOG(ERROR, __FUNCTION__, " no can trigger instance available ");
+        LOGFE("no can trigger instance available");
         return;
     }
     canTriggerPtr->eventManager_->holdWakeLock("CANReceived");
-    LOG(DEBUG, __FUNCTION__);
-    LOG(DEBUG, __FUNCTION__, " received frame id = ", pf->getId());
+    LOGFD();
+    LOGFD("received frame id = %u", pf->getId());
     std::shared_ptr<Event> eventPtr;
     for (auto trigger : canTriggerPtr->triggers_) {
         // ignore identifier extension (IDE) bit of CAN frame ID
-        LOG(DEBUG, __FUNCTION__, " compare with trigger id = ", trigger.first);
+        LOGFD("compare with trigger id = %u", trigger.first);
         if (trigger.first << 1 == pf->getId() << 1) {
             std::string machineName = "";
             int dataLength          = pf->getDataLen();
@@ -90,11 +90,11 @@ void CANTrigger::triggerEvent(CwFrame *pf, void *userData, int ifNo) {
                     machineName       = std::string((char const *)pdata);
                     free(pdata);
                 } else {
-                    LOG(ERROR, __FUNCTION__, " memory allocation failed to fetch CAN frame ");
+                    LOGFE("memory allocation failed to fetch CAN frame");
                 }
             }
 
-            LOG(DEBUG, __FUNCTION__, " machineName ", machineName, " ,machineName.length() ",
+            LOGFD("machineName %s, machineName.length() %zu", machineName.c_str(),
                 machineName.length());
 
             if (machineName.empty()) {
@@ -111,28 +111,28 @@ void CANTrigger::triggerEvent(CwFrame *pf, void *userData, int ifNo) {
             RefAppUtils::logKpiFile(eventPtr);
             canTriggerPtr->eventManager_->pushEvent(eventPtr);
         } else {
-            LOG(ERROR, __FUNCTION__, "  event manager is not available ");
+            LOGFE("event manager is not available");
         }
     } else {
-        LOG(ERROR, __FUNCTION__, " unable to create event");
+        LOGFE("unable to create event");
     }
     canTriggerPtr->eventManager_->releaseWakeLock("CANReceived");
 }
 
 std::shared_ptr<CANTrigger> CANTrigger::getInstance(std::shared_ptr<EventManager> eventManager) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     if (!canTrigger_ && eventManager) {
         CANTrigger::canTrigger_ = std::make_shared<CANTrigger>(eventManager);
     }
 
     if (!CANTrigger::canTrigger_) {
-        LOG(ERROR, __FUNCTION__, " failed to create CANTrigger instance");
+        LOGFE("failed to create CANTrigger instance");
     }
     return CANTrigger::canTrigger_;
 }
 
 bool CANTrigger::loadTrigger() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     std::map<std::string, TcuActivityState> expectedTrigger{
         {TRIGGER_SUSPEND, TcuActivityState::SUSPEND}, {TRIGGER_RESUME, TcuActivityState::RESUME},
         {TRIGGER_SHUTDOWN, TcuActivityState::SHUTDOWN}};
@@ -144,14 +144,14 @@ bool CANTrigger::loadTrigger() {
             if (!configText.empty()) {
                 triggerCANId = std::stoul(configText, nullptr, 16);
                 if (triggers_.find(triggerCANId) != triggers_.end()) {
-                    LOG(ERROR, __FUNCTION__, " Error : same trigger for multiple state");
+                    LOGFE("Error : same trigger for multiple state");
                     return false;
                 }
                 triggers_.insert({triggerCANId, {itr->second, 0}});
             }
         }
     } catch (const std::invalid_argument &ia) {
-        LOG(ERROR, __FUNCTION__, " Error : invalid argument");
+        LOGFE("Error : invalid argument");
         return false;
     }
     return true;

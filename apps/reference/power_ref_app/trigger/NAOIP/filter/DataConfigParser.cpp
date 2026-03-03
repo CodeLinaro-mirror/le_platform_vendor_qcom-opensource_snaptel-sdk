@@ -34,7 +34,7 @@ DataConfigParser::DataConfigParser(std::string section, std::string configFile) 
         section_ = section;
         readConfigFile(configFilePath);
     } else {
-        LOG(DEBUG, __FUNCTION__, " Config file does not exists: ", configFilePath);
+        LOGFD(" Config file does not exists: %s", configFilePath);
     }
 }
 

@@ -689,20 +689,20 @@ bool RefAppUtils::isUDP() {
     std::string proto
         = ConfigParser::getInstance()->getValue("communication", "TRANSPORT_PROTOCOL");
     if (!proto.compare("UDP")) {
-        LOG(DEBUG, __FUNCTION__, "Using UDP communication");
+        LOGFD("Using UDP communication");
         return true;
     }
-    LOG(DEBUG, __FUNCTION__, "Using TCP communication");
+    LOGFD("Using TCP communication");
     return false;
 }
 
 bool RefAppUtils::isClient() {
     std::string value = ConfigParser::getInstance()->getValue("communication", "ROLE");
     if (!value.compare("SERVER")) {
-        LOG(DEBUG, __FUNCTION__, " configured as server");
+        LOGFD("configured as server");
         return false;
     }
-    LOG(DEBUG, __FUNCTION__, " not server default config as client ", value);
+    LOGFD("not server default config as client %s", value.c_str());
     return true;
 }
 
@@ -716,7 +716,7 @@ std::vector<std::shared_ptr<Connection>> RefAppUtils::getConnectionConfigs() {
     for (auto socketConnectionStr : allSocketConnectionsStr) {
         std::shared_ptr<Connection> connection = std::make_shared<Connection>();
         if (!connection) {
-            LOG(ERROR, __FUNCTION__, " Failed to create Connection object");
+            LOGFE(" Failed to create Connection object");
             continue;
         }
         std::string value = socketConnectionStr["ROLE"];
@@ -747,46 +747,46 @@ std::vector<std::shared_ptr<Connection>> RefAppUtils::getConnectionConfigs() {
         try {
             connection->serverPort = std::stoi(serverPortValue);
         } catch (const std::exception &e) {
-            LOG(WARNING, __FUNCTION__, " Invalid port format: ", serverPortValue);
+            LOGFW(" Invalid port format: %s", serverPortValue.c_str());
             connection->serverPort = 0;
         }
 
         try {
             connection->profileId = std::stoi(profileIdValue);
         } catch (const std::exception &e) {
-            LOG(WARNING, __FUNCTION__, " Invalid profileIdValue format: ", profileIdValue);
+            LOGFW(" Invalid profileIdValue format: %s", profileIdValue.c_str());
             connection->profileId = 0;
         }
 
         try {
             connection->slotId = static_cast<SlotId>(std::stoi(slotIdValue));
         } catch (const std::exception &e) {
-            LOG(WARNING, __FUNCTION__, " Invalid slotId: ", slotIdValue);
+            LOGFW(" Invalid slotId: %s", slotIdValue.c_str());
             connection->slotId = DEFAULT_SLOT_ID;
         }
 
         try {
             connection->keepAliveInterval = std::stoul(keepAliveIntervalValue);
         } catch (const std::exception &e) {
-            LOG(WARNING, __FUNCTION__, " Invalid keepAliveInterval: ", keepAliveIntervalValue);
+            LOGFW(" Invalid keepAliveInterval: %s", keepAliveIntervalValue.c_str());
             connection->keepAliveInterval = 60000;
         }
         connectionList.push_back(connection);
-        LOG(DEBUG, __FUNCTION__, " connection: ", connection->toString());
+        LOGFD(" connection: %s", connection->toString().c_str());
     }
     return connectionList;
 }
 
 bool RefAppUtils::isDataFilterInstallationEnabled() {
     std::string value = ConfigParser::getInstance()->getValue("NAOIP_TRIGGER", "DATA_FILTER");
-    LOG(DEBUG, __FUNCTION__, " value: ", value);
+    LOGFD(" value: %s", value.c_str());
     return RefAppUtils::stringToBool(value);
 }
 
 bool RefAppUtils::isAutoExitEnabled() {
     std::string value
         = ConfigParser::getInstance()->getValue("NAOIP_TRIGGER", "DATA_FILTER_AUTO_EXIT");
-    LOG(DEBUG, __FUNCTION__, " value: ", value);
+    LOGFD(" value: %s", value.c_str());
     return RefAppUtils::stringToBool(value);
 }
 
@@ -796,14 +796,14 @@ bool RefAppUtils::stringToBool(std::string enable) {
     } else if (!enable.compare("DISABLE")) {
         return false;
     } else {
-        LOG(ERROR, __FUNCTION__, " Invalid value ");
+        LOGFE("Invalid value");
         return false;
     }
 }
 
 bool RefAppUtils::isWakeupListenerEnabled() {
     std::string value = ConfigParser::getInstance()->getValue("WAKEUP_LISTENER", "WAKEUP_LISTENER");
-    LOG(DEBUG, __FUNCTION__, " value: ", value);
+    LOGFD(" value: %s", value.c_str());
     return RefAppUtils::stringToBool(value);
 }
 
@@ -823,7 +823,7 @@ std::bitset<32> RefAppUtils::getTriggerResumeOnWakeupConfig() {
 
 void RefAppUtils::logKpiFile(std::shared_ptr<Event> event) {
     if (!kpiLoggingEnabled_) {
-        LOG(DEBUG, __FUNCTION__, "KPI logging is disabled");
+        LOGFD("KPI logging is disabled");
         return;
     }
 
@@ -839,7 +839,7 @@ void RefAppUtils::logKpiFile(std::shared_ptr<Event> event) {
             log = "resume";
             break;
         default:
-            LOG(ERROR, __FUNCTION__, "Inappropriate TCU-activity state for an acknowledgement");
+            LOGFE("Inappropriate TCU-activity state for an acknowledgement");
             log = "trigger";
     }
 
@@ -853,13 +853,13 @@ void RefAppUtils::logKpiFile(std::shared_ptr<Event> event) {
         kpi_output << "M - Refd " << log << ": " << ts.tv_sec << "." << ts.tv_nsec;
         kpi_output.close();
     } else {
-        LOG(DEBUG, __FUNCTION__, "Unable to open KPI file ", errno, ": ", strerror(errno));
+        LOGFD("Unable to open KPI file %d : %s", errno, strerror(errno));
     }
 }
 
 void RefAppUtils::logKpiFile(const std::string &message) {
     if (!kpiLoggingEnabled_) {
-        LOG(DEBUG, __FUNCTION__, "KPI logging is disabled");
+        LOGFD("KPI logging is disabled");
         return;
     }
 
@@ -870,18 +870,18 @@ void RefAppUtils::logKpiFile(const std::string &message) {
         kpi_output << "M - Refd " << message << ": " << ts.tv_sec << "." << ts.tv_nsec;
         kpi_output.close();
     } else {
-        LOG(DEBUG, __FUNCTION__, "Unable to open KPI file ", errno, ": ", strerror(errno));
+        LOGFD("Unable to open KPI file %d : %s", errno, strerror(errno));
     }
 }
 
 void RefAppUtils::logKpiFile(const char *message, size_t length) {
     if (!kpiLoggingEnabled_) {
-        LOG(DEBUG, __FUNCTION__, "KPI logging is disabled");
+        LOGFD("KPI logging is disabled");
         return;
     }
 
     if (message == nullptr || length == 0) {
-        LOG(ERROR, __FUNCTION__, "Invalid message pointer or length");
+        LOGFE("Invalid message pointer or length");
         return;
     }
 
@@ -894,13 +894,13 @@ void RefAppUtils::logKpiFile(const char *message, size_t length) {
         kpi_output << ": " << ts.tv_sec << "." << ts.tv_nsec;
         kpi_output.close();
     } else {
-        LOG(DEBUG, __FUNCTION__, "Unable to open KPI file ", errno, ": ", strerror(errno));
+        LOGFD("Unable to open KPI file %d : %s", errno, strerror(errno));
     }
 }
 
 void RefAppUtils::setKpiLoggingEnabled(bool enable) {
     kpiLoggingEnabled_ = enable;
-    LOG(DEBUG, __FUNCTION__, "KPI logging ", (enable ? "enabled" : "disabled"));
+    LOGFD("KPI logging %s", (enable ? "enabled" : "disabled"));
 }
 
 bool RefAppUtils::isKpiLoggingEnabled() {

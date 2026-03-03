@@ -82,11 +82,11 @@ Status AudioSession::createStream(StreamConfig config) {
                 return statusFromResponse;
             }
         } else {
-            LOG(ERROR, "Invalid audio Manager");
+            LOGE("Invalid audio Manager");
             return Status::FAILED;
         }
     } else {
-        LOG(DEBUG, "Stream already exist");
+        LOGD("Stream already exist");
         return Status::ALREADY;
     }
     return statusFromRequest;
@@ -117,11 +117,11 @@ Status AudioSession::deleteStream() {
                 return statusFromResponse;
             }
         } else {
-            LOG(ERROR, "Invalid audio Manager");
+            LOGE("Invalid audio Manager");
             return Status::FAILED;
         }
     } else {
-        LOG(ERROR, "No stream exists");
+        LOGE("No stream exists");
         return Status::FAILED;
     }
     return statusFromRequest;
@@ -150,7 +150,7 @@ Status AudioSession::getStreamDevice(std::vector<DeviceType> &devices) {
             return statusFromResponse;
         }
     } else {
-        LOG(ERROR, "No stream exists");
+        LOGE("No stream exists");
         return Status::FAILED;
     }
     return statusFromRequest;
@@ -177,7 +177,7 @@ Status AudioSession::setStreamDevice(std::vector<DeviceType> devices) {
             return statusFromResponse;
         }
     } else {
-        LOG(ERROR, "No stream exists");
+        LOGE("No stream exists");
         return Status::FAILED;
     }
     return statusFromRequest;
@@ -204,7 +204,7 @@ Status AudioSession::setVolume(StreamVolume streamVol) {
             return statusFromResponse;
         }
     } else {
-        LOG(ERROR, "No stream exists");
+        LOGE("No stream exists");
         return Status::FAILED;
     }
     return statusFromRequest;
@@ -232,7 +232,7 @@ Status AudioSession::getVolume(StreamVolume &volume) {
             return statusFromResponse;
         }
     } else {
-        LOG(ERROR, "No stream exists");
+        LOGE("No stream exists");
         return Status::FAILED;
     }
     return statusFromRequest;
@@ -259,7 +259,7 @@ Status AudioSession::setMute(StreamMute mute) {
             return statusFromResponse;
         }
     } else {
-        LOG(ERROR, "No stream exists");
+        LOGE("No stream exists");
         return Status::FAILED;
     }
     return statusFromRequest;
@@ -287,7 +287,7 @@ Status AudioSession::getMute(StreamMute &muteStatus) {
             return statusFromResponse;
         }
     } else {
-        LOG(ERROR, "No stream exists");
+        LOGE("No stream exists");
         return Status::FAILED;
     }
     return statusFromRequest;

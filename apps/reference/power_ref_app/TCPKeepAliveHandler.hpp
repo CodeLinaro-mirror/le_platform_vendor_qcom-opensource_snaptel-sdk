@@ -35,6 +35,7 @@ class TCPKeepAliveHandler : public ISocketConnectionListener,
     bool init();
     bool startKAOffload();
     void stopKAOffload();
+    bool sendMessageToAll(std::string string);
 
     void onConnect(std::shared_ptr<Connection> connection) override;
     void messageReceived(

@@ -39,6 +39,9 @@ enum TriggerType {
     SMS_TRIGGER,
     GPIO_TRIGGER,
     CAN_TRIGGER,
+    WAKEUP_IND_TRIGGER,
+    CONSOLE_TRIGGER,
+    TIMER_TRIGGER,
     UNKNOWN
 };
 

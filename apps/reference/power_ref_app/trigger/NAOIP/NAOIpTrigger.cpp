@@ -54,16 +54,12 @@ bool NAOIpTrigger::init() {
                 return false;
             }
         }
-        if (!RefAppUtils::isUDP() && RefAppUtils::isKeepAliveEnabled()) {
-            tcpKeepAliveHandler_ = TCPKeepAliveHandler::getInstance(eventManager_);
-            if (tcpKeepAliveHandler_ && tcpKeepAliveHandler_->init()) {
-                LOG(DEBUG, __FUNCTION__, " naoIpTrigger init succeed");
-            } else {
-                LOG(ERROR, __FUNCTION__, " naoIpTrigger init failed");
-                return false;
-            }
+        tcpKeepAliveHandler_ = TCPKeepAliveHandler::getInstance(eventManager_);
+        if (tcpKeepAliveHandler_ && tcpKeepAliveHandler_->init()) {
+            LOG(DEBUG, __FUNCTION__, " naoIpTrigger init succeed");
         } else {
-            LOG(DEBUG, __FUNCTION__, " keep alive is not enabled");
+            LOG(ERROR, __FUNCTION__, " naoIpTrigger init failed");
+            return false;
         }
 
         dataFilterController_ = std::make_shared<DataFilterController>();
@@ -144,7 +140,6 @@ void NAOIpTrigger::onEventRejected(shared_ptr<Event> event, EventStatus reason) 
         if (tcpKeepAliveHandler_) {
             tcpKeepAliveHandler_->stopKAOffload();
         }
-        disableFilter();
     }
 }
 
@@ -158,21 +153,29 @@ void NAOIpTrigger::onEventProcessed(shared_ptr<Event> event, bool success) {
             }
             enableFilter();
         } else if (event->getTriggeredState() == TcuActivityState::RESUME) {
+            RefAppUtils::logKpiFile("resumed to PMD");
             if (tcpKeepAliveHandler_) {
                 tcpKeepAliveHandler_->stopKAOffload();
             }
-            disableFilter();
         }
+    }
+}
+
+void NAOIpTrigger::preProcessEvent(shared_ptr<Event> event) {
+    LOG(DEBUG, __FUNCTION__);
+    if (event->getTriggeredState() == TcuActivityState::RESUME) {
+        disableFilter();
+        RefAppUtils::logKpiFile("disabled filter");
     }
 }
 
 void NAOIpTrigger::triggerEvent(TcuActivityState eventState, std::string machineName) {
     LOG(DEBUG, __FUNCTION__);
-
     std::shared_ptr<Event> event
         = std::make_shared<Event>(eventState, machineName, TriggerType::NAOIP_TRIGGER);
     if (event) {
         if (eventManager_) {
+            RefAppUtils::logKpiFile(event);
             eventManager_->pushEvent(event);
         } else {
             LOG(ERROR, __FUNCTION__, "  event manager is not available ");
@@ -225,13 +228,14 @@ void NAOIpTrigger::onDataRestrictModeChange(DataRestrictMode mode) {
 
 void NAOIpTrigger::messageReceived(
     IPMessage msg, int length, std::shared_ptr<Connection> connection) {
-    LOG(DEBUG, __FUNCTION__);
     eventManager_->holdWakeLock("MessageReceived");
+    LOG(DEBUG, __FUNCTION__);
     TcuActivityState triggerState = TcuActivityState::UNKNOWN;
     std::string machineName       = ALL_MACHINES;
     if (validateTrigger(msg.msg, length, triggerState, machineName)) {
         triggerEvent(triggerState, machineName);
     } else {
+        RefAppUtils::logKpiFile("received TCP");
         LOG(ERROR, __FUNCTION__, " trigger not match ");
         if (eventManager_->getActivityState() == TcuActivityState::SUSPEND) {
             if (tcpKeepAliveHandler_) {
@@ -241,6 +245,7 @@ void NAOIpTrigger::messageReceived(
             enableFilter();
         }
     }
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     eventManager_->releaseWakeLock("MessageReceived");
     messageCv_.notify_all();
 }

@@ -5,6 +5,7 @@
 
 #include "EventManager.hpp"
 #include <algorithm>
+#include "common/RefAppUtils.hpp"
 
 EventManager *EventManager::instance = nullptr;
 
@@ -79,6 +80,27 @@ void EventManager::cleanup() {
     if (tcuActivityStateMgr_)
         tcuActivityStateMgr_.reset();
     eventQueue_.clear();
+}
+
+void EventManager::notifyPreProcessEvent(shared_ptr<Event> event) {
+    LOG(DEBUG, __FUNCTION__, " event = ", event->toString());
+
+    // TriggerType
+    for (std::vector<weak_ptr<IEventListener>>::iterator it
+         = eventListeners_[TriggerType::UNKNOWN].begin();
+         it != eventListeners_[TriggerType::UNKNOWN].end(); ++it) {
+        if (std::shared_ptr<IEventListener> eventListener = (*it).lock()) {
+            eventListener->preProcessEvent(event);
+        }
+    }
+
+    for (std::vector<weak_ptr<IEventListener>>::iterator it
+         = eventListeners_[event->getTriggerType()].begin();
+         it != eventListeners_[event->getTriggerType()].end(); ++it) {
+        if (std::shared_ptr<IEventListener> eventListener = (*it).lock()) {
+            eventListener->preProcessEvent(event);
+        }
+    }
 }
 
 void EventManager::notifyOnEventRejected(shared_ptr<Event> event, EventStatus status) {
@@ -235,6 +257,7 @@ void EventManager::pushEvent(shared_ptr<Event> event) {
 
 void EventManager::setActivityState(shared_ptr<Event> event) {
     LOG(DEBUG, __FUNCTION__);
+    notifyPreProcessEvent(event);
     tcuActivityStateMgr_->setActivityState(
         event->getTriggeredState(), event->getMachineName(), [event, this](ErrorCode errorCode) {
             if (errorCode != telux::common::ErrorCode::SUCCESS) {
@@ -245,7 +268,6 @@ void EventManager::setActivityState(shared_ptr<Event> event) {
                 if (event->getTriggeredState() == TcuActivityState::RESUME) {
                     // Acknowledgment message (onSlaveAckStatusUpdate) is not expected for resume.
                     processedEventHandler(EventStatus::SUCCEED);
-                    releaseWakeLock();
                 } else {
                     event->setEventStatus(EventStatus::IN_PROGRESS_TCU_ACTIVITY);
                 }

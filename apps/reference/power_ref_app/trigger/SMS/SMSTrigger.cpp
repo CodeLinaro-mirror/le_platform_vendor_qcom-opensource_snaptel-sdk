@@ -8,6 +8,7 @@
 #include <future>
 #include <telux/common/DeviceConfig.hpp>
 #include <telux/tel/PhoneFactory.hpp>
+#include "common/RefAppUtils.hpp"
 
 SMSTrigger::SMSTrigger(std::shared_ptr<EventManager> eventManager) {
     LOG(DEBUG, __FUNCTION__);
@@ -122,6 +123,7 @@ void SMSTrigger::triggerEvent(TcuActivityState eventState, std::string machineNa
         = std::make_shared<Event>(eventState, machineName, TriggerType::SMS_TRIGGER);
     if (event) {
         if (eventManager_) {
+            RefAppUtils::logKpiFile(event);
             eventManager_->pushEvent(event);
         } else {
             LOG(ERROR, __FUNCTION__, "  event manager is not available ");

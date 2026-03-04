@@ -41,11 +41,11 @@ bool isEqual(std::string &str1, std::string &str2) {
  */
 ConfigParser::ConfigParser(std::string configFile) {
     LOG(DEBUG, __FUNCTION__);
-    std::string configFilePath = configFile;
-    if (fileExists(configFilePath)) {
-        readConfigFile(configFilePath);
+    configFile_ = configFile;
+    if (fileExists(configFile_)) {
+        readConfigFile(configFile_);
     } else {
-        LOG(DEBUG, __FUNCTION__, " Config file does not exists: ", configFilePath);
+        LOG(DEBUG, __FUNCTION__, " Config file does not exists: ", configFile_);
     }
 }
 
@@ -96,6 +96,72 @@ std::map<std::string, std::string> ConfigParser::getSectionValue(std::string sec
         std::map<std::string, std::string> m;
         return m;
     }
+}
+
+std::vector<std::map<std::string, std::string>> ConfigParser::getDuplicateSectionValue(
+    std::string section) {
+    LOG(DEBUG, __FUNCTION__);
+    std::vector<std::map<std::string, std::string>> bunchOfRequestedSectionMap;
+    std::map<std::string, std::string> requestedSectionMap;
+
+    // regular expressions to process configuration files filter section
+    std::regex sectionMatch("\\[(.*?)\\]");
+    std::regex requestedSectionMatch("\\[" + section + "\\]");
+    // regular expressions to process configuration files key=value pairs
+    std::regex keyValueMatch_("^(?!#)(\\w+)=([^\\+]+(?!\\+{3}))");
+
+    // Create a file stream from the file name
+    std::ifstream configFileStream(configFile_);
+
+    // Iterate through each parameter in the file and read the key value pairs
+    std::string param;
+    bool requestSectionMatch = false;
+
+    while (std::getline(configFileStream, param)) {
+
+        param = trim(param);
+        // trim all carriage return \r from the end of string.
+        param.erase(std::remove(param.begin(), param.end(), '\r'), param.end());
+
+        // Trim all the spaces between fields for regex to work
+        std::string::iterator end_pos = std::remove(param.begin(), param.end(), ' ');
+        param.erase(end_pos, param.end());
+
+        if (param.length() > 0) {
+            std::smatch match;
+            if (std::regex_search(param, match, sectionMatch)) {
+                if (std::regex_search(param, match, requestedSectionMatch)) {
+                    requestSectionMatch = true;
+                    if (!requestedSectionMap.empty()) {
+                        bunchOfRequestedSectionMap.emplace_back(requestedSectionMap);
+                    }
+                    requestedSectionMap = std::map<std::string, std::string>();
+                } else {
+                    requestSectionMatch = false;
+                }
+            } else if (std::regex_search(param, match, keyValueMatch_)) {
+                if (requestSectionMatch) {
+                    // trim the leading and trailing spaces
+                    std::string value1          = trim(match.str(1));
+                    std::string value2          = trim(match.str(2));
+                    requestedSectionMap[value1] = value2;
+                }
+            }
+        }
+    }
+
+    if (!requestedSectionMap.empty()) {
+        bunchOfRequestedSectionMap.emplace_back(requestedSectionMap);
+    }
+
+    for (size_t i = 0; i < bunchOfRequestedSectionMap.size(); ++i) {
+        LOG(DEBUG, __FUNCTION__, "Map ", i + 1);
+        for (const auto &pair : bunchOfRequestedSectionMap[i]) {
+            LOG(DEBUG, __FUNCTION__, "  ", pair.first, " : ", pair.second);
+        }
+        LOG(DEBUG, __FUNCTION__, "-----------------");
+    }
+    return bunchOfRequestedSectionMap;
 }
 
 /**

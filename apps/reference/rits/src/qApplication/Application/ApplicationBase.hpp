@@ -169,7 +169,7 @@ typedef struct {
     bsm_data bs = {0};
 } logData;
 
-typedef enum {FREE, VERIF_DONE, PP_DONE} AsyncCbState;
+typedef enum {FREE, VERIF_DONE, QUEUED} AsyncCbState;
 
 typedef struct {
     int indexToData;

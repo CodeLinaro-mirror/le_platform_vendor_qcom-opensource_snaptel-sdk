@@ -133,7 +133,17 @@ class AerolinkSecurity : public SecurityService {
             MisbehaviorStats* misbehaviorStat,
             SecuredMessageParserC* smp);
         void fillBsmDataForMbd(Kinematics* rvBsmData);
+        static void registerCallbackSemaphore(sem_t* sem);
+        static void unregisterCallbackSemaphore(sem_t* sem);
+        static bool isSemaphoreValid(sem_t* sem);
+        static bool postSemaphoreIfValid(sem_t* sem);
+        static bool isShutdownInProgress() {
+            return shutdownInProgress_.load(std::memory_order_acquire);
+        }
 
+        static void setShutdownInProgress(bool value) {
+            shutdownInProgress_.store(value, std::memory_order_release);
+        }
     private:
        // ctor for aerolink w/o encryption
        AerolinkSecurity(const std::string ctxName, uint16_t countryCode);
@@ -185,6 +195,59 @@ class AerolinkSecurity : public SecurityService {
         uint8_t keyGenMethod_;
         char lcmName_[50] = "\0";
         IDChangeData* idChangeData_;
+        // Semaphore manager - tracks valid semaphores
+        struct SemaphoreManager {
+            std::set<sem_t*> activeSemaphores;
+            std::mutex mutex;
+            std::atomic<bool> shutdownInitiated{false};
+            void registerSemaphore(sem_t* sem) {
+                std::lock_guard<std::mutex> lock(mutex);
+                activeSemaphores.insert(sem);
+            }
+
+            void unregisterSemaphore(sem_t* sem) {
+                std::lock_guard<std::mutex> lock(mutex);
+                activeSemaphores.erase(sem);
+            }
+
+            bool isValid(sem_t* sem) {
+                std::lock_guard<std::mutex> lock(mutex);
+                return activeSemaphores.find(sem) != activeSemaphores.end();
+            }
+
+            void clear() {
+                std::lock_guard<std::mutex> lock(mutex);
+                activeSemaphores.clear();
+            }
+            bool postSemaphoreIfValid(sem_t* sem) {
+                if (sem == nullptr) {
+                    return false;
+                }
+
+                // Check shutdown flag first
+                if (shutdownInitiated.load(std::memory_order_acquire)) {
+                    // Safe path: Use mutex validation
+                    std::lock_guard<std::mutex> lock(mutex);
+
+                    if (activeSemaphores.find(sem) == activeSemaphores.end()) {
+                        return false;
+                    }
+
+                    sem_post(sem);
+                    return true;
+                }
+
+                // Fast path: Direct post (no lock)
+                sem_post(sem);
+                return true;
+            }
+            void initiateShutdown() {
+                shutdownInitiated.store(true, std::memory_order_release);
+            }
+        };
+
+        static SemaphoreManager semaphoreManager_;
+        static std::atomic<bool> shutdownInProgress_;
         bool enableMisbehavior;
         bool enableConsistency;
         bool enableRelevance;

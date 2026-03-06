@@ -258,6 +258,20 @@ public:
     */
     virtual int sspCheck(void* smp, uint8_t const* ssp) = 0;
 
+    /**
+     * Method to check if the ID change (pseudonym certificate change)
+     * has been successfully enabled and registered with the security
+     * service. ID change is considered enabled only when a valid LCM
+     * name is provided and the ID change callback registration with
+     * Aerolink security services has completed successfully during
+     * initialization.
+     * @param  None
+     * @return bool - Returns true if ID change is successfully
+     *                registered and enabled, false otherwise.
+     */
+    bool isIdChangeEnabled() const {
+        return idChangeEnabled_;
+    }
 protected:
     /**
     * Virtual method to setup and initialize security instance.
@@ -266,7 +280,7 @@ protected:
     */
     virtual int init() = 0;
 
-
+    bool idChangeEnabled_ = false;
     std::string SecurityCtxName_;
     uint16_t countryCode_;
 };

@@ -789,6 +789,9 @@ ApplicationBase::~ApplicationBase() {
     if(appVerbosity){
         std::cout << "ApplicationBase destructing" << std::endl;
     }
+
+    // Small delay to let signal handler thread see the flag
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
     if(badRadioSetup){
         if(appVerbosity){
             std::cerr << "radio flows were not set up properly\n";
@@ -797,12 +800,19 @@ ApplicationBase::~ApplicationBase() {
     }else{
         // call prepare for exit here again in case it wasn't called previously
         prepareForExit();
-
-        if(SecService){
-            SecService->lockIdChange();
-            SecService->deinit();
-            SecService.reset();
+        if (!threadsExited_) {
+            if (appVerbosity > 3) {
+                std::cout << "Warning: Threads not yet joined, waiting..." << std::endl;
+            }
+            waitForWorkerThreads();
         }
+        if (appVerbosity > 5) {
+            std::cout << "Starting security shutdown sequence..." << std::endl;
+        }
+        explicitSecurityShutdown();
+        //  Wait for security to fully shut down
+        waitForSecurityShutdown();
+
         if (enableDiagLog_ && utility_) {
             utility_->deInitDiagLog();
         }
@@ -827,6 +837,149 @@ ApplicationBase::~ApplicationBase() {
                 fclose(csvfp);
                 csvfp = nullptr;
             }
+        }
+    }
+}
+/**
+ * Wait for all worker threads to exit
+ */
+void ApplicationBase::waitForWorkerThreads() {
+    if (appVerbosity > 5) {
+        std::cout << "Waiting for " << workerThreads_.size()
+                  << " worker threads to exit..." << std::endl;
+    }
+    std::lock_guard<std::mutex> lock(threadsMutex_);
+    for (size_t i = 0; i < workerThreads_.size(); i++) {
+        auto& t = workerThreads_[i];
+        if (t.joinable()) {
+            try {
+                if (appVerbosity > 7) {
+                    std::cout << "Joining thread " << (i+1) << "/"
+                              << workerThreads_.size() << "..." << std::endl;
+                }
+                t.join();
+                if (appVerbosity > 7) {
+                    std::cout << "Thread " << (i+1) << " joined" << std::endl;
+                }
+            } catch (const std::exception& e) {
+                std::cerr << "Exception joining thread " << (i+1) << ": "
+                          << e.what() << std::endl;
+            } catch (...) {
+                std::cerr << "Unknown exception joining thread " << (i+1) << std::endl;
+            }
+        }
+    }
+    workerThreads_.clear();
+    threadsExited_ = true;
+
+    if (appVerbosity > 5) {
+        std::cout << "All worker threads have exited" << std::endl;
+    }
+}
+
+size_t ApplicationBase::getWorkerThreadCount() const {
+    std::lock_guard<std::mutex> lock(threadsMutex_);
+    return workerThreads_.size();
+}
+
+void ApplicationBase::explicitSecurityShutdown() {
+    if (SecService) {
+        try {
+            /* ---------------------------------------------------------------
+            * SHUTDOWN STRATEGY:
+            * 1. Set shutdown flag immediately to block all new callbacks
+            *    and security operations before teardown begins.
+            * 2. If ID change is enabled, attempt to lock with up to 5
+            *    retries (5 x 100ms) to prevent new certificate rotations.
+            *    Log FATAL error if all retries fail but proceed regardless.
+            * 3. Wait SEC_SHUTDOWN_SLEEP_TIME for in-progress operations to
+            *    drain, then call deinit() to release all security resources.
+            * 4. Wait additional 100ms post-deinit for full internal cleanup.
+            * ---------------------------------------------------------------
+            */
+            // Set shutdown flag BEFORE any shutdown operations
+            AerolinkSecurity::setShutdownInProgress(true);
+
+            if (appVerbosity > 5) {
+                std::cout << "Security shutdown flag set, blocking new callbacks" << std::endl;
+            }
+            if(SecService->isIdChangeEnabled())
+            {
+                // Retry lock acquisition with timeout
+                const int MAX_RETRIES = 5;
+                bool lockAcquired = false;
+                for (int i = 0; i < MAX_RETRIES && !lockAcquired; i++) {
+                    if (SecService->lockIdChange() == 0) {
+                        lockAcquired = true;
+                        break;
+                    }
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                }
+
+                if (!lockAcquired) {
+                    std::cerr << "FATAL: Failed to lock ID change after retries" << std::endl;
+                }
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(SEC_SHUTDOWN_SLEEP_TIME));
+            if (appVerbosity > 5) {
+                std::cout << "Calling SecService->deinit()..." << std::endl;
+            }
+            SecService->deinit();
+
+            if (appVerbosity > 5) {
+                std::cout << "SecService->deinit() completed" << std::endl;
+            }
+
+            // Additional wait to ensure deinit completes fully
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+        } catch (const std::exception& e) {
+            std::cerr << "Exception during security shutdown: " << e.what() << std::endl;
+        } catch (...) {
+            std::cerr << "Unknown exception during security shutdown" << std::endl;
+        }
+    }
+
+    securityShutdownComplete_ = true;
+
+    if (appVerbosity > 5) {
+        std::cout << "Security shutdown completed" << std::endl;
+    }
+}
+
+void ApplicationBase::waitForSecurityShutdown() {
+    auto start = std::chrono::steady_clock::now();
+
+    // Wait for security shutdown to complete
+    while (!securityShutdownComplete_) {
+        if (std::chrono::steady_clock::now() - start >
+            std::chrono::seconds(3)) {
+            std::cerr << "FATAL: Security shutdown timed out after 3 seconds!" << std::endl;
+            std::cerr << "Application cannot continue safely - terminating" << std::endl;
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    // Additional safety wait before destroying SecService
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    // Normal case: security shutdown completed successfully
+    if (SecService) {
+        if (appVerbosity > 5) {
+            std::cout << "Destroying security service..." << std::endl;
+        }
+
+        try {
+            // Reset the unique_ptr, which will call the destructor
+            SecService.reset();
+
+            if (appVerbosity > 5) {
+                std::cout << "Security service destroyed" << std::endl;
+            }
+        } catch (const std::exception& e) {
+            std::cerr << "Exception destroying security service: " << e.what() << std::endl;
+        } catch (...) {
+            std::cerr << "Unknown exception destroying security service" << std::endl;
         }
     }
 }
@@ -1025,50 +1178,57 @@ void ApplicationBase::vehicleEventReport(bool emergent,
     }
 }
 void ApplicationBase::prepareForExit() {
-    exitApp = true; 
-    if(badRadioSetup){
-        if(appVerbosity){
-            exitApp = true;
-        }
-    }else{
-        sem_post(&this->rx_sem);
-        sem_post(&this->log_sem);
-        sem_post(&idChangeData.idSem);
-
-        if(configuration.enableCongCtrl &&
-                    congestionControlManager && congCtrlInitialized){
-            if(congestionControlManager->
-                        getCongestionControlUserData()->congestionControlSem){
-                sem_post(congestionControlManager->
-                            getCongestionControlUserData()->congestionControlSem);
+    std::call_once(exitOnce_, [&]{
+        exitApp = true;
+        if(badRadioSetup){
+            if(appVerbosity){
+                exitApp = true;
             }
-            congestionControlManager->stopCongestionControl();
-            congCtrlInitialized = false;
-        }
+        }else{
+            sem_post(&this->rx_sem);
+            sem_post(&this->log_sem);
+            // Only post if security with LCM is enabled
+            if (configuration.enableSecurity &&
+                !configuration.lcmName.empty() &&
+                configuration.idChangeInterval) {
+                sem_post(&idChangeData.idSem);
+            }
 
-        {
+            if(configuration.enableCongCtrl &&
+                        congestionControlManager && congCtrlInitialized){
+                if(congestionControlManager->
+                            getCongestionControlUserData()->congestionControlSem){
+                    sem_post(congestionControlManager->
+                                getCongestionControlUserData()->congestionControlSem);
+                }
+                congestionControlManager->stopCongestionControl();
+                congCtrlInitialized = false;
+            }
+
+            {
             std::unique_lock<std::mutex> loc(stateMtx);
             stateCv.notify_all();
-        }
-        {
+            }
+            {
             lock_guard<std::mutex> lock(csvMutex);
             writeLogFinish = true;
             writeMutexCv.notify_all();
+            }
+            // notify all radio interface to prepare for exit
+            for (uint8_t i = 0; i<this->eventTransmits.size(); i++) {
+                this->eventTransmits[i].prepareForExit();
+            }
+            for (uint8_t i = 0; i < this->spsTransmits.size(); i++) {
+                this->spsTransmits[i].prepareForExit();
+            }
+            for (uint8_t i = 0; i < this->radioReceives.size(); i++) {
+                this->radioReceives[i].prepareForExit();
+            }
+            if (kinematicsReceive != nullptr) {
+                kinematicsReceive->close();
+            }
         }
-        // notify all radio interface to prepare for exit
-        for (uint8_t i = 0; i<this->eventTransmits.size(); i++) {
-            this->eventTransmits[i].prepareForExit();
-        }
-        for (uint8_t i = 0; i < this->spsTransmits.size(); i++) {
-            this->spsTransmits[i].prepareForExit();
-        }
-        for (uint8_t i = 0; i < this->radioReceives.size(); i++) {
-            this->radioReceives[i].prepareForExit();
-        }
-        if (kinematicsReceive != nullptr) {
-            kinematicsReceive->close();
-        }
-    }
+    });
 }
 
 bool ApplicationBase::pendingTillEmergency() {

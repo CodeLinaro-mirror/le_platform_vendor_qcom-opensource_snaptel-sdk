@@ -370,5 +370,10 @@ telux::common::ErrorCode SubsystemManagerStub::deRegisterListener(
     return telux::common::ErrorCode::SUCCESS;
 }
 
+telux::common::Status SubsystemManagerStub::triggerMpssRestart(MpssRestartResponseCb cb) {
+    LOG(DEBUG, __FUNCTION__);
+    return telux::common::Status::NOTSUPPORTED;
+}
+
 }  // End of namespace platform
 }  // End of namespace telux

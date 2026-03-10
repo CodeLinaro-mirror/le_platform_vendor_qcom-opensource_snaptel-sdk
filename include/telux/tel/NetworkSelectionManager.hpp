@@ -178,8 +178,8 @@ enum class NetworkScanType {
 struct NetworkScanInfo {
     NetworkScanType scanType; /**< Network scan type */
     RatMask ratMask; /**< Bit mask denotes which of the radio access technologies are set. ratMask
-                        is valid/set only when scanType is provided as
-                        NetworkScanType::USER_SPECIFIED_RAT */
+                          is valid or set only when scanType is provided as
+                          NetworkScanType::USER_SPECIFIED_RAT */
 };
 
 /**
@@ -265,12 +265,12 @@ struct LteDubiousCell {
  * The callback can be invoked from multiple different threads.
  * The implementation should be thread safe.
  *
- * @param [in] mode       @ref NetworkSelectionMode
+ * @param [in] mode       @ref telux::tel::NetworkSelectionMode
  * @param [in] error      Return code which indicates whether the operation
  *                        succeeded or not
  *                        @ref telux::common::ErrorCode
  *
- * @deprecated Use SelectionModeInfoCb API instead.
+ * @deprecated Use @ref telux::tel::SelectionModeInfoCb API instead.
  */
 using SelectionModeResponseCallback
     = std::function<void(NetworkSelectionMode mode, telux::common::ErrorCode error)>;
@@ -281,7 +281,8 @@ using SelectionModeResponseCallback
  * The callback can be invoked from multiple different threads.
  * The implementation should be thread safe.
  *
- * @param [in] info       Provides NetworkSelectionMode, MCC and MNC. @ref NetworkModeInfo
+ * @param [in] info       Provides NetworkSelectionMode, MCC and MNC.
+ *                        @ref telux::tel::NetworkModeInfo
  * @param [in] error      Return code which indicates whether the operation
  *                        succeeded or not.
  *                        @ref telux::common::ErrorCode
@@ -431,15 +432,15 @@ class INetworkSelectionManager {
      *
      * @returns Status of performNetworkScan i.e. success or suitable error code.
      *
-     * @deprecated Use INetworkSelectionManager::performNetworkScan(
-     *     common::ResponseCallback callback) API instead
+     * @deprecated Use @ref telux::tel::INetworkSelectionManager::performNetworkScan(
+     *     NetworkScanInfo info, common::ResponseCallback callback = nullptr) API instead
      */
     virtual telux::common::Status performNetworkScan(NetworkScanCallback callback) = 0;
 
     /**
      * Perform the network scan. The available networks list is returned incrementally as they
      * become available, without waiting for the entire scan to complete through the
-     * indication API (INetworkSelectionListener::onNetworkScanResults).
+     * indication API (@ref telux::tel::INetworkSelectionListener::onNetworkScanResults).
      * The scan status in indication will indicate if its a partial result or complete result.
      *
      * On platforms with Access control enabled, Caller needs to have
@@ -465,7 +466,7 @@ class INetworkSelectionManager {
      * existing dubious cell list.
      *
      * Dubious cell parameters are not persistent over device reboot or subsystem restart (SSR)
-     * updated via @ref INetworkSelectionListener::onServiceStatusChange.
+     * updated via @ref telux::tel::INetworkSelectionListener::onServiceStatusChange.
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SNS_CONFIG
      * permission to invoke this API successfully.
@@ -487,7 +488,7 @@ class INetworkSelectionManager {
      * existing dubious cell list.
      *
      * Dubious cell parameters are not persistent over device reboot or subsystem restart (SSR)
-     * updated via @ref INetworkSelectionListener::onServiceStatusChange.
+     * updated via @ref telux::tel::INetworkSelectionListener::onServiceStatusChange.
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SNS_CONFIG
      * permission to invoke this API successfully.
@@ -512,7 +513,7 @@ class INetworkSelectionManager {
      * telux::common::ErrorCode::INVALID_OPERATION, indicating that there is no active
      * scan to abort.
      *
-     * If this API is invoked after calling the deprecated
+     * If this API is invoked after calling the deprecated @ref
      * telux::tel::INetworkSelectionManager::performNetworkScan(NetworkScanCallback callback),
      * the deprecated API will receive a callback with telux::common::ErrorCode::ABORTED,
      * indicating that the ongoing operation has been successfully aborted.
@@ -545,7 +546,7 @@ class INetworkSelectionManager {
      * @param [in] listener    Previously registered INetworkSelectionListener
      *                         that needs to be removed
      *
-     * @returns Status of removeListener success or suitable status code
+     * @returns Status of deregisterListener success or suitable status code
      */
     virtual telux::common::Status deregisterListener(
         std::weak_ptr<INetworkSelectionListener> listener)
@@ -562,7 +563,7 @@ class INetworkSelectionManager {
      *
      * @returns Status of requestNetworkSelectionMode i.e. success or suitable error code.
      *
-     * @deprecated Use INetworkSelectionManager::requestNetworkSelectionMode(
+     * @deprecated Use @ref telux::tel::INetworkSelectionManager::requestNetworkSelectionMode(
      *     SelectionModeInfoCb callback) API instead.
      */
     virtual telux::common::Status requestNetworkSelectionMode(
@@ -607,14 +608,14 @@ class OperatorInfo {
     /**
      * Get radio access technology.
      *
-     * @returns Radio access technology(RAT) @ref RadioTechnology.
+     * @returns Radio access technology(RAT) @ref telux::tel::RadioTechnology.
      */
     RadioTechnology getRat();
 
     /**
      * Get status of operator.
      *
-     * @returns status of the operator @ref OperatorStatus.
+     * @returns status of the operator @ref telux::tel::OperatorStatus.
      */
     OperatorStatus getStatus();
 
@@ -640,7 +641,8 @@ class INetworkSelectionListener : public common::IServiceStatusListener {
      * On platforms with Access control enabled, Caller needs to have
      * TELUX_TEL_NETWORK_SELECTION_READ permission to receive this notification.
      *
-     * @param [in] info   Provides NetworkSelectionMode, MCC and MNC. @ref NetworkModeInfo
+     * @param [in] info   Provides NetworkSelectionMode, MCC and MNC. @ref
+     * telux::tel::NetworkModeInfo
      *
      */
     virtual void onSelectionModeChanged(NetworkModeInfo info) {
@@ -654,7 +656,8 @@ class INetworkSelectionListener : public common::IServiceStatusListener {
      *
      * @note This API is not supported for the NTN network.
      *
-     * @param [in] scanStatus      Status of the network scan results @ref NetworkScanStatus
+     * @param [in] scanStatus      Status of the network scan results @ref
+     * telux::tel::NetworkScanStatus
      * @param [in] operatorInfos   Operators info with details of network operator name, MCC,
      *                             MNC, etc. In case of partial network scan results, the
      *                             operator info will have the information of the new set of
@@ -672,9 +675,9 @@ class INetworkSelectionListener : public common::IServiceStatusListener {
      * On platforms with Access control enabled, Caller needs to have
      * TELUX_TEL_NETWORK_SELECTION_READ permission to receive this notification.
      *
-     * @param [in] mode    Network selection mode. @ref NetworkSelectionMode
+     * @param [in] mode    Network selection mode. @ref telux::tel::NetworkSelectionMode
      *
-     * @deprecated Use INetworkSelectionListener::onSelectionModeChanged(
+     * @deprecated Use @ref telux::tel::INetworkSelectionListener::onSelectionModeChanged(
      *    NetworkModeInfo info) API instead.
      */
     virtual void onSelectionModeChanged(NetworkSelectionMode mode) {

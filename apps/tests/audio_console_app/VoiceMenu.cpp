@@ -387,37 +387,40 @@ void VoiceMenu::stopDtmf(std::vector<std::string> userInput) {
 }
 
 void VoiceMenu::registerListener(std::vector<std::string> userInput) {
-    if(audioStarted_) {
-        std::promise<bool> p;
-        telux::common::Status status = audioVoiceStream_ ->registerListener(shared_from_this(),
-                                     [&p,this](telux::common::ErrorCode error) {
-            if (error == telux::common::ErrorCode::SUCCESS) {
-                p.set_value(true);
-            } else {
-                p.set_value(false);
-                std::cout << "Failed to Register Listener" << std::endl;
-            }
-            });
-        if(status == telux::common::Status::SUCCESS) {
-            std::cout << "Request to Register Listener sent" << std::endl;
-        }
-        if (p.get_future().get()) {
-                std::cout << "Listener Registered Successfully" << std::endl;
-        }
-    } else {
-        std::cout << "Audio is not started yet" << std::endl;
+    if (!audioVoiceStream_) {
+        std::cout << "voice stream has not been created yet" << std::endl;
+        return;
     }
+
+    std::promise<bool> p;
+    telux::common::Status status = audioVoiceStream_ ->registerListener(shared_from_this(),
+                                    [&p,this](telux::common::ErrorCode error) {
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            p.set_value(true);
+        } else {
+            p.set_value(false);
+            std::cout << "Failed to Register Listener" << std::endl;
+        }
+        });
+    if(status == telux::common::Status::SUCCESS) {
+        std::cout << "Request to Register Listener sent" << std::endl;
+    }
+    if (p.get_future().get()) {
+            std::cout << "Listener Registered Successfully" << std::endl;
+    }
+
 }
 
 void VoiceMenu::deRegisterListener(std::vector<std::string> userInput) {
-    if (audioStarted_) {
-        telux::common::Status status = audioVoiceStream_ ->deRegisterListener(
-            shared_from_this());
-        if(status == telux::common::Status::SUCCESS){
-            std::cout << "Request to deregister Dtmf Sent" << std::endl;
-        }
-    } else {
-        std::cout << "Audio is not started yet" << std::endl;
+    if (!audioVoiceStream_) {
+        std::cout << "voice stream has not been created yet" << std::endl;
+        return;
+    }
+
+    telux::common::Status status = audioVoiceStream_ ->deRegisterListener(
+        shared_from_this());
+    if(status == telux::common::Status::SUCCESS){
+        std::cout << "Request to deregister Dtmf Sent" << std::endl;
     }
 }
 

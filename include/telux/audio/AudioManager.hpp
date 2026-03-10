@@ -622,9 +622,7 @@ class IAudioVoiceStream : virtual public IAudioStream {
 
    /**
     * Registers the given listener to get notified whenever a DTMF tone is detected on a
-    * voice-call stream or when the voice-call and audio state changes. Used in conjunction with
-    * @ref IVoiceListener::onDtmfToneDetection() and
-    * @ref IVoiceListener::onVoiceCallAndAudioStateChange()
+    * voice-call stream or when the voice-call and audio state changes.
     *
     * @param [in] listener Receives the DTMF tone detected or for changes in the voice-call and
     * audio state

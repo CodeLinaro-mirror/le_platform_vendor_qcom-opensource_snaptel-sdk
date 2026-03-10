@@ -172,39 +172,43 @@ Status VoiceSession::registerListener(std::weak_ptr<IVoiceListener> listener) {
     auto statusFromRequest = Status::FAILED;
     telux::common::Status statusFromResponse;
 
-    if (audioVoiceStream_ && audioStarted_) {
-        std::promise<bool> p;
-        statusFromRequest = audioVoiceStream_ ->registerListener(
-            listener, [&p, &statusFromResponse, &audioVoiceStream_](ErrorCode error) {
-            if (error == ErrorCode::SUCCESS) {
-                statusFromResponse = telux::common::Status::SUCCESS;
-                p.set_value(true);
-            } else {
-                statusFromResponse = telux::common::Status::FAILED;
-                p.set_value(false);
-                LOG(ERROR, "Failed to register Listener");
-            }
-            });
-        if(statusFromRequest == Status::SUCCESS) {
-            p.get_future().wait();
-            return statusFromResponse;
-        }
-    } else {
-        LOG(ERROR, "Audio is not started yet");
+    if (!audioVoiceStream_) {
+        LOG(ERROR, "voice stream has not been created yet");
+        return statusFromRequest;
     }
+
+    std::promise<bool> p;
+    statusFromRequest = audioVoiceStream_->registerListener(
+        listener, [&p, &statusFromResponse, &audioVoiceStream_](ErrorCode error) {
+        if (error == ErrorCode::SUCCESS) {
+            statusFromResponse = telux::common::Status::SUCCESS;
+            p.set_value(true);
+        } else {
+            statusFromResponse = telux::common::Status::FAILED;
+            p.set_value(false);
+            LOG(ERROR, "Failed to register Listener");
+        }
+    });
+    if(statusFromRequest == Status::SUCCESS) {
+        p.get_future().wait();
+        return statusFromResponse;
+    }
+
     return statusFromRequest;
 }
 
 Status VoiceSession::deRegisterListener(std::weak_ptr<IVoiceListener> listener) {
     auto audioVoiceStream_ = std::dynamic_pointer_cast<IAudioVoiceStream>(stream_);
     auto statusFromRequest = Status::FAILED;
-    if (audioVoiceStream_ && audioStarted_) {
-        statusFromRequest = audioVoiceStream_ ->deRegisterListener(listener);
-        if (statusFromRequest == Status::SUCCESS) {
-            LOG(DEBUG, "Request to deregister DTMF Sent");
-        }
-    } else {
-        LOG(ERROR, "Audio is not started yet");
+
+    if (!audioVoiceStream_) {
+        LOG(ERROR, "voice stream has not been created yet");
+        return statusFromRequest;
+    }
+
+    statusFromRequest = audioVoiceStream_ ->deRegisterListener(listener);
+    if (statusFromRequest == Status::SUCCESS) {
+        LOG(DEBUG, "Request to deregister DTMF Sent");
     }
     return statusFromRequest;
 }

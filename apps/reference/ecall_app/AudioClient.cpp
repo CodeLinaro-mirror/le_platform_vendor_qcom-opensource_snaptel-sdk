@@ -61,6 +61,25 @@ void AudioClient::createStreamCallback(std::shared_ptr<IAudioStream> &stream, Er
     if (ErrorCode::SUCCESS == error) {
         std::cout << CLIENT_NAME << "Voice stream created" << std::endl;
         audioVoiceStream_ = std::dynamic_pointer_cast<IAudioVoiceStream>(stream);
+        std::promise<bool> p;
+        telux::common::Status statusFromResponse;
+        auto statusFromRequest = audioVoiceStream_->registerListener(
+            shared_from_this(), [&p, &statusFromResponse](ErrorCode error) {
+            if (error == ErrorCode::SUCCESS) {
+                statusFromResponse = telux::common::Status::SUCCESS;
+                std::cout << CLIENT_NAME << "event registration with voice stream succeed"
+                    << std::endl;
+                p.set_value(true);
+            } else {
+                statusFromResponse = telux::common::Status::FAILED;
+                p.set_value(false);
+                std::cout << CLIENT_NAME << "register event with voice stream failed" << std::endl;
+            }
+            });
+        std::cout << CLIENT_NAME << "event registration with voice stream sent" << std::endl;
+        if(statusFromRequest == Status::SUCCESS) {
+            p.get_future().wait();
+        }
         auto status = audioVoiceStream_->startAudio(std::bind(&AudioClient::startAudioCallback,
                                                 this, std::placeholders::_1));
         if (status == telux::common::Status::SUCCESS) {
@@ -134,9 +153,10 @@ void AudioClient::onServiceStatusChange(ServiceStatus status) {
 
 void AudioClient::onVoiceCallAndAudioStateChange(State state) {
     if (state == State::READY) {
-        std::cout << "The voice-call and audio have been established " << std::endl;
+        std::cout << CLIENT_NAME << "The voice-call and audio have been established " << std::endl;
     } else {
-        std::cout << "either the voice-call or audio is not established " << std::endl;
+        std::cout << CLIENT_NAME << "either the voice-call or audio is not established "
+          << std::endl;
     }
 }
 

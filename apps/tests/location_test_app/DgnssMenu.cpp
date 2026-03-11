@@ -143,7 +143,9 @@ static UniqueFd connectAnyAddrinfo(struct addrinfo *res) {
 } // namespace
 
 DgnssMenu::DgnssMenu(std::string appName, std::string cursor)
-   : ConsoleApp(appName, cursor) {
+   : ConsoleApp(appName, cursor),
+     dgnssSourceType_(DgnssSourceType::FILE_SOURCE),
+     dataFormat_(DgnssDataFormat::DATA_FORMAT_UNKNOWN) {
 }
 
 DgnssMenu::~DgnssMenu() {
@@ -244,56 +246,15 @@ int DgnssMenu::init() {
 
     return 0;
 }
-int DgnssMenu::waitforSock(int fd) {
-    fd_set rfds;
-    int ret;
-    int retryCount = 0;
-
-    // Validate fd for select/FD_SET usage
-    if (fd < 0 || fd >= FD_SETSIZE) {
-        reconnect_ = true;
-        return -1;
-    }
-
-    while (retryCount < RETRY_COUNT) {
-        struct timeval tv;
-        tv.tv_sec = SOCKET_READ_TO;
-        tv.tv_usec = 0;
-        FD_ZERO(&rfds);
-        FD_SET(fd, &rfds);
-        ret = select(fd + 1, &rfds, NULL, NULL, &tv);
-        if (ret < 0 ) {
-            if (errno == EINTR) {
-                std::cout << "select interrupted, continue..." << std::endl;
-                continue;
-            } else {
-                printSysErr("select");
-                stop_ = true;
-                break;
-            }
-        } else if (ret == 0) {
-            //time out and no data
-            retryCount++;
-        } else {
-            // data ready to read
-            break;
-        }
-    }
-
-    if (retryCount == RETRY_COUNT && ret == 0) {
-        reconnect_ = true;
-    }
-    return ret;
-}
-
 int DgnssMenu::processRtxFromServer(void) {
    uint8_t buffer[RESP_BUFFER_SIZE];
-   int ret = recv(ntcSocketFd_, buffer, sizeof(buffer), 0);
+   int ret;
+   // Blocking recv with EINTR handling
+   do {
+       ret = recv(ntcSocketFd_, buffer, sizeof(buffer), 0);
+   } while (ret < 0 && errno == EINTR);
+
    if (ret < 0) {
-       if (errno == EAGAIN || errno == EWOULDBLOCK) {
-           std::cout << "processRtxFromServer: no data available yet" << std::endl;
-           return 0; // try again later
-       }
        printSysErr("processRtxFromServer recv");
        return ret;
    }
@@ -308,27 +269,19 @@ int DgnssMenu::processRtxFromServer(void) {
 }
 
 int DgnssMenu::processRtcmFromServer(void) {
-
    int i, length;
    uint8_t buffer[RESP_BUFFER_SIZE];
    static int msg_type;
    int ret;
 
    memset(buffer, 0, sizeof(buffer));
-   ret = waitforSock(ntcSocketFd_);
+   // Blocking recv with EINTR handling
+   do {
+       ret = recv(ntcSocketFd_, buffer, sizeof(buffer), 0);
+   } while (ret < 0 && errno == EINTR);
 
-   if (ret <= 0) {
-       return ret;
-   }
-
-   ret = recv(ntcSocketFd_, buffer, sizeof(buffer), 0);
    if (ret < 0) {
-
-       if (errno == EAGAIN || errno == EWOULDBLOCK) {
-           return 0; // try again later
-       }
        printSysErr("processRtcmFromServer recv");
-
        stop_ = true;
        return ret;
    }
@@ -542,6 +495,7 @@ void DgnssMenu::injectFromFile(std::vector<std::string> userInput) {
         }
     }
 }
+
 /**
  * Config file is needed if injecting from Ntrip caster. The format is:
  *
@@ -551,7 +505,7 @@ void DgnssMenu::injectFromFile(std::vector<std::string> userInput) {
  * mountPoint = /mountpoint
  */
 void DgnssMenu::injectFromServer(std::vector<std::string> userInput) {
-   int flags, ret;
+   int ret;
    std::string con_request;
    std::string configFile;
    char response[RESP_BUFFER_SIZE];
@@ -644,39 +598,13 @@ void DgnssMenu::injectFromServer(std::vector<std::string> userInput) {
               ntcSocketFd_ = -1;
               continue;
           }
-          // set for nonblocking socket
-          flags = fcntl(ntcSocketFd_,F_GETFL,0);
-          if (flags < 0) {
-              printSysErr("fcntl(F_GETFL)");
-              close(ntcSocketFd_);
-              ntcSocketFd_ = -1;
-              continue;
-          }
-          if (fcntl(ntcSocketFd_, F_SETFL, flags | O_NONBLOCK) < 0) {
-              printSysErr("fcntl(F_SETFL)");
-              close(ntcSocketFd_);
-              ntcSocketFd_ = -1;
-              continue;
-          }
-          ret = waitforSock(ntcSocketFd_);
-          if (ret <= 0) {
-              if (reconnect_ == true) {
-                  close(ntcSocketFd_);
-                  ntcSocketFd_ = -1;
-                  reconnect_ = false;
-                  continue;
-              }
-          }
 
-          ret = recv(ntcSocketFd_, response, sizeof(response), 0);
+          // Blocking recv with EINTR handling for initial response
+          do {
+              ret = recv(ntcSocketFd_, response, sizeof(response), 0);
+          } while (ret < 0 && errno == EINTR);
 
           if (ret < 0) {
-              if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                  std::cout << "recv: no data available yet (EAGAIN), reconnect" << std::endl;
-                  close(ntcSocketFd_);
-                  ntcSocketFd_ = -1;
-                  continue;
-              }
               printSysErr("recv");
               close(ntcSocketFd_);
               ntcSocketFd_ = -1;

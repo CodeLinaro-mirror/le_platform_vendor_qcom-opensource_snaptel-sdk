@@ -85,7 +85,5 @@ private:
    bool reconnect_ = false;
    DgnssSourceType dgnssSourceType_;
    DgnssDataFormat dataFormat_;
-
-
 };
 #endif  // DGNSMENU_HPP

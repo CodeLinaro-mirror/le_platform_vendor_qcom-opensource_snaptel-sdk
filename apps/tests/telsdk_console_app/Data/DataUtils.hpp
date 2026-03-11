@@ -40,6 +40,7 @@
 #include <telux/data/DataFactory.hpp>
 #include <telux/data/DataConnectionManager.hpp>
 #include <telux/data/ServingSystemManager.hpp>
+#include <telux/data/DataHealthManager.hpp>
 #include "../../../common/utils/Utils.hpp"
 
 #define PROTO_TCP 6
@@ -70,6 +71,15 @@ public:
    static std::string vlanInterfaceToString(telux::data::InterfaceType interface);
    static std::string trafficClassToString(telux::data::IpTrafficClassType tc);
    static std::string flowStateEventToString(telux::data::QosFlowStateChangeEvent state);
+
+   static std::string networkModuleToString(telux::data::DataStallNetworkModule module);
+   static std::string stallReasonToString(telux::data::DataStallReason reason);
+   static std::string recoveryActionToString(telux::data::DataStallRecoveryAction action);
+   static std::string recoveryResultToString(telux::data::DataStallRecoveryResult result);
+   static std::string disablementReasonToString(telux::data::DataStallDisablementReason reason);
+   static std::string restartTimerStatusToString(telux::data::DataStallRestartTimerStatus status);
+   static void printDataStallConfig(const telux::data::DataStallConfig &config);
+
    static void logQosDetails(std::shared_ptr<telux::data::TrafficFlowTemplate> &tft);
    static void printFilterDetails(std::shared_ptr<telux::data::IIpFilter> filter);
 };

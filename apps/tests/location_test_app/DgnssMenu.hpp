@@ -83,8 +83,7 @@ private:
    int dgnssSourceFd_ = -1;
    bool stop_ = false;
    bool reconnect_ = false;
-   DgnssSourceType dgnssSourceType_ = DgnssSourceType::FILE_SOURCE;
-   DgnssDataFormat dataFormat_ = DgnssDataFormat::DATA_FORMAT_UNKNOWN;
-
+   DgnssSourceType dgnssSourceType_;
+   DgnssDataFormat dataFormat_;
 };
 #endif  // DGNSMENU_HPP

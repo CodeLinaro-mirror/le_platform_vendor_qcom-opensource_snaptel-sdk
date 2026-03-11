@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef DGNSSMENU_HPP
 #define DGNSSMENU_HPP
 
@@ -72,8 +78,8 @@ private:
    std::shared_ptr<IDgnssManager> dgnssManager_ = nullptr;
    int ntcSocketFd_ = -1;
    int dgnssSourceFd_ = -1;
-   DgnssSourceType dgnssSourceType_;
-
+   DgnssSourceType dgnssSourceType_ = DgnssSourceType::FILE_SOURCE;
+   DgnssDataFormat dataFormat_ = DgnssDataFormat::DATA_FORMAT_UNKNOWN;
 
 };
 #endif  // DGNSMENU_HPP

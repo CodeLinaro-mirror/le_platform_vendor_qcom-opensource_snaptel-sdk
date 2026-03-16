@@ -78,6 +78,7 @@ void DataHealthListener::onDataStallRecoveryTriggered(const DataStallRecoverySta
     std::cout << "Recovery Result: " << DataUtils::recoveryResultToString(status.status)
               << std::endl;
     std::cout << "Is Recoverable: " << (status.isRecoverable ? "Yes" : "No") << std::endl;
+    std::cout << "Stall Reason: " << DataUtils::stallReasonToString(status.reason) << std::endl;
 
     if (!status.isRecoverable) {
         std::cout << "\n*** WARNING: Data stall cannot be automatically recovered ***"
@@ -95,6 +96,7 @@ void DataHealthListener::onDataStallRecoveryRestartTimerUpdate(
               << std::endl;
     std::cout << "Timer Status: " << DataUtils::restartTimerStatusToString(status.status)
               << std::endl;
+    std::cout << "Stall Reason: " << DataUtils::stallReasonToString(status.reason) << std::endl;
 
     switch (status.status) {
         case DataStallRestartTimerStatus::STARTED:

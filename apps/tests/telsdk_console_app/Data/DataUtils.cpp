@@ -626,11 +626,8 @@ std::string DataUtils::stallReasonToString(telux::data::DataStallReason reason) 
 std::string DataUtils::recoveryActionToString(telux::data::DataStallRecoveryAction action) {
     switch (action) {
         case telux::data::DataStallRecoveryAction::NO_ACTION: return "NO_ACTION";
-        case telux::data::DataStallRecoveryAction::INTERNAL: return "INTERNAL";
         case telux::data::DataStallRecoveryAction::LPM_TOGGLE: return "LPM_TOGGLE";
         case telux::data::DataStallRecoveryAction::MODEM_SSR: return "MODEM_SSR";
-        case telux::data::DataStallRecoveryAction::DEVICE_REBOOT: return "DEVICE_REBOOT";
-        case telux::data::DataStallRecoveryAction::FACTORY_RESET: return "FACTORY_RESET";
         case telux::data::DataStallRecoveryAction::ETH_IPA_SUSPEND_RESUME: return "ETH_IPA_SUSPEND_RESUME";
         case telux::data::DataStallRecoveryAction::ETH_SW_TX_CHNL_REINIT: return "ETH_SW_TX_CHNL_REINIT";
         case telux::data::DataStallRecoveryAction::ETH_SW_RX_CHNL_REINIT: return "ETH_SW_RX_CHNL_REINIT";

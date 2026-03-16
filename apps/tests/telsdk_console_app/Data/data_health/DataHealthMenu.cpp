@@ -174,6 +174,7 @@ bool DataHealthMenu::init() {
     };
 
     addCommands(commandsList);
+    ConsoleApp::displayMenu();
     return dhmSubSystemStatus;
 }
 

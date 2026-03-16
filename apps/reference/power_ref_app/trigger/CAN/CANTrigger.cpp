@@ -69,7 +69,7 @@ bool CANTrigger::registerCanListener() {
     for (auto trigger : triggers_) {
         if (trigger.first) {
             LOG(INFO, __FUNCTION__, " trigger id ", trigger.first);
-            // registering for CAN trigger to receive notifications when new CAN messages arrive 
+            // registering for CAN trigger to receive notifications when new CAN messages arrive
             RegistrationToken token = canWrapper_->registerListener(trigger.first, CwBase::MASK29,
                                             CANTrigger::triggerEvent, this, 0, CwBase::IFACE_ANY);
             if (token) {

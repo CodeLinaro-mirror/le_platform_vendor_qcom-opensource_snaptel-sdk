@@ -130,7 +130,7 @@ using DigestTypes = int32_t;
  */
 enum Algorithm {
     ALGORITHM_UNKNOWN,  /**< Unspecified algorithm. */
-    ALGORITHM_RSA,      /**< RSA (Rivest–Shamir–Adleman) algorithm. */
+    ALGORITHM_RSA,      /**< RSA (Rivest-Shamir-Adleman) algorithm. */
     ALGORITHM_EC,       /**< Elliptic-curve algorithm. */
     ALGORITHM_AES,      /**< Advanced encryption standard algorithm. */
     ALGORITHM_HMAC      /**< Hash-based message authentication code algorithm. */

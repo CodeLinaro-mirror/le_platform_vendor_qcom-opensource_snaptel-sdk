@@ -1,7 +1,7 @@
 Using remote SIM reference apps {#remote_sim_reference_apps}
 ============================================================
 
-This section describes how to use the provided Remote SIM reference apps – remote-sim-daemon and
+This section describes how to use the provided Remote SIM reference apps - remote-sim-daemon and
 sap-card-provider. The remote-sim-daemon app will run on the device without a SIM, while the
 sap-card-provider app will run on the device with a SIM. The two apps will communicate over a
 standard IP Ethernet connection, providing the WWAN capabilities of the remote SIM card to the

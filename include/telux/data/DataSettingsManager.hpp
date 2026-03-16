@@ -462,8 +462,8 @@ public:
      * On platforms with Access control enabled, Caller needs to have TELUX_DATA_SETTING permission
      * to invoke this API successfully.
      *
-     * @param [in] urlToBackhaulMapping  @ref telux::data::UrlIdToBackhaulMapping structure.
-     * @param [in] callback             Optional callback to get the response for
+     * @param [in] urlToBackhaulMapping @ref telux::data::UrlIdToBackhaulMapping structure.
+     * @param [in] callback             Optional callback to get the response for
      *                                  setUrlIdToBackhaulMapping.
      *
      * @returns Status of setUrlIdToBackhaulMapping, i.e., success or applicable status code.

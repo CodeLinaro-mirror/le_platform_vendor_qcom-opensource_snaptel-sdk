@@ -41,7 +41,7 @@ To enable SLSS in the lower layer, the following requirements must be met.
 
     - 3GPP SLSS variant - v2x-CommPreconfigSync-r14 is valid
 
-    - non-3GPP SLSS variant – sl-Subframe-r14 is 100 bitmap
+    - non-3GPP SLSS variant - sl-Subframe-r14 is 100 bitmap
 
 - SLSS is enabled using either of the following approaches.
 
@@ -148,20 +148,20 @@ These parameters are defined in 3GPP 36.331.
 ##### SyncRefMinHyst
 
       Hysteresis when evaluating a syncRefUE using absolute comparison.
-      Value: [0,4] 0:0dB, 1:3dB, 2:6dB, 3:9dB, 4：12dB
+      Value: [0,4] 0:0dB, 1:3dB, 2:6dB, 3:9dB, 4: 12dB
       Default value: 1
 
 ##### SyncRefDiffHyst
 
       RSRP filtering coefficient.
-      Value: [0,5] 0:0dB, 1:3dB, 2:6dB, 3:9dB, 4：12dB, 5:infinity
+      Value: [0,5] 0:0dB, 1:3dB, 2:6dB, 3:9dB, 4: 12dB, 5:infinity
       Default value: 1
 
 ## Test tool options
 
   After executing "cv2x_config_app", user needs to input option 1/2/3 to select the next step.
 
-- Option 1 – Retrieve C-V2X configuration and store to the specified XML file.
+- Option 1 - Retrieve C-V2X configuration and store to the specified XML file.
   In selinux permissive mode, the path must be "/var/tmp/", the file name doesn't matter.
 
 - Option 2 - Send C-V2X configuration or SLSS configuration in the specified XML file to the low layer.

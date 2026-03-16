@@ -2379,7 +2379,7 @@ On boot-up, ETH will be available as expected e.g., 10G USXGMII.
     For instance, this could happen when temperature mitigation is no longer needed
 14. The user app conveys the recommended ETH mode to the peer device (expecting the user app to use an interconnect other than ETH for this communication).
 15. Ideally, the peer device agrees to update the ETH mode and sends an acknowledgement to the local device.
-16. The local device receives notification of the peer device’s intention and becomes ready for the ETH mode update.
+16. The local device receives notification of the peer device's intention and becomes ready for the ETH mode update.
 17. The peer device starts updating the operating mode.
 18. The peer device successfully updates the ETH operating mode.
 19. A listener is invoked if any other client is interested in the ETH mode transition status.
@@ -2409,7 +2409,7 @@ On boot-up, ETH will be available as expected e.g., 10G USXGMII.
 4. IDataSettingsManager returns the current service status.
   4.1 If the status is SERVICE_UNAVAILABLE (i.e., the manager is not ready), the application should wait for
       the initialization callback provided in step 1.
-  4.2 IDataSettingsManager invokes the application’s callback with the initialization result (success or failure).
+  4.2 IDataSettingsManager invokes the application's callback with the initialization result (success or failure).
 5. The application calls IDataSettingsManager::setUrlIdToBackhaulMapping to associate URL IDs with the desired backhaul.
 6. The application receives a synchronous Status indicating whether the setUrlIdToBackhaulMapping request was sent successfully.
 7. The application is notified of the final Status of the setUrlIdToBackhaulMapping request (either SUCCESS or FAILED) via the callback it provided.
@@ -3762,8 +3762,8 @@ sections.
  * - Master can trigger the TCU-activity state change of a specific machine or all machines at once.
  * - If the slave wants to differentiate between a state change indication that is the result of a trigger for all machines or a trigger for its specific machines, it can be detected using the machine name provided in the listener API.
  * - When the master triggers an all machines TCU-activity state change, only the machines that are not in the desired state will undergo the state transition, and the slaves to those machines will be notified.
- * - In the case of 
- *   - suspend or shutdown trigger: 
+ * - In the case of
+ *   - suspend or shutdown trigger:
  *      - After becoming ready for state change, all slave clients should acknowledge back.
  *      - The master client will get notification about the consolidated acknowledgement status of all slave clients.
  *      - On getting a successful consolidated acknowledgement from all the slaves for the suspend trigger, the power framework allows the respective machine to suspend. On getting a successful consolidated acknowledgement from all the slaves for the shutdown trigger, the power framework triggers the respective machine shutdown without waiting further.
@@ -3771,7 +3771,7 @@ sections.
  *      - In such failed cases, if the master wants to stop the state transition considering the information in the consolidated acknowledgement, then the master is allowed to trigger a new TCU-activity state change, or else the state transition will proceed after the configured timeout.
  *   - resume trigger:
  *      - Power framework will prevent the respective machine from going into suspend.
- *      - No acknowledgement will be required from slave clients and the master will not be getting consolidated acknowledgement / slave acknowledgement as machine will be already resumed. 
+ *      - No acknowledgement will be required from slave clients and the master will not be getting consolidated acknowledgement / slave acknowledgement as machine will be already resumed.
  *
  * When the application is notified about the service being unavailable, the TCU-activity state notifications will be inactive. After the service becomes available, the existing listener registrations will be maintained.
 

@@ -132,7 +132,7 @@ enum class RedialConfigType {
                          Transmission status */
     CALL_ORIG = 1,  /**< Redial configuration for eCall origination is applicable only to CS eCall.
                          It must not be applied on platforms that support both NG eCall and CS
-                         eCall, as redial behavior in such cases is governed by the modem’s domain
+                         eCall, as redial behavior in such cases is governed by the modem's domain
                          selection process and redial attempts are handled internally by the
                          modem. */
 };

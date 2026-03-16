@@ -296,7 +296,7 @@ void Ldm::startTrusted() {
 * last bytes/digest of signing cert
 * time since last heard
 * PPPP
-* length /width – very important at plugtests for idenifying the OEM
+* length /width - very important at plugtests for idenifying the OEM
 * Decoded event flags (highlight if critical event)
 */
 void Ldm::printLdmIdMap() {

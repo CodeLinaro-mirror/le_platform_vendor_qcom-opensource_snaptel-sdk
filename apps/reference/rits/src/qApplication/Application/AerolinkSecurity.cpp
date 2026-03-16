@@ -214,7 +214,7 @@ void printVerifStats(std::thread::id thrId){
     certificates to sign messages).
     numCerts provides the number of simultaneously valid certificates for the registered
     LCM(), e.g. 20, and on its return, this function can specify the next certificate to be used
-    by setting cert_index to a value from 1 – 20. A value of 0 is used to indicate no
+    by setting cert_index to a value from 1 - 20. A value of 0 is used to indicate no
     preference, and Aerolink will choose the next certificate. An invalid value (greater than
     the number of certificates) will be treated as a value of 0.
     typedef void (*IdChangeInitCallback)(

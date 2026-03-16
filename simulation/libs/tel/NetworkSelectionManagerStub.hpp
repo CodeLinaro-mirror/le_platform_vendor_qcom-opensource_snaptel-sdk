@@ -62,6 +62,8 @@ class NetworkSelectionManagerStub
     telux::common::ErrorCode setNrDubiousCell(
         const std::vector<NrDubiousCell> &nrDbCellList) override;
 
+    telux::common::ErrorCode abortNetworkScan() override;
+
     void cleanup();
 
     void onEventUpdate(google::protobuf::Any event) override;

@@ -47,6 +47,11 @@ class ConfigParser {
     // Get the user defined value for configured key
     std::string getValue(std::string section, std::string key);
     std::map<std::string, std::string> getSectionValue(std::string section);
+
+    // Added to support cases where the same section name is provided multiple times,
+    // for example, multiple socket parameters to enable multiple socket connections
+    std::vector<std::map<std::string, std::string>> getDuplicateSectionValue(std::string section);
+
     std::map<std::string, std::map<std::string, std::string>> getAllConfig();
 
  private:
@@ -57,6 +62,7 @@ class ConfigParser {
     std::string getConfigFilePath();
     // Hashmap to store all settings as key-value pairs
     std::map<std::string, std::map<std::string, std::string>> configMap_;
+    std::string configFile_ = DEFAULT_CONFIG_FILE_NAME;
 };
 
 #endif  // CONFIGPARSER_HPP

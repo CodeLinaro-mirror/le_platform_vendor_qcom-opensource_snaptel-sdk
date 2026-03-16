@@ -83,6 +83,10 @@ class DataConnectionMenu : public ConsoleApp {
     void requestThrottledApnsInfo();
     void setDefaultProfile();
     void getDefaultProfile();
+    void registerForThroughput(std::vector<std::string> inputCommand);
+    void deregisterForThroughput(std::vector<std::string> inputCommand);
+    void setThroughputInterval(std::vector<std::string> inputCommand);
+    void getLastThroughputInfo(std::vector<std::string> inputCommand);
 
     // Initialization Callback
     void onInitCompleted(telux::common::ServiceStatus status);

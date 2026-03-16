@@ -39,6 +39,7 @@ extern "C" {
 
 #include <algorithm>
 #include <iostream>
+#include <string>
 #include <cstring>
 
 #include <telux/data/DataFactory.hpp>
@@ -48,6 +49,7 @@ extern "C" {
 
 #include "DataFilterMenu.hpp"
 #include "../DataResponseCallback.hpp"
+#include "../DataUtils.hpp"
 
 #define PROTO_ICMP 1
 #define PROTO_IGMP 2
@@ -187,7 +189,7 @@ bool DataFilterMenu::initDataFilterManagerAndListener(SlotId slotId) {
         // If this is newly created Manager
         if (dataFilterManagerMap_.find(slotId) == dataFilterManagerMap_.end()) {
             dataFilterManagerMap_.emplace(slotId, dataFilterMgr);
-            dataFilterListener_.emplace(slotId, std::make_shared<MyDataFilterListener>());
+            dataFilterListener_.emplace(slotId, std::make_shared<MyDataFilterListener>(slotId));
             auto responseCb
                 = std::bind(&DataFilterMenu::commandCallback, this, std::placeholders::_1);
             responseCbMap_.emplace(slotId, responseCb);
@@ -339,14 +341,49 @@ void DataFilterMenu::addFilter() {
         std::cout << "\nData Filter Manager on slot " << slotId << " is not ready" << std::endl;
         return;
     }
-
-    DataConfigParser cfgParser("filter", DEFAULT_DATA_CONFIG_FILE_NAME);
-    std::vector<std::map<std::string, std::string>> vectorFilter = cfgParser.getFilters();
-
-    std::cout << "Total Filter = " << vectorFilter.size() << std::endl;
-
     // Get data factory instance
-    auto &dataFilterFactory = DataFactory::getInstance();
+    std::vector<std::shared_ptr<telux::data::IIpFilter>> dataFilters;
+    int value = 0;
+    std::cout << "Add data filters (0 - Read from file, 1 - Manual input): ";
+    std::cin >> value;
+    Utils::validateInput(value, {0, 1});
+    if (value) {
+        if (!getDataFiltersInput(dataFilters)) {
+            return;
+        }
+    } else {
+        std::string filePath = DEFAULT_DATA_CONFIG_FILE_NAME;
+        std::cout << "Add data filters ( 0 - Default \"/etc/Datafilter.conf\","
+                  << " 1 - Provide file path): ";
+        std::cin >> value;
+        Utils::validateInput(value, {0, 1});
+        if (value) {
+            std::cin >> filePath;
+        }
+        if (!getDataFiltersConfig(slotId, filePath, dataFilters)) {
+            return;
+        }
+    }
+
+    std::cout << " Number of filters to add: " << dataFilters.size() << std::endl;
+    std::cout << " Sending command to Add Data Filters" << std::endl;
+    telux::common::Status status = telux::common::Status::FAILED;
+
+    status = dataFilterManagerMap_[static_cast<SlotId>(slotId)]->addDataRestrictFilters(
+        dataFilters, responseCbMap_[static_cast<SlotId>(slotId)]);
+
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << " *** ERROR - Failed to send Data Restrict command" << std::endl;
+    }
+}
+
+bool DataFilterMenu::getDataFiltersConfig(int slotId, std::string filePath,
+    std::vector<std::shared_ptr<telux::data::IIpFilter>> &dataFilters) {
+
+    DataConfigParser cfgParser("filter", filePath);
+    std::vector<std::map<std::string, std::string>> vectorFilter = cfgParser.getFilters();
+    auto &dataFilterFactory                                      = DataFactory::getInstance();
+    std::cout << "Total filters in config = " << vectorFilter.size() << std::endl;
 
     for (uint8_t i = 0; i < vectorFilter.size(); i++) {
         SlotId filterSlotId = getSlotIdOfFilter(cfgParser, vectorFilter[i]);
@@ -364,13 +401,6 @@ void DataFilterMenu::addFilter() {
             addIPParameters(dataFilter, cfgParser, vectorFilter[i]);
             auto tcpRestrictFilter = std::dynamic_pointer_cast<ITcpFilter>(dataFilter);
 
-            PortInfo srcPort  = {};
-            PortInfo destPort = {};
-
-            srcPort.port                  = 0;
-            srcPort.range                 = 0;
-            destPort.port                 = 0;
-            destPort.range                = 0;
             telux::data::TcpInfo tcpInfo_ = {};
             tcpInfo_.src.range            = 0;
             tcpInfo_.dest.range           = 0;
@@ -395,13 +425,13 @@ void DataFilterMenu::addFilter() {
             } catch (const std::exception &e) {
                 std::cout << " *** ERROR - Invalid " << e.what() << ", expected in range (0-65535)"
                           << std::endl;
-                return;
+                return false;
             }
             if (tcpRestrictFilter) {
                 tcpRestrictFilter->setTcpInfo(tcpInfo_);
             } else {
                 std::cout << " *** ERROR - Invalid tcp filter" << std::endl;
-                return;
+                return false;
             }
         } else if (typeOfFilter == PROTO_UDP) {
             std::cout << "Creating UDP filter " << std::endl;
@@ -412,13 +442,6 @@ void DataFilterMenu::addFilter() {
 
             auto udpRestrictFilter = std::dynamic_pointer_cast<IUdpFilter>(dataFilter);
 
-            PortInfo srcPort;
-            PortInfo destPort;
-
-            srcPort.port                  = 0;
-            srcPort.range                 = 0;
-            destPort.port                 = 0;
-            destPort.range                = 0;
             telux::data::UdpInfo udpInfo_ = {};
             udpInfo_.src.range            = 0;
             udpInfo_.dest.range           = 0;
@@ -443,28 +466,174 @@ void DataFilterMenu::addFilter() {
             } catch (const std::exception &e) {
                 std::cout << " *** ERROR - Invalid " << e.what() << ", expected in range (0-65535)"
                           << std::endl;
-                return;
+                return false;
             }
             if (udpRestrictFilter) {
                 udpRestrictFilter->setUdpInfo(udpInfo_);
             } else {
                 std::cout << " *** ERROR - Invalid udp filter" << std::endl;
-                return;
+                return false;
             }
         } else {
             std::cout << " *** ERROR - Invalid conf file parameters" << std::endl;
-            return;
+            return false;
         }
-        std::cout << " Sending command to Add Data Filter" << std::endl;
-        telux::common::Status status = telux::common::Status::FAILED;
-
-        status = dataFilterManagerMap_[static_cast<SlotId>(slotId)]->addDataRestrictFilter(
-            dataFilter, responseCbMap_[static_cast<SlotId>(slotId)]);
-
-        if (status != telux::common::Status::SUCCESS) {
-            std::cout << " *** ERROR - Failed to send Data Restrict command" << std::endl;
-        }
+        dataFilters.emplace_back(dataFilter);
     }
+    return true;
+}
+
+void DataFilterMenu::getIPInfo(std::shared_ptr<telux::data::IIpFilter> &dataFilter) {
+    int sourceOption = 0;
+    std::cout << " Enter IP family (4-IPv4, 6-IPv6, 0-Skip): ";
+    std::cin >> sourceOption;
+    Utils::validateInput(sourceOption, {4, 6, 0});
+
+    if (sourceOption == 4) {
+        telux::data::IPv4Info ipv4Info = {};
+        std::string ipv4Addr = "", ipv4SubnetMask = "";
+        char delimiter = '\n';
+        std::cout << " Do you want to enter a source IPv4 address? (1-Yes, 0-Skip): ";
+        std::cin >> sourceOption;
+        Utils::validateInput(sourceOption, {1, 0});
+        if (sourceOption) {
+            std::cout << "Enter source IPv4 address: ";
+            std::getline(std::cin, ipv4Info.srcAddr, delimiter);
+        }
+
+        std::cout << " Do you want to enter a destination IPv4 address? (1-Yes, 0-Skip): ";
+        std::cin >> sourceOption;
+        Utils::validateInput(sourceOption, {1, 0});
+        if (sourceOption) {
+            std::cout << "Enter destination IPv4 address: ";
+            std::getline(std::cin, ipv4Info.destAddr, delimiter);
+        }
+        dataFilter->setIPv4Info(ipv4Info);
+    } else if (sourceOption == 6) {
+        telux::data::IPv6Info ipv6Info = {};
+        char delimiter                 = '\n';
+        std::string ipv6Addr           = "";
+        std::cout << "Enter source IPv6 address: ";
+        std::getline(std::cin, ipv6Info.srcAddr, delimiter);
+
+        std::cout << "Enter destination IPv6 address: ";
+        std::getline(std::cin, ipv6Info.destAddr, delimiter);
+        dataFilter->setIPv6Info(ipv6Info);
+    }
+}
+
+void DataFilterMenu::getPortInfo(int &srcPort, int &srcRange, int &destPort, int &destRange) {
+    std::cout << " Enter source port (or 0-Skip): ";
+    std::cin >> srcPort;
+    Utils::validateInput(srcPort);
+    if (srcPort > std::numeric_limits<unsigned short>::max()
+        || srcPort < std::numeric_limits<unsigned short>::min()) {
+        throw invalid_argument(" Invalid source port");
+    }
+    std::cout << " Enter source port range (or 0-Skip): ";
+    std::cin >> srcRange;
+    Utils::validateInput(srcRange);
+    if (srcRange > std::numeric_limits<unsigned short>::max()
+        || srcRange < std::numeric_limits<unsigned short>::min()) {
+        throw invalid_argument(" Invalid source port range");
+    }
+
+    std::cout << " Enter destination port (or 0-Skip): ";
+    std::cin >> destPort;
+    Utils::validateInput(destPort);
+    if (destPort > std::numeric_limits<unsigned short>::max()
+        || destPort < std::numeric_limits<unsigned short>::min()) {
+        throw invalid_argument(" Invalid destination port");
+    }
+    std::cout << " Enter destination port range (or 0-Skip): ";
+    std::cin >> destRange;
+    Utils::validateInput(destRange);
+    if (destRange > std::numeric_limits<unsigned short>::max()
+        || destRange < std::numeric_limits<unsigned short>::min()) {
+        throw invalid_argument(" Invalid destination port range");
+    }
+}
+
+bool DataFilterMenu::getDataFiltersInput(
+    std::vector<std::shared_ptr<telux::data::IIpFilter>> &dataFilters) {
+    auto &dataFilterFactory = DataFactory::getInstance();
+    std::vector<std::shared_ptr<IFirewallEntry>> fwEntries;
+    int continueNewDataFilterInput = 1;
+
+    do {
+        char delimiter = '\n';
+        std::string protoStr;
+        std::cout << "Enter Protocol (TCP, UDP): ";
+        std::getline(std::cin, protoStr, delimiter);
+        telux::data::IpProtocol typeOfFilter = DataUtils::getProtcol(protoStr);
+        std::shared_ptr<telux::data::IIpFilter> dataFilter;
+
+        if (typeOfFilter == PROTO_TCP) {
+            std::cout << "Creating TCP filter " << std::endl;
+            // Get data filter manager object
+            dataFilter = dataFilterFactory.getNewIpFilter(PROTO_TCP);
+            getIPInfo(dataFilter);
+
+            auto tcpRestrictFilter       = std::dynamic_pointer_cast<ITcpFilter>(dataFilter);
+            telux::data::TcpInfo tcpInfo = {};
+            int srcPort = 0, srcRange = 0, destPort = 0, destRange = 0;
+            try {
+                getPortInfo(srcPort, srcRange, destPort, destRange);
+            } catch (const std::exception &e) {
+                std::cout << " *** ERROR - Invalid " << e.what() << ", expected in range (0-65535)"
+                          << std::endl;
+                return false;
+            }
+            tcpInfo.src.port   = srcPort;
+            tcpInfo.src.range  = srcRange;
+            tcpInfo.dest.port  = destPort;
+            tcpInfo.dest.range = destRange;
+
+            if (tcpRestrictFilter) {
+                tcpRestrictFilter->setTcpInfo(tcpInfo);
+            } else {
+                std::cout << " *** ERROR - Invalid tcp filter" << std::endl;
+                return false;
+            }
+        } else if (typeOfFilter == PROTO_UDP) {
+            std::cout << "Creating UDP filter " << std::endl;
+
+            // Get data filter manager object
+            dataFilter = dataFilterFactory.getNewIpFilter(PROTO_UDP);
+            getIPInfo(dataFilter);
+
+            auto udpRestrictFilter       = std::dynamic_pointer_cast<IUdpFilter>(dataFilter);
+            telux::data::UdpInfo udpInfo = {};
+            int srcPort = 0, srcRange = 0, destPort = 0, destRange = 0;
+            try {
+                getPortInfo(srcPort, srcRange, destPort, destRange);
+            } catch (const std::exception &e) {
+                std::cout << " *** ERROR - Invalid " << e.what() << ", expected in range (0-65535)"
+                          << std::endl;
+                return false;
+            }
+            udpInfo.src.port   = srcPort;
+            udpInfo.src.range  = srcRange;
+            udpInfo.dest.port  = destPort;
+            udpInfo.dest.range = destRange;
+
+            if (udpRestrictFilter) {
+                udpRestrictFilter->setUdpInfo(udpInfo);
+            } else {
+                std::cout << " *** ERROR - Invalid udp filter" << std::endl;
+                return false;
+            }
+        } else {
+            std::cout << " *** ERROR - Invalid conf file parameters" << std::endl;
+            return false;
+        }
+        dataFilters.emplace_back(dataFilter);
+        std::cout << "\n 0 - Done, 1 - Add more data filters " << std::endl;
+
+        std::cin >> continueNewDataFilterInput;
+        Utils::validateInput(continueNewDataFilterInput, {0, 1});
+    } while (continueNewDataFilterInput);
+    return true;
 }
 
 SlotId DataFilterMenu::getSlotIdOfFilter(

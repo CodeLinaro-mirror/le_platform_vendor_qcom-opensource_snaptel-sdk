@@ -137,7 +137,7 @@ class FirewallServerImpl final : public dataStub::FirewallManager::Service {
             if (config[idx]["profileId"].asInt() != request->profile_id()) {
                 continue;
             }
-            if (config[idx]["fw_direction"].asInt() != request->fw_direction().fw_direction()) {
+            if (config[idx]["fw_direction"].asInt() != request->fw_direction()) {
                 continue;
             }
             if (config[idx]["protocol"].asString() != request->protocol()) {

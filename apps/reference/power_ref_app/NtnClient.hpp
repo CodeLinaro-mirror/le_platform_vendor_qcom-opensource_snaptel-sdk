@@ -25,8 +25,7 @@ using namespace telux::loc;
 class NtnClientLocationListener;
 #endif
 
-class NtnClient : public INtnListener,
-                    public std::enable_shared_from_this<NtnClient> {
+class NtnClient : public INtnListener, public std::enable_shared_from_this<NtnClient> {
  public:
     NtnClient();
     ~NtnClient();
@@ -68,25 +67,29 @@ class NtnClient : public INtnListener,
     // Member variable to keep the manager object alive till application ends.
     std::shared_ptr<telux::satcom::INtnManager> ntnMgr_ = nullptr;
 #ifdef TELSDK_FEATURE_LOC_ENABLED
-    std::shared_ptr<ILocationManager> locationManager_ = nullptr;
+    std::shared_ptr<ILocationManager> locationManager_      = nullptr;
     std::shared_ptr<NtnClientLocationListener> posListener_ = nullptr;
 #endif
 };
 
 #ifdef TELSDK_FEATURE_LOC_ENABLED
 class NtnClientLocationListener : public telux::loc::ILocationListener {
-  public:
+ public:
     void onDetailedLocationUpdate(
         const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo) override;
     // Provide controlled access methods
-    std::mutex& getLocationMutex() { return locMtx_; }
-    std::condition_variable& getLocationCV() { return locCv_; }
+    std::mutex &getLocationMutex() {
+        return locMtx_;
+    }
+    std::condition_variable &getLocationCV() {
+        return locCv_;
+    }
     telux::satcom::LocationFix locFix_;
     bool isReportReceived_ = false;
-    //Needed to prevent overwriting of the first snapshot data received via the updates.
+    // Needed to prevent overwriting of the first snapshot data received via the updates.
     int reportCount_ = 0;
 
-  private:
+ private:
     std::mutex locMtx_;
     std::condition_variable locCv_;
 };

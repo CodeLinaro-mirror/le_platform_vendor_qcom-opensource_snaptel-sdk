@@ -195,7 +195,7 @@ void MyMultiSimCallback::configureLogicalSlotMappingResponse(telux::common::Erro
     if (error == telux::common::ErrorCode::SUCCESS) {
         std::cout << "Configure logical slot mapping completed successfully" << std::endl;
     } else {
-        std::cout << "Configure logical slot mapping failed, error: "
-                  << static_cast<int>(error) << std::endl;
+        std::cout << "Configure logical slot mapping failed, error: " << static_cast<int>(error)
+                  << std::endl;
     }
 }

@@ -57,6 +57,7 @@ class MyCallListener : public telux::tel::ICallListener {
     std::string getCallEndCauseString(telux::tel::CallEndCause causeCode);
     std::string getRttModeString(telux::tel::RttMode mode);
     std::string getCallTypeString(telux::tel::CallType type);
+    std::string getNetworkModeString(telux::tel::NetworkMode mode);
 
     ~MyCallListener() {
     }

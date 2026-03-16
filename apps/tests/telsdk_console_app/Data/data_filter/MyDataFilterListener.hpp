@@ -25,6 +25,7 @@
  *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
  */
 
 /*
@@ -44,10 +45,14 @@ using namespace telux::common;
 
 class MyDataFilterListener : public telux::data::IDataFilterListener {
  public:
-    void onDataRestrictModeChange(DataRestrictMode mode) override;
+    MyDataFilterListener(SlotId slotId);
+    void onDataFilterModeChange(DataRestrictModeType mode) override;
     void onServiceStatusChange(telux::common::ServiceStatus status) override;
     ~MyDataFilterListener() {
     }
+
+ private:
+    SlotId slotId_;
 };
 
 #endif  // MYDATAFILTERLISTENER_HPP

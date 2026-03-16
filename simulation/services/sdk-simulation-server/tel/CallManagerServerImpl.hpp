@@ -18,6 +18,7 @@
 #include "../../../libs/common/CommonUtils.hpp"
 #include <telux/tel/PhoneDefines.hpp>
 #include <telux/tel/ECallDefines.hpp>
+#include <telux/tel/ImsServingSystemManager.hpp>
 #include "EcallStateMachine.hpp"
 #include "../event/ServerEventManager.hpp"
 #include "../event/EventService.hpp"
@@ -43,6 +44,7 @@ struct CallInfo {
     std::string remotePartyNumber         = "";
     telux::tel::CallEndCause callEndCause = telux::tel::CallEndCause::NORMAL;
     int sipErrorCode                      = 0;
+    int rawCauseCode                      = 0;
     int phoneId;
     bool isRegulatoryeCall         = false;
     bool isMultiPartyCall          = false;
@@ -53,6 +55,7 @@ struct CallInfo {
     RttMode localRttCapability     = RttMode::DISABLED;
     RttMode peerRttCapability      = RttMode::DISABLED;
     CallType callType              = CallType::UNKNOWN;
+    NetworkMode networkMode        = NetworkMode::UNKNOWN;
     bool isEraGlonassSelfTestECall = false;
     std::string callReason         = "";
 };
@@ -222,10 +225,12 @@ class CallManagerServerImpl final : public telStub::DialerService::Service,
     int getCallIndexOfActiveCall(int phoneId);
     // Find the lowest unfilled index in the call list.
     int setCallIndexForNewCall();
+    void setCallEndReasons(int phoneId, telux::tel::CallEndCause &callEndCause, int &rawCauseCode);
     bool getUserConfiguredALACKParameter();
     void restartTimer(int phoneId, std::string timer, int timerDuration);
     telux::tel::ECallMode getEcallOperatingMode(int phoneId);
     void fillCallInformation(int phoneId, ::telStub::GetInProgressCallsData *data);
+    std::string getUserConfiguredCallMode(int phoneId);
     template <typename T>
     int addNewCallDetails(const T *request) {
         CallInfo callInfo;
@@ -234,7 +239,8 @@ class CallManagerServerImpl final : public telStub::DialerService::Service,
         callInfo.callDirection    = CallDirection::OUTGOING;
         callInfo.callState        = CallState::CALL_IDLE;
         callInfo.isMultiPartyCall = true;
-        CallApi makeCallApiType   = static_cast<CallApi>(request->api());
+        setCallEndReasons(callInfo.phoneId, callInfo.callEndCause, callInfo.rawCauseCode);
+        CallApi makeCallApiType = static_cast<CallApi>(request->api());
         if ((makeCallApiType == CallApi::makeECallWithMsd)
             || (makeCallApiType == CallApi::makeECallWithRawMsd)
             || (makeCallApiType == CallApi::makeECallWithoutMsd)) {
@@ -249,39 +255,37 @@ class CallManagerServerImpl final : public telStub::DialerService::Service,
             callInfo.isTpseCallOverIms = false;
             callInfo.callType          = CallType::VOICE_CALL;
         }
+        std::string callMode = getUserConfiguredCallMode(callInfo.phoneId);
+        if (callMode == "NR5G") {
+            callInfo.networkMode = NetworkMode::NR5G;
+        } else if (callMode == "LTE") {
+            callInfo.networkMode = NetworkMode::LTE;
+        } else if (callMode == "UMTS") {
+            callInfo.networkMode = NetworkMode::WCDMA;
+        } else if (callMode == "GSM") {
+            callInfo.networkMode = NetworkMode::GSM;
+        } else {
+            callInfo.networkMode = NetworkMode::UNKNOWN;
+        }
         if (request->remote_party_number() == "") {
             // No input will be passed from client for regulatory eCall
             callInfo.remotePartyNumber = getRemotePartyNumber(request->phone_id());
         } else {
             // Normal Voice call and custom number eCall
-            callInfo.remotePartyNumber = request->remote_party_number();
-            telStub::RadioTechnology rat;
+            callInfo.remotePartyNumber             = request->remote_party_number();
             std::vector<std::string> eccNumberList = {"112", "911"};
-            std::vector<telStub::RadioTechnology> psRatList
-                = {telStub::RadioTechnology::RADIO_TECH_NR5G,
-                    telStub::RadioTechnology::RADIO_TECH_LTE};
-            if (telux::common::ErrorCode::SUCCESS
-                == TelUtil::readVoiceRadioTechnologyFromJsonFile(callInfo.phoneId, rat)) {
-                if (std::find(
-                        eccNumberList.begin(), eccNumberList.end(), callInfo.remotePartyNumber)
-                    != eccNumberList.end()) {
-                    if (std::find(psRatList.begin(), psRatList.end(), rat) != psRatList.end()) {
-                        callInfo.callType = CallType::EMERGENCY_IP_CALL;
-                    } else {
-                        callInfo.callType = CallType::EMERGENCY_CALL;
-                    }
+            if (std::find(eccNumberList.begin(), eccNumberList.end(), callInfo.remotePartyNumber)
+                != eccNumberList.end()) {
+                if (callInfo.networkMode == NetworkMode::NR5G
+                    || callInfo.networkMode == NetworkMode::LTE) {
+                    callInfo.callType = CallType::EMERGENCY_IP_CALL;
                 } else {
-                    if (std::find(psRatList.begin(), psRatList.end(), rat) != psRatList.end()) {
-                        callInfo.callType = CallType::VOICE_IP_CALL;
-                    } else {
-                        callInfo.callType = CallType::VOICE_CALL;
-                    }
+                    callInfo.callType = CallType::EMERGENCY_CALL;
                 }
             } else {
-                if (std::find(
-                        eccNumberList.begin(), eccNumberList.end(), callInfo.remotePartyNumber)
-                    != eccNumberList.end()) {
-                    callInfo.callType = CallType::EMERGENCY_CALL;
+                if (callInfo.networkMode == NetworkMode::NR5G
+                    || callInfo.networkMode == NetworkMode::LTE) {
+                    callInfo.callType = CallType::VOICE_IP_CALL;
                 } else {
                     callInfo.callType = CallType::VOICE_CALL;
                 }

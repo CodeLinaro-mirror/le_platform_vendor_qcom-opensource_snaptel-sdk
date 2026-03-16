@@ -58,7 +58,6 @@ class SMSTrigger : public telux::tel::ISmsListener,
         ntnClient_ = ntnClientptr;
     }
 #endif
-
 };
 
 #endif  // SMSTRIGGER_HPP

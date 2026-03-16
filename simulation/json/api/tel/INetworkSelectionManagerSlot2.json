@@ -36,6 +36,10 @@
         "setNrDubiousCell" :
         {
             "error" : "SUCCESS"
+        },
+        "abortNetworkScan" :
+        {
+            "error" : "SUCCESS"
         }
     }
 }

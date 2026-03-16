@@ -64,6 +64,7 @@ class EventManager : public ITcuActivityListener,
     void notifyOnEventRejected(shared_ptr<Event> event, EventStatus status);
     void notifyAndEraseEventProcessed(
         TriggerType triggerType, TcuActivityState triggeredState, bool success, EventStatus status);
+    void notifyPreProcessEvent(shared_ptr<Event> event);
 
     // wake lock node control
     void writeToSystemNode(char *nodepath, char *value, int length);

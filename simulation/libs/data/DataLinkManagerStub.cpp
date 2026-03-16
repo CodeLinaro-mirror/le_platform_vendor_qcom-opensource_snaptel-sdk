@@ -359,12 +359,12 @@ telux::common::Status DataLinkManagerStub::setLocalEthOperatingMode(
     grpc::Status reqStatus = stub_->SetLocalEthOperatingMode(&context, request, &response);
 
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
 
     if (error == telux::common::ErrorCode::SUCCESS) {
         if (!reqStatus.ok()) {
             LOG(ERROR, __FUNCTION__, " SetLocalEthOperatingMode request failed");
             error = telux::common::ErrorCode::INTERNAL_ERROR;
+            return telux::common::Status::FAILED;
         } else {
             if (listenerMgr_) {
                 std::vector<std::weak_ptr<IDataLinkListener>> listeners;
@@ -378,8 +378,11 @@ telux::common::Status DataLinkManagerStub::setLocalEthOperatingMode(
                 }
             }
         }
+    } else {
+        LOG(ERROR, __FUNCTION__, " SetLocalEthOperatingMode error");
+        return telux::common::Status::FAILED;
     }
-    return status;
+    return telux::common::Status::SUCCESS;
 }
 
 telux::common::Status DataLinkManagerStub::setPeerModeChangeRequestStatus(

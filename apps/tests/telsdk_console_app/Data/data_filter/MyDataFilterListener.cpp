@@ -25,6 +25,7 @@
  *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
  */
 
 /*
@@ -42,11 +43,15 @@
 
 #define print_notification std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
-void MyDataFilterListener::onDataRestrictModeChange(DataRestrictMode mode) {
-    if (mode.filterMode == DataRestrictModeType::ENABLE) {
-        print_notification << "Data Filter Mode : Enable" << std::endl;
-    } else if (mode.filterMode == DataRestrictModeType::DISABLE) {
-        print_notification << "Data Filter Mode : Disable" << std::endl;
+MyDataFilterListener::MyDataFilterListener(SlotId slotId)
+   : slotId_(slotId) {
+}
+
+void MyDataFilterListener::onDataFilterModeChange(DataRestrictModeType mode) {
+    if (mode == DataRestrictModeType::ENABLE) {
+        print_notification << "Data Filter Mode : Enable for slot " << slotId_ << std::endl;
+    } else if (mode == DataRestrictModeType::DISABLE) {
+        print_notification << "Data Filter Mode : Disable for slot " << slotId_ << std::endl;
     } else {
         std::cout << " ERROR: Invalid Data Filter mode notified" << std::endl;
     }
@@ -66,5 +71,6 @@ void MyDataFilterListener::onServiceStatusChange(telux::common::ServiceStatus st
             stat = " Unknown service status";
             break;
     }
-    print_notification << " ** Data Filter onServiceStatusChange **\n" << stat << std::endl;
+    print_notification << " ** Data Filter onServiceStatusChange:" << stat
+                       << " for slot:" << slotId_ << std::endl;
 }

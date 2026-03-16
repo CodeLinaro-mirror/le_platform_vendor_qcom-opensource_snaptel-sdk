@@ -292,6 +292,14 @@ void DataFilterModeResponseCb::requestDataRestrictModeResponse(
         } else {
             std::cout << " Invalid DataRestrictMode" << std::endl;
         }
+
+        if (mode.filterAutoExit == DataRestrictModeType::DISABLE) {
+            std::cout << " AutoExit Disabled" << std::endl;
+        } else if (mode.filterAutoExit == DataRestrictModeType::ENABLE) {
+            std::cout << " AutoExit Enabled" << std::endl;
+        } else {
+            std::cout << " AutoExit invalid status" << std::endl;
+        }
     } else {
         PRINT_CB
             << "requestDataRestrictMode Response failed, errorCode: " << static_cast<int>(error)

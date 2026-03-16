@@ -36,15 +36,15 @@
 /**
  * @file       DataFilterManager.hpp
  *
- * @brief      It manages Data Restrict Filters. When the filters are enabled, only the data packets
- *             matching the filters will be sent by the modem to the apps processor. All other
- *             packets will be queued by the modem till the filters are disabled. One application
- *             of these filters is for power save purposes. When the apps processor goes to sleep,
+ * @brief      It manages Data Restrict Filters. When the filters are enabled, only data packets
+ *             matching the filters will be forwarded by the modem, while all other packets will
+ *             be dropped by the modem until the filters are disabled. One application of these
+ *             filters is for power saving purposes. When the apps processor goes to sleep,
  *             spurious incoming packets from the network could unnecessarily wake it up thereby
  *             draining the power. The DataFilterManager allows one to add filters only for
  *             necessary/important/wakeup packets. After adding these filters, one could enable them
- *             just before the apps processor goes to sleep. The apps proc will now be woken up only
- *             if a packet that we care about is received by the modem.
+ *             just before the apps processor goes to sleep. The apps processor will now be woken up
+ *             only if a packet that we care about is received by the modem.
  *
  */
 
@@ -69,7 +69,7 @@ namespace data {
  *
  * @param [in] mode       Return current data restrict mode.
  * @param [in] error      Return code which indicates whether the operation
- *                        succeeded or not.  @ref ErrorCode.
+ *                        succeeded or not. @ref ErrorCode.
  */
 using DataRestrictModeCb
     = std::function<void(DataRestrictMode mode, telux::common::ErrorCode error)>;
@@ -81,9 +81,11 @@ using DataRestrictModeCb
  *          to suspend so that we are not waking up the AP due to spurious incoming messages. Also
  *          to make sure the DataRestrict mode is enabled.
  *
- *          In contrary to when DataRestrict mode is disabled, modem will forward all the
- *          incoming data packets to AP and might wake up AP unnecessarily.
+ *          In contrast, when DataRestrict mode is disabled, the modem forwards all incoming data
+ *          packets to the AP, which may cause unnecessary wake-ups.
  *
+ *          @note @ref IDataFilterManager does not restrict packets in the uplink direction; it only
+ *          restricts packets in the downlink direction.
  */
 class IDataFilterManager {
  public:
@@ -119,14 +121,14 @@ class IDataFilterManager {
     /**
      * Changes the Data Powersave filter mode and auto exit feature.
      *
-     * This API enables or disables the powersave filtering mode for all active data calls.
+     * This API enables or disables the powersave filtering mode for all the active data calls.
      * The mode setting will be reset to @ref DataRestrictMode::DISABLE when all data calls are
      * disconnected.
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_DATA_FILTER_OPS
      * permission to invoke this API successfully.
      *
-     * @param [in] mode - Enable or disable the powersave filtering mode.
+     * @param [in] mode     - Enable or disable the powersave filtering mode.
      * @param [in] callback - Optional callback to get the response for the change in filter mode.
      *
      * @returns Status of setDataRestrictMode i.e. success or suitable status code.
@@ -147,27 +149,43 @@ class IDataFilterManager {
     virtual telux::common::Status requestDataRestrictMode(DataRestrictModeCb callback) = 0;
 
     /**
-     * This API adds a filter rule for all active data calls. In case when DataRestrict mode is
-     * enabled, modem will filter all the incoming data packet and route them to application
-     * processor only if filter rules added via addDataRestrictFilter API matches the criteria,
-     * else they are dropped at the modem itself and not forwarded to application processor.
+     * This API allows the addition of up to five filter rules at a time, for all the active data
+     * calls. When DataRestrict mode is enabled, the modem filters all the incoming data packets and
+     * forwards them, only if they match the criteria specified by the filter rules added via the
+     * @ref addDataRestrictFilters API. Otherwise, the packets are dropped at the modem and not
+     * forwarded.
+     * It is recommended to establish a TCP or UDP client connection before adding filter rules.
+     *
+     * When all data calls terminate, the data filter is automatically disabled. For any new
+     * data call, you must re-enable Data Restrict mode and reapply the filter rules.
+     *
+     * If the recipient of an incoming IP packet is a tethered client with a private IP address and
+     * filters are based on destination IP and port, then:
+     * - A TCP or UDP session must be established before applying filter rules.
+     * - Source IP address, destination IP address, source port, destination port, and protocol are
+     *   mandatory parameters.
+     * - The destination port range parameter is not supported.
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_DATA_FILTER_OPS
      * permission to invoke this API successfully.
      *
-     * @param [in] filter - Filter rule.
+     * @param [in] filters  - Filter rules.
      * @param [in] callback - Optional callback to get the response.
      *
-     * @returns Status of addDataRestrictFilter i.e. success or suitable status
+     * @returns Status of addDataRestrictFilters i.e. success or suitable status
      * code.
      *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     *
      */
-    virtual telux::common::Status addDataRestrictFilter(
-        std::shared_ptr<IIpFilter> &filter, telux::common::ResponseCallback callback = nullptr)
+    virtual telux::common::Status addDataRestrictFilters(
+        std::vector<std::shared_ptr<IIpFilter>> &filters,
+        telux::common::ResponseCallback callback = nullptr)
         = 0;
 
     /**
-     * This API removes all the previously added powersave filter.
+     * This API removes all the previously added powersave filters.
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_DATA_FILTER_OPS
      * permission to invoke this API successfully.
@@ -316,6 +334,32 @@ class IDataFilterManager {
     virtual telux::common::Status removeAllDataRestrictFilters(
         telux::common::ResponseCallback callback, int profileId,
         IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN)
+        = 0;
+
+    /**
+     * This API adds a filter rule for all the active data calls. When DataRestrict mode is
+     * enabled, the modem filters all the incoming data packets and forwards them, only if they
+     * match the criteria specified by the filter rules added via @ref addDataRestrictFilter API.
+     * Otherwise the packets are dropped at the modem and not forwarded.
+     *
+     * @note When all data calls stop, the data filter will also be disabled. For a new data call,
+     * you will need to enable and add the data filter again.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_FILTER_OPS
+     * permission to invoke this API successfully.
+     *
+     * @param [in] filter   - Filter rule.
+     * @param [in] callback - Optional callback to get the response.
+     *
+     * @returns Status of addDataRestrictFilter i.e. success or suitable status
+     * code.
+     *
+     * @deprecated Use @ref addDataRestrictFilters(std::vector<std::shared_ptr<IIpFilter>>,
+     *    telux::common::ResponseCallback callback = nullptr) to add multiple filters together.
+     *
+     */
+    virtual telux::common::Status addDataRestrictFilter(
+        std::shared_ptr<IIpFilter> &filter, telux::common::ResponseCallback callback = nullptr)
         = 0;
 
     /**

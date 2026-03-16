@@ -52,9 +52,13 @@ telux::common::Status CardStub::getState(CardState &cardState) {
 }
 
 void CardStub::getMepInfo(MepInfo &info) {
-    info.isMep = false;
-    info.portId = 0;
+    info.isMep             = false;
+    info.portId            = 0;
     info.negotiatedMepMode = Mode::NONE;
+}
+
+void CardStub::getPhysicalSlotId(PhysicalSlotId &slotId) {
+    slotId = PhysicalSlotId::INVALID_SLOT_ID;
 }
 
 std::vector<std::shared_ptr<ICardApp>> CardStub::getApplications(telux::common::Status *status) {
@@ -146,8 +150,7 @@ void CardStub::invokeCallback(std::shared_ptr<ICardChannelCallback> callback, in
 }
 
 telux::common::Status CardStub::closeLogicalChannel(
-    int channelId, std::shared_ptr<telux::common::ICommandResponseCallback> callback,
-    bool isEs10) {
+    int channelId, std::shared_ptr<telux::common::ICommandResponseCallback> callback, bool isEs10) {
     ::telStub::CloseLogicalChannelRequest request;
     ::telStub::CloseLogicalChannelReply response;
     ClientContext context;

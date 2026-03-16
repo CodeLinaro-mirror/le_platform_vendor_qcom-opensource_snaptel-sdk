@@ -67,12 +67,35 @@ namespace data {
 class IDataFilterListener : public common::IServiceStatusListener {
  public:
     /**
+     * This function is called when the filter mode is changed.
+     * When disabled, all the data packets will be forwarded from modem to the
+     * apps. When enabled using @ref telux::data::setDataRestrictMode, only the
+     * data matching the filters will be forwarded from modem to the apps.
+     *
+     * Filter mode may change under the following conditions:
+     *  - The filter mode is explicitly updated using telux::data::setDataRestrictMode.
+     *  - The autoExit feature is enabled and an incoming packet matches the defined filter.
+     *  - All active data calls are terminated.
+     *
+     * @param [in] filterMode - state the current data filter mode
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual void onDataFilterModeChange(DataRestrictModeType filterMode) {
+    }
+
+    /**
      * This function is called when the data filtering mode is changed
      * for the packet data session.
      *
      * @param [in] mode - state the current data filter mode
      *
      * @note Currently this API is unsupported.
+     *
+     * @deprecated Use telux::data::onDataFilterModeChange(DataRestrictModeType) to
+     * receive notification for filter mode change.
+     *
      */
     virtual void onDataRestrictModeChange(DataRestrictMode mode) {
     }

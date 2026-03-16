@@ -687,7 +687,8 @@ std::string ECallMenu::getCallDescription(std::shared_ptr<telux::tel::ICall> cal
     callDesc += "Call Index: " + std::to_string(call->getCallIndex()) + ", ";
     callDesc += "Phone Number: " + call->getRemotePartyNumber() + ", Call State: ";
     callDesc += std::to_string(static_cast<int>(call->getCallState()))
-                + ", Call Type: " + std::to_string(static_cast<int>(call->getCallDirection()));
+                + ", Call Type: " + std::to_string(static_cast<int>(call->getCallDirection()))
+                + ", Network Mode: " + std::to_string(static_cast<int>(call->getNetworkMode()));
     return callDesc;
 }
 

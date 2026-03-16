@@ -252,7 +252,7 @@ void DataLinkMenu::setLocalEthOperatingMode(std::vector<std::string> inputComman
             std::cout << " *** Set local Eth operating mode request completed" << std::endl;
         });
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << " *** ERROR - Failed to set peer Eth capability" << std::endl;
+        std::cout << " *** ERROR - Failed to set local Eth operating mode" << std::endl;
         return;
     }
     std::cout << " *** Set local Eth operating mode request sent" << std::endl;

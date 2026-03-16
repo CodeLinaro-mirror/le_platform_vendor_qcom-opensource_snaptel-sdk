@@ -36,10 +36,14 @@ struct Connection {
     Protocol protocol;
     telux::data::IpFamilyType ipFamily;
     ConnectionRole connectionRole;
-    std::string serverIpAddr = "";
-    std::string clientIpAddr = "";
-    int serverPort           = 0;
-    int clientPort           = 0;
+    std::string serverIpAddr            = "";
+    std::string clientIpAddr            = "";
+    std::string configuredInterfaceName = "";
+    int serverPort                      = 0;
+    int clientPort                      = 0;
+    bool installDataFilterForSocket     = true;
+    bool isKeepAliveEnabled             = true;
+    uint32_t keepAliveInterval          = 60000;
 
     SlotId slotId;
     int profileId;
@@ -91,13 +95,20 @@ struct Connection {
         oss << "Protocol: " << enumToString(protocol) << ", IP Family: " << enumToString(ipFamily)
             << ", Connection Role: " << enumToString(connectionRole)
             << ", Server IP: " << serverIpAddr << ", Client IP: " << clientIpAddr
-            << ", Server Port: " << serverPort << ", Client Port: " << clientPort;
+            << ", Server Port: " << serverPort << ", Client Port: " << clientPort
+            << ", configured Interface Name: " << configuredInterfaceName
+            << ", installDataFilterForSocket: "
+            << (installDataFilterForSocket ? "enabled" : "disabled")
+            << ", isKeepAliveEnabled: " << (isKeepAliveEnabled ? "enabled" : "disabled")
+            << ", keepAliveInterval: " << keepAliveInterval;
         return oss.str();
     }
 };
 
 class IIPConnection {
  public:
+    virtual ~IIPConnection() {
+    }
     virtual bool isStarted()                                                           = 0;
     virtual bool start(std::shared_ptr<Connection> connectionConfigList)               = 0;
     virtual bool isConnected()                                                         = 0;
@@ -110,6 +121,8 @@ class IIPConnection {
 
 class ISocketConnectionListener {
  public:
+    virtual ~ISocketConnectionListener() {
+    }
     virtual void onConnect(std::shared_ptr<Connection> connection) {
     }
     virtual void messageReceived(

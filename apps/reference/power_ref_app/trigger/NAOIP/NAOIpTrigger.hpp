@@ -72,6 +72,7 @@ class NAOIpTrigger : public IEventListener,
     bool init();
     void onEventRejected(shared_ptr<Event> event, EventStatus reason) override;
     void onEventProcessed(shared_ptr<Event> event, bool success) override;
+    void preProcessEvent(shared_ptr<Event> event) override;
 
     void messageReceived(
         IPMessage msg, int length, std::shared_ptr<Connection> connection) override;

@@ -39,6 +39,7 @@ struct CallInfo {
     CallState callState           = CallState::CALL_IDLE;
     CallEndCause callEndCause     = CallEndCause::NORMAL;
     int sipErrorCode              = 0;
+    int rawCauseCode              = 0;
     bool isMultiPartyCall         = false;
     bool isMpty                   = false;
     RttMode mode                  = RttMode::DISABLED;  // RTT mode of the call
@@ -46,6 +47,7 @@ struct CallInfo {
     RttMode peerRttCapability     = RttMode::DISABLED;  // RTT capability of peer device
     CallType callType             = CallType::UNKNOWN;
     std::string callReason        = "";
+    NetworkMode networkMode       = NetworkMode::UNKNOWN;
 };
 
 class CallStub : public ICall {
@@ -81,12 +83,14 @@ class CallStub : public ICall {
     CallType getCallType();
     telux::common::Status modify(
         RttMode mode, std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
+    NetworkMode getNetworkMode();
     telux::common::Status respondToModifyRequest(bool modifyResponseType,
         std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
     CallState getCallState();
     int getCallIndex();
     CallEndCause getCallEndCause();
     int getSipErrorCode();
+    int getDetailedCauseCode();
     CallDirection getCallDirection();
     std::string getRemotePartyNumber();
     std::string getCallReason();

@@ -3,7 +3,8 @@
             "eth0Config" : {
                     "ethLinkState" : "DOWN",
                     "ethModes": ["USXGMII_10G", "USXGMII_5G", "SGMII_1G"],
-                    "currentMode": "UNKNOWN"
+                    "currentMode": "UNKNOWN",
+                    "ethOperatingMode": ""
             },
             "peerEthCapabilities": [],
             "peerModeChangeRequestStatus": "UNKNOWN",

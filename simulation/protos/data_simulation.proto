@@ -44,6 +44,7 @@ service DataConnectionManager {
     rpc DeRegisterOnServiceStatusChange(DeRegisterNotificationRequest) returns
         (google.protobuf.Empty) {}
     rpc requestConnectedDataCallLists(CachedDataCallsRequest) returns (CachedDataCalls) {}
+    rpc IsAnyDataCallActive(google.protobuf.Empty) returns (IsAnyDataCallActiveReply) {}
 }
 
  /*
@@ -73,6 +74,7 @@ service DataFilterManager {
     rpc GetDataRestrictMode(GetDataRestrictModeRequest) returns (GetDataRestrictModeReply) {}
     rpc SetDataRestrictMode(SetDataRestrictModeRequest) returns (DefaultReply) {}
     rpc AddDataRestrictFilter(AddDataRestrictFilterRequest) returns (DefaultReply) {}
+    rpc AddDataRestrictFilters(AddDataRestrictFilterRequest) returns (DefaultReply) {}
     rpc RemoveAllDataRestrictFilter(RemoveDataRestrictFilterRequest) returns
         (DefaultReply) {}
 }
@@ -206,6 +208,8 @@ service DataFilterManager {
     rpc DeRegisterOnWwanConnectivityConfigChange(DeRegisterNotificationRequest) returns
         (google.protobuf.Empty) {}
     rpc RestoreFactorySettings(RestoreFactorySettingsRequest) returns (DefaultReply) {}
+    rpc IsDeviceDataUsageMonitoringEnabled(google.protobuf.Empty) returns
+        (IsDeviceDataUsageMonitoringEnabledReply) {}
   }
 
   service SocksManager {
@@ -215,6 +219,12 @@ service DataFilterManager {
 
   service KeepAliveManager {
     rpc InitService(InitRequest) returns (GetServiceStatusReply) {}
+    rpc GetServiceStatus(google.protobuf.Empty) returns (GetServiceStatusReply) {}
+    rpc EnableTCPMonitor(EnableTCPMonitorRequest) returns (EnableTCPMonitorReply) {}
+    rpc DisableTCPMonitor(DisableTCPMonitorRequest) returns (DefaultReply) {}
+    rpc StartTCPKeepAliveOffload(StartTCPKeepAliveOffloadRequest) returns (
+        StartTCPKeepAliveOffloadReply) {}
+    rpc StopTCPKeepAliveOffload(StopTCPKeepAliveOffloadRequest) returns (DefaultReply) {}
   }
   service DualDataManager {
     rpc InitService(InitRequest) returns (GetServiceStatusReply) {}
@@ -251,11 +261,202 @@ service DataFilterManager {
 
   service QoSManager {
     rpc InitService(InitRequest) returns (GetServiceStatusReply) {}
+    rpc CreateTrafficClass(CreateTrafficClassRequest) returns (CreateTrafficClassReply) {}
+    rpc GetAllTrafficClasses(google.protobuf.Empty) returns (GetAllTrafficClassesReply) {}
+    rpc DeleteTrafficClass(DeleteTrafficClassRequest) returns (DefaultReply) {}
+    rpc AddQoSFilter(AddQoSFilterRequest) returns (AddQoSFilterReply) {}
+    rpc GetQosFilter(GetQosFilterRequest) returns (GetQosFilterReply) {}
+    rpc GetQosFilters(google.protobuf.Empty) returns (GetQosFiltersReply) {}
+    rpc DeleteQosFilter(DeleteQosFilterRequest) returns (DefaultReply) {}
+    rpc DeleteAllQosConfigs(google.protobuf.Empty) returns (DefaultReply) {}
+    rpc RegisterOnQoSFilterStatusChange(google.protobuf.Empty) returns
+        (stream RegisterOnQoSFilterStatusChangeReply) {}
+    rpc DeRegisterOnQoSFilterStatusChange(DeRegisterNotificationRequest) returns
+        (google.protobuf.Empty) {}
   }
 
 /*******************************************************************
  * Messages Definition                                             *
  *******************************************************************/
+enum Direction {
+    DIRECTION_UNSPECIFIED = 0; // Use UNSPECIFIED for default/unknown values
+    UPLINK = 1;
+    DOWNLINK = 2;
+}
+
+enum DataPath {
+    TETHERED_TO_WAN_HW = 0;
+    TETHERED_TO_APPS_SW = 1;
+    APPS_TO_WAN = 2;
+}
+
+message BandwidthRange {
+    uint32 min_bandwidth = 1;
+    uint32 max_bandwidth = 2;
+}
+
+enum BandwidthConfigType {
+    BW_RANGE = 0; // Maps to 1 in C++, starting from 0 for Protobuf enum
+}
+
+message BandwidthConfig {
+    BandwidthConfigType dl_bandwidth_config_type = 1;
+    BandwidthRange dl_bandwidth_value = 2;
+}
+
+enum TcConfigValidField {
+    TC_TRAFFIC_CLASS_VALID = 0; // Maps to 1 << 0
+    TC_DIRECTION_VALID = 1;     // Maps to 1 << 1
+    TC_DATA_PATH_VALID = 2;     // Maps to 1 << 2
+    TC_BANDWIDTH_CONFIG_VALID = 3; // Maps to 1 << 3
+}
+
+message ITcConfig {
+    uint32 validity_mask = 1;
+    uint32 traffic_class = 2;
+    Direction direction = 3;
+    DataPath data_path = 4; // Reference the DataPath defined directly in this file
+    BandwidthConfig bandwidth_config = 5;
+}
+
+message CreateTrafficClassRequest {
+    ITcConfig tc_config = 1;
+}
+
+enum TcConfigErrorCode {
+    TC_SUCCESS = 0;
+    TC_MISSING_TRAFFIC_CLASS = 1;
+    TC_MISSING_DATA_PATH = 2;
+    TC_MISSING_DIRECTION = 3;
+}
+
+message CreateTrafficClassReply {
+    DefaultReply reply = 1;
+    TcConfigErrorCode tc_config_error_code = 2;
+}
+
+message GetAllTrafficClassesReply {
+    DefaultReply reply = 1;
+    repeated ITcConfig tc_configs = 2;
+}
+
+message DeleteTrafficClassRequest {
+    ITcConfig tc_config = 1;
+}
+
+enum TrafficFilterValidField {
+  TF_NONE = 0;
+  TF_DIRECTION_VALID = 1;      // Changed from (1 << 0)
+  TF_PCP_VALID = 2;            // Changed from (1 << 1)
+  TF_IP_PROTOCOL_VALID = 4;    // Changed from (1 << 2)
+  TF_SOURCE_IPV4_ADDRESS_VALID = 8;     // Changed from (1 << 3)
+  TF_SOURCE_IPV6_ADDRESS_VALID = 16;    // Changed from (1 << 4)
+  TF_SOURCE_PORT_VALID = 32;            // Changed from (1 << 5)
+  TF_SOURCE_VLAN_LIST_VALID = 64;       // Changed from (1 << 6)
+  TF_DESTINATION_IPV4_ADDRESS_VALID = 128;   // Changed from (1 << 7)
+  TF_DESTINATION_IPV6_ADDRESS_VALID = 256;   // Changed from (1 << 8)
+  TF_DESTINATION_PORT_VALID = 512;           // Changed from (1 << 9)
+  TF_DESTINATION_VLAN_LIST_VALID = 1024;    // Changed from (1 << 10)
+  TF_DATA_PATH_VALID = 2048;            // Changed from (1 << 11)
+  TF_SOURCE_PORT_RANGE_VALID = 4096;    // Changed from (1 << 12)
+  TF_DESTINATION_PORT_RANGE_VALID = 8192;   // Changed from (1 << 13)
+  TF_SOURCE_PORT_CONFIG_VALID = 16384;  // Changed from (1 << 14)
+  TF_DESTINATION_PORT_CONFIG_VALID = 32768; // Changed from (1 << 15)
+}
+
+message PortConfig {
+    uint32 port = 1; // uint16_t maps to uint32 in protobuf
+    uint32 range = 2; // uint16_t maps to uint32 in protobuf
+    uint32 max_active_connections = 3; // uint16_t maps to uint32 in protobuf
+}
+
+message ITrafficFilter {
+    // Bitmask indicating which fields are set/valid
+    uint32 validity_mask = 1; // Uses the bit flags defined in TrafficFilterValidField
+
+    // Explicit fields matching TrafficFilterImpl members
+    string source_ipv4_address = 2;
+    string source_ipv6_address = 3;
+    uint32 source_port = 4; // uint16 in C++ maps to uint32 in proto
+    repeated int32 source_vlan_list = 5; // std::vector<int> maps to repeated int32
+    uint32 source_start_port = 6;
+    uint32 source_port_range = 7;
+    PortConfig source_port_config = 8; // Nested message
+
+    string dest_ipv4_address = 9;
+    string dest_ipv6_address = 10;
+    uint32 dest_port = 11; // uint16 in C++ maps to uint32 in proto
+    repeated int32 dest_vlan_list = 12; // std::vector<int> maps to repeated int32
+    uint32 dest_start_port = 13;
+    uint32 dest_port_range = 14;
+    PortConfig dest_port_config = 15; // Nested message
+
+    uint32 ip_protocol = 16; // IpProtocol in C++ is an enum, common to use uint32 for numeric representation
+    Direction direction = 17; // Enum
+    int32 pcp = 18; // int8_t in C++ maps to int32 in proto
+    DataPath data_path = 19; // Enum
+}
+
+
+enum QoSFilterErrorCode {
+    QOS_SUCCESS = 0;
+    QOS_MISSING_DIRECTION = 1;
+    QOS_INVALID_MULTIPLE_SOURCE_INFO = 2;
+    QOS_INVALID_MULTIPLE_DESTINATION_INFO = 3;
+}
+
+enum FilterInstallationStatus {
+    SUCCESS = 0;
+    FAILED = 1;
+    PENDING = 2;
+    NOT_APPLICABLE = 3;
+}
+
+message QoSFilterStatus {
+    FilterInstallationStatus eth_status = 1;
+    FilterInstallationStatus modem_status = 2;
+    FilterInstallationStatus ipa_status = 3;
+}
+
+message IQoSFilter {
+    uint32 handle = 1;
+    QoSFilterStatus status = 2;
+    uint32 traffic_class = 3;
+    ITrafficFilter traffic_filter = 4; // Reference the ITrafficFilter defined directly in this file
+}
+
+message AddQoSFilterRequest {
+    uint32 traffic_class = 1;
+    ITrafficFilter traffic_filter = 2; // Reference the ITrafficFilter defined directly in this file
+}
+
+message AddQoSFilterReply {
+    DefaultReply reply = 1;
+    uint32 filter_handle = 2;
+    QoSFilterErrorCode qos_filter_error_code = 3;
+}
+
+message GetQosFilterRequest {
+    uint32 filter_handle = 1;
+}
+
+message GetQosFilterReply {
+    DefaultReply reply = 1;
+    IQoSFilter qos_filter = 2;
+}
+
+message GetQosFiltersReply {
+    DefaultReply reply = 1;
+    repeated IQoSFilter qos_filters = 2;
+}
+
+message DeleteQosFilterRequest {
+    uint32 filter_handle = 1;
+}
+
+message RegisterOnQoSFilterStatusChangeReply {
+    IQoSFilter qos_filter = 1;
+}
 
 message GetDualDataCapabilityReply {
     bool capability = 1;
@@ -296,6 +497,11 @@ message DualDataUsageRecommendationEvent {
 
 message ClientInfo {
     int32 client_id = 1;
+}
+
+message QoSFilterStatusChangeEvent {
+    uint32 handle = 1;
+    QoSFilterStatus status = 2;
 }
 
 message StopDataCallEvent {
@@ -473,6 +679,72 @@ message GetServiceStatusReply {
     int32 delay = 2;
 }
 
+
+message TCPKAParams {
+    string src_ip = 1;      // Source IPv4/IPv6 address
+    string dst_ip = 2;      // Destination IPv4/IPv6 address
+    int32 src_port = 3;     // Source port
+    int32 dst_port = 4;     // Destination port
+}
+
+message TCPSessionParams {
+    uint32 recv_next = 1;
+    uint32 recv_window = 2;
+    uint32 send_next = 3;
+    uint32 send_window = 4;
+}
+
+message EnableTCPMonitorRequest {
+    int32 slot_id = 1;
+    TCPKAParams tcp_ka_params = 2;
+    OperationType operation_type = 3;
+}
+
+message EnableTCPMonitorReply {
+    uint32 monitor_handle = 1;
+    DefaultReply reply = 2;
+}
+
+message DisableTCPMonitorRequest {
+    uint32 monitor_handle = 1;
+    OperationType operation_type = 2;
+}
+
+message StartTCPKeepAliveOffloadRequest {
+    oneof params {
+        StartTCPKeepAliveOffloadWithSessionParams session_params = 1;
+        StartTCPKeepAliveOffloadWithMonitorHandle monitor_handle_params = 2;
+    }
+    uint32 interval = 3;
+    OperationType operation_type = 4;
+    int32 slot_id = 5;
+}
+
+message StartTCPKeepAliveOffloadWithSessionParams {
+    TCPKAParams tcp_ka_params = 1;
+    TCPSessionParams tcp_session_params = 2;
+    int32 slot_id = 3;
+}
+
+message StartTCPKeepAliveOffloadWithMonitorHandle {
+    uint32 monitor_handle = 1;
+}
+
+message StartTCPKeepAliveOffloadReply {
+    uint32 offload_handle = 1;
+    DefaultReply reply = 2;
+}
+
+message StopTCPKeepAliveOffloadRequest {
+    uint32 offload_handle = 1;
+    OperationType operation_type = 2;
+}
+
+message KeepAliveStatusChangeReply {
+    commonStub.ErrorCode error = 1;
+    uint32 offload_handle = 2;
+}
+
 message DataCallReply {
     int32 slot_id = 1;
     int32 profile_id = 2;
@@ -565,6 +837,10 @@ message setIpConfigReply {
 message DataCallStatisticsRequest{
     int32 slot_id = 1;
     int32 profile_id = 2;
+}
+
+message IsAnyDataCallActiveReply{
+    bool isAnyDataCallActive = 1;
 }
 
 message RequestDataCallStatisticsReply {
@@ -1145,15 +1421,6 @@ message ProtocolParams {
     int32 esp_spi = 7;
 }
 
-message Direction {
-    enum Fw_Direction {
-        DUMMY = 0;
-        UPLINK = 1;
-        DOWNLINK = 2;
-    }
-    Fw_Direction fw_direction = 1;
-}
-
 message BindToBackhaulConfig {
     int32 vlan_id = 1;
     int32 slot_id = 2;
@@ -1570,6 +1837,10 @@ message RecommendationDetails {
 message RestoreFactorySettingsRequest {
     OperationType operation_type = 1;
     bool is_reboot_needed = 2;
+}
+
+message IsDeviceDataUsageMonitoringEnabledReply {
+    bool enabled = 1;
 }
 
 message EthModeChangeRequestEvent {

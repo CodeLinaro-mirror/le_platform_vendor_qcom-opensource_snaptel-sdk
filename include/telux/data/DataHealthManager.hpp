@@ -76,20 +76,17 @@ enum class DataStallReason {
  */
 enum class DataStallRecoveryAction {
     NO_ACTION = 0,                  /**< No recovery action */
-    INTERNAL = 1,                   /**< HM internal recovery action */
-    LPM_TOGGLE = 2,                 /**< Modem LPM toggle and Modem online */
-    MODEM_SSR = 3,                  /**< Modem SSR */
-    DEVICE_REBOOT = 4,              /**< Device reboot */
-    FACTORY_RESET = 5,              /**< Device factory reset */
-    ETH_IPA_SUSPEND_RESUME = 6,     /**< Suspend resume eth-ipa pipe */
-    ETH_SW_TX_CHNL_REINIT = 7,      /**< ETH S/W Tx channel re-initialization */
-    ETH_SW_RX_CHNL_REINIT = 8,      /**< ETH S/W Rx channel re-initialization */
-    ETH_REINIT = 9,                 /**< ETH interface toggle */
-    WLAN_RECONNECT = 10,            /**< WLAN reconnect from QCMAP */
-    WLAN_AP_RECONNECT = 11,         /**< WLAN AP reconnect from QCMAP */
-    WLAN_STA_RECONNECT = 12,        /**< WLAN STA reconnect */
-    WLAN_DRIVER_RELOAD = 13,        /**< Reload WLAN driver */
-    IPACM_RESTART = 14,             /**< Restart IPACM */
+    LPM_TOGGLE = 1,                 /**< Modem LPM toggle and Modem online */
+    MODEM_SSR = 2,                  /**< Modem SSR */
+    ETH_IPA_SUSPEND_RESUME = 3,     /**< Suspend resume eth-ipa pipe */
+    ETH_SW_TX_CHNL_REINIT = 4,      /**< ETH S/W Tx channel re-initialization */
+    ETH_SW_RX_CHNL_REINIT = 5,      /**< ETH S/W Rx channel re-initialization */
+    ETH_REINIT = 6,                 /**< ETH interface toggle */
+    WLAN_RECONNECT = 7,             /**< WLAN reconnect from QCMAP */
+    WLAN_AP_RECONNECT = 8,          /**< WLAN AP reconnect from QCMAP */
+    WLAN_STA_RECONNECT = 9,         /**< WLAN STA reconnect */
+    WLAN_DRIVER_RELOAD = 10,        /**< Reload WLAN driver */
+    IPACM_RESTART = 11,             /**< Restart IPACM */
 };
 
 /**

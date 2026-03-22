@@ -1,0 +1,50 @@
+{
+    "IMultiSimManager" :
+    {
+        "logicalSlotMapping": {
+            "mapInfo": [
+                {
+                    "logicalSlotId": "SLOT_ID_1",
+                    "physicalSlotId": "SLOT_ID_1",
+                    "portId": 0
+                },
+                {
+                    "logicalSlotId": "SLOT_ID_2",
+                    "physicalSlotId": "SLOT_ID_2",
+                    "portId": 0
+                }
+            ]
+        },
+        "getPhysicalSlotStatus": {
+            "slotStatus": [
+                {
+                    "physicalSlotId": "SLOT_ID_1",
+                    "isMep": false,
+                    "mepSlotInfo": {
+                        "mode": "NONE",
+                        "port": []
+                    },
+                    "slotState": "ACTIVE",
+                    "cardState": "CARDSTATE_PRESENT",
+                    "cardError": "CARD_ERROR_NONE"
+                },
+                {
+                    "physicalSlotId": "SLOT_ID_2",
+                    "isMep": true,
+                    "mepSlotInfo": {
+                        "mode": "MEP_A1",
+                        "port": [
+                            {
+                                "state": "ACTIVE",
+                                "slotId": "SLOT_ID_2"
+                            }
+                        ]
+                    },
+                    "slotState": "ACTIVE",
+                    "cardState": "CARDSTATE_PRESENT",
+                    "cardError": "CARD_ERROR_NONE"
+                }
+            ]
+        }
+    }
+}

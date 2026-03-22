@@ -16,6 +16,7 @@
 #include <string>
 
 #define DEFAULT_DELAY 100
+#define MULTI_SIM_STATE_JSON_PATH1 "system-state/tel/IMultiSimManagerStateSlot1.json"
 
 namespace telux {
 namespace tel {

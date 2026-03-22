@@ -52,13 +52,35 @@ telux::common::Status CardStub::getState(CardState &cardState) {
 }
 
 void CardStub::getMepInfo(MepInfo &info) {
-    info.isMep             = false;
-    info.portId            = 0;
-    info.negotiatedMepMode = Mode::NONE;
+    LOG(DEBUG, __FUNCTION__);
+    ::telStub::GetMepInfoRequest request;
+    ::telStub::GetMepInfoResponse response;
+    ClientContext context;
+
+    request.set_phone_id(slotId_);
+    grpc::Status status = stub_->getMepInfo(&context, request, &response);
+    if (!status.ok()) {
+        return;
+    }
+
+    info.isMep             = response.is_mep();
+    info.portId            = response.port_id();
+    info.negotiatedMepMode = static_cast<Mode>(response.negotiated_mep_mode());
 }
 
 void CardStub::getPhysicalSlotId(PhysicalSlotId &slotId) {
-    slotId = PhysicalSlotId::INVALID_SLOT_ID;
+    LOG(DEBUG, __FUNCTION__);
+    ::telStub::GetPhysicalSlotIdRequest request;
+    ::telStub::GetPhysicalSlotIdResponse response;
+    ClientContext context;
+
+    request.set_phone_id(slotId_);
+    grpc::Status status = stub_->getPhysicalSlotId(&context, request, &response);
+    if (!status.ok()) {
+        return;
+    }
+
+    slotId = static_cast<PhysicalSlotId>(response.slot_id());
 }
 
 std::vector<std::shared_ptr<ICardApp>> CardStub::getApplications(telux::common::Status *status) {

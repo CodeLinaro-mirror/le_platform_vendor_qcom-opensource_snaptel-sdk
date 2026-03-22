@@ -365,8 +365,7 @@ void MultiSimMenu::getPhysicalSlotStatus(std::vector<std::string> userInput) {
             }
         }
     } else {
-        std::cout << " Configure logical slot mapping request failed with status code: "
-                  << static_cast<int>(ret) << std::endl;
+        std::cout << " physical slot status failed with : " << static_cast<int>(ret) << std::endl;
     }
 }
 

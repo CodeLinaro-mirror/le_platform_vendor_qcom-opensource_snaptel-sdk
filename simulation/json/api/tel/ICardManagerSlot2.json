@@ -2,6 +2,11 @@
     "ICardManager" :
     {
         "DefaultCallbackDelay" : 400,
+        "mode" : "MEP_A1",
+        "physicalSlotId" : "SLOT_ID_2",
+        "_comment_mode" : "Valid inputs NONE, MEP_A1, MEP_B Refer telux::tel::Mode",
+        "ICCID" : "8901410331140284781",
+        "_comment_ICCID" : "Valid only when mode is MEP_A1, MEP_B",
         "readEFLinearFixed" :
         {
             "status" : "SUCCESS",

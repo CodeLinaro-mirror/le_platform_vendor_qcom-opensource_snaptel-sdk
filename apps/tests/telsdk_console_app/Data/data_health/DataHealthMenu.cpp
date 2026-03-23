@@ -438,16 +438,6 @@ void DataHealthMenu::getDataStallConfig(std::vector<std::string> inputCommand) {
     DataStallConfig config;
     config.module = module;
 
-    // For WWAN, get profileId (optional)
-    if (module == DataStallNetworkModule::WWAN) {
-        int profileId;
-        std::cout << "Enter Profile Id : ";
-        std::cin >> profileId;
-        if (profileId != -1) {
-            config.profileId = profileId;
-        }
-    }
-
     std::cout << "\nGetting data stall config for "
               << DataUtils::networkModuleToString(module) << " module..." << std::endl;
 

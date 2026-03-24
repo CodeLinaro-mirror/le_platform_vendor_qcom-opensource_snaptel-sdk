@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
     SignalHandler::registerSignalHandler(sigset, cb);
 
     // Setting required secondary groups for SDK file/diag logging
-    std::vector<std::string> supplementaryGrps{"system", "diag", "locclient", "logd"};
+    std::vector<std::string> supplementaryGrps{"system", "diag", "locclient", "logd", "dlt"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1) {
         std::cout << "Adding supplementary groups failed!" << std::endl;

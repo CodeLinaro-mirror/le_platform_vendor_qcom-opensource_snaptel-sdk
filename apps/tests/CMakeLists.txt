@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.10.2)
 
-add_subdirectory( telsdk_console_app )
-
+if (NOT TELSDK_OWRT_SUPPORT)
+    add_subdirectory( telsdk_console_app )
+endif (TELSDK_OWRT_SUPPORT)
 if (TELSDK_FEATURE_SQUISH)
     add_subdirectory( squish_test_app )
 endif (TELSDK_FEATURE_SQUISH)

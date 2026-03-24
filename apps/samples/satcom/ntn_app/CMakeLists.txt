@@ -14,7 +14,7 @@ include_directories(BEFORE
 )
 
 # set global variables
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fPIE")
 
 add_executable (${TARGET_NTN_APP} ${SOURCES})
 target_link_libraries(${TARGET_NTN_APP} telux_satcom)

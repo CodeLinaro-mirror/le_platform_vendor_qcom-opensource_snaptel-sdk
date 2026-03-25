@@ -58,6 +58,9 @@ class MyECallListener : public telux::tel::ICallListener {
     std::string callStateToString(telux::tel::CallState cs);
 
     std::string callDirectionToString(telux::tel::CallDirection cd);
+
+    std::string networkModeToString(telux::tel::NetworkMode mode);
+
     /**
      * Get the call end cause in string format from call end cause code
      */

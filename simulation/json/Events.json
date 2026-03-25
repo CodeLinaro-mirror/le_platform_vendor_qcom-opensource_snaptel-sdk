@@ -391,6 +391,12 @@
             "RecommendationDetails: string,Valid RecommendationType: REVOKE,LOW,HIGH"
         ]
     },
+    "keep_alive": {
+        "stateChange":[
+            "telsdk_event_injector -f keep_alive -e statusChange <KAoffloadHandle>",
+            "KAoffloadHandle:  integer, The TCPKA offload handle associated with the status change."
+        ]
+    },
     "client_manager": {
         "deviceDataUsageStatsUpdate": [
             "telsdk_event_injector -f client_manager -e deviceDataUsageStatsUpdate <macAddress> <bytesRx> <bytesTx>",

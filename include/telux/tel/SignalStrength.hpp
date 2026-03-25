@@ -223,7 +223,7 @@ class LteSignalStrengthInfo {
      *
      * @returns LteCqI.
      *
-     * @deprecated As of version 1.54.0 this API is no longer supported.
+     * @deprecated This API is no longer supported.
      */
     const int getLteChannelQualityIndicator() const;
 

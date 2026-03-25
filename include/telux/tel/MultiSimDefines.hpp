@@ -64,34 +64,34 @@ enum class SlotState {
  * Represents the state of the port associated with a physical SIM slot.
  */
 enum class PortState {
-   UNKNOWN = -1,    /**< Port state is unknown */
-   INACTIVE,        /**< Port is inactive */
-   ACTIVE,          /**< Port is active */
+    UNKNOWN = -1, /**< Port state is unknown */
+    INACTIVE, /**< Port is inactive */
+    ACTIVE, /**< Port is active */
 };
 
 /**
  * Represents the mapping of logical slot to physical SIM slot and portId.
  */
 struct LogicalSlotMapInfo {
-    PhysicalSlotId physicalSlot;        /**< Physical slot identifier */
-    int portId;                         /**< Port identifier for the mapped physical slot  */
+    PhysicalSlotId physicalSlot; /**< Physical slot identifier */
+    int portId; /**< Port identifier for the mapped physical slot  */
 };
 
 /**
  * Represents the port information on a physical SIM slot.
  */
 struct PortInfo {
-    PortState state;    /**< State of the port associated with a physical SIM slot */
-    std::string iccId;  /**< Integrated circuit card identifier (ICCID) of the profile mapped on
-                             the port */
+    PortState state; /**< State of the port associated with a physical SIM slot */
+    std::string iccId; /**< Integrated circuit card identifier (ICCID) of the profile mapped on
+                            the port */
     LogicalSlotId slotId; /**< Logical slot identifier associated with the port */
 };
 
 /**
  * Represents MEP mode and port information of a physical SIM slot.
  */
-struct MepSlotInfo{
-    Mode mode;                  /**< MEP mode of the SIM card */
+struct MepSlotInfo {
+    Mode mode; /**< MEP mode of the SIM card */
     std::vector<PortInfo> port; /**< Port information of various ports for the physical slot */
 };
 
@@ -99,12 +99,12 @@ struct MepSlotInfo{
  * Represents the status of a physical SIM slot, which may contain either a MEP or non-MEP card.
  */
 struct SimSlotStatus {
-    bool isMep;                     /**< Indicates whether the SIM card is a MEP card */
-    MepSlotInfo mepSlotInfo;        /**< Provides MEP information of the physical SIM slot */
-    SlotState slotState;            /**< State of the physical SIM slot */
-    CardState cardState;            /**< Status of the card in the physical slot */
-    CardError cardError;            /**< Indicates the reason for the card error, and is valid only
-                                         when the card state is CARDSTATE_ERROR. */
+    bool isMep; /**< Indicates whether the SIM card is a MEP card */
+    MepSlotInfo mepSlotInfo; /**< Provides MEP information of the physical SIM slot */
+    SlotState slotState; /**< State of the physical SIM slot */
+    CardState cardState; /**< Status of the card in the physical slot */
+    CardError cardError; /**< Indicates the reason for the card error, and is valid only
+                              when the card state is CARDSTATE_ERROR. */
 };
 
 /**
@@ -112,10 +112,10 @@ struct SimSlotStatus {
  * @deprecated - Use telux::tel::SimSlotStatus instead.
  */
 struct SlotStatus {
-   SlotState slotState;         /**< State of the physical SIM slot */
-   CardState cardState;         /**< Status of the card in the physical slot */
-   CardError cardError;         /**< Indicates the reason for the card error, and is valid only
-                                     when the card state is CARDSTATE_ERROR. */
+    SlotState slotState; /**< State of the physical SIM slot */
+    CardState cardState; /**< Status of the card in the physical slot */
+    CardError cardError; /**< Indicates the reason for the card error, and is valid only
+                              when the card state is CARDSTATE_ERROR. */
 };
 
 /** @} */ /* end_addtogroup telematics_multi_sim */

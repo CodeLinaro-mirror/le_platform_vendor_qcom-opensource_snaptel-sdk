@@ -5,6 +5,7 @@
 
 #include "Event.hpp"
 
+#include "common/RefAppUtils.hpp"
 uint64_t Event::nextId;
 
 /**

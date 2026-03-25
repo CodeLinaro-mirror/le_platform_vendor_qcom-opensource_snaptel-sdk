@@ -598,6 +598,18 @@ Details of parameters that can be configured in the Simulation framework.
 
   Supported Values: SUCCESS, CALLORIG, CALLDROP.
 
+- "callMode" : To configure network mode for call.
+
+  Supported Values: NR5G, LTE, UMTS, GSM.
+
+- "callEndCause" : To configure call end reason for call.
+
+  Supported Values: refer to telux::tel::CallEndCause.
+
+- "rawCauseCode" : To configure raw cause code for call.
+
+  Supported Values: refer to QMI definitions.
+
 These parameters can be configured via *simulation/json/api/tel/ICallManagerSlot1.json and simulation/json/api/tel/ICallManagerSlot2.json*.
 
 Retrieve eCall MSD payload or encoded optional additional data content
@@ -1648,6 +1660,7 @@ The following managers are currently available in the simulation:
 12. DualDataManager
 13. DataControlManager
 14. DataLinkManager
+15. QoSManager
 
 
 Data APIs Response handling

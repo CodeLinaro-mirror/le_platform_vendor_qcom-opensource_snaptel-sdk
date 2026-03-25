@@ -753,8 +753,28 @@ telux::common::ErrorCode DataSettingsManagerStub::setIpConfig(
 }
 
 bool DataSettingsManagerStub::isDeviceDataUsageMonitoringEnabled() {
-    LOG(ERROR, __FUNCTION__, " TBD");
-    return false;
+    LOG(ERROR, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Data settings manager not ready");
+        return false;
+    }
+
+    ::google::protobuf::Empty request;
+    ::dataStub::IsDeviceDataUsageMonitoringEnabledReply response;
+    ClientContext context;
+
+    grpc::Status reqStatus
+        = stub_->IsDeviceDataUsageMonitoringEnabled(&context, request, &response);
+
+    if (!reqStatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " IsDeviceDataUsageMonitoringEnabled request failed");
+        return false;
+    }
+
+    bool isEnabled = response.enabled();
+    LOG(DEBUG, __FUNCTION__, " Device data usage monitoring enabled: ", isEnabled);
+
+    return isEnabled;
 }
 
 telux::common::Status DataSettingsManagerStub::registerListener(

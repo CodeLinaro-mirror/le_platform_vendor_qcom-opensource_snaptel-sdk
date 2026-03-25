@@ -54,6 +54,7 @@ class DataListener : public telux::data::IDataConnectionListener {
         const std::vector<std::shared_ptr<telux::data::TftChangeInfo>> &tfts) override;
     // Connectivity enablement indication
     void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed);
+    void onThroughputInfoAvailable(const std::vector<telux::data::ThroughputInfo> &info);
     std::shared_ptr<telux::data::IDataCall> getDataCall(int slotId, int profileId);
     void initDataCallListResponseCb(
         const std::vector<std::shared_ptr<telux::data::IDataCall>> &dataCallList,

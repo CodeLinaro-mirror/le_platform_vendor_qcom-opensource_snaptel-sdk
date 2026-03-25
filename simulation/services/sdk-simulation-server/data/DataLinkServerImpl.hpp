@@ -81,6 +81,7 @@ class DataLinkServerImpl final : public dataStub::DataLinkManager::Service,
     void handleEvent(std::string token, std::string event);
     void handleOnEthModeChangeTransactionStatus(std::string event);
     void handleOnEthModeChangeRequest(std::string event);
+    void sendEthModeChangeTransactionStatusEvent(int mode, dataStub::ModeChangeStatusEnum status);
 };
 
 #endif  // DATA_LINK_SERVER_HPP

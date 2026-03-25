@@ -13,12 +13,18 @@
 #include <string>
 #include <iomanip>
 #include <algorithm>
+#include <time.h>
 
 #include "RefAppUtils.hpp"
 #include "ConfigParser.hpp"
 #include "DataConfigParser.hpp"
 
 #define DEFAULT_TCP_KEEP_ALIVE_PACKET_INTERVAL "60000"
+#define KPI_FILE "/sys/kernel/boot_kpi/kpi_values"
+#define ALL_MACHINES "ALL_MACHINES"
+
+// Initialize static member
+bool RefAppUtils::kpiLoggingEnabled_ = false;
 
 std::map<telux::common::ErrorCode, std::string> RefAppUtils::errorCodeToStringMap_ = {
 
@@ -617,16 +623,25 @@ std::string RefAppUtils::triggerTypeToString(TriggerType triggeredBy) {
 
     switch (triggeredBy) {
         case TriggerType::NAOIP_TRIGGER:
-            returnStingValue = "NAOIP_TRIGGER";
+            returnStingValue = "NAOIP";
             break;
         case TriggerType::SMS_TRIGGER:
-            returnStingValue = "SMS_TRIGGER";
+            returnStingValue = "SMS";
             break;
         case TriggerType::GPIO_TRIGGER:
-            returnStingValue = "GPIO_TRIGGER";
+            returnStingValue = "GPIO";
             break;
         case TriggerType::CAN_TRIGGER:
-            returnStingValue = "CAN_TRIGGER";
+            returnStingValue = "CAN";
+            break;
+        case TriggerType::CONSOLE_TRIGGER:
+            returnStingValue = "CONSOLE";
+            break;
+        case TriggerType::TIMER_TRIGGER:
+            returnStingValue = "TIMER";
+            break;
+        case TriggerType::WAKEUP_IND_TRIGGER:
+            returnStingValue = "WAKEUP_IND";
             break;
         default:
             break;
@@ -691,142 +706,86 @@ bool RefAppUtils::isClient() {
     return true;
 }
 
-bool RefAppUtils::isKeepAliveEnabled() {
-    std::string value = ConfigParser::getInstance()->getValue("communication", "TCP_KEEP_ALIVE");
+std::vector<std::shared_ptr<Connection>> RefAppUtils::getConnectionConfigs() {
+    std::vector<std::shared_ptr<Connection>> connectionList;
+    auto config = ConfigParser::getInstance();
+
+    std::vector<std::map<std::string, std::string>> allSocketConnectionsStr
+        = config->getDuplicateSectionValue("SOCKET_COMMUNICATION");
+
+    for (auto socketConnectionStr : allSocketConnectionsStr) {
+        std::shared_ptr<Connection> connection = std::make_shared<Connection>();
+        if (!connection) {
+            LOG(ERROR, __FUNCTION__, " Failed to create Connection object");
+            continue;
+        }
+        std::string value = socketConnectionStr["ROLE"];
+        connection->connectionRole
+            = (!value.compare("SERVER")) ? ConnectionRole::SERVER : ConnectionRole::CLIENT;
+
+        value                = socketConnectionStr["IP_FAMILY"];
+        connection->ipFamily = (!value.compare("6")) ? telux::data::IpFamilyType::IPV6
+                                                     : telux::data::IpFamilyType::IPV4;
+
+        value                = socketConnectionStr["TRANSPORT_PROTOCOL"];
+        connection->protocol = (!value.compare("UDP")) ? Protocol::UDP : Protocol::TCP;
+
+        connection->isKeepAliveEnabled
+            = RefAppUtils::stringToBool(socketConnectionStr["TCP_KEEP_ALIVE"]);
+
+        connection->installDataFilterForSocket
+            = RefAppUtils::stringToBool(socketConnectionStr["INSTALL_DATA_FILTER_FOR_SOCKET"]);
+        connection->serverIpAddr = socketConnectionStr["SERVER_ADDRESS"];
+
+        connection->configuredInterfaceName = socketConnectionStr["DATA_INTERFACE_NAME"];
+
+        std::string serverPortValue        = socketConnectionStr["SERVER_PORT"];
+        std::string profileIdValue         = socketConnectionStr["PROFILE_ID"];
+        std::string slotIdValue            = socketConnectionStr["SLOT_ID"];
+        std::string keepAliveIntervalValue = socketConnectionStr["TCP_KEEP_ALIVE_PACKET_INTERVAL"];
+
+        try {
+            connection->serverPort = std::stoi(serverPortValue);
+        } catch (const std::exception &e) {
+            LOG(WARNING, __FUNCTION__, " Invalid port format: ", serverPortValue);
+            connection->serverPort = 0;
+        }
+
+        try {
+            connection->profileId = std::stoi(profileIdValue);
+        } catch (const std::exception &e) {
+            LOG(WARNING, __FUNCTION__, " Invalid profileIdValue format: ", profileIdValue);
+            connection->profileId = 0;
+        }
+
+        try {
+            connection->slotId = static_cast<SlotId>(std::stoi(slotIdValue));
+        } catch (const std::exception &e) {
+            LOG(WARNING, __FUNCTION__, " Invalid slotId: ", slotIdValue);
+            connection->slotId = DEFAULT_SLOT_ID;
+        }
+
+        try {
+            connection->keepAliveInterval = std::stoul(keepAliveIntervalValue);
+        } catch (const std::exception &e) {
+            LOG(WARNING, __FUNCTION__, " Invalid keepAliveInterval: ", keepAliveIntervalValue);
+            connection->keepAliveInterval = 60000;
+        }
+        connectionList.push_back(connection);
+        LOG(DEBUG, __FUNCTION__, " connection: ", connection->toString());
+    }
+    return connectionList;
+}
+
+bool RefAppUtils::isDataFilterInstallationEnabled() {
+    std::string value = ConfigParser::getInstance()->getValue("NAOIP_TRIGGER", "DATA_FILTER");
     LOG(DEBUG, __FUNCTION__, " value: ", value);
     return RefAppUtils::stringToBool(value);
 }
 
 bool RefAppUtils::isAutoExitEnabled() {
     std::string value
-        = ConfigParser::getInstance()->getValue("communication", "DATA_FILTER_AUTO_EXIT");
-    LOG(DEBUG, __FUNCTION__, " value: ", value);
-    return RefAppUtils::stringToBool(value);
-}
-
-uint32_t RefAppUtils::getKeepAliveInterval() {
-    std::string interval
-        = ConfigParser::getInstance()->getValue("communication", "TCP_KEEP_ALIVE_PACKET_INTERVAL");
-    return interval.empty() ? std::stoul(DEFAULT_TCP_KEEP_ALIVE_PACKET_INTERVAL)
-                            : std::stoul(interval);
-}
-
-std::vector<std::shared_ptr<Connection>> RefAppUtils::getConnectionConfigs() {
-    std::vector<std::shared_ptr<Connection>> connectionList;
-    std::shared_ptr<Connection> commonConnection;
-    try {
-        commonConnection = std::make_shared<Connection>();
-    } catch (const std::exception &e) {
-        LOG(ERROR, __FUNCTION__, "Exception creating Connection: ", e.what());
-        return {};
-    }
-    if (!commonConnection) {
-        LOG(ERROR, __FUNCTION__, "Failed to create Connection object");
-        return {};
-    }
-    auto config = ConfigParser::getInstance();
-
-    std::string value = config->getValue("communication", "ROLE");
-    commonConnection->connectionRole
-        = (!value.compare("SERVER")) ? ConnectionRole::SERVER : ConnectionRole::CLIENT;
-
-    value = config->getValue("communication", "IP_FAMILY");
-    commonConnection->ipFamily
-        = (!value.compare("6")) ? telux::data::IpFamilyType::IPV6 : telux::data::IpFamilyType::IPV4;
-
-    value                      = config->getValue("communication", "TRANSPORT_PROTOCOL");
-    commonConnection->protocol = (!value.compare("UDP")) ? Protocol::UDP : Protocol::TCP;
-
-    value                          = config->getValue("communication", "CLIENT_ADDRESS");
-    commonConnection->clientIpAddr = (!value.empty()) ? value : "";
-
-    value                        = config->getValue("communication", "SERVER_PORT");
-    commonConnection->serverPort = (!value.empty()) ? std::stoi(value) : 0;
-
-    value                        = config->getValue("communication", "CLIENT_PORT");
-    commonConnection->clientPort = (!value.empty()) ? std::stoi(value) : 0;
-
-    try {
-        std::string ipValue   = config->getValue("communication", "SERVER_ADDRESS");
-        std::string portValue = config->getValue("communication", "SERVER_PORT");
-        std::string profileIdValue
-            = config->getValue("communication", "START_DATA_CALL_ON_PROFILE_ID");
-
-        std::vector<std::string> ipList;
-        std::vector<std::string> portList;
-        std::vector<std::string> profileIdList;
-
-        // Split and clean IP addresses
-        if (!ipValue.empty()) {
-            std::stringstream ss(ipValue);
-            std::string ip;
-            while (std::getline(ss, ip, ',')) {
-                ip.erase(std::remove_if(ip.begin(), ip.end(), ::isspace), ip.end());
-                ipList.push_back(ip);
-            }
-        }
-
-        // Split and clean ports
-        if (!portValue.empty()) {
-            std::stringstream ss(portValue);
-            std::string port;
-            while (std::getline(ss, port, ',')) {
-                port.erase(std::remove_if(port.begin(), port.end(), ::isspace), port.end());
-                portList.push_back(port);
-            }
-        }
-
-        // Split and clean ports
-        if (!profileIdValue.empty()) {
-            std::stringstream ss(profileIdValue);
-            std::string profileId;
-            while (std::getline(ss, profileId, ',')) {
-                profileId.erase(
-                    std::remove_if(profileId.begin(), profileId.end(), ::isspace), profileId.end());
-                profileIdList.push_back(profileId);
-            }
-        }
-
-        // Match IPs and ports by index
-        size_t count = std::max(ipList.size(), portList.size());
-        for (size_t i = 0; i < count; ++i) {
-            std::shared_ptr<Connection> connection
-                = std::make_shared<Connection>(*commonConnection);
-
-            if (i < ipList.size()) {
-                connection->serverIpAddr = ipList[i];
-            }
-
-            if (i < portList.size()) {
-                try {
-                    connection->serverPort = std::stoi(portList[i]);
-                } catch (const std::exception &e) {
-                    LOG(WARNING, __FUNCTION__, "Invalid port format: ", portList[i]);
-                    connection->serverPort = 0;
-                }
-            }
-
-            if (i < profileIdList.size()) {
-                try {
-                    connection->profileId = std::stoi(profileIdList[i]);
-                } catch (const std::exception &e) {
-                    LOG(WARNING, __FUNCTION__, "Invalid profile id format: ", profileIdList[i]);
-                    connection->profileId = 0;
-                }
-            }
-            connection->slotId = static_cast<SlotId>(i + 1);
-            connectionList.push_back(connection);
-        }
-
-    } catch (const std::exception &e) {
-        LOG(ERROR, __FUNCTION__, e.what());
-    }
-    return connectionList;
-}
-
-bool RefAppUtils::isDataFilterInstallationEnabled() {
-    std::string value
-        = ConfigParser::getInstance()->getValue("communication", "INSTALL_DATA_FILTER");
+        = ConfigParser::getInstance()->getValue("NAOIP_TRIGGER", "DATA_FILTER_AUTO_EXIT");
     LOG(DEBUG, __FUNCTION__, " value: ", value);
     return RefAppUtils::stringToBool(value);
 }
@@ -840,4 +799,110 @@ bool RefAppUtils::stringToBool(std::string enable) {
         LOG(ERROR, __FUNCTION__, " Invalid value ");
         return false;
     }
+}
+
+bool RefAppUtils::isWakeupListenerEnabled() {
+    std::string value = ConfigParser::getInstance()->getValue("WAKEUP_LISTENER", "WAKEUP_LISTENER");
+    LOG(DEBUG, __FUNCTION__, " value: ", value);
+    return RefAppUtils::stringToBool(value);
+}
+
+std::bitset<32> RefAppUtils::getTriggerResumeOnWakeupConfig() {
+    std::string config
+        = ConfigParser::getInstance()->getValue("WAKEUP_LISTENER", "TRIGGER_RESUME_ON_WAKEUP");
+    std::bitset<32> indBits{};
+    if (not config.empty()) {
+        unsigned long tempValue;
+        std::istringstream ost(config);
+        ost >> std::hex >> tempValue;
+        std::bitset<32> indBitsConfig(tempValue);
+        indBits = indBitsConfig;
+    }
+    return indBits;
+}
+
+void RefAppUtils::logKpiFile(std::shared_ptr<Event> event) {
+    if (!kpiLoggingEnabled_) {
+        LOG(DEBUG, __FUNCTION__, "KPI logging is disabled");
+        return;
+    }
+
+    std::string log = "";
+    switch (event->getTriggeredState()) {
+        case telux::power::TcuActivityState::SUSPEND:
+            log = "suspend";
+            break;
+        case telux::power::TcuActivityState::SHUTDOWN:
+            log = "shutdown";
+            break;
+        case telux::power::TcuActivityState::RESUME:
+            log = "resume";
+            break;
+        default:
+            LOG(ERROR, __FUNCTION__, "Inappropriate TCU-activity state for an acknowledgement");
+            log = "trigger";
+    }
+
+    // Add trigger type information
+    log += " via " + triggerTypeToString(event->getTriggerType());
+
+    struct timespec ts = {};
+    clock_gettime(CLOCK_REALTIME, &ts);
+    std::ofstream kpi_output(KPI_FILE);
+    if (kpi_output.is_open()) {
+        kpi_output << "M - Refd " << log << ": " << ts.tv_sec << "." << ts.tv_nsec;
+        kpi_output.close();
+    } else {
+        LOG(DEBUG, __FUNCTION__, "Unable to open KPI file ", errno, ": ", strerror(errno));
+    }
+}
+
+void RefAppUtils::logKpiFile(const std::string &message) {
+    if (!kpiLoggingEnabled_) {
+        LOG(DEBUG, __FUNCTION__, "KPI logging is disabled");
+        return;
+    }
+
+    struct timespec ts = {};
+    clock_gettime(CLOCK_REALTIME, &ts);
+    std::ofstream kpi_output(KPI_FILE);
+    if (kpi_output.is_open()) {
+        kpi_output << "M - Refd " << message << ": " << ts.tv_sec << "." << ts.tv_nsec;
+        kpi_output.close();
+    } else {
+        LOG(DEBUG, __FUNCTION__, "Unable to open KPI file ", errno, ": ", strerror(errno));
+    }
+}
+
+void RefAppUtils::logKpiFile(const char *message, size_t length) {
+    if (!kpiLoggingEnabled_) {
+        LOG(DEBUG, __FUNCTION__, "KPI logging is disabled");
+        return;
+    }
+
+    if (message == nullptr || length == 0) {
+        LOG(ERROR, __FUNCTION__, "Invalid message pointer or length");
+        return;
+    }
+
+    struct timespec ts = {};
+    clock_gettime(CLOCK_REALTIME, &ts);
+    std::ofstream kpi_output(KPI_FILE);
+    if (kpi_output.is_open()) {
+        kpi_output << "M - Refd ";
+        kpi_output.write(message, length);
+        kpi_output << ": " << ts.tv_sec << "." << ts.tv_nsec;
+        kpi_output.close();
+    } else {
+        LOG(DEBUG, __FUNCTION__, "Unable to open KPI file ", errno, ": ", strerror(errno));
+    }
+}
+
+void RefAppUtils::setKpiLoggingEnabled(bool enable) {
+    kpiLoggingEnabled_ = enable;
+    LOG(DEBUG, __FUNCTION__, "KPI logging ", (enable ? "enabled" : "disabled"));
+}
+
+bool RefAppUtils::isKpiLoggingEnabled() {
+    return kpiLoggingEnabled_;
 }

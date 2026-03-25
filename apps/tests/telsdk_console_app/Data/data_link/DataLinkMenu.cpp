@@ -89,17 +89,17 @@ bool DataLinkMenu::initDataLinkManagerAndListener() {
 
     auto &dataFactory    = telux::data::DataFactory::getInstance();
     auto dataLinkManager = dataFactory.getDataLinkManager(initCb);
+    std::string mgr      = "Data Link Manager";
     if (dataLinkManager) {
-        std::cout << "\nInitializing Data Link Manager, Please wait..." << std::endl;
+        std::cout << "\nInitializing " << mgr << ", Please wait..." << std::endl;
         std::unique_lock<std::mutex> lck(mtx_);
         cv_.wait(lck, [this] { return this->subSystemStatusUpdated_; });
         subSystemStatus = dataLinkManager->getServiceStatus();
 
+        Utils::printServiceStatus("\n", mgr, subSystemStatus);
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "\nData Link Manager is ready" << std::endl;
             retValue = true;
         } else {
-            std::cout << "\nData Link Manager is not ready" << std::endl;
             // If manager exist - deregister and remove it
             if (dataLinkManager_) {
                 dataLinkManager_->deregisterListener(dataLinkListener_);
@@ -252,7 +252,7 @@ void DataLinkMenu::setLocalEthOperatingMode(std::vector<std::string> inputComman
             std::cout << " *** Set local Eth operating mode request completed" << std::endl;
         });
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << " *** ERROR - Failed to set peer Eth capability" << std::endl;
+        std::cout << " *** ERROR - Failed to set local Eth operating mode" << std::endl;
         return;
     }
     std::cout << " *** Set local Eth operating mode request sent" << std::endl;

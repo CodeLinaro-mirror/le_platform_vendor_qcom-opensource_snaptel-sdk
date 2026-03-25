@@ -272,6 +272,13 @@ int CallStub::getSipErrorCode() {
 }
 
 /**
+ * Get the raw cause code of call termination.
+ */
+int CallStub::getDetailedCauseCode() {
+    return callInfo_.rawCauseCode;
+}
+
+/**
  * Get the call type - incoming, outgoing etc
  */
 CallDirection CallStub::getCallDirection() {
@@ -385,7 +392,8 @@ bool CallStub::isInfoStale(const std::shared_ptr<CallStub> &ci) {
             || (callInfo_.callState != ci->getCallState()) || (callInfo_.mode != ci->getRttMode())
             || (callInfo_.localRttCapability != ci->getLocalRttCapability())
             || (callInfo_.peerRttCapability != ci->getPeerRttCapability())
-            || (callInfo_.callType != ci->getCallType()));
+            || (callInfo_.callType != ci->getCallType())
+            || (callInfo_.networkMode != ci->getNetworkMode()));
 }
 
 /*
@@ -403,7 +411,10 @@ void CallStub::logCallDetails() {
         ", localRttCapability = ", static_cast<int>(callInfo_.localRttCapability),
         ", peerRttCapability = ", static_cast<int>(callInfo_.peerRttCapability),
         ", callType = ", static_cast<int>(callInfo_.callType),
-        ", callReason = ", callInfo_.callReason);
+        ", callReason = ", callInfo_.callReason,
+        ", networkMode = ", static_cast<int>(callInfo_.networkMode),
+        ", callEndCause = ", static_cast<int>(callInfo_.callEndCause),
+        ", rawCauseCode = ", callInfo_.rawCauseCode);
 }
 
 /**
@@ -421,6 +432,9 @@ telux::common::Status CallStub::updateCallInfo(std::shared_ptr<CallStub> &callIn
     callInfo_.peerRttCapability  = callInfo->getPeerRttCapability();
     callInfo_.callType           = callInfo->getCallType();
     callInfo_.callReason         = callInfo->getCallReason();
+    callInfo_.networkMode        = callInfo->getNetworkMode();
+    callInfo_.callEndCause       = callInfo->getCallEndCause();
+    callInfo_.rawCauseCode       = callInfo->getDetailedCauseCode();
     LOG(DEBUG, "Updated call details");
     logCallDetails();
     return telux::common::Status::SUCCESS;
@@ -462,6 +476,11 @@ CallType CallStub::getCallType() {
 void CallStub::setCallReason(std::string reason) {
     LOG(DEBUG, "Call reason is ", reason);
     callInfo_.callReason = reason;
+}
+
+NetworkMode CallStub::getNetworkMode() {
+    LOG(DEBUG, __FUNCTION__, " Network mode is ", static_cast<int>(callInfo_.networkMode));
+    return callInfo_.networkMode;
 }
 
 telux::common::Status CallStub::modify(

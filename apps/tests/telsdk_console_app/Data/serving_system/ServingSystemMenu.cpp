@@ -111,22 +111,20 @@ bool DataServingSystemMenu::initServingSystemManagerAndListener(SlotId slotId) {
 
     auto &dataFactory     = telux::data::DataFactory::getInstance();
     auto ServingSystemMgr = dataFactory.getServingSystemManager(slotId, initCb);
+    std::string mgrAndSlot
+        = "Serving System Manager on slot " + std::to_string(static_cast<int>(slotId));
     if (ServingSystemMgr) {
         ServingSystemMgr->registerListener(dataServingSystemListeners_[slotId]);
 
-        std::cout << "\nInitializing Serving Manager on Slot " << static_cast<int>(slotId)
-                  << ", Please wait..." << std::endl;
+        std::cout << "\nInitializing " << mgrAndSlot << ", Please wait..." << std::endl;
         std::unique_lock<std::mutex> lck(mtx_);
         cv_.wait(lck, [this] { return this->subSystemStatusUpdated_; });
         subSystemStatus = ServingSystemMgr->getServiceStatus();
 
+        Utils::printServiceStatus("\n", mgrAndSlot, subSystemStatus);
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "\nServing System Manager on slot " << static_cast<int>(slotId)
-                      << " is ready" << std::endl;
             retValue = true;
         } else {
-            std::cout << "\nServing System Manager on slot " << static_cast<int>(slotId)
-                      << " is not ready" << std::endl;
             // If manager exist - deregister and remove it
             if (dataServingSystemManagers_.find(slotId) != dataServingSystemManagers_.end()) {
                 dataServingSystemManagers_[slotId]->deregisterListener(

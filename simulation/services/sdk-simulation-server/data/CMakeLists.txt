@@ -10,12 +10,14 @@ set(TARGET_SIMULATION_SERVER_APP_SRC
     data/DualDataServerImpl.cpp
     data/DataControlServerImpl.cpp
     data/DataLinkServerImpl.cpp
+    data/KeepAliveServerImpl.cpp
     data/net/SocksServerImpl.cpp
     data/net/NatServerImpl.cpp
     data/net/L2tpServerImpl.cpp
     data/net/FirewallServerImpl.cpp
     data/net/BridgeServerImpl.cpp
     data/net/VlanServerImpl.cpp
+    data/net/QoSServerImpl.cpp
 )
 
 target_sources (${TARGET_SIMULATION_SERVER_APP} PRIVATE ${TARGET_SIMULATION_SERVER_APP_SRC})

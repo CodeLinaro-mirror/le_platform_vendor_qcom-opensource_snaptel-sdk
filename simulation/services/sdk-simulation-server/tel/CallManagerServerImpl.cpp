@@ -291,6 +291,23 @@ int CallManagerServerImpl::setCallIndexForNewCall() {
     return index;
 }
 
+void CallManagerServerImpl::setCallEndReasons(
+    int phoneId, telux::tel::CallEndCause &callEndCause, int &rawCauseCode) {
+    std::string jsonfilename = "";
+    Json::Value rootObj;
+    grpc::Status readStatus = readJson();
+    if (readStatus.ok()) {
+        getJsonForApiResponseSlot(phoneId, jsonfilename, rootObj);
+        callEndCause
+            = static_cast<telux::tel::CallEndCause>(rootObj[CALL_MANAGER]["callEndCause"].asInt());
+        rawCauseCode = rootObj[CALL_MANAGER]["rawCauseCode"].asInt();
+        LOG(DEBUG, __FUNCTION__, " CallConfig callEndCause is ", static_cast<int>(callEndCause),
+            " ,rawCauseCode is ", rawCauseCode);
+    } else {
+        LOG(ERROR, __FUNCTION__, " CallConfig read failed ");
+    }
+}
+
 grpc::Status CallManagerServerImpl::MakeECall(ServerContext *context,
     const telStub::MakeECallRequest *request, telStub::MakeECallReply *response) {
     telux::common::ErrorCode error;
@@ -682,6 +699,7 @@ void CallManagerServerImpl::logCallDetails(std::shared_ptr<CallInfo> call) {
         ", localRttCapability = ", static_cast<int>(call->localRttCapability),
         ", peerRttCapability = ", static_cast<int>(call->peerRttCapability),
         ", callType = ", static_cast<int>(call->callType),
+        ", networkMode = ", static_cast<int>(call->networkMode),
         ", isEraGlonassSelfTestECall = ", static_cast<bool>(call->isEraGlonassSelfTestECall));
 }
 
@@ -2359,6 +2377,7 @@ void CallManagerServerImpl::fillCallInformation(
         result->set_remote_party_number(it->remotePartyNumber);
         result->set_call_end_cause(static_cast<telStub::CallEndCause_Cause>(it->callEndCause));
         result->set_sip_error_code(it->sipErrorCode);
+        result->set_raw_cause_code(it->rawCauseCode);
         result->set_is_multi_party_call(it->isMultiPartyCall);
         result->set_is_mpty(it->isMpty);
         result->set_call_index(it->index);
@@ -2371,6 +2390,7 @@ void CallManagerServerImpl::fillCallInformation(
         } else {
             result->set_call_reason("");
         }
+        result->set_network_mode(static_cast<telStub::NetworkMode>(it->networkMode));
         LOG(DEBUG, __FUNCTION__, " CallState: ", static_cast<int>(it->callState),
             " CallIndex: ", static_cast<int>(it->index),
             " Calldirection: ", static_cast<int>(it->callDirection),
@@ -2378,7 +2398,8 @@ void CallManagerServerImpl::fillCallInformation(
             " Rtt mode: ", static_cast<int>(it->mode),
             " Local capability: ", static_cast<int>(it->localRttCapability),
             " Peer capability: ", static_cast<int>(it->peerRttCapability),
-            " Call type: ", static_cast<int>(it->callType), " Call Reason: ", it->callReason);
+            " Call type: ", static_cast<int>(it->callType), " Call Reason: ", it->callReason,
+            " Network Mode: ", static_cast<int>(it->networkMode));
     }
 }
 
@@ -2429,7 +2450,11 @@ void CallManagerServerImpl::triggerCallListAfterCallEnd(int phoneId) {
         LOG(DEBUG, "CallMgr - ", __FUNCTION__, "remotePartyNumber is ",
             static_cast<std::string>(it->remotePartyNumber));
         result->set_call_end_cause(static_cast<telStub::CallEndCause_Cause>(it->callEndCause));
+        LOG(DEBUG, "CallMgr - ", __FUNCTION__, "callEndCause is ",
+            static_cast<int>(it->callEndCause));
         result->set_sip_error_code(it->sipErrorCode);
+        result->set_raw_cause_code(it->rawCauseCode);
+        LOG(DEBUG, "CallMgr - ", __FUNCTION__, "rawCauseCode is ", it->rawCauseCode);
         result->set_is_multi_party_call(it->isMultiPartyCall);
         result->set_is_mpty(it->isMpty);
         result->set_call_reason("");
@@ -2521,4 +2546,18 @@ bool CallManagerServerImpl::findAndRemoveMatchingCall(int callIndex, bool retain
     } else {
         return false;
     }
+}
+
+std::string CallManagerServerImpl::getUserConfiguredCallMode(int phoneId) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string jsonObjFileName = "";
+    Json::Value rootObj;
+    grpc::Status readStatus = readJson();
+    if (readStatus.ok()) {
+        getJsonForApiResponseSlot(phoneId, jsonObjFileName, rootObj);
+        std::string input = rootObj[CALL_MANAGER]["callMode"].asString();
+        LOG(DEBUG, __FUNCTION__, " input ", input);
+        return input;
+    }
+    return "";
 }

@@ -125,6 +125,20 @@ class ICall {
         = 0;
 
     /**
+     * Retrieve the underlying low level cause for the call termination. This API is intended
+     * for debugging purposes.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_INFO_READ
+     * permission to invoke this API successfully.
+     *
+     * @returns integer representing low level call end cause.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change and
+     *          could break backward compatibility.
+     */
+    virtual int getDetailedCauseCode() = 0;
+
+    /**
      * Resumes this call from on-hold state to active state
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
@@ -496,6 +510,21 @@ class ICall {
      *         change and could break backwards compatibility.
      */
     virtual CallType getCallType() = 0;
+
+    /**
+     * Retrieves the current network mode of the ongoing call, such as GSM
+     * @ref telux::tel::NetworkMode::GSM, LTE @ref telux::tel::NetworkMode::LTE,
+     * or other supported RAT.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_INFO_READ
+     * permission to successfully invoke this API.
+     *
+     * @returns NetworkMode - enumeration representing network mode @ref telux::tel::NetworkMode
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual NetworkMode getNetworkMode() = 0;
 
     virtual ~ICall() {
     }

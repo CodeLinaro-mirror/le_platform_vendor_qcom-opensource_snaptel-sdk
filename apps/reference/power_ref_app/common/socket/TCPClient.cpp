@@ -108,6 +108,12 @@ class TCPClient : public IIPConnection {
         }
 
         LOG(DEBUG, __FUNCTION__, connectionConfig_->toString());
+
+        IPMessage msg{};
+        std::string messageStr
+            = "\n\n [Connected client] config: " + connectionConfig_->toString() + "\n\n";
+        std::snprintf(msg.msg, sizeof(msg.msg), "%s", messageStr.c_str());
+        sendMessage(msg);
         return true;
     }
 
@@ -194,7 +200,12 @@ class TCPClient : public IIPConnection {
 
                 isConnected_ = true;
                 int no       = 1;
-                setsockopt(clientSocket_, SOL_SOCKET, SO_KEEPALIVE, &no, sizeof(int));
+                if (setsockopt(clientSocket_, SOL_SOCKET, SO_KEEPALIVE, &no, sizeof(int)) != 0) {
+                    LOG(ERROR, __FUNCTION__,
+                        "Failed to bind to device: ", std::string(strerror(errno)));
+                    usleep(4000000);  // Retry delay
+                    continue;
+                }
                 updateConnectionParams();
                 readLoop();  // TCP-specific listener
             } while (!receivedStopClient_);
@@ -227,21 +238,29 @@ class TCPClient : public IIPConnection {
         socklen_t sockSize            = 0;
         int reuse                     = 1;
 
-        // Prepare bind address
-        if (!prepareBindAddress(&sockAddrBind, &sockSize)) {
-            return false;
-        }
+        if (!connectionConfig_->configuredInterfaceName.empty()) {
+            if (!bindToDevice(clientSocket_, connectionConfig_->configuredInterfaceName)) {
+                LOG(ERROR, __FUNCTION__, " bind : ", connectionConfig_->configuredInterfaceName,
+                    " ", std::string(strerror(errno)));
+            }
+        } else {
+            // Prepare bind address
+            if (!prepareBindAddress(sockAddrBind, sockSize)) {
+                LOG(ERROR, __FUNCTION__,
+                    " prepareBindAddress bind : ", std::string(strerror(errno)));
+            }
 
-        if (!bindToDevice(clientSocket_, connectionConfig_->dataCall->getInterfaceName())) {
-            return false;
-        }
-
-        if (sockAddrBind != nullptr) {
-            setsockopt(clientSocket_, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
-            setsockopt(clientSocket_, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse));
-            if (bind(clientSocket_, sockAddrBind, sockSize) < 0) {
-                LOG(ERROR, __FUNCTION__, " bind : ", std::string(strerror(errno)));
-                return false;
+            if (!bindToDevice(clientSocket_, connectionConfig_->dataCall->getInterfaceName())) {
+                LOG(ERROR, __FUNCTION__,
+                    " bind : ", connectionConfig_->dataCall->getInterfaceName(), " ",
+                    std::string(strerror(errno)));
+            }
+            if (sockAddrBind != nullptr) {
+                setsockopt(clientSocket_, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
+                setsockopt(clientSocket_, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse));
+                if (bind(clientSocket_, sockAddrBind, sockSize) < 0) {
+                    LOG(ERROR, __FUNCTION__, " bind : ", std::string(strerror(errno)));
+                }
             }
         }
         return true;
@@ -263,6 +282,11 @@ class TCPClient : public IIPConnection {
             v4ServerAddr.sin_port   = htons(connectionConfig_->serverPort);
             sockAddrConnect         = reinterpret_cast<struct sockaddr *>(&v4ServerAddr);
             sockSize                = sizeof(sockaddr_in);
+            if (connect(clientSocket_, sockAddrConnect, sockSize) == -1) {
+                LOG(ERROR, __FUNCTION__, " connect : ", std::string(strerror(errno)),
+                    "; Connection config: ", connectionConfig_->toString());
+                return false;
+            }
         } else {
             struct sockaddr_in6 v6ServerAddr = {};
             if (!inet_pton(
@@ -274,17 +298,16 @@ class TCPClient : public IIPConnection {
             v6ServerAddr.sin6_port   = htons(connectionConfig_->serverPort);
             sockAddrConnect          = reinterpret_cast<struct sockaddr *>(&v6ServerAddr);
             sockSize                 = sizeof(sockaddr_in6);
-        }
-
-        if (connect(clientSocket_, sockAddrConnect, sockSize) == -1) {
-            LOG(ERROR, __FUNCTION__, " connect : ", std::string(strerror(errno)),
-                "; Connection config: ", connectionConfig_->toString());
-            return false;
+            if (connect(clientSocket_, sockAddrConnect, sockSize) == -1) {
+                LOG(ERROR, __FUNCTION__, " connect : ", std::string(strerror(errno)),
+                    "; Connection config: ", connectionConfig_->toString());
+                return false;
+            }
         }
         return true;
     }
 
-    bool prepareBindAddress(struct sockaddr **sockAddrBind, socklen_t *sockSize) {
+    bool prepareBindAddress(struct sockaddr *&sockAddrBind, socklen_t &sockSize) {
         LOG(DEBUG, __FUNCTION__);
         if (connectionConfig_->ipFamily == telux::data::IpFamilyType::IPV4) {
             static struct sockaddr_in v4ClientAddr = {};
@@ -301,8 +324,8 @@ class TCPClient : public IIPConnection {
             if (connectionConfig_->clientPort != 0) {
                 v4ClientAddr.sin_port = htons(connectionConfig_->clientPort);
             }
-            *sockAddrBind = reinterpret_cast<struct sockaddr *>(&v4ClientAddr);
-            *sockSize     = sizeof(sockaddr_in);
+            sockAddrBind = reinterpret_cast<struct sockaddr *>(&v4ClientAddr);
+            sockSize     = sizeof(sockaddr_in);
         } else {
             static struct sockaddr_in6 v6ClientAddr = {};
             if (!connectionConfig_->dataCall->getIpv6Info().addr.ifAddress.empty()) {
@@ -318,8 +341,8 @@ class TCPClient : public IIPConnection {
             if (connectionConfig_->clientPort != 0) {
                 v6ClientAddr.sin6_port = htons(connectionConfig_->clientPort);
             }
-            *sockAddrBind = reinterpret_cast<struct sockaddr *>(&v6ClientAddr);
-            *sockSize     = sizeof(sockaddr_in6);
+            sockAddrBind = reinterpret_cast<struct sockaddr *>(&v6ClientAddr);
+            sockSize     = sizeof(sockaddr_in6);
         }
         return true;
     }
@@ -341,8 +364,10 @@ class TCPClient : public IIPConnection {
 
     bool sendMessage(IPMessage &msg) override {
         LOG(DEBUG, __FUNCTION__);
-        if (send(clientSocket_, static_cast<const void *>(&msg), sizeof(IPMessage), 0)
-            != sizeof(IPMessage)) {
+        size_t expected   = strnlen(msg.msg, sizeof(msg.msg)) + 1;
+        ssize_t sentBytes = send(clientSocket_, msg.msg, expected, 0);
+        LOG(DEBUG, __FUNCTION__, " sentBytes : ", sentBytes);
+        if (sentBytes != (ssize_t)expected) {
             LOG(ERROR, __FUNCTION__, " send : ", std::string(strerror(errno)));
             for (auto listener : listeners_) {
                 listener->onDisconnect(connectionConfig_);
@@ -385,7 +410,7 @@ class TCPClient : public IIPConnection {
     std::vector<std::shared_ptr<ISocketConnectionListener>> listeners_;
     std::shared_ptr<Connection> connectionConfig_;
     std::thread clientThread_;
-    int clientSocket_;
+    int clientSocket_                     = -1;
     std::atomic<bool> receivedStopClient_ = {false};
     std::mutex mtx_;
     std::atomic<bool> isConnected_ = {false};

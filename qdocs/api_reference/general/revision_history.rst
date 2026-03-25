@@ -21,6 +21,14 @@ Revision History
      - Date
      - Description
 
+   * - BJ
+     - Feb 2026
+     - Updated documentation for SDK release V1.78.0 changes
+
+   * - BH
+     - Nov 2025
+     - Updated documentation for SDK release V1.77.0 changes
+
    * - BG
      - Jul 2025
      - Updated documentation for SDK release V1.76.0 changes

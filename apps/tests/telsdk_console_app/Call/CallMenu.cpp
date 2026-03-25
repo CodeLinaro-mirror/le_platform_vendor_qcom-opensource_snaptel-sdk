@@ -737,6 +737,9 @@ void CallMenu::getCalls(std::vector<std::string> userInput) {
                   << " Call Type: "
                   << (std::dynamic_pointer_cast<MyCallListener>(callListener_))
                          ->getCallTypeString((*callIterator)->getCallType())
+                  << " Network Mode: "
+                  << (std::dynamic_pointer_cast<MyCallListener>(callListener_))
+                         ->getNetworkModeString((*callIterator)->getNetworkMode())
                   << " Phone Number: " << (*callIterator)->getRemotePartyNumber()
                   << " SlotId: " << (*callIterator)->getPhoneId()
                   << " isMpty: " << (*callIterator)->isMultiPartyCall() << ", RTT mode of the call "

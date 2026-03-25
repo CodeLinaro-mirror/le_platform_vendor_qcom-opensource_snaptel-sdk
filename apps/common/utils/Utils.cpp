@@ -503,6 +503,24 @@ void Utils::printStatus(telux::common::Status status) {
     }
 }
 
+void Utils::printServiceStatus(const std::string &prefix, const std::string &mgr,
+    const telux::common::ServiceStatus srv, const bool hasfeature) {
+    std::string failure = hasfeature ? "FAILED" : "NOT SUPPORTED";
+    switch (srv) {
+        case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
+            std::cout << prefix << mgr << " service is UNAVAILABLE" << std::endl;
+            break;
+        case telux::common::ServiceStatus::SERVICE_AVAILABLE:
+            std::cout << prefix << mgr << " service is READY" << std::endl;
+            break;
+        case telux::common::ServiceStatus::SERVICE_FAILED:
+            std::cout << prefix << mgr << " service is " << failure << std::endl;
+            break;
+        default:
+            break;
+    }
+}
+
 uint64_t Utils::getCurrentTimestamp(void) {
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);

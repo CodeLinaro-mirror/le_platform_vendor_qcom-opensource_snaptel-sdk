@@ -107,23 +107,21 @@ bool VlanMenu::initVlanManager(telux::data::OperationType opType) {
     auto &dataFactory     = telux::data::DataFactory::getInstance();
     auto vlanMgr          = dataFactory.getVlanManager(opType, initCb);
     std::string opTypeStr = (opType == telux::data::OperationType::DATA_LOCAL) ? "Local" : "Remote";
+    const std::string mgr = " VLAN Manager";
     if (vlanMgr) {
         vlanMgr->registerListener(shared_from_this());
         std::unique_lock<std::mutex> lck(mtx_);
         telux::common::ServiceStatus subSystemStatus = vlanMgr->getServiceStatus();
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
-            std::cout << "\nInitializing " << opTypeStr
-                      << " VLAN Manager subsystem, Please wait \n";
+            std::cout << "\nInitializing " << opTypeStr << mgr << " subsystem, Please wait \n";
             cv_.wait(lck, [this] { return this->subSystemStatusUpdated_; });
             subSystemStatus = vlanMgr->getServiceStatus();
         }
+        Utils::printServiceStatus("\n" + opTypeStr, mgr, subSystemStatus);
         // At this point, initialization should be either AVAILABLE or FAIL
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "\n" << opTypeStr << " Vlan Manager is ready" << std::endl;
             retVal                  = true;
             vlanManagerMap_[opType] = vlanMgr;
-        } else {
-            std::cout << "\n" << opTypeStr << " Vlan Manager is not ready" << std::endl;
         }
     }
     return retVal;

@@ -60,12 +60,13 @@ BridgeMenu::~BridgeMenu() {
 bool BridgeMenu::init() {
     telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
     subSystemStatusUpdated_                      = false;
+    std::string mgr                              = "Bridge Manager";
     if (bridgeMgr_ == nullptr) {
         auto initCb       = std::bind(&BridgeMenu::onInitComplete, this, std::placeholders::_1);
         auto &dataFactory = telux::data::DataFactory::getInstance();
         bridgeMgr_        = dataFactory.getBridgeManager(initCb);
         if (bridgeMgr_ == nullptr) {
-            std::cout << "\nError encountered in initializing Bridge Manager" << std::endl;
+            std::cout << "\nError encountered in initializing " << mgr << std::endl;
             return false;
         }
         bridgeMgr_->registerListener(shared_from_this());
@@ -77,15 +78,13 @@ bool BridgeMenu::init() {
         // point, reference count of L2TP manager should still be 1
         telux::common::ServiceStatus subSystemStatus = bridgeMgr_->getServiceStatus();
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
-            std::cout << "\nInitializing Bridge Manager, Please wait ..." << std::endl;
+            std::cout << "\nInitializing " << mgr << ", Please wait ..." << std::endl;
             cv_.wait(lck, [this] { return this->subSystemStatusUpdated_; });
             subSystemStatus = bridgeMgr_->getServiceStatus();
         }
+        Utils::printServiceStatus("\n", mgr, subSystemStatus);
         // At this point, initialization should be either AVAILABLE or FAIL
-        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "\nBridge Manager is ready" << std::endl;
-        } else {
-            std::cout << "\nBridge Manager initialization failed" << std::endl;
+        if (subSystemStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             bridgeMgr_ = nullptr;
             return false;
         }

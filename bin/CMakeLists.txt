@@ -9,7 +9,7 @@ set(INPUT_LIST "telux_common" "telux_data" "telux_loc" "telux_tel" "telux_cv2x"
                "telux_platform" "telux_platform_diag" "telux_sec" "telux_sec_con" "telux_wlan"
                "telux_satcom")
 
-set(SDK_VERSION "1.78.0")
+set(SDK_VERSION "1.79.0")
 
 #Update SDK Version for release
 

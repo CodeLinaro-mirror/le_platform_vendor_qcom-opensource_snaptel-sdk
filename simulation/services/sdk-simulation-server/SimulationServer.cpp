@@ -40,12 +40,14 @@
 #include "data/DualDataServerImpl.hpp"
 #include "data/DataControlServerImpl.hpp"
 #include "data/DataLinkServerImpl.hpp"
+#include "data/KeepAliveServerImpl.hpp"
 #include "data/net/SocksServerImpl.hpp"
 #include "data/net/NatServerImpl.hpp"
 #include "data/net/FirewallServerImpl.hpp"
 #include "data/net/L2tpServerImpl.hpp"
 #include "data/net/BridgeServerImpl.hpp"
 #include "data/net/VlanServerImpl.hpp"
+#include "data/net/QoSServerImpl.hpp"
 #include "loc/LocationManagerServerImpl.hpp"
 #include "loc/LocationConfiguratorServerImpl.hpp"
 #include "tel/CallManagerServerImpl.hpp"
@@ -184,6 +186,9 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<VlanServerImpl> vlanService = std::make_shared<VlanServerImpl>();
     builder.RegisterService(vlanService.get());
 
+    std::shared_ptr<QoSServerImpl> qosService = std::make_shared<QoSServerImpl>(dcmService);
+    builder.RegisterService(qosService.get());
+
     std::shared_ptr<DualDataServerImpl> dualDataService = std::make_shared<DualDataServerImpl>();
     builder.RegisterService(dualDataService.get());
 
@@ -303,6 +308,10 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<SecurityCryptoAcceleratorServerImpl> securityCryptoAcceleratorService
         = std::make_shared<SecurityCryptoAcceleratorServerImpl>();
     builder.RegisterService(securityCryptoAcceleratorService.get());
+
+    std::shared_ptr<KeepAliveServerImpl> keepAliveService
+        = std::make_shared<KeepAliveServerImpl>(dcmService);
+    builder.RegisterService(keepAliveService.get());
 
     std::unique_ptr<Server> server(builder.BuildAndStart());
     LOG(DEBUG, __FUNCTION__, " Server listening on ", server_address);

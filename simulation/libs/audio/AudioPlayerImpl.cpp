@@ -804,6 +804,7 @@ void AudioPlayerImpl::deleteStreamComplete(telux::common::ErrorCode result) {
 
         errToReport_           = result;
         isDeleteResponseReady_ = true;
+        isStreamOpened_        = false;
         asyncResponse_.notify_all();
     }
 }

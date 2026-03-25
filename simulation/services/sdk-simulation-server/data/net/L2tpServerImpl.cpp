@@ -226,10 +226,7 @@ grpc::Status L2tpServerImpl::AddTunnel(ServerContext *context,
                 std::string ipFamily = DataUtilsStub::convertIpFamilyEnumToString(
                     request->l2tp_tunnel_config().ip_family_type().ip_family_type());
 
-                if (ipFamily == "IPV4") {
-                    newTunnel["peerIpv4Addr"]   = request->l2tp_tunnel_config().peer_ipv4_addr();
-                    newTunnel["peerIpv4GwAddr"] = request->l2tp_tunnel_config().peer_ipv4_gw_addr();
-                } else if (ipFamily == "IPV6") {
+                if (ipFamily == "IPV6") {
                     if (protocol == "UDP") {
                         newTunnel["peerIpv6Addr"] = request->l2tp_tunnel_config().peer_ipv6_addr();
                         newTunnel["peerIpv6GwAddr"]
@@ -238,6 +235,14 @@ grpc::Status L2tpServerImpl::AddTunnel(ServerContext *context,
                         data.error = telux::common::ErrorCode::NOT_SUPPORTED;
                         break;
                     }
+                } else if (ipFamily == "IPV4") {
+                    data.error = telux::common::ErrorCode::NOT_SUPPORTED;
+                    LOG(ERROR, __FUNCTION__, " IPV4 NOT SUPPORTED");
+                    break;
+                } else {
+                    data.error = telux::common::ErrorCode::NOT_SUPPORTED;
+                    LOG(ERROR, __FUNCTION__, " Invalid IP Type entered ");
+                    break;
                 }
 
                 newTunnel["locIface"] = request->l2tp_tunnel_config().loc_iface();

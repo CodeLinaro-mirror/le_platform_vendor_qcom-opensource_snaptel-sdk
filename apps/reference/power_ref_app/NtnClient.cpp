@@ -37,8 +37,8 @@ NtnClient::~NtnClient() {
 
 telux::common::Status NtnClient::init() {
     LOG(DEBUG, __FUNCTION__);
-    if(ntnMgr_ == nullptr) {
-        if(!initSatcom()) {
+    if (ntnMgr_ == nullptr) {
+        if (!initSatcom()) {
             LOG(ERROR, __FUNCTION__, " Ntn manager init failed");
             return telux::common::Status::FAILED;
         } else {
@@ -47,8 +47,8 @@ telux::common::Status NtnClient::init() {
     }
 
 #ifdef TELSDK_FEATURE_LOC_ENABLED
-    if(locationManager_ == nullptr) {
-        if(!initLocationManager()) {
+    if (locationManager_ == nullptr) {
+        if (!initLocationManager()) {
             LOG(ERROR, __FUNCTION__, " Location manager init failed");
             return telux::common::Status::FAILED;
         } else {
@@ -60,17 +60,17 @@ telux::common::Status NtnClient::init() {
 }
 
 bool NtnClient::initSatcom() {
-    if(ntnMgr_ == nullptr) {
-        auto &satcomFactory = telux::satcom::SatcomFactory::getInstance();
+    if (ntnMgr_ == nullptr) {
+        auto &satcomFactory              = telux::satcom::SatcomFactory::getInstance();
         std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
-        ntnMgr_ = satcomFactory.getNtnManager([&](telux::common::ServiceStatus status)
-                                                    { prom.set_value(status); });
+        ntnMgr_                          = satcomFactory.getNtnManager(
+            [&](telux::common::ServiceStatus status) { prom.set_value(status); });
         if (ntnMgr_ == nullptr) {
             LOG(ERROR, __FUNCTION__, " satcomFactory.getNtnManager returned nullptr");
             return false;
         }
         ServiceStatus ntnMgrStatus = ntnMgr_->getServiceStatus();
-        if(ntnMgrStatus != ServiceStatus::SERVICE_AVAILABLE) {
+        if (ntnMgrStatus != ServiceStatus::SERVICE_AVAILABLE) {
             LOG(DEBUG, __FUNCTION__, " Ntn subsystem is not ready, Please wait");
         }
         ntnMgrStatus = prom.get_future().get();
@@ -87,28 +87,28 @@ bool NtnClient::initSatcom() {
 #ifdef TELSDK_FEATURE_LOC_ENABLED
 bool NtnClient::initLocationManager() {
     bool locSubsystemReady = true;
-    if(locationManager_ == nullptr) {
+    if (locationManager_ == nullptr) {
         std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
-        auto &locationFactory = LocationFactory::getInstance();
+        auto &locationFactory            = LocationFactory::getInstance();
         locationManager_ = locationFactory.getLocationManager([&](ServiceStatus status) {
             if (status == ServiceStatus::SERVICE_AVAILABLE) {
-                    prom.set_value(ServiceStatus::SERVICE_AVAILABLE);
-                } else {
-                    prom.set_value(ServiceStatus::SERVICE_FAILED);
-                }
-            });
+                prom.set_value(ServiceStatus::SERVICE_AVAILABLE);
+            } else {
+                prom.set_value(ServiceStatus::SERVICE_FAILED);
+            }
+        });
         std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-        startTime = std::chrono::system_clock::now();
+        startTime                  = std::chrono::system_clock::now();
         ServiceStatus locMgrStatus = locationManager_->getServiceStatus();
-        if(locMgrStatus != ServiceStatus::SERVICE_AVAILABLE) {
+        if (locMgrStatus != ServiceStatus::SERVICE_AVAILABLE) {
             LOG(DEBUG, __FUNCTION__, " Location subsystem is not ready, Please wait");
         }
         locMgrStatus = prom.get_future().get();
-        if(locMgrStatus == ServiceStatus::SERVICE_AVAILABLE) {
-            endTime = std::chrono::system_clock::now();
+        if (locMgrStatus == ServiceStatus::SERVICE_AVAILABLE) {
+            endTime                                   = std::chrono::system_clock::now();
             std::chrono::duration<double> elapsedTime = endTime - startTime;
-            LOG(DEBUG, __FUNCTION__, " Elapsed Time for Subsystems to ready : ",
-                elapsedTime.count());
+            LOG(DEBUG, __FUNCTION__,
+                " Elapsed Time for Subsystems to ready : ", elapsedTime.count());
         } else {
             LOG(ERROR, __FUNCTION__, " ERROR - Unable to initialize Location subsystem");
             locSubsystemReady = false;
@@ -143,13 +143,13 @@ void NtnClient::deregisterForUpdates() {
 
 telux::common::ErrorCode NtnClient::enableNtn() {
     LOG(DEBUG, __FUNCTION__);
-    int emergency = 0;
-    std::string iccid = "";
-    ConfigParser* config = ConfigParser::getInstance();
+    int emergency        = 0;
+    std::string iccid    = "";
+    ConfigParser *config = ConfigParser::getInstance();
     if (config->getValue("NTN_CONFIGS", "EMERGENCY") == "TRUE") {
         emergency = 1;
     }
-    iccid = config->getValue("NTN_CONFIGS","ICCID");
+    iccid = config->getValue("NTN_CONFIGS", "ICCID");
     return ntnMgr_->enableNtn(true, emergency, iccid);
 }
 
@@ -204,10 +204,10 @@ void NtnClient::onNtnBandUpdate(uint32_t bandValue) {
 void NtnClient::onLocationFixRequest(LocationFixRequestReason reqReason) {
     LOG(DEBUG, __FUNCTION__, "**** onLocationFixRequest Reason = ", toString(reqReason));
 
-    std::thread ([this] {
-        #ifdef TELSDK_FEATURE_LOC_ENABLED
-            triggerLocationReports();
-        #endif
+    std::thread([this] {
+#ifdef TELSDK_FEATURE_LOC_ENABLED
+        triggerLocationReports();
+#endif
     }).detach();
 }
 
@@ -226,25 +226,26 @@ std::string NtnClient::toString(LocationFixRequestReason reqReason) {
 #ifdef TELSDK_FEATURE_LOC_ENABLED
 void NtnClient::triggerLocationReports() {
     LOG(DEBUG, __FUNCTION__);
-    if(locationManager_ && posListener_) {
+    if (locationManager_ && posListener_) {
         GnssReportTypeMask reportMask = DEFAULT_REPORT_MASK;
         reportMask |= LOCATION;
-        auto startStatus = locationManager_->startDetailedReports(
-            DEFAULT_REPORT_INTERVAL, nullptr, reportMask);
-        if(startStatus != telux::common::Status::SUCCESS) {
+        auto startStatus
+            = locationManager_->startDetailedReports(DEFAULT_REPORT_INTERVAL, nullptr, reportMask);
+        if (startStatus != telux::common::Status::SUCCESS) {
             LOG(ERROR, __FUNCTION__, " Failed to start location reports");
             return;
         }
         {
             LOG(DEBUG, __FUNCTION__, " Waiting for location reports");
             std::unique_lock<std::mutex> lck(posListener_->getLocationMutex());
-            posListener_->getLocationCV().wait(lck, [this]{ return posListener_->isReportReceived_; });
+            posListener_->getLocationCV().wait(
+                lck, [this] { return posListener_->isReportReceived_; });
         }
         locationManager_->stopReports(nullptr);
         {
             std::unique_lock<std::mutex> lck(posListener_->getLocationMutex());
             posListener_->isReportReceived_ = false;
-            posListener_->reportCount_ = 0;
+            posListener_->reportCount_      = 0;
         }
         LOG(DEBUG, __FUNCTION__, " Stopping reports");
         auto err = ntnMgr_->locationFixResponse(telux::satcom::LocationStatus::SUCCESS, 0);
@@ -257,59 +258,59 @@ void NtnClient::triggerLocationReports() {
 
 void NtnClientLocationListener::onDetailedLocationUpdate(
     const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo) {
-    if(reportCount_ > 0) {
+    if (reportCount_ > 0) {
         return;
     }
     std::cout << " Detailed reports received" << std::endl;
     LOG(DEBUG, __FUNCTION__);
-    locFix_.lat = locationInfo->getLatitude();
-    locFix_.lon = locationInfo->getLongitude();
-    locFix_.alt = locationInfo->getAltitude();
+    locFix_.lat           = locationInfo->getLatitude();
+    locFix_.lon           = locationInfo->getLongitude();
+    locFix_.alt           = locationInfo->getAltitude();
     locFix_.uncerCircular = locationInfo->getHorizontalUncertainty();
-    locFix_.heading = locationInfo->getHeading();
-    locFix_.headingUncer = locationInfo->getHeadingUncertainty();
+    locFix_.heading       = locationInfo->getHeading();
+    locFix_.headingUncer  = locationInfo->getHeadingUncertainty();
     std::vector<float> velocityEastNorthUp;
     locationInfo->getVelocityEastNorthUp(velocityEastNorthUp);
     size_t itr = 0;
-    for(auto vel: velocityEastNorthUp) {
+    for (auto vel : velocityEastNorthUp) {
         locFix_.velInfo.enuVel[itr] = vel;
         itr++;
     }
     std::vector<float> velocityUncertaintyEastNorthUp;
     locationInfo->getVelocityUncertaintyEastNorthUp(velocityUncertaintyEastNorthUp);
     itr = 0;
-    for(auto vel: velocityUncertaintyEastNorthUp) {
+    for (auto vel : velocityUncertaintyEastNorthUp) {
         locFix_.velInfo.enuUncer[itr] = vel;
         itr++;
     }
-    telux::loc::LocationInfoValidity validityMask = locationInfo->getLocationInfoValidity();
+    telux::loc::LocationInfoValidity validityMask     = locationInfo->getLocationInfoValidity();
     telux::loc::LocationInfoExValidity validityMaskEx = locationInfo->getLocationInfoExValidity();
-    if((validityMask & telux::loc::HAS_HEADING_BIT)) {
+    if ((validityMask & telux::loc::HAS_HEADING_BIT)) {
         locFix_.isHeadingValid = true;
     } else {
         locFix_.isHeadingValid = false;
     }
-    if((validityMask & telux::loc::HAS_HEADING_ACCURACY_BIT)) {
+    if ((validityMask & telux::loc::HAS_HEADING_ACCURACY_BIT)) {
         locFix_.isHeadingUncerValid = true;
     } else {
         locFix_.isHeadingUncerValid = false;
     }
-    if((validityMask & telux::loc::HAS_HORIZONTAL_ACCURACY_BIT)) {
+    if ((validityMask & telux::loc::HAS_HORIZONTAL_ACCURACY_BIT)) {
         locFix_.isConfidenceValid = true;
-        locFix_.confidence = 68;
+        locFix_.confidence        = 68;
     } else {
         locFix_.isConfidenceValid = false;
-        locFix_.confidence = 0;
+        locFix_.confidence        = 0;
     }
-    if((validityMaskEx & telux::loc::HAS_NORTH_VEL) && (validityMaskEx & telux::loc::HAS_EAST_VEL)
+    if ((validityMaskEx & telux::loc::HAS_NORTH_VEL) && (validityMaskEx & telux::loc::HAS_EAST_VEL)
         && (validityMaskEx & telux::loc::HAS_UP_VEL)) {
         locFix_.velInfo.isEnuValueValid = true;
     } else {
         locFix_.velInfo.isEnuValueValid = false;
     }
-    if((validityMaskEx & telux::loc::HAS_NORTH_VEL_UNC) &&
-        (validityMaskEx & telux::loc::HAS_EAST_VEL_UNC)
-            && (validityMaskEx & telux::loc::HAS_UP_VEL_UNC)) {
+    if ((validityMaskEx & telux::loc::HAS_NORTH_VEL_UNC)
+        && (validityMaskEx & telux::loc::HAS_EAST_VEL_UNC)
+        && (validityMaskEx & telux::loc::HAS_UP_VEL_UNC)) {
         locFix_.velInfo.isEnuUncerValid = true;
     } else {
         locFix_.velInfo.isEnuUncerValid = false;
@@ -325,14 +326,14 @@ void NtnClientLocationListener::onDetailedLocationUpdate(
 
 telux::common::Status NtnClient::sendDataString(std::string text) {
     LOG(DEBUG, __FUNCTION__);
-    int emergency = 0;
-    ConfigParser* config = ConfigParser::getInstance();
+    int emergency        = 0;
+    ConfigParser *config = ConfigParser::getInstance();
     if (config->getValue("NTN_CONFIGS", "IS_EMERGENCY_DATA") == "TRUE") {
         emergency = 1;
     }
     std::vector<uint8_t> data;
     for (char c : text) {
-        data.push_back((uint8_t) c);
+        data.push_back((uint8_t)c);
     }
     TransactionId tId;
     LOG(DEBUG, __FUNCTION__, " Data of size : ", data.size());
@@ -346,21 +347,21 @@ void NtnClient::onDataAck(ErrorCode err, TransactionId id) {
     if (err == ErrorCode::SUCCESS) {
         LOG(DEBUG, __FUNCTION__, " **** onDataAck ack received for id = ", id);
     } else {
-        LOG(DEBUG, __FUNCTION__, " **** onDataAck error = ",
-            Utils::getErrorCodeAsString(err), " id = ", id);
+        LOG(DEBUG, __FUNCTION__, " **** onDataAck error = ", Utils::getErrorCodeAsString(err),
+            " id = ", id);
     }
 }
 
 void NtnClient::cleanup() {
     deregisterForUpdates();
     LOG(DEBUG, __FUNCTION__);
-    if(ntnMgr_) {
+    if (ntnMgr_) {
         ntnMgr_ = nullptr;
     }
 #ifdef TELSDK_FEATURE_LOC_ENABLED
-    if(locationManager_ && posListener_) {
+    if (locationManager_ && posListener_) {
         locationManager_->deRegisterListenerEx(posListener_);
-        posListener_ = nullptr;
+        posListener_     = nullptr;
         locationManager_ = nullptr;
     }
 #endif

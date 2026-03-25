@@ -511,6 +511,7 @@ void CallManagerStub::handleCallInfoChanged(::telStub::GetInProgressCallsData ev
         callInfo.callEndCause
             = static_cast<telux::tel::CallEndCause>(event.calls(i).call_end_cause());
         callInfo.sipErrorCode     = event.calls(i).sip_error_code();
+        callInfo.rawCauseCode     = event.calls(i).raw_cause_code();
         callInfo.isMultiPartyCall = event.calls(i).is_multi_party_call();
         callInfo.isMpty           = event.calls(i).is_mpty();
         LOG(DEBUG, "CallMgr - ", __FUNCTION__, "isMpty is ", callInfo.isMpty);
@@ -519,20 +520,23 @@ void CallManagerStub::handleCallInfoChanged(::telStub::GetInProgressCallsData ev
             = static_cast<telux::tel::RttMode>(event.calls(i).local_rtt_capability());
         callInfo.peerRttCapability
             = static_cast<telux::tel::RttMode>(event.calls(i).peer_rtt_capability());
-        callInfo.callType   = static_cast<telux::tel::CallType>(event.calls(i).call_type());
-        callInfo.callReason = static_cast<std::string>(event.calls(i).call_reason());
+        callInfo.callType    = static_cast<telux::tel::CallType>(event.calls(i).call_type());
+        callInfo.callReason  = static_cast<std::string>(event.calls(i).call_reason());
+        callInfo.networkMode = static_cast<telux::tel::NetworkMode>(event.calls(i).network_mode());
         LOG(DEBUG, __FUNCTION__, " CallState: ", static_cast<int>(callInfo.callState),
             " CallIndex: ", static_cast<int>(callInfo.index),
             " Calldirection: ", static_cast<int>(callInfo.callDirection),
             " RemotePartyNumber: ", callInfo.remotePartyNumber,
             " callEndCause: ", static_cast<int>(callInfo.callEndCause),
             " sipErrorCode: ", static_cast<int>(callInfo.sipErrorCode),
+            " rawCauseCode: ", callInfo.rawCauseCode,
             " isMultiPartyCall: ", callInfo.isMultiPartyCall, " isMpty: ", callInfo.isMpty,
             " Rtt mode: ", static_cast<int>(callInfo.mode),
             " Local Rtt capability: ", static_cast<int>(callInfo.localRttCapability),
             " Peer Rtt capability: ", static_cast<int>(callInfo.peerRttCapability),
             " Call Type: ", static_cast<int>(callInfo.callType),
-            " Call Reason: ", callInfo.callReason);
+            " Call Reason: ", callInfo.callReason,
+            " Network Mode: ", static_cast<int>(callInfo.networkMode));
         auto Info = std::make_shared<CallStub>(phoneId, callInfo);
         { calls.emplace_back(Info); }
     }

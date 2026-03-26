@@ -202,6 +202,18 @@ void PowerMgmtTestApp::onServiceStatusChange(ServiceStatus status) {
     }
 }
 
+void PowerMgmtTestApp::onServiceStatusChange(
+    telux::common::ServiceStatus status, std::string machName, TcuActivityState currState) {
+    if (status == ServiceStatus::SERVICE_AVAILABLE) {
+        PRINT_NOTIFICATION << " Service Status : AVAILABLE" << std::endl;
+    } else if (status == ServiceStatus::SERVICE_UNAVAILABLE) {
+        PRINT_NOTIFICATION << " Service Status : UNAVAILABLE" << std::endl;
+    } else if (status == ServiceStatus::SERVICE_FAILED) {
+        PRINT_NOTIFICATION << " Service Status : FAILED" << std::endl;
+    }
+    printTcuActivityState(currState, machName);
+}
+
 static void signalHandler(int signum) {
     std::unique_lock<std::mutex> lock(mutex);
     std::cout << APP_NAME << " Interrupt signal (" << signum << ") received.." << std::endl;

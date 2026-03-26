@@ -1,4 +1,5 @@
 /*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -34,6 +35,25 @@
 #include <telux/power/PowerFactory.hpp>
 #include <telux/power/TcuActivityManager.hpp>
 #include <telux/power/TcuActivityListener.hpp>
+
+#define APP_NAME "telux_power_test_app"
+#define PRINT_NOTIFICATION std::cout << APP_NAME << " \033[1;35mNOTIFICATION: \033[0m"
+
+static void printTcuActivityState(
+    telux::power::TcuActivityState state, std::string machineName = "") {
+    if (state == telux::power::TcuActivityState::SUSPEND) {
+        PRINT_NOTIFICATION << " TCU-activity State : SUSPEND for " << machineName << std::endl;
+    } else if (state == telux::power::TcuActivityState::RESUME) {
+        PRINT_NOTIFICATION << " TCU-activity State : RESUME for " << machineName << std::endl;
+    } else if (state == telux::power::TcuActivityState::SHUTDOWN) {
+        PRINT_NOTIFICATION << " TCU-activity State : SHUTDOWN for " << machineName << std::endl;
+    } else if (state == telux::power::TcuActivityState::UNKNOWN) {
+        PRINT_NOTIFICATION << " TCU-activity State : UNKNOWN for " << machineName << std::endl;
+    } else {
+        std::cout << APP_NAME << " ERROR: Invalid TCU-activity state notified for " << machineName
+                  << std::endl;
+    }
+}
 
 class PowerEventsListener : public telux::power::ITcuActivityListener,
                             public std::enable_shared_from_this<PowerEventsListener> {
@@ -132,6 +152,18 @@ class PowerEventsListener : public telux::power::ITcuActivityListener,
                           << "received, machine: " << machineName << std::endl;
                 break;
         }
+    }
+
+    void onServiceStatusChange(telux::common::ServiceStatus status, std::string machName,
+        telux::power::TcuActivityState currState) override {
+        if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            PRINT_NOTIFICATION << " Service Status : AVAILABLE" << std::endl;
+        } else if (status == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+            PRINT_NOTIFICATION << " Service Status : UNAVAILABLE" << std::endl;
+        } else if (status == telux::common::ServiceStatus::SERVICE_FAILED) {
+            PRINT_NOTIFICATION << " Service Status : FAILED" << std::endl;
+        }
+        printTcuActivityState(currState, machName);
     }
 
  private:

@@ -56,6 +56,7 @@ class AecsSmsListener : public telux::tel::ISmsListener,
     int msdLastSentPhoneId_{-1};  // Remember phoneId used for last send
 
     void scheduleNextMsdRetryFromNow();
+    void markMsdRetryStopped();
 };
 
 #endif  // AECSSMSLISTENER_HPP

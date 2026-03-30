@@ -60,7 +60,9 @@ class AecsCallListener : public telux::tel::ICallListener {
     // Persist AECS drop window across temporary CALL_ACTIVE states.
     std::chrono::steady_clock::time_point dropWindowDeadline_{};
     bool dropWindowArmed_{false};
-    bool isAecsCallFailReason(telux::tel::CallEndCause endCause);
+    bool isAecsCallFailReason(telux::tel::CallEndCause endCause, int phoneId);
+    void markRetryStopped();
+    void joinRetryThreadIfNeeded();
 };
 
 class AecsDialCallback {

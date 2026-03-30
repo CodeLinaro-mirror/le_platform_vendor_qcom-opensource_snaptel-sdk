@@ -14,6 +14,7 @@
 
 #include "Utils.hpp"
 #include "AecsCall.hpp"
+#include "../TelClientUtils.hpp"
 
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 // Specific to DSDA, in case of two simultaneous incoming calls in accept,reject scenario
@@ -614,7 +615,6 @@ void AecsCall::hangup(std::vector<std::string> userInput) {
 
         // Step 4: exit emergency mode if no more calls on this slot
         auto &mgr = AecsCallManager::getInstance();
-        mgr.stopAudioIfNoCalls(phoneIdOfCall);
         if (!mgr.isEmergencyMode(phoneIdOfCall)) {
             // already off
         } else {
@@ -651,9 +651,7 @@ void AecsCall::getAllCalls(std::vector<std::string> userInput) {
     }
 
     for (auto &call : inProgressCalls) {
-        std::cout << " Call State: "
-                  << (std::dynamic_pointer_cast<AecsCallListener>(callListener_))
-                         ->getCallStateString(call->getCallState())
+        std::cout << " Call State: " << TelClientUtils::callStateToString(call->getCallState())
                   << " Call Index: " << (int)call->getCallIndex()
                   << " Call Direction: " << (int)call->getCallDirection()
                   << " Phone Number: " << call->getRemotePartyNumber()

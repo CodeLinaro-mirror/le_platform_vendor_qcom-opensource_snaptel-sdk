@@ -193,7 +193,7 @@ int GenerateDTMF::stopVoiceStream() {
 int GenerateDTMF::generateDTMFTone() {
 
     uint16_t toneGain;
-    uint16_t toneDuration;
+    uint32_t toneDuration;
     telux::common::ErrorCode ec;
     telux::common::Status status;
     telux::audio::DtmfTone dtmfTone{};

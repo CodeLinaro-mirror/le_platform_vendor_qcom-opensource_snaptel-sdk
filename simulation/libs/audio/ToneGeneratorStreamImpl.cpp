@@ -23,7 +23,7 @@ ToneGeneratorStreamImpl::~ToneGeneratorStreamImpl() {
  * Generate tone for the given duration at given frequency and gain.
  */
 telux::common::Status ToneGeneratorStreamImpl::playTone(std::vector<uint16_t> frequency,
-    uint16_t duration, uint16_t gain, telux::common::ResponseCallback callback) {
+    uint32_t duration, uint16_t gain, telux::common::ResponseCallback callback) {
 
     intptr_t cmdId;
     telux::common::Status status;

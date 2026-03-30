@@ -158,7 +158,7 @@ void VoiceStreamImpl::onStreamStopResult(
  *   -----------------------------------------------
  */
 telux::common::Status VoiceStreamImpl::playDtmfTone(
-    DtmfTone dtmfTone, uint16_t duration, uint16_t gain, telux::common::ResponseCallback callback) {
+    DtmfTone dtmfTone, uint32_t duration, uint16_t gain, telux::common::ResponseCallback callback) {
 
     intptr_t cmdId;
     telux::common::Status status;

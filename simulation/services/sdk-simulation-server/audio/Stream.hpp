@@ -63,7 +63,7 @@ class Stream : public IStreamEventListener,
             StreamDirection direction);
 
     void startDtmf(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-            uint16_t gain, uint16_t duration, DtmfTone dtmfTone);
+            uint16_t gain, uint32_t duration, DtmfTone dtmfTone);
 
     void stopDtmf(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
             StreamDirection direction);
@@ -76,7 +76,7 @@ class Stream : public IStreamEventListener,
         uint32_t readLengthRequested, std::vector<int> &voiceCallList);
 
     void startTone(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-            uint16_t gain, uint16_t duration, std::vector<uint16_t> toneFrequencies);
+            uint16_t gain, uint32_t duration, std::vector<uint16_t> toneFrequencies);
 
     void stopTone(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId);
 
@@ -140,13 +140,13 @@ class Stream : public IStreamEventListener,
             uint8_t *data, std::vector<int> voiceCallList);
 
     void doStartDtmf(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-            uint16_t gain, uint16_t duration, DtmfTone dtmfTone);
+            uint16_t gain, uint32_t duration, DtmfTone dtmfTone);
 
     void doStopDtmf(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
             StreamDirection direction);
 
     void doStartTone(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-            uint16_t gain, uint16_t duration, std::vector<uint16_t> toneFrequencies);
+            uint16_t gain, uint32_t duration, std::vector<uint16_t> toneFrequencies);
 
     void doStopTone(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId);
 

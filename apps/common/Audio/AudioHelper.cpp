@@ -353,7 +353,7 @@ Status AudioHelper::getUserDtmfInput(DtmfTone &tone, uint32_t &duration, uint16_
         return Status::FAILED;
     }
 
-    std::cout << "Enter the duration (in ms (0-65534) and 65535 for infinite): ";
+    std::cout << "Enter the duration (in ms (0-4294967294) and 4294967295 for infinite): ";
     if (std::getline(std::cin, userInput)) {
         std::stringstream inputStream(userInput);
         if (!(inputStream >> duration)) {

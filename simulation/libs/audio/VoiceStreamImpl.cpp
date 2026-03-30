@@ -159,7 +159,7 @@ void VoiceStreamImpl::onStreamStopResult(telux::common::ErrorCode ec,
  *  |              941  |  *   |  0   |  #   |  D   |
  *   -----------------------------------------------
  */
-telux::common::Status VoiceStreamImpl::playDtmfTone(DtmfTone dtmfTone, uint16_t duration,
+telux::common::Status VoiceStreamImpl::playDtmfTone(DtmfTone dtmfTone, uint32_t duration,
         uint16_t gain, telux::common::ResponseCallback callback) {
 
     intptr_t cmdId;

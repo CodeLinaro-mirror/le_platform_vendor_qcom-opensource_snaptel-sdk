@@ -37,7 +37,7 @@ class VoiceStreamImpl : public AudioStreamImpl,
     telux::common::Status stopAudio(
         telux::common::ResponseCallback callback = nullptr) override;
 
-    telux::common::Status playDtmfTone(DtmfTone dtmfTone, uint16_t duration, uint16_t gain,
+    telux::common::Status playDtmfTone(DtmfTone dtmfTone, uint32_t duration, uint16_t gain,
         telux::common::ResponseCallback callback = nullptr) override;
 
     telux::common::Status stopDtmfTone(StreamDirection direction,

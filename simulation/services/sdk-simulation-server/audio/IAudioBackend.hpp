@@ -77,7 +77,7 @@ class IAudioBackend {
     virtual telux::common::ErrorCode flush(StreamHandle streamHandle) = 0;
 
     virtual telux::common::ErrorCode startDtmf(StreamHandle streamHandle,
-        uint16_t gain, uint16_t duration, DtmfTone dtmfTone) = 0;
+        uint16_t gain, uint32_t duration, DtmfTone dtmfTone) = 0;
 
     virtual telux::common::ErrorCode stopDtmf(StreamHandle streamHandle,
         StreamDirection direction) = 0;
@@ -97,7 +97,7 @@ class IAudioBackend {
         uint32_t &readMinSize) = 0;
 
     virtual telux::common::ErrorCode startTone(StreamHandle &streamHandle, uint32_t sampleRate,
-        uint16_t gain, uint16_t duration, std::vector<uint16_t> toneFrequency) = 0;
+        uint16_t gain, uint32_t duration, std::vector<uint16_t> toneFrequency) = 0;
 
     virtual telux::common::ErrorCode stopTone(StreamHandle &streamHandle) = 0;
 

@@ -71,13 +71,13 @@ public:
         uint32_t streamId, uint32_t readLengthRequested) = 0;
 
     virtual void startDtmf(std::shared_ptr<AudioRequest> audioRequest,
-        uint32_t streamId, uint16_t gain, uint16_t duration, DtmfTone dtmfTone) = 0;
+        uint32_t streamId, uint16_t gain, uint32_t duration, DtmfTone dtmfTone) = 0;
 
     virtual void stopDtmf(std::shared_ptr<AudioRequest> audioRequest,
         uint32_t streamId, StreamDirection direction) = 0;
 
     virtual void startTone(std::shared_ptr<AudioRequest> audioRequest,
-        uint32_t streamId, uint16_t gain, uint16_t duration,
+        uint32_t streamId, uint16_t gain, uint32_t duration,
         std::vector<uint16_t> toneFrequencies) = 0;
 
     virtual void stopTone(std::shared_ptr<AudioRequest> audioRequest,

@@ -111,7 +111,7 @@ class Alsa : public IAudioBackend,
     telux::common::ErrorCode flush(StreamHandle streamHandle) override;
 
     telux::common::ErrorCode startDtmf(StreamHandle streamHandle,
-        uint16_t gain, uint16_t duration, DtmfTone dtmfTone) override;
+        uint16_t gain, uint32_t duration, DtmfTone dtmfTone) override;
 
     telux::common::ErrorCode stopDtmf(StreamHandle streamHandle,
         StreamDirection direction) override;
@@ -131,7 +131,7 @@ class Alsa : public IAudioBackend,
         uint32_t& readMinSize) override;
 
     telux::common::ErrorCode startTone(StreamHandle &streamHandle, uint32_t sampleRate,
-        uint16_t gain, uint16_t duration, std::vector<uint16_t> toneFrequency) override;
+        uint16_t gain, uint32_t duration, std::vector<uint16_t> toneFrequency) override;
 
     telux::common::ErrorCode stopTone(StreamHandle &streamHandle) override;
 
@@ -175,7 +175,7 @@ private:
     telux::common::ErrorCode startLoopback(snd_pcm_t *captureHandle, snd_pcm_t *playHandle,
         int channels);
     telux::common::ErrorCode generateTone(StreamHandle streamHandle, uint32_t sampleRate,
-    uint16_t gain, uint16_t duration, std::vector<uint16_t> toneFrequency);
+    uint16_t gain, uint32_t duration, std::vector<uint16_t> toneFrequency);
     void genTone(std::vector<uint16_t> toneFrequency, int channels, uint32_t sampleRate,
         uint16_t gain, float buf[]);
     float generateSignal(float t1, float t2);

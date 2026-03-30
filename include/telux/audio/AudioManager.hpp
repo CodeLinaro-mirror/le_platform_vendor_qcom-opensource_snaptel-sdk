@@ -649,7 +649,7 @@ class IAudioVoiceStream : virtual public IAudioStream {
     * @returns @ref telux::common::Status::SUCCESS if the request is initiated
     *          successfully, otherwise, an appropriate error code
     */
-   virtual telux::common::Status playDtmfTone(DtmfTone dtmfTone, uint16_t duration,
+   virtual telux::common::Status playDtmfTone(DtmfTone dtmfTone, uint32_t duration,
         uint16_t gain, telux::common::ResponseCallback callback = nullptr) = 0;
 
    /**
@@ -900,7 +900,7 @@ class IAudioToneGeneratorStream : virtual public IAudioStream {
     * @returns @ref telux::common::Status::SUCCESS if the request is initiated
     *          successfully, otherwise, an appropriate error code
     */
-   virtual telux::common::Status playTone(std::vector<uint16_t> freq, uint16_t duration,
+   virtual telux::common::Status playTone(std::vector<uint16_t> freq, uint32_t duration,
                uint16_t gain, telux::common::ResponseCallback callback = nullptr) = 0;
 
    /**

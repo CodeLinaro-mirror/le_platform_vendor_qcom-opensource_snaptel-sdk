@@ -310,11 +310,11 @@ void Stream::stop(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) {
  * here knowingly to remain flexible.
  *
  * @gain - defines the volume of speaker on which tone will be heard
- * @duration - possible upto 65 seconds
+ * @duration - supported up to 71 minutes 35 seconds (maximum value of uint32 in milliseconds)
  * @toneFrequencies - 1st value in the vector is used as frequency value, rest ignored
  */
 void Stream::doStartTone(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-        uint16_t gain, uint16_t duration, std::vector<uint16_t> toneFrequencies) {
+        uint16_t gain, uint32_t duration, std::vector<uint16_t> toneFrequencies) {
 
     telux::common::ErrorCode ec;
 
@@ -341,7 +341,7 @@ result:
 }
 
 void Stream::startTone(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-            uint16_t gain, uint16_t duration, std::vector<uint16_t> toneFrequencies) {
+            uint16_t gain, uint32_t duration, std::vector<uint16_t> toneFrequencies) {
     streamTaskExecutor_->submitTask( [=]{ doStartTone(audioReq, streamId, gain,
         duration, toneFrequencies); });
 }
@@ -768,7 +768,7 @@ void Stream::getMuteState(std::shared_ptr<AudioRequest> audioReq, uint32_t strea
  *   -----------------------------------------------
  */
 void Stream::doStartDtmf(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-        uint16_t gain, uint16_t duration, DtmfTone dtmfTone) {
+        uint16_t gain, uint32_t duration, DtmfTone dtmfTone) {
 
     telux::common::ErrorCode ec = telux::common::ErrorCode::SUCCESS;
 
@@ -817,7 +817,7 @@ result:
 }
 
 void Stream::startDtmf(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-        uint16_t gain, uint16_t duration, DtmfTone dtmfTone) {
+        uint16_t gain, uint32_t duration, DtmfTone dtmfTone) {
 
     streamTaskExecutor_->submitTask( [=]{ doStartDtmf(audioReq, streamId, gain,
         duration, dtmfTone); });

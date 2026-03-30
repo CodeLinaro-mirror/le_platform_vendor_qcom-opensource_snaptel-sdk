@@ -86,7 +86,7 @@ class AudioGrpcClientStub : public ICommunicator,
     telux::common::Status stopStream(uint32_t streamId,
         std::shared_ptr<telux::audio::IStopStreamCb> resultListener, int cmdId) override;
 
-    telux::common::Status playDtmfTone(telux::audio::DtmfTone dtmfTone, uint16_t duration,
+    telux::common::Status playDtmfTone(telux::audio::DtmfTone dtmfTone, uint32_t duration,
         uint16_t gain, uint32_t streamId,
         std::shared_ptr<telux::audio::IDTMFCb> resultListener, int cmdId) override;
 
@@ -122,7 +122,7 @@ class AudioGrpcClientStub : public ICommunicator,
         telux::audio::AudioUserData *audioUserData) override;
 
     telux::common::Status playTone(uint32_t streamId, std::vector<uint16_t> frequency,
-        uint16_t duration, uint16_t gain,
+        uint32_t duration, uint16_t gain,
         std::shared_ptr<telux::audio::IToneCb> resultListener, int cmdId) override;
 
     telux::common::Status stopTone(uint32_t streamId,

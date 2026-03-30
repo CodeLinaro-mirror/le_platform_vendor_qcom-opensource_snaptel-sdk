@@ -21,8 +21,6 @@ public:
    void onIncomingCall(std::shared_ptr<telux::tel::ICall> call) override;
    void onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) override;
 
-   std::string getCallStateString(telux::tel::CallState cs);
-   std::string getCallEndCauseString(telux::tel::CallEndCause causeCode);
    std::string getCurrentTime();
    ~AecsCallListener();
 
@@ -57,7 +55,9 @@ private:
     // Persist AECS drop window across temporary CALL_ACTIVE states.
     std::chrono::steady_clock::time_point dropWindowDeadline_{};
     bool dropWindowArmed_{false};
-    bool isAecsCallFailReason(telux::tel::CallEndCause endCause);
+    bool isAecsCallFailReason(telux::tel::CallEndCause endCause, int phoneId);
+    void markRetryStopped();
+    void joinRetryThreadIfNeeded();
 };
 
 class AecsDialCallback {

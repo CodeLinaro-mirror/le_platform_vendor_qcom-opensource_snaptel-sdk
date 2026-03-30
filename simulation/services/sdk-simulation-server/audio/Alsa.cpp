@@ -811,7 +811,7 @@ telux::common::ErrorCode Alsa::flush(StreamHandle streamHandle) {
  * Configure and start playing dtmf tone.
  */
 telux::common::ErrorCode Alsa::startDtmf(
-    StreamHandle streamHandle, uint16_t gain, uint16_t duration, DtmfTone dtmfTone) {
+    StreamHandle streamHandle, uint16_t gain, uint32_t duration, DtmfTone dtmfTone) {
     return telux::common::ErrorCode::SUCCESS;
 }
 
@@ -928,7 +928,7 @@ void Alsa::genTone(std::vector<uint16_t> toneFrequency, int channels, uint32_t s
 }
 
 telux::common::ErrorCode Alsa::generateTone(StreamHandle streamHandle, uint32_t sampleRate,
-    uint16_t gain, uint16_t duration, std::vector<uint16_t> toneFrequency) {
+    uint16_t gain, uint32_t duration, std::vector<uint16_t> toneFrequency) {
     int ret;
     float buf[sampleRate];
     int nbSamples  = sampleRate * streamHandle.channels * (duration / 1000);
@@ -966,7 +966,7 @@ telux::common::ErrorCode Alsa::generateTone(StreamHandle streamHandle, uint32_t 
  * Configure and start playing tone.
  */
 telux::common::ErrorCode Alsa::startTone(StreamHandle &streamHandle, uint32_t sampleRate,
-    uint16_t gain, uint16_t duration, std::vector<uint16_t> toneFrequency) {
+    uint16_t gain, uint32_t duration, std::vector<uint16_t> toneFrequency) {
 
     if (runTone_) {
         stopTone(streamHandle);

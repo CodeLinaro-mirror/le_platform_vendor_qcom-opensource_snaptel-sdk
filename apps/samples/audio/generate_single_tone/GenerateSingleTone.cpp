@@ -138,7 +138,7 @@ int GenerateSingleTone::generateSingleTone() {
     telux::common::ErrorCode ec;
 
     std::vector<uint16_t> frequency{1244};
-    uint16_t duration = 12000;
+    uint32_t duration = 12000;
     uint16_t gain     = 5000;
 
     status = audioToneStream_->playTone(

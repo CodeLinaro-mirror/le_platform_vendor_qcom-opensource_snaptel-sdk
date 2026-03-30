@@ -266,13 +266,14 @@ void AecsCallManager::stopAudioIfNoCalls(int phoneId) {
 // ---------------------- Emergency mode ----------------------
 // Callback which provides response for set emergency mode
 void AecsCallManager::setEmergencyModeResponse(telux::common::ErrorCode error) {
-    if (error != telux::common::ErrorCode::SUCCESS &&
-        error != telux::common::ErrorCode::NO_EFFECT) {
+    if (error == telux::common::ErrorCode::NO_EFFECT) {
+        std::cout << "Emergency mode already set" << std::endl;
+    } else if (error == telux::common::ErrorCode::SUCCESS) {
+        std::cout << "Successfully set emergency mode " << std::endl;
+    } else {
         std::cout << "Failed to set emergency mode with error code: "
             << Utils::getErrorCodeAsString(error) << std::endl;
         return;
-    } else {
-        std::cout << "Successfully set emergency mode " << std::endl;
     }
 }
 

@@ -117,6 +117,16 @@ void AecsSmsListener::stopMsdRetryLoop() {
     msdRetryRawPdus_.clear();
 }
 
+
+void AecsSmsListener::markMsdRetryStopped() {
+    msdRetryStop_.store(true);
+    msdRetryInProgress_.store(false);
+    {
+        std::lock_guard<std::mutex> lk(msdRetryMutex_);
+        msdRetryScheduled_ = false;
+    }
+}
+
 void AecsSmsListener::scheduleNextMsdRetryFromNow() {
     std::lock_guard<std::mutex> lk(msdRetryMutex_);
     msdNextRetryAt_ = std::chrono::steady_clock::now() + std::chrono::seconds(msdRetryIntervalSec_);
@@ -173,6 +183,12 @@ void AecsSmsListener::retryMsdOverSms(int phoneId) {
         std::cout << "Invalid Phone ID. Retry aborted." << std::endl;
         return;
     }
+
+    if (msdRetryThread_.joinable() &&
+        std::this_thread::get_id() != msdRetryThread_.get_id()) {
+        msdRetryThread_.join();
+    }
+
     auto &aecsMgr = AecsCallManager::getInstance();
     if (!aecsMgr.isEmergencyMode(phoneId)) {
         std::cout << std::endl << std::endl;
@@ -237,7 +253,9 @@ void AecsSmsListener::retryMsdOverSms(int phoneId) {
                     msdRetryScheduled_ = false;
                 }
                 msdRetryCv_.notify_all();
-                break;
+
+                markMsdRetryStopped();
+                return;
             }
             // Wait for a scheduled (FAILURE + interval) time or stop
             std::unique_lock<std::mutex> lk(msdRetryMutex_);
@@ -264,7 +282,9 @@ void AecsSmsListener::retryMsdOverSms(int phoneId) {
                 std::cout << "MSD retry window expired ("
                     << (msdRetryDurationSec_ / SEC_PER_MIN) << " min). Stopping retries."
                     << std::endl;
-                break;
+
+                markMsdRetryStopped();
+                return;
             }
             // Attempt another send
             sendMsdOnce(msdRetryPhoneId_, msdRetryRawPdus_);

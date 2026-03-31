@@ -444,15 +444,15 @@ void WlanUtils::printScanResult(const telux::wlan::StaScanResult &staScanResult)
     if (staScanResult.externalApList.size() > 0) {
         std::cout << "List of External APs:" << std::endl;
         std::cout << std::left << std::setw(18) << "\nBSSID " << std::setw(10) << " | Frequency "
-                  << std::setw(10) << " | Signal Level " << std::setw(23) << " | Flags "
-                  << " | SSID\n"
+                  << std::setw(10) << " | Signal Level " << std::setw(35) << " | SSID "
+                  << " | Flags\n"
                   << std::endl;
 
         for (auto &externalAp : staScanResult.externalApList) {
             std::cout << std::left << std::setw(20) << externalAp.bssid << std::setw(10)
                       << RadioTypeToString(externalAp.band) << std::setw(10)
-                      << externalAp.signalStrength << std::setw(30) << externalAp.securityFlags
-                      << externalAp.ssid << std::endl;
+                      << externalAp.signalStrength << std::setw(35) << externalAp.ssid
+                      << externalAp.securityFlags << std::endl;
         }
         std::cout << std::endl;
     } else {

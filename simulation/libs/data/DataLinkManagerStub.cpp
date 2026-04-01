@@ -318,7 +318,8 @@ telux::common::Status DataLinkManagerStub::getEthCapability(
     }
     ethCapability.ethModes = 0;
     for (const auto &mode : response.capability().eth_modes()) {
-        ethCapability.ethModes |= (1 << mode);
+        LOG(DEBUG, __FUNCTION__, " eth_modes are : ", mode);
+        ethCapability.ethModes |= mode;
     }
 
     return telux::common::Status::SUCCESS;
@@ -353,6 +354,7 @@ telux::common::Status DataLinkManagerStub::setLocalEthOperatingMode(
     ::dataStub::SetLocalEthOperatingModeRequest request;
     ::dataStub::SetLocalEthOperatingModeReply response;
     grpc::ClientContext context;
+    telux::common::Status returnStatus = telux::common::Status::FAILED;
 
     request.set_eth_mode(static_cast<::dataStub::EthModeEnum>(ethModeType));
 
@@ -360,29 +362,22 @@ telux::common::Status DataLinkManagerStub::setLocalEthOperatingMode(
 
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
 
-    if (error == telux::common::ErrorCode::SUCCESS) {
-        if (!reqStatus.ok()) {
-            LOG(ERROR, __FUNCTION__, " SetLocalEthOperatingMode request failed");
-            error = telux::common::ErrorCode::INTERNAL_ERROR;
-            return telux::common::Status::FAILED;
-        } else {
-            if (listenerMgr_) {
-                std::vector<std::weak_ptr<IDataLinkListener>> listeners;
-                listenerMgr_->getAvailableListeners(listeners);
-                LOG(DEBUG, __FUNCTION__, " listeners size : ", listeners.size());
-                for (auto &wp : listeners) {
-                    if (auto sp = wp.lock()) {
-                        LOG(DEBUG, "DataLink Manager: invoking onEthModeChangeRequest");
-                        sp->onEthModeChangeRequest(ethModeType);
-                    }
-                }
-            }
-        }
+    if (!reqStatus.ok()) {
+        error        = telux::common::ErrorCode::INTERNAL_ERROR;
+        returnStatus = telux::common::Status::FAILED;
     } else {
-        LOG(ERROR, __FUNCTION__, " SetLocalEthOperatingMode error");
-        return telux::common::Status::FAILED;
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            returnStatus = telux::common::Status::SUCCESS;
+        } else {
+            returnStatus = telux::common::Status::FAILED;
+        }
     }
-    return telux::common::Status::SUCCESS;
+
+    if (callback) {
+        auto f = std::async(std::launch::async, [callback, error]() { callback(error); });
+        f.get();
+    }
+    return returnStatus;
 }
 
 telux::common::Status DataLinkManagerStub::setPeerModeChangeRequestStatus(

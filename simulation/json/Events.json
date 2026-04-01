@@ -413,7 +413,7 @@
     "data_link_eth_mode": {
         "onEthModeChangeRequest": [
             "telsdk_event_injector -f data_link_eth_mode -e onEthModeChangeRequest <ethModeType>",
-            "ethModeType: integer, numeric value of EthModeType enum (e.g., 0 for ETHMODE_UNKNOWN, 1 for USXGMII_10G, etc.)"
+            "ethModeType: integer, numeric value of EthModeType enum (e.g., 0 for ETHMODE_UNKNOWN, 1 for USXGMII_10G,2 for USXGMII_5G,4 for USXGMII_2_5G, 128 for SGMII_1G, 256 for SGMII_100M)"
         ],
         "onEthModeChangeTransactionStatus": [
             "telsdk_event_injector -f data_link_eth_mode -e onEthModeChangeTransactionStatus <ethModeType> <linkModeChangeStatus>",

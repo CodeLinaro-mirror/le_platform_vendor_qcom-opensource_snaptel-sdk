@@ -1708,13 +1708,13 @@ enum EthModeEnum {
     EthModeEnum_UNKNOWN = 0;
     EthModeEnum_USXGMII_10G = 1;
     EthModeEnum_USXGMII_5G = 2;
-    EthModeEnum_USXGMII_2_5G = 3;
-    EthModeEnum_USXGMII_1G = 4;
-    EthModeEnum_USXGMII_100M = 5;
-    EthModeEnum_USXGMII_10M = 6;
-    EthModeEnum_SGMII_2_5G = 7;
-    EthModeEnum_SGMII_1G = 8;
-    EthModeEnum_SGMII_100M = 9;
+    EthModeEnum_USXGMII_2_5G = 4;
+    EthModeEnum_USXGMII_1G = 8;
+    EthModeEnum_USXGMII_100M = 16;
+    EthModeEnum_USXGMII_10M = 32;
+    EthModeEnum_SGMII_2_5G = 64;
+    EthModeEnum_SGMII_1G = 128;
+    EthModeEnum_SGMII_100M = 256;
 }
 
 

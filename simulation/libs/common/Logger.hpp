@@ -56,6 +56,9 @@ class Logger {
     void writeLogMessage(std::ostringstream &os, LogLevel logLevel, const std::string &fileName,
         const int &component, const std::string &lineNo);
 
+    void writeLogMessageCStyle(const char *msg, LogLevel logLevel, const char *fileName,
+        const int &component, const char *lineNo);
+
     /*
      * get the current date and time of the device
      */
@@ -197,6 +200,12 @@ class Logger {
      * Update max log level.
      */
     void updateMaxLogLevel();
+
+    /*
+     * Helper to format common log prefix
+     */
+    void formatLogPrefix(std::ostringstream &outputStream, LogLevel logLevel, const char *fileName,
+        const char *lineNo);
 
     static Logger instance;
 

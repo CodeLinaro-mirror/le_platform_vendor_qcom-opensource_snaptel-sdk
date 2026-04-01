@@ -175,3 +175,8 @@ enum LocationFixRequestReason {
 message IncomingDataEvent {
     repeated uint32 data = 1;
 }
+
+message DataAckEvent {
+    uint32 transaction_id = 1;
+    commonStub.ErrorCode error = 2;
+}

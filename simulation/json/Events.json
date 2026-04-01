@@ -449,6 +449,11 @@
         "incomingData": [
             "telsdk_event_injector -f ntn -e incomingData <data>",
             "data: valid data is a comma-separated list of byte values."
+        ],
+        "dataAck": [
+            "telsdk_event_injector -f ntn -e dataAck <transactionId> <errorCode>",
+            "transactionId: transaction ID (0 for abort all)",
+            "errorCode: error code (e.g., 0 for SUCCESS, 10 for ABORTED)"
         ]
     },
     "fs_manager": {

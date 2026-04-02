@@ -3264,6 +3264,48 @@ Call flow to Modify WLAN Access Point Configuration
 9. Application calls IApInterfaceManager::managerApService to restart hostapd daemon.
 10. Application receives response to restart hostapd daemon and access point configuration shall be active at this stage.
 
+Call flow for WLAN Control Manager - OSS Interface Management
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. figure:: /../images/wlan_control_manager.png
+
+This call flow describes how an application uses IWlanControlManager to monitor WLAN
+interfaces that are controlled via Linux OSS APIs (i.e., when
+isWlanExternallyManaged is set). It covers interface status queries and runtime
+AP/STA status notifications.
+
+1. Application requests IWlanControlManager object from WlanFactory using
+   getWlanControlManager(initCb).
+2. WlanFactory returns a shared pointer to IWlanControlManager to the application.
+3. Application calls IWlanControlManager::getServiceStatus() to determine if the subsystem
+   is ready.
+4. The application receives the status, i.e., either SERVICE_AVAILABLE or
+   SERVICE_UNAVAILABLE, to indicate whether the subsystem is ready or not.
+
+   a. If the subsystem is not ready, the application should wait for the initialization callback
+      provided in step 1.
+   b. The application-provided callback is invoked with subsystem status
+      (SERVICE_AVAILABLE/SERVICE_FAILED).
+
+5. Application creates a listener object of type IWlanControlListener and registers it with
+   IWlanControlManager::registerListener().
+6. IWlanControlManager returns ErrorCode::SUCCESS to confirm listener registration.
+7. Application calls IWlanControlManager::getInterfaceStatus(status) to query current
+   active AP and STA interface status (interface name, IP address, MAC address, band, SSID,
+   and connection state).
+8. IWlanControlManager returns ErrorCode::SUCCESS along with the interface status
+   vector.
+9. When an AP network interface is added to or removed from the bridge by the framework, the
+   IWlanControlListener::onApStatusChanged(status) notification is delivered to the
+   application. The application updates its AP state and adjusts routing/firewall rules as
+   required.
+10. When station connection state changes (connected with IP assigned, IP assignment failed,
+   or disconnected), the IWlanControlListener::onStationStatusChanged(staStatus)
+   notification is delivered. The application updates routing tables or fallback logic as
+   required.
+11. Application calls IWlanControlManager::deregisterListener() to remove the listener.
+12. IWlanControlManager returns ErrorCode::SUCCESS.
+
 SATCOM
 ------
 

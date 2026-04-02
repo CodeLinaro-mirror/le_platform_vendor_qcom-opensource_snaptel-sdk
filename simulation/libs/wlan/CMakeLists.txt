@@ -11,6 +11,7 @@ set(WLAN_STUB_SOURCES
     WlanDeviceManagerStub.cpp
     ApInterfaceManagerStub.cpp
     StaInterfaceManagerStub.cpp
+    WlanControlManagerStub.cpp
 )
 
 find_library(JSONCPP_LIBRARY NAMES jsoncpp)

@@ -53,6 +53,7 @@ class DataSettingsMenu : public ConsoleApp,
     void isDeviceDataUsageMonitoringEnabled(std::vector<std::string> inputCommand);
     void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) override;
     void onDdsChange(DdsInfo currentState) override;
+    void onCoexActionRequired(CoexAction action) override;
 
     void setIPPTNatConfig(std::vector<std::string> inputCommand);
     void getIPPTNatConfig(std::vector<std::string> inputCommand);

@@ -7,6 +7,7 @@ set(WLAN_APP_SOURCES
     WlanDeviceManagerMenu.cpp
     WlanApInterfaceManagerMenu.cpp
     WlanStaInterfaceManagerMenu.cpp
+    WlanControlManagerMenu.cpp
     WlanUtils.cpp
     ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/Utils.cpp
     ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleAppCommand.cpp

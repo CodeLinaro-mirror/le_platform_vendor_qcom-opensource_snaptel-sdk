@@ -45,8 +45,7 @@ bool WlanDeviceManagerMenu::isSubSystemReady() {
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << "\nWlan Device Manager is ready" << std::endl;
         } else {
-            std::cout << "\nWlan Device Manager initialization failed" << std::endl;
-            wlanDeviceManager_ = nullptr;
+            // Keep wlanDeviceManager_ so APIs can be invoked and return SERVICE_UNAVAILABLE
             return false;
         }
     }

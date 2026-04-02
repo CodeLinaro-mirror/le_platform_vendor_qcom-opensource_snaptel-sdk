@@ -1027,6 +1027,26 @@ void DataSettingsMenu::onDdsChange(DdsInfo currentState) {
     std::cout << std::endl << std::endl;
 }
 
+void DataSettingsMenu::onCoexActionRequired(CoexAction action) {
+    std::cout << "\n\n";
+    PRINT_NOTIFICATION << " ** Coexistence Action Required ** \n";
+
+    std::cout << "Coexistence Action: ";
+    switch (action) {
+        case CoexAction::WLAN_5GHZ_TUNE_AWAY:
+            std::cout << "WLAN_5GHZ_TUNE_AWAY" << std::endl;
+            break;
+        case CoexAction::WLAN_5GHZ_ALLOWED:
+            std::cout << "WLAN_5GHZ_ALLOWED" << std::endl;
+            break;
+        default:
+            std::cout << "UNKNOWN" << std::endl;
+            break;
+    }
+
+    std::cout << std::endl << std::endl;
+}
+
 void DataSettingsMenu::isDeviceDataUsageMonitoringEnabled(std::vector<std::string> inputCommand) {
     std::cout << "\nIs device data usage monitoring enabled" << std::endl;
     telux::common::Status retStat = telux::common::Status::SUCCESS;

@@ -31,14 +31,6 @@ class IApListener;
 #define INVALID_AP_ID 0
 
 /**
- * AP Interworking Information
- */
-enum class ApInterworking {
-    INTERNET_ACCESS = 0, /**<  AP with internet access only - No LAN access   */
-    FULL_ACCESS     = 1 /**<  AP Can Access LAN and Internet                 */
-};
-
-/**
  * AP Client Connection Status
  */
 enum class ApDeviceConnectionEvent {

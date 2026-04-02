@@ -10,6 +10,7 @@
 #include "ApInterfaceManagerStub.hpp"
 #include "StaInterfaceManagerStub.hpp"
 #include "WlanDeviceManagerStub.hpp"
+#include "WlanControlManagerStub.hpp"
 
 namespace telux {
 namespace wlan {
@@ -96,6 +97,27 @@ std::shared_ptr<IStaInterfaceManager> WlanFactoryStub::getStaInterfaceManager() 
     // Use FactoryHelper to manage singleton instance.
     auto manager
         = getManager<telux::wlan::IStaInterfaceManager>(type, staInterfaceManager_, createAndInit);
+    return manager;
+}
+
+std::shared_ptr<IWlanControlManager> WlanFactoryStub::getWlanControlManager(
+    telux::common::InitResponseCb clientCallback) {
+    std::function<std::shared_ptr<telux::wlan::IWlanControlManager>(telux::common::InitResponseCb)>
+        createAndInit = [this](telux::common::InitResponseCb initCb)
+        -> std::shared_ptr<telux::wlan::IWlanControlManager> {
+        std::shared_ptr<telux::wlan::WlanControlManagerStub> manager
+            = std::make_shared<telux::wlan::WlanControlManagerStub>();
+        if (manager && telux::common::Status::SUCCESS != manager->init(initCb)) {
+            LOG(ERROR, __FUNCTION__, " WLAN Factory unable to initialize Wlan Control Manager");
+            return nullptr;
+        }
+        return manager;
+    };
+    auto type = std::string("Wlan Control Manager");
+    LOG(DEBUG, __FUNCTION__, ": Requesting ", type.c_str());
+    // Use FactoryHelper to manage singleton instance and callbacks.
+    auto manager = getManager<telux::wlan::IWlanControlManager>(
+        type, wlanControlManager_, wlanControlManagerCallbacks_, clientCallback, createAndInit);
     return manager;
 }
 

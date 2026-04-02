@@ -39,6 +39,9 @@ class WlanFactoryStub : public WlanFactory, public telux::common::FactoryHelper 
 
     virtual std::shared_ptr<IStaInterfaceManager> getStaInterfaceManager() override;
 
+    virtual std::shared_ptr<IWlanControlManager> getWlanControlManager(
+        telux::common::InitResponseCb clientCallback = nullptr) override;
+
  private:
     WlanFactoryStub();
     ~WlanFactoryStub();
@@ -51,6 +54,8 @@ class WlanFactoryStub : public WlanFactory, public telux::common::FactoryHelper 
     std::vector<telux::common::InitResponseCb> wlanDeviceManagerCallbacks_;
     std::weak_ptr<IApInterfaceManager> apInterfaceManager_;
     std::weak_ptr<IStaInterfaceManager> staInterfaceManager_;
+    std::weak_ptr<IWlanControlManager> wlanControlManager_;
+    std::vector<telux::common::InitResponseCb> wlanControlManagerCallbacks_;
 };
 
 }  // namespace wlan

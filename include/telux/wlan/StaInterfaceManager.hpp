@@ -46,29 +46,11 @@ using NetworkId = uint16_t;
 using Priority = uint16_t;
 
 /**
- * Station Connection IP Type.
- */
-enum class StaIpConfig {
-    DYNAMIC_IP = 1, /**< Station is configured with dynamic IP */
-    STATIC_IP  = 2, /**< Station is configured with Static IP  */
-};
-
-/**
  * Bridge/Router Mode.
  */
 enum class StaBridgeMode {
     ROUTER = 0, /**<  Station is in Router Mode      */
     BRIDGE = 1 /**<  Station is in Bridge Mode      */
-};
-
-/**
- * Static IP Configuration.
- */
-struct StaStaticIpConfig {
-    std::string ipAddr; /**<   IPv4 address to be assigned. */
-    std::string gwIpAddr; /**<   IPv4 address of the gateway. */
-    std::string netMask; /**<   Subnet mask.                 */
-    std::string dnsAddr; /**<   DNS IPv4 address.            */
 };
 
 /**

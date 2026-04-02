@@ -29,25 +29,6 @@ namespace wlan {
 class IWlanListener;
 
 /**
- * Wlan Interface State
- */
-enum class InterfaceState {
-    INACTIVE = 0x00, /**<  Interface is Inactive  */
-    ACTIVE   = 0x01, /**<  Interface is Active    */
-};
-
-/**
- * Wlan Interface Device
- */
-enum class HwDeviceType {
-    UNKNOWN = 0, /**<  Wlan device is Unknown   */
-    QCA6574 = 1, /**<  Wlan device is QCA6574   */
-    QCA6696 = 2, /**<  Wlan device is QCA6696   */
-    QCA6595 = 3, /**<  Wlan device is QCA6595   */
-    QCA6797 = 4, /**<  Wlan device is QCA6797   */
-};
-
-/**
  * Wlan Device Performance State
  */
 enum class DevicePerfState {
@@ -55,15 +36,6 @@ enum class DevicePerfState {
     FULL     = 1, /**<  Device is in full performance state      */
     REDUCED  = 2, /**<  Device is in reduced performance state   */
     SHUTDOWN = 3, /**<  Device is shutdown                       */
-};
-
-/**
- * Wlan Interface status
- */
-struct InterfaceStatus {
-    HwDeviceType device; /**< WiFi hardware type           */
-    std::vector<ApStatus> apStatus; /**< Vector of active APs status  */
-    std::vector<StaStatus> staStatus; /**< Vector of active Sta status  */
 };
 
 /**

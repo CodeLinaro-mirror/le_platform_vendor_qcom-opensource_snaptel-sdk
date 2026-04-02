@@ -1,5 +1,5 @@
-/* Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -1016,6 +1016,26 @@ void DataSettingsMenu::onDdsChange(DdsInfo currentState) {
         std::string type = (currentState.type == DdsType::PERMANENT) ?
             "Permanent" : "Temporary";
         std::cout << "Switch Type: " << type << std::endl;
+
+    std::cout << std::endl << std::endl;
+}
+
+void DataSettingsMenu::onCoexActionRequired(CoexAction action) {
+    std::cout << "\n\n";
+    PRINT_NOTIFICATION << " ** Coexistence Action Required ** \n";
+
+    std::cout << "Coexistence Action: ";
+    switch (action) {
+        case CoexAction::WLAN_5GHZ_TUNE_AWAY:
+            std::cout << "WLAN_5GHZ_TUNE_AWAY" << std::endl;
+            break;
+        case CoexAction::WLAN_5GHZ_ALLOWED:
+            std::cout << "WLAN_5GHZ_ALLOWED" << std::endl;
+            break;
+        default:
+            std::cout << "UNKNOWN" << std::endl;
+            break;
+    }
 
     std::cout << std::endl << std::endl;
 }

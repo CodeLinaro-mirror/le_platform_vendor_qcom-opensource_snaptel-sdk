@@ -1,7 +1,7 @@
-/* Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
-*/
+ */
 
 /**
  * This is Data Settings Manager Sample Application using Telematics SDK.
@@ -54,6 +54,7 @@ class DataSettingsMenu : public ConsoleApp ,
     void isDeviceDataUsageMonitoringEnabled(std::vector<std::string> inputCommand);
     void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) override;
     void onDdsChange(DdsInfo currentState) override;
+    void onCoexActionRequired(CoexAction action) override;
 
     void setIPPTNatConfig(std::vector<std::string> inputCommand);
     void getIPPTNatConfig(std::vector<std::string> inputCommand);

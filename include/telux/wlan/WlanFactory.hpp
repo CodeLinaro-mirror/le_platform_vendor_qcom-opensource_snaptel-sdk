@@ -6,8 +6,8 @@
 /**
  * @file       WlanFactory.hpp
  *
- * @brief      WlanFactory is the central factory to create all wlan managers instances such as
- *             WlanDeviceManager, WlanApInterfaceManager, and WlanStaInterfaceManager
+ * @brief      WlanFactory is the central factory to create all wlan manager instances such as
+ *             WlanControlManager
  *
  */
 
@@ -19,9 +19,7 @@
 
 #include <telux/common/CommonDefines.hpp>
 
-#include <telux/wlan/WlanDeviceManager.hpp>
-#include <telux/wlan/ApInterfaceManager.hpp>
-#include <telux/wlan/StaInterfaceManager.hpp>
+#include <telux/wlan/WlanControlManager.hpp>
 
 namespace telux {
 namespace wlan {
@@ -41,32 +39,20 @@ class WlanFactory {
     static WlanFactory &getInstance();
 
     /**
-     * Get Wlan Device Manager
+     * Get Wlan Control Manager
+     * Returns manager for handling networking aspects of WLAN interfaces
+     * controlled via Linux OSS APIs.
      *
      * @param [in] clientCallback       Optional callback to get the initialization status of
-     *                                  WlanDeviceManager @ref telux::common::InitResponseCb
-     * @returns instance of IWlanDeviceManager
+     *                                  WlanControlManager @ref telux::common::InitResponseCb
      *
+     * @returns instance of IWlanControlManager
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+     *         break backwards compatibility.
      */
-    virtual std::shared_ptr<IWlanDeviceManager> getWlanDeviceManager(
-        telux::common::InitResponseCb clientCallback = nullptr)
-        = 0;
-
-    /**
-     * Get Access Point Interface Manager
-     *
-     * @returns instance of IApInterfaceManager
-     *
-     */
-    virtual std::shared_ptr<IApInterfaceManager> getApInterfaceManager() = 0;
-
-    /**
-     * Get Station Interface Manager
-     *
-     * @returns instance of IStaInterfaceManager
-     *
-     */
-    virtual std::shared_ptr<IStaInterfaceManager> getStaInterfaceManager() = 0;
+    virtual std::shared_ptr<IWlanControlManager> getWlanControlManager(
+        telux::common::InitResponseCb clientCallback = nullptr) = 0;
 
  protected:
     WlanFactory();

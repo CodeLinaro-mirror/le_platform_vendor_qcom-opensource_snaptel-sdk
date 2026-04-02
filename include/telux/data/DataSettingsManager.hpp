@@ -30,8 +30,8 @@ class IDataSettingsListener;
  * Set priority between N79 5G and Wlan 5GHz Band
  */
 enum class BandPriority {
-    N79  = 0, /**< N79 has higher priority  */
-    WLAN = 1, /**< Wlan has higher priority */
+    N79  = 0, /**< N79 5G has higher priority  */
+    WLAN = 1, /**< WLAN 5GHz has higher priority */
 };
 
 /**
@@ -40,12 +40,24 @@ enum class BandPriority {
 struct BandInterferenceConfig {
     BandPriority priority; /**< Priority settings for N79/Wlan 5G */
     uint32_t wlanWaitTimeInSec = 30; /**< If Wlan 5GHz has higher priority and suffers signal
-                                         drop, modem will wait for period of time specified here
-                                         for Wlan signal to recover before enabeling N79 5G.  */
+                                          drop, modem will wait for period of time specified here
+                                          for Wlan signal to recover before enabeling N79 5G.  */
     uint32_t n79WaitTimeInSec = 30; /**< If N79 has higher priority and suffers signal drop,
-                                        modem will wait for period of time specified here for
-                                        N79 5G signal to recover before switching Wlan to
-                                        5GHz. */
+                                         modem will wait for period of time specified here for
+                                         N79 5G signal to recover before switching Wlan to
+                                         5GHz. */
+};
+
+/**
+ * WLAN - N79 5G coexistence actions.
+ * These actions are sent only when N79 has higher priority and client is using Linux OSS APIs
+ * for WLAN management. When WLAN has priority, the framework handles N79 management internally.
+ */
+enum class CoexAction {
+    WLAN_5GHZ_TUNE_AWAY = 0, /**< User should tune away WLAN from 5GHz band to avoid
+                                  interference with N79 5G */
+    WLAN_5GHZ_ALLOWED = 1, /**< WLAN can safely operate on 5GHz band without
+                                interference */
 };
 
 /**
@@ -217,27 +229,40 @@ class IDataSettingsManager {
         = 0;
 
     /**
-     * Configure N79 5G and Wlan 5GHz band priority.
-     * Sets priority for modem to use either 5GHz Wlan or N79 5G band when they are both available
-     * to avoid interference.
-     * In case N79 5G is configured as higher priority:
-     *    If N79 5G becomes available while 5G Wlan is enabled, Wlan (AP/Sta) will be moved to
-     *    2.4 GHz.
-     *    If N79 5G becomes unavailable for
-     *    @ref telux::data::BandInterferenceConfig::n79WaitTimeInSec time period, Wlan will be
-     *    moved to 5GHz.
-     * In case Wlan 5GHz is configured as higher priority:
-     *    If Wlan 5GHz (AP/Sta) becomes available while N79 5G is enabled, N79 5G will be disabled.
-     *    If Wlan 5GHz becomes unavailable for
-     *    @ref telux::data::BandInterferenceConfig::wlanWaitTimeInSec period and N79 5G is
-     *    available, N79 will be enabled.
+     * Configure N79 5G and WLAN 5GHz band priority for interference avoidance.
+     * Sets priority between 5GHz WLAN and N79 5G band when both are available to avoid
+     * interference.
      *
-     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_SETTING permission
-     * to invoke this API successfully.
+     * When N79 5G has higher priority (@ref telux::data::BandPriority::N79):
+     *   For client using Linux OSS APIs for WLAN management:
+     *     - Coexistence action indications are sent via
+     *       @ref telux::data::IDataSettingsListener::onCoexActionRequired when framework
+     *       determines a coexistence issue was identified and client is expected to take
+     *       action on it. User must handle WLAN band switching based on the action received.
+     *   For client using telux::wlan APIs for WLAN management:
+     *     - If N79 5G becomes available while WLAN is on 5GHz, WLAN (AP/STA) will be
+     *       automatically moved to 2.4GHz.
+     *     - If N79 5G becomes unavailable for
+     *       @ref telux::data::BandInterferenceConfig::n79WaitTimeInSec time period, WLAN will
+     *       be automatically moved back to 5GHz.
+     *
+     * When WLAN 5GHz has higher priority (@ref telux::data::BandPriority::WLAN):
+     *   - The framework handles N79 management internally without user intervention.
+     *   - If WLAN 5GHz (AP/STA) becomes available while N79 5G is enabled, N79 5G will be
+     *     disabled.
+     *   - If WLAN 5GHz becomes unavailable for
+     *     @ref telux::data::BandInterferenceConfig::wlanWaitTimeInSec period and N79 5G is
+     *     available, N79 will be enabled.
+     *   - No coexistence indications are sent regardless of WLAN management approach.
+     *
+     * Configuration changes are persistent across reboots.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_SETTING
+     * permission to invoke this API successfully.
      *
      * @param [in] enable           True: enable interference management.
      *                              False: disable interference management
-     * @param [in] config           N79 5G /Wlan 5GHz band interference configuration
+     * @param [in] config           N79 5G/WLAN 5GHz band interference configuration
      *                              @ref telux::data::BandInterferenceConfig
      * @param [in] callback         callback to get response for setBandInterferenceConfig.
      *
@@ -647,6 +672,35 @@ class IDataSettingsListener : public telux::common::ISDKListener {
      * @deprecated Use IDualDataListener::onDdsChange indication.
      */
     virtual void onDdsChange(DdsInfo currentState) {
+    }
+
+    /**
+     * This function is called when framework determines a coexistence issue was identified and
+     * client is expected to take action on it.
+     *
+     * This callback is invoked only when N79 has higher priority
+     * (@ref telux::data::BandPriority::N79, as configured via
+     * @ref telux::data::IDataSettingsManager::setBandInterferenceConfig) and client is using
+     * Linux OSS APIs for WLAN management.
+     *
+     * @ref telux::data::CoexAction::WLAN_5GHZ_TUNE_AWAY can be received if:
+     *   - UE is on N79 5G band and N79/WLAN 5GHz conflict is detected.
+     *   - User must tune away WLAN SAP/STA interfaces from 5GHz to avoid
+     *     interference with N79 5G.
+     *
+     * @ref telux::data::CoexAction::WLAN_5GHZ_ALLOWED can be received if:
+     *   - UE has moved out of N79 5G band and no conflicts are detected.
+     *   - User may tune WLAN SAP/STA interfaces back to 5GHz band.
+     *
+     * Note: For clients using telux::wlan APIs, band switching is handled automatically
+     * and this callback will not be invoked.
+     *
+     * @param [in] action - Coexistence action @ref CoexAction
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to change and
+     *         could break backwards compatibility.
+     */
+    virtual void onCoexActionRequired(CoexAction action) {
     }
 
     /**

@@ -1,6 +1,6 @@
 ..
-   *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
-   *  SPDX-License-Identifier: BSD-3-Clause-Clear
+    * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+    * SPDX-License-Identifier: BSD-3-Clause-Clear
 ..
    =============================================================================
                                Edit History
@@ -20,6 +20,10 @@ Revision History
    * - Revision
      - Date
      - Description
+
+   * - BH
+     - Apr 2026
+     - Updated documentation for SDK release V1.76.2 changes
 
    * - BG
      - Jul 2025

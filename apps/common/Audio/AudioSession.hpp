@@ -58,7 +58,7 @@ class AudioSession {
 
     Status setStreamDevice(std::vector<DeviceType> devices);
     Status getStreamDevice(std::vector<DeviceType> &devices);
-    Status setVolume(StreamVolume streamVol);
+    Status setVolume(const StreamVolume &streamVol);
     Status getVolume(StreamVolume &volume);
     Status setMute(StreamMute mute);
     Status getMute(StreamMute &muteStatus);

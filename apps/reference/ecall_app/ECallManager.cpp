@@ -260,7 +260,7 @@ telux::common::Status ECallManager::triggerECall(
         return telux::common::Status::FAILED;
     }
     char delimiter = '\n';
-    std::string msdData;
+    std::string msdData{};
     std::cout << "Enter MSD PDU: ";
     std::getline(std::cin, msdData, delimiter);
     std::vector<uint8_t> rawData;
@@ -295,7 +295,7 @@ telux::common::Status ECallManager::updateEcallMSD() {
         return telux::common::Status::FAILED;
     }
     char delimiter = '\n';
-    std::string msdData;
+    std::string msdData{};
     std::cout << "Enter MSD PDU: ";
     std::getline(std::cin, msdData, delimiter);
     std::vector<uint8_t> rawData;
@@ -464,7 +464,7 @@ telux::common::ErrorCode ECallManager::getECallRedialConfig() {
     return errorCode;
 }
 
-telux::common::Status ECallManager::setECallConfig(EcallConfig config) {
+telux::common::Status ECallManager::setECallConfig(const EcallConfig &config) {
     if (!telClient_) {
         std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
         return telux::common::Status::FAILED;

@@ -92,7 +92,7 @@ static map<Cv2xCauseType, string> gCv2xCauseToString = {{Cv2xCauseType::TIMING, 
     {Cv2xCauseType::NOT_READY, "NOT_READY"}, {Cv2xCauseType::NTN, "NTN"},
     {Cv2xCauseType::NO_DATA_CALL, "NO_DATA_CALL"}, {Cv2xCauseType::UNKNOWN, "UNKNOWN"}};
 
-static void printCv2xStatus(Cv2xStatusEx eStatus) {
+static void printCv2xStatus(const Cv2xStatusEx &eStatus) {
     cout << "Current UTC Timestamp: " << Utils::getCurrentTimestamp();
     cout << ", Local Time: " << Utils::getCurrentTimeString() << endl;
     cout << "C-V2X Status:" << endl;
@@ -139,7 +139,7 @@ class Cv2xExtStatusListener : public ICv2xListener {
 };
 
 // Callback function for Cv2xRadioManager->requestCv2xStatus(Cv2xStatusEx)
-static void cv2xExtStatusCallback(Cv2xStatusEx status, ErrorCode error) {
+static void cv2xExtStatusCallback(const Cv2xStatusEx &status, ErrorCode error) {
     if (ErrorCode::SUCCESS == error) {
         std::lock_guard<std::mutex> lock(gStatusMtx);
         gCv2xStatus = status;

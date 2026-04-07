@@ -209,7 +209,7 @@ class ECallManager : public LocationListener,
      * @returns Status of setECallConfig i.e success or suitable status code.
      *
      */
-    telux::common::Status setECallConfig(EcallConfig config);
+    telux::common::Status setECallConfig(const EcallConfig &config);
 
     /**
      * Restart eCall High Level Application Protocol (HLAP) timer for residual timer duration.

@@ -115,9 +115,9 @@ class TelClient : public ICallListener,
      * @returns Status of startECall i.e success or suitable status code.
      *
      */
-    telux::common::Status startECall(int phoneId, std::vector<uint8_t> msdPdu, ECallMsdData msdData,
-        ECallCategory category, ECallVariant variant, bool transmitMsd, int dialDuration,
-        int autoAnswerDuration, TestECallConfig config,
+    telux::common::Status startECall(int phoneId, std::vector<uint8_t> msdPdu,
+        const ECallMsdData &msdData, ECallCategory category, ECallVariant variant, bool transmitMsd,
+        int dialDuration, int autoAnswerDuration, TestECallConfig config,
         std::shared_ptr<CallStatusListener> callListener);
 
     /**
@@ -155,9 +155,9 @@ class TelClient : public ICallListener,
      * @returns Status of startECall i.e success or suitable status code.
      *
      */
-    telux::common::Status startECall(int phoneId, std::vector<uint8_t> msdPdu, ECallMsdData msdData,
-        ECallCategory category, const std::string dialNumber, bool transmitMsd,
-        std::shared_ptr<CallStatusListener> callListener);
+    telux::common::Status startECall(int phoneId, std::vector<uint8_t> msdPdu,
+        const ECallMsdData &msdData, ECallCategory category, const std::string dialNumber,
+        bool transmitMsd, std::shared_ptr<CallStatusListener> callListener);
     /**
      * This function starts a voice eCall procedure to the specified phone number over IMS.
      * This is typically invoked when a TPS eCall over IMS is triggered.
@@ -187,7 +187,7 @@ class TelClient : public ICallListener,
      * @returns Status of updateECallMSD i.e success or suitable status code.
      *
      */
-    telux::common::Status updateECallMSD(int phoneId, ECallMsdData msdData);
+    telux::common::Status updateECallMSD(int phoneId, const ECallMsdData &msdData);
 
     /**
      * Response callback for MSD data for a Tps eCall over IMS
@@ -287,7 +287,7 @@ class TelClient : public ICallListener,
      * @returns Status of setECallConfig i.e success or suitable status code.
      *
      */
-    telux::common::Status setECallConfig(EcallConfig config);
+    telux::common::Status setECallConfig(const EcallConfig &config);
 
     /**
      * Gets encoded optional additional data content for eCall MSD.
@@ -312,7 +312,7 @@ class TelClient : public ICallListener,
      *
      */
     telux::common::ErrorCode getECallMsdPayload(
-        ECallMsdData eCallMsd, std::vector<uint8_t> &msdPdu);
+        const ECallMsdData &eCallMsd, std::vector<uint8_t> &msdPdu);
 
     /**
      * Configure eCall redial parameters.

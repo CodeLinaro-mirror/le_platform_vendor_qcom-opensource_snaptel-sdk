@@ -183,7 +183,7 @@ Status AudioSession::setStreamDevice(std::vector<DeviceType> devices) {
     return statusFromRequest;
 }
 
-Status AudioSession::setVolume(StreamVolume streamVol) {
+Status AudioSession::setVolume(const StreamVolume &streamVol) {
     Status statusFromRequest = Status::FAILED;
     telux::common::Status statusFromResponse;
 

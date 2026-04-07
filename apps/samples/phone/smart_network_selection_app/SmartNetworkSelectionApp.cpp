@@ -180,7 +180,7 @@ int main(int argc, char *argv[]) {
         return -EINVAL;
     }
 
-    if ((std::atoi(argv[1]) != SlotId::SLOT_ID_1) || (std::atoi(argv[1]) != SlotId::SLOT_ID_2)) {
+    if ((std::atoi(argv[1]) != SlotId::SLOT_ID_1) && (std::atoi(argv[1]) != SlotId::SLOT_ID_2)) {
         std::cout << " Invalid slotId, valid values: 1/2" << std::endl;
         return -EINVAL;
     }

@@ -1,6 +1,7 @@
 /*
- *  Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights
- * reserved. SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 syntax = "proto3";
@@ -265,6 +266,8 @@ service NetworkSelectionService {
       returns (SetNrDubiousCellReply) {}
   rpc AbortNetworkScan(AbortNetworkScanRequest)
       returns (AbortNetworkScanReply) {}
+  rpc SetCoverageState(SetCoverageStateRequest)
+      returns (SetCoverageStateReply) {}
 }
 
 service ImsService {
@@ -3266,6 +3269,12 @@ enum ServiceState {
   UNKNOWN_STATE = 10; /**< Unknown */
 };
 
+enum CoverageState {
+    INVALID_COVERAGE = 0;
+    IN_5G_COVERAGE = 1;
+    OUT_OF_5G_COVERAGE = 2;
+}
+
 message ServiceStateChangeEvent {
   ServiceState service_state = 1;
   int32 phone_id = 2;
@@ -3798,4 +3807,7 @@ message SetLteDubiousCellReply { commonStub.ErrorCode error = 1; }
 
 message SetNrDubiousCellReply { commonStub.ErrorCode error = 1; }
 
+message SetCoverageStateRequest { int32 phone_id = 1; CoverageState state = 2; }
+
+message SetCoverageStateReply { commonStub.ErrorCode error = 1; }
 // --- Supp Services end ---

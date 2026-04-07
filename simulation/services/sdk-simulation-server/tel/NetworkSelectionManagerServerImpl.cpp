@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <thread>
@@ -209,6 +209,30 @@ grpc::Status NetworkSelectionManagerServerImpl::SetPreferredNetworks(ServerConte
     response->set_error(static_cast<commonStub::ErrorCode>(data.error));
     response->set_delay(data.cbDelay);
     response->set_status(static_cast<commonStub::Status>(data.status));
+
+    return grpc::Status::OK;
+}
+
+grpc::Status NetworkSelectionManagerServerImpl::SetCoverageState(ServerContext *context,
+    const ::telStub::SetCoverageStateRequest *request,
+    ::telStub::SetCoverageStateReply *response) {
+    LOG(DEBUG, __FUNCTION__);
+
+    std::string apiJsonPath = (request->phone_id() == SLOT_1) ? JSON_PATH1 : JSON_PATH2;
+    std::string subsystem   = MANAGER;
+    std::string method      = "setCoverageState";
+    JsonData data;
+    Json::Value rootObj;
+
+    auto error = JsonParser::readFromJsonFile(rootObj, apiJsonPath);
+    if (error != telux::common::ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, ":: Reading JSON File failed! ");
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    std::string errStr = rootObj[subsystem][method]["error"].asString();
+    auto errCode       = CommonUtils::mapErrorCode(errStr);
+    response->set_error(static_cast<commonStub::ErrorCode>(errCode));
 
     return grpc::Status::OK;
 }

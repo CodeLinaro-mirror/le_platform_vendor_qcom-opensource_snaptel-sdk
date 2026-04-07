@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -64,6 +64,9 @@ public:
     grpc::Status AbortNetworkScan(ServerContext *context,
             const ::telStub::AbortNetworkScanRequest *request,
             ::telStub::AbortNetworkScanReply *response) override;
+    grpc::Status SetCoverageState(ServerContext *context,
+            const ::telStub::SetCoverageStateRequest *request,
+            ::telStub::SetCoverageStateReply *response) override;
 
 private:
     void createPreferredNetworkInfo(telux::tel::PreferredNetworkInfo input,

@@ -1,7 +1,7 @@
 .. #=============================================================================
    #
-   #  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
-   #  SPDX-License-Identifier: BSD-3-Clause-Clear
+   # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+   # SPDX-License-Identifier: BSD-3-Clause-Clear
    #
    #=============================================================================
 
@@ -12,6 +12,8 @@ Revision history
 +-----------+---------------+--------------------------------------------------------------------------------------------+
 | Revision  |  Date         |  Description                                                                               |
 +===========+===============+============================================================================================+
+| BH        |  Apr 2026     |  - Updated documentation for API reference and user guide for V1.76.2                      |
++-----------+---------------+--------------------------------------------------------------------------------------------+
 | BG        |  Jul 2025     |  - Updated documentation for API reference and user guide for V1.76.0                      |
 +-----------+---------------+--------------------------------------------------------------------------------------------+
 | BF        |  Jun 2025     |  - Updated documentation for API reference and user guide for V1.75.0                      |

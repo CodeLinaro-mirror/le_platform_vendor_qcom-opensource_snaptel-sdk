@@ -39,6 +39,7 @@ set(TELSDK_CONSOLE_APP_SOURCES
    Data/serving_system/ServingSystemListener.cpp
    Data/data_settings/DataSettingsMenu.cpp
    Data/data_settings/DataSettingsListener.cpp
+   Data/data_health/DataHealthMenu.cpp
 
    Phone/MyServingSystemHandler.cpp
    Phone/ServingSystemMenu.cpp

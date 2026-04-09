@@ -28,10 +28,9 @@
  */
 
 /*
- *  ​​​​​Changes from Qualcomm Innovation Center are provided under the following license:
-
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -54,6 +53,7 @@
 #include <telux/data/DataProfileManager.hpp>
 #include <telux/data/ServingSystemManager.hpp>
 #include <telux/data/DataFilterManager.hpp>
+#include <telux/data/DataHealthManager.hpp>
 #include <telux/data/IpFilter.hpp>
 #include <telux/data/DataSettingsManager.hpp>
 
@@ -65,6 +65,10 @@
 #include <telux/data/net/L2tpManager.hpp>
 
 namespace telux {
+namespace common {
+template <typename T>
+class AsyncTaskQueue;
+}  // namespace common
 namespace data {
 
 /** @addtogroup telematics_data
@@ -240,6 +244,20 @@ class DataFactory {
     virtual std::shared_ptr<telux::data::IDataSettingsManager> getDataSettingsManager(
         telux::data::OperationType oprType);
 
+    /**
+     * Gets the Data Health Manager instance.
+     *
+     * @param [in] clientCallback   Optional callback to get notified when Data Health Manager
+     *                              initialization is complete.
+     *
+     * @returns IDataHealthManager instance
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
+     *          break backward compatibility.
+     */
+    std::shared_ptr<telux::data::IDataHealthManager> getDataHealthManager(
+        telux::common::InitResponseCb clientCallback = nullptr);
+
  private:
     // mutex to protect member variables
     std::mutex dataMutex_;
@@ -258,6 +276,8 @@ class DataFactory {
     std::shared_ptr<telux::data::net::IL2tpManager>  l2tpManager_;
     std::map<telux::data::OperationType, std::shared_ptr<telux::data::IDataSettingsManager>>
         dataSettingsManagerMap_;
+    std::shared_ptr<telux::data::IDataHealthManager> dataHealthManager_;
+    std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
 
     DataFactory();
     ~DataFactory();

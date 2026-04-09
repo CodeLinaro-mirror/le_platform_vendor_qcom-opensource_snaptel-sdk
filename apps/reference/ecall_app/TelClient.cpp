@@ -28,6 +28,7 @@
  */
 
 /*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -67,6 +68,28 @@ TelClient::~TelClient() {
     eCallInprogress_ = false;
     isPrivateEcallTriggered = false;
     eCallDataMap_.clear();
+}
+
+void TelClient::cleanup() {
+    if (callMgr_) {
+        callMgr_->removeListener(shared_from_this());
+    }
+
+    // Remove EcallScanFailHandler listener if registered
+    if (callMgr_ && eCallScanFailHdlrInstance_) {
+        callMgr_->removeListener(eCallScanFailHdlrInstance_);
+        eCallScanFailHdlrInstance_.reset();
+    }
+
+    // Clear CallStatusListener
+    if (callListener_) {
+        callListener_ = nullptr;
+    }
+
+    // Reset all callback pointers
+    hangupCommandCallback_ = nullptr;
+    updateMsdCommandCallback_ = nullptr;
+    answerCommandCallback_ = nullptr;
 }
 
 // Initialize the telephony subsystem
@@ -855,3 +878,4 @@ telux::common::ErrorCode TelClient::getECallMsdPayload(ECallMsdData eCallMsd,
     }
     return telux::common::ErrorCode::SUCCESS;
 }
+

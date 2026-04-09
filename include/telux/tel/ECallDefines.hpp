@@ -27,8 +27,7 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -542,6 +541,19 @@ struct EcallConfig {
    uint32_t t9Timer;    /* T9 timer value in milliseconds, according to EN 16062:2015 standard */
    uint8_t msdVersion;  /* MSD version to be used by modem when it internally generates MSD for
                            transmission */
+};
+
+/**
+ * Represents redial states for AECS (Automatic Emergency Call System) call origination fails.
+ */
+enum class RedialState {
+    UNKNOWN = -1,         /**< Unknown redial state. */
+    MODEM_RETRY_START,    /**< Indicates when a call failed to originate and the modem has
+                               started automatic redial attempts (duration: 45 seconds). The
+                               call will be in the dialing state. */
+    MODEM_RETRY_END,      /**< Indicates when the modem has completed its automatic redial
+                               attempts and call will be ended. Upon receiving this state, the
+                               application is expected to initiate a new call. */
 };
 
 /** @} */ /* end_addtogroup telematics_phone */

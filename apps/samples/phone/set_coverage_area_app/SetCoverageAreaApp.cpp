@@ -4,18 +4,18 @@
  */
 
 /*
- * This application demonstrates how to set coverage state to tune the 5G scan behavior.
- * The steps are as follows:
+ * This application demonstrates how to set a coverage area hole, based on which the modem may
+ * restore normal 5G operation more quickly.
  *
  * 1. Get a PhoneFactory instance.
  * 2. Get a INetworkSelectionManager instance from the PhoneFactory.
  * 3. Wait for the network selection manager service to become available.
- * 4. Set coverage state.
+ * 4. Set coverage area.
  * 5. Deinit app.
  *
  * Usage:
- * # ./set_coverage_state_app <SlotId (1 / 2)>
- * E.g. ./set_coverage_state_app 1
+ * # ./set_coverage_area_app <SlotId (1 / 2)>
+ * E.g. ./set_coverage_area_app 1
  */
 
 #include <errno.h>
@@ -33,8 +33,8 @@
 #include <telux/tel/ServingSystemDefines.hpp>
 #include <telux/tel/NetworkSelectionManager.hpp>
 
-class SetCoverageStateApp : public telux::tel::INetworkSelectionListener,
-                            public std::enable_shared_from_this<SetCoverageStateApp> {
+class SetCoverageAreaApp : public telux::tel::INetworkSelectionListener,
+                            public std::enable_shared_from_this<SetCoverageAreaApp> {
  public:
     int init(int slotId) {
         telux::common::ServiceStatus serviceStatus;
@@ -67,33 +67,33 @@ class SetCoverageStateApp : public telux::tel::INetworkSelectionListener,
         return 0;
     }
 
-    int userInputForCoverageState(telux::tel::CoverageState &state) {
-        int stateInput = -1;
-        std::cout << "Enter coverage state (1-IN_5G-COVERAGE, 2-OUT_OF_5G_COVERAGE): ";
-        std::cin >> stateInput;
+    int userInputForCoverageArea(telux::tel::CoverageArea &area) {
+        int areaInput = -1;
+        std::cout << "Enter coverage area (1-IN_5G-COVERAGE_HOLE, 2-OUT_OF_5G_COVERAGE_HOLE): ";
+        std::cin >> areaInput;
 
-        switch (stateInput) {
+        switch (areaInput) {
             case 1:
-                state = telux::tel::CoverageState::IN_5G_COVERAGE;
+                area = telux::tel::CoverageArea::IN_5G_COVERAGE_HOLE;
                 break;
             case 2:
-                state = telux::tel::CoverageState::OUT_OF_5G_COVERAGE;
+                area = telux::tel::CoverageArea::OUT_OF_5G_COVERAGE_HOLE;
                 break;
             default:
-                std::cout << "Invalid coverage state input" << std::endl;
+                std::cout << "Invalid coverage area input" << std::endl;
                 return -EIO;
         }
         return 0;
     }
 
-    int setCoverageState(telux::tel::CoverageState &state) {
-        auto errCode = nwSelectionMgr_->setCoverageState(state);
+    int setCoverageArea(telux::tel::CoverageArea &area) {
+        auto errCode = nwSelectionMgr_->setCoverageArea(area);
         if (errCode != telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Can't set coverage state, err " << static_cast<int>(errCode) << std::endl;
+            std::cout << "Can't set coverage area, err " << static_cast<int>(errCode) << std::endl;
             return -EIO;
         }
 
-        std::cout << " set coverage state succeed" << std::endl;
+        std::cout << " set coverage area succeed" << std::endl;
         return 0;
     }
 
@@ -115,11 +115,11 @@ class SetCoverageStateApp : public telux::tel::INetworkSelectionListener,
 int main(int argc, char *argv[]) {
 
     int ret, slotId;
-    std::shared_ptr<SetCoverageStateApp> app;
-    telux::tel::CoverageState state;
+    std::shared_ptr<SetCoverageAreaApp> app;
+    telux::tel::CoverageArea area;
 
     if (argc != 2) {
-        std::cout << "./set_coverage_state_app <SlotId>" << std::endl;
+        std::cout << "./set_coverage_area_app <SlotId>" << std::endl;
         return -EINVAL;
     }
 
@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
     slotId = static_cast<int>(std::atoi(argv[1]));
 
     try {
-        app = std::make_shared<SetCoverageStateApp>();
+        app = std::make_shared<SetCoverageAreaApp>();
     } catch (const std::exception &e) {
         std::cout << "Can't allocate: insufficient memory" << std::endl;
         return -ENOMEM;
@@ -143,13 +143,13 @@ int main(int argc, char *argv[]) {
     }
 
     /** Step - 2 */
-    ret = app->userInputForCoverageState(state);
+    ret = app->userInputForCoverageArea(area);
     if (ret < 0) {
         return ret;
     }
 
     /** Step - 3 */
-    ret = app->setCoverageState(state);
+    ret = app->setCoverageArea(area);
     if (ret < 0) {
         return ret;
     }
@@ -160,6 +160,6 @@ int main(int argc, char *argv[]) {
         return ret;
     }
 
-    std::cout << "\nSet coverage state app exiting" << std::endl;
+    std::cout << "\nSet coverage area app exiting" << std::endl;
     return 0;
 }

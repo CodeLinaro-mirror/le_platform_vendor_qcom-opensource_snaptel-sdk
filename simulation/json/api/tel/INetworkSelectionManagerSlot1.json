@@ -41,7 +41,7 @@
         {
             "error" : "SUCCESS"
         },
-        "setCoverageState": {
+        "setCoverageArea": {
             "error": "SUCCESS"
         }
     }

@@ -213,14 +213,14 @@ grpc::Status NetworkSelectionManagerServerImpl::SetPreferredNetworks(ServerConte
     return grpc::Status::OK;
 }
 
-grpc::Status NetworkSelectionManagerServerImpl::SetCoverageState(ServerContext *context,
-    const ::telStub::SetCoverageStateRequest *request,
-    ::telStub::SetCoverageStateReply *response) {
+grpc::Status NetworkSelectionManagerServerImpl::SetCoverageArea(ServerContext *context,
+    const ::telStub::SetCoverageAreaRequest *request,
+    ::telStub::SetCoverageAreaReply *response) {
     LOG(DEBUG, __FUNCTION__);
 
     std::string apiJsonPath = (request->phone_id() == SLOT_1) ? JSON_PATH1 : JSON_PATH2;
     std::string subsystem   = MANAGER;
-    std::string method      = "setCoverageState";
+    std::string method      = "setCoverageArea";
     JsonData data;
     Json::Value rootObj;
 

@@ -2,12 +2,12 @@
    *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
    *  SPDX-License-Identifier: BSD-3-Clause-Clear
 
-.. _set-coverage-state:
+.. _set-coverage-area:
 
-Set coverage state
+Set coverage area
 ===================================================
 
-This sample application demonstrates setting the 5G network coverage state to control and optimize
+This sample application demonstrates setting the 5G network coverage area to control and optimize
 5G scan behavior.
 
 1. Get phone factory and network selection manager instances
@@ -39,28 +39,28 @@ This sample application demonstrates setting the 5G network coverage state to co
        return -EIO;
    }
 
-4. Set coverage state for the 5G network
+4. Set coverage area for the 5G network
 
 .. code-block::
 
-   int stateInput = -1;
-   std::cout << "Enter coverage state (1-IN_5G-COVERAGE, 2-OUT_OF_5G_COVERAGE): ";
-   std::cin >> stateInput;
+   int areaInput = -1;
+   std::cout << "Enter coverage area (1-IN_5G-COVERAGE_HOLE, 2-OUT_OF_5G_COVERAGE_HOLE): ";
+   std::cin >> areaInput;
 
-   switch (stateInput) {
+   switch (areaInput) {
        case 1:
-           state = telux::tel::CoverageState::IN_5G_COVERAGE;
+           area = telux::tel::CoverageArea::IN_5G_COVERAGE_HOLE;
            break;
        case 2:
-           state = telux::tel::CoverageState::OUT_OF_5G_COVERAGE;
+           area = telux::tel::CoverageArea::OUT_OF_5G_COVERAGE_HOLE;
            break;
        default:
-           std::cout << "Invalid coverage state input" << std::endl;
+           std::cout << "Invalid coverage area input" << std::endl;
            return -EIO;
    }
 
    if (networkMgr) {
-       ErrorCode err = networkMgr->setCoverageState(state);
+       ErrorCode err = networkMgr->setCoverageArea(area);
        std::cout << "ErrorCode: " << static_cast<int>(err) <<std::endl;
    }
 

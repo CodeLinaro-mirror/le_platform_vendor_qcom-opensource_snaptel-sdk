@@ -1,5 +1,4 @@
 /*
- * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -266,8 +265,8 @@ service NetworkSelectionService {
       returns (SetNrDubiousCellReply) {}
   rpc AbortNetworkScan(AbortNetworkScanRequest)
       returns (AbortNetworkScanReply) {}
-  rpc SetCoverageState(SetCoverageStateRequest)
-      returns (SetCoverageStateReply) {}
+  rpc SetCoverageArea(SetCoverageAreaRequest)
+      returns (SetCoverageAreaReply) {}
 }
 
 service ImsService {
@@ -3269,10 +3268,10 @@ enum ServiceState {
   UNKNOWN_STATE = 10; /**< Unknown */
 };
 
-enum CoverageState {
-    INVALID_COVERAGE = 0;
-    IN_5G_COVERAGE = 1;
-    OUT_OF_5G_COVERAGE = 2;
+enum CoverageArea {
+    INVALID_COVERAGE_HOLE = 0;
+    IN_5G_COVERAGE_HOLE = 1;
+    OUT_OF_5G_COVERAGE_HOLE = 2;
 }
 
 message ServiceStateChangeEvent {
@@ -3807,7 +3806,7 @@ message SetLteDubiousCellReply { commonStub.ErrorCode error = 1; }
 
 message SetNrDubiousCellReply { commonStub.ErrorCode error = 1; }
 
-message SetCoverageStateRequest { int32 phone_id = 1; CoverageState state = 2; }
+message SetCoverageAreaRequest { int32 phone_id = 1; CoverageArea area = 2; }
 
-message SetCoverageStateReply { commonStub.ErrorCode error = 1; }
+message SetCoverageAreaReply { commonStub.ErrorCode error = 1; }
 // --- Supp Services end ---

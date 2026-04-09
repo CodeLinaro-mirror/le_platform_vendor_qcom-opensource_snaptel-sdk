@@ -172,10 +172,10 @@ bool NetworkMenu::init() {
          "11", "abort_network_scan", {},
       std::bind(&NetworkMenu::abortNetworkScan, this, std::placeholders::_1)));
 
-      std::shared_ptr<ConsoleAppCommand> setCoverageStateCommand
+      std::shared_ptr<ConsoleAppCommand> setCoverageAreaCommand
          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "12", "set_coverage_state", {},
-      std::bind(&NetworkMenu::setCoverageState, this, std::placeholders::_1)));
+         "12", "set_coverage_area", {},
+      std::bind(&NetworkMenu::setCoverageArea, this, std::placeholders::_1)));
 
       std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListNetworkSubMenu
          = {selectSimSlotCommand, getNetworkSelectionModeCommand, setNetworkSelectionModeCommand,
@@ -186,7 +186,7 @@ bool NetworkMenu::init() {
       commandsListNetworkSubMenu.emplace_back(removeAllLteDubiousCellCommand);
       commandsListNetworkSubMenu.emplace_back(removeAllNrDubiousCellCommand);
       commandsListNetworkSubMenu.emplace_back(abortNetworkScanCommand);
-      commandsListNetworkSubMenu.emplace_back(setCoverageStateCommand);
+      commandsListNetworkSubMenu.emplace_back(setCoverageAreaCommand);
 
       addCommands(commandsListNetworkSubMenu);
       ConsoleApp::displayMenu();
@@ -722,33 +722,33 @@ void NetworkMenu::removeAllNrDubiousCell(std::vector<std::string> userInput) {
 
 }
 
-void NetworkMenu::setCoverageState(std::vector<std::string> userInput) {
+void NetworkMenu::setCoverageArea(std::vector<std::string> userInput) {
     auto networkManager = networkManagers_[slot_ - 1];
     if (networkManager) {
-        int stateInput = 0;
-        telux::tel::CoverageState state;
+        int areaInput = 0;
+        telux::tel::CoverageArea area;
 
-        std::cout << "Enter coverage state (1-IN_5G-COVERAGE, 2-OUT_OF_5G_COVERAGE): ";
-        std::cin >> stateInput;
-        Utils::validateInput(stateInput);
+        std::cout << "Enter coverage area (1-IN_5G-COVERAGE_HOLE, 2-OUT_OF_5G_COVERAGE_HOLE): ";
+        std::cin >> areaInput;
+        Utils::validateInput(areaInput);
 
-        switch (stateInput) {
+        switch (areaInput) {
             case 1:
-                state = telux::tel::CoverageState::IN_5G_COVERAGE;
+                area = telux::tel::CoverageArea::IN_5G_COVERAGE_HOLE;
                 break;
             case 2:
-                state = telux::tel::CoverageState::OUT_OF_5G_COVERAGE;
+                area = telux::tel::CoverageArea::OUT_OF_5G_COVERAGE_HOLE;
                 break;
             default:
-                std::cout << "Invalid coverage state input" << std::endl;
+                std::cout << "Invalid coverage area input" << std::endl;
                 return;
         }
 
-        auto err = networkManager->setCoverageState(state);
+        auto err = networkManager->setCoverageArea(area);
         if (err == telux::common::ErrorCode::SUCCESS) {
-            std::cout << "\nSet coverage state succeed" << std::endl;
+            std::cout << "\nSet coverage area succeed" << std::endl;
         } else {
-            std::cout << "\nSet coverage state failed, err: " << Utils::getErrorCodeAsString(err)
+            std::cout << "\nSet coverage area failed, err: " << Utils::getErrorCodeAsString(err)
                       << std::endl;
         }
     } else {

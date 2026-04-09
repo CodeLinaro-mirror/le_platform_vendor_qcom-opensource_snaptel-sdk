@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.10.2)
 
-set(TARGET_TEL_APP set_coverage_state_app)
+set(TARGET_TEL_APP set_coverage_area_app)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(TELUXTEL REQUIRED telux-tel)
 
 set(TEL_APP_SOURCES
-        SetCoverageStateApp.cpp
+        SetCoverageAreaApp.cpp
 )
 
 add_executable(${TARGET_TEL_APP} ${TEL_APP_SOURCES})

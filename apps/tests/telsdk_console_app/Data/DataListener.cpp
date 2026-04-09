@@ -213,3 +213,42 @@ void DataListener::onTrafficFlowTemplateChange(
       std::cout << " ----------------------------------------------------------\n\n";
    }
 }
+
+void DataListener::onThroughputInfoAvailable(const std::vector<telux::data::ThroughputInfo> &info) {
+    std::cout << "---------------------------------------------------------------" << "\n";
+    std::cout << "Throughput details \n";
+    std::cout << "---------------------------------------------------------------" << "\n";
+
+    for(size_t i = 0; i < info.size(); i++) {
+        std::cout << "--------------Profile ID: " << info[i].profileId << "---------------" << "\n";
+        std::cout << "Slot ID: " << static_cast<int>(info[i].slot) << "\n";
+
+        // Uplink throughput details
+        std::cout << "UL throughput: " << info[i].ulThroughput.throughput << " kbps\n";
+        std::cout << "Total UL queue size: " <<
+                     info[i].ulThroughput.queueSize << " bytes\n";
+
+        // Priority queue information
+        if (!info[i].ulThroughput.priorityQueues.empty()) {
+            std::cout << "UL Priority Queues:\n";
+            for (const auto& queue : info[i].ulThroughput.priorityQueues) {
+                std::cout << "  Queue Type: ";
+                switch (queue.queueType) {
+                    case telux::data::UplinkPriorityQueueType::PRIORITY_QUEUE_1:
+                        std::cout << "PRIORITY_QUEUE_1";
+                        break;
+                    case telux::data::UplinkPriorityQueueType::PRIORITY_QUEUE_2:
+                        std::cout << "PRIORITY_QUEUE_2";
+                        break;
+                    default:
+                        std::cout << "UNKNOWN";
+                        break;
+                }
+                std::cout << ", Queue Size: " << queue.queueSize << " bytes\n";
+            }
+        } else {
+            std::cout << "UL Priority Queues: None\n";
+        }
+    }
+    std::cout << "---------------------------------------------------------------" << "\n";
+}

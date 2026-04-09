@@ -527,17 +527,16 @@ class INetworkSelectionManager {
         = 0;
 
     /**
-     * Sets the coverage state to enable faster 5G recovery when the device returns
-     * from out‑of‑5G‑coverage.
+     * Sets the current 5G coverage area.
      *
      * This API allows a client to inform the modem when the device is expected to be
-     * outside 5G coverage (for example, in an underground parking garage) and when it
-     * returns to a 5G-covered area. Based on this indication, the modem may expedite
-     * 5G recovery and restore normal 5G operation more quickly upon exit from the
-     * out‑of‑5G‑coverage.
+     * @ref telux::tel::CoverageArea::IN_5G_COVERAGE_HOLE (for example, in an underground parking
+     * garage) and when it returns to @ref telux::tel::CoverageArea::OUT_OF_5G_COVERAGE_HOLE. Based
+     * on this information, the modem may restore normal 5G operation more quickly after the device
+     * @ref telux::tel::CoverageArea::OUT_OF_5G_COVERAGE_HOLE is reported.
      *
-     * A request to set @ref telux::tel::CoverageState::IN_5G_COVERAGE is usually
-     * ignored unless a request to set @ref telux::tel::CoverageState::OUT_OF_5G_COVERAGE
+     * A request to set @ref telux::tel::CoverageArea::OUT_OF_5G_COVERAGE_HOLE is usually
+     * ignored unless a request to set @ref telux::tel::CoverageArea::IN_5G_COVERAGE_HOLE
      * was received previously.
      *
      * This setting is not persistent. Clients must call this API again after an SSR or reboot.
@@ -545,14 +544,14 @@ class INetworkSelectionManager {
      * On platforms with access control enabled, Caller needs to have TELUX_TEL_SNS_CONFIG
      * permission to invoke this API successfully.
      *
-     * @param [in] state  The @ref telux::tel::CoverageState value to apply.
+     * @param [in] area  The @ref telux::tel::CoverageArea value to apply.
      *
      * @returns An error code indicating success or failure.
      *
      * @note    Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual telux::common::ErrorCode setCoverageState(CoverageState state) = 0;
+    virtual telux::common::ErrorCode setCoverageArea(CoverageArea area) = 0;
 
     /**
      * Abort an ongoing network scan operation that was previously initiated using

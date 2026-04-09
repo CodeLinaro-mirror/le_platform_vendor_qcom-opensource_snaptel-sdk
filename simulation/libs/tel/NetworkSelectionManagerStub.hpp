@@ -64,7 +64,7 @@ class NetworkSelectionManagerStub
 
     telux::common::ErrorCode abortNetworkScan() override;
 
-    telux::common::ErrorCode setCoverageState(CoverageState state) override;
+    telux::common::ErrorCode setCoverageArea(CoverageArea area) override;
 
     void cleanup();
 

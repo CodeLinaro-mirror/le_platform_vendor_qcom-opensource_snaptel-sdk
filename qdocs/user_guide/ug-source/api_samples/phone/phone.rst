@@ -12,6 +12,7 @@ Telephony
 
    make_call
    make_eCall
+   make_aecs_call
    make_tps_eCall_over_Ims
    request_voice_service_state
    request_set_operating_mode
@@ -30,6 +31,7 @@ Telephony
 ..
    * :ref:`make-call`
    * :ref:`make-eCall`
+   * :ref:`make-aecs-call`
    * :ref:`make-eCall-Over-Ims`
    * :ref:`request-voice-service-state`
    * :ref:`request_set_operating_mode`

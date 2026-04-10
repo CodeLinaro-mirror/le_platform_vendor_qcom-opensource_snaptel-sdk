@@ -33,6 +33,7 @@ Data
    set_eth_datalink_state
    create_traffic_class_and_add_qos_filter
    start_tcp_keep_alive_offload
+   dds_recommendation
 
 
 ..
@@ -56,4 +57,5 @@ Data
    * :ref:`on-demand-pdn-connectivity`
    * :ref:`create_traffic_class_and_add_qos_filter`
    * :ref:`start-tcp-keep-alive-offload`
+   * :ref:`dds-recommendation`
 

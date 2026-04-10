@@ -632,7 +632,7 @@ void AecsCall::hangup(std::vector<std::string> userInput) {
        if (!mgr.isEmergencyMode(phoneIdOfCall)) {
            // already off
        } else {
-          // check if there are any active AECS calls – simplest: reuse stopAudioIfNoCalls logic:
+          // check if there are any active AECS calls - simplest: reuse stopAudioIfNoCalls logic:
           auto cm = mgr.getCallManager();
           auto calls = cm->getInProgressCalls();
           bool aecsOnThisSlot = false;

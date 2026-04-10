@@ -363,7 +363,7 @@ Transcoder provides APIs to manage audio transcoder which is able to perform bel
 
 Audio SDK provides details of supported "Device Types" and "Stream Types" in the audio subsystem of Reference Telematics platform.
 
-“Device Type” encapsulates the type of device supported in Reference Telematics platform.
+"Device Type" encapsulates the type of device supported in Reference Telematics platform.
 The representation of these devices would be made available via public header file <usr/include/telux/audio/AudioDefines.hpp>.
 
 Example: DEVICE_TYPE_XXXX
@@ -418,7 +418,7 @@ For voice stream Rx Device would decide corresponding Tx Device pair as decided 
 The mapping of Audio devices to Audio HAL devices is static currently based on QTI's Reference Telematics platform.
 For custom platforms this mapping need to be updated.
 
-“Stream Type” encapsulates the type of stream supported in Reference Telematics Platform.
+"Stream Type" encapsulates the type of stream supported in Reference Telematics Platform.
 The representation of these stream types made available via public header file <usr/include/telux/audio/AudioDefines.hpp>.
 
 Example:  VOICE_CALL, PLAY, CAPTURE, LOOPBACK, TONE_GENERATOR etc

@@ -83,8 +83,8 @@ namespace power {
  * - When the @ref ClientType::MASTER triggers an all machines TCU-activity state change, only the
  *   machines that are not in the desired state will undergo the state transition, and the
  *   @ref ClientType::SLAVEs to those machines will be notified.
- * - In the case of 
- *   - @ref TcuActivityState::SUSPEND or @ref TcuActivityState::SHUTDOWN trigger: 
+ * - In the case of
+ *   - @ref TcuActivityState::SUSPEND or @ref TcuActivityState::SHUTDOWN trigger:
  *      - After becoming ready for state change, all @ref ClientType::SLAVE should acknowledge back.
  *      - The @ref ClientType::MASTER will get notification about the consolidated acknowledgement
  *        status of all @ref ClientType::SLAVEs.
@@ -105,7 +105,7 @@ namespace power {
  *      - Power framework will prevent the respective machine from going into suspend.
  *      - No acknowledgement will be required from @ref ClientType::SLAVE and the
  *        @ref ClientType::MASTER will not be getting consolidated/slave acknowledgement as machine
- *        will be already resumed. 
+ *        will be already resumed.
  *
  * When the application is notified about the service being unavailable, the TCU-activity state
  * notifications will be inactive. After the service becomes available, the existing listener
@@ -194,7 +194,7 @@ public:
      *
      * This API needs to be used cautiously, as it could change the power-state of the system and
      * may affect other processes. For example, if a master sets the SUSPEND state, all SLAVE
-     * processes will suspend their activity, allowing the system to suspend.
+     * processes will suspend their activity, allowing the system to suspend.
      *
      * This API can only be invoked by clients that have instantiated the ITcuActivityManager
      * instance using @ref ClientType::MASTER.

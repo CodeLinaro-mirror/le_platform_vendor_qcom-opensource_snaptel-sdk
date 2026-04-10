@@ -3,6 +3,7 @@ Telephony {#phone}
 
 * @subpage make_call
 * @subpage make_eCall
+* @subpage make_aecs_call
 * @subpage make_eCall_Over_Ims
 * @subpage request_voice_service_state
 * @subpage request_set_operating_mode

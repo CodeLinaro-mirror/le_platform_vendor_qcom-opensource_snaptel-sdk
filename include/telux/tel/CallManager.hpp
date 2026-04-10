@@ -186,45 +186,44 @@ public:
    /**
     * Initiates an automotive Accident Emergency Call System (AECS) call.
     *
-    * Prerequisites and behavior:
+    * Prerequisites and Behavior:
     * - The UE must be in full service to initiate the call.
-    * - To enable AECS call optimizations:
-    *   On multi-SIM (DSDS) devices, when the application selects a phone and initiates an AECS
-    *   call on the selected phone, the modem will suspend the other phone. After completion of
-    *   both the voice call and Minimum Set of data (MSD) delivery, the modem will resume the
-    *   suspended phone.
-    *   On single-SIM devices, and to allow the modem to distinguish AECS calls from other
-    *   incoming calls, the application must enter emergency mode by invoking @ref
-    *   telux::tel::ICallManager::setEmergencyMode before initiating the AECS call.
-    * - Any on-going call on the phone that will be suspended (in the case of multi-SIM devices)
-    *   will be terminated by the modem when entering emergency mode.
-    * - Any on-going non-AECS call on the selected phone must be terminated by the application
+    * - The application must enter emergency mode by invoking @ref telux::tel::ICallManager::
+    *   setEmergencyMode before initiating the AECS call. This is required for both single-SIM and
+    *   multi-SIM devices:
+    *   - On single-SIM devices: This allows the modem to distinguish the AECS call from other
+    *     incoming calls.
+    *   - On multi-SIM (DSDS and hybrid DSDA) devices: Enabling emergency mode on the selected
+    *     phone will suspend the other phone. The modem will resume the suspended phone only after
+    *     both the voice call and Minimum Set of Data (MSD) delivery are complete.
+    * - Any ongoing call on a phone that is about to be suspended (in multi-SIM configurations)
+    *   will be automatically terminated by the modem upon entering emergency mode.
+    * - The application must manually terminate any ongoing non-AECS calls on the selected phone
     *   before initiating the AECS call.
-    * - Once emergency mode is set, the application may transmit the Minimum Set of Data (MSD).
-    *   MSD transmission may be performed via HTTP or SMS. To send MSD over SMS, use @ref
-    *   telux::tel::ISmsManager::sendRawSms.
-    * - After the AECS call and MSD transmission are complete, the application must exit
-    *   emergency mode by invoking @ref telux::tel::ICallManager::setEmergencyMode to disable
-    *   AECS call optimizations and resume any suspended phone (in the case of multi-SIM devices).
+    * - Once emergency mode is active, the application may transmit the Minimum Set of Data (MSD)
+    *   via HTTP or SMS. To send MSD over SMS, use @ref telux::tel::ISmsManager::sendRawSms.
+    * - After the AECS call and MSD transmission are complete, the application must exit emergency
+    *   mode by invoking @ref telux::tel::ICallManager::setEmergencyMode. This resumes any
+    *   suspended phones for normal calls.
     *
     * Additional Information:
-    * - If an AECS call is already in progress, the application must not initiate another AECS
-    *   call and must not disconnect the on-going AECS call.
-    * - In case of call origination failure, the modem will silently retry for up to 45 seconds.
-    *   If the call still fails after this period, or if the modem does not initiate retries and
-    *   ends the call, the application must retry the AECS call within 2 minutes, at least for
-    *   60 minutes, in accordance with AECS specification GB-45672-2025.
-    * - If the AECS call is dropped, the application is responsible for redialing based on its own
-    *   retry logic.
-    * - If MSD delivery fails, the application must retry MSD transmission within 2 minutes, at
-    *   least for 60 minutes, in accordance with AECS specification GB-45672-2025.
-    * - The application should reject any incoming non-AECS call while an AECS call is in progress.
-    * - The AECS specification does not define T2 (call clear-down fallback timer) or T9
-    *   (NAD minimum network-registration timer) to limit prolonged emergency call connection or
-    *   to ensure post-call network registration. The application may implement equivalent T2/T9
-    *   logic outside the AECS framework, but this is not mandated by the specification.
+    * - If an AECS call is already in progress, the application must not initiate another AECS call
+    *   or disconnect the existing one.
+    * - If call origination fails, the modem will silently retry for up to 45 seconds. If the
+    *   failure persists beyond this period, or if the modem ends the call without retrying, the
+    *   application must retry the AECS call within 2 minutes and continue retrying for at least
+    *   60 minutes, per AECS specification GB-45672-2025.
+    * - If an active AECS call is dropped, the application is responsible for redialing based on
+    *   its own retry logic.
+    * - If MSD delivery fails, the application must retry transmission within 2 minutes and
+    *   continue retrying for at least 60 minutes, per AECS specification GB-45672-2025.
+    * - The application should reject any incoming non-AECS calls while an AECS call is in progress.
+    * - The AECS specification does not define T2 (call clear-down fallback timer) or T9 (NAD
+    *   minimum network-registration timer). While the application may implement equivalent logic
+    *   outside the AECS framework to manage prolonged connections or post-call registration, it
+    *   is not mandated.
     * - The application must not hang up an AECS call. The call should be terminated by the AECSP
-    *   (similar to a PSAP) after completion of the call and MSD transmission.
+    *   (similar to a PSAP) only after the call and MSD transmission are completed.
     *
     * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
     * permission to successfully invoke this API.
@@ -893,13 +892,13 @@ public:
         int duration, common::ResponseCallback callback = nullptr ) = 0;
 
    /**
-    * Enable or disable emergency mode configuration for AECS (Automated Emergency Call System)
+    * Enables or disables emergency mode configuration for AECS (Automated Emergency Call System)
     * calls.
     *
     * This API enables or disables emergency mode and optionally allows antenna switching for
     * AECS call:
     *   - When emergency mode is enabled on the phone identifier, other subscriptions
-    *     in DSDS mode will be suspended.
+    *     in DSDS//hybrid DSDA mode will be suspended.
     *   - If antenna switching is enabled, the system will automatically select the best
     *     alternative antenna if the active one becomes damaged.
     *
@@ -912,7 +911,7 @@ public:
     *
     * @note Antenna switching cannot be enabled when emergency mode is disabled. i.e., Setting
     *       emergencyModeEnabled = false while antennaSwitchEnabled = true is not supported and
-    *       will return @ref telux::common::ErrorCode::INVALID_ARGUMENTS.
+    *       will return @ref telux::common::ErrorCode::::NO_EFFECT
     * @note This API is platform-dependent. Ensure the platform supports antenna switching
     *       before enabling antenna switching.
     *
@@ -921,8 +920,8 @@ public:
     *
     * @param [in] phoneId          Represents the phone corresponding to which the emergency
     *                              mode is configured.
-    * @param [in] emergencyModeEnabled If true, enables emergency mode in SS/DSDS;
-    *                                  if false, disables emergency mode in SS/DSDS.
+    * @param [in] emergencyModeEnabled If true, enables emergency mode in SS/DSDS/hybrid DSDA;
+    *                                  if false, disables emergency mode in SS/DSDS/hybrid DSDA.
     * @param [in] antennaSwitchEnabled If true, enables automatic antenna switching mode;
     *                                  if false, disables automatic antenna switching mode.
     * @param [in] callback         Optional callback pointer to get the response of the

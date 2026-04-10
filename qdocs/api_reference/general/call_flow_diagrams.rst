@@ -104,6 +104,115 @@ Private eCall:
 17. Optionally, the application gets asynchronous response for hangup using CommandResponseCallback.
 18. CallManager sends call info change i.e Call Ended to the application by using onCallInfoChange callback function.
 
+Accident Emergency Call System (AECS) call flow
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Setting Emergency mode:
+
+1. The application should enable emergency mode using the setEmergencyMode API before initiating an AECS call. Any ongoing call(s) on other phones should be terminated by the modem when emergency mode is enabled, in the case of DSDS or hybrid DSDA mode.
+2. The application should disable emergency mode once the AECS call and MSD transmission are complete.
+
+.. figure:: /../images/set_emergency_mode_for_aecs_call_flow.png
+
+1. The application requests an instance of the CallManager object using PhoneFactory and provides the initialization callback.
+2. The application receives a CallManager instance.
+3. The application checks whether the CallManager subsystem is ready. If it is not ready, it waits until it becomes ready.
+4. The application receives the subsystem initialization callback, which notifies the subsystem initialization status.
+5. The application registers a listener with CallManager to receive call-info change notifications such as DIALING, ALERTING, ACTIVE, etc.
+6. The application receives a status such as SUCCESS or FAILED, based on the listener registration with CallManager.
+7. The application should enable Emergency Mode using the setEmergencyMode API before initiating or answering an AECS call. On single-SIM devices, this tells the modem to treat the next call as an emergency/AECS call, allowing it to bypass normal restrictions. On DSDS or hybrid DSDA multi-SIM devices, any ongoing call(s) on other phones will be terminated by the modem when Emergency Mode is activated. Antenna switching is platform-dependent. Ensure the platform supports antenna switching before enabling it.
+8. The application receives a status such as SUCCESS or FAILED, based on the execution of the setEmergencyMode API.
+9. Optionally, the application receives an asynchronous response for the setEmergencyMode API.
+10. Once Emergency Mode is enabled successfully, the application can dial an AECS call, answer an incoming AECS call, or send an MSD over HTTP or SMS. Once the AECS call and/or MSD transmission is complete, the Accident Emergency Call System Platform (AECSP) clears down the call. The application receives listener notifications for call-status changes such as END. CallManager sends a call-info change notification (i.e., call end) to the application using the onCallInfoChange function.
+11. The application should disable Emergency Mode using the setEmergencyMode API.
+12. The application receives a status such as SUCCESS or FAILED, based on the execution of the setEmergencyMode API.
+13. Optionally, the application receives an asynchronous response for the setEmergencyMode API.
+
+Outgoing AECS call:
+
+.. figure:: /../images/aecs_mo_call_flow.png
+
+1. The application requests an instance of the CallManager object using PhoneFactory and provides an initialization callback.
+2. The application receives a CallManager instance.
+3. The application checks whether the CallManager subsystem is ready. If it is not ready, the application waits until it becomes ready.
+4. The application waits for the subsystem initialization callback, which reports the subsystem initialization status.
+5. The application registers a listener with CallManager to receive call-info change notifications such as DIALING, ALERTING, ACTIVE, etc.
+6. The application receives a status such as SUCCESS or FAILED, based on the listener registration result from CallManager.
+7. Before initiating an AECS call, the application must enable Emergency Mode by calling the setEmergencyMode API. On single-SIM devices, this tells the modem to treat the next call as an emergency/AECS call, allowing it to bypass normal restrictions. On DSDS or hybrid DSDA multi-SIM devices, the modem terminates any ongoing calls on other phones when Emergency Mode is activated.
+8. The application receives a status such as SUCCESS or FAILED, based on the execution of the setEmergencyMode API.
+9. Optionally, the application receives an asynchronous response for the setEmergencyMode API.
+10. The application dials an AECS call (i.e., a normal voice call) using the makeAecsCall API and provides a callback to receive an asynchronous response.
+11. The application receives a status such as SUCCESS or FAILED, based on the execution of the makeAecsCall API.
+12. Optionally, the application receives an asynchronous response for makeAecsCall via makeCallResponseCallback.
+13. The application receives listener notifications for call-status changes such as DIALING, ALERTING, and ACTIVE when AECSP accepts the call.
+14. Once the AECS call and MSD transmission are complete, AECSP terminates the call.
+15. The application receives listener notifications for call-status changes such as END. CallManager sends a call-info change notification (i.e., call end) to the application using the onCallInfoChange function.
+16. Once the AECS call is disconnected, the application should disable Emergency Mode using the setEmergencyMode API.
+17. The application receives a status such as SUCCESS or FAILED, based on the execution of the setEmergencyMode API.
+18. Optionally, the application receives an asynchronous response for the setEmergencyMode API.
+
+Outgoing AECS call origination failure:
+
+.. figure:: /../images/aecs_mo_call_fail_call_flow.png
+
+This flow is similar to the outgoing AECS call flow, but it highlights failure-handling scenarios.
+
+Before initiating the AECS call, the application should initialize CallManager, register CallListener, and enable Emergency Mode.
+
+1. The application dials an AECS call (i.e., similar to a normal voice call) using the makeAecsCall API and provides a callback to receive an asynchronous response.
+2. The application receives a status such as SUCCESS or FAILED, based on the execution of the makeAecsCall API.
+3. Optionally, the application receives an asynchronous response for makeAecsCall via makeCallResponseCallback.
+4. The application receives listener notifications for call-state transitions such as DIALING → END.
+5. If the modem supports silent retries, the call state remains in DIALING for up to 45 seconds. When the call ends, the application receives a call status change notification such as END. The application should then query getRedialState() on the ICall instance.
+6. If the redial state transitions to MODEM_RETRY_END, the application must implement additional retry logic for emergency call failure handling as per AECS specification GB-45672-2025 (redial interval ≤ 2 minutes and total duration ≤ 60 minutes).
+7. If the modem does not support silent retries, the call ends immediately. The application receives a call-status change notification such as END, and should query getCallEndCause(). The application should retry based on the call end reason (i.e., except NORMAL, CLIENT_END, and RADIO_OFF), as per AECS specification GB-45672-2025 (redial interval ≤ 2 minutes and total duration ≤ 60 minutes).
+8. If the call connects during retries, the application receives listener notifications for call-status changes such as DIALING, ALERTING, and ACTIVE when AECSP accepts the call.
+9. Once the AECS call and MSD transmission are complete, AECSP clears down the call.
+10. The application receives listener notifications for call-status changes such as END. CallManager sends a call-info change notification (i.e., call end) to the application using the onCallInfoChange function.
+11. Once the AECS call is disconnected, the application should disable Emergency Mode using the setEmergencyMode API.
+
+Outgoing AECS call drop:
+
+.. figure:: /../images/aecs_mo_call_drop_call_flow.png
+
+This flow is similar to outgoing AECS call flow, but highlights the drop handling cases.
+
+Before initiating the AECS call, the application should initialize CallManager, register CallListener, and enable Emergency Mode.
+
+1. The application dials an AECS call (i.e., a normal voice call) using the makeAecsCall API and provides a callback to receive an asynchronous response.
+2. The application receives a status such as SUCCESS or FAILED, based on the execution of the makeAecsCall API.
+3. Optionally, the application receives an asynchronous response for makeAecsCall via makeCallResponseCallback.
+4. If the call connects, the call state transitions as DIALING → ALERTING → ACTIVE.
+5. If the AECS call drops after it becomes ACTIVE, the call state transitions as ACTIVE → END.
+6. The application should query isAecsCallDrop() on the ICall instance. If it returns true, the application must implement additional retry logic for call-drop handling, based on OEM-defined logic.
+7. If the call reconnects during retries, the call state transitions as DIALING → ALERTING → ACTIVE.
+8. Once the AECS call and MSD transmission are complete, AECSP clears down the call.
+9. The application receives listener notifications for call-status changes such as END. CallManager sends a call-info change notification (i.e., call end) to the application using the onCallInfoChange function.
+10. Once the AECS call is disconnected, the application should disable Emergency Mode using the setEmergencyMode API.
+
+Incoming AECS call:
+
+.. figure:: /../images/aecs_mt_call_flow.png
+
+Initialize CallManager and wait for subsystem readiness.
+
+1. The application registers a listener with CallManager to receive incoming-call notifications and call-info change notifications.
+2. The application receives a status such as SUCCESS or FAILED, based on the listener registration result from CallManager.
+3. The application receives an onIncomingCall notification when an incoming call is received. The modem does not automatically accept the incoming call; the application is responsible for determining whether the call is a callback from the AECSP and whether to accept it.
+4. Before enabling Emergency Mode, the application must disconnect any ongoing call that is not an AECS call.
+5. The application enables Emergency Mode by calling the setEmergencyMode API and providing a callback.
+6. The application receives a status such as SUCCESS or FAILED, based on the execution of the setEmergencyMode API.
+7. Optionally, the application receives an asynchronous response for setEmergencyMode via the callback.
+8. The application answers the incoming AECS call using the answer(callback) API.
+9. The application receives a status such as SUCCESS or FAILED, based on the execution of the answer API.
+10. Optionally, the application receives an asynchronous response for answer via the callback.
+11. When the call is answered, the AECS call state transitions as INCOMING → WAITING → ACTIVE.
+12. Once the AECS call and MSD transmission are complete, AECSP clears down the call.
+13. The AECS call state transitions from ACTIVE → END. CallManager sends a call-info change notification (i.e., call end) to the application using the onCallInfoChange function.
+14. Once the AECS call is disconnected, the application should disable Emergency Mode by calling the setEmergencyMode API and providing a callback.
+15. The application receives a status such as SUCCESS or FAILED, based on the execution of the setEmergencyMode API.
+16. Optionally, the application receives an asynchronous response for setEmergencyMode via the callback.
+
 Answer, Reject, RejectWithSMS call flow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

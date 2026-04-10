@@ -131,9 +131,17 @@ void AecsCallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call)
 
 bool AecsCallListener::isAecsCallFailReason(telux::tel::CallEndCause endCause, int phoneId) {
     auto &mgr = AecsCallManager::getInstance();
-    return (mgr.isEmergencyMode(phoneId) && (endCause != telux::tel::CallEndCause::RADIO_OFF) &&
+    /* AECS call retry not requied for below cause codes.
+       1. When the device is offline(radio_off) - CallEndCause::RADIO_OFF
+       2. When UE(user) ends the call - CallEndCause::CLIENT_END,
+       3. When the network or other end(peer) ends the call - CallEndCause::NORMAL
+         (in case of PS network), CallEndCause::NORMAL_CALL_CLEARING(in case of CS network)
+       4. And if the cause code is unspecified. */
+    return (mgr.isEmergencyMode(phoneId) &&
+        (endCause != telux::tel::CallEndCause::RADIO_OFF) &&
         (endCause != telux::tel::CallEndCause::CLIENT_END) &&
         (endCause != telux::tel::CallEndCause::NORMAL) &&
+        (endCause != telux::tel::CallEndCause::NORMAL_CALL_CLEARING) &&
         (endCause != telux::tel::CallEndCause::ERROR_UNSPECIFIED));
 }
 

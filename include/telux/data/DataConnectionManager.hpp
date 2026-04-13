@@ -363,9 +363,11 @@ class IDataConnectionManager {
      * Enable roaming mode for profile id. If disabled, any client attempt to bring up data call on
      * such profile id will be prevented by system when device is in roaming area. System will
      * report NO_NETWORK_FOUND error in such scenario.
-     * if enabled, clients can bring up data call made on such profile id and slot id successfully
+     * If enabled, clients can bring up data call made on such profile id and slot id successfully
      * even if device is in roaming area.
-     * Configuration changes will be persistant across multiple boots.
+     * For this API to work, the platform needs to be configured in tel.conf to allow roaming
+     * management, by setting data.manage_roaming_for_datacalls=TRUE.
+     * Configuration changes will be persistent across multiple boots.
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_DATA_SETTING permission
      * to invoke this API successfully.

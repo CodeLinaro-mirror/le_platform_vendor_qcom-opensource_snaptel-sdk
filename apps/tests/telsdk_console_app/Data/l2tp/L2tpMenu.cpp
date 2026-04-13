@@ -28,39 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 
@@ -238,7 +208,7 @@ void L2tpMenu::addTunnel(std::vector<std::string> inputCommand) {
         std::getline(std::cin, l2tpTunnelConfig.peerIpv6Addr, delimiter);
     }
     else  {
-        std::cout << "Inavlid IP type entered .. exiting ..." <<std::endl;
+        std::cout << "Invalid IP type entered .. exiting ..." <<std::endl;
         return;
     }
     std::cout << "Enter encapsulation protocol (0-IP, 1-UDP): ";
@@ -259,14 +229,14 @@ void L2tpMenu::addTunnel(std::vector<std::string> inputCommand) {
         l2tpTunnelConfig.peerUdpPort = tempInt;
     }
     else  {
-        std::cout << "Inavlid protocol entered .. exiting ..." <<std::endl;
+        std::cout << "Invalid protocol entered .. exiting ..." <<std::endl;
         return;
     }
-    std::cout << "Enter number of sessions for this tunnel (max allowed 3): ";
+    std::cout << "Enter number of sessions for this tunnel (max allowed 4): ";
     std::cin >> tempInt;
     Utils::validateInput(tempInt);
-    if (tempInt > 3) {
-        std::cout << "Inavlid number of sessions .. exiting ..." <<std::endl;
+    if (tempInt > 4) {
+        std::cout << "Invalid number of sessions .. exiting ..." <<std::endl;
         return;
     }
     int num_sessions = tempInt;
@@ -291,11 +261,10 @@ void L2tpMenu::addTunnel(std::vector<std::string> inputCommand) {
                   << ". ErrorCode: " << static_cast<int>(error)
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
         if (error == telux::common::ErrorCode::NOT_SUPPORTED) {
-            std::cout << "L2TP is not enabled, please enable L2TP";
+            std::cout << "L2TP config not supported.";
         }
         else if (error == telux::common::ErrorCode::INCOMPATIBLE_STATE) {
             std::cout << "L2TP config can not be enabled...\n";
-            std::cout << "Please map VLAN to default PDN first.\n";
         }
         else if (error == telux::common::ErrorCode::NO_EFFECT) {
             std::cout << "L2TP Config already set";

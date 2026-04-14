@@ -46,18 +46,21 @@ public:
                                         std::shared_ptr<IMakeCallCallback> callback) override;
     telux::common::Status makeECall(int phoneId, const ECallMsdData &eCallMsdData,
                                            int category, int variant,
-                                           std::shared_ptr<IMakeCallCallback> callback) override;
+                                           std::shared_ptr<IMakeCallCallback> callback,
+        TestECallConfig config = {telux::tel::TestECallConfigType::DEFAULT_SDN_URI, ""}) override;
     telux::common::Status makeECall(int phoneId, const std::string dialNumber,
         const std::vector<uint8_t> &msdPdu, CustomSipHeader header,
         MakeCallCallback callback) override;
     telux::common::Status makeECall(int phoneId, const std::vector<uint8_t> &msdPdu,
                                             int category, int variant,
-                                            MakeCallCallback callback) override;
+                                            MakeCallCallback callback,
+        TestECallConfig config = {telux::tel::TestECallConfigType::DEFAULT_SDN_URI, ""}) override;
     telux::common::Status makeECall(int phoneId, const std::string dialNumber,
                                            const std::vector<uint8_t> &msdPdu, int category,
                                            MakeCallCallback callback) override;
     telux::common::Status makeECall(int phoneId, int category, int variant,
-                                            MakeCallCallback callback) override;
+                                            MakeCallCallback callback,
+        TestECallConfig config = {telux::tel::TestECallConfigType::DEFAULT_SDN_URI, ""}) override;
     telux::common::Status makeECall(int phoneId, const std::string dialNumber, int category,
                                            MakeCallCallback callback) override;
     telux::common::Status makeECall(int phoneId, const std::string dialNumber,

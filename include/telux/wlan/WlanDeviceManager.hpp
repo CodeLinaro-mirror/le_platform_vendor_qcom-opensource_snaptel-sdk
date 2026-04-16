@@ -144,7 +144,7 @@ class IWlanDeviceManager {
      *   - Persistent mode configuration can be set
      *     (@ref telux::wlan::ModeConfig::isPersistent = true).
      *   - Dynamic changes (@ref telux::wlan::ModeConfig::updateImmediately = true)
-     *     return ERROR_INVALID_STATE.
+     *     return INVALID_OPERATION.
      *   - Mode Configuration is applied on next Wlan enablement.
      *
      * When Wlan is enabled:
@@ -197,10 +197,16 @@ class IWlanDeviceManager {
     /**
      * Retrieve the current Wlan mode configuration.
      *
-     * This API returns the mode configuration that was most recently set using
-     * @ref telux::wlan::IWlanDeviceManager::setMode and is dynamic.
+     * This API returns the mode configuration that is currently active in the system:
+     * - If called immediately after Wlan is enabled, it reflects the persistent mode configuration
+     *   set via @ref telux::wlan::IWlanDeviceManager::setMode with
+     *   @ref telux::wlan::ModeConfig::isPersistent = true.
+     * - If a dynamic mode update was applied while Wlan was already operational (i.e.,
+     *   @ref telux::wlan::ModeConfig::updateImmediately = true), it reflects the most recently
+     *   applied dynamic configuration.
      *
-     * @note This may differ from the mode configuration currently active in the system. To check
+     * @note This reflects the number of APs and stations configured to be operational at runtime.
+     * It does not reflect the live service state of individual APs or stations, To check
      * the current Wlan status and enablement, use @ref telux::wlan::IWlanDeviceManager::getStatus.
      *
      * @param [in] numAp                Num of configured APs

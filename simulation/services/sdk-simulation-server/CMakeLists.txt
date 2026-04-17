@@ -29,18 +29,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -pthread")
 
 add_executable (${TARGET_SIMULATION_SERVER_APP} ${TARGET_SIMULATION_SERVER_APP_SRC})
 
-add_subdirectory(common)
-add_subdirectory(data)
 add_subdirectory(event)
-add_subdirectory(tel)
-add_subdirectory(loc)
-add_subdirectory(cv2x)
-add_subdirectory(sensor)
-add_subdirectory(audio)
-add_subdirectory(therm)
-add_subdirectory(power)
-add_subdirectory(platform)
-add_subdirectory(sec)
 add_subdirectory(satcom)
 
 target_link_libraries(${TARGET_SIMULATION_SERVER_APP}

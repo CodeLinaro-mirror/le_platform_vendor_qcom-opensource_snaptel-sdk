@@ -30,10 +30,10 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 
 #include <telux/common/SDKListener.hpp>
 #include <telux/common/CommonDefines.hpp>
-#include <telux/data/DataDefines.hpp>
 
 #define MAX_DIMENSIONS 3
 

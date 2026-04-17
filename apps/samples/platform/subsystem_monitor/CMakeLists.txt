@@ -1,2 +1,0 @@
-add_subdirectory(local_mpss_monitor)
-add_subdirectory(remote_apss_monitor)

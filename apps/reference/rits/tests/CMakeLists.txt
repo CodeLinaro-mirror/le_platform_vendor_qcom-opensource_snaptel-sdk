@@ -1,3 +1,0 @@
-add_subdirectory(applicationTest)
-add_subdirectory(qimcTest)
-add_subdirectory(qMonitorTest)

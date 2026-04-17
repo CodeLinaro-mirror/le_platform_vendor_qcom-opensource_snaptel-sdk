@@ -42,8 +42,6 @@ set (COMMON_STUB_SOURCES
     TaskThread.cpp
     TaskDispatcher.cpp
     EnvUtils.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/../../common/therm/ThermalZoneImpl.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/../../common/therm/CoolingDeviceImpl.cpp
 )
 
 add_library (${TARGET_COMMON_LIBRARY} SHARED  ${COMMON_STUB_SOURCES})

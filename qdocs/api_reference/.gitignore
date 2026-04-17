@@ -1,8 +1,0 @@
-# Sphinx artifacts
-_build
-
-# Doxygen artifacts
-_doxygen
-
-# Exhale artifacts
-api_rst

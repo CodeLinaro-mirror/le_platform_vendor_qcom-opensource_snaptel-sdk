@@ -1,8 +1,0 @@
-{
-    "IDataFilterManager": {
-        "requestDataRestrictMode": {
-            "filter_mode" : "DISABLE",
-            "filter_auto_exit" : "DISABLE"
-        }
-    }
-}

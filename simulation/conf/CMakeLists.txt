@@ -8,13 +8,3 @@ install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/telsdk_simulation_server.conf"
 
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/tel.conf"
     DESTINATION "${CMAKE_INSTALL_PREFIX}/etc/telux/")
-
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/eCall.conf"
-    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/")
-
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/msdsettings.txt"
-    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/")
-
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/updated_msdsettings.txt"
-    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/")
-

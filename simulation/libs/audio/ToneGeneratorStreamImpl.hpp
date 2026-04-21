@@ -22,7 +22,7 @@ class ToneGeneratorStreamImpl : public IAudioToneGeneratorStream,
     ToneGeneratorStreamImpl(uint32_t streamId, std::shared_ptr<ICommunicator> transportClient);
     ~ToneGeneratorStreamImpl();
 
-    telux::common::Status playTone(std::vector<uint16_t> frequency, uint16_t duration,
+    telux::common::Status playTone(std::vector<uint16_t> frequency, uint32_t duration,
         uint16_t gain, telux::common::ResponseCallback callback = nullptr);
 
     telux::common::Status stopTone(telux::common::ResponseCallback callback = nullptr);

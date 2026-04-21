@@ -569,3 +569,9 @@ void WlanApInterfaceManagerMenu::populateApElementInfo(
         ElementInfoConfig.assocRespElements = inStr;
     }
 }
+
+void WlanApInterfaceManagerMenu::onApStatusChanged(
+        const std::vector<telux::wlan::ApStatus> &apStatus) {
+    PRINT_NOTIFICATION << " ** Wlan onApStatusChanged **\n";
+    WlanUtils::printAPStatus(apStatus);
+}

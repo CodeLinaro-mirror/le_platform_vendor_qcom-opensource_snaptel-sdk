@@ -105,7 +105,8 @@ telux::common::Status ECallManager::init() {
  * Function to trigger the standard eCall procedure(eg.112)
  */
 telux::common::Status ECallManager::triggerECall(int phoneId, ECallCategory category,
-    ECallVariant variant, bool transmitMsd, std::vector<uint8_t> msdPdu) {
+    ECallVariant variant, bool transmitMsd, std::vector<uint8_t> msdPdu,
+    const TestECallConfig config) {
     if (!telClient_) {
         std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
         return telux::common::Status::FAILED;
@@ -158,7 +159,7 @@ telux::common::Status ECallManager::triggerECall(int phoneId, ECallCategory cate
         }
     }
     auto status = telClient_->startECall(phoneId, msdPdu_, msdData_, category, variant, transmitMsd,
-        dialDuration, autoAnswerDuration, shared_from_this());
+        dialDuration, autoAnswerDuration, config, shared_from_this());
     if (status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to initiate eCall " << std::endl;
         cleanup();

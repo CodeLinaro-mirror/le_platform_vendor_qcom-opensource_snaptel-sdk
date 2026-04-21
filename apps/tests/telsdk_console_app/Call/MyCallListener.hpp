@@ -52,6 +52,7 @@ class MyCallListener : public telux::tel::ICallListener {
     void onServiceStatusChange(telux::common::ServiceStatus status) override;
     void onModifyCallRequest(telux::tel::RttMode rttMode, int callId, int phoneId) override;
     void onRttMessage(int phoneId, std::string text) override;
+    void onDtmfReceived(int phoneId, char dtmfTone) override;
 
     std::string getCallStateString(telux::tel::CallState cs);
     std::string getCallEndCauseString(telux::tel::CallEndCause causeCode);

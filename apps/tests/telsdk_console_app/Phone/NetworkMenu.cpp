@@ -160,6 +160,10 @@ bool NetworkMenu::init() {
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("11", "abort_network_scan", {},
                 std::bind(&NetworkMenu::abortNetworkScan, this, std::placeholders::_1)));
 
+        std::shared_ptr<ConsoleAppCommand> setCoverageStateCommand
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("12", "set_coverage_state", {},
+                std::bind(&NetworkMenu::setCoverageState, this, std::placeholders::_1)));
+
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListNetworkSubMenu = {
             selectSimSlotCommand, getNetworkSelectionModeCommand, setNetworkSelectionModeCommand,
             getPreferredNetworksCommand, setPreferredNetworksCommand, performNetworkScanCommand};
@@ -169,6 +173,7 @@ bool NetworkMenu::init() {
         commandsListNetworkSubMenu.emplace_back(removeAllLteDubiousCellCommand);
         commandsListNetworkSubMenu.emplace_back(removeAllNrDubiousCellCommand);
         commandsListNetworkSubMenu.emplace_back(abortNetworkScanCommand);
+        commandsListNetworkSubMenu.emplace_back(setCoverageStateCommand);
 
         addCommands(commandsListNetworkSubMenu);
         ConsoleApp::displayMenu();
@@ -697,5 +702,39 @@ void NetworkMenu::removeAllNrDubiousCell(std::vector<std::string> userInput) {
         std::cout
             << "\nRemove all NR dubious cell failed, err: " << Utils::getErrorCodeAsString(err)
             << std::endl;
+    }
+}
+
+void NetworkMenu::setCoverageState(std::vector<std::string> userInput) {
+    auto networkManager = networkManagers_[slot_ - 1];
+    if (networkManager) {
+        int stateInput = 0;
+        telux::tel::CoverageState state;
+
+        std::cout << "Enter coverage state (1-IN_5G-COVERAGE, 2-OUT_OF_5G_COVERAGE): ";
+        std::cin >> stateInput;
+        Utils::validateInput(stateInput);
+
+        switch (stateInput) {
+            case 1:
+                state = telux::tel::CoverageState::IN_5G_COVERAGE;
+                break;
+            case 2:
+                state = telux::tel::CoverageState::OUT_OF_5G_COVERAGE;
+                break;
+            default:
+                std::cout << "Invalid coverage state input" << std::endl;
+                return;
+        }
+
+        auto err = networkManager->setCoverageState(state);
+        if (err == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "\nSet coverage state succeed" << std::endl;
+        } else {
+            std::cout << "\nSet coverage state failed, err: " << Utils::getErrorCodeAsString(err)
+                      << std::endl;
+        }
+    } else {
+        std::cout << " ERROR - Network manager is NULL\n";
     }
 }

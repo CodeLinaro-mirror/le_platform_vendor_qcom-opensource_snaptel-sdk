@@ -38,7 +38,7 @@ class WlanUtils {
     static std::string apSecurityModeToString(telux::wlan::SecMode mode);
     static std::string apSecurityAuthToString(telux::wlan::SecAuth auth);
     static std::string apSecurityEncryptToString(telux::wlan::SecEncrypt encrypt);
-   static void printAPStatus(const std::vector<telux::wlan::ApStatus> &apStatus);
+    static void printAPStatus(const std::vector<telux::wlan::ApStatus> &apStatus);
     static void printStaStatus(std::vector<telux::wlan::StaStatus> &staStatus);
     static void printDeviceInfo(std::vector<telux::wlan::DeviceInfo> &info);
     static void printApElementInfo(telux::wlan::ApElementInfoConfig ElementInfoConfig);

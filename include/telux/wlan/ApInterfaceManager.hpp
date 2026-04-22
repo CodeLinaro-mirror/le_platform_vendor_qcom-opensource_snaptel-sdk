@@ -421,7 +421,8 @@ class IApListener : public telux::common::ISDKListener {
      * @param [in] status       List of APs whose status has been updated @ref telux::wlan::ApStatus
      */
 
-    virtual void onApStatusChanged(const std::vector<ApStatus> &status) {}
+    virtual void onApStatusChanged(const std::vector<ApStatus> &status) {
+    }
 
     virtual ~IApListener() {
     }

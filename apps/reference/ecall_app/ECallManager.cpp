@@ -90,11 +90,12 @@ telux::common::Status ECallManager::init() {
         return status;
     }
     thermClient_ = std::make_shared<ThermClient>();
-    status       = thermClient_->init();
+    status = thermClient_->init();
+#if defined TELSDK_THERMAL_SHUTDOWN_ENABLED
     if (status != telux::common::Status::SUCCESS) {
         return status;
     }
-
+#endif
     // Parse the eCall settings and fetch the static MSD data
     parseAppConfig();
 

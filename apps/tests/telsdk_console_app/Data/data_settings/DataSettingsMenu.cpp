@@ -957,6 +957,11 @@ void DataSettingsMenu::switchBackHaul(std::vector<std::string> inputCommand) {
         source.slotId = static_cast<SlotId>(slotId);
     } else {
         source.backhaul = telux::data::BackhaulType::WLAN;
+        int staId       = -1;
+        std::cout << "Enter the sta Id associated with backhaul: ";
+        std::cin >> staId;
+        Utils::validateInput(staId);
+        source.staId = staId;
     }
 
     std::cout << "Enter Backhaul Type to switch to (0-Wlan, 1-WWAN): ";
@@ -978,6 +983,11 @@ void DataSettingsMenu::switchBackHaul(std::vector<std::string> inputCommand) {
         dest.slotId = static_cast<SlotId>(slotId);
     } else {
         dest.backhaul = telux::data::BackhaulType::WLAN;
+        int staId     = -1;
+        std::cout << "Enter the sta Id associated with backhaul: ";
+        std::cin >> staId;
+        Utils::validateInput(staId);
+        dest.staId = staId;
     }
     // Callback
     auto respCb = [](telux::common::ErrorCode error) {

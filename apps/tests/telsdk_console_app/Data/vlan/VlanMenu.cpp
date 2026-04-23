@@ -502,6 +502,8 @@ void VlanMenu::queryVlanToBackhaulBindings(std::vector<std::string> inputCommand
                 std::cout << ", profile id: " << c.bhInfo.profileId;
             } else if (c.bhInfo.backhaul == telux::data::BackhaulType::ETH) {
                 std::cout << ", vlan Id associated with Eth backhaul: " << c.bhInfo.vlanId;
+            } else if (c.bhInfo.backhaul == telux::data::BackhaulType::WLAN) {
+                std::cout << ", sta Id associated with WLAN backhaul: " << c.bhInfo.staId;
             }
             std::cout << ", vlanId: " << c.vlanId << "\n";
         }

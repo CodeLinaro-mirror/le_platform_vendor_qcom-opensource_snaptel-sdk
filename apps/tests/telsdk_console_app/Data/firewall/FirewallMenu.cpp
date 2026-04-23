@@ -276,6 +276,8 @@ void FirewallMenu::requestFirewallStatus(std::vector<std::string> inputCommand) 
             std::cout << "On Backhaul: " << DataUtils::backhaulToString(fwConfig.bhInfo.backhaul);
             if (fwConfig.bhInfo.backhaul == telux::data::BackhaulType::WWAN) {
                 std::cout << ", Profile id: " << fwConfig.bhInfo.profileId;
+            } else if (fwConfig.bhInfo.backhaul == telux::data::BackhaulType::WLAN) {
+                std::cout << ", Sta id: " << fwConfig.bhInfo.staId;
             }
         }
         std::cout << "\n";
@@ -924,6 +926,8 @@ void FirewallMenu::requestDmzEntry(std::vector<std::string> inputCommand) {
             std::cout << "On Backhaul: " << DataUtils::backhaulToString(entry.bhInfo.backhaul);
             if (entry.bhInfo.backhaul == telux::data::BackhaulType::WWAN) {
                 std::cout << " And Profile id: " << entry.bhInfo.profileId;
+            } else if (entry.bhInfo.backhaul == telux::data::BackhaulType::WLAN) {
+                std::cout << " And Sta id: " << entry.bhInfo.staId;
             }
             std::cout << std::endl;
             std::cout << "address: " << entry.ipAddr

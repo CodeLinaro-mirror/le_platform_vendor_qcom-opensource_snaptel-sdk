@@ -199,7 +199,7 @@ class ISimProfileManager {
      * Provide user consent required for downloading and installing profile.
      *
      * @param [in] slotId            Slot identifier corresponding to the card.
-     * @param [in] userConsent       Consent for proﬁle download and install.
+     * @param [in] userConsent       Consent for profile download and install.
                                      True means user consent to download and install.
      * @param [in] callback          Callback function to get the result of user consent request.
      *

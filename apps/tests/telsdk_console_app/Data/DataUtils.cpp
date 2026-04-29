@@ -619,6 +619,7 @@ std::string DataUtils::stallReasonToString(telux::data::DataStallReason reason) 
         case telux::data::DataStallReason::IPA_CONF_DATA_STALL: return "IPA_CONF_DATA_STALL";
         case telux::data::DataStallReason::WLAN_AP_DATA_STALL: return "WLAN_AP_DATA_STALL";
         case telux::data::DataStallReason::WLAN_STA_DATA_STALL: return "WLAN_STA_DATA_STALL";
+        case telux::data::DataStallReason::WWAN_DATA_STALL: return "WWAN_DATA_STALL";
         default: return "UNKNOWN";
     }
 }

@@ -126,6 +126,12 @@ enum class RFBand {
     E_UTRA_OPERATING_BAND_87  = 177,
     E_UTRA_OPERATING_BAND_88  = 178,
     E_UTRA_OPERATING_BAND_70  = 179,
+    E_UTRA_OPERATING_BAND_44  = 180,
+    E_UTRA_OPERATING_BAND_256 = 181,
+    E_UTRA_OPERATING_BAND_106 = 182,
+    E_UTRA_OPERATING_BAND_255 = 183,
+    E_UTRA_OPERATING_BAND_253 = 184,
+    E_UTRA_OPERATING_BAND_252 = 185,
     TDSCDMA_BAND_A            = 200,
     TDSCDMA_BAND_B            = 201,
     TDSCDMA_BAND_C            = 202,
@@ -183,7 +189,24 @@ enum class RFBand {
     NR5G_BAND_91              = 298,
     NR5G_BAND_92              = 299,
     NR5G_BAND_93              = 300,
-    NR5G_BAND_94              = 301
+    NR5G_BAND_94              = 301,
+    NR5G_BAND_96              = 302,
+    NR5G_BAND_106             = 303,
+    NR5G_BAND_67              = 304,
+    NR5G_BAND_68              = 305,
+    NR5G_BAND_89              = 306,
+    NR5G_BAND_95              = 307,
+    NR5G_BAND_97              = 308,
+    NR5G_BAND_98              = 309,
+    NR5G_BAND_99              = 310,
+    NR5G_BAND_104             = 311,
+    NR5G_BAND_47              = 312,
+    NR5G_BAND_102             = 313,
+    NR5G_BAND_105             = 314,
+    NR5G_BAND_100             = 315,
+    NR5G_BAND_101             = 316,
+    NR5G_BAND_31              = 317,
+    NR5G_BAND_72              = 318
 };
 
 /**

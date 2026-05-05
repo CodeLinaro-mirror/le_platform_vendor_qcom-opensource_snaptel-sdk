@@ -133,6 +133,32 @@ using OperatorNameCallback = std::function<void(
 using OperatorInfoCallback = std::function<void(PlmnInfo plmnInfo, telux::common::ErrorCode error)>;
 
 /**
+ * This function is called with the response to requestCarrierAggregationCellInfo API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [out] info   List of entries representing all currently configured Serving Primary cell
+ *                     and Secondary Serving cells.
+ * @param [out] error  Return error code indicating whether the operation succeeded or failed.
+ */
+using CaInfoCallback
+    = std::function<void(CarrierAggregationInfo info, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called with the response to the requestCellChannelInfo API.
+ *
+ * The callback may be invoked from multiple threads. The implementation must
+ * be thread-safe.
+ *
+ * @param[out] channelInfoList Provides LTE and NR channel information for serving cells and
+ *                             neighboring cells. @ref telux::tel::CellChannelInfoList
+ * @param[out] error Returns error code indicating whether the operation succeeded or failed.
+ */
+using CellChannelInfoListCallback
+    = std::function<void(CellChannelInfoList channelInfoList, telux::common::ErrorCode error)>;
+
+/**
  * @brief This class allows getting system information and registering for system events.
  * Each Phone instance is associated with a single SIM. So on a dual SIM device you
  * would have 2 Phone instances.
@@ -441,6 +467,73 @@ class IPhone {
     virtual telux::common::Status configureSignalStrength(
         std::vector<SignalStrengthConfigEx> signalStrengthConfigEx, uint16_t hysteresisMs = 0,
         telux::common::ResponseCallback callback = nullptr)
+        = 0;
+
+    /**
+     * Requests the Carrier Aggregation information for the specified Radio Access Technology
+     * (RAT), including the Primary cell and configured Secondary cells.
+     *
+     * Carrier Aggregation enables the modem to use multiple component carriers simultaneously to
+     * increase data throughput.
+     * @note Carrier Aggregation (CA) information is applicable only when the device has a serving
+     * cell on a RAT that supports CA. The active serving RAT can be queried via
+     * @ref IServingSystemManager::getSystemInfo().
+     *
+     * On platforms with access control enabled, the caller must have the
+     * TELUX_TEL_PRIVATE_INFO_READ permission to successfully invoke this API.
+     *
+     * @param [in] type         Selects the Radio Access Technology for which the CA
+     *                          information is requested.
+     *                          Currently CA for only LTE(PS domain) is supported.
+     * @param [in] callback     Callback to receive the CA information asynchronously.
+     *
+     * @returns Status of requestCarrierAggregationCellInfo i.e. success or suitable error code.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual telux::common::Status requestCarrierAggregationCellInfo(
+        CarrierAggregationType type, CaInfoCallback callback)
+        = 0;
+
+    /**
+     * Retrieves LTE and NR channel information for serving cells(Primary and Secondary cells) and
+     * neighboring cells.
+     *
+     * The response is delivered through @ref CellChannelInfoListCallback with a
+     * @ref CellChannelInfoList containing:
+     *
+     *  - lteServingAndSCellArfcn:
+     *        LTE channel information for the serving cells.
+     *        Index 0 represents the Primary cell information and subsequent entries represent
+     *        configured Secondary cells. @ref LteCellChannelInfo
+     *
+     *  - lteNeighborArfcn:
+     *        LTE channel information for inter-frequency neighboring
+     *        cells. Each entry contains the downlink EARFCN, uplink EARFCN,
+     *        and channel bandwidth. @ref LteCellChannelInfo
+     *
+     *  - nr5gServingAndSCellArfcn:
+     *        NR-ARFCNs for the NR primary and secondary serving cells.
+     *        Index 0 represents the Primary cell information and subsequent entries represent
+     *        configured Secondary cells.
+     *
+     *  - nr5gNeighborArfcn:
+     *        NR-ARFCNs for NR neighboring cells.
+     *
+     * On platforms with access control enabled, the caller must have the
+     * TELUX_TEL_PRIVATE_INFO_READ permission to successfully invoke this API.
+     *
+     * @param[in] callback Callback function that receives the requested LTE and NR channel
+     *                     information @ref CellChannelInfoListCallback
+     *
+     * @returns Status of requestCellChannelInfo i.e. success or suitable error code.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual telux::common::Status requestCellChannelInfo(
+        CellChannelInfoListCallback callback = nullptr)
         = 0;
 
     virtual ~IPhone(){};

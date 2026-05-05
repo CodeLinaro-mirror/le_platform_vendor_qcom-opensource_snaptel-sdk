@@ -77,6 +77,10 @@
          (ConfigureSignalStrengthReply) {}
      rpc ConfigureSignalStrengthEx(ConfigureSignalStrengthExRequest) returns
          (ConfigureSignalStrengthExReply) {}
+     rpc requestCarrierAggregationCellInfo(requestCarrierAggregationCellInfoRequest) returns
+         (requestCarrierAggregationCellInfoReply) {}
+     rpc RequestCellChannelInfo(RequestCellChannelInfoRequest) returns
+         (RequestCellChannelInfoReply) {}
  }
  service SmsService {
      rpc InitService (commonStub.GetServiceStatusRequest) returns (commonStub.GetServiceStatusReply) {}
@@ -3090,6 +3094,88 @@ message OperatorInfoEvent {
     int32 phone_id = 2;
 }
 
+enum CarrierAggregationType {
+    LTE_CA = 0; // Mapped from 0
+}
+// telux::tel::LteBandwidth
+enum LteBandwidth {
+    BW_1_4_MHZ = 0;
+    BW_3_MHZ = 1;
+    BW_5_MHZ = 2;
+    BW_10_MHZ = 3;
+    BW_15_MHZ = 4;
+    BW_20_MHZ = 5;
+    BW_UNKNOWN = 255; // Mapped from 0xFF
+}
+enum LteSCellState {
+    DECONFIGURED = 0;
+    CONFIGURED_DEACTIVATED = 1;
+    CONFIGURED_ACTIVATED = 2;
+}
+message LteCaCellInfo {
+    uint32 pci = 1;
+    uint32 freq = 2;
+    LteBandwidth bandwidth = 3;
+    RFBand band = 4;
+}
+message LtePCellInfo {
+    LteCaCellInfo cell = 1;
+}
+message LteSCellInfo {
+    LteCaCellInfo cell = 1;
+    bool ul_configured = 2;
+    LteSCellState scell_state = 3;
+}
+message LteCaInfo {
+    LtePCellInfo p_cell = 1;
+    repeated LteSCellInfo s_cell = 2;
+}
+message CarrierAggregationInfo {
+    CarrierAggregationType type = 1;
+    LteCaInfo lte_info = 2;
+}
+message requestCarrierAggregationCellInfoRequest {
+    int32 phone_id = 1;
+    CarrierAggregationType rat = 2;
+}
+message requestCarrierAggregationCellInfoReply {
+    CarrierAggregationInfo ca_info = 1;
+    int32 phone_id = 2;
+    commonStub.ErrorCode error = 3;
+    commonStub.Status status = 4;
+    int32 delay = 5;
+    bool iscallback = 6;
+}
+message CarrierAggregationInfoEvent {
+    CarrierAggregationInfo ca_info = 1;
+    int32 phone_id = 2;
+}
+message LteCellChannelInfo {
+    uint32 dl_earfcn = 1;
+    uint32 ul_earfcn = 2;
+    LteBandwidth bandwidth = 3;
+}
+message CellChannelInfoList {
+    repeated LteCellChannelInfo lte_serving_and_scell_arfcn = 1;
+    repeated LteCellChannelInfo lte_neighbor_arfcn = 2;
+    repeated uint32 nr5g_serving_and_scell_arfcn = 3;
+    repeated uint32 nr5g_neighbor_arfcn = 4;
+}
+message RequestCellChannelInfoRequest {
+    int32 phone_id = 1;
+}
+message RequestCellChannelInfoReply {
+    CellChannelInfoList channel_info_list = 1;
+    int32 phone_id = 2;
+    commonStub.ErrorCode error = 3;
+    commonStub.Status status = 4;
+    int32 delay = 5;
+    bool iscallback = 6;
+}
+message CellChannelInfoListEvent {
+    CellChannelInfoList channel_info_list = 1;
+    int32 phone_id = 2;
+}
 enum SignalStrengthConfigType {
     CONFIG_NONE = 0;
     DELTA = 1;       /**< Signal strength delta provided. */

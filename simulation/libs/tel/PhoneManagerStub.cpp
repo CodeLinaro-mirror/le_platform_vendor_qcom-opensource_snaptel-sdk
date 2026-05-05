@@ -595,6 +595,14 @@ void PhoneManagerStub::onEventUpdate(google::protobuf::Any event) {
         ::telStub::OperatorInfoEvent opertorInfoChangeEvent;
         event.UnpackTo(&opertorInfoChangeEvent);
         handleOperatorInfoChanged(opertorInfoChangeEvent);
+    } else if (event.Is<::telStub::CarrierAggregationInfoEvent>()) {
+        ::telStub::CarrierAggregationInfoEvent carrierAggregationInfoEvent;
+        event.UnpackTo(&carrierAggregationInfoEvent);
+        handleCarrierAggregationInfoChanged(carrierAggregationInfoEvent);
+    } else if (event.Is<::telStub::CellChannelInfoListEvent>()) {
+        ::telStub::CellChannelInfoListEvent cellChannelInfoListEvent;
+        event.UnpackTo(&cellChannelInfoListEvent);
+        handleCellChannelInfoListChanged(cellChannelInfoListEvent);
     } else if (event.Is<::telStub::VoiceRadioTechnologyChangeEvent>()) {
         ::telStub::VoiceRadioTechnologyChangeEvent voiceRadioTechnologyChangeEvent;
         event.UnpackTo(&voiceRadioTechnologyChangeEvent);
@@ -1075,6 +1083,88 @@ void PhoneManagerStub::handleOperatorInfoChanged(::telStub::OperatorInfoEvent ev
         for (auto &wp : applisteners) {
             if (auto sp = wp.lock()) {
                 sp->onOperatorInfoChange(phoneId, plmnInfo);
+            }
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
+    }
+}
+
+static LteCaCellInfo convertLteCaCellInfoFromGrpcEvent(const telStub::LteCaCellInfo &cellInfo) {
+    LteCaCellInfo cell;
+    cell.pci       = static_cast<uint16_t>(cellInfo.pci());
+    cell.freq      = cellInfo.freq();
+    cell.bandwidth = static_cast<LteBandwidth>(cellInfo.bandwidth());
+    cell.band      = static_cast<RFBand>(cellInfo.band());
+    return cell;
+}
+void PhoneManagerStub::handleCarrierAggregationInfoChanged(
+    ::telStub::CarrierAggregationInfoEvent event) {
+    LOG(DEBUG, __FUNCTION__);
+    int phoneId = event.phone_id();
+    telux::tel::CarrierAggregationInfo caInfo;
+    caInfo.type = static_cast<CarrierAggregationType>(event.ca_info().type());
+    if (event.ca_info().has_lte_info()) {
+        auto lteInfo = std::make_shared<LteCaInfo>();
+        lteInfo->pCell.cell
+            = convertLteCaCellInfoFromGrpcEvent(event.ca_info().lte_info().p_cell().cell());
+        for (int i = 0; i < event.ca_info().lte_info().s_cell_size(); i++) {
+            const auto &sCellGrpc = event.ca_info().lte_info().s_cell(i);
+            LteSCellInfo sCell;
+            sCell.cell         = convertLteCaCellInfoFromGrpcEvent(sCellGrpc.cell());
+            sCell.ulConfigured = sCellGrpc.ul_configured();
+            sCell.scellState   = static_cast<LteSCellState>(sCellGrpc.scell_state());
+            lteInfo->sCell.emplace_back(sCell);
+        }
+        caInfo.lteInfo = lteInfo;
+    }
+    std::vector<std::weak_ptr<IPhoneListener>> applisteners;
+    if (listenerMgr_) {
+        listenerMgr_->getAvailableListeners(applisteners);
+        for (auto &wp : applisteners) {
+            if (auto sp = wp.lock()) {
+                sp->onCarrierAggregationInfoChanged(phoneId, caInfo);
+            }
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
+    }
+}
+
+void PhoneManagerStub::handleCellChannelInfoListChanged(::telStub::CellChannelInfoListEvent event) {
+    LOG(DEBUG, __FUNCTION__);
+    int phoneId = event.phone_id();
+    CellChannelInfoList channelInfoList;
+    for (auto &lteInfo : event.channel_info_list().lte_serving_and_scell_arfcn()) {
+        LteCellChannelInfo info;
+        info.dlEarfcn  = lteInfo.dl_earfcn();
+        info.ulEarfcn  = lteInfo.ul_earfcn();
+        info.bandwidth = static_cast<LteBandwidth>(lteInfo.bandwidth());
+        channelInfoList.lteServingAndSCellArfcns.emplace_back(info);
+    }
+    for (auto &lteInfo : event.channel_info_list().lte_neighbor_arfcn()) {
+        LteCellChannelInfo info;
+        info.dlEarfcn  = lteInfo.dl_earfcn();
+        info.ulEarfcn  = lteInfo.ul_earfcn();
+        info.bandwidth = static_cast<LteBandwidth>(lteInfo.bandwidth());
+        channelInfoList.lteNeighborArfcns.emplace_back(info);
+    }
+    for (auto &arfcn : event.channel_info_list().nr5g_serving_and_scell_arfcn()) {
+        NrCellChannelInfo info;
+        info.dlEarfcn = arfcn;
+        channelInfoList.nr5gServingAndSCellArfcns.emplace_back(info);
+    }
+    for (auto &arfcn : event.channel_info_list().nr5g_neighbor_arfcn()) {
+        NrCellChannelInfo info;
+        info.dlEarfcn = arfcn;
+        channelInfoList.nr5gNeighborArfcns.emplace_back(info);
+    }
+    std::vector<std::weak_ptr<IPhoneListener>> applisteners;
+    if (listenerMgr_) {
+        listenerMgr_->getAvailableListeners(applisteners);
+        for (auto &wp : applisteners) {
+            if (auto sp = wp.lock()) {
+                sp->onCellChannelInfoListChanged(phoneId, channelInfoList);
             }
         }
     } else {

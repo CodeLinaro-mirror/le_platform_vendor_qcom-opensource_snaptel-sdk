@@ -78,6 +78,8 @@ class PhoneManagerStub : public IPhoneManager,
     void handleOperatingModeChanged(::telStub::OperatingModeEvent event);
     void handleECallOperatingModeChanged(::telStub::ECallModeInfoChangeEvent event);
     void handleOperatorInfoChanged(::telStub::OperatorInfoEvent event);
+    void handleCarrierAggregationInfoChanged(::telStub::CarrierAggregationInfoEvent event);
+    void handleCellChannelInfoListChanged(::telStub::CellChannelInfoListEvent event);
     void handleVoiceRadioTechChanged(::telStub::VoiceRadioTechnologyChangeEvent event);
     void handleServiceStateChanged(::telStub::ServiceStateChangeEvent event);
     void onEventUpdate(std::string event);

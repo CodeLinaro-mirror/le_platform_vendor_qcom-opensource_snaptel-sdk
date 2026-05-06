@@ -289,38 +289,30 @@ void EventManager::registerListener(
 }
 
 void EventManager::writeToSystemNode(char *nodepath, char *value, int length) {
-    LOG(DEBUG, __FUNCTION__);
-    int fd = -1;
-    LOG(DEBUG, __FUNCTION__, " About to open node ", string(nodepath));
-    string logTmp;
-    fd = open(nodepath, O_WRONLY | O_APPEND | O_NONBLOCK);
+    int fd = open(nodepath, O_WRONLY | O_APPEND | O_NONBLOCK);
     if (fd < 0) {
-        logTmp = " Opening of  node failed!!! err " + string(nodepath)
-                 + " errno = " + string(strerror(errno));
-        LOG(ERROR, __FUNCTION__, logTmp);
+        LOG(ERROR, __FUNCTION__, " Opening of  node failed!!! err ", string(nodepath),
+            " errno = ", string(strerror(errno)));
     } else {
-        LOG(DEBUG, __FUNCTION__, " Opening of  node success ", string(nodepath));
-        int returnValueWrite = write(fd, value, length);
-        if (returnValueWrite == -1) {
-            logTmp = " Writing of  to  node failed err " + string(value) + " " + string(nodepath)
-                     + " errno = " + string(strerror(errno));
-            LOG(ERROR, __FUNCTION__, logTmp);
+        if (write(fd, value, length) == -1) {
+            LOG(ERROR, __FUNCTION__, " Writing of  to  node failed err ", string(value), " ",
+                string(nodepath), " errno = ", string(strerror(errno)));
         } else {
-            logTmp = " Writing of  to  node success " + string(value) + " " + string(nodepath);
-            LOG(DEBUG, __FUNCTION__, logTmp);
+            LOG(DEBUG, __FUNCTION__, " Writing of  to  node success ", string(value), " ",
+                string(nodepath));
         }
+        close(fd);
     }
-    close(fd);
 }
 
 void EventManager::holdWakeLock() {
-    LOG(DEBUG, __FUNCTION__);
     writeToSystemNode((char *)WAKELOCK_PATH, (char *)WAKE_LOCK, strlen(WAKE_LOCK));
+    LOG(DEBUG, __FUNCTION__);
 }
 
 void EventManager::holdWakeLock(const std::string &wakeLockValue) {
-    LOG(DEBUG, __FUNCTION__);
     writeToSystemNode((char *)WAKELOCK_PATH, (char *)wakeLockValue.c_str(), wakeLockValue.length());
+    LOG(DEBUG, __FUNCTION__);
 }
 
 void EventManager::releaseWakeLock() {

@@ -294,9 +294,9 @@ for the change in network selection mode.
 23. The application can set dubious cell list for NR network.
 24. Application receives the errorcode i.e. either SUCCESS or other errorcode based on execution of
     setNrDubiousCell API.
-25. The application can tune the 5G scan behavior by setting the coverage state.
+25. The application set the coverage area.
 26. Application receives the errorcode i.e. either SUCCESS or other errorcode based on execution of
-    setCoverageState API.
+    setCoverageArea API.
 27. Application can deregister a listener there by it would not get notifications.
 28. Status of deregister listener i.e. either SUCCESS or other status will be returned to the application.
 

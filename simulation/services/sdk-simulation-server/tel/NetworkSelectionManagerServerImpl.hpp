@@ -63,9 +63,9 @@ class NetworkSelectionManagerServerImpl final
     grpc::Status AbortNetworkScan(ServerContext *context,
         const ::telStub::AbortNetworkScanRequest *request,
         ::telStub::AbortNetworkScanReply *response) override;
-    grpc::Status SetCoverageState(ServerContext *context,
-        const ::telStub::SetCoverageStateRequest *request,
-        ::telStub::SetCoverageStateReply *response) override;
+    grpc::Status SetCoverageArea(ServerContext *context,
+        const ::telStub::SetCoverageAreaRequest *request,
+        ::telStub::SetCoverageAreaReply *response) override;
 
  private:
     void createPreferredNetworkInfo(

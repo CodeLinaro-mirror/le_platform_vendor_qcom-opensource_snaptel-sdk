@@ -106,6 +106,19 @@ telux::common::Status PowerRefDaemon::init() {
             LOGFD("smsTrigger %s", config_->getValue("TRIGGER", "SMS_TRIGGER").c_str());
         }
 
+        if (RefAppUtils::isWakeupListenerEnabled()) {
+            wakeupHandler_ = WakeupHandler::getInstance(eventManager);
+            if (wakeupHandler_ && wakeupHandler_->init()) {
+                LOGFI("wakeupHandler init succeeded");
+            } else {
+                LOGFE("wakeupHandler init failed");
+                initStatus = telux::common::Status::FAILED;
+                break;
+            }
+        } else {
+            LOGFI("wakeupHandler not enabled");
+        }
+
         if (config_->getValue("TRIGGER", "CAN_TRIGGER") == "ENABLE") {
 #ifdef CAN_TRIGGER_SUPPORTED
             canTrigger_ = CANTrigger::getInstance(eventManager);

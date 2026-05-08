@@ -128,38 +128,20 @@ grpc::Status NtnServerImpl::SendData(ServerContext *context,
     const ::google::protobuf::Empty *request, satcomStub::SendDataReply *response) {
 
     LOG(DEBUG, __FUNCTION__);
-    std::string apiJsonPath   = SATCOM_API_LOCAL_JSON;
-    std::string stateJsonPath = SATCOM_STATE_JSON;
-    std::string subsystem     = "INtnManager";
-    std::string method        = "sendData";
-    JsonData data;
-    telux::common::ErrorCode error
-        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
-
-    if (error != ErrorCode::SUCCESS) {
-        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
-    }
 
     if (ntnState_ != telux::satcom::NtnState::IN_SERVICE) {
-        return grpc::Status(grpc::StatusCode::INTERNAL, " ntn not enabled");
+        response->set_status(static_cast<commonStub::Status>(telux::common::Status::NOTREADY));
+        return grpc::Status::OK;
     }
 
-    uint64_t transactionId = generateRandomTransactionId();
+    uint64_t transactionId = generateNextTransactionId();
     response->set_transaction_id(transactionId);
-    response->mutable_reply()->set_status(static_cast<commonStub::Status>(data.status));
-    response->mutable_reply()->set_error(static_cast<commonStub::ErrorCode>(data.error));
-
+    response->set_status(static_cast<commonStub::Status>(telux::common::Status::SUCCESS));
     return grpc::Status::OK;
 }
 
-uint64_t NtnServerImpl::generateRandomTransactionId() {
-    static bool seeded = false;
-    if (!seeded) {
-        srand(static_cast<unsigned int>(time(nullptr)));
-        seeded = true;
-    }
-
-    return (rand() % 1001) + 1000;
+uint64_t NtnServerImpl::generateNextTransactionId() {
+    return transactionCounter_++;
 }
 
 grpc::Status NtnServerImpl::AbortData(ServerContext *context,

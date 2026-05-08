@@ -80,7 +80,8 @@ class NtnServerImpl final : public satcomStub::NtnManager::Service,
     void handleLocationFixRequest(std::string event);
     void handleIncomingData(std::string event);
     void handleDataAck(std::string event);
-    uint64_t generateRandomTransactionId();
+    std::atomic<uint64_t> transactionCounter_{1};
+    uint64_t generateNextTransactionId();
 };
 
 #endif  // NTN_SERVER_HPP

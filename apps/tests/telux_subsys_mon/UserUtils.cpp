@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <iostream>
 #include <cstdint>
+#include <limits>
 
 #include "UserUtils.hpp"
 
@@ -69,5 +70,32 @@ bool UserUtils::getLocalRemoteFromUser() {
         }
 
         return (numFromUsr == 0) ? true : false;
+    }
+}
+
+/*
+ * Prompts the user for a non-empty string input and returns it.
+ */
+std::string UserUtils::getStringFromUser(std::string prompt) {
+
+    std::string usrInput = "";
+
+    while (1) {
+        std::cout << prompt;
+
+        std::getline(std::cin, usrInput);
+        if (std::cin.fail() || std::cin.bad() || std::cin.eof()) {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "input stream closed" << std::endl;
+            return "";
+        }
+
+        if (usrInput.empty()) {
+            std::cout << "invalid input" << std::endl;
+            continue;
+        }
+
+        return usrInput;
     }
 }

@@ -2954,6 +2954,51 @@ is available.
 4. Once the self test is completed, the callback gets invoked indicating the result of the self
    test.
 
+Call flow for EDL (Emergency Download) management
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. figure:: /../images/platform_edl_call_flow.png
+
+1. Get the reference to the SubsystemFactory singleton using
+   ``SubsystemFactory::getInstance()``.
+2. Request an ``ISubsystemManager`` instance from SubsystemFactory, providing an optional
+   initialization callback. The factory creates a new SubsystemManagerImpl if one does not
+   already exist.
+3. Call ``ISubsystemManager::getServiceStatus()`` to determine whether the subsystem
+   service is ready. If the status is ``SERVICE_UNAVAILABLE``, wait for the initialization
+   callback to be invoked with the updated ``ServiceStatus``.
+4. Create a listener class that implements ``ISubsystemListener`` and register it with
+   ``ISubsystemManager::registerListener()``, specifying the subsystems to monitor
+   (e.g. ``{subsystem=APSS, location=REMOTE_PROC}``). The listener will receive both
+   subsystem state change notifications and EDL lifecycle notifications.
+5. Set the EDL configuration parameters (image path, rawprogram XML and patch XML) using
+   ``ISubsystemManager::setEdlConfigurations()``. On success, all registered listeners are
+   notified via ``ISubsystemListener::onEdlConfigUpdate()`` with the updated configuration.
+6. Optionally verify the stored configuration by calling
+   ``ISubsystemManager::getEdlConfigurations()``.
+7. Initiate the EDL operation by calling ``ISubsystemManager::triggerEdl()``. The call
+   returns immediately with ``ErrorCode::SUCCESS`` if the request was accepted. A valid EDL
+   configuration must have been set prior to this call, otherwise the request is rejected.
+8. The EDL lifecycle proceeds asynchronously. Phase transitions are reported to all registered
+   listeners via ``ISubsystemListener::onEdlStateChanged()``:
+
+   a. ``MOVING_TO_EDL`` — an attempt to place the target device into EDL mode is in progress.
+   b. ``MOVED_TO_EDL`` — the target device has entered EDL mode and image flashing can begin.
+   c. ``FLASHING`` — the image write operation is in progress.
+   d. ``FLASHED`` — the image write completed successfully (success path only).
+
+9. Once the EDL operation concludes, ``ISubsystemListener::onEdlOperationResult()`` is
+   invoked once with the final outcome:
+
+   a. ``success=true`` — the EDL and flashing operations completed successfully.
+   b. ``success=false`` — a failure occurred at one of the lifecycle stages. The last
+      ``onEdlStateChanged()`` notification indicates the stage at which the failure occurred.
+
+10. At any point, the current EDL phase can be polled synchronously using
+    ``ISubsystemManager::getEdlState()`` as an alternative to the listener notifications.
+11. When monitoring is no longer required, call ``ISubsystemManager::deRegisterListener()``
+    to remove the listener.
+
 Security Management
 -------------------
 

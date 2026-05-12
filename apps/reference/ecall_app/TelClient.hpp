@@ -105,13 +105,14 @@ class TelClient : public ICallListener,
      * @param [in] category     ECallCategory
      * @param [in] variant      ECallVariant
      * @param [in] transmitMsd  Configures MSD transmission at MO call connect
+     * @param [in] config       Custom test NG eCall configuration
      * @param [in] callListener pointer to CallStatusListener to notify call status changes
      *
      * @returns Status of startECall i.e success or suitable status code.
      *
      */
     telux::common::Status startECall(int phoneId, std::vector<uint8_t> msdPdu, ECallMsdData msdData,
-        ECallCategory category, ECallVariant variant, bool transmitMsd,
+        ECallCategory category, ECallVariant variant, bool transmitMsd, TestECallConfig config,
         std::shared_ptr<CallStatusListener> callListener);
 
     /**
@@ -442,6 +443,9 @@ class TelClient : public ICallListener,
     std::shared_ptr<EcallScanFailHandler> eCallScanFailHdlrInstance_;
     /** Represents whether ecall initiated is a private ecall. */
     bool isPrivateEcallTriggered;
+    /** TestECallConfig for custom test NG eCall. */
+    telux::tel::TestECallConfig ngTestECallConfig_
+                        = {telux::tel::TestECallConfigType::DEFAULT_SDN_URI, ""};
 };
 
 #endif  // TELCLIENT_HPP

@@ -60,7 +60,8 @@ TelClient::TelClient()
    , eCall_(nullptr)
    , eCallInprogress_(false)
    , eCallScanFailHdlrInstance_(nullptr)
-   , isPrivateEcallTriggered(false) {
+   , isPrivateEcallTriggered(false)
+   , ngTestECallConfig_({telux::tel::TestECallConfigType::DEFAULT_SDN_URI, ""}) {
 }
 
 TelClient::~TelClient() {
@@ -474,7 +475,7 @@ void TelClient::configureECallRedialResponse(telux::common::ErrorCode error) {
 // Initiate a standard eCall procedure(eg.112)
 telux::common::Status TelClient::startECall(int phoneId, std::vector<uint8_t> msdPdu,
     ECallMsdData msdData, ECallCategory category, ECallVariant variant, bool transmitMsd,
-    std::shared_ptr<CallStatusListener> callListener) {
+    TestECallConfig config, std::shared_ptr<CallStatusListener> callListener) {
     if (!callMgr_) {
         std::cout << CLIENT_NAME << "Invalid Call Manager, Failed to initiate an eCall"
                   << std::endl;
@@ -485,18 +486,20 @@ telux::common::Status TelClient::startECall(int phoneId, std::vector<uint8_t> ms
     // Initiate an eCall
     telux::common::Status status = telux::common::Status::FAILED;
     if (transmitMsd) {
-        if(msdPdu.empty()) {
-            status = callMgr_->makeECall(phoneId, msdData, (int)category, (int)variant,
-                shared_from_this());
+        if (msdPdu.empty()) {
+            status = callMgr_->makeECall(
+                phoneId, msdData, (int)category, (int)variant, shared_from_this(), config);
         } else {
             status = callMgr_->makeECall(phoneId, msdPdu, (int)category, (int)variant,
-                 std::bind(&TelClient::makeCallResponse, this, std::placeholders::_1,
-                 std::placeholders::_2));
+                std::bind(&TelClient::makeCallResponse, this, std::placeholders::_1,
+                    std::placeholders::_2),
+                config);
         }
     } else {
         status = callMgr_->makeECall(phoneId, (int)category, (int)variant,
             std::bind(
-                &TelClient::makeCallResponse, this, std::placeholders::_1, std::placeholders::_2));
+                &TelClient::makeCallResponse, this, std::placeholders::_1, std::placeholders::_2),
+            config);
     }
     if (status == telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Request to make an ECall is sent successfully" << std::endl;
@@ -512,6 +515,7 @@ telux::common::Status TelClient::startECall(int phoneId, std::vector<uint8_t> ms
         ecallInfo.msdTransmissionStatus = telux::tel::ECallMsdTransmissionStatus::FAILURE;
         ecallInfo.eCallNWScanFailed = false;
         eCallDataMap_[phoneId] = ecallInfo;
+        ngTestECallConfig_ = config;
     } else {
         std::cout << CLIENT_NAME << "Request to make an ECall failed!" << std::endl;
         setECallProgressState(false);

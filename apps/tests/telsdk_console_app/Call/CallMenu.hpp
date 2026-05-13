@@ -67,6 +67,8 @@ protected:
    std::shared_ptr<telux::tel::ICallManager> callManager_;
    std::shared_ptr<MyCallCommandCallback> myHoldCb_;
    std::shared_ptr<MyCallCommandCallback> myResumeCb_;
+   std::shared_ptr<MyDialCallback> myDialCallCmdCb_;
+   std::shared_ptr<MyCallCommandCallback> myHangupCb_;
 
 private:
    void conferenceSubMenu(std::vector<std::string> userInput);
@@ -83,9 +85,6 @@ private:
    void stopDtmfTone(std::vector<std::string> userInput);
    void enableAudio(std::vector<std::string> userInput);
    bool queryAudioState();
-
-   std::shared_ptr<MyDialCallback> myDialCallCmdCb_;
-   std::shared_ptr<MyCallCommandCallback> myHangupCb_;
    std::shared_ptr<MyCallCommandCallback> myAnswerCb_;
    std::shared_ptr<MyCallCommandCallback> myRejectCb_;
    std::shared_ptr<MyCallCommandCallback> myConferenceCb_;

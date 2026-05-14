@@ -20,6 +20,7 @@
 #define DEFAULT_DELIMITER " "
 #define NTN_FILTER "ntn"
 #define NTN_IN_SERVICE "2"
+#define NTN_OUT_OF_SERVICE "1"
 #define NTN_DISABLED "0"
 
 NtnServerImpl::NtnServerImpl() {
@@ -100,22 +101,33 @@ grpc::Status NtnServerImpl::EnableNtn(ServerContext *context,
     if (error != ErrorCode::SUCCESS) {
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
     }
+    bool isExternalGnssMode = data.stateRootObj["INtnManager"]["isExternalGnssMode"].asBool();
+    bool enable             = request->enable();
 
-    bool enable = request->enable();
-
-    std::thread([this, enable] {
+    std::thread([this, enable, isExternalGnssMode] {
         telux::satcom::NtnState targetState
             = enable ? telux::satcom::NtnState::IN_SERVICE : telux::satcom::NtnState::DISABLED;
-        if (ntnState_ == targetState) {
+        if (ntnState_ == targetState && !isExternalGnssMode) {
             LOG(DEBUG, __FUNCTION__,
                 " NTN already in target state: ", static_cast<int>(targetState));
             return;
         }
         LOG(DEBUG, __FUNCTION__, " Changing NTN state from ", static_cast<int>(ntnState_), " to ",
             static_cast<int>(targetState));
+        /* Use event injector to switch switch between internal and external gnss
+           telsdk_event_injector -f json_update -e modify system-state/satcom/INtnManagerState.json
+           INtnManager.isExternalGnssMode false/true  */
 
         if (enable) {
-            handleStateChangeRequest(NTN_IN_SERVICE);
+            if (isExternalGnssMode) {
+                // External GNSS mode: go to OUT_OF_SERVICE, request location fix
+                handleStateChangeRequest(NTN_OUT_OF_SERVICE);
+                handleLocationFixRequest("1");
+            } else {
+                // Internal GNSS mode: go directly to IN_SERVICE
+                gnssEnabled_ = true;
+                handleStateChangeRequest(NTN_IN_SERVICE);
+            }
         } else {
             handleStateChangeRequest(NTN_DISABLED);
         }
@@ -338,7 +350,8 @@ grpc::Status NtnServerImpl::SetLocationFix(ServerContext *context,
     }
 
     response->set_error(static_cast<commonStub::ErrorCode>(data.error));
-
+    locationFixReceived_ = true;
+    gnssEnabled_         = false;
     if (ntnState_ == telux::satcom::NtnState::OUT_OF_SERVICE) {
         std::thread([this] { handleStateChangeRequest(NTN_IN_SERVICE); }).detach();
     }
@@ -364,6 +377,15 @@ grpc::Status NtnServerImpl::LocationFixResponse(ServerContext *context,
 
     response->set_error(static_cast<commonStub::ErrorCode>(data.error));
 
+    auto reqStatus    = static_cast<telux::satcom::LocationStatus>(request->status());
+    uint64_t waitTime = request->wait_time();
+
+    if (reqStatus == telux::satcom::LocationStatus::RETRY && waitTime > 0) {
+        std::thread([this, waitTime] {
+            std::this_thread::sleep_for(std::chrono::milliseconds(waitTime));
+            handleLocationFixRequest("1");
+        }).detach();
+    }
     return grpc::Status::OK;
 }
 
@@ -416,6 +438,11 @@ void NtnServerImpl::handleStateChangeRequest(std::string event) {
         } else {
             LOG(ERROR, __FUNCTION__, "Invalid state value");
             return;
+        }
+
+        if (stateValue == 0 || stateValue == 1) {
+            gnssEnabled_         = false;
+            locationFixReceived_ = false;
         }
     } catch (const std::exception &ex) {
         LOG(ERROR, __FUNCTION__, "Exception occurred: ", ex.what());

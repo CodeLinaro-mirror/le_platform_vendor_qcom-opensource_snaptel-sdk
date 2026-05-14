@@ -89,7 +89,6 @@ TelClient::~TelClient() {
     eCallInprogress_ = false;
     isPrivateEcallTriggered = false;
     eCallDataMap_.clear();
-    cleanup();
 }
 
 void TelClient::cleanup() {

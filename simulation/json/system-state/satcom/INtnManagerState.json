@@ -2,6 +2,7 @@
     "INtnManager": {
         "isNtnSupported": {
             "isSupported": true
-        }
+        },
+        "isExternalGnssMode": true
     }
 }

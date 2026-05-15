@@ -595,7 +595,7 @@ void AudioServiceImpl::read(
 }
 
 void AudioServiceImpl::startDtmf(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-    uint16_t gain, uint16_t duration, DtmfTone dtmfTone) {
+    uint16_t gain, uint32_t duration, DtmfTone dtmfTone) {
     std::shared_ptr<Stream> stream = streamCache_->retrieveStream(streamId);
     if (stream) {
         stream->startDtmf(audioReq, streamId, gain, duration, dtmfTone);
@@ -611,7 +611,7 @@ void AudioServiceImpl::stopDtmf(
 }
 
 void AudioServiceImpl::startTone(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
-    uint16_t gain, uint16_t duration, std::vector<uint16_t> toneFrequencies) {
+    uint16_t gain, uint32_t duration, std::vector<uint16_t> toneFrequencies) {
     std::shared_ptr<Stream> stream = streamCache_->retrieveStream(streamId);
     if (stream) {
         stream->startTone(audioReq, streamId, gain, duration, toneFrequencies);

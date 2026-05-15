@@ -77,13 +77,13 @@ class AudioServiceImpl : public IAudioMsgListener,
         uint32_t readLengthRequested) override;
 
     void startDtmf(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, uint16_t gain,
-        uint16_t duration, DtmfTone dtmfTone) override;
+        uint32_t duration, DtmfTone dtmfTone) override;
 
     void stopDtmf(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId,
         StreamDirection direction) override;
 
     void startTone(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId, uint16_t gain,
-        uint16_t duration, std::vector<uint16_t> toneFrequencies) override;
+        uint32_t duration, std::vector<uint16_t> toneFrequencies) override;
 
     void stopTone(std::shared_ptr<AudioRequest> audioReq, uint32_t streamId) override;
 

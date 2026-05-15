@@ -230,8 +230,18 @@ class ICallManager {
      * MSD encoding for optional ERA-GLONASS additional data is not supported as per spec
      * GOST R 54620 / GOST R 33464.
      *
-     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT
-     * permission to invoke this API successfully.
+     * To initiate a custom test NG eCall using the default SDN or an SDN URI, or a
+     * user-specified SDN URI or dialing number, the application must populate the @ref
+     * telux::tel::TestECallConfig structure with the required configuration parameters.
+     *
+     * @note Before initiating a custom test NG eCall, ensure that @ref telux::tel::ECallNumType
+     * is set to @ref telux::tel::ECallNumType::DEFAULT. If it is configured to any other value,
+     * it must be reset to @ref telux::tel::ECallNumType::DEFAULT by invoking @ref
+     * telux::tel::ICallManager::setECallConfig. This action clears any previously configured
+     * eCall number type.
+     *
+     * On platforms with access control enabled, the caller must have the TELUX_TEL_ECALL_MGMT
+     * permission to successfully invoke this API.
      *
      * @param [in] phoneId      Represents phone corresponding to which make
      *                          eCall operation is performed
@@ -241,6 +251,7 @@ class ICallManager {
      * @param [in] variant      @ref ECallVariant
      * @param [in] callback     Optional callback pointer to get the response of
      *                          makeECall request.
+     * @param [in] config       Custom test NG eCall configuration.
      *                          Possible(not exhaustive) error codes for callback response
      *                          - @ref telux::common::ErrorCode::SUCCESS
      *                          - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
@@ -256,7 +267,8 @@ class ICallManager {
      * @returns Status of makeECall i.e. success or suitable status code.
      */
     virtual telux::common::Status makeECall(int phoneId, const ECallMsdData &eCallMsdData,
-        int category, int variant, std::shared_ptr<IMakeCallCallback> callback = nullptr)
+        int category, int variant, std::shared_ptr<IMakeCallCallback> callback = nullptr,
+        const TestECallConfig config = {telux::tel::TestECallConfigType::DEFAULT_SDN_URI, ""})
         = 0;
 
     /**
@@ -299,6 +311,7 @@ class ICallManager {
         const ECallMsdData &eCallMsdData, int category,
         std::shared_ptr<IMakeCallCallback> callback = nullptr)
         = 0;
+
     /**
      * Initiate an automotive Third Party Service(TPS) eCall over IMS only, to the specified phone
      * number with Minimum Set of Data(MSD) at call connect. It will be treated like a regular voice
@@ -333,13 +346,24 @@ class ICallManager {
         CustomSipHeader header    = {telux::tel::CONTENT_HEADER, ""},
         MakeCallCallback callback = nullptr)
         = 0;
+
     /**
      * Initiate an European(EU) or ERA-GLONASS automotive eCall with raw MSD pdu.
      * Regular voice calls will be blocked by device while eCall is in progress.
      * MSD encoding for optional ERA-GLONASS additional data is not supported as per spec
      * GOST R 54620 / GOST R 33464.
      *
-     * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+     * To initiate a custom test NG eCall using the default SDN or an SDN URI, or a
+     * user-specified SDN URI or dialing number, the application must populate the @ref
+     * telux::tel::TestECallConfig structure with the required configuration parameters.
+     *
+     * @note Before initiating a custom test NG eCall, ensure that @ref telux::tel::ECallNumType
+     * is set to @ref telux::tel::ECallNumType::DEFAULT. If it is configured to any other value,
+     * it must be reset to @ref telux::tel::ECallNumType::DEFAULT by invoking @ref
+     * telux::tel::ICallManager::setECallConfig. This action clears any previously configured
+     * eCall number type.
+     *
+     * On platforms with access control enabled, the caller must have the TELUX_TEL_ECALL_MGMT
      * permission to successfully invoke this API.
      *
      * @param [in] phoneId   Represents phone corresponding to which on make eCall
@@ -350,6 +374,7 @@ class ICallManager {
      * @param [in] variant   @ref ECallVariant
      * @param [in] callback  Callback function to get the response of makeECall
      *                       request.
+     * @param [in] config    Custom test NG eCall configuration.
      *                       Possible(not exhaustive) error codes for callback response
      *                       - @ref telux::common::ErrorCode::SUCCESS
      *                       - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
@@ -365,7 +390,8 @@ class ICallManager {
      * @returns Status of makeECall i.e. success or suitable status code.
      */
     virtual telux::common::Status makeECall(int phoneId, const std::vector<uint8_t> &msdPdu,
-        int category, int variant, MakeCallCallback callback = nullptr)
+        int category, int variant, MakeCallCallback callback = nullptr,
+        const TestECallConfig config = {telux::tel::TestECallConfigType::DEFAULT_SDN_URI, ""})
         = 0;
 
     /**
@@ -415,6 +441,19 @@ class ICallManager {
      * MSD encoding for optional ERA-GLONASS additional data is not supported as per spec
      * GOST R 54620 / GOST R 33464.
      *
+     * To initiate a custom test NG eCall using the default SDN or an SDN URI, or a
+     * user-specified SDN URI or dialing number, the application must populate the @ref
+     * telux::tel::TestECallConfig structure with the required configuration parameters.
+     *
+     * @note Before initiating a custom test NG eCall, ensure that @ref telux::tel::ECallNumType
+     * is set to @ref telux::tel::ECallNumType::DEFAULT. If it is configured to any other value,
+     * it must be reset to @ref telux::tel::ECallNumType::DEFAULT by invoking @ref
+     * telux::tel::ICallManager::setECallConfig. This action clears any previously configured
+     * eCall number type.
+     *
+     * On platforms with access control enabled, the caller must have the TELUX_TEL_ECALL_MGMT
+     * permission to successfully invoke this API.
+     *
      * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
      * permission to successfully invoke this API.
      *
@@ -424,6 +463,7 @@ class ICallManager {
      * @param [in] variant      @ref ECallVariant
      * @param [in] callback     Optional callback function to get the response of
      *                          makeECall request.
+     * @param [in] config       Custom test NG eCall configuration.
      *                          Possible(not exhaustive) error codes for callback response
      *                          - @ref telux::common::ErrorCode::SUCCESS
      *                          - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
@@ -438,8 +478,9 @@ class ICallManager {
      *
      * @returns Status of makeECall i.e. success or suitable status code.
      */
-    virtual telux::common::Status makeECall(
-        int phoneId, int category, int variant, MakeCallCallback callback = nullptr)
+    virtual telux::common::Status makeECall(int phoneId, int category, int variant,
+        MakeCallCallback callback    = nullptr,
+        const TestECallConfig config = {telux::tel::TestECallConfigType::DEFAULT_SDN_URI, ""})
         = 0;
 
     /**

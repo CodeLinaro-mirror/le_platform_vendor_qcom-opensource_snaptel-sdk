@@ -72,6 +72,8 @@ class PowerMgmtTestApp : public ITcuActivityListener,
         const std::vector<ClientInfo> unresponsiveClients,
         const std::vector<ClientInfo> nackResponseClients) override;
     void onServiceStatusChange(ServiceStatus status) override;
+    void onServiceStatusChange(telux::common::ServiceStatus status, std::string machName,
+        TcuActivityState currState) override;
     void onMachineUpdate(const std::string machineName, const MachineEvent machineEvent) override;
 
     void registerForUpdates();

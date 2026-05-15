@@ -423,6 +423,15 @@ class IStaListener : public telux::common::ISDKListener {
     /**
      * This function is called when Station Status Changes
      *
+     * @note Under certain external conditions, if the STA interface status remains in
+     * the @ref telux::wlan::StaInterfaceStatus::CONNECTING state for an extended period,
+     * clients are advised to take recovery actions to avoid being stuck indefinitely.
+     *
+     * Possible actions:
+     * Restart the STA service using @ref telux::wlan::IStaInterfaceManager::manageStaService API.
+     * Restart WLAN using @ref telux::wlan::IWlanDeviceManager::enable API.
+     * If feasible, attempt connection to a different Access Point (AP).
+     *
      * @param [in] status     List of station state @ref telux::wlan::StaStatus
      */
     virtual void onStationStatusChanged(std::vector<StaStatus> staStatus) {

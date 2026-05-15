@@ -345,7 +345,8 @@ telux::common::Status CallManagerStub::makeECall(int phoneId, const std::string 
 }
 
 telux::common::Status CallManagerStub::makeECall(int phoneId, const ECallMsdData &eCallMsdData,
-    int category, int variant, std::shared_ptr<IMakeCallCallback> callback) {
+    int category, int variant, std::shared_ptr<IMakeCallCallback> callback,
+    TestECallConfig config) {
     LOG(DEBUG, "CallManager - ", __FUNCTION__);
 
     if (phoneId <= 0 || phoneId > noOfSlots_) {
@@ -887,7 +888,7 @@ telux::common::Status CallManagerStub::makeECall(int phoneId, const std::string 
 }
 
 telux::common::Status CallManagerStub::makeECall(int phoneId, const std::vector<uint8_t> &msdPdu,
-    int category, int variant, MakeCallCallback callback) {
+    int category, int variant, MakeCallCallback callback, TestECallConfig config) {
     LOG(DEBUG, "CallManager - ", __FUNCTION__);
     if (phoneId <= 0 || phoneId > noOfSlots_) {
         LOG(DEBUG, __FUNCTION__, " Invalid PhoneId");
@@ -966,7 +967,7 @@ telux::common::Status CallManagerStub::makeECall(int phoneId, const std::string 
 }
 
 telux::common::Status CallManagerStub::makeECall(
-    int phoneId, int category, int variant, MakeCallCallback callback) {
+    int phoneId, int category, int variant, MakeCallCallback callback, TestECallConfig config) {
     LOG(DEBUG, "CallManager - ", __FUNCTION__);
 
     if (phoneId <= 0 || phoneId > noOfSlots_) {

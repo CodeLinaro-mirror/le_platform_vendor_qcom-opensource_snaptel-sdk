@@ -79,7 +79,7 @@ class NtnServerImpl final : public satcomStub::NtnManager::Service,
     void handleCellularCoverageAvailable(std::string event);
     void handleLocationFixRequest(std::string event);
     void handleIncomingData(std::string event);
-
+    void handleDataAck(std::string event);
     uint64_t generateRandomTransactionId();
 };
 

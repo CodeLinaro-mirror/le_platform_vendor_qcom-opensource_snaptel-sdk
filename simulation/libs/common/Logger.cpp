@@ -14,6 +14,8 @@ extern "C" {
 #include <algorithm>
 #include <vector>
 #include <thread>
+#include <cstdarg>
+#include <cstdio>
 #include "Logger.hpp"
 #include "CommonUtils.hpp"
 #include "SimulationConfigParser.hpp"
@@ -291,12 +293,11 @@ void Logger::writeToSyslog(std::ostringstream &outputStream, LogLevel logLevel) 
     }
 }
 
-void Logger::writeLogMessage(std::ostringstream &os, LogLevel logLevel, const std::string &fileName,
-    const int &component, const std::string &lineNo) {
+void Logger::formatLogPrefix(
+    std::ostringstream &outputStream, LogLevel logLevel, const char *fileName, const char *lineNo) {
     std::string timeStamp         = "";
     std::string fileNameAndLineNo = "";
     std::string processIdAndName  = "";
-    std::ostringstream outputStream;
     struct timespec tp;
     tp.tv_sec = tp.tv_nsec = 0;
 
@@ -309,7 +310,7 @@ void Logger::writeLogMessage(std::ostringstream &os, LogLevel logLevel, const st
     processIdAndName = std::to_string(processID_) + "/" + processName_;
 
     // get the filename from full path
-    const char *lastSlash = std::strrchr(fileName.c_str(), '/');
+    const char *lastSlash = std::strrchr(fileName, '/');
     if (lastSlash != nullptr) {
         fileNameAndLineNo = " " + std::string(lastSlash + 1) + "(" + lineNo + ") ";
     } else {
@@ -330,7 +331,6 @@ void Logger::writeLogMessage(std::ostringstream &os, LogLevel logLevel, const st
             outputStream << "[D]" << timeStamp << " " << processIdAndName << fileNameAndLineNo;
             break;
         case LogLevel::LEVEL_PERF:
-            // Get current time in nano second from BOOT
             this->getTimeStampNs(&tp);
             outputStream << "[TS]" << timeStamp << " " << tp.tv_sec << "." << tp.tv_nsec << " "
                          << processIdAndName << fileNameAndLineNo;
@@ -338,6 +338,44 @@ void Logger::writeLogMessage(std::ostringstream &os, LogLevel logLevel, const st
         default:
             break;
     }
+}
+void Logger::writeLogMessageCStyle(const char *msg, LogLevel logLevel, const char *fileName,
+    const int &component, const char *lineNo) {
+
+    std::ostringstream outputStream;
+    formatLogPrefix(outputStream, logLevel, fileName, lineNo);
+
+    // Print thread id for debugging
+    outputStream << std::this_thread::get_id() << ": ";
+
+    // msg->Is the pointer valid *msg->first char not '\0'
+    if (msg) {
+        // Validate string is null-terminated within MAX_LOG_MESSAGE_SIZE
+        const size_t MAX_LOG_MESSAGE_SIZE = 4096;
+        size_t len                        = strnlen(msg, MAX_LOG_MESSAGE_SIZE);
+        if (len >= MAX_LOG_MESSAGE_SIZE) {
+            outputStream << "[LOG ERROR: Message too long or not null-terminated]";
+        } else {
+            outputStream << msg;
+        }
+
+        if (consoleLogLevel_ >= logLevel) {
+            writeToConsole(outputStream);
+        }
+        if (fileLogLevel_ >= logLevel) {
+            writeToFile(outputStream);
+        }
+        if (syslogLogLevel_ >= logLevel) {
+            writeToSyslog(outputStream, logLevel);
+        }
+    }
+}
+
+void Logger::writeLogMessage(std::ostringstream &os, LogLevel logLevel, const std::string &fileName,
+    const int &component, const std::string &lineNo) {
+
+    std::ostringstream outputStream;
+    formatLogPrefix(outputStream, logLevel, fileName.c_str(), lineNo.c_str());
 
     // Print thread id for debugging
     outputStream << std::this_thread::get_id() << ": ";
@@ -513,4 +551,58 @@ void Log::logStream(std::ostringstream &outputStream, LogLevel logLevel,
     const std::string &fileName, const std::string &lineNo, const int &component) {
     Logger &logger = Logger::getInstance();
     logger.writeLogMessage(outputStream, logLevel, fileName, component, lineNo);
+}
+
+void Log::logStreamVarArgs(LogLevel logLevel, const char *fileName, const char *lineNo,
+    const int &component, const char *fmt, va_list args) {
+
+    // This includes '\0' so valid char is 1023 + '\0'
+    constexpr size_t STACK_CAP = 1024;
+    char stackBuf[STACK_CAP];
+    const char *msgToLog = nullptr;
+    std::vector<char> heapBuf;
+
+    Logger &logger = Logger::getInstance();
+
+    // Handle empty format string
+    if (!fmt || *fmt == '\0') {
+        logger.writeLogMessageCStyle("", logLevel, fileName, component, lineNo);
+        return;
+    }
+
+    // Copy va_list because vsnprintf will consume it
+    va_list argsCopy;
+    va_copy(argsCopy, args);
+
+    // Calculate required size (excluding null terminator)
+    int written = vsnprintf(stackBuf, STACK_CAP, fmt, argsCopy);
+    va_end(argsCopy);
+
+    if (written < 0) {
+        msgToLog = "Log format error";
+    } else if (written < static_cast<int>(STACK_CAP)) {
+        // Fits in stack buffer: single pass, no heap
+        msgToLog = stackBuf;
+    } else {
+        // executed only when written >= STACK_CAP
+        size_t heapsize = written + 1;
+        try {
+            heapBuf.resize(heapsize);
+        } catch (const std::bad_alloc &e) {
+            syslog(LOG_ERR, "%s: Failed to allocate %zu bytes for log message", __FUNCTION__,
+                heapsize);
+            return;
+        }
+
+        int written2 = vsnprintf(heapBuf.data(), heapsize, fmt, args);
+
+        if (written2 >= 0 && written2 < static_cast<int>(heapsize)) {
+            msgToLog = heapBuf.data();
+        } else {
+            syslog(LOG_ERR, "%s: Failed to allocate %zu bytes for log message", __FUNCTION__,
+                heapsize);
+            return;
+        }
+    }
+    logger.writeLogMessageCStyle(msgToLog, logLevel, fileName, component, lineNo);
 }

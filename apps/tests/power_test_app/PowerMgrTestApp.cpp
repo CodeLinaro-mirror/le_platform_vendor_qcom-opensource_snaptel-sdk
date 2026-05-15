@@ -79,7 +79,7 @@ static void printTcuActivityState(TcuActivityState state, std::string machineNam
 
 static void printHelp() {
     std::cout << "-----------------------------------------------" << std::endl;
-    std::cout << "./telux_power_test_app <-l> <-s> <-r> <-p> <-c> <-t> <-T> <-h>" << std::endl;
+    std::cout << "./telux_power_test_app <-l> <-s> <-r> <-p> <-c> <-t> <-T> <-w> <-h>" << std::endl;
     std::cout << "Operations: " << std::endl;
     std::cout << "   -l : listen to TCU-activity state updates (as SLAVE)" << std::endl;
     std::cout << "   -s : send SUSPEND command (as MASTER)" << std::endl;
@@ -110,6 +110,7 @@ static void printHelp() {
               << "        e.g. telux_power_test_app -T qcom,mdm" << std::endl
               << "             telux_power_test_app -T qcom,televm" << std::endl;
     std::cout << "   -c : open interactive console (as MASTER)" << std::endl;
+    std::cout << "   -w : register for wakeup indications" << std::endl;
     std::cout << "   -h : print the help menu" << std::endl;
 }
 
@@ -200,6 +201,18 @@ void PowerMgmtTestApp::onServiceStatusChange(ServiceStatus status) {
     } else if (status == ServiceStatus::SERVICE_AVAILABLE) {
         PRINT_NOTIFICATION << " Service Status : AVAILABLE" << std::endl;
     }
+}
+
+void PowerMgmtTestApp::onServiceStatusChange(
+    telux::common::ServiceStatus status, std::string machName, TcuActivityState currState) {
+    if (status == ServiceStatus::SERVICE_AVAILABLE) {
+        PRINT_NOTIFICATION << " Service Status : AVAILABLE" << std::endl;
+    } else if (status == ServiceStatus::SERVICE_UNAVAILABLE) {
+        PRINT_NOTIFICATION << " Service Status : UNAVAILABLE" << std::endl;
+    } else if (status == ServiceStatus::SERVICE_FAILED) {
+        PRINT_NOTIFICATION << " Service Status : FAILED" << std::endl;
+    }
+    printTcuActivityState(currState, machName);
 }
 
 static void signalHandler(int signum) {

@@ -67,12 +67,13 @@ void CANTrigger::onEventProcessed(shared_ptr<Event> event, bool success) {
 }
 
 void CANTrigger::triggerEvent(CwFrame *pf, void *userData, int ifNo) {
-    LOG(DEBUG, __FUNCTION__);
     CANTrigger *canTriggerPtr = (CANTrigger *)userData;
     if (!canTriggerPtr) {
         LOG(ERROR, __FUNCTION__, " no can trigger instance available ");
         return;
     }
+    canTriggerPtr->eventManager_->holdWakeLock("CANReceived");
+    LOG(DEBUG, __FUNCTION__);
     LOG(DEBUG, __FUNCTION__, " received frame id = ", pf->getId());
     std::shared_ptr<Event> eventPtr;
     for (auto trigger : canTriggerPtr->triggers_) {
@@ -115,6 +116,7 @@ void CANTrigger::triggerEvent(CwFrame *pf, void *userData, int ifNo) {
     } else {
         LOG(ERROR, __FUNCTION__, " unable to create event");
     }
+    canTriggerPtr->eventManager_->releaseWakeLock("CANReceived");
 }
 
 std::shared_ptr<CANTrigger> CANTrigger::getInstance(std::shared_ptr<EventManager> eventManager) {

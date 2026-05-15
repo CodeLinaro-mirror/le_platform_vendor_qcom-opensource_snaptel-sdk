@@ -354,10 +354,12 @@ message CryptoAccServiceStatus {
 }
 
 message OperationResult {
-    uint32 id = 1;
-    OperationType operationType = 2;
-    commonStub.ErrorCode error_code = 3;
-    bytes data = 4;
+    uint32 reserved = 1;
+    uint32 id = 2;
+    OperationType operationType = 3;
+    uint32 result = 4;              // Main result: 0=SUCCESS, 1=FAILED
+    uint32 errCode = 5;             // PKE-specific error code (9-bit): 0-9
+    bytes data = 6;
 }
 
 enum EccCurve {

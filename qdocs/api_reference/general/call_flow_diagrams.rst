@@ -246,8 +246,9 @@ Network Selection Manager call flow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Network selection manager provides APIs to get and set network selection mode,
-get and set preferred networks, set dubious cell for LTE and NR network and perform network scan for
-available networks. Registered listener will get notified for the change in network selection mode.
+get and set preferred networks, set dubious cell for LTE and NR network, perform network scan for
+available networks and set the coverage state for 5G network. Registered listener will get notified
+for the change in network selection mode.
 
 .. figure:: /../images/network_selection_call_flow.png
 
@@ -287,14 +288,17 @@ available networks. Registered listener will get notified for the change in netw
 19. Application receives the status i.e. either SUCCESS or other status based on the execution
     of performNetworkScan API.
 20. Network name, MCC, MNC and status of the operator will be received by the application.
-21. The application can set dubious cell list for LTE network..
+21. The application can set dubious cell list for LTE network.
 22. Application receives the errorcode i.e. either SUCCESS or other errorcode based on execution of
     setLteDubiousCell API.
-23. The application can set dubious cell list for NR network..
+23. The application can set dubious cell list for NR network.
 24. Application receives the errorcode i.e. either SUCCESS or other errorcode based on execution of
     setNrDubiousCell API.
-25. Application can deregister a listener there by it would not get notifications.
-26. Status of deregister listener i.e. either SUCCESS or other status will be returned to the application.
+25. The application set the coverage area.
+26. Application receives the errorcode i.e. either SUCCESS or other errorcode based on execution of
+    setCoverageArea API.
+27. Application can deregister a listener there by it would not get notifications.
+28. Status of deregister listener i.e. either SUCCESS or other status will be returned to the application.
 
 Serving System Manager Call Flow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

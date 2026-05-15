@@ -148,32 +148,6 @@ class ITcuActivityManager {
         = 0;
 
     /**
-     * Register the given listener to listen power management service's functional
-     * status change.
-     *
-     * @param[in] listener Receives status change updates
-     *
-     * @returns @ref telux::common::Status::SUCCESS if the listener is registered,
-     *          otherwise, an appropriate error code
-     */
-    virtual telux::common::Status registerServiceStateListener(
-        std::weak_ptr<telux::common::IServiceStatusListener> listener)
-        = 0;
-
-    /**
-     * Deregisters the given listener registered previously with
-     * @ref ITcuActivityManager::registerServiceStateListener().
-     *
-     * @param[in] listener Listener to deregister
-     *
-     * @returns @ref telux::common::Status::SUCCESS if the listener is deregistered,
-     *          otherwise, an appropriate error code
-     */
-    virtual telux::common::Status deregisterServiceStateListener(
-        std::weak_ptr<telux::common::IServiceStatusListener> listener)
-        = 0;
-
-    /**
      * Gets machine's platform name on which the caller process is running. It can be used
      * to identify the local machine on a platform with multiple machines registered with
      * the platform's power management framework.
@@ -376,6 +350,40 @@ class ITcuActivityManager {
      *             TcuActivityState &state) instead.
      */
     virtual TcuActivityState getActivityState() = 0;
+
+    /**
+     * Register the given listener to listen power management service's functional
+     * status change.
+     *
+     * @param[in] listener Receives status change updates
+     *
+     * @returns @ref telux::common::Status::SUCCESS if the listener is registered,
+     *          otherwise, an appropriate error code
+     *
+     * @deprecated Use @ref telux::power::ITcuActivityManager::registerListener(
+     *             std::weak_ptr<ITcuActivityListener> listener) API to get notified about
+     *             power management service state change via
+     *             @ref telux::power::ITcuActivityListener::onServiceStatusChange
+     */
+    virtual telux::common::Status registerServiceStateListener(
+        std::weak_ptr<telux::common::IServiceStatusListener> listener)
+        = 0;
+
+    /**
+     * Deregisters the given listener registered previously with
+     * @ref ITcuActivityManager::registerServiceStateListener().
+     *
+     * @param[in] listener Listener to deregister
+     *
+     * @returns @ref telux::common::Status::SUCCESS if the listener is deregistered,
+     *          otherwise, an appropriate error code
+     *
+     * @deprecated Use @ref telux::power::ITcuActivityManager::deregisterListener(
+     *             std::weak_ptr<ITcuActivityListener> listener) API instead.
+     */
+    virtual telux::common::Status deregisterServiceStateListener(
+        std::weak_ptr<telux::common::IServiceStatusListener> listener)
+        = 0;
 
     /**
      * Destructor of ITcuActivityManager.

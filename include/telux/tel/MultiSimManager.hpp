@@ -196,7 +196,7 @@ class IMultiSimManager {
     /**
      * Configure logical slot to physical slot and port.
      *
-     * Logical slot index @ref telux::common::LogicalSlotId - It refers to the logical modem stack
+     * Logical slot index @ref LogicalSlotId - It refers to the logical modem stack
      * that is mapped to a physical slot.
      *
      * Physical slot index @ref telux::tel::PhysicalToPort::physicalSlot - Unique index referring
@@ -204,9 +204,8 @@ class IMultiSimManager {
      * This differs from the number of logical slots a device has, which corresponds to the number
      * of active slots a device is capable of using. For example, if device has two physical slots
      * but only one active slot, holding MEP card with two enabled profiles, it will have two
-     * logical slots telux::common::LogicalSlotId::SLOT_ID_1 and
-     * telux::common::LogicalSlotId::SLOT_ID_2 but only one physical slot
-     * @ref telux::common::PhysicalSlotId.
+     * logical slots LogicalSlotId::SLOT_ID_1 and LogicalSlotId::SLOT_ID_2 but only one physical
+     * slot @ref PhysicalSlotId.
      *
      * Port index @ref telux::tel::PhysicalToPort::portId - Unique index referring to a port
      * belonging to the physical SIM slot. For UICC/ eUICC card with single enabled profile (SEP)
@@ -234,15 +233,19 @@ class IMultiSimManager {
      * Application is expected to configure the device with dual-sim configuration with
      * MULTISIM_CONFIG=dsda or MULTISIM_CONFIG=dsds in /etc/tel.conf file.
      *
+     * @note: Existing profiles are not deleted during this configuration. Profiles stay linked to
+     *        their port identifiers. The application can disable and re-enable profiles as needed
+     *        after the transition.
+     *
      * @param [in] mapInfo A map of logical to physical slot and port.
      * For instance, consider a device with dual baseband support and application wishes to
      * configure MEP A1 card with two enabled profiles.
      *
      * Configuration:
      * mapInfo[0]=
-     *   {telux::common::LogicalSlotId::SLOT_ID_1, {telux::common::PhysicalSlotId::SLOT_ID_1,1}} ,
+     *   {LogicalSlotId::SLOT_ID_1, {PhysicalSlotId::SLOT_ID_1,1}} ,
      * mapInfo[1]=
-     *   {telux::common::LogicalSlotId::SLOT_ID_2, {telux::common::PhysicalSlotId::SLOT_ID_1,2}}
+     *   {LogicalSlotId::SLOT_ID_2, {PhysicalSlotId::SLOT_ID_1,2}}
      *
      * @param [in] callback     Callback function to get the response of
      *                          configureLogicalSlotMapping request.
@@ -260,17 +263,13 @@ class IMultiSimManager {
      * - Both logical slots are mapped to the same physical slot (eUICC).
      * - Each logical slot uses a unique port to access a distinct profile.
      * - Enables dual-profile operation on a single MEP A1 card.
-     * - Logical Slot 1 ↔ Port 1 ↔ Profile A
-     * - Logical Slot 2 ↔ Port 2 ↔ Profile B
-     * +------------------+------------------+
-     * | Logical Slot 1   | Logical Slot 2   |
-     * +------------------+------------------+
-     * | Port 1           | Port 2           |
-     * +------------------+------------------+
-     * |          Physical Slot 1            |
-     * +------------------+------------------+
-     * | Profile A        | Profile B        |
-     * +------------------+------------------+
+     *
+     * \brief Logical to Physical Slot Mapping
+     *
+     * Mapping details:
+     * - Physical Slot 1 hosts two profiles.
+     * - Profile A is accessed via Logical Slot 1 using Port 1.
+     * - Profile B is accessed via Logical Slot 2 using Port 2.
      *
      * Below are the sequence of steps to be followed to download, enable or disable profile for MEP
      * card.
@@ -407,8 +406,8 @@ class IMultiSimListener : public common::IServiceStatusListener {
      *
      * @param [in] slotStatus   list of slots status @ref SlotStatus
      *
-     * @deprecated Use IMultiSimManager::onSlotStatusChanged(std::map<SlotId, SimSlotStatus>
-     * &slotStatus) instead.
+     * @deprecated Use IMultiSimManager::onSlotStatusChanged(std::map<PhysicalSlotId,
+     * SimSlotStatus> slotStatus) instead.
      *
      */
     virtual void onSlotStatusChanged(std::map<SlotId, SlotStatus> slotStatus) {

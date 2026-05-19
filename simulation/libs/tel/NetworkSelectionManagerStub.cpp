@@ -488,6 +488,38 @@ telux::common::ErrorCode NetworkSelectionManagerStub::abortNetworkScan() {
     return error;
 }
 
+telux::common::ErrorCode NetworkSelectionManagerStub::setCoverageArea(CoverageArea area) {
+    LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " NetworkSelection Manager is not ready");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+
+    ::telStub::SetCoverageAreaRequest request;
+    ::telStub::SetCoverageAreaReply response;
+    ClientContext context;
+    request.set_phone_id(phoneId_);
+
+    switch (area) {
+        case CoverageArea::IN_5G_COVERAGE_HOLE:
+            request.set_area(telStub::CoverageArea::IN_5G_COVERAGE_HOLE);
+            break;
+        case CoverageArea::OUT_OF_5G_COVERAGE_HOLE:
+            request.set_area(telStub::CoverageArea::OUT_OF_5G_COVERAGE_HOLE);
+            break;
+        default:
+            return telux::common::ErrorCode::INVALID_ARGUMENTS;
+    }
+
+    grpc::Status reqstatus = stub_->SetCoverageArea(&context, request, &response);
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    }
+
+    return static_cast<telux::common::ErrorCode>(response.error());
+}
+
 void NetworkSelectionManagerStub::onEventUpdate(google::protobuf::Any event) {
     if (event.Is<::telStub::SelectionModeChangeEvent>()) {
         ::telStub::SelectionModeChangeEvent selectionModeChangeEvent;

@@ -210,6 +210,29 @@ grpc::Status NetworkSelectionManagerServerImpl::SetPreferredNetworks(ServerConte
     return grpc::Status::OK;
 }
 
+grpc::Status NetworkSelectionManagerServerImpl::SetCoverageArea(ServerContext *context,
+    const ::telStub::SetCoverageAreaRequest *request, ::telStub::SetCoverageAreaReply *response) {
+    LOG(DEBUG, __FUNCTION__);
+
+    std::string apiJsonPath = (request->phone_id() == SLOT_1) ? JSON_PATH1 : JSON_PATH2;
+    std::string subsystem   = MANAGER;
+    std::string method      = "setCoverageArea";
+    JsonData data;
+    Json::Value rootObj;
+
+    auto error = JsonParser::readFromJsonFile(rootObj, apiJsonPath);
+    if (error != telux::common::ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, ":: Reading JSON File failed! ");
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    std::string errStr = rootObj[subsystem][method]["error"].asString();
+    auto errCode       = CommonUtils::mapErrorCode(errStr);
+    response->set_error(static_cast<commonStub::ErrorCode>(errCode));
+
+    return grpc::Status::OK;
+}
+
 telux::tel::PreferredNetworkInfo NetworkSelectionManagerServerImpl::parsePreferredNetworkInfo(
     telStub::PreferredNetworkInfo input) {
     telux::tel::PreferredNetworkInfo nwInfo;

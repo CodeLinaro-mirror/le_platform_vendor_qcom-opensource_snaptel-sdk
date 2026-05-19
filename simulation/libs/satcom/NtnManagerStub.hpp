@@ -75,6 +75,7 @@ class NtnManagerStub : public INtnManager,
         ::satcomStub::CellularCoverageAvailableEvent cellularCoverageAvailableEvent);
     void handleLocationFixRequestEvent(
         ::satcomStub::LocationFixRequestEvent locationFixRequestEvent);
+    void handleDataAckEvent(::satcomStub::DataAckEvent dataAckEvent);
     void handleIncomingDataEvent(::satcomStub::IncomingDataEvent incomingDataEvent);
 };
 

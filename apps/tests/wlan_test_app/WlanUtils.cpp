@@ -385,10 +385,10 @@ telux::wlan::SecEncrypt WlanUtils::convertIntToSecEncrypt(int encrypt) {
     return retEncrypt;
 }
 
-void WlanUtils::printAPStatus(std::vector<telux::wlan::ApStatus> &apStatus) {
+void WlanUtils::printAPStatus(const std::vector<telux::wlan::ApStatus> &apStatus) {
     if (apStatus.size() > 0) {
-        std::cout << "List of APs:" << std::endl;
-        for (auto &ap : apStatus) {
+        std::cout << "Status of all APs:" << std::endl;
+        for (const auto &ap : apStatus) {
             std::cout << "--------------------------------------------" << std::endl;
             std::cout << "Id                 : " << WlanUtils::getWlanId(ap.id) << std::endl;
             std::cout << "Network Interface  : " << ap.name << std::endl;
@@ -444,15 +444,15 @@ void WlanUtils::printScanResult(const telux::wlan::StaScanResult &staScanResult)
     if (staScanResult.externalApList.size() > 0) {
         std::cout << "List of External APs:" << std::endl;
         std::cout << std::left << std::setw(18) << "\nBSSID " << std::setw(10) << " | Frequency "
-                  << std::setw(10) << " | Signal Level " << std::setw(23) << " | Flags "
-                  << " | SSID\n"
+                  << std::setw(10) << " | Signal Level " << std::setw(35) << " | SSID "
+                  << " | Flags\n"
                   << std::endl;
 
         for (auto &externalAp : staScanResult.externalApList) {
             std::cout << std::left << std::setw(20) << externalAp.bssid << std::setw(10)
                       << RadioTypeToString(externalAp.band) << std::setw(10)
-                      << externalAp.signalStrength << std::setw(30) << externalAp.securityFlags
-                      << externalAp.ssid << std::endl;
+                      << externalAp.signalStrength << std::setw(35) << externalAp.ssid
+                      << externalAp.securityFlags << std::endl;
         }
         std::cout << std::endl;
     } else {

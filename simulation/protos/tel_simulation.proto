@@ -197,6 +197,7 @@
      rpc SetLteDubiousCell (SetLteDubiousCellRequest) returns (SetLteDubiousCellReply) {}
      rpc SetNrDubiousCell (SetNrDubiousCellRequest) returns (SetNrDubiousCellReply) {}
      rpc AbortNetworkScan (AbortNetworkScanRequest) returns (AbortNetworkScanReply) {}
+     rpc SetCoverageArea(SetCoverageAreaRequest) returns (SetCoverageAreaReply) {}
  }
 
  service ImsService {
@@ -3338,6 +3339,12 @@ enum ServiceState {
    UNKNOWN_STATE = 10; /**< Unknown */
 };
 
+enum CoverageArea {
+    INVALID_COVERAGE_HOLE = 0;
+    IN_5G_COVERAGE_HOLE = 1;
+    OUT_OF_5G_COVERAGE_HOLE = 2;
+}
+
 message ServiceStateChangeEvent {
     ServiceState service_state = 1;
     int32 phone_id = 2;
@@ -3888,6 +3895,14 @@ message SetNrDubiousCellReply {
      commonStub.ErrorCode error = 1;
 }
 
+message SetCoverageAreaRequest {
+     int32 phone_id = 1;
+     CoverageArea area = 2;
+}
+
+message SetCoverageAreaReply {
+     commonStub.ErrorCode error = 1;
+}
 // --- ApSimProfile Service start ---
 enum ApduExchangeStatus {
   SUCCESS = 0;

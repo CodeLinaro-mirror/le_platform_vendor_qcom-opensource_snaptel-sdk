@@ -160,6 +160,10 @@ bool NetworkMenu::init() {
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("11", "abort_network_scan", {},
                 std::bind(&NetworkMenu::abortNetworkScan, this, std::placeholders::_1)));
 
+        std::shared_ptr<ConsoleAppCommand> setCoverageAreaCommand
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("12", "set_coverage_area", {},
+                std::bind(&NetworkMenu::setCoverageArea, this, std::placeholders::_1)));
+
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListNetworkSubMenu = {
             selectSimSlotCommand, getNetworkSelectionModeCommand, setNetworkSelectionModeCommand,
             getPreferredNetworksCommand, setPreferredNetworksCommand, performNetworkScanCommand};
@@ -169,6 +173,7 @@ bool NetworkMenu::init() {
         commandsListNetworkSubMenu.emplace_back(removeAllLteDubiousCellCommand);
         commandsListNetworkSubMenu.emplace_back(removeAllNrDubiousCellCommand);
         commandsListNetworkSubMenu.emplace_back(abortNetworkScanCommand);
+        commandsListNetworkSubMenu.emplace_back(setCoverageAreaCommand);
 
         addCommands(commandsListNetworkSubMenu);
         ConsoleApp::displayMenu();
@@ -697,5 +702,39 @@ void NetworkMenu::removeAllNrDubiousCell(std::vector<std::string> userInput) {
         std::cout
             << "\nRemove all NR dubious cell failed, err: " << Utils::getErrorCodeAsString(err)
             << std::endl;
+    }
+}
+
+void NetworkMenu::setCoverageArea(std::vector<std::string> userInput) {
+    auto networkManager = networkManagers_[slot_ - 1];
+    if (networkManager) {
+        int areaInput = 0;
+        telux::tel::CoverageArea area;
+
+        std::cout << "Enter coverage area (1-IN_5G-COVERAGE_HOLE, 2-OUT_OF_5G_COVERAGE_HOLE): ";
+        std::cin >> areaInput;
+        Utils::validateInput(areaInput);
+
+        switch (areaInput) {
+            case 1:
+                area = telux::tel::CoverageArea::IN_5G_COVERAGE_HOLE;
+                break;
+            case 2:
+                area = telux::tel::CoverageArea::OUT_OF_5G_COVERAGE_HOLE;
+                break;
+            default:
+                std::cout << "Invalid coverage area input" << std::endl;
+                return;
+        }
+
+        auto err = networkManager->setCoverageArea(area);
+        if (err == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "\nSet coverage area succeed" << std::endl;
+        } else {
+            std::cout << "\nSet coverage area failed, err: " << Utils::getErrorCodeAsString(err)
+                      << std::endl;
+        }
+    } else {
+        std::cout << " ERROR - Network manager is NULL\n";
     }
 }

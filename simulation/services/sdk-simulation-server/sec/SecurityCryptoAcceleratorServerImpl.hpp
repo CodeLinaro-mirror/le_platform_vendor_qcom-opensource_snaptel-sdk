@@ -97,9 +97,10 @@ class SecurityCryptoAcceleratorServerImpl
     };
 
     // Members for asynchronous results management
-    std::vector<AsyncOperationResult> asyncResultsQueue_;
+    std::deque<AsyncOperationResult> asyncResultsQueue_;
     std::mutex asyncResultsMutex_;
 
+    uint32_t mapTeluxErrorToPke(telux::common::ErrorCode ec);
     void handleSSREvent(std::string eventParams);
     std::string mapCurveToString(securityStub::EccCurve curve);
 };

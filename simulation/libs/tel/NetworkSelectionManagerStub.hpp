@@ -64,6 +64,8 @@ class NetworkSelectionManagerStub
 
     telux::common::ErrorCode abortNetworkScan() override;
 
+    telux::common::ErrorCode setCoverageArea(CoverageArea area) override;
+
     void cleanup();
 
     void onEventUpdate(google::protobuf::Any event) override;

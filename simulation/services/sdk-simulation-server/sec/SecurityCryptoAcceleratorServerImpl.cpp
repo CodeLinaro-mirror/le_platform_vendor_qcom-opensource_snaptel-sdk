@@ -552,9 +552,11 @@ grpc::Status SecurityCryptoAcceleratorServerImpl::EcqvPostDataForMultiplyAndAdd(
         response->set_delay(apiResp.cbDelay);
     } else {
         // For polling mode, store results in a queue.
-        op_id = request->uniqueid();  // Use the uniqueId from the request.
+        op_id = request->uniqueid();
         asyncResultsQueue_.push_back(
             {op_id, securityStub::OP_TYPE_CALCULATE, final_result_data, apiResp.error});
+
+        // asyncResultsCV_.notify_one();
         LOG(INFO, __FUNCTION__, " ECQV result (ID: ", op_id,
             ") stored for async retrieval. Error Code: ", static_cast<int>(apiResp.error));
         response->set_error_code(
@@ -589,20 +591,63 @@ grpc::Status SecurityCryptoAcceleratorServerImpl::GetAsyncResults(::grpc::Server
     for (uint32_t i = 0; i < results_to_read; ++i) {
         const auto &res                           = asyncResultsQueue_[i];
         ::securityStub::OperationResult *opResult = response->add_results();
-        opResult->set_id(res.id);
+        telux::common::ErrorCode errorCode        = res.error_code;
+
+        // Set basic fields
+        opResult->set_reserved(0);
+        opResult->set_id(res.id & 0xFFFU);
         opResult->set_operationtype(res.operation_type);
+
+        if (errorCode == telux::common::ErrorCode::SUCCESS) {
+            opResult->set_result(0);  // MVM_RESULT_SUCCESS
+            opResult->set_errcode(0);  // MVM_ERROR_NONE
+        } else if (errorCode == telux::common::ErrorCode::VERIFICATION_FAILED) {
+            opResult->set_result(1);  // MVM_RESULT_FAILED
+            opResult->set_errcode(0);  // MVM_ERROR_NONE
+        } else {
+            opResult->set_result(1);  // MVM_RESULT_FAILED
+            uint32_t pkeError = mapTeluxErrorToPke(errorCode);
+            opResult->set_errcode(pkeError & 0x1FFU);
+        }
         opResult->set_data(res.result_data);
-        opResult->set_error_code(static_cast<commonStub::ErrorCode>(res.error_code));
     }
 
     LOG(INFO, __FUNCTION__, " Retrieved ", results_to_read, " async results.");
     response->set_numresultsread(results_to_read);
-    response->set_error_code(static_cast<commonStub::ErrorCode>(telux::common::ErrorCode::SUCCESS));
+    response->set_error_code(commonStub::ErrorCode::ERROR_CODE_SUCCESS);
 
-    // Remove retrieved results from the queue.
+    // Remove retrieved results from the queue
     asyncResultsQueue_.erase(
         asyncResultsQueue_.begin(), asyncResultsQueue_.begin() + results_to_read);
     LOG(INFO, __FUNCTION__, " Remaining results in queue: ", asyncResultsQueue_.size());
 
     return grpc::Status::OK;
+}
+
+uint32_t SecurityCryptoAcceleratorServerImpl::mapTeluxErrorToPke(telux::common::ErrorCode ec) {
+
+    // Map Telux error codes to PKE hardware error codes (9-bit values)
+    // These match the MVM_ERROR_STATUS enum values from ca_internal.h
+    switch (ec) {
+        case telux::common::ErrorCode::SUCCESS:
+            return 0;  // MVM_ERROR_NONE
+        case telux::common::ErrorCode::VERIFICATION_FAILED:
+            return 0;  // MVM_ERROR_NONE (not a PKE error)
+        case telux::common::ErrorCode::DMA_ERR:
+            return 1;  // MVM_ERROR_HSDMA
+        case telux::common::ErrorCode::DIV_ERR:
+            return 4;  // MVM_ERROR_DIV
+        case telux::common::ErrorCode::INVALID_LENGTH:
+            return 5;  // MVM_ERROR_DATASIZE
+        case telux::common::ErrorCode::RNG_UNSEEDED:
+            return 6;  // MVM_ERROR_PRNG
+        case telux::common::ErrorCode::MEM_ERR:
+            return 7;  // MVM_ERROR_MEM_READ
+        case telux::common::ErrorCode::MODULUS_ERR:
+            return 8;  // MVM_ERROR_MODULUS
+        case telux::common::ErrorCode::DECODING_ERR:
+            return 9;  // MVM_ERROR_DECODE
+        default:
+            return 2;  // MVM_ERROR_RESERVE1 (unknown error)
+    }
 }

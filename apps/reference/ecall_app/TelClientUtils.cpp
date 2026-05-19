@@ -126,6 +126,10 @@ std::string TelClientUtils::eCallMsdTransmissionStatusToString(
             return std::string("INIT SENT");
         case telux::tel::ECallMsdTransmissionStatus::NACK_RECEIVED:
             return std::string("NACK RECEIVED");
+        case telux::tel::ECallMsdTransmissionStatus::LL_NACK_DUE_TO_T7_EXPIRY:
+            return std::string("LL_NACK_DUE_TO_T7_EXPIRY");
+        case telux::tel::ECallMsdTransmissionStatus::MSD_AL_ACK_CLEARDOWN:
+            return std::string("MSD_AL_ACK_CLEARDOWN");
         default:
             std::stringstream ss;
             ss << "Unknown ECallMsdTransmissionStatus  = " << (int)status;

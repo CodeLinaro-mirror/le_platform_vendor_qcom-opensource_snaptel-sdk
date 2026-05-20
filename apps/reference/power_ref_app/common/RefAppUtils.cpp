@@ -635,13 +635,13 @@ std::string RefAppUtils::triggerTypeToString(TriggerType triggeredBy) {
             returnStingValue = "CAN";
             break;
         case TriggerType::CONSOLE_TRIGGER:
-            returnStingValue = "CONSOLE";
+            returnStingValue = "CIN";
             break;
         case TriggerType::TIMER_TRIGGER:
             returnStingValue = "TIMER";
             break;
         case TriggerType::WAKEUP_IND_TRIGGER:
-            returnStingValue = "WAKEUP_IND";
+            returnStingValue = "IND";
             break;
         default:
             break;

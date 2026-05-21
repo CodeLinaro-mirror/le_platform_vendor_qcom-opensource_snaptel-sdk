@@ -68,7 +68,7 @@ enum class StaInterfaceStatus {
     CONNECTED            = 2, /**< Station interface is connected                */
     DISCONNECTED         = 3, /**< Station interface is disconnected             */
     ASSOCIATION_FAILED   = 4, /**< Station is unable to associate with AP        */
-    IP_ASSIGNMENT_FAILED = 5, /**< Station in unable to get IP address via DHCP  */
+    IP_ASSIGNMENT_FAILED = 5, /**< Station is unable to get IP address via DHCP  */
 };
 
 /**
@@ -126,7 +126,7 @@ struct StaStatus {
 /**
  * This applies in architectures where the modem is attached to an External Application
  * Processor(EAP). An API that sets or configure Wlan can be invoked from the EAP or from
- * the modems Internal Application Processor (IAP). This type  specifies where the operation
+ * the modem's Internal Application Processor (IAP). This type  specifies where the operation
  * should be carried out.
  */
 enum class OperationType {

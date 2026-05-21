@@ -6,10 +6,10 @@
 /**
  * @file       ThermalListener.hpp
  *
- * @brief      IThermalListener - Interface for Thermal listener object. the clients needs
+ * @brief      IThermalListener - Interface for Thermal listener object. The clients need
  *             to implement this interface to get access to thermal service notifications
  *             like onServiceStatusChange.
- *             The methods in listener can be invoked from multiple threads.So the client
+ *             The methods in listener can be invoked from multiple threads. So the client
  *             needs to make sure that the implementation is thread-safe.
  */
 
@@ -60,7 +60,7 @@ class IThermalListener : public telux::common::IServiceStatusListener {
      * On platforms with Access control enabled, the client needs to have
      * TELUX_THERM_DATA_READ permission to receive this event.
      *
-     * @param [in] tripInfo  - Vector of the trip point for which trip event has been occured.
+     * @param [in] tripInfo  - Vector of the trip point for which trip event has been occurred.
      * @param [in] tripEvent - Indicates trip event.
      *                       - NONE
      *                       - CROSSED_UNDER

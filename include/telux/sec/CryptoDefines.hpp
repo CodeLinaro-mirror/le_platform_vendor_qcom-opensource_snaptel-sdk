@@ -138,7 +138,7 @@ enum KeyFormat {
 
 /**
  * Specifies how a crypto operation should be performed. An instance
- * of this must be created only thorough @ref CryptoParamBuilder.
+ * of this must be created only through @ref CryptoParamBuilder.
  */
 class ICryptoParam {
  public:

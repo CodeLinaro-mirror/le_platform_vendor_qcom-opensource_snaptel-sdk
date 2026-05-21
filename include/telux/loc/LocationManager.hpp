@@ -65,7 +65,7 @@ namespace loc {
  * The new APIs(registerListenerEx, deRegisterListenerEx, startDetailedReports,
  * startBasicReports) and old/deprecated APIs(registerListener, removeListener,
  * setPositionReportTimeout, setHorizontalAccuracyLevel, setMinIntervalForReports)
- * should not be used interchangebly, either the new APIs should be used or the
+ * should not be used interchangeably, either the new APIs should be used or the
  * old APIs should be used.
  *
  */
@@ -246,10 +246,10 @@ class ILocationManager {
      *
      * NMEA updates can be received by either:
      * a) Setting the
-     * @ref telux::loc::GnssReportType::NMEA bit in the reportMask passed as a paramter to
+     * @ref telux::loc::GnssReportType::NMEA bit in the reportMask passed as a parameter to
      * this API and receive the sentences via @ref ILocationListener::onGnssNmeaInfo.
      * b) Setting the
-     * @ref telux::loc::GnssReportType::ENGINE_NMEA bit in the reportMask passed as a paramter to
+     * @ref telux::loc::GnssReportType::ENGINE_NMEA bit in the reportMask passed as a parameter to
      * this API and receive the sentences via @ref ILocationListener::onEngineNmeaInfo.
      *
      * When clients set the GnssReportType::NMEA bit in the reportMask passed as a parameter
@@ -368,7 +368,7 @@ class ILocationManager {
         = 0;
 
     /**
-     * This API removes a previously registered listener and will also stop receiving informations
+     * This API removes a previously registered listener and will also stop receiving information
      * related to location system for that particular listener.
      *
      * @param [in] listener - Previously registered ILocationSystemInfoListener that needs to be

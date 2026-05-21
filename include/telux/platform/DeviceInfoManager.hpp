@@ -37,7 +37,7 @@ struct PlatformVersion {
 };
 
 /**
- * @brief   IDeviceInfoManager provides interface to to retrieve IMEI and
+ * @brief   IDeviceInfoManager provides interface to retrieve IMEI and
  *          platform version operations.
  */
 class IDeviceInfoManager {
@@ -52,7 +52,7 @@ class IDeviceInfoManager {
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
-     * Registers the listener for FileSystem Manager indications.
+     * Registers the listener for Device Info Manager indications.
      *
      * @param [in] listener      - pointer to implemented listener.
      *

@@ -80,7 +80,7 @@ class IConfigManager {
      *
      * @param [in] listener - Pointer of object that processes the notification.
      *
-     * @returns Status of registerForUpdates i.e success or suitable status code.
+     * @returns Status of deregisterListener i.e success or suitable status code.
      *
      */
     virtual telux::common::Status deregisterListener(std::weak_ptr<IConfigListener> listener) = 0;

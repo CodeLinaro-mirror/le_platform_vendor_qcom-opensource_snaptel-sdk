@@ -236,7 +236,7 @@ class ILocationConfigurator {
         = 0;
 
     /**
-     * This API sets the lever arm parameters for the vehicle. LeverArm is sytem level parameters
+     * This API sets the lever arm parameters for the vehicle. LeverArm is system level parameters
      * and it is not expected to change. So, it is needed to issue configureLeverArm once for every
      * application processor boot-up. For multiple invocations of this API client should wait for
      * the command to finish, e.g.: via ResponseCallback received before issuing a second
@@ -441,7 +441,7 @@ class ILocationConfigurator {
      * filtered out in the filtered position solution and will have negative performance impact.
      *
      * This setting does not impact the SV information and SV measurement reports retrieved from
-     * APIs such as IGnssSvINfo::getSVInfoList, ILocationListener::onGnssMeasurementsInfo.
+     * APIs such as IGnssSVInfo::getSVInfoList, ILocationListener::onGnssMeasurementsInfo.
      *
      * To apply the setting, the GNSS standard position engine(SPE) will require GNSS measurement
      * engine and position engine to be turned off briefly. This may cause glitch for on-going
@@ -627,11 +627,11 @@ class ILocationConfigurator {
      * will receive via @ref ILocationListener class APIs.
      * NMEA updates can be received by either:
      * a) Setting the
-     * @ref telux::loc::GnssReportType::NMEA bit in the reportMask passed as a paramter to
+     * @ref telux::loc::GnssReportType::NMEA bit in the reportMask passed as a parameter to
      * @ref ILocationManager::startDetailedReports OR @ref
      * ILocationManager::startDetailedEngineReports and receive the sentences via @ref
      * ILocationListener::onGnssNmeaInfo. b) Setting the
-     * @ref telux::loc::GnssReportType::ENGINE_NMEA bit in the reportMask passed as a paramter to
+     * @ref telux::loc::GnssReportType::ENGINE_NMEA bit in the reportMask passed as a parameter to
      * @ref ILocationManager::startDetailedEngineReports
      * and receive the sentences via @ref ILocationListener::onEngineNmeaInfo.
      *

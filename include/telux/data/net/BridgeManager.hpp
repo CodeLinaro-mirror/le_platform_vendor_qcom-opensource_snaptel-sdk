@@ -233,8 +233,8 @@ class IBridgeManager {
         = 0;
 
     /**
-     * Register Bridge Manager as listener for Data Service heath events like data service available
-     * or data service not available.
+     * Register Bridge Manager as listener for Data Service health events like data service
+     * available or data service not available.
      *
      * @param [in] listener    pointer of IBridgeListener object that processes the
      * notification

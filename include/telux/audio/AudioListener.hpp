@@ -57,7 +57,7 @@ class IVoiceListener : public telux::common::ISDKListener {
  public:
     /**
      * Called when a DTMF tone is detected on a @ref StreamType::VOICE_CALL stream.
-     * Used in conjuction with @ref IAudioVoiceStream::registerListener().
+     * Used in conjunction with @ref IAudioVoiceStream::registerListener().
      *
      * @param [in] dtmfTone Contains details of the tone detected
      */

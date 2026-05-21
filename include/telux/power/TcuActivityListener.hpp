@@ -69,7 +69,7 @@ class ITcuActivityListener : public telux::common::ISDKListener {
      * about to change. Called only for the slave clients not for the master client.
      *
      * Upon receiving this update, client must acknowledge with the appropriate response
-     * @ref StateChangeResponsethrough using @ref ITcuActivityManager::sendActivityStateAck
+     * @ref StateChangeResponse through using @ref ITcuActivityManager::sendActivityStateAck
      * so that the platform's power management framework can take the next appropriate step.
      *
      * When a slave client receives this update for suspend state, it is expected that it
@@ -101,7 +101,7 @@ class ITcuActivityListener : public telux::common::ISDKListener {
      *
      * @param[in] unresponsiveClients Slaves that did not respond at all
      *
-     * @param[in] nackResponseClients Slaves with @ref TcuActivityStateChangeResponse::NACK
+     * @param[in] nackResponseClients Slaves with @ref StateChangeResponse::NACK
      *                                response
      *
      * @note Recommended for both hypervisor and non-hypervisor based systems.

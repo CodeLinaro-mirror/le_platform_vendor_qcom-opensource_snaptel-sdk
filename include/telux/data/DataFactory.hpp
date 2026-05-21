@@ -285,7 +285,7 @@ class DataFactory {
      * Get DualData Manager
      *
      * @param [in] clientCallback   Optional callback to get the initialization status of
-     *                              DuaData manager @ref telux::common::InitResponseCb
+     *                              DualData manager @ref telux::common::InitResponseCb
      *
      * @returns instance of IDualDataManager
      *

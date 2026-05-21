@@ -58,7 +58,7 @@ namespace loc {
  * @{ */
 
 /**
- * @brief IRtcmManager provides interface to inject RTCM data into modem,
+ * @brief IDgnssManager provides interface to inject RTCM data into modem,
  * register event listener reported by cdfw(correction data framework).
  *
  */
@@ -112,7 +112,7 @@ class IDgnssManager {
     /**
      * deRegister a listener for Dgnss injection status update.
      *
-     * @returns Status of registerListener i.e success or suitable status code.
+     * @returns Status of deRegisterListener i.e success or suitable status code.
      *
      */
     virtual telux::common::Status deRegisterListener(void) = 0;
@@ -130,7 +130,7 @@ class IDgnssManager {
     virtual telux::common::Status createSource(DgnssDataFormat dataFormat) = 0;
 
     /**
-     * Release current Dgnss injection source (previously created by  createSource() call)
+     * Release current Dgnss injection source (previously created by createSource() call)
      * This function is to be called if it's determined that current injection data is not
      * suitable anymore, and a new source will be created and used as injection source.
      *
@@ -141,7 +141,7 @@ class IDgnssManager {
 
     /**
      * Inject correction data
-     * This function is to be called when a source has been created, either through a explicit call
+     * This function is to be called when a source has been created, either through an explicit call
      * to createSource(), or after DgnssManager object was instantiated through the factory
      * method(The factory method create a default source for DgnssManager object).
      *
@@ -154,7 +154,7 @@ class IDgnssManager {
         = 0;
 
     /**
-     * Destructor of IRtcmManager
+     * Destructor of IDgnssManager
      */
     virtual ~IDgnssManager(){};
 };

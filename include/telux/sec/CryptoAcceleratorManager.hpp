@@ -154,7 +154,7 @@ struct OperationResult {
     /* Indicates if ECC verification failed or passed, or ECQV calculation
      * succeeded or not */
     uint32_t result : 4;
-    /* Provides a more granluar error code specific to the cryptographic hardware */
+    /* Provides a more granular error code specific to the cryptographic hardware */
     uint32_t errCode : 9;
     /* Contains r'prime for verification or ECC point for calculation */
     uint8_t data[CA_RESULT_DATA_LENGTH];
@@ -430,7 +430,7 @@ class ResultParser {
 
     /**
      * Gets the type of operation corresponding to this result; values are
-     * and OperationType::OP_TYPE_VERIFY and OperationType::OP_TYPE_CALCULATE.
+     * OperationType::OP_TYPE_VERIFY and OperationType::OP_TYPE_CALCULATE.
      *
      * @param[in] result Result obtained from @ref ICryptoAcceleratorManager::getAsyncResults()
      *
@@ -474,7 +474,7 @@ class ResultParser {
      * @param[in] result Result obtained from @ref ICryptoAcceleratorManager::getAsyncResults()
      *
      * @returns Pointer to the data, For ECC verification contains r-prime, For ECQV
-     *          calculatio contains coordinates
+     *          calculation contains coordinates
      *
      */
     static uint8_t *getData(OperationResult &result);

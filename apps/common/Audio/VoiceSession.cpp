@@ -59,7 +59,7 @@ bool VoiceSession::isReady() const {
 
 Status VoiceSession::startAudio() {
     if (!ready_) {
-        LOG(ERROR, "Audio Service UNAVAILABLE");
+        LOGE("Audio Service UNAVAILABLE");
         return Status::FAILED;
     }
 
@@ -97,7 +97,7 @@ Status VoiceSession::startAudio() {
 
 Status VoiceSession::stopAudio() {
     if (!ready_) {
-        LOG(ERROR, "Audio Service UNAVAILABLE");
+        LOGE("Audio Service UNAVAILABLE");
         return Status::FAILED;
     }
 
@@ -130,7 +130,7 @@ Status VoiceSession::stopAudio() {
 
 Status VoiceSession::startDtmf(DtmfTone tone, uint32_t duration, uint16_t gain) {
     if (!ready_) {
-        LOG(ERROR, "Audio Service UNAVAILABLE");
+        LOGE("Audio Service UNAVAILABLE");
         return Status::FAILED;
     }
 
@@ -162,7 +162,7 @@ Status VoiceSession::startDtmf(DtmfTone tone, uint32_t duration, uint16_t gain) 
 
 Status VoiceSession::stopDtmf() {
     if (!ready_) {
-        LOG(ERROR, "Audio Service UNAVAILABLE");
+        LOGE("Audio Service UNAVAILABLE");
         return Status::FAILED;
     }
 
@@ -194,7 +194,7 @@ Status VoiceSession::stopDtmf() {
 
 Status VoiceSession::registerListener(std::weak_ptr<IVoiceListener> listener) {
     if (!ready_) {
-        LOG(ERROR, "Audio Service UNAVAILABLE");
+        LOGE("Audio Service UNAVAILABLE");
         return Status::FAILED;
     }
 
@@ -227,7 +227,7 @@ Status VoiceSession::registerListener(std::weak_ptr<IVoiceListener> listener) {
 
 Status VoiceSession::deRegisterListener(std::weak_ptr<IVoiceListener> listener) {
     if (!ready_) {
-        LOG(ERROR, "Audio Service UNAVAILABLE");
+        LOGE("Audio Service UNAVAILABLE");
         return Status::FAILED;
     }
 

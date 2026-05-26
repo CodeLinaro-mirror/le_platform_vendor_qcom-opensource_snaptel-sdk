@@ -8,6 +8,7 @@
 #include "aecsCall/AecsCall.hpp"
 #include "../../common/utils/Utils.hpp"
 #include "../../common/utils/SignalHandler.hpp"
+#include "../../common/utils/ThreadSafeOStreamBuf.hpp"
 
 #include "ECallMainMenu.hpp"
 
@@ -67,6 +68,12 @@ void ECallMainMenu::cleanup() {
 // Main function that displays the interactive console for eCall related operations
 int main(int argc, char **argv) {
 
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    if (isatty(fileno(stdout))) {
+        std::cout << std::unitbuf;
+    }
+    static ThreadSafeOStreamBuf safeCout;
     sigset_t sigset;
     sigemptyset(&sigset);
     sigaddset(&sigset, SIGINT);

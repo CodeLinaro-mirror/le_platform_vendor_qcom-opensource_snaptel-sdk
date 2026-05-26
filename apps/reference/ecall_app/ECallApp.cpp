@@ -52,7 +52,6 @@
 #include "ECallApp.hpp"
 #include "../../common/utils/Utils.hpp"
 #include "../../common/utils/SignalHandler.hpp"
-#include "../../common/utils/ThreadSafeOStreamBuf.hpp"
 
 #define ECALL_CATEGORY_AUTO 1
 #define ECALL_CATEGORY_MANUAL 2

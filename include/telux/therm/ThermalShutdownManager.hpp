@@ -79,35 +79,12 @@ using GetAutoShutdownModeResponseCb = std::function<void(AutoShutdownMode mode)>
 class IThermalShutdownManager {
  public:
     /**
-     * Checks the status of thermal shutdown management service and if the other APIs are ready for
-     * use and returns the result.
-     *
-     * @returns  True if the services are ready otherwise false.
-     *
-     * @deprecated use getServiceStatus()
-     */
-    virtual bool isReady() = 0;
-
-    /**
      * This status indicates whether the object is in a usable state.
      *
      * @returns  @ref telux::common::ServiceStatus
      *
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
-
-    /**
-     * Wait for thermal shutdown management service to be ready.
-     *
-     * @returns  A future that caller can wait on to be notified when thermal shutdown management
-     *           service is ready.
-     *
-     * @deprecated The callback mechanism introduced in the
-     * @ref ThermalFactory::getThermalShutdownManager with initialization callback along with
-     * @ref getServiceStatus API will provide the similar mechanism as @ref onReady and
-     * @ref isReady. This API will soon be removed from further releases.
-     */
-    virtual std::future<bool> onReady() = 0;
 
     /**
      * Register a listener for updates on automatic shutdown mode changes

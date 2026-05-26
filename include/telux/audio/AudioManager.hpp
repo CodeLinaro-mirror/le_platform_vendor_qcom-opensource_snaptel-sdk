@@ -225,15 +225,6 @@ using GetCalInitStatusResponseCb
 class IAudioManager {
  public:
     /**
-     * Checks if the audio service is ready for use.
-     *
-     * @returns True if the audio service is ready for use, otherwise, False
-     *
-     * @deprecated Use @ref getServiceStatus()
-     */
-    virtual bool isSubsystemReady() = 0;
-
-    /**
      * Gets the audio service status.
      *
      * @returns @ref telux::common::ServiceStatus::SERVICE_AVAILABLE if the audio
@@ -244,15 +235,6 @@ class IAudioManager {
      *          service needs re-initialization
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
-
-    /**
-     * Suggests when the audio service is ready.
-     *
-     * @returns Future to block on until the service status is updated to read
-     *
-     * @deprecated Use @ref telux::common::InitResponseCb in @ref AudioFactory::getAudioManager()
-     */
-    virtual std::future<bool> onSubsystemReady() = 0;
 
     /**
      * Gets the list of the supported audio devices.

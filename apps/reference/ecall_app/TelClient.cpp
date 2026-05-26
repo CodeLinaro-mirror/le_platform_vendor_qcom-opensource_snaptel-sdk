@@ -197,11 +197,17 @@ void TelClient::onIncomingCall(std::shared_ptr<ICall> call) {
 
 // Callback invoked when a call status changes
 void TelClient::onCallInfoChange(std::shared_ptr<ICall> call) {
+    if (call == nullptr) {
+        std::cout << CLIENT_NAME << "call ptr is null\n";
+        return;
+    }
     std::cout << CLIENT_NAME << "\n CallInfoChange: "
                       << " Call State: " << TelClientUtils::callStateToString(call->getCallState())
                       << "\n Call Index: " << (int)call->getCallIndex()
                       << ", Call Direction: " <<
                                     TelClientUtils::callDirectionToString(call->getCallDirection())
+                      << ", Network Mode: " <<
+                                    TelClientUtils::networkModeToString(call->getNetworkMode())
                       << ", Phone Number: " << call->getRemotePartyNumber() << std::endl;
     //During the redial(by modem or app) scenario to setup audio session
     if(call->getCallState() == telux::tel::CallState::CALL_DIALING) {
@@ -221,6 +227,9 @@ void TelClient::onCallInfoChange(std::shared_ptr<ICall> call) {
             << TelClientUtils::callEndCauseToString(call->getCallEndCause())
             << ((call->getSipErrorCode() > 0) ? " and Sip error code: " : "")
             << ((call->getSipErrorCode() > 0) ? std::to_string(call->getSipErrorCode()) : "")
+            << ((call->getDetailedCauseCode() > 0) ? " and detailed cause code: " : "")
+            << ((call->getDetailedCauseCode() > 0)
+                ? std::to_string(call->getDetailedCauseCode()) : "")
             << std::endl;
         if (eCall_ != nullptr) {
             if (eCall_->getCallIndex() == call->getCallIndex()
@@ -622,6 +631,8 @@ telux::common::Status TelClient::getCurrentCalls() {
                       << TelClientUtils::callStateToString((*callIterator)->getCallState())
                   << ", Call Direction: "
                       << TelClientUtils::callDirectionToString((*callIterator)->getCallDirection())
+                  << ", Network Mode: "
+                      << TelClientUtils::networkModeToString((*callIterator)->getNetworkMode())
                   << ", Phone Number: " << (*callIterator)->getRemotePartyNumber() << std::endl;
     }
     return telux::common::Status::SUCCESS;

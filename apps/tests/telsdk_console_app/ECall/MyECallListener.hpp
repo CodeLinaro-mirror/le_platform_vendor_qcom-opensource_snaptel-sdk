@@ -27,11 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the
- * following license:
- *
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef MYECALLLISTENER_HPP
@@ -42,6 +40,8 @@
 
 #include <telux/tel/Call.hpp>
 #include <telux/tel/CallListener.hpp>
+
+using namespace telux::common;
 
 class MyECallListener : public telux::tel::ICallListener {
   void onIncomingCall(std::shared_ptr<telux::tel::ICall> call) override;

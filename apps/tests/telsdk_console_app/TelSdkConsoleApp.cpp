@@ -27,10 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -125,7 +124,11 @@ void TelSdkConsoleApp::init() {
 
     // This instance is needed to hold the audio for the voice call in case the user comes out of
     // dialer menu.
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
     static std::shared_ptr<AudioClient> audioClient_ = AudioClient::getInstance();
+#else
+    std::cout << "Audio is not supported, skipping audio session" << std::endl;
+#endif
     addCommands(mainMenuCommands);
     TelSdkConsoleApp::displayMenu();
 }

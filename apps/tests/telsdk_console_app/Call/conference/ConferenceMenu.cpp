@@ -154,6 +154,7 @@ void ConferenceMenu::holdCall(std::vector<std::string> userInput) {
         }
     }
     if(spCall) {
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
         static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
         if (audioClient->isReady()) {
             // Ask the user for the mute functionality.
@@ -161,6 +162,9 @@ void ConferenceMenu::holdCall(std::vector<std::string> userInput) {
                 audioClient->setMuteStatus(static_cast<SlotId>(phoneId), MUTE);
             }
         }
+#else
+        std::cout << "Audio is not supported, skipping MUTE functionality" << std::endl;
+#endif
         spCall->hold(myHoldCb_);
     } else {
         std::cout << "No active call found" << std::endl;
@@ -187,6 +191,7 @@ void ConferenceMenu::resumeCall(std::vector<std::string> userInput) {
         }
     }
     if(spCall) {
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
         static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
         if (audioClient->isReady()) {
             // Ask the user for the mute functionality.
@@ -194,6 +199,9 @@ void ConferenceMenu::resumeCall(std::vector<std::string> userInput) {
                 audioClient->setMuteStatus(static_cast<SlotId>(phoneId), UNMUTE);
             }
         }
+#else
+        std::cout << "Audio is not supported, skipping MUTE functionality" << std::endl;
+#endif
         spCall->resume(myResumeCb_);
     } else {
         std::cout << "No call to resume which is on hold " << std::endl;

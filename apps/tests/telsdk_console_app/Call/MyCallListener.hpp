@@ -28,9 +28,9 @@
  */
 
 /*
- * ​​​​​Changes from Qualcomm Technologies, Inc. are provided under
- * the following license: Copyright (c) Qualcomm Technologies, Inc. and/or its
- * subsidiaries. SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef MYCALLLISTENER_HPP
@@ -41,7 +41,11 @@
 #include <telux/tel/CallManager.hpp>
 #include <telux/tel/PhoneDefines.hpp>
 
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
 #include "../Audio/AudioClient.hpp"
+#endif
+
+using namespace telux::common;
 
 class MyCallListener : public telux::tel::ICallListener {
 public:

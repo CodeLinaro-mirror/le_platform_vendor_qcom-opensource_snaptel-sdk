@@ -27,11 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the
- * following license:
- *
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights
- * reserved. SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <iomanip>
@@ -300,6 +298,7 @@ void ECallMenu::makeCall(std::vector<std::string> inputCommand) {
   std::shared_ptr<telux::tel::ICall> spCall;
   const std::string phoneNumber = inputCommand[1]; // Phone Number mandatory
   if (callManager_) {
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
     static std::shared_ptr<AudioClient> audioClient =
         AudioClient::getInstance();
     if (audioClient->isReady()) {
@@ -309,6 +308,9 @@ void ECallMenu::makeCall(std::vector<std::string> inputCommand) {
         audioClient->startVoiceSession(static_cast<SlotId>(phoneId_));
       }
     }
+#else
+        std::cout << "Audio is not supported, skipping start voice session" << std::endl;
+#endif
     telux::common::Status status =
         callManager_->makeCall(phoneId_, phoneNumber, callCommandCallback_);
     std::cout << (status == telux::common::Status::SUCCESS
@@ -339,6 +341,7 @@ void ECallMenu::answerCall(std::vector<std::string> inputCommand) {
       if (spCall) {
         std::cout << "Sending request to accept call " << std::endl;
         int phoneId = spCall->getPhoneId();
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
         static std::shared_ptr<AudioClient> audioClient =
             AudioClient::getInstance();
         if (audioClient->isReady()) {
@@ -349,6 +352,9 @@ void ECallMenu::answerCall(std::vector<std::string> inputCommand) {
             audioClient->startVoiceSession(static_cast<SlotId>(phoneId));
           }
         }
+#else
+                std::cout << "Audio is not supported, skipping start voice session" << std::endl;
+#endif
         spCall->answer(answerCommandCallback_);
       } else {
         std::cout << "No incoming call to accept " << std::endl;
@@ -429,6 +435,7 @@ void ECallMenu::eCallSos(std::vector<std::string> inputCommand) {
   updateOptionalAdditionalDataContent(msdSettings);
   auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
   if (callManager_) {
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
     static std::shared_ptr<AudioClient> audioClient =
         AudioClient::getInstance();
     if (audioClient->isReady()) {
@@ -438,6 +445,9 @@ void ECallMenu::eCallSos(std::vector<std::string> inputCommand) {
         audioClient->startVoiceSession(static_cast<SlotId>(phoneId_));
       }
     }
+#else
+        std::cout << "Audio is not supported, skipping start voice session" << std::endl;
+#endif
     auto ret =
         callManager_->makeECall(phoneId_, eCallMsdData, (int)emergencyCategory,
                                 (int)eCallVariant, callCommandCallback_);
@@ -486,6 +496,7 @@ void ECallMenu::makeECall(std::vector<std::string> inputCommand) {
   updateOptionalAdditionalDataContent(msdSettings);
   auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
   if (callManager_) {
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
     static std::shared_ptr<AudioClient> audioClient =
         AudioClient::getInstance();
     if (audioClient->isReady()) {
@@ -495,6 +506,9 @@ void ECallMenu::makeECall(std::vector<std::string> inputCommand) {
         audioClient->startVoiceSession(static_cast<SlotId>(phoneId_));
       }
     }
+#else
+        std::cout << "Audio is not supported, skipping start voice session" << std::endl;
+#endif
     auto ret =
         callManager_->makeECall(phoneId_, eCallMsdData, (int)emergencyCategory,
                                 (int)eCallVariant, callCommandCallback_);
@@ -530,6 +544,7 @@ void ECallMenu::makeCustomNumberECall(std::vector<std::string> inputCommand) {
   updateOptionalAdditionalDataContent(msdSettings);
   auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
   if (callManager_) {
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
     static std::shared_ptr<AudioClient> audioClient =
         AudioClient::getInstance();
     if (audioClient->isReady()) {
@@ -539,6 +554,9 @@ void ECallMenu::makeCustomNumberECall(std::vector<std::string> inputCommand) {
         audioClient->startVoiceSession(static_cast<SlotId>(phoneId_));
       }
     }
+#else
+        std::cout << "Audio is not supported, skipping start voice session" << std::endl;
+#endif
     auto ret =
         callManager_->makeECall(phoneId_, dialNumber, eCallMsdData,
                                 (int)emergencyCategory, callCommandCallback_);
@@ -651,6 +669,7 @@ void ECallMenu::eCallWithPdu(std::vector<std::string> inputCommand) {
   }
 
   telux::common::Status ret;
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
   static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
   if (audioClient->isReady()) {
     bool audioState = queryAudioState();
@@ -659,6 +678,9 @@ void ECallMenu::eCallWithPdu(std::vector<std::string> inputCommand) {
       audioClient->startVoiceSession(static_cast<SlotId>(phoneId_));
     }
   }
+#else
+    std::cout << "Audio is not supported, skipping start voice session" << std::endl;
+#endif
   if (eCallVariant != telux::tel::ECallVariant::ECALL_VOICE && callManager_) {
     ret = callManager_->makeECall(phoneId_, rawData, (int)emergencyCategory,
                                   (int)eCallVariant, &makeEcallResponse);
@@ -839,6 +861,7 @@ void ECallMenu::AnswerCommandCallback::commandResponse(
 }
 
 void ECallMenu::enableAudio(std::vector<std::string> userInput) {
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
   static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
   if (!audioClient->isReady()) {
     std::cout << "Initializing Audio Subsystem...." << std::endl;
@@ -851,6 +874,9 @@ void ECallMenu::enableAudio(std::vector<std::string> userInput) {
   } else {
     std::cout << "Audio subsystem already initialized" << std::endl;
   }
+#else
+    std::cout << "Audio is not supported, skipping audio session initialization" << std::endl;
+#endif
 }
 
 bool ECallMenu::queryAudioState() {

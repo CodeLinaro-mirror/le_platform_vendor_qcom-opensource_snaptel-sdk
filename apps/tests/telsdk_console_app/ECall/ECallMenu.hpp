@@ -27,10 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef ECALLMENU_HPP
@@ -56,7 +55,9 @@ extern "C" {
 
 #include "console_app_framework/ConsoleApp.hpp"
 #include "MsdSettings.hpp"
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
 #include "./../Audio/AudioClient.hpp"
+#endif
 
 #define CATEGORY_AUTO 1
 #define CATEGORY_MANUAL 2

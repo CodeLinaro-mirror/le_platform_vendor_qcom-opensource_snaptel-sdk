@@ -61,7 +61,7 @@ class DataProfile {
     DataProfile(int id, const std::string &name, const std::string &apn,
         const std::string &username, const std::string &password, IpFamilyType ipFamilyType,
         TechPreference techPref, AuthProtocolType authType, ApnTypes apnTypes,
-        EmergencyCapability emergencyAllowed, bool clatEnabled);
+        EmergencyCapability emergencyAllowed, bool clatEnabled, bool enablePcscfViaPco);
 
     /**
      * Get profile identifier.
@@ -142,6 +142,13 @@ class DataProfile {
      *
      */
     EmergencyCapability getIsEmergencyAllowed();
+    /**
+     * Get status of enablePcscfViaPco.
+     *
+     * @returns true if PCSCF address via PCO is enabled, otherwise false.
+     *
+     */
+    bool isPcscfViaPcoEnabled();
 
     /**
      * Get status of CLAT.
@@ -170,6 +177,7 @@ class DataProfile {
     ApnTypes apnTypes_;
     EmergencyCapability emergencyAllowed_;
     bool clatEnabled_;
+    bool enablePcscfViaPco_;
 };
 
 /** @} */ /* end_addtogroup telematics_data */

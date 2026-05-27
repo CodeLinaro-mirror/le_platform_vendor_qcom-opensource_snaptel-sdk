@@ -42,7 +42,9 @@
 #define CALLMENU_HPP
 
 #include "console_app_framework/ConsoleApp.hpp"
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
 #include "./../Audio/AudioClient.hpp"
+#endif
 #include "MyCallListener.hpp"
 
 #define MIN_SIM_SLOT_COUNT 1

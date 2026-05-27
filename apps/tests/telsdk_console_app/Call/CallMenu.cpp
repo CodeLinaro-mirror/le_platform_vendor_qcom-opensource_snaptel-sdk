@@ -41,12 +41,12 @@
 #include <chrono>
 #include <iostream>
 
+#include "CallMenu.hpp"
 #include <telux/tel/PhoneFactory.hpp>
 #include <telux/common/DeviceConfig.hpp>
 
 #include "conference/ConferenceMenu.hpp"
 #include "realTimeText/RttMenu.hpp"
-#include "CallMenu.hpp"
 
 // Minimum number of calls required to perform conference or swap
 #define MIN_PROGRESS_CALLS 2
@@ -206,6 +206,7 @@ void CallMenu::dial(std::vector<std::string> userInput) {
             return;
         }
     }
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
     static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
     if (audioClient->isReady()) {
         bool audioState = queryAudioState();
@@ -214,6 +215,9 @@ void CallMenu::dial(std::vector<std::string> userInput) {
             audioClient->startVoiceSession(static_cast<SlotId>(phoneId));
         }
     }
+#else
+    std::cout << "Audio is not supported, skipping start voice session" << std::endl;
+#endif
     telux::common::Status makeCallStatus
         = callManager_->makeCall(phoneId, phoneNumber, myDialCallCmdCb_);
     if (makeCallStatus == telux::common::Status::NOTALLOWED) {
@@ -291,6 +295,7 @@ void CallMenu::acceptCall(std::vector<std::string> userInput) {
         }
     }
     if (spCall) {
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
         static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
         if (audioClient->isReady()) {
             int phoneId     = spCall->getPhoneId();
@@ -299,6 +304,9 @@ void CallMenu::acceptCall(std::vector<std::string> userInput) {
                 audioClient->startVoiceSession(static_cast<SlotId>(phoneId));
             }
         }
+#else
+        std::cout << "Audio is not supported, skipping start voice session" << std::endl;
+#endif
         spCall->answer(myAnswerCb_);
     } else {
         std::cout << "No incoming/waiting call" << std::endl;
@@ -569,6 +577,7 @@ void CallMenu::holdCall(std::vector<std::string> userInput) {
         }
     }
     if (spCall) {
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
         static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
         if (audioClient->isReady()) {
             // Ask the user for the mute functionality.
@@ -576,6 +585,9 @@ void CallMenu::holdCall(std::vector<std::string> userInput) {
                 audioClient->setMuteStatus(static_cast<SlotId>(phoneId), MUTE);
             }
         }
+#else
+        std::cout << "Audio is not supported, skipping MUTE functionality " << std::endl;
+#endif
         spCall->hold(myHoldCb_);
     } else {
         std::cout << "No active call found" << std::endl;
@@ -796,6 +808,7 @@ void CallMenu::resumeCall(std::vector<std::string> userInput) {
         }
     }
     if (spCall) {
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
         static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
         if (audioClient->isReady()) {
             // Ask the user for the mute functionality.
@@ -803,6 +816,9 @@ void CallMenu::resumeCall(std::vector<std::string> userInput) {
                 audioClient->setMuteStatus(static_cast<SlotId>(phoneId), UNMUTE);
             }
         }
+#else
+        std::cout << "Audio is not supported, skipping MUTE functionality" << std::endl;
+#endif
         spCall->resume(myResumeCb_);
     } else {
         std::cout << "No call to resume which is on hold " << std::endl;
@@ -962,6 +978,7 @@ void CallMenu::stopDtmfTone(std::vector<std::string> userInput) {
 }
 
 void CallMenu::enableAudio(std::vector<std::string> userInput) {
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
     static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
     if (!audioClient->isReady()) {
         std::cout << "Initializing Audio Subsystem...." << std::endl;
@@ -974,6 +991,9 @@ void CallMenu::enableAudio(std::vector<std::string> userInput) {
     } else {
         std::cout << "Audio subsystem already initialized." << std::endl;
     }
+#else
+    std::cout << "Audio is not supported, skipping audio session initialization" << std::endl;
+#endif
 }
 
 bool CallMenu::queryAudioState() {

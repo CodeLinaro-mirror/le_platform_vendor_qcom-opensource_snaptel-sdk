@@ -29,6 +29,7 @@ class SubsystemApp : public ConsoleApp {
     void init(void);
     void registerListener(void);
     void deRegisterListener(void);
+    void triggerMpssRestart(void);
 
  private:
     UserUtils userUtils_;

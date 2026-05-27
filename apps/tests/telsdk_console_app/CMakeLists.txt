@@ -109,11 +109,11 @@ if (TELSDK_FEATURE_AUDIO)
     ${CMAKE_CURRENT_LIST_DIR}/../../common/Audio/VoiceSession.cpp
     ${CMAKE_CURRENT_LIST_DIR}/../../common/Audio/AudioSession.cpp
     ${CMAKE_CURRENT_LIST_DIR}/../../common/Audio/AudioHelper.cpp
+    Audio/AudioClient.cpp
     )
 endif (TELSDK_FEATURE_AUDIO)
 
 set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
-   Audio/AudioClient.cpp
    TelSdkConsoleApp.cpp
    ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/Utils.cpp
    ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/SignalHandler.cpp

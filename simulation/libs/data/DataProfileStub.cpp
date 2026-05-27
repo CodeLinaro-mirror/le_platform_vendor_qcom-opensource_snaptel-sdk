@@ -13,7 +13,7 @@ namespace data {
 DataProfile::DataProfile(int id, const std::string &name, const std::string &apn,
     const std::string &username, const std::string &password, IpFamilyType ipFamilyType,
     TechPreference techPref, AuthProtocolType authType, ApnTypes apnTypes,
-    EmergencyCapability emergencyAllowed, bool clatEnabled)
+    EmergencyCapability emergencyAllowed, bool clatEnabled, bool enablePcscfViaPco)
    : id_(id)
    , name_(name)
    , apn_(apn)
@@ -24,7 +24,8 @@ DataProfile::DataProfile(int id, const std::string &name, const std::string &apn
    , authType_(authType)
    , apnTypes_(apnTypes)
    , emergencyAllowed_(emergencyAllowed)
-   , clatEnabled_(clatEnabled) {
+   , clatEnabled_(clatEnabled)
+   , enablePcscfViaPco_(enablePcscfViaPco) {
 }
 
 int DataProfile::getId() {
@@ -70,6 +71,10 @@ bool DataProfile::isClatEnabled() {
     return clatEnabled_;
 }
 
+bool DataProfile::isPcscfViaPcoEnabled() {
+    return enablePcscfViaPco_;
+}
+
 std::string DataProfile::toString() {
     std::stringstream ss;
     ss << " id: " << id_ << ", name: " << name_ << ", apn: " << apn_ << ", username: " << username_
@@ -77,7 +82,8 @@ std::string DataProfile::toString() {
        << ", Tech Pref: " << static_cast<int>(techPref_)
        << ", Auth Type: " << static_cast<int>(authType_) << ", Apn Type: " << apnTypes_.to_string()
        << ", Emergency Allowed: " << static_cast<int>(emergencyAllowed_)
-       << ", CLAT enabled: " << static_cast<int>(clatEnabled_);
+       << ", CLAT enabled: " << static_cast<int>(clatEnabled_)
+       << ", Enable PCSCF via PCO: " << static_cast<int>(enablePcscfViaPco_);
     return ss.str();
 }
 }  // namespace data

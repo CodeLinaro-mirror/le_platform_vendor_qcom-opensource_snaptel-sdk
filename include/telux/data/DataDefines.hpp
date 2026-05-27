@@ -225,7 +225,14 @@ struct ProfileParams {
     EmergencyCapability emergencyAllowed
         = telux::data::EmergencyCapability::UNSPECIFIED; /**< Emergency services are allowed if
                                                            this field is set to ALLOWED*/
-    bool clatEnabled = false; /**< Enable or disable CLAT */
+    bool clatEnabled       = false; /**< Enable or disable CLAT */
+    bool enablePcscfViaPco = false; /**< Enable PCSCF address request
+                                       via PCO. When enabled, the UE
+                                       will request PCSCF server
+                                       addresses from the network during
+                                       PDN connection establishment. This
+                                       is typically used for IMS services.
+                                       Default is false. */
 };
 
 /**

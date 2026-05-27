@@ -28,10 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021-2023,2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -135,6 +134,11 @@ Status AudioClient::init() {
 // Function to start an audio on voice call
 void AudioClient::startVoiceSession(SlotId slotId) {
 #ifdef TELSDK_FEATURE_AUDIO_ENABLED
+    if (!ready_) {
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
+        return;
+    }
+
     if (!audioMgr_) {
         std::cout << "Invalid Audio Manager" << std::endl;
         return;
@@ -184,6 +188,10 @@ void AudioClient::startVoiceSession(SlotId slotId) {
 // Function to stop an active voice session
 void AudioClient::stopVoiceSession(SlotId slotId) {
 #ifdef TELSDK_FEATURE_AUDIO_ENABLED
+    if (!ready_) {
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
+        return;
+    }
 
     if (hasConcurrentVoiceCall_) {
         /* If the stream doesn't exist, return early */
@@ -225,6 +233,11 @@ void AudioClient::stopVoiceSession(SlotId slotId) {
 
 void AudioClient::setActiveSession(SlotId slotId) {
 #ifdef TELSDK_FEATURE_AUDIO_ENABLED
+    if (!ready_) {
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
+        return;
+    }
+
     std::lock_guard<std::mutex> lk(mutex_);
     if (!voiceSessions_.count(slotId)) {
         auto session = std::make_shared<VoiceSession>();
@@ -299,6 +312,11 @@ void AudioClient::loadConfFileData() {
 
 void AudioClient::setMuteStatus(SlotId slotId, bool muteStatus) {
 #ifdef TELSDK_FEATURE_AUDIO_ENABLED
+    if (!ready_) {
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
+        return;
+    }
+
     if (muteStatus) {
         return muteStream(slotId);
     }
@@ -308,6 +326,11 @@ void AudioClient::setMuteStatus(SlotId slotId, bool muteStatus) {
 
 void AudioClient::muteStream(SlotId slotId) {
 #ifdef TELSDK_FEATURE_AUDIO_ENABLED
+    if (!ready_) {
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
+        return;
+    }
+
     setActiveSession(slotId);
     StreamMute mute{};
     mute.enable = true;
@@ -326,6 +349,11 @@ void AudioClient::muteStream(SlotId slotId) {
 
 void AudioClient::unmuteStream(SlotId slotId) {
 #ifdef TELSDK_FEATURE_AUDIO_ENABLED
+    if (!ready_) {
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
+        return;
+    }
+
     if (hasConcurrentVoiceCall_) {
         SlotId tmpSlotId{};
         tmpSlotId = previousSlotId_;
@@ -391,8 +419,22 @@ void AudioClient::setSystemReady() {
 
 void AudioClient::cleanup() {
     ready_ = false;
-    voiceSessions_.clear();
-    activeSession_ = nullptr;
+
+    {
+        std::lock_guard<std::mutex> lk(mutex_);
+        for (auto &session : voiceSessions_) {
+            if (session.second) {
+                session.second->setReady(false);
+            }
+        }
+        voiceSessions_.clear();
+        activeSession_ = nullptr;
+    }
+
+    audioStartedOnSim1_ = false;
+    audioStartedOnSim2_ = false;
+    currentSlotId_      = INVALID_SLOT_ID;
+    previousSlotId_     = INVALID_SLOT_ID;
 }
 
 void AudioClient::onServiceStatusChange(telux::common::ServiceStatus status) {

@@ -28,10 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef VOICESESSION_HPP
@@ -61,10 +60,13 @@ public:
     Status registerListener(std::weak_ptr<IVoiceListener> listener);
     Status deRegisterListener(std::weak_ptr<IVoiceListener> listener);
     SlotId getSlotId();
+    void setReady(bool ready);
+    bool isReady() const;
 
 private:
     std::atomic<bool> audioStarted_;
     SlotId slotId_;
+    std::atomic<bool> ready_{true};
 };
 
 #endif // VOICESESSION_HPP

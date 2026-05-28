@@ -22,6 +22,7 @@ endif (TELUX_QTI_EXTERNAL_AP OR TELUX_FOR_EXTERNAL_AP OR TELSDK_FEATURE_FOR_SECO
 
 set(TARGET_POWER_REF_DAEMON_SOURCES
     ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
+    ${telematics-apps_SOURCE_DIR}/common/utils/KpiLogUtils.cpp
     common/ConfigParser.cpp
     common/RefAppUtils.cpp
     Event.cpp

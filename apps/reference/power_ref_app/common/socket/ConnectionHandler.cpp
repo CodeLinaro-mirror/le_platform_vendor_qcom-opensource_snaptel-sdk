@@ -5,6 +5,7 @@
 
 #include "common/RefAppUtils.hpp"
 #include "ConnectionHandler.hpp"
+#include "KpiLogUtils.hpp"
 #include "TCPServer.cpp"
 #include "UDPServer.cpp"
 #include "TCPClient.cpp"
@@ -12,6 +13,26 @@
 
 std::shared_ptr<ConnectionHandler> ConnectionHandler::instance = nullptr;
 std::once_flag ConnectionHandler::initInstanceFlag;
+
+namespace {
+// Compact status codes for the KPI log line (kept short to avoid the KPI line length limit).
+// Only the statuses that the data-call implementation actually reports are mapped here; any
+// other value maps to "UNK" so it does not appear as if it were a supported status.
+std::string shortDataCallStatus(telux::data::DataCallStatus status) {
+    switch (status) {
+        case telux::data::DataCallStatus::NET_CONNECTED:
+            return "CONN";
+        case telux::data::DataCallStatus::NET_NO_NET:
+            return "NONET";
+        case telux::data::DataCallStatus::NET_CONNECTING:
+            return "CTG";
+        case telux::data::DataCallStatus::NET_DISCONNECTING:
+            return "DCTG";
+        default:
+            return "UNK";
+    }
+}
+}  // namespace
 
 std::vector<std::shared_ptr<Connection>> ConnectionHandler::getConnectionList() {
     LOGFD();
@@ -140,6 +161,21 @@ void ConnectionHandler::cleanup() {
 void ConnectionHandler::onDataCallInfoChanged(
     const std::shared_ptr<telux::data::IDataCall> &dataCall) {
     LOGFD();
+
+    // KPI: minimal no-timestamp mark for data call status change
+    if (RefAppUtils::isKpiLoggingEnabled()) {
+        std::string kpiLog = "s" + std::to_string(static_cast<int>(dataCall->getSlotId())) + " p"
+                             + std::to_string(dataCall->getProfileId());
+        if (dataCall->getIpFamilyType() == telux::data::IpFamilyType::IPV4V6) {
+            kpiLog += " v4:" + shortDataCallStatus(dataCall->getIpv4Info().status)
+                      + " v6:" + shortDataCallStatus(dataCall->getIpv6Info().status);
+        } else if (dataCall->getIpFamilyType() == telux::data::IpFamilyType::IPV4) {
+            kpiLog += " v4:" + shortDataCallStatus(dataCall->getIpv4Info().status);
+        } else if (dataCall->getIpFamilyType() == telux::data::IpFamilyType::IPV6) {
+            kpiLog += " v6:" + shortDataCallStatus(dataCall->getIpv6Info().status);
+        }
+        KpiLogUtils::logKpiFile(kpiLog, false, "M - Refd ");
+    }
     logDataCallDetails(dataCall);
 
     for (const auto &entry : connectionConfigList_) {
@@ -162,6 +198,11 @@ void ConnectionHandler::onDataCallInfoChanged(
 }
 
 void ConnectionHandler::onServiceStatusChange(telux::common::ServiceStatus status) {
+    // KPI: minimal no-timestamp mark for DCM service status change
+    if (RefAppUtils::isKpiLoggingEnabled()) {
+        KpiLogUtils::logKpiFile(
+            "DCM " + RefAppUtils::serviceStatusToString(status), false, "M - Refd ");
+    }
     LOGFD("DataConnectionListener status = %s", RefAppUtils::serviceStatusToString(status).c_str());
     bool dcmStatus = status == telux::common::ServiceStatus::SERVICE_AVAILABLE ? true : false;
 

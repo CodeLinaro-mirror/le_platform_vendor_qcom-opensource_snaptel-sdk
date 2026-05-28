@@ -5,6 +5,7 @@
 
 #include "NAOIpTrigger.hpp"
 #include "common/RefAppUtils.hpp"
+#include "KpiLogUtils.hpp"
 
 NAOIpTrigger::NAOIpTrigger(std::shared_ptr<EventManager> eventManager) {
     LOGFD();
@@ -153,7 +154,9 @@ void NAOIpTrigger::onEventProcessed(shared_ptr<Event> event, bool success) {
             }
             enableFilter();
         } else if (event->getTriggeredState() == TcuActivityState::RESUME) {
-            RefAppUtils::logKpiFile("resumed to PMD");
+            if (RefAppUtils::isKpiLoggingEnabled()) {
+                KpiLogUtils::logKpiFile("resumed", false, "M - Refd ");
+            }
             if (tcpKeepAliveHandler_) {
                 tcpKeepAliveHandler_->stopKAOffload();
             }
@@ -165,7 +168,9 @@ void NAOIpTrigger::preProcessEvent(shared_ptr<Event> event) {
     LOGFD();
     if (event->getTriggeredState() == TcuActivityState::RESUME) {
         disableFilter();
-        RefAppUtils::logKpiFile("disabled filter");
+        if (RefAppUtils::isKpiLoggingEnabled()) {
+            KpiLogUtils::logKpiFile("filter off", false, "M - Refd ");
+        }
     }
 }
 
@@ -235,7 +240,9 @@ void NAOIpTrigger::messageReceived(
     if (validateTrigger(msg.msg, length, triggerState, machineName)) {
         triggerEvent(triggerState, machineName);
     } else {
-        RefAppUtils::logKpiFile("received TCP");
+        if (RefAppUtils::isKpiLoggingEnabled()) {
+            KpiLogUtils::logKpiFile("TCP rx", false, "M - Refd ");
+        }
         LOGFE("trigger not match");
         if (eventManager_->getActivityState() == TcuActivityState::SUSPEND) {
             if (tcpKeepAliveHandler_) {

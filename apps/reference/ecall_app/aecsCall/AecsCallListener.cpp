@@ -79,7 +79,7 @@ void AecsCallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call)
                 // Already retrying -> push next attempt to (END + interval)
                 scheduleNextRetryFromNow();
             }
-        } else {
+        } else if (call->getCallDirection() == telux::tel::CallDirection::OUTGOING) {
             // retry for AECS call failed reasons
             mgr.setAecsCallFailStatus(true);
             int intervalSec = mgr.getAecsRetryInterval();
@@ -95,6 +95,10 @@ void AecsCallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call)
                 // Already retrying -> push next attempt to (END + interval)
                 scheduleNextRetryFromNow();
             }
+        } else {
+            mgr.setAecsCallDropStatus(false);
+            mgr.setAecsCallFailStatus(false);
+            std::cout << "\nRetry MT AECS calls from PSAP" << std::endl;
         }
 
         if (mgr.isEmergencyMode(phoneId)

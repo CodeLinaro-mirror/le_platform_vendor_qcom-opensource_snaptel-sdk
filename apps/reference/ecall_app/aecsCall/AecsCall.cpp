@@ -173,32 +173,40 @@ void AecsCall::dialAecsCall(std::vector<std::string> userInput) {
                     status = spCall->hangup(aecsHangupCb_);
                     if (status != telux::common::Status::SUCCESS) {
                         std::cout << " Failed to hangup ongoing non-AECS call" << std::endl;
+                        return;
                     } else {
                         std::cout << " Ongoing non-AECS call hanged up successfully" << std::endl;
                     }
                 }
             }
         }
-        std::cout << std::endl << std::endl;
-        // 1.2 enable emergency mode
-        std::cout << "Enter 7 to enable emergency mode" << std::endl;
-        int opt = -1;
-        char delimiter = '\n';
-        std::string temp = "";
-        std::getline(std::cin, temp, delimiter);
-        if (!temp.empty()) {
-            try {
-                opt = std::stoi(temp);
-            } catch (const std::exception &e) {
-                std::cout << "ERROR: invalid input, please enter numerical values " << opt
-                    << std::endl;
+        while (true) {
+            std::cout << std::endl << std::endl;
+            // 1.2 enable emergency mode
+            std::cout << "Enter 7 to enable emergency mode" << std::endl;
+            int opt = -1;
+            char delimiter = '\n';
+            std::string temp = "";
+            std::getline(std::cin, temp, delimiter);
+            if (!temp.empty()) {
+                try {
+                    opt = std::stoi(temp);
+                } catch (const std::exception &e) {
+                    std::cout << "ERROR: invalid input, please enter numerical values " << opt
+                        << std::endl;
+                }
             }
-        }
-        if (opt != 7) {
-            return;
-        } else {
-            std::vector<std::string> args; // menu 7 takes no explicit args
-            setEmergencyMode(args);
+            if (opt != 7) {
+                std::cout << "Invalid input, please enter 7" << std::endl;
+                continue;
+            } else {
+                std::vector<std::string> args; // menu 7 takes no explicit args
+                status = setEmergencyModeResult(args);
+                if (status == telux::common::Status::SUCCESS) {
+                    break;
+                }
+                std::cout << "setEmergencyMode failed. Retrying...\n";
+            }
         }
     } else {
         for (auto &call : inProgressCalls) {
@@ -280,6 +288,11 @@ void AecsCall::acceptCall(std::vector<std::string> userInput) {
             break;  // handle first incoming/waiting call
         }
     }
+
+    if (!incomingCall) {
+        std::cout << "No incoming/waiting call found" << std::endl;
+        return;
+    }
     // TODO: This will be updated once we have data for AECS number or URN
     std::string incomingAecsCall;
     char delimiter = '\n';
@@ -303,11 +316,6 @@ void AecsCall::acceptCall(std::vector<std::string> userInput) {
     } else {
         isIncomingAecs = false;
         std::cout << " Proceed with non-AECS call" << std::endl;
-    }
-
-    if (!incomingCall) {
-        std::cout << "No incoming/waiting call found" << std::endl;
-        return;
     }
 
     // ------------------------------------------------------------------
@@ -339,25 +347,32 @@ void AecsCall::acceptCall(std::vector<std::string> userInput) {
         // 2.2 Enter emergency mode
         phoneId_ = incomingCallPhoneId;
         if (!aecsMgr.isEmergencyMode(incomingCallPhoneId)) {
-            std::cout << std::endl << std::endl;
-            std::cout << "Enter 7 to enable emergency mode" << std::endl;
-            int opt = -1;
-            char delimiter = '\n';
-            std::string temp = "";
-            std::getline(std::cin, temp, delimiter);
-            if (!temp.empty()) {
-                try {
-                    opt = std::stoi(temp);
-                 } catch (const std::exception &e) {
-                    std::cout << "ERROR: invalid input, please enter numerical values " << opt
-                        << std::endl;
+            while (true) {
+                std::cout << std::endl << std::endl;
+                std::cout << "Enter 7 to enable emergency mode" << std::endl;
+                int opt = -1;
+                char delimiter = '\n';
+                std::string temp = "";
+                std::getline(std::cin, temp, delimiter);
+                if (!temp.empty()) {
+                    try {
+                        opt = std::stoi(temp);
+                    } catch (const std::exception &e) {
+                        std::cout << "ERROR: invalid input, please enter numerical values " << opt
+                            << std::endl;
+                    }
                 }
-            }
-            if (opt != 7) {
-                return;
-            } else {
-                std::vector<std::string> args;
-                setEmergencyMode(args);
+                if (opt != 7) {
+                    std::cout << "Invalid input, please enter 7" << std::endl;
+                    continue;
+                } else {
+                    std::vector<std::string> args; // menu 7 takes no explicit args
+                    status = setEmergencyModeResult(args);
+                    if (status == telux::common::Status::SUCCESS) {
+                        break;
+                    }
+                    std::cout << "setEmergencyMode failed. Retrying...\n";
+                }
             }
         }
         // Step 2.3: Answer AECS call
@@ -504,13 +519,15 @@ int AecsCall::getInputPhoneId() {
  */
 void AecsCall::sendAecsMessage(std::vector<std::string> userInput) {
     int phoneId = getInputPhoneId();
+    telux::common::Status status = telux::common::Status::FAILED;
     if (phoneId == INVALID_PHONE_ID) {
         std::cout << "Invalid Phone ID. sendAecsMessage aborted." << std::endl;
         return;
     }
     auto &aecsMgr = AecsCallManager::getInstance();
     if (!aecsMgr.isEmergencyMode(phoneId)) {
-        std::cout << std::endl << std::endl;
+        while (true) {
+            std::cout << std::endl << std::endl;
             std::cout << "Enter 7 to enable emergency mode" << std::endl;
             int opt = -1;
             char delimiter = '\n';
@@ -519,19 +536,29 @@ void AecsCall::sendAecsMessage(std::vector<std::string> userInput) {
             if (!temp.empty()) {
                 try {
                     opt = std::stoi(temp);
-                 } catch (const std::exception &e) {
+                } catch (const std::exception &e) {
                     std::cout << "ERROR: invalid input, please enter numerical values " << opt
                         << std::endl;
                 }
             }
             if (opt != 7) {
-                return;
+                std::cout << "Invalid input, please enter 7" << std::endl;
+                continue;
             } else {
-                std::vector<std::string> args;
-                setEmergencyMode(args);
+                std::vector<std::string> args; // menu 7 takes no explicit args
+                status = setEmergencyModeResult(args);
+                if (status == telux::common::Status::SUCCESS) {
+                    break;
+                }
+                std::cout << "setEmergencyMode failed. Retrying...\n";
             }
+        }
     }
-    auto smsMgr = smsMgrs_[phoneId - 1];
+    auto smsMgr = aecsMgr.getSmsManager(phoneId);
+    if (!smsMgr) {
+        std::cout << "No SMS manager available for phoneId " << phoneId << std::endl;
+        return;
+    }
     char delimiter = '\n';
 
     std::cout << std::endl << std::endl;
@@ -586,7 +613,7 @@ void AecsCall::sendAecsMessage(std::vector<std::string> userInput) {
             }
         }
     };
-    telux::common::Status status = smsMgr->sendRawSms(rawPdus, cb);
+    status = smsMgr->sendRawSms(rawPdus, cb);
     if (status == telux::common::Status::SUCCESS) {
         std::cout << "sendAecsMessage is successful.\n";
     } else if (status == telux::common::Status::INVALIDPARAM) {
@@ -602,14 +629,14 @@ void AecsCall::sendAecsMessage(std::vector<std::string> userInput) {
 void AecsCall::hangup(std::vector<std::string> userInput) {
     std::shared_ptr<telux::tel::ICall> spCall = nullptr;
     int noOfExistingCalls = 0;
-
-    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls =
-        callMgr_->getInProgressCalls();
     int phoneId = getInputPhoneId();
     if (phoneId == INVALID_PHONE_ID) {
         std::cout << "Invalid Phone ID. hangup aborted." << std::endl;
         return;
     }
+
+    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls =
+        callMgr_->getInProgressCalls();
 
     for (auto &call : inProgressCalls) {
         if (call->getCallState() != telux::tel::CallState::CALL_ENDED &&
@@ -680,10 +707,19 @@ void AecsCall::getAllCalls(std::vector<std::string> userInput) {
 }
 
 void AecsCall::setEmergencyMode(std::vector<std::string> userInput) {
+     telux::common::Status status = setEmergencyModeResult(userInput);
+     if (status != telux::common::Status::SUCCESS) {
+         std::cout << "Failed to set emergency mode" << std::endl;
+         return;
+     }
+}
+
+telux::common::Status AecsCall::setEmergencyModeResult(std::vector<std::string> userInput) {
     int phoneId = getInputPhoneId();
+    telux::common::Status emStatus = telux::common::Status::FAILED;
     if (phoneId == INVALID_PHONE_ID) {
         std::cout << "Invalid Phone ID. Emergency mode configuration aborted." << std::endl;
-        return;
+        return emStatus;
     }
 
     // Get configuration from user
@@ -699,17 +735,18 @@ void AecsCall::setEmergencyMode(std::vector<std::string> userInput) {
             if (emergencyModeEnabled != 0 && emergencyModeEnabled != 1) {
                 std::cout << "ERROR: Invalid value. Please enter 0 (disable) or 1 (enable)"
                     << std::endl;
-                return;
+                return emStatus;
             }
         } catch(const std::exception &e) {
             std::cout << "ERROR: invalid input, please enter numerical values, "
                << emergencyModeEnabled << std::endl;
-            return;
+            return emStatus;
         }
     } else {
         std::cout << "No input" << std::endl;
-        return;
+        return emStatus;
     }
+
     std::cout << "Enter antenna switching configuration (0-disable, 1- enable): ";
     std::getline(std::cin, temp, delimiter);
     if(!temp.empty()) {
@@ -718,23 +755,19 @@ void AecsCall::setEmergencyMode(std::vector<std::string> userInput) {
             if (antennaSwitchEnabled != 0 && antennaSwitchEnabled != 1) {
                 std::cout << "ERROR: Invalid value. Please enter 0 (disable) or 1 (enable)"
                     << std::endl;
-                return;
+                return emStatus;
             }
         } catch(const std::exception &e) {
             std::cout << "ERROR: invalid input, please enter numerical values, "
                << antennaSwitchEnabled << std::endl;
-            return;
+            return emStatus;
         }
     } else {
         std::cout << "No input" << std::endl;
-        return;
+        return emStatus;
     }
     auto &aecsMgr = AecsCallManager::getInstance();
-    telux::common::Status emStatus =
-        aecsMgr.setEmergencyMode(phoneId, static_cast<bool>(emergencyModeEnabled),
+    emStatus = aecsMgr.setEmergencyMode(phoneId, static_cast<bool>(emergencyModeEnabled),
         static_cast<bool>(antennaSwitchEnabled));
-    if(emStatus != telux::common::Status::SUCCESS) {
-       std::cout << "Failed to set emergency mode" << std::endl;
-       return;
-    }
+    return emStatus;
 }

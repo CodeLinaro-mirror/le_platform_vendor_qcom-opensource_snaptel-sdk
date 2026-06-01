@@ -105,6 +105,10 @@ class AecsCallManager {
     mutable std::mutex emergencyModeMutex_;  // Add mutex for thread safety
     bool aecsCallDrop_ = false;
     bool aecsCallFail_ = false;
+
+    std::condition_variable emergencyModeCv_;
+    bool emergencyModeResponseReceived_           = false;
+    telux::common::ErrorCode emergencyModeResult_ = telux::common::ErrorCode::GENERIC_FAILURE;
 };
 
 #endif

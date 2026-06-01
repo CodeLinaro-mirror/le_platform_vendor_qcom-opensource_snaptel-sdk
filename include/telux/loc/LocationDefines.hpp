@@ -103,9 +103,9 @@ enum class DgnssStatus {
     /** Data source is usable */
     DATA_SOURCE_USABLE = 5,
     /** Data source is not usable, for example,
-     * the reference station is too far away to improve the potion accuracy */
+     * the reference station is too far away to improve the position accuracy */
     DATA_SOURCE_NOT_USABLE = 6,
-    /** The CDFW service askes the source client to stop
+    /** The CDFW service asks the source client to stop
      *  injecting the correction data */
     CDFW_STOP_SOURCE_INJECT = 7
 };
@@ -371,7 +371,7 @@ struct GnssKinematicsData {
  * The location info is calculated according to the vehicle's GNSS antenna where as Vehicle
  * Reference Point(VRP) refers to a point on the vehicle where the display of the car sits.
  * The VRP based info is calculated by adding that extra difference between GNSS antenna and
- * the VRP on the top where the location info is recieved. The VRP parameters can be configured
+ * the VRP on the top where the location info is received. The VRP parameters can be configured
  * through @ref ILocationConfigurator::configureLeverArm.
  * LLAInfo specifies latitude, longitude and altitude info of location for VRP-based.
  */
@@ -639,7 +639,7 @@ enum LocCapabilityType {
      */
     QWES_CV2X_LOCATION_PREMIUM = (1 << 9),
     /** Support PPE (Precise Positioning Engine) library is enabled or Precise Positioning Framework
-     *  (PPF) is available. This includes features for Carrier Phase and SV Ephermeris.
+     *  (PPF) is available. This includes features for Carrier Phase and SV Ephemeris.
      */
     QWES_PPE = (1 << 10),
     /** Support QDR2_C license bundle is enabled. */
@@ -799,11 +799,11 @@ enum LocationInfoExValidityType {
     HAS_HOR_RELIABILITY = (1ULL << 3),
     /** valid vertical reliability */
     HAS_VER_RELIABILITY = (1ULL << 4),
-    /** valid elipsode semi major */
+    /** valid ellipse semi major */
     HAS_HOR_ACCURACY_ELIP_SEMI_MAJOR = (1ULL << 5),
-    /** valid elipsode semi minor */
+    /** valid ellipse semi minor */
     HAS_HOR_ACCURACY_ELIP_SEMI_MINOR = (1ULL << 6),
-    /** valid accuracy elipsode azimuth */
+    /** valid accuracy ellipse azimuth */
     HAS_HOR_ACCURACY_ELIP_AZIMUTH = (1ULL << 7),
     /** valid gnss sv used in pos data */
     HAS_GNSS_SV_USED_DATA = (1ULL << 8),
@@ -1527,7 +1527,7 @@ enum GnssEphSource {
 
 /** Specifies the action to be performed by the clients on the ephemeris info received. */
 enum GnssEphAction {
-    /** Epehmeris Action Unknown  */
+    /** Ephemeris Action Unknown  */
     EPH_ACTION_UNKNOWN = 0,
     /** Update ephemeris data */
     EPH_ACTION_UPDATE = 1,
@@ -1677,8 +1677,8 @@ enum GpsQzssExtEphValidityType {
     /** Valid validtyPeriod*/
     GPS_QZSS_EXT_EPH_VALIDITY_PERIOD_VALID = (1 << 10),
     /** Valid deltaNdot */
-    GPS_QZSS_EXT_EPH_DELTA_NDOT_VALID = (1 < 11),
-    /** Valid delaA*/
+    GPS_QZSS_EXT_EPH_DELTA_NDOT_VALID = (1 << 11),
+    /** Valid deltaA*/
     GPS_QZSS_EXT_EPH_DELTAA_VALID = (1 << 12),
     /** Valid adot */
     GPS_QZSS_EXT_EPH_ADOT_VALID = (1 << 13)
@@ -2128,7 +2128,7 @@ struct GnssEphemeris {
 
 /** Specify leap second change event info.*/
 struct LeapSecondChangeInfo {
-    /** GPS timestamp that corrresponds to the last known leap
+    /** GPS timestamp that corresponds to the last known leap
      *  second change event.
      *  The info can be available on two scenario:
      *  1: This leap second change event has been scheduled and yet
@@ -2606,7 +2606,7 @@ struct XtraConfig {
     /**
      * Path to the certificate authority (CA) repository that needs
      * to be used for XTRA assistance data download.
-     * If empty string is specified, device default CA repositaory
+     * If empty string is specified, device default CA repository
      * will be used.
      */
     std::string caPath;

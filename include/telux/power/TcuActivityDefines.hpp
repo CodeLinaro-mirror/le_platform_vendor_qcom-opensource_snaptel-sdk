@@ -69,7 +69,7 @@ enum class TcuActivityState {
 
     /** Master client uses it to indicate that the given machine(s) should resume (resume
      *  operating at normal power level). Slave client receives it when the machine is about
-     *  to suspend. */
+     *  to resume. */
     RESUME,
 
     /** Master client uses it to indicate that the given machine(s) should power-off.

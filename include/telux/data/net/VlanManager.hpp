@@ -332,7 +332,7 @@ class IVlanManager {
      *   - Binding VLAN to any other profile id and slot id will associate it with own bridge.
      *   - Multiple VLAN binding attempt to any profile id or slot id will result in error
      *     telux::common::ErrorCode::INVALID_OPERATION
-     * This setting will be persistant across multiple boots.
+     *     This setting will be persistent across multiple boots.
      *
      * @param [in] profileId    profile id for VLAN association
      * @param [in] vlanId       VLAN ID to be bound to the data call brought up on the profile id
@@ -349,8 +349,8 @@ class IVlanManager {
         = 0;
 
     /**
-     * Unbind VLAN id from given slot id and profile id
-     * This setting will be persistant across multiple boots.
+     * Unbind VLAN id from given slot id and profile id.
+     * This setting will be persistent across multiple boots.
      *
      * @param [in] profileId    profile id for VLAN association
      * @param [in] vlanId       VLAN ID to be unbound to the data call brought up on the profile id

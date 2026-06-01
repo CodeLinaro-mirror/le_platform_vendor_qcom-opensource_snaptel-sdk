@@ -22,7 +22,7 @@ namespace sec {
  * @{ */
 
 /**
- * @brief ConnectionConnectionSecurityFactory allows creation of CellularSecurityManager
+ * @brief ConnectionSecurityFactory allows creation of CellularSecurityManager
  * and WiFiSecurityManager.
  */
 class ConnectionSecurityFactory {
@@ -71,7 +71,8 @@ class ConnectionSecurityFactory {
      *
      * @returns IWiFiSecurityManager instance or nullptr, if an error occurred
      *
-     * @deprected use the getWiFiSecurityManager(telux::common::InitResponseCb callback) API instead
+     * @deprecated use the getWiFiSecurityManager(telux::common::InitResponseCb callback) API
+     * instead
      */
     virtual std::shared_ptr<IWiFiSecurityManager> getWiFiSecurityManager(
         telux::common::ErrorCode &ec)

@@ -84,7 +84,7 @@ class ISocksManager {
      * @returns True if SocksManager is ready for service, otherwise
      * returns false.
      *
-     * @deprecated Use getServiceStatus API..
+     * @deprecated Use getServiceStatus API.
      */
     virtual bool isSubsystemReady() = 0;
 
@@ -92,7 +92,7 @@ class ISocksManager {
      * Wait for SocksManager subsystem to be ready.
      *
      * @returns A future that caller can wait on to be notified
-     * when Socksanager is ready.
+     * when SocksManager is ready.
      *
      *  @deprecated Use InitResponseCb callback in factory API getSocksManager.
      */
@@ -116,7 +116,7 @@ class ISocksManager {
         = 0;
 
     /**
-     * Register Socks Manager as listener for Data Service heath events like data service available
+     * Register Socks Manager as listener for Data Service health events like data service available
      * or data service not available.
      *
      * @param [in] listener    pointer of ISocksListener object that processes the

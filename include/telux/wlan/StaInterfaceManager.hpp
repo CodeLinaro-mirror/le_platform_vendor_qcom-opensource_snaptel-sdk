@@ -7,7 +7,7 @@
  * @file       StaInterfaceManager.hpp
  *
  * @brief      Primary interface for Wi-Fi Station Mode.
- *             it provide APIs for Wi-Fi Station mode configurations and management.
+ *             it provides APIs for Wi-Fi Station mode configurations and management.
  *
  */
 
@@ -41,7 +41,7 @@ using NetworkId = uint16_t;
  * Priority is used to determine the order in which persistent network
  * configurations are selected when multiple network entries are present and
  * network with higher priority value is preferred over those with lower
- * values, it should be set to 0 if you do not want specify priority.
+ * values, it should be set to 0 if you do not want to specify priority.
  */
 using Priority = uint16_t;
 
@@ -274,7 +274,7 @@ class IStaInterfaceManager {
      *
      * @note Preferential connection to a specific band set via
      * @ref telux::wlan::StaNetworkConfigEntry::band is established or maintained only if the
-     * link to the external AP remains stable. otherwise, this preference is ignored and the STA
+     * link to the external AP remains stable. Otherwise, this preference is ignored and the STA
      * connects to an AP that can provide a reliable radio link without considering the band that
      * it operates on.
      *

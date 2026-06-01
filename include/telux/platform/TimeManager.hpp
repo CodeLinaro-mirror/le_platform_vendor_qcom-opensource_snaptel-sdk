@@ -76,7 +76,7 @@ class ITimeManager {
      * Deregisters the previously registered listener for time updates.
      *
      * @param [in] listener      - pointer to registered listener that needs to be removed.
-     * @param [in] mask          - mask to indicate which times the client has registering for.
+     * @param [in] mask          - mask to indicate which times the client has registered for.
      *
      * @returns status of the deregistration request.
      *

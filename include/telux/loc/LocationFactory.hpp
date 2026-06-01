@@ -84,7 +84,7 @@ class LocationFactory {
      * Get instance of Location Configurator.
      *
      * @param[in] callback   Optional callback pointer to get the response of the manager
-     *                       initialisation.
+     *                       initialization.
      *
      * @returns Pointer of ILocationConfigurator object.
      */
@@ -97,7 +97,7 @@ class LocationFactory {
      *
      * @param[in] dataFormat @ref DgnssDataFormat RTCM injection data format
      * @param[in] callback   Optional callback pointer to get the response of the manager
-     *                       initialisation.
+     *                       initialization.
      *
      * @returns Pointer of IDgnssManager object.
      */

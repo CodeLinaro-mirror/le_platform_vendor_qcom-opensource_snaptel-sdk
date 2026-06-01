@@ -70,7 +70,7 @@ class IFirewallListener;
  * Firewall configuration parameters
  */
 struct FirewallConfig {
-    BackhaulInfo bhInfo; /**< Backhaul Information to apply firewal settings on       */
+    BackhaulInfo bhInfo; /**< Backhaul Information to apply firewall settings on      */
     bool enable; /**< True: Firewall enabled. False: Firewall disabled        */
     bool allowPackets; /**< True: Packets that match rules will be allowed.         */
     /**< False: Packets that match rules will be dropped         */
@@ -80,7 +80,7 @@ struct FirewallConfig {
  * DMZ configuration parameters
  */
 struct DmzConfig {
-    BackhaulInfo bhInfo; /**< Backhaul Information to apply firewal settings on       */
+    BackhaulInfo bhInfo; /**< Backhaul Information to apply firewall settings on      */
     std::string ipAddr; /**< IP address for which DMZ will be enabled                */
 };
 
@@ -90,13 +90,13 @@ struct DmzConfig {
 struct FirewallEntryInfo {
     std::shared_ptr<IFirewallEntry> fwEntry;
     /**< Shared pointer to firewall rules for the backhaul       */
-    BackhaulInfo bhInfo; /**< Backhaul Information to add firewal rules on       */
+    BackhaulInfo bhInfo; /**< Backhaul Information to add firewall rules on      */
 };
 
 /**
  * This function is called as a response to @ref requestFirewallConfig()
  *
- * @param [in] config            Firewall configuration status for specific backhaul
+ * @param [in] status            Firewall configuration status for specific backhaul
  *                               @ref telux::data::FirewallConfig.
  * @param [in] error             Return code which indicates whether the operation
  *                               succeeded or not. @ref telux::common::ErrorCode
@@ -113,7 +113,7 @@ using FirewallConfigCb = std::function<void(FirewallConfig status, telux::common
  *
  */
 using FirewallEntryInfoCb
-    = std::function<void(std::vector<FirewallEntryInfo> entry, telux::common::ErrorCode error)>;
+    = std::function<void(std::vector<FirewallEntryInfo> entries, telux::common::ErrorCode error)>;
 
 /**
  * This function is called as a response to @ref requestDmzEntries()
@@ -249,7 +249,7 @@ class IFirewallManager {
      * permission to invoke this API successfully.
      *
      * @param [in] entries          Firewall rules entries settings.
-     * @param [in] callback         optional callback to get the response addFirewallEntry
+     * @param [in] callback         optional callback to get the response of addFirewallEntry
      *
      * @returns Status of addFirewallEntry i.e. success or suitable status code.
      *
@@ -289,7 +289,8 @@ class IFirewallManager {
      * used to remove the firewall entry @ref removeFirewallEntry().
      *
      * @param [in] entries          Firewall rules entries settings.
-     * @param [in] callback         optional callback to get the response addFirewallEntry
+     * @param [in] callback         optional callback to get the response of
+     * addHwAccelerationFirewallEntry
      *
      * @returns Status of addHwAccelerationFirewallEntry i.e. success or suitable status code.
      *
@@ -319,7 +320,7 @@ class IFirewallManager {
      * @param[in] handle            handle of Firewall entry to be removed. To retrieve the handle,
      *                              first use requestFirewallEntries() to get the list of entries
      *                              added in the system. And then use IFirewallEntry::getHandle()
-     * @param[in] callback          callback to get the response removeFirewallEntry
+     * @param[in] callback          optional callback to get the response of removeFirewallEntry
      *
      * @returns Status of removeFirewallEntry i.e. success or suitable status code.
      *
@@ -332,7 +333,7 @@ class IFirewallManager {
      * Enable demilitarized zone (DMZ) on particular backhaul
      *
      * @param [in] config        DMZ configuration to be enabled
-     * @param [in] callback      optional callback to get the response addDmz
+     * @param [in] callback      optional callback to get the response of enableDmz
      *
      * @returns Status of enableDmz i.e. success or suitable status code.
      *
@@ -346,7 +347,7 @@ class IFirewallManager {
      *
      * @param [in] bhInfo        Backhaul on which DMZ will be disabled.
      * @param [in] ipType        Specify IP type of the DMZ to be disabled
-     * @param [in] callback      optional callback to get the response removeDmz
+     * @param [in] callback      optional callback to get the response of disableDmz
      *
      * @returns Status of disableDmz i.e. success or suitable status code.
      *
@@ -356,7 +357,7 @@ class IFirewallManager {
         = 0;
 
     /**
-     * Request DMZ entry on particulat backhaul that was previously set using enableDmz API
+     * Request DMZ entry on particular backhaul that was previously set using enableDmz API
      *
      * @param [in] bhInfo          Backhaul info on which DMZ entries are requested.
      * @param [in] callback        callback to get the response requestDmzEntry
@@ -367,7 +368,7 @@ class IFirewallManager {
     virtual telux::common::Status requestDmzEntry(BackhaulInfo bhInfo, DmzEntryInfoCb callback) = 0;
 
     /**
-     * Register Firewall Manager as listener for Data Service heath events like data service
+     * Register Firewall Manager as listener for Data Service health events like data service
      * available or data service not available.
      *
      * @param [in] listener    pointer of IFirewallListener object that processes the
@@ -474,7 +475,7 @@ class IFirewallManager {
      *
      * @param [in] profileId        Profile identifier on which firewall rule will be added.
      * @param [in] entry            Firewall entry based on protocol type
-     * @param [in] callback         optional callback to get the response
+     * @param [in] callback         optional callback to get the response of
      *                              @ref addHwAccelerationFirewallEntry
      * @param [in] slotId           Specify slot id which has the sim that contains profile id
      *
@@ -553,7 +554,7 @@ class IFirewallManager {
      *
      * @param [in] profileId     Profile identifier on which DMZ will be enabled.
      * @param [in] ipAddr        IP address for which DMZ will be enabled
-     * @param [in] callback      optional callback to get the response addDmz
+     * @param [in] callback      optional callback to get the response of enableDmz
      * @param [in] slotId        Specify slot id which has the sim that contains profile id
      *
      * @returns Status of enableDmz i.e. success or suitable status code.
@@ -572,7 +573,7 @@ class IFirewallManager {
      *
      * @param [in] profileId     Profile identifier on which DMZ will be disabled.
      * @param [in] ipType        Specify IP type of the DMZ to be disabled
-     * @param [in] callback      optional callback to get the response removeDmz
+     * @param [in] callback      optional callback to get the response of disableDmz
      * @param [in] slotId        Specify slot id which has the sim that contains profile id
      *
      * @returns Status of disableDmz i.e. success or suitable status code.

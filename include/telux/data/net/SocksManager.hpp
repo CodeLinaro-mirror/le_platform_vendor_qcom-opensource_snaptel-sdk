@@ -79,26 +79,6 @@ class ISocksManager {
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
-     * Checks if the SocksManager subsystem is ready.
-     *
-     * @returns True if SocksManager is ready for service, otherwise
-     * returns false.
-     *
-     * @deprecated Use getServiceStatus API..
-     */
-    virtual bool isSubsystemReady() = 0;
-
-    /**
-     * Wait for SocksManager subsystem to be ready.
-     *
-     * @returns A future that caller can wait on to be notified
-     * when Socksanager is ready.
-     *
-     *  @deprecated Use InitResponseCb callback in factory API getSocksManager.
-     */
-    virtual std::future<bool> onSubsystemReady() = 0;
-
-    /**
      * Enable or Disable Socks proxy service.
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG

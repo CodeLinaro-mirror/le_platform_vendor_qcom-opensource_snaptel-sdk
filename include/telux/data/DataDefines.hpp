@@ -269,7 +269,7 @@ struct IpAddrInfo {
 };
 
 /**
- * Bearer technology types (returned with getCurrentBearerTech).
+ * Bearer technology types.
  */
 enum class DataBearerTechnology {
     UNKNOWN, /**< Unknown bearer. */

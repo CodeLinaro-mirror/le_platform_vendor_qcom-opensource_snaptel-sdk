@@ -444,19 +444,19 @@ std::shared_ptr<DataQosTestApp> init() {
     }
 
     // Get the DataFactory
-    auto &dataFactory        = telux::data::DataFactory::getInstance();
-    dataQosApp->dataConnMgr_ = dataFactory.getDataConnectionManager();
+    auto &dataFactory = telux::data::DataFactory::getInstance();
+
+    // Use init callback to block until the manager is ready, avoiding a race on cold start.
+    int slotId = DEFAULT_SLOT_ID;
+    std::promise<telux::common::ServiceStatus> p;
+    dataQosApp->dataConnMgr_ = dataFactory.getDataConnectionManager(
+        static_cast<SlotId>(slotId),
+        [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
     // Check if data subsystem is ready
-    bool subSystemStatus = dataQosApp->dataConnMgr_->isSubsystemReady();
-
-    // If data subsystem is not ready, wait for it to be ready
-    if (!subSystemStatus) {
-        std::cout << "DATA subsystem is not ready" << std::endl;
-        std::cout << "wait unconditionally for it to be ready " << std::endl;
-        std::future<bool> f = dataQosApp->dataConnMgr_->onSubsystemReady();
-        // If we want to wait unconditionally for data subsystem to be ready
-        subSystemStatus = f.get();
+    bool subSystemStatus = false;
+    if (dataQosApp->dataConnMgr_) {
+        subSystemStatus = (p.get_future().get() == telux::common::ServiceStatus::SERVICE_AVAILABLE);
     }
 
     // Exit the application, if SDK is unable to initialize data subsystems

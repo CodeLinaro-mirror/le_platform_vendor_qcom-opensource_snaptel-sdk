@@ -45,7 +45,9 @@ extern "C" {
 
 #include "Utils.hpp"
 #include "MyECallListener.hpp"
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
 #include "../Audio/AudioClient.hpp"
+#endif
 
 #define PRINT_NOTIFICATION std::cout << std::endl << "\033[1;35mNOTIFICATION: \033[0m"
 #define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
@@ -66,7 +68,8 @@ void MyECallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) 
                        << ", Network Mode: " << networkModeToString(call->getNetworkMode())
                        << ", Phone Number: " << call->getRemotePartyNumber() << std::endl;
     if (call->getCallState() == telux::tel::CallState::CALL_ENDED) {
-        int phoneId                                     = call->getPhoneId();
+        int phoneId = call->getPhoneId();
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
         static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
         if (audioClient->isReady()) {
             int numCalls = getCallsOnSlot(static_cast<SlotId>(phoneId));
@@ -76,6 +79,9 @@ void MyECallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) 
                 audioClient->stopVoiceSession(static_cast<SlotId>(phoneId));
             }
         }
+#else
+        std::cout << "Audio is not supported, skipping stop voice session" << std::endl;
+#endif
         PRINT_NOTIFICATION
             << Utils::getCurrentTime()
             << "  Cause of call termination: " << callEndCauseToString(call->getCallEndCause())

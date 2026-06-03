@@ -127,16 +127,6 @@ class ILocationConfigurator {
         const telux::loc::XtraStatus xtraStatus, telux::common::ErrorCode error)>;
 
     /**
-     * Checks the status of location configuration subsystems and returns the result.
-     *
-     * @returns True if location configuration subsystem is ready for service otherwise false.
-     *
-     * @deprecated use getServiceStatus()
-     *
-     */
-    virtual bool isSubsystemReady() = 0;
-
-    /**
      * This status indicates whether the object is in a usable state.
      *
      * @returns SERVICE_AVAILABLE    -  If location configurator is ready for service.
@@ -146,19 +136,6 @@ class ILocationConfigurator {
      *
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
-
-    /**
-     * Wait for location configuration subsystem to be ready.
-     *
-     * @returns  A future that caller can wait on to be notified when location
-     *           configuration subsystem is ready.
-     *
-     * @deprecated The callback mechanism introduced in the
-     * @ref LocationFactory::getLocationConfigurator() API will provide the similar notification
-     * mechanism as onSubsystemReady(). This API will soon be removed from further releases.
-     *
-     */
-    virtual std::future<bool> onSubsystemReady() = 0;
 
     /**
      * This API enables or disables the constrained time uncertainty(C-TUNC) feature. When the

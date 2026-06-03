@@ -106,16 +106,6 @@ class ILocationManager {
         = std::function<void(const std::shared_ptr<ILocationInfoBase> terrestrialInfo)>;
 
     /**
-     * Checks the status of location subsystems and returns the result.
-     *
-     * @returns True if location subsystem is ready for service otherwise false.
-     *
-     * @deprecated use getServiceStatus()
-     *
-     */
-    virtual bool isSubsystemReady() = 0;
-
-    /**
      * This status indicates whether the object is in a usable state.
      *
      * @returns SERVICE_AVAILABLE    -  If location manager is ready for service.
@@ -124,19 +114,6 @@ class ILocationManager {
      *
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
-
-    /**
-     * Wait for location subsystem to be ready.
-     *
-     * @returns  A future that caller can wait on to be notified when location
-     *           subsystem is ready.
-     *
-     * @deprecated The callback mechanism introduced in the
-     * @ref LocationFactory::getLocationManager() API will provide the similar notification
-     * mechanism as onSubsystemReady(). This API will soon be removed from further releases.
-     *
-     */
-    virtual std::future<bool> onSubsystemReady() = 0;
 
     /**
      * Register a listener for specific updates from location manager like

@@ -184,8 +184,6 @@ enum class GnssConstellationType {
     GPS     = 1, /**< GPS satellite */
     GALILEO = 2, /**< GALILEO satellite */
     SBAS    = 3, /**< SBAS satellite */
-    COMPASS = 4, /**< COMPASS satellite.
-                 @deprecated constellation type is not supported.*/
     GLONASS = 5, /**< GLONASS satellite */
     BDS     = 6, /**< BDS satellite */
     QZSS    = 7, /**< QZSS satellite */
@@ -396,10 +394,6 @@ enum class GnssSystem {
     GNSS_LOC_SV_SYSTEM_GALILEO = 2,
     /** SBAS satellite. */
     GNSS_LOC_SV_SYSTEM_SBAS = 3,
-    /** COMPASS satellite.
-    @deprecated constellation type
-    is not supported.*/
-    GNSS_LOC_SV_SYSTEM_COMPASS = 4,
     /** GLONASS satellite. */
     GNSS_LOC_SV_SYSTEM_GLONASS = 5,
     /** BDS satellite. */
@@ -1153,11 +1147,6 @@ enum LeverArmType {
      *  IMU (inertial measurement unit) for DR (dead reckoning
      *  engine) */
     LEVER_ARM_TYPE_DR_IMU_TO_GNSS = 2,
-    /** Lever arm regarding GNSS Antenna w.r.t the origin at the
-     *  IMU (inertial measurement unit) for VEPP (vision enhanced
-     *  precise positioning engine)
-     *  @deprecated enum type is not supported.*/
-    LEVER_ARM_TYPE_VEPP_IMU_TO_GNSS = 3,
     /** Lever arm regarding GNSS Antenna w.r.t the origin at the
      *  IMU (inertial measurement unit) for VPE (vision positioning
      *  engine) */
@@ -3366,28 +3355,6 @@ class ISVInfo {
     virtual uint16_t getId() = 0;
 
     /**
-     * Health status of satellite vehicle.
-     *
-     * @returns  HealthStatus of Satellite Vehicle if available else returns
-     * UNKNOWN.
-     *          - @ref SVHealthStatus
-     * @deprecated This API is not supported.
-     *
-     */
-    virtual SVHealthStatus getSVHealthStatus() = 0;
-
-    /**
-     * Status of satellite vehicle.
-     *
-     * @note    This API is work-in-progress and is subject to change.
-     * @returns Satellite Vehicle Status if available else returns UNKNOWN.
-     *          - @ref SVStatus
-     * @deprecated This API is not supported.
-     *
-     */
-    virtual SVStatus getStatus() = 0;
-
-    /**
      * Indicates whether ephemeris information(which allows the receiver
      * to calculate the satellite's position) is available.
      *
@@ -3479,20 +3446,10 @@ class ISVInfo {
 };
 
 /**
- * @brief IGnssSVInfo provides interface to retrieve the list of SV info
- * available and whether altitude is assumed or calculated.
+ * @brief IGnssSVInfo provides interface to retrieve the list of SV info available.
  */
 class IGnssSVInfo {
  public:
-    /**
-     * Indicates whether altitude is assumed or calculated.
-     *
-     * @returns @ref AltitudeType if available else returns UNKNOWN.
-     * @deprecated This API is not supported.
-     *
-     */
-    virtual AltitudeType getAltitudeType() = 0;
-
     /**
      * Pointer to satellite vehicles information for all GNSS
      * constellations.

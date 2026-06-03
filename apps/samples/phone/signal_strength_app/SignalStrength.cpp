@@ -131,16 +131,6 @@ class PhoneMaker : public telux::tel::ISignalStrengthCallback,
                           << std::endl;
             }
 
-            if (signalStrength->getGsmSignalStrength()->getGsmBitErrorRate()
-                == INVALID_SIGNAL_STRENGTH_VALUE) {
-                std::cout << "GSM Bit Error Rate: "
-                          << "UNAVAILABLE" << std::endl;
-            } else {
-                std::cout << "GSM Bit Error Rate: "
-                          << signalStrength->getGsmSignalStrength()->getGsmBitErrorRate()
-                          << std::endl;
-            }
-
             if (signalStrength->getGsmSignalStrength()->getDbm() == INVALID_SIGNAL_STRENGTH_VALUE) {
                 std::cout << "GSM Signal Strength(in dBm): "
                           << "UNAVAILABLE" << std::endl;
@@ -157,16 +147,6 @@ class PhoneMaker : public telux::tel::ISignalStrengthCallback,
                 std::cout << "GSM Received Signal Strength Indicator(in dBm): "
                           << signalStrength->getGsmSignalStrength()->getRssi() << std::endl;
             }
-            if (signalStrength->getGsmSignalStrength()->getTimingAdvance()
-                == INVALID_SIGNAL_STRENGTH_VALUE) {
-                std::cout << "GSM Timing Advance(in bit periods): "
-                          << "UNAVAILABLE" << std::endl;
-            } else {
-                std::cout << "GSM Timing Advance(in bit periods): "
-                          << signalStrength->getGsmSignalStrength()->getTimingAdvance()
-                          << std::endl;
-            }
-
             std::cout << "GSM Signal Level: "
                       << signalLevelToString(signalStrength->getGsmSignalStrength()->getLevel())
                       << std::endl;
@@ -258,16 +238,6 @@ class PhoneMaker : public telux::tel::ISignalStrengthCallback,
             } else {
                 std::cout << "WCDMA Received Signal Strength Indicator(in dBm): "
                           << signalStrength->getWcdmaSignalStrength()->getRssi() << std::endl;
-            }
-
-            if (signalStrength->getWcdmaSignalStrength()->getBitErrorRate()
-                == INVALID_SIGNAL_STRENGTH_VALUE) {
-                std::cout << "WCDMA Bit Error Rate: "
-                          << "UNAVAILABLE" << std::endl;
-            } else {
-                std::cout << "WCDMA Bit Error Rate: "
-                          << signalStrength->getWcdmaSignalStrength()->getBitErrorRate()
-                          << std::endl;
             }
 
             if (signalStrength->getWcdmaSignalStrength()->getEcio()

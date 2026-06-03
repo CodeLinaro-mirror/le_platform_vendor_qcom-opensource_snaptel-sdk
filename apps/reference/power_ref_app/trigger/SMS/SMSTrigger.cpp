@@ -3,12 +3,16 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include <future>
+#include <sstream>
+#include <iomanip>
+
 #include "SMSTrigger.hpp"
 #include <telux/common/Log.hpp>
-#include <future>
 #include <telux/common/DeviceConfig.hpp>
 #include <telux/tel/PhoneFactory.hpp>
 #include "common/RefAppUtils.hpp"
+#include "Utils.hpp"
 
 SMSTrigger::SMSTrigger(std::shared_ptr<EventManager> eventManager) {
     LOG(DEBUG, __FUNCTION__);
@@ -76,12 +80,13 @@ void SMSTrigger::onIncomingSms(
         text = text + smsMsg.getText();
 
         std::shared_ptr<telux::tel::MessagePartInfo> partInfo = smsMsg.getMessagePartInfo();
+
         if (partInfo) {
             std::string tmpLog = " mSegment: " + std::to_string(partInfo->segmentNumber)
                                  + "\n SMS Part on phone ID " + std::to_string(phoneId)
                                  + " from: " + smsMsg.getSender() + " to: " + smsMsg.getReceiver()
                                  + "\n Message Part: " + smsMsg.getText()
-                                 + "\n PDU: " + smsMsg.getPdu()
+                                 + "\n Raw PDU (hex): " + Utils::toHexString(smsMsg.getRawPdu())
                                  + "\n RefNumber:" + std::to_string(partInfo->refNumber)
                                  + " NumberOfSegments:" + std::to_string(partInfo->numberOfSegments)
                                  + " SegmentNumber: " + std::to_string(partInfo->segmentNumber);

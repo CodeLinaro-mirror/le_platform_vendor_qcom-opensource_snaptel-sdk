@@ -79,32 +79,6 @@ class ISubscription {
     virtual std::string getIccId() = 0;
 
     /**
-     * Retrieves the mobile country code of the carrier to which the phone is
-     * connected.
-     *
-     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SUBSCRIPTION_READ
-     * permission to invoke this API successfully.
-     *
-     * @returns Mobile Country Code.
-     *
-     * @deprecated Use telux::tel::ISubscription::getMobileCountryCode() API instead
-     */
-    virtual int getMcc() = 0;
-
-    /**
-     * Retrieves the mobile network code of the carrier to which phone is
-     * connected.
-     *
-     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SUBSCRIPTION_READ
-     * permission to invoke this API successfully.
-     *
-     * @returns Mobile Network Code.
-     *
-     * @deprecated Use telux::tel::ISubscription::getMobileNetworkCode() API instead
-     */
-    virtual int getMnc() = 0;
-
-    /**
      * Retrieves the mobile country code(MCC) of the carrier to which the phone is connected.
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SUBSCRIPTION_READ

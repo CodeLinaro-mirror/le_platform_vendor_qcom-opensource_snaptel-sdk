@@ -329,26 +329,6 @@ using NetworkScanCallback
 class INetworkSelectionManager {
  public:
     /**
-     * Checks the status of network subsystem and returns the result.
-     *
-     * @returns True if network subsystem is ready for service otherwise false.
-     *
-     * @deprecated Use INetworkSelectionManager::getServiceStatus() API.
-     */
-    virtual bool isSubsystemReady() = 0;
-
-    /**
-     * Wait for network subsystem to be ready.
-     *
-     * @returns  A future that caller can wait on to be notified when network
-     *           subsystem is ready.
-     *
-     * @deprecated Use InitResponseCb in PhoneFactory::getNetworkSelectionManager instead, to
-     *             get notified about subsystem readiness.
-     */
-    virtual std::future<bool> onSubsystemReady() = 0;
-
-    /**
      * This status indicates whether the INetworkSelectionManager object is in a usable state.
      *
      * @returns SERVICE_AVAILABLE    -  If Serving System manager is ready for service.

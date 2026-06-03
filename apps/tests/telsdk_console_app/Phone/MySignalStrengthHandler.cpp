@@ -80,15 +80,6 @@ void MySignalStrengthCallback::signalStrengthResponse(
                      << signalStrength->getGsmSignalStrength()->getGsmSignalStrength() << std::endl;
         }
 
-        if (signalStrength->getGsmSignalStrength()->getGsmBitErrorRate()
-            == INVALID_SIGNAL_STRENGTH_VALUE) {
-            PRINT_CB << "GSM Bit Error Rate: "
-                     << "UNAVAILABLE" << std::endl;
-        } else {
-            PRINT_CB << "GSM Bit Error Rate: "
-                     << signalStrength->getGsmSignalStrength()->getGsmBitErrorRate() << std::endl;
-        }
-
         if (signalStrength->getGsmSignalStrength()->getDbm() == INVALID_SIGNAL_STRENGTH_VALUE) {
             PRINT_CB << "GSM Signal Strength(in dBm): "
                      << "UNAVAILABLE" << std::endl;
@@ -103,15 +94,6 @@ void MySignalStrengthCallback::signalStrengthResponse(
         } else {
             PRINT_CB << "GSM Received Signal Strength Indicator(in dBm): "
                      << signalStrength->getGsmSignalStrength()->getRssi() << std::endl;
-        }
-
-        if (signalStrength->getGsmSignalStrength()->getTimingAdvance()
-            == INVALID_SIGNAL_STRENGTH_VALUE) {
-            PRINT_CB << "GSM Timing Advance(in bit periods): "
-                     << "UNAVAILABLE" << std::endl;
-        } else {
-            PRINT_CB << "GSM Timing Advance(in bit periods): "
-                     << signalStrength->getGsmSignalStrength()->getTimingAdvance() << std::endl;
         }
 
         PRINT_CB << "GSM Signal Level: "
@@ -203,15 +185,6 @@ void MySignalStrengthCallback::signalStrengthResponse(
         } else {
             PRINT_CB << "WCDMA Received Signal Strength Indicator(in dBm): "
                      << signalStrength->getWcdmaSignalStrength()->getRssi() << std::endl;
-        }
-
-        if (signalStrength->getWcdmaSignalStrength()->getBitErrorRate()
-            == INVALID_SIGNAL_STRENGTH_VALUE) {
-            PRINT_CB << "WCDMA Bit Error Rate: "
-                     << "UNAVAILABLE" << std::endl;
-        } else {
-            PRINT_CB << "WCDMA Bit Error Rate: "
-                     << signalStrength->getWcdmaSignalStrength()->getBitErrorRate() << std::endl;
         }
 
         if (signalStrength->getWcdmaSignalStrength()->getEcio() == INVALID_SIGNAL_STRENGTH_VALUE) {

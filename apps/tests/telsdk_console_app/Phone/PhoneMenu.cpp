@@ -134,12 +134,6 @@ bool PhoneMenu::init() {
                 }
             }
         }
-        // Turn on the radio if it's not available
-        for (auto index = 0; index < phones_.size(); index++) {
-            if (phones_[index]->getRadioState() != telux::tel::RadioState::RADIO_STATE_ON) {
-                phones_[index]->setRadioPower(true);
-            }
-        }
 
         phoneListener_ = std::make_shared<MyPhoneListener>();
         status         = phoneManager_->registerListener(phoneListener_);
@@ -175,6 +169,22 @@ bool PhoneMenu::init() {
         myCellularCapabilityCb_ = std::make_shared<MyCellularCapabilityCallback>();
         myGetOperatingModeCb_   = std::make_shared<MyGetOperatingModeCallback>();
         mySetOperatingModeCb_   = std::make_shared<MySetOperatingModeCallback>();
+        // Turn on the radio if it's not available
+        status = phoneManager_->requestOperatingMode(myGetOperatingModeCb_);
+        if (status == telux::common::Status::SUCCESS) {
+            try {
+                if (myGetOperatingModeCb_->getFuture().get() == telux::common::ErrorCode::SUCCESS) {
+                    auto opMode = myGetOperatingModeCb_->getOperatingMode();
+                    if (opMode != telux::tel::OperatingMode::ONLINE) {
+                        phoneManager_->setOperatingMode(telux::tel::OperatingMode::ONLINE, nullptr);
+                    }
+                }
+            } catch (const std::exception& e) {
+                std::cout << "Failed to get operating mode: " << e.what() << std::endl;
+            }
+        } else {
+            std::cout << "Failed to request operating mode" << std::endl;
+        }
     } else {
         std::cout << "ERROR - Unable to initialize SubscriptionManager subsystem \n";
         return false;
@@ -273,27 +283,6 @@ void PhoneMenu::requestSignalStrength(std::vector<std::string> userInput) {
     } else {
         std::cout << "No default phone found" << std::endl;
     }
-}
-
-std::string PhoneMenu::getServiceStateAsString(telux::tel::ServiceState serviceState) {
-    std::string serviceStateString = "";
-    switch (serviceState) {
-        case telux::tel::ServiceState::EMERGENCY_ONLY:
-            serviceStateString = "Emergency Only";
-            break;
-        case telux::tel::ServiceState::IN_SERVICE:
-            serviceStateString = "In Service";
-            break;
-        case telux::tel::ServiceState::OUT_OF_SERVICE:
-            serviceStateString = "Out Of Service";
-            break;
-        case telux::tel::ServiceState::RADIO_OFF:
-            serviceStateString = "Radio Off";
-            break;
-        default:
-            break;
-    }
-    return serviceStateString;
 }
 
 void PhoneMenu::requestVoiceServiceState(std::vector<std::string> userInput) {

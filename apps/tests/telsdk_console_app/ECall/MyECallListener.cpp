@@ -158,17 +158,6 @@ std::string MyECallListener::callStateToString(telux::tel::CallState cs) {
     }
 }
 
-void MyECallListener::onECallMsdTransmissionStatus(
-    int phoneId, telux::common::ErrorCode errorCode) {
-    if (errorCode == telux::common::ErrorCode::SUCCESS) {
-        PRINT_NOTIFICATION << "onECallMsdTransmissionStatus is Success" << std::endl;
-    } else {
-        PRINT_NOTIFICATION << "onECallMsdTransmissionStatus failed with error code: "
-                           << static_cast<int>(errorCode) << ":"
-                           << Utils::getErrorCodeAsString(errorCode) << std::endl;
-    }
-}
-
 std::string MyECallListener::eCallMsdTransmissionStatusToString(
     telux::tel::ECallMsdTransmissionStatus status) {
     switch (status) {

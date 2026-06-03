@@ -101,16 +101,6 @@ void MyCellInfoCallback::cellInfoListResponse(
                              << std::endl;
                 }
 
-                if (gsmCellInfo->getSignalStrengthInfo().getGsmBitErrorRate()
-                    == INVALID_SIGNAL_STRENGTH_VALUE) {
-                    PRINT_CB << "GSM Bit Error Rate: "
-                             << "UNAVAILABLE" << std::endl;
-                } else {
-                    PRINT_CB << "GSM Bit Error Rate: "
-                             << gsmCellInfo->getSignalStrengthInfo().getGsmBitErrorRate()
-                             << std::endl;
-                }
-
                 if (gsmCellInfo->getSignalStrengthInfo().getDbm()
                     == INVALID_SIGNAL_STRENGTH_VALUE) {
                     PRINT_CB << "GSM Signal Strength(in dBm): "
@@ -127,16 +117,6 @@ void MyCellInfoCallback::cellInfoListResponse(
                 } else {
                     PRINT_CB << "GSM Received Signal Strength Indicator(in dBm): "
                              << gsmCellInfo->getSignalStrengthInfo().getRssi() << std::endl;
-                }
-
-                if (gsmCellInfo->getSignalStrengthInfo().getTimingAdvance()
-                    == INVALID_SIGNAL_STRENGTH_VALUE) {
-                    PRINT_CB << "GSM Timing Advance(in bit periods): "
-                             << "UNAVAILABLE" << std::endl;
-                } else {
-                    PRINT_CB << "GSM Timing Advance(in bit periods): "
-                             << gsmCellInfo->getSignalStrengthInfo().getTimingAdvance()
-                             << std::endl;
                 }
 
                 PRINT_CB << "GSM Signal Level: "
@@ -220,15 +200,6 @@ void MyCellInfoCallback::cellInfoListResponse(
                         << std::endl;
                 }
 
-                if (lteCellInfo->getSignalStrengthInfo().getTimingAdvance()
-                    == INVALID_SIGNAL_STRENGTH_VALUE) {
-                    PRINT_CB << "LTE Timing Advance: "
-                             << "UNAVAILABLE" << std::endl;
-                } else {
-                    PRINT_CB << "LTE Timing Advance: "
-                             << lteCellInfo->getSignalStrengthInfo().getTimingAdvance()
-                             << std::endl;
-                }
                 PRINT_CB << "LTE Signal Level: "
                          << signalLevelToString(lteCellInfo->getSignalStrengthInfo().getLevel())
                          << std::endl;
@@ -289,15 +260,6 @@ void MyCellInfoCallback::cellInfoListResponse(
                              << wcdmaCellInfo->getSignalStrengthInfo().getRssi() << std::endl;
                 }
 
-                if (wcdmaCellInfo->getSignalStrengthInfo().getBitErrorRate()
-                    == INVALID_SIGNAL_STRENGTH_VALUE) {
-                    PRINT_CB << "WCDMA Bit Error Rate: "
-                             << "UNAVAILABLE" << std::endl;
-                } else {
-                    PRINT_CB << "WCDMA Bit Error Rate: "
-                             << wcdmaCellInfo->getSignalStrengthInfo().getBitErrorRate()
-                             << std::endl;
-                }
                 if (wcdmaCellInfo->getSignalStrengthInfo().getEcio()
                     == INVALID_SIGNAL_STRENGTH_VALUE) {
                     PRINT_CB << "WCDMA Energy per chip to Interference Power Ratio(in dB): "

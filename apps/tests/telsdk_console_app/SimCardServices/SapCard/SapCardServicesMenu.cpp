@@ -322,13 +322,15 @@ void SapCardServicesMenu::requestSapState(std::vector<std::string> userInput) {
 void SapCardServicesMenu::getState(std::vector<std::string> userInput) {
     auto sapCardMgr = sapManagers_[slot_ - 1];
     if (sapCardMgr) {
-        telux::tel::SapState sapstate;
-        if (sapCardMgr->getState(sapstate) == telux::common::Status::SUCCESS) {
-            logSapState(sapstate);
-            std::cout << "Get sap state success \n";
-        } else {
-            std::cout << "Get sap state failed \n";
-        }
+        sapCardMgr->requestSapState([this](telux::tel::SapState sapstate,
+                                        telux::common::ErrorCode error) {
+            if (error == telux::common::ErrorCode::SUCCESS) {
+                logSapState(sapstate);
+                std::cout << "Get sap state success \n";
+            } else {
+                std::cout << "Get sap state failed \n";
+            }
+        });
     } else {
         std::cout << "ERROR: Unable to get SAP Manager instance";
     }

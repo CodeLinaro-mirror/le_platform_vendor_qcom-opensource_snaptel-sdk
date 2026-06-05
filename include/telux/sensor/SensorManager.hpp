@@ -100,33 +100,6 @@ class ISensorManager {
      *
      * @returns                 Status of request @ref telux::common::Status
      *
-     * @deprecated Use getSensorClient API.
-     *
-     */
-    virtual telux::common::Status getSensor(
-        std::shared_ptr<ISensorClient> &sensor, std::string name)
-        = 0;
-
-    /**
-     * Get an instance of ISensorClient to interact with the underlying sensor.
-     * The provided instance is not a singleton. Everytime this method is called a new sensor
-     * object is created. It is the caller's responsibility to manage the object's lifetime.
-     * Every instance of the sensor returned acts as new client and can configure the underlying
-     * sensor with it's own configuration and it's own callbacks for
-     * @ref telux::sensor::SensorEvent and configuration update among other events
-     * @ref telux::sensor::ISensorEventListener.
-     *
-     * @param [out] sensor -    An instance of @ref telux::sensor::ISensorClient to interact with
-     *                          the underlying sensor is provided as a result of the method
-     *                          If the initialization of the sensor and underlying system
-     *                          fails, sensor is set to nullptr
-     *
-     * @param [in]  name -      The unique name of the sensor @ref telux::sensor::SensorInfo::name
-     *                          that was provided in the list of sensor information by
-     *                          @ref telux::sensor::ISensorManager::getAvailableSensorInfo
-     *
-     * @returns                 Status of request @ref telux::common::Status
-     *
      */
     virtual telux::common::Status getSensorClient(
         std::shared_ptr<ISensorClient> &sensor, std::string name)

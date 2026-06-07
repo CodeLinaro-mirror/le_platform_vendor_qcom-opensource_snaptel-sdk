@@ -97,31 +97,6 @@ Cv2xStatus Cv2xStatusListener::getCv2xStatus() {
     return cv2xStatus_;
 }
 
-void Cv2xStatusListener::onStatusChanged(Cv2xStatus status) {
-    bool stateUpdated = false;
-    {
-        lock_guard<mutex> lock(mtx_);
-        if (status.rxStatus != cv2xStatus_.rxStatus or status.txStatus != cv2xStatus_.txStatus) {
-            cout << "cv2x status changed, Tx: " << static_cast<int>(status.txStatus);
-            cout << ", Rx: " << static_cast<int>(status.rxStatus) << endl;
-            cv2xStatus_  = status;
-            stateUpdated = true;
-        }
-    }
-
-    if (stateUpdated) {
-        if ((status.rxStatus == Cv2xStatusType::ACTIVE
-                and status.txStatus == Cv2xStatusType::ACTIVE)) {
-            // notifiy client that is waiting for Tx active
-            cv_.notify_all();
-        } else if (status.rxStatus == Cv2xStatusType::INACTIVE
-                   or status.txStatus == Cv2xStatusType::INACTIVE) {
-            // cv2x transition to inactive, deinit and exit from the app
-            std::thread([&]() { Cv2xTxStatusReportApp::getInstance().deinit(); }).detach();
-        }
-    }
-}
-
 void Cv2xStatusListener::waitCv2xActive() {
     std::unique_lock<mutex> cvLock(mtx_);
     if (Cv2xStatusType::ACTIVE != cv2xStatus_.txStatus

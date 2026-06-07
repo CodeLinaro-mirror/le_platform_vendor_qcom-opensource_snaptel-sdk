@@ -44,7 +44,6 @@
 #define TELUX_CV2X_CV2XCONFIG_HPP
 
 #include <string>
-#include <future>
 #include <telux/common/SDKListener.hpp>
 #include <telux/common/CommonDefines.hpp>
 #include <telux/cv2x/Cv2xRadioTypes.hpp>
@@ -86,28 +85,6 @@ class ICv2xConfig {
  public:
     virtual ~ICv2xConfig() {
     }
-    /**
-     * Checks if the Cv2x Config Manager is ready.
-     *
-     * @returns True if Cv2x Config is ready for service, otherwise
-     * returns false.
-     *
-     * @deprecated use getServiceStatus instead
-     */
-    virtual bool isReady() = 0;
-
-    /**
-     * Wait for Cv2x Config to be ready.
-     *
-     * @returns A future that caller can wait on to be notified
-     * when Cv2x Radio Manager is ready.
-     *
-     * @deprecated the readiness can be notified via the callback passed to
-     *             Cv2xFactory::getCv2xConfig.
-     *
-     */
-    virtual std::future<bool> onReady() = 0;
-
     /**
      * This status indicates whether the Cv2xConfig is in a usable state.
      *

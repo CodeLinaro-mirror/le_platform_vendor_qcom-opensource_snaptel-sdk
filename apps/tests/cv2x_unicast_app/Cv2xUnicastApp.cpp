@@ -79,7 +79,6 @@ using telux::cv2x::ICv2xRadioListener;
 using telux::cv2x::ICv2xRadioManager;
 using telux::cv2x::ICv2xRxSubscription;
 using telux::cv2x::ICv2xTxFlow;
-using telux::cv2x::Periodicity;
 using telux::cv2x::Priority;
 using telux::cv2x::SpsFlowInfo;
 using telux::cv2x::TrafficCategory;
@@ -149,20 +148,6 @@ class RadioListener : public ICv2xRadioListener {
 };
 
 class Cv2xStatusListener : public ICv2xListener {
- public:
-    void onStatusChanged(Cv2xStatus status) override {
-        lock_guard<mutex> lock(gCv2xStatusMutex);
-        if (status.rxStatus != gCv2xStatus.rxStatus or status.txStatus != gCv2xStatus.txStatus) {
-            cout << "cv2x status changed, Tx: " << static_cast<int>(status.txStatus);
-            cout << ", Rx: " << static_cast<int>(status.rxStatus) << endl;
-            gCv2xStatus = status;
-
-            if (status.rxStatus == Cv2xStatusType::ACTIVE
-                and status.txStatus == Cv2xStatusType::ACTIVE) {
-                gStatusCv.notify_all();
-            }
-        }
-    }
 };
 
 static bool isV2xReady() {
@@ -523,7 +508,6 @@ static Status registerBroadcastFlows() {
         // Register non-Ip Tx sps flow with broadcast SID and broadcast port
         SpsFlowInfo spsInfo;
         spsInfo.priority                = Priority::PRIORITY_2;
-        spsInfo.periodicity             = Periodicity::PERIODICITY_100MS;
         spsInfo.nbytesReserved          = BROADCAST_PACKET_LEN;
         spsInfo.autoRetransEnabledValid = true;
         spsInfo.autoRetransEnabled      = true;

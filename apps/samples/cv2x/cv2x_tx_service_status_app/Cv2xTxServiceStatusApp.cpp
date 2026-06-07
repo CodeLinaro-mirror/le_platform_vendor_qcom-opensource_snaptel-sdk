@@ -82,7 +82,6 @@ using telux::cv2x::ICv2xListener;
 using telux::cv2x::ICv2xRadio;
 using telux::cv2x::ICv2xRadioListener;
 using telux::cv2x::ICv2xTxFlow;
-using telux::cv2x::Periodicity;
 using telux::cv2x::Priority;
 using telux::cv2x::SpsFlowInfo;
 using telux::cv2x::TrafficCategory;
@@ -307,7 +306,6 @@ int main(int argc, char *argv[]) {
     // Create new Tx SPS flow
     SpsFlowInfo spsInfo;
     spsInfo.priority                = Priority::PRIORITY_2;
-    spsInfo.periodicity             = Periodicity::PERIODICITY_100MS;
     spsInfo.nbytesReserved          = G_BUF_LEN;
     spsInfo.autoRetransEnabledValid = true;
     spsInfo.autoRetransEnabled      = true;

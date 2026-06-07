@@ -44,7 +44,6 @@
 #define TELUX_CV2X_CV2XRADIOMANAGER_HPP
 
 #include <memory>
-#include <future>
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/cv2x/Cv2xRadioTypes.hpp>
@@ -61,16 +60,6 @@ class ICv2xRadio;
  */
 class ICv2xListener : public common::IServiceStatusListener {
  public:
-    /**
-     * Called when the status of the CV2X radio has changed.
-     *
-     * @param [in] status - CV2X radio status.
-     *
-     * @deprecated use onStatusChanged(Cv2xStatusEx status)
-     */
-    virtual void onStatusChanged(Cv2xStatus status) {
-    }
-
     /**
      * Called when the status of the CV2X radio has changed.
      *
@@ -125,20 +114,6 @@ using StopCv2xCallback = std::function<void(telux::common::ErrorCode error)>;
  * @param [in] error     - SUCCESS if Cv2x status was successully retrieved
  *                       - SUCCESS
  *                       - GENERIC_FAILURE
- *
- *
- * @deprecated use @ref RequestCv2xStatusCallbackEx
- */
-using RequestCv2xStatusCallback
-    = std::function<void(Cv2xStatus status, telux::common::ErrorCode error)>;
-
-/**
- * This function is called as a response to @ref ICv2xRadioManager::requestCv2xStatus
- *
- * @param [in] status    - Cv2x status
- * @param [in] error     - SUCCESS if Cv2x status was successully retrieved
- *                       - SUCCESS
- *                       - GENERIC_FAILURE
  */
 using RequestCv2xStatusCallbackEx
     = std::function<void(Cv2xStatusEx status, telux::common::ErrorCode error)>;
@@ -162,28 +137,6 @@ using GetSlssRxInfoCallback
  */
 class ICv2xRadioManager {
  public:
-    /**
-     * Checks if the Cv2x Radio Manager is ready.
-     *
-     * @returns True if Cv2x Radio Manager is ready for service, otherwise
-     * returns false.
-     *
-     * @deprecated use getServiceStatus instead
-     */
-    virtual bool isReady() = 0;
-
-    /**
-     * Wait for Cv2x Radio Manager to be ready.
-     *
-     * @returns A future that caller can wait on to be notified
-     * when Cv2x Radio Manager is ready.
-     *
-     * @deprecated the readiness can be notified via the callback passed to
-     *             Cv2xFactory::getCv2xRadioManager.
-     *
-     */
-    virtual std::future<bool> onReady() = 0;
-
     /**
      * This status indicates whether the Cv2xRadioManager is in a usable state.
      *
@@ -231,17 +184,6 @@ class ICv2xRadioManager {
      * @returns SUCCESS on success. Error status otherwise.
      */
     virtual telux::common::Status stopCv2x(StopCv2xCallback cb) = 0;
-
-    /**
-     * request CV2X status from modem
-     *
-     * @param [in] cb      - Callback that is invoked when Cv2x status is retrieved
-     *
-     * @returns SUCCESS on success. Error status otherwise.
-     *
-     * @deprecated use requestCv2xStatus(RequestCv2xCalbackEx)
-     */
-    virtual telux::common::Status requestCv2xStatus(RequestCv2xStatusCallback cb) = 0;
 
     /**
      * request CV2X status from modem

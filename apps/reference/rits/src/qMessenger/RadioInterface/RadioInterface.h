@@ -112,7 +112,6 @@ class Cv2xStatusListener : public telux::cv2x::ICv2xListener {
     int waitForCv2xStatus(telux::cv2x::Cv2xStatusType status, bool &restartFlow);
     int waitForCv2xRxStatus(telux::cv2x::Cv2xStatusType status, bool &restartFlow);
     int waitForCv2xTxStatus(telux::cv2x::Cv2xStatusType status, bool &restartFlow);
-    void onStatusChanged(telux::cv2x::Cv2xStatus status) override;
     void deinit();
 
     // avoid potential stuck in case deinit is not invoked

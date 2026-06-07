@@ -69,7 +69,6 @@ using telux::cv2x::Cv2xUtil;
 using telux::cv2x::DataSessionSettings;
 using telux::cv2x::EventFlowInfo;
 using telux::cv2x::ICv2xTxFlow;
-using telux::cv2x::Periodicity;
 using telux::cv2x::Priority;
 using telux::cv2x::SpsFlowInfo;
 using telux::cv2x::TrafficCategory;
@@ -157,7 +156,6 @@ static void requestSpsFlowInfoCallback(
     shared_ptr<ICv2xTxFlow> txSpsFlow, const SpsFlowInfo &spsInfo, ErrorCode spsError) {
     if (ErrorCode::SUCCESS == spsError) {
         cout << "Priority: " << static_cast<int>(spsInfo.priority)
-             << ", Periodicity: " << static_cast<int>(spsInfo.periodicity)
              << ", NbytesReserved: " << spsInfo.nbytesReserved << ", Traffic class:"
              << static_cast<int>(Cv2xUtil::priorityToTrafficClass(spsInfo.priority)) << endl;
     }
@@ -335,7 +333,6 @@ static int createTxFlow(std::shared_ptr<telux::cv2x::ICv2xRadio> &radio) {
     if (gFlowType == TxFlowType::SpsOnly || gFlowType == TxFlowType::Combine) {
         SpsFlowInfo spsInfo;
         spsInfo.priority       = Priority::PRIORITY_2;
-        spsInfo.periodicity    = Periodicity::PERIODICITY_100MS;
         spsInfo.nbytesReserved = G_BUF_LEN;
         auto createEvtFlow     = (gFlowType == TxFlowType::Combine) ? true : false;
 

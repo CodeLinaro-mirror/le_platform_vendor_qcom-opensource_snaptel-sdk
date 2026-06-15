@@ -125,7 +125,7 @@ void AudioClient::onServiceStatusChange(ServiceStatus status) {
         std::cout << "Audio subsystem is AVAILABLE" << std::endl;
         // In case of an SSR, automatically start audio session post SSR
         if (keepVoiceSessionActive_) {
-            startVoiceSession(streamConfig_.modemSubId, streamConfig_.deviceTypes,
+            startVoiceSession(static_cast<int>(streamConfig_.slotId), streamConfig_.deviceTypes,
                 streamConfig_.sampleRate, streamConfig_.format, streamConfig_.channelTypeMask,
                 streamConfig_.ecnrMode);
         }
@@ -188,7 +188,7 @@ telux::common::Status AudioClient::startVoiceSession(int phoneId, std::vector<De
         // Create a Voice Stream
         streamConfig_                 = {};
         streamConfig_.type            = StreamType::VOICE_CALL;
-        streamConfig_.modemSubId      = phoneId;
+        streamConfig_.slotId          = static_cast<SlotId>(phoneId);
         streamConfig_.sampleRate      = sampleRate;
         streamConfig_.format          = voiceFormat;
         streamConfig_.channelTypeMask = channels;

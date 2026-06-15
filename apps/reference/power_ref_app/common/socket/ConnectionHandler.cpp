@@ -298,9 +298,7 @@ void ConnectionHandler::logDataCallDetails(
     }
     tmpLog
         = " IpFamilyType: " + std::to_string(static_cast<int>(dataCall->getIpFamilyType()))
-          + "\nTechPreference: " + std::to_string(static_cast<int>(dataCall->getTechPreference()))
-          + "\n DataBearerTechnology: "
-          + std::to_string(static_cast<int>(dataCall->getCurrentBearerTech()));
+          + "\nTechPreference: " + std::to_string(static_cast<int>(dataCall->getTechPreference()));
     LOG(DEBUG, __FUNCTION__, tmpLog);
 }
 

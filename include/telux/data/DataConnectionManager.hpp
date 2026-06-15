@@ -120,8 +120,6 @@ struct TftChangeInfo {
  * Data call bit rate info
  */
 struct BitRateInfo {
-    uint64_t txRate; /**< @deprecated Unused */
-    uint64_t rxRate; /**< @deprecated Unused */
     uint64_t maxTxRate; /**< Maximum transmit rate that can be assigned to device in bits/sec */
     uint64_t maxRxRate; /**< Maximum receive rate that can be assigned to device in bits/sec  */
 };
@@ -395,26 +393,6 @@ class IDataConnectionManager {
      *
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
-
-    /**
-     * Checks if the data subsystem is ready.
-     *
-     * @returns True if Data Connection Manager is ready for service, otherwise
-     * returns false.
-     *
-     *  @deprecated Use getServiceStatus API.
-     */
-    virtual bool isSubsystemReady() = 0;
-
-    /**
-     * Wait for data subsystem to be ready.
-     *
-     * @returns A future that caller can wait on to be notified
-     * when card manager is ready.
-     *
-     * @deprecated Use InitResponseCb callback in factory API getDataConnectionManager.
-     */
-    virtual std::future<bool> onSubsystemReady() = 0;
 
     /**
      * Set a profile as default which results in following:
@@ -897,17 +875,6 @@ class IDataCall {
      * Destructor for IDataCall
      */
     virtual ~IDataCall(){};
-
-    /**
-     * Get the bearer technology on which earlier data call was brought up like LTE, WCDMA and etc.
-     * This is synchronous API called by client to get bearer technology corresponding to data call.
-     *
-     * @returns @ref DataBearerTechnology
-     *
-     * @deprecated, use telux::data::IServingSystemManager::requestServiceStatus instead
-     *
-     */
-    virtual DataBearerTechnology getCurrentBearerTech() = 0;
 };
 
 /**

@@ -81,25 +81,6 @@ class IDataProfileManager {
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
-     * Checks if the data profile manager is ready.
-     *
-     * @returns True if data profile subsystem is ready for service otherwise false.
-     *
-     * @deprecated Use getServiceStatus API.
-     */
-    virtual bool isSubsystemReady() = 0;
-
-    /**
-     * Waits for data profile subsystem to be ready.
-     *
-     * @returns  A future that caller can wait on to be notified when data profile
-     *           subsystem is ready.
-     *
-     * @deprecated Use InitResponseCb callback in factory API getDataProfileManager.
-     */
-    virtual std::future<bool> onSubsystemReady() = 0;
-
-    /**
      * Request list of profiles supported by the device.
      *
      * @param [in, out ] callback    Callback pointer to get the response.

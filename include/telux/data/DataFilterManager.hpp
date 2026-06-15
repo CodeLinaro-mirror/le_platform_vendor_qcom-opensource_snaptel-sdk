@@ -208,26 +208,6 @@ class IDataFilterManager {
     virtual SlotId getSlotId() = 0;
 
     /**
-     * Checks the status of Data Filter Service and if the other APIs are ready for use,
-     * and returns the result.
-     *
-     * @returns  True if the services are ready otherwise false.
-     *
-     * @deprecated Use getServiceStatus API.
-     */
-    virtual bool isReady() = 0;
-
-    /**
-     * Wait for Data Filter Service to be ready.
-     *
-     * @returns  A future that caller can wait on to be notified when Data Filter Service
-     *           are ready.
-     *
-     * @deprecated Use InitResponseCb callback in factory API getDataFilterManager.
-     */
-    virtual std::future<bool> onReady() = 0;
-
-    /**
      * Changes the Data Powersave filter mode and auto exit feature.
      *
      * This API enables or disables the powersave filtering mode of the running packet data

@@ -251,8 +251,6 @@ class DataConnectionManager
         }
         std::cout << " IpFamilyType: " << static_cast<int>(dataCall->getIpFamilyType()) << '\n';
         std::cout << " TechPreference: " << static_cast<int>(dataCall->getTechPreference()) << '\n';
-        std::cout << " DataBearerTechnology: " << static_cast<int>(dataCall->getCurrentBearerTech())
-                  << '\n';
     }
 
     void logThrottledApnInfoChanged(

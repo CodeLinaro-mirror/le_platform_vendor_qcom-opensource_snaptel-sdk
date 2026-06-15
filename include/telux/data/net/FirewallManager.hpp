@@ -195,25 +195,6 @@ class IFirewallManager {
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
-     * Checks if the Firewall manager subsystem is ready.
-     *
-     * @returns True if Firewall Manager is ready for service, otherwise
-     * returns false.
-     *
-     * @deprecated Use getServiceStatus API.
-     */
-    virtual bool isSubsystemReady() = 0;
-
-    /**
-     * Wait for Firewall manager subsystem to be ready.
-     *
-     * @returns A future that caller can wait on to be notified
-     * when firewall manager is ready.
-     *
-     * @deprecated Use InitResponseCb callback in factory API getFirewallManager.
-     */
-    virtual std::future<bool> onSubsystemReady() = 0;
-    /**
      * Sets firewall configuration to enable or disable firewall and update configuration to
      * drop or accept the packets matching the rules on slot ID, profile ID and backhaul type.
      *

@@ -101,15 +101,6 @@ using GetActiveConfigCallback
 class IModemConfigManager {
  public:
     /**
-     * Checks the status of modem config subsystem and returns the result.
-     *
-     * @returns    If true that means ModemConfigManager is ready for performing config operations.
-     *
-     * @deprecated Use @ref getServiceStatus API
-     */
-    virtual bool isSubsystemReady() = 0;
-
-    /**
      * This status indicates whether the manager object is in a usable state or not.
      *
      * @returns SERVICE_AVAILABLE    -  if modem config manager is ready to use.
@@ -118,17 +109,6 @@ class IModemConfigManager {
      *                                  and can not be used.
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
-
-    /**
-     * Wait for modem config subsystem to be ready.
-     *
-     * @returns    A future that caller can wait on to be notified when modem config
-     *             subsystem is ready.
-     *
-     * @deprecated Use InitResponseCb callback in factory API @ref
-     * ConfigFactory::getModemConfigManager.
-     */
-    virtual std::future<bool> onSubsystemReady() = 0;
 
     /**
      * Fetching the list of config files present in modem's storage.

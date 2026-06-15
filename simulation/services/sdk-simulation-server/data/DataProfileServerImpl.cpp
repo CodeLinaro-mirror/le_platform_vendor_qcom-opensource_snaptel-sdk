@@ -110,8 +110,9 @@ grpc::Status DataProfileServerImpl::CreateProfile(ServerContext *context,
         if (emergencyAllowed == dataStub::EmergencyCapability::UNSPECIFIED) {
             emergencyAllowed = dataStub::EmergencyCapability::NOT_ALLOWED;
         }
-        newProfile["emergencyAllowed"] = ((int)emergencyAllowed);
-        newProfile["clatEnabled"]      = request->clat_enabled();
+        newProfile["emergencyAllowed"]  = ((int)emergencyAllowed);
+        newProfile["clatEnabled"]       = request->clat_enabled();
+        newProfile["enablePcscfViaPco"] = request->enable_pcscf_via_pco();
         data.stateRootObj[subsystem]["requestProfileList"]["profiles"][currentProfileCount]
             = newProfile;
 
@@ -249,8 +250,9 @@ grpc::Status DataProfileServerImpl::ModifyProfile(ServerContext *context,
             if (emergencyAllowed == dataStub::EmergencyCapability::UNSPECIFIED) {
                 emergencyAllowed = dataStub::EmergencyCapability::NOT_ALLOWED;
             }
-            updatedProfile["emergencyAllowed"] = ((int)emergencyAllowed);
-            updatedProfile["clatEnabled"]      = request->clat_enabled();
+            updatedProfile["emergencyAllowed"]  = ((int)emergencyAllowed);
+            updatedProfile["clatEnabled"]       = request->clat_enabled();
+            updatedProfile["enablePcscfViaPco"] = request->enable_pcscf_via_pco();
 
             Json::Value newRoot;
             for (auto idx = 0; idx < currentProfileCount; idx++) {
@@ -351,6 +353,8 @@ grpc::Status DataProfileServerImpl::RequestProfileById(ServerContext *context,
             response->mutable_profile()->set_emergency_capability(
                 (dataStub::EmergencyCapability)requestedProfile["emergencyAllowed"].asInt());
             response->mutable_profile()->set_clat_enabled(requestedProfile["clatEnabled"].asBool());
+            response->mutable_profile()->set_enable_pcscf_via_pco(
+                requestedProfile["enablePcscfViaPco"].asBool());
         } else {
             LOG(DEBUG, __FUNCTION__, " profile not found ");
             error = telux::common::ErrorCode::EXTENDED_INTERNAL;
@@ -412,6 +416,7 @@ grpc::Status DataProfileServerImpl::RequestProfileList(ServerContext *context,
             profile->set_emergency_capability(
                 (dataStub::EmergencyCapability)requestedProfile["emergencyAllowed"].asInt());
             profile->set_clat_enabled(requestedProfile["clatEnabled"].asBool());
+            profile->set_enable_pcscf_via_pco(requestedProfile["enablePcscfViaPco"].asBool());
         }
     }
 
@@ -453,6 +458,7 @@ grpc::Status DataProfileServerImpl::QueryProfile(ServerContext *context,
         = DataUtilsStub::convertAuthProtocolEnumToString(request->auth_type().auth_type());
     dataStub::EmergencyCapability emergencyAllowed = request->emergency_capability();
     bool clatEnabled                               = request->clat_enabled();
+    bool enablePcscfViaPco                         = request->enable_pcscf_via_pco();
 
     if (data.status == telux::common::Status::SUCCESS) {
         int currentProfileCount
@@ -503,6 +509,9 @@ grpc::Status DataProfileServerImpl::QueryProfile(ServerContext *context,
             if ((requestedProfile["clatEnabled"].asBool() != clatEnabled)) {
                 continue;
             }
+            if ((requestedProfile["enablePcscfViaPco"].asBool() != enablePcscfViaPco)) {
+                continue;
+            }
             dataStub::Profile *profile = response->add_profiles();
 
             profile->set_profile_id(requestedProfile["profileId"].asInt());
@@ -526,6 +535,7 @@ grpc::Status DataProfileServerImpl::QueryProfile(ServerContext *context,
                 (dataStub::EmergencyCapability)requestedProfile["emergencyAllowed"].asInt());
             *profile->mutable_auth_type() = authType;
             profile->set_clat_enabled(requestedProfile["clatEnabled"].asBool());
+            profile->set_enable_pcscf_via_pco(requestedProfile["enablePcscfViaPco"].asBool());
         }
     }
 

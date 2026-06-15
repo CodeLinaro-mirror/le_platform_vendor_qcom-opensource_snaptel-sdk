@@ -420,11 +420,11 @@ void DgnssMenu::injectFromFile(std::vector<std::string> userInput) {
             // created but not ready to accept data, we wait for it to become ready before
             // injecting data.
             // NOTE that in real case, if this happened the data should come from new source.
-            bool subSystemStatus = dgnssManager_->isSubsystemReady();
-            if (false == subSystemStatus) {
-                std::future<bool> f = dgnssManager_->onSubsystemReady();
-                subSystemStatus     = f.get();
-                if (false == subSystemStatus) {
+            telux::common::ServiceStatus srvStatus = dgnssManager_->getServiceStatus();
+            if (srvStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+                // Source was released; wait for new source to become ready using initCb pattern
+                dgnssManager_ = nullptr;
+                if (initDgnssManager(dgnssManager_) != telux::common::Status::SUCCESS) {
                     break;
                 }
                 ret = 0;

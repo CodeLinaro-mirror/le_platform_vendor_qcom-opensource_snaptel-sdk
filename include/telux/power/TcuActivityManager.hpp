@@ -270,26 +270,6 @@ class ITcuActivityManager {
     virtual telux::common::Status setModemActivityState(TcuActivityState state) = 0;
 
     /**
-     * Returns true if the power management service is functionally ready, false otherwise.
-     *
-     * @returns True if service is ready, false otherwise
-     *
-     * @deprecated Use ITcuActivityManager::getServiceStatus() API.
-     *             @ref telux::power::ITcuActivityManager::getServiceStatus
-     */
-    virtual bool isReady() = 0;
-
-    /**
-     * Provides a mechanism to wait for the power management service to be functionally
-     * ready.
-     *
-     * @returns Future object on which the caller can wait
-     *
-     * @deprecated Use InitResponseCb in PowerFactory::getTcuActivityManager instead.
-     */
-    virtual std::future<bool> onReady() = 0;
-
-    /**
      * Initiates a TCU-activity state transition.
      * If the platform is configured to change the modem activity state automatically when the TCU
      * activity state is changed, this API initiates the relevant internal operation.

@@ -72,8 +72,6 @@ class SensorControlMenu : public ConsoleApp {
     void configureSensor(std::vector<std::string> userInput);
     void activateSensor(std::vector<std::string> userInput);
     void deactivateSensor(std::vector<std::string> userInput);
-    void enableLowPowerMode(std::vector<std::string> userInput);
-    void disableLowPowerMode(std::vector<std::string> userInput);
     void deleteSensorClient(std::vector<std::string> userInput);
     void listActiveClients(std::vector<std::string> userInput);
     void cleanupReinit(std::vector<std::string> userInput);

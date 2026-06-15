@@ -239,26 +239,6 @@ telux::common::Status SensorClient::deactivate() {
     return status;
 }
 
-void SensorClient::enableLowPowerMode() {
-    telux::common::Status status = sensor_->enableLowPowerMode();
-    if (status != telux::common::Status::SUCCESS) {
-        std::cout << tag_ << "low power mode enable request failed: ";
-        Utils::printStatus(status);
-        return;
-    }
-    std::cout << tag_ << "Low power mode enable request successful" << std::endl;
-}
-
-void SensorClient::disableLowPowerMode() {
-    telux::common::Status status = sensor_->disableLowPowerMode();
-    if (status != telux::common::Status::SUCCESS) {
-        std::cout << tag_ << "low power mode disable request failed: ";
-        Utils::printStatus(status);
-        return;
-    }
-    std::cout << tag_ << "Low power mode disable request successful" << std::endl;
-}
-
 telux::common::Status SensorClient::selfTest(SelfTestType selfTestType) {
     static uint64_t requestID = 0;
     ++requestID;

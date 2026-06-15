@@ -327,17 +327,6 @@ void TelClient::onCallInfoChange(std::shared_ptr<ICall> call) {
 }
 
 // Callback to notify MSD transmission status
-void TelClient::onECallMsdTransmissionStatus(int phoneId, telux::common::ErrorCode errorCode) {
-    if (errorCode == telux::common::ErrorCode::SUCCESS) {
-        std::cout << CLIENT_NAME << "MSD is transmitted Successfully" << std::endl;
-    } else {
-        std::cout << CLIENT_NAME
-                  << "MSD transmission failed with error code: " << static_cast<int>(errorCode)
-                  << " : " << Utils::getErrorCodeAsString(errorCode) << std::endl;
-    }
-}
-
-// Callback to notify MSD transmission status
 void TelClient::onECallMsdTransmissionStatus(
     int phoneId, telux::tel::ECallMsdTransmissionStatus msdTransmissionStatus) {
     std::cout << CLIENT_NAME << "ECallMsdTransmission  Status: "

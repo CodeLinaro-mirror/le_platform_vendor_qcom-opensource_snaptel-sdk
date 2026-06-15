@@ -35,8 +35,8 @@
 
 /**
  * @file       SignalStrength.hpp
- * @brief      SignalStrength is a container class for obtaining the LTE, GSM, WCDMA, TDSCDMA and
- *             CDMA signal strength parameters.
+ * @brief      SignalStrength is a container class for obtaining the LTE, GSM, WCDMA, NR5G and
+ *             NB-IoT(NB1) NTN signal strength parameters.
  */
 #ifndef TELUX_TEL_SIGNALSTRENGTH_HPP
 #define TELUX_TEL_SIGNALSTRENGTH_HPP
@@ -55,9 +55,7 @@ namespace tel {
 // forward declarations
 class LteSignalStrengthInfo;
 class GsmSignalStrengthInfo;
-class CdmaSignalStrengthInfo;
 class WcdmaSignalStrengthInfo;
-class TdscdmaSignalStrengthInfo;
 class Nr5gSignalStrengthInfo;
 class Nb1NtnSignalStrengthInfo;
 /**
@@ -74,16 +72,14 @@ enum class SignalStrengthLevel {
 };
 
 /**
- * SignalStrength class provides access to LTE, GSM, CDMA, WCDMA, TDSCDMA, NR5G and NB-IoT(NB1)
+ * SignalStrength class provides access to LTE, GSM, WCDMA, NR5G and NB-IoT(NB1)
  * NTN signal strengths.
  */
 class SignalStrength {
  public:
     SignalStrength(std::shared_ptr<LteSignalStrengthInfo> lteSignalStrengthInfo,
         std::shared_ptr<GsmSignalStrengthInfo> gsmSignalStrengthInfo,
-        std::shared_ptr<CdmaSignalStrengthInfo> cdmaSignalStrengthInfo,
         std::shared_ptr<WcdmaSignalStrengthInfo> wcdmaSignalStrengthInfo,
-        std::shared_ptr<TdscdmaSignalStrengthInfo> tdscdmaSignalStrengthInfo,
         std::shared_ptr<Nr5gSignalStrengthInfo> nr5gSignalStrengthInfo,
         std::shared_ptr<Nb1NtnSignalStrengthInfo> nb1NtnSignalStrengthInfo);
     /**
@@ -103,32 +99,12 @@ class SignalStrength {
     std::shared_ptr<GsmSignalStrengthInfo> getGsmSignalStrength();
 
     /**
-     * Gives CDMA signal strength instance.
-     *
-     * @returns Pointer to CDMA signal strength instance that can be used to get
-     * cdma/evdo dbm, signal level values.
-     *
-     * @deprecated As of version 1.53.0 this API is no longer supported.
-     */
-    std::shared_ptr<CdmaSignalStrengthInfo> getCdmaSignalStrength();
-
-    /**
      * Gives WCDMA signal strength instance.
      *
      * @returns Pointer to WCDMA signal strength instance that can be used to get
      * WCDMA dbm, signal level values.
      */
     std::shared_ptr<WcdmaSignalStrengthInfo> getWcdmaSignalStrength();
-
-    /**
-     * Gives TDSWCDMA signal strength instance.
-     *
-     * @returns Pointer to TDSWCDMA signal strength instance that can be used to get
-     * TDSCDMA RSCP value.
-     *
-     * @deprecated As of version 1.53.0 this API is no longer supported.
-     */
-    std::shared_ptr<TdscdmaSignalStrengthInfo> getTdscdmaSignalStrength();
 
     /**
      * Gives 5G NR signal strength instance.
@@ -150,9 +126,7 @@ class SignalStrength {
  private:
     std::shared_ptr<LteSignalStrengthInfo> lteSS_;
     std::shared_ptr<GsmSignalStrengthInfo> gsmSS_;
-    std::shared_ptr<CdmaSignalStrengthInfo> cdmaSS_;
     std::shared_ptr<WcdmaSignalStrengthInfo> wcdmaSS_;
-    std::shared_ptr<TdscdmaSignalStrengthInfo> tdscdmaSS_;
     std::shared_ptr<Nr5gSignalStrengthInfo> nr5gSS_;
     std::shared_ptr<Nb1NtnSignalStrengthInfo> nb1NtnSS_;
 };
@@ -164,8 +138,8 @@ class SignalStrength {
  */
 class LteSignalStrengthInfo {
  public:
-    LteSignalStrengthInfo(int lteSignalStrength, int lteRsrp, int lteRsrq, int lteRssnr, int lteCqi,
-        int timingAdvance, int lteRssi = INVALID_SIGNAL_STRENGTH_VALUE);
+    LteSignalStrengthInfo(int lteSignalStrength, int lteRsrp, int lteRsrq, int lteRssnr,
+        int lteRssi = INVALID_SIGNAL_STRENGTH_VALUE);
     /**
      * Get signal level in the range.
      *
@@ -215,29 +189,6 @@ class LteSignalStrengthInfo {
      */
     const int getLteReferenceSignalSnr() const;
 
-    /**
-     * Get LTE channel quality indicator.
-     * (Valid value range [0, 15] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
-     *
-     * @deprecated This API not being supported
-     *
-     * @returns LteCqI.
-     *
-     * @deprecated This API is no longer supported.
-     */
-    const int getLteChannelQualityIndicator() const;
-
-    /**
-     * Get the timing advance in micro seconds.
-     * (Valid value range [0, 0x7FFFFFFE] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
-     *
-     * @deprecated This API not being supported
-     *
-     * @returns Timing advance value.
-     *
-     */
-    const int getTimingAdvance() const;
-
  private:
     int lteSignalStrength_;
     int lteRssi_;
@@ -245,8 +196,6 @@ class LteSignalStrengthInfo {
     int lteAsu_;
     int lteRsrq_;
     int lteRssnr_;
-    int lteCqi_;
-    int timingAdvance_;
 };
 
 /**
@@ -255,8 +204,7 @@ class LteSignalStrengthInfo {
  */
 class GsmSignalStrengthInfo {
  public:
-    GsmSignalStrengthInfo(int gsmSignalStrength, int gsmBitErrorRate, int timingAdvance,
-        int gsmRssi = INVALID_SIGNAL_STRENGTH_VALUE);
+    GsmSignalStrengthInfo(int gsmSignalStrength, int gsmRssi = INVALID_SIGNAL_STRENGTH_VALUE);
     /**
      * Get signal level in the range.
      *
@@ -292,92 +240,9 @@ class GsmSignalStrengthInfo {
      */
     const int getGsmSignalStrength() const;
 
-    /**
-     * Get the GSM bit error rate.
-     * (Valid value range [0, 7] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
-     *
-     * @deprecated This API not being supported
-     *
-     * @returns GSM bit error rate.
-     */
-    const int getGsmBitErrorRate() const;
-
-    /**
-     * Get the timing advance in bit periods . 1 bit period = 48/13 us
-     * (Valid value range [0, 219] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
-     *
-     * @deprecated This API not being supported
-     *
-     * @returns timing advance.
-     */
-    const int getTimingAdvance();
-
  private:
     int gsmSignalStrength_;
     int rssi_;
-    int gsmBitErrorRate_;
-    int timingAdvance_;
-};
-
-/**
- * CDMA signal strength provides methods to get details of CDMA and EVDO like signal strength
- * in dBm and signal level.
- *
- * @deprecated As of version 1.53.0 this API is no longer supported.
- */
-class CdmaSignalStrengthInfo {
- public:
-    CdmaSignalStrengthInfo(
-        int cdmaDbm, int cdmaEcio, int evdoDbm, int evdoEcio, int evdoSignalNoiseRatio);
-    /**
-     * Get signal level in the range.
-     *
-     * @returns Signal levels indicates the quality of signal being received by
-     * the device.
-     */
-    const SignalStrengthLevel getLevel() const;
-
-    /**
-     * Get the signal strength in dBm.
-     *
-     * @returns Minimum value of Evdo dBm and Cdma dBm.
-     */
-    const int getDbm() const;
-
-    /**
-     * Get the CDMA Ec/Io in dB.
-     *
-     * @returns CDMA Ec/Io.
-     */
-    const int getCdmaEcio() const;
-
-    /**
-     * Get the EVDO Ec/Io in dB.
-     *
-     * @returns EVDO Ec/Io.
-     */
-    const int getEvdoEcio() const;
-
-    /**
-     * Get the EVDO signal noise ratio.
-     * (Valid value range [0, 8] and 8 is the highest signal to noise ratio.
-     *
-     * @returns EVDO SNR.
-     */
-    const int getEvdoSignalNoiseRatio() const;
-
- private:
-    // Helper functions used to calculate EVDO dBm and EVDO Level
-    const int getEvdoDbm() const;
-    const SignalStrengthLevel getEvdoLevel() const;
-    // Helper functions used  to calculate CDMA dBm and CDMA Level
-    const int getCdmaDbm() const;
-    const SignalStrengthLevel getCdmaLevel() const;
-    int cdmaDbm_;
-    int cdmaEcio_;
-    int evdoDbm_;
-    int evdoEcio_;
-    int evdoSignalNoiseRatio_;
 };
 
 /**
@@ -386,8 +251,7 @@ class CdmaSignalStrengthInfo {
  */
 class WcdmaSignalStrengthInfo {
  public:
-    WcdmaSignalStrengthInfo(int signalStrength, int bitErrorRate);
-    WcdmaSignalStrengthInfo(int signalStrength, int bitErrorRate, int wcdmaEcio, int wcdmaRscp,
+    WcdmaSignalStrengthInfo(int signalStrength, int wcdmaEcio, int wcdmaRscp,
         int wcdmaRssi = INVALID_SIGNAL_STRENGTH_VALUE);
     /**
      * Get signal level in the range.
@@ -426,17 +290,6 @@ class WcdmaSignalStrengthInfo {
     const int getSignalStrength() const;
 
     /**
-     * Get the WCDMA bit error rate.
-     * (Valid value range [0, 7] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
-     *
-     * @deprecated This API not being supported
-     *
-     * @returns WCDMA bit error rate.
-     *
-     */
-    const int getBitErrorRate() const;
-
-    /**
      * Gets the WCDMA energy per chip to interference power ratio in dB.
      *
      * @returns The WCDMA energy per chip to interference power ratio. The valid range is
@@ -456,33 +309,11 @@ class WcdmaSignalStrengthInfo {
 
  private:
     int signalStrength_;
-    int bitErrorRate_;
     int ecio_;
     int rscp_;
     int rssi_;
 };
 
-/**
- * Tdscdma signal strength provides methods to get received signal code power.
- *
- * @deprecated As of version 1.53.0 this API is no longer supported.
- */
-class TdscdmaSignalStrengthInfo {
- public:
-    TdscdmaSignalStrengthInfo(int rscp);
-
-    /**
-     * Get TdScdma received signal code power in dBm.
-     *(Valid Range [-120,-25], and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
-     *
-     * @returns TdScdma signal code power.
-     *
-     */
-    const int getRscp() const;
-
- private:
-    int rscp_;
-};
 
 /**
  * 5G NR signal strength provides methods to get signal strength and signal-to-noise ratio.

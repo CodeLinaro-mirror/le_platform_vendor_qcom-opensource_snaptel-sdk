@@ -190,36 +190,6 @@ class ICall {
         = 0;
 
     /**
-     * Reject the call and  send an SMS to caller. Only applicable for CallState::INCOMING
-     * and CallState::WAITING calls.
-     *
-     * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_MGMT
-     * permission to successfully invoke this API.
-     *
-     * @param [in] rejectSMS SMS string used to send in response to a call rejection.
-     * @param [in] callback - optional callback pointer to get the response of rejectwithSMS request
-     * below are possible error codes for callback response
-     *        - @ref telux::common::ErrorCode::SUCCESS
-     *        - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
-     *        - @ref telux::common::ErrorCode::NO_MEMORY
-     *        - @ref telux::common::ErrorCode::MODEM_ERR
-     *        - @ref telux::common::ErrorCode::INTERNAL_ERR
-     *        - @ref telux::common::ErrorCode::INVALID_STATE
-     *        - @ref telux::common::ErrorCode::INVALID_CALL_ID
-     *        - @ref telux::common::ErrorCode::INVALID_ARGUMENTS
-     *        - @ref telux::common::ErrorCode::OPERATION_NOT_ALLOWED
-     *        - @ref telux::common::ErrorCode::GENERIC_FAILURE
-     *
-     *  @deprecated This API not being supported
-     *
-     *  @returns Status of success for call reject() or suitable error code.
-     *
-     */
-    virtual telux::common::Status reject(const std::string &rejectSMS,
-        std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)
-        = 0;
-
-    /**
      * Hangup the call if the call state is either active, hold, dialing, waiting or alerting.
      *
      * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_MGMT

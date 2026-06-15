@@ -204,10 +204,10 @@ struct SmsFailureCause {
 class SmsMessage {
  public:
     SmsMessage(std::string text, std::string sender, std::string receiver, SmsEncoding encoding,
-        std::string pdu, PduBuffer pduBuffer, std::shared_ptr<MessagePartInfo> info);
+        PduBuffer pduBuffer, std::shared_ptr<MessagePartInfo> info);
 
     SmsMessage(std::string text, std::string sender, std::string receiver, SmsEncoding encoding,
-        std::string pdu, PduBuffer pduBuffer, std::shared_ptr<MessagePartInfo> info,
+        PduBuffer pduBuffer, std::shared_ptr<MessagePartInfo> info,
         bool isMetaInfoValid, SmsMetaInfo metaInfo);
 
     /**
@@ -237,15 +237,6 @@ class SmsMessage {
      * @returns SMS message encoding used.
      */
     SmsEncoding getEncoding() const;
-
-    /**
-     * Get the raw PDU for the single part message or part of the multipart message.
-     *
-     * @returns String containing raw PDU content.
-     *
-     * @deprecated Use API SmsMessage::getRawPdu
-     */
-    const std::string &getPdu() const;
 
     /**
      * Get the raw PDU buffer for the single part message or part of the multipart message.
@@ -288,8 +279,7 @@ class SmsMessage {
     std::string sender_; /**< Originating address (sender) */
     std::string receiver_; /**< Destination address (receiver) */
     SmsEncoding encoding_; /**< Encoding of the SMS message */
-    std::string pdu_; /**< Raw PDU content. This is deprecated use rawPdu_ */
-    PduBuffer rawPdu_; /**< Raw PDU content */
+    PduBuffer rawPdu_; /**< Raw PDU buffer */
     std::shared_ptr<MessagePartInfo> msgPartInfo_; /**< Information related to part of
                                                         multi-part message */
     bool isMetaInfoValid_; /**< If true meta information is valid otherwise not */
@@ -677,67 +667,6 @@ class ISmsManager {
      * @returns Status of removeListener i.e. success or suitable error code.
      */
     virtual telux::common::Status removeListener(std::weak_ptr<ISmsListener> listener) = 0;
-
-    /**
-     * Send SMS to the destination address. When registered on IMS the SMS will be attempted over
-     * IMS. If sending SMS over IMS fails, an automatic retry would be attempted to send the message
-     * over CS. Only support UCS2 format, GSM 7 bit default alphabet and does not support National
-     * language shift tables.
-     *
-     * On platforms with access control enabled, caller needs to have TELUX_TEL_SMS_OPS permission
-     * to invoke this API successfully.
-     *
-     * @param [in] message           Message text to be sent
-     * @param [in] receiverAddress   Receiver or destination address
-     * @param [in] sentCallback      Optional callback pointer to get the response
-     *                               of send SMS request.
-     * @param [in] deliveryCallback  Optional callback pointer to get message
-     *                               delivery status
-     *
-     * @deprecated Use API ISmsManager::sendSms(const std::string &message,
-          const std::string &receiverAddress, bool deliveryReportNeeded = true,
-          SmsResponseCb callback = nullptr, std::string smscAddr = "")
-     *
-     * @returns Status of sendSms i.e. success or suitable error code.
-     *
-     */
-    virtual telux::common::Status sendSms(const std::string &message,
-        const std::string &receiverAddress,
-        std::shared_ptr<telux::common::ICommandResponseCallback> sentCallback     = nullptr,
-        std::shared_ptr<telux::common::ICommandResponseCallback> deliveryCallback = nullptr)
-        = 0;
-
-    /**
-     * Send single or multipart SMS to the destination address. When registered on IMS the SMS will
-     * be attempted over IMS. If sending SMS over IMS fails, an automatic retry would be attempted
-     * to send the message over CS. Only support UCS2 format, GSM 7 bit default alphabet and does
-     * not support National language shift tables. The SMS is sent directly not stored on storage.
-     *
-     * On platforms with access control enabled, caller needs to have TELUX_TEL_SMS_OPS permission
-     * to invoke this API successfully.
-     *
-     * @param [in] message                 Message text to be send.
-     * @param [in] receiverAddress         Receiver or destination address
-     * @param [in] deliveryReportNeeded    Delivery status received in the listener API
-     *                                     @ref telux::tel::ISmsListener if deliveryReportNeeded is
-     *                                     true. Provided recipient responds to SMSC before the
-     *                                     validity period expires. If deliveryReportNeeded is false
-     *                                     delivery report will not be received.
-     * @param [in] sentCallback            Optional callback pointer to get the sent response for
-     *                                     single part or multi-part SMS.
-     * @param [in] smscAddr                SMS is sent to SMSC address. If SMSC address is empty
-     * then pre-configured SMSC address is used.
-     *
-     * @returns Status of sendSms i.e. success or suitable error code.
-     *
-     * @deprecated Use API ISmsManager::sendSmsEx(const std::string &message,
-     *     const std::string &receiverAddress, bool deliveryReportNeeded = true,
-     *     SmsResponseCbEx sentCallback = nullptr, std::string smscAddr = "")
-     *
-     */
-    virtual telux::common::Status sendSms(std::string message, std::string receiverAddress,
-        bool deliveryReportNeeded, SmsResponseCb sentCallback = nullptr, std::string smscAddr = "")
-        = 0;
 
     /**
      * Send an SMS that is provided as a raw encoded PDU(s). When registered on IMS the SMS will

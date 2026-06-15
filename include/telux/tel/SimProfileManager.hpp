@@ -244,21 +244,6 @@ class ISimProfileManager {
         = 0;
 
     /**
-     * Request eUICC identifier(EID) for the slot.
-     *
-     * On platforms with access control enabled, caller needs to have TELUX_TEL_SIM_PROFILE_READ
-     * permission to invoke this API successfully.
-     *
-     * @param [in] slotId            Slot identifier corresponding to the card.
-     * @param [in] callback          Callback function to get the result of request EID.
-     *
-     * @returns  Status of request EID i.e. success or suitable error code.
-     *
-     * @deprecated Use telux::tel::ICard::requestEid API instead
-     */
-    virtual telux::common::Status requestEid(SlotId slotId, EidResponseCb callback) = 0;
-
-    /**
      * Provide user consent required for downloading and installing profile.
      * This API should be called in response to
      * @ref telux::tel::ISimProfileListener::onUserDisplayInfo.

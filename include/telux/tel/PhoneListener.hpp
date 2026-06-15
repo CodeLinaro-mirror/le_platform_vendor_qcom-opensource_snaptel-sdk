@@ -73,18 +73,6 @@ namespace tel {
 class IPhoneListener : public common::IServiceStatusListener {
  public:
     /**
-     * This function is called when device service state changes.
-     *
-     * @param [in] phoneId   Unique id of the phone on which service state
-     *                       changed.
-     * @param [in] state     Service state of the phone @ref ServiceState
-     *
-     * @deprecated Use onVoiceServiceStateChanged() listener
-     */
-    virtual void onServiceStateChanged(int phoneId, ServiceState state) {
-    }
-
-    /**
      * This function is called when network signal strength changes.
      *
      * @param [in] phoneId          Unique id of the phone on which signal
@@ -109,33 +97,6 @@ class IPhoneListener : public common::IServiceStatusListener {
      */
     virtual void onCellInfoListChanged(
         int phoneId, std::vector<std::shared_ptr<CellInfo>> cellInfoList) {
-    }
-
-    /**
-     * This function is called when radio state changes on phone
-     *
-     * @param [in] phoneId     Unique id of the phone on which radio state
-     *                         changed
-     *
-     * @param [in] radioState  Radio state of the phone @ref RadioState
-     *
-     * @deprecated Use onOperatingModeChanged() API instead
-     */
-    virtual void onRadioStateChanged(int phoneId, RadioState radioState) {
-    }
-
-    /**
-     * This function is called when the radio technology for voice service changes
-     *
-     * @param [in] phoneId     Unique id of the phone on which radio technology
-     *                         changed
-     *
-     * @param [in] radioTech   Radio state of the phone
-     *                         @ref telux::tel::RadioTechnology
-     *
-     * @deprecated Use onVoiceServiceStateChanged() API instead
-     */
-    virtual void onVoiceRadioTechnologyChanged(int phoneId, RadioTechnology radioTech) {
     }
 
     /**

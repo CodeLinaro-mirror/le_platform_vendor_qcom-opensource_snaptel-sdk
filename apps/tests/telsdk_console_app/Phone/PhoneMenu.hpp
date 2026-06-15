@@ -75,8 +75,6 @@ class PhoneMenu : public ConsoleApp {
     void configureSignalStrength(std::vector<std::string> userInput);
     void configureSignalStrengthEx(std::vector<std::string> userInput);
 
-    std::string getRadioStateAsString(telux::tel::RadioState radioState);
-    std::string getServiceStateAsString(telux::tel::ServiceState serviceState);
     // Member variable to keep the Listener object alive till application ends.
     std::shared_ptr<telux::tel::IPhoneListener> phoneListener_;
     std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;

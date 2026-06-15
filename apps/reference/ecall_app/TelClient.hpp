@@ -390,7 +390,6 @@ class TelClient : public ICallListener,
     telux::common::ErrorCode getECallPostTestRegistrationTimer(int phoneId);
     void onIncomingCall(std::shared_ptr<ICall> call) override;
     void onCallInfoChange(std::shared_ptr<ICall> call) override;
-    void onECallMsdTransmissionStatus(int phoneId, ErrorCode errorCode) override;
     void onECallMsdTransmissionStatus(
         int phoneId, ECallMsdTransmissionStatus msdTransmissionStatus) override;
     void OnMsdUpdateRequest(int phoneId) override;

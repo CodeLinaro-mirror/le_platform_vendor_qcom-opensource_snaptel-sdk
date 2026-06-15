@@ -47,7 +47,6 @@ class MyCallListener : public telux::tel::ICallListener {
  public:
     void onIncomingCall(std::shared_ptr<telux::tel::ICall> call) override;
     void onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) override;
-    void onECallMsdTransmissionStatus(int phoneId, telux::common::ErrorCode errorCode) override;
     void onRingbackTone(bool isAlerting, int phoneId) override;
     void onServiceStatusChange(telux::common::ServiceStatus status) override;
     void onModifyCallRequest(telux::tel::RttMode rttMode, int callId, int phoneId) override;

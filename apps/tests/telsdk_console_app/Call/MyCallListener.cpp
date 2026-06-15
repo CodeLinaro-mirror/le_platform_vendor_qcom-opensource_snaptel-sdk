@@ -105,16 +105,6 @@ void MyCallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) {
     }
 }
 
-void MyCallListener::onECallMsdTransmissionStatus(int phoneId, telux::common::ErrorCode errorCode) {
-    if (errorCode == telux::common::ErrorCode::SUCCESS) {
-        PRINT_NOTIFICATION << "OnECallMsdTransmissionStatus is success" << std::endl;
-    } else {
-        PRINT_NOTIFICATION
-            << "OnECallMsdTransmissionStatus failed, code: " << static_cast<int>(errorCode)
-            << std::endl;
-    }
-}
-
 void MyCallListener::onRingbackTone(bool isAlerting, int phoneId) {
     PRINT_NOTIFICATION << "onRingbackTone: " << (isAlerting == true ? "Start" : "Stop")
                        << " playing ringback tone on slot " << phoneId << std::endl;

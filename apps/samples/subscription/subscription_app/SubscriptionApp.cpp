@@ -132,8 +132,8 @@ class SubscriptionInfo : public telux::tel::ISubscriptionListener,
         std::cout << " CarrierName : " << subscription->getCarrierName() << std::endl;
         std::cout << " PhoneNumber : " << subscription->getPhoneNumber() << std::endl;
         std::cout << " IccId : " << subscription->getIccId() << std::endl;
-        std::cout << " Mcc : " << subscription->getMcc() << std::endl;
-        std::cout << " Mnc : " << subscription->getMnc() << std::endl;
+        std::cout << " Mcc : " << subscription->getMobileCountryCode() << std::endl;
+        std::cout << " Mnc : " << subscription->getMobileNetworkCode() << std::endl;
         std::cout << " SlotId : " << subscription->getSlotId() << std::endl;
         std::cout << " Imsi : " << subscription->getImsi() << std::endl;
 
@@ -152,8 +152,8 @@ class SubscriptionInfo : public telux::tel::ISubscriptionListener,
         std::cout << " CarrierName : " << newSubscription->getCarrierName() << std::endl;
         std::cout << " PhoneNumber : " << newSubscription->getPhoneNumber() << std::endl;
         std::cout << " IccId : " << newSubscription->getIccId() << std::endl;
-        std::cout << " Mcc : " << newSubscription->getMcc() << std::endl;
-        std::cout << " Mnc : " << newSubscription->getMnc() << std::endl;
+        std::cout << " Mcc : " << newSubscription->getMobileCountryCode() << std::endl;
+        std::cout << " Mnc : " << newSubscription->getMobileNetworkCode() << std::endl;
         std::cout << " SlotId : " << newSubscription->getSlotId() << std::endl;
         std::cout << " Imsi : " << newSubscription->getImsi() << std::endl;
     }

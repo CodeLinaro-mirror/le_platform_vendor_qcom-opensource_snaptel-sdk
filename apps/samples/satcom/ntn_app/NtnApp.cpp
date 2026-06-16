@@ -138,8 +138,8 @@ class NtnApp : public INtnListener, public std::enable_shared_from_this<NtnApp> 
     void printNtnState(NtnState state) {
         switch (state) {
             case NtnState::DISABLED:
-                break;
                 std::cout << "NtnState: DISABLED\n";
+                break;
             case NtnState::OUT_OF_SERVICE:
                 std::cout << "NtnState: OUT_OF_SERVICE\n";
                 break;

@@ -78,12 +78,12 @@ enum class AutoSelectionMode {
 };
 
 /**
- * ConfigUpdateStatus represent status of config update, a update of config happens when a
+ * ConfigUpdateStatus represent status of config update, an update of config happens when a
  * software config is activated and all segments using the config are updated with new config.
  */
 enum class ConfigUpdateStatus {
-    START, /**< start of updation process */
-    COMPLETE, /**< end of updation process */
+    START, /**< start of update process */
+    COMPLETE, /**< end of update process */
 };
 
 /** @} */ /* end_addtogroup telematics_config_manager */

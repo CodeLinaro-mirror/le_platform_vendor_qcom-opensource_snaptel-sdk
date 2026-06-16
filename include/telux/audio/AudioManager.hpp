@@ -121,7 +121,7 @@ class IAudioBuffer {
 };
 
 /**
- *  Implements the @ref IAudioBuffer interface to give contexual meaning to its methods
+ *  Implements the @ref IAudioBuffer interface to give contextual meaning to its methods
  *  based on the @ref StreamType type associated with the stream, with which this
  *  buffer will be used.
  */
@@ -825,7 +825,7 @@ class IAudioLoopbackStream : virtual public IAudioStream {
         = 0;
 
     /**
-     * Starts looping back the audio between the source and sink devices associated with this
+     * Stops looping back the audio between the source and sink devices associated with this
      * stream.
      *
      * @param [in] callback  Optional, invoked to confirm if the loopback has stopped

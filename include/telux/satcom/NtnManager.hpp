@@ -20,7 +20,7 @@
  *          - monitor signal strength of the NTN network
  *
  *          @note
- *          Only once instance of this manager can be active throughout the system. Creating
+ *          Only one instance of this manager can be active throughout the system. Creating
  *          multiple instances of NtnManager within one or more processes is undefined behavior.
  *
  */
@@ -244,7 +244,7 @@ class INtnManager {
     /**
      * Abort all the data packets waiting in the queue for transmission.
      * This API has no effect on already transmitted packets. All the aborted packets will have
-     * corresponding @onDataAck called with appropriate error.
+     * corresponding @ref telux::satcom::INtnListener::onDataAck called with appropriate error.
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_NTN_DATA
      * permission to invoke this API successfully.
@@ -257,7 +257,7 @@ class INtnManager {
     virtual telux::common::ErrorCode abortData() = 0;
 
     /**
-     * Get the capabilties of NTN network.
+     * Get the capabilities of NTN network.
      * @note that the capabilities returned by this API might change over the period of time.
      * The client shall implement @ref telux::satcom::onCapabilitiesChange to receive the updated
      * capabilities.

@@ -96,7 +96,7 @@ class ISocksManager {
         = 0;
 
     /**
-     * Register Socks Manager as listener for Data Service heath events like data service available
+     * Register Socks Manager as listener for Data Service health events like data service available
      * or data service not available.
      *
      * @param [in] listener    pointer of ISocksListener object that processes the

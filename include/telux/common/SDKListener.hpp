@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-/*
+/**
  * @file       SDKListener.hpp
  * @brief This is an empty base class for all Listener classes.
  * It allows child classes to inherit and implement the required notification methods.

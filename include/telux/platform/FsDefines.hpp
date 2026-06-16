@@ -6,7 +6,7 @@
 /**
  * @file       FsDefines.hpp
  *
- * @brief      This file contains enumerations and variables used for filesystem susbsystem.
+ * @brief      This file contains enumerations and variables used for filesystem subsystem.
  *
  */
 

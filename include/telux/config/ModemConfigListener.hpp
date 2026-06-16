@@ -37,8 +37,8 @@
  * @file    ModemConfigListener.hpp
  *
  * @brief   ModemConfigListener provides callback methods for listening to notifications like
- *          config change detection. Client need to implement these methods.
- *          The methods in listener can be invoked from multiple threads.So the client needs to
+ *          config change detection. Clients need to implement these methods.
+ *          The methods in listener can be invoked from multiple threads. So the client needs to
  *          make sure that the implementation is thread-safe.
  */
 

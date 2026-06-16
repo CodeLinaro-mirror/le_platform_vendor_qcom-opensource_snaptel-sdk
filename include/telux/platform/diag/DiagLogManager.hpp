@@ -82,7 +82,7 @@ enum class LogMethod {
      * different directory by defining platform.diag.diag_output_log_path in the tel.conf
      * file. If specified, the directory should exist before starting the log collection.
      *
-     * The logs files typically follow 'diag_log_*_date_time.qmdl' naming convention and
+     * The log files typically follow 'diag_log_*_date_time.qmdl' naming convention and
      * can be read in plain text format using Qualcomm extensible diagnostic monitor (QXDM)
      * tool.
      */
@@ -225,7 +225,7 @@ using Peripherals = uint8_t;
  * Defines source of the logs; device or peripheral. Logs will be collected
  * from this source.
  *
- * Note: device and peripheral logs collection are mutually exclusive.
+ * Note: device and peripheral log collection is mutually exclusive.
  */
 enum class SourceType {
     /**
@@ -446,7 +446,7 @@ class IDiagListener : public telux::common::ISDKListener {
  * IDiagLogManager provides ability to collect diagnostics logs on-device.
  *
  * - Methods; two methods are provided; namely file and callback. In the file method, logs
- *   are stored in file(S). In callback method, logs are delivered to the client through a
+ *   are stored in file(s). In callback method, logs are delivered to the client through a
  *   callback.
  *
  * - Modes; three modes are provided; streaming, threshold and circular to let the client
@@ -455,7 +455,7 @@ class IDiagListener : public telux::common::ISDKListener {
  * - Source; logs can be collected from the whole device or selected peripherals.
  *
  *   A client running on the MDM can collect logs from the whole MDM device or from the
- *   specific  MDM peripheral(s).
+ *   specific MDM peripheral(s).
  *
  *   Consider a fusion architecture where an EAP is connected to the MDM SoC via some interconnect
  *   (e.g. USB, PCIe or Ethernet). (a) If the client is running on the MDM, it can collect logs
@@ -467,10 +467,10 @@ class IDiagListener : public telux::common::ISDKListener {
  * - Granularity, on top of the log source, logs can be further narrowed down to be of specific
  *   type like message/event/F3 etc. using a mask file.
  *
- * - Decoding: When using file method, logs are in a propriety format and can be decoded through
+ * - Decoding: When using file method, logs are in a proprietary format and can be decoded through
  *   QXDM to read them in a plain text format. For callback method, they are in raw format.
  *
- * - Concurrency: Two or more processes can not collect logs from the same peripheral. A process
+ * - Concurrency: Two or more processes cannot collect logs from the same peripheral. A process
  *   can have only one session. A session is started with startLogCollection() and stopped with
  *   stopLogCollection(). The file and callback methods are mutually exclusive.
  */

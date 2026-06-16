@@ -169,7 +169,7 @@ class ICAControlManager {
     virtual telux::common::ErrorCode startMonitoring(LoadConfig loadConfig) = 0;
 
     /**
-     * Stops monitoring the load calculation previosuly started by @ref startMonitoring().
+     * Stops monitoring the load calculation previously started by @ref startMonitoring().
      *
      * On platforms with access control enabled, caller needs to have TELUX_SEC_CA_CTRL_LOAD_OPS
      * permission to invoke this API successfully.

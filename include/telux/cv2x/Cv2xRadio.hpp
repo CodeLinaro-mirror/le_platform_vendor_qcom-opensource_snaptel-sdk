@@ -50,7 +50,6 @@
 #include <telux/cv2x/Cv2xTxRxSocket.hpp>
 #include <telux/cv2x/Cv2xTxStatusReportListener.hpp>
 
-#include <future>
 #include <memory>
 
 #include <telux/common/CommonDefines.hpp>
@@ -690,15 +689,6 @@ class ICv2xRadio {
         = 0;
 
     /**
-     * Get the capabilities of this Cv2xRadio.
-     *
-     * @returns Cv2xRadioCapabilities - Contains capabilities of this Cv2xRadio.
-     *
-     * @deprecated Use requestCapabilities() API
-     */
-    virtual Cv2xRadioCapabilities getCapabilities() const = 0;
-
-    /**
      * Inject vehicle speed, which will be used to select radio resources for C-V2X
      * transmission when GNSS is not available.
      *
@@ -721,26 +711,6 @@ class ICv2xRadio {
         uint32_t speed, telux::common::ResponseCallback cb)
         = 0;
 
-    /**
-     * Returns true if the radio interface was successfully initialized.
-     *
-     * @returns True if ready. False otherwise.
-     *
-     * @deprecated use getServiceStatus instead
-     */
-    virtual bool isReady() const = 0;
-
-    /**
-     * Returns a future that indicated if the radio interface is ready or if
-     * radio failed to initialize.
-     *
-     * @returns SUCCESS if Cv2xRadio initialization was successful. Otherwise it
-     *          returns an Error Code.
-     *
-     * @deprecated the readiness can be notified via the callback passed to
-     *          ICv2xRadioManager::getCv2xRadio.
-     */
-    virtual std::future<telux::common::Status> onReady() = 0;
 };
 
 /** @} */ /* end_addtogroup telematics_cv2x_cpp */

@@ -59,42 +59,11 @@ namespace cv2x {
 class ICv2xRadioListener : virtual public telux::common::ISDKListener {
  public:
     /**
-     * Called when the status of the CV2X radio has changed.
-     *
-     * @param [in] status - CV2X radio status.
-     *
-     * @deprecated use onStatusChanged in Cv2xListener
-     */
-    virtual void onStatusChanged(Cv2xStatus status) {
-    }
-
-    /**
-     * Called when the status of the CV2X radio has changed.
-     *
-     * @param [in] status - CV2X radio status.
-     *
-     * @deprecated use onStatusChanged in Cv2xListener
-     */
-    virtual void onStatusChanged(Cv2xStatusEx status) {
-    }
-
-    /**
      * Called when the L2 Address has changed.
      *
      * @param [in] newL2Address - The new L2 address.
      */
     virtual void onL2AddrChanged(uint32_t newL2Address) {
-    }
-
-    /**
-     * Called when SPS offset has changed.
-     *
-     * @param [in] spsId   - SPS Id of the SPS flow
-     * @param [in] details - new SPS MAC PHY details.
-     *
-     * @deprecated use onSpsSchedulingChanged
-     */
-    virtual void onSpsOffsetChanged(int spsId, MacDetails details) {
     }
 
     /**

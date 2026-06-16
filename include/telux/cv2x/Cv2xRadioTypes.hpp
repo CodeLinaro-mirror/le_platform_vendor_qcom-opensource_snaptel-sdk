@@ -264,23 +264,6 @@ enum class Priority {
 };
 
 /**
- * Range of supported periodicities in milliseconds.
- *
- * Used in @ref Cv2xRadioCapabilities and @ref SpsFlowInfo
- *
- * @deprecated: enum class not going to be supported in future releases. Clients should stop using
- * this. Once a class has been marked as Deprecated, the class could be removed in future releases.
- *
- */
-enum class Periodicity {
-    PERIODICITY_10MS,
-    PERIODICITY_20MS,
-    PERIODICITY_50MS,
-    PERIODICITY_100MS,
-    PERIODICITY_UNKNOWN,
-};
-
-/**
  * Contains minimum and maximum EARFCNs for a given Tx pool ID. Multiple Tx
  * Pools allow the same radio and overall frequency range to be shared for
  * multiple types of traffic like V2V and V2X. Each pool ID and frequency range
@@ -345,19 +328,13 @@ struct SpsFlowInfo {
     /**< Specifies one of the 3GPP levels of Priority for the traffic that is
          pre-reserved on the SPS flow. Default is PRIORITY_2.
 
-         Use getCapabilities() to discover the supported priority levels.
-         @deprecated: periodicity, Use new periodicityMs instead */
-    Periodicity periodicity = Periodicity::PERIODICITY_100MS;
-    /**This is the new interface to specify periodicity in milliseconds for
-       SpsFlowInfo. Enum Periodicity is deprecated and will be removed in future
-       release.
-    */
-    uint64_t periodicityMs = 100;
+         Use requestCapabilities() to discover the supported priority levels. */
     /**< Bandwidth-reserved periodicity interval in interval in milliseconds.
 
          There are limits on which intervals the underlying radio supports.
-         Use getCapabilities() to discover minPeriodicityMultiplierMs and
+         Use requestCapabilities() to discover minPeriodicityMultiplierMs and
          maximumPeriodicityMs. */
+    uint64_t periodicityMs = 100;
     uint32_t nbytesReserved = 0u;
     /**< Number of bytes of TX bandwidth that are sent every periodicity
          interval. */
@@ -402,9 +379,7 @@ struct Cv2xRadioCapabilities {
     uint16_t nonIpTxPayloadOffsetBytes;
     /**< Byte offset in a non-IP Tx packet before the actual payload begins. */
     uint16_t nonIpRxPayloadOffsetBytes;
-    /**< Byte offset in a non-IP Rx packet before the actual payload begins.
-         @deprecated: periodicitiesSupported, Use new periodicities instead */
-    std::bitset<8> periodicitiesSupported;
+    /**< Byte offset in a non-IP Rx packet before the actual payload begins. */
     std::vector<uint64_t> periodicities;
     /**< Specifies the periodicities supported */
     uint8_t maxNumAutoRetransmissions;
@@ -480,11 +455,6 @@ struct TrustedUEInfo {
     /**< Trusted Source L2 ID */
     float timeUncertainty;
     /**< Time uncertainty value in milliseconds. */
-    uint16_t timeConfidenceLevel;
-    /**< @deprecated Use timeUncertainty
-         Time confidence level.
-         Range from 0 to 127 with 0 being invalid/unavailable
-         and 127 being the most confident. */
     uint16_t positionConfidenceLevel;
     /**< Position confidence level.
          Range from 0 to 127 with 0 being invalid/unavailable

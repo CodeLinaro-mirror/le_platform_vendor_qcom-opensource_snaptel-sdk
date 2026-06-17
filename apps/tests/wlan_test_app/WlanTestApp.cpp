@@ -12,78 +12,43 @@ WlanTestApp::WlanTestApp(std::string appName, std::string cursor)
 }
 
 WlanTestApp::~WlanTestApp() {
-    wlanDeviceManagerMenu_      = nullptr;
-    wlanApInterfaceManagerMenu_ = nullptr;
+    wlanControlManagerMenu_ = nullptr;
 }
 
 bool WlanTestApp::initWlan() {
-    if (wlanDeviceManagerMenu_ == nullptr) {
-        wlanDeviceManagerMenu_
-            = std::make_shared<WlanDeviceManagerMenu>("Device Manager Menu", "device> ");
+    if (wlanControlManagerMenu_ == nullptr) {
+        wlanControlManagerMenu_ =
+            std::make_shared<WlanControlManagerMenu>("Control Manager Menu", "ctrl> ");
     }
-    if (wlanDeviceManagerMenu_->isSubSystemReady()) {
-        std::cout << "Wlan Subsystem is Ready" << std::endl;
-        wlanApInterfaceManagerMenu_
-            = std::make_shared<WlanApInterfaceManagerMenu>("Ap Interface Manager Menu", "ap> ");
-        if (wlanApInterfaceManagerMenu_) {
-            wlanApInterfaceManagerMenu_->init();
-        }
-        wlanStaInterfaceManagerMenu_ = std::make_shared<WlanStaInterfaceManagerMenu>(
-            "Station Interface Manager Menu", "sta> ");
-        if (wlanStaInterfaceManagerMenu_) {
-            wlanStaInterfaceManagerMenu_->init();
-        }
-        return true;
-    }
-    return false;
-}
-
-bool WlanTestApp::init() {
-    if (initWlan()) {
-        std::shared_ptr<ConsoleAppCommand> wlanDeviceManagerMenu
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "device_manager_Menu", {},
-                std::bind(&WlanTestApp::wlanDeviceManagerMenu, this, std::placeholders::_1)));
-
-        std::shared_ptr<ConsoleAppCommand> wlanApInterfaceManagerMenu
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2",
-                "ap_interface_manager_menu", {},
-                std::bind(&WlanTestApp::wlanApInterfaceManagerMenu, this, std::placeholders::_1)));
-
-        std::shared_ptr<ConsoleAppCommand> wlanStaInterfaceManagerMenu
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3",
-                "sta_interface_manager_menu", {},
-                std::bind(&WlanTestApp::wlanStaInterfaceManagerMenu, this, std::placeholders::_1)));
-
-        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList
-            = {wlanDeviceManagerMenu, wlanApInterfaceManagerMenu, wlanStaInterfaceManagerMenu};
-
-        addCommands(commandsList);
-        ConsoleApp::displayMenu();
+    if (wlanControlManagerMenu_->isSubSystemReady()) {
         return true;
     } else {
+        std::cout << "Wlan Control Manager initialization failed, "
+                  << "control_manager_menu will be unavailable." << std::endl;
+        wlanControlManagerMenu_ = nullptr;
         return false;
     }
 }
 
-void WlanTestApp::wlanDeviceManagerMenu(std::vector<std::string> inputCommand) {
-    if (wlanDeviceManagerMenu_->init()) {
-        wlanDeviceManagerMenu_->mainLoop();
-    }
+bool WlanTestApp::init() {
+    initWlan();
+
+    std::shared_ptr<ConsoleAppCommand> wlanControlManagerMenu =
+        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "control_manager_menu",
+        {}, std::bind(&WlanTestApp::wlanControlManagerMenu, this, std::placeholders::_1)));
+
+    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {wlanControlManagerMenu};
+    addCommands(commandsList);
     ConsoleApp::displayMenu();
+    return true;
 }
 
-void WlanTestApp::wlanApInterfaceManagerMenu(std::vector<std::string> inputCommand) {
-    if (wlanApInterfaceManagerMenu_) {
-        wlanApInterfaceManagerMenu_->showMenu();
-        wlanApInterfaceManagerMenu_->mainLoop();
-    }
-    ConsoleApp::displayMenu();
-}
-
-void WlanTestApp::wlanStaInterfaceManagerMenu(std::vector<std::string> inputCommand) {
-    if (wlanStaInterfaceManagerMenu_) {
-        wlanStaInterfaceManagerMenu_->showMenu();
-        wlanStaInterfaceManagerMenu_->mainLoop();
+void WlanTestApp::wlanControlManagerMenu(std::vector<std::string> inputCommand) {
+    if (wlanControlManagerMenu_) {
+        wlanControlManagerMenu_->init();
+        wlanControlManagerMenu_->mainLoop();
+    } else {
+        std::cout << "Wlan Control Manager is not available. Type 'q' to exit." << std::endl;
     }
     ConsoleApp::displayMenu();
 }

@@ -138,6 +138,7 @@
      rpc getECallPostTestRegistrationTimer(GetECallPostTestRegistrationTimerRequest)
         returns (GetECallPostTestRegistrationTimerResponse) {}
      rpc restartECallHlapTimer(RestartECallHlapTimerRequest) returns (RestartECallHlapTimerResponse){}
+     rpc setEmergencyMode(SetEmergencyModeRequest) returns (SetEmergencyModeResponse) {}
  }
 
  service ImsServingSystem {
@@ -300,6 +301,8 @@ message GetCardStateRequest {
  message GetInProgressCallsData {
     int32 phone_id = 1;
     repeated Call calls = 2;
+    CallEndCause.Cause cause_code = 3;
+    AecsCallEndReason reason = 4;
 }
 
  message MsdPullRequestEvent {
@@ -1283,6 +1286,15 @@ enum EcallHlapTimerId {
     string timer = 3;
  }
 
+ enum AecsCallEndReason {
+     AECS_DUMMY = 0;
+     AECS_DROPPED = 2;          /* AECS call connected and failed unexpectedly */
+     AECS_ORIG_FAILED = 4;      /* AECS call origination fails */
+     AECS_FAILED = 5;           /* AECS call failed permanently */
+     AECS_COMPLETED = 6;        /* AECS call ended or disconnected */
+     AECS_UNSPECIFIED = 0xffff; /* AECS call fail reason is not available */
+ };
+
  message ECallRedialInfoEvent {
     int32 phone_id = 1;
     bool will_ecall_redial = 2;
@@ -1339,6 +1351,19 @@ enum EcallHlapTimerId {
     commonStub.ErrorCode error = 2;
     int32 delay = 3;
     bool iscallback = 4;
+ }
+
+ message SetEmergencyModeRequest {
+    int32 phone_id = 1;
+    int32 emergency_mode_enabled = 2;
+    int32 antenna_switch_enabled = 3;
+ }
+
+ message SetEmergencyModeResponse {
+   commonStub.Status status = 1;
+   commonStub.ErrorCode error = 2;
+   int32 delay = 3;
+   bool iscallback = 4;
  }
 
  message Call {

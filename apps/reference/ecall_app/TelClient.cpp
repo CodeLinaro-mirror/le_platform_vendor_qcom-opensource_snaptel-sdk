@@ -92,6 +92,28 @@ TelClient::~TelClient() {
     eCallDataMap_.clear();
 }
 
+void TelClient::cleanup() {
+    if (callMgr_) {
+        callMgr_->removeListener(shared_from_this());
+    }
+
+    // Remove EcallScanFailHandler listener if registered
+    if (callMgr_ && eCallScanFailHdlrInstance_) {
+        callMgr_->removeListener(eCallScanFailHdlrInstance_);
+        eCallScanFailHdlrInstance_.reset();
+    }
+
+    // Clear CallStatusListener
+    if (callListener_) {
+        callListener_ = nullptr;
+    }
+
+    // Reset all callback pointers
+    hangupCommandCallback_    = nullptr;
+    updateMsdCommandCallback_ = nullptr;
+    answerCommandCallback_    = nullptr;
+}
+
 // Initialize the telephony subsystem
 telux::common::Status TelClient::init() {
 

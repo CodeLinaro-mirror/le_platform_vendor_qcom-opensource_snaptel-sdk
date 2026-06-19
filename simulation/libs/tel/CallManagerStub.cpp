@@ -151,12 +151,12 @@ telux::common::Status CallManagerStub::removeListener(std::shared_ptr<ICallListe
 telux::common::Status CallManagerStub::makeCall(
     int phoneId, const std::string &dialNumber, std::shared_ptr<IMakeCallCallback> callback) {
     LOG(DEBUG, __FUNCTION__, " Phone Id ", phoneId, " dial number ", dialNumber);
-    telux::common::Status status = dialCall(phoneId, dialNumber, callback, makeVoiceCall);
+    telux::common::Status status = dialCall(phoneId, dialNumber, callback, nullptr, makeVoiceCall);
     return status;
 }
 
 telux::common::Status CallManagerStub::dialCall(int phoneId, const std::string &dialNumber,
-    std::shared_ptr<IMakeCallCallback> callback, CallApi inputApi) {
+    std::shared_ptr<IMakeCallCallback> callback, MakeCallCallback cb, CallApi inputApi) {
     LOG(DEBUG, " CallManager - ", __FUNCTION__);
 
     if (phoneId <= 0 || phoneId > noOfSlots_) {
@@ -212,9 +212,14 @@ telux::common::Status CallManagerStub::dialCall(int phoneId, const std::string &
         int cbDelay   = static_cast<int>(response.delay());
 
         if (status == telux::common::Status::SUCCESS) {
-            // Update call details from server and invoke callback
-            findMatchingCall(
-                callIndex, remotePartyNumber, phoneId, cbDelay, callback, nullptr, error);
+            if (inputApi == CallApi::makeAecsVoiceCall) {
+                findMatchingCall(
+                    callIndex, remotePartyNumber, phoneId, cbDelay, nullptr, cb, error);
+            } else {
+                // Update call details from server and invoke callback
+                findMatchingCall(
+                    callIndex, remotePartyNumber, phoneId, cbDelay, callback, nullptr, error);
+            }
         } else {
             // Update call details from server
             findMatchingCall(
@@ -508,7 +513,6 @@ void CallManagerStub::handleCallInfoChanged(::telStub::GetInProgressCallsData ev
         callInfo.callDirection
             = static_cast<telux::tel::CallDirection>(event.calls(i).call_direction());
         callInfo.remotePartyNumber = static_cast<std::string>(event.calls(i).remote_party_number());
-        ;
         callInfo.callEndCause
             = static_cast<telux::tel::CallEndCause>(event.calls(i).call_end_cause());
         callInfo.sipErrorCode     = event.calls(i).sip_error_code();
@@ -537,12 +541,18 @@ void CallManagerStub::handleCallInfoChanged(::telStub::GetInProgressCallsData ev
             " Peer Rtt capability: ", static_cast<int>(callInfo.peerRttCapability),
             " Call Type: ", static_cast<int>(callInfo.callType),
             " Call Reason: ", callInfo.callReason,
-            " Network Mode: ", static_cast<int>(callInfo.networkMode));
+            " Network Mode: ", static_cast<int>(callInfo.networkMode),
+            " Is AECS call drop: ", callInfo.isAecsCallDrop,
+            " Redial State: ", static_cast<int>(callInfo.redialState));
         auto Info = std::make_shared<CallStub>(phoneId, callInfo);
         { calls.emplace_back(Info); }
     }
+    CallEndCause callEndCause    = static_cast<telux::tel::CallEndCause>(event.cause_code());
+    AecsCallEndReason aecsReason = static_cast<telux::tel::AecsCallEndReason>(event.reason());
+    LOG(DEBUG, __FUNCTION__, " callEndCause: ", static_cast<int>(callEndCause),
+        " reason: ", static_cast<int>(aecsReason));
     // updates/removes cached calls
-    refreshCachedCalls(phoneId, calls);
+    refreshCachedCalls(phoneId, calls, callEndCause, aecsReason);
 
     // adds new calls into calls_ list
     addLatestCalls(calls);
@@ -584,8 +594,9 @@ void CallManagerStub::updateCurrentCalls() {
     }
 }
 
-void CallManagerStub::refreshCachedCalls(
-    int phoneId, std::vector<std::shared_ptr<CallStub>> &latestCalls) {
+void CallManagerStub::refreshCachedCalls(int phoneId,
+    std::vector<std::shared_ptr<CallStub>> &latestCalls, CallEndCause endCause,
+    AecsCallEndReason reason) {
     LOG(DEBUG, __FUNCTION__, " Number of latest calls: ", latestCalls.size());
 
     std::vector<std::shared_ptr<CallStub>> callsToBeNotified;
@@ -639,7 +650,7 @@ void CallManagerStub::refreshCachedCalls(
             notifyCallInfoChange(*callIter);
         }
     }
-    notifyAndRemoveDroppedCalls();
+    updateLastFailCause(true, endCause, reason);
 }
 
 void CallManagerStub::addLatestCalls(std::vector<std::shared_ptr<CallStub>> &latestCalls) {
@@ -662,9 +673,11 @@ void CallManagerStub::addLatestCalls(std::vector<std::shared_ptr<CallStub>> &lat
 /**
  * Update call state on dropped calls and remove them
  */
-void CallManagerStub::notifyAndRemoveDroppedCalls() {
+void CallManagerStub::notifyAndRemoveDroppedCalls(
+    CallEndCause causeCode, AecsCallEndReason reason) {
     std::vector<std::shared_ptr<CallStub>> callsToBeNotified;
-    LOG(DEBUG, __FUNCTION__);
+    LOG(DEBUG, __FUNCTION__, " causeCode: ", static_cast<int>(causeCode),
+        " reason: ", static_cast<int>(reason));
     {
         std::lock_guard<std::mutex> lock(callManagerMutex_);
         LOG(DEBUG, "Size of droppedCalls_ vector is ", droppedCalls_.size());
@@ -672,6 +685,8 @@ void CallManagerStub::notifyAndRemoveDroppedCalls() {
              droppedCall++) {
             (*droppedCall)->setCallState(CallState::CALL_ENDED);
             (*droppedCall)->setCallReason("");
+            (*droppedCall)->setCallEndCause(causeCode);
+            (*droppedCall)->setAecsCallEndReason(reason);
             // Move dropped calls into a local list for notifying listeners
             callsToBeNotified.emplace_back(std::move(*droppedCall));
             droppedCalls_.erase(droppedCall--);
@@ -1173,6 +1188,7 @@ telux::common::Status CallManagerStub::requestECallHlapTimerStatus(
 
 std::vector<std::shared_ptr<ICall>> CallManagerStub::getInProgressCalls() {
     LOG(DEBUG, __FUNCTION__);
+    std::lock_guard<std::mutex> lock(callManagerMutex_);
     std::vector<std::shared_ptr<ICall>> iCalls(calls_.begin(), calls_.end());
     return iCalls;
 }
@@ -1660,7 +1676,8 @@ telux::common::ErrorCode CallManagerStub::encodeECallMsd(
 telux::common::Status CallManagerStub::makeRttCall(
     int phoneId, const std::string &dialNumber, std::shared_ptr<IMakeCallCallback> callback) {
     LOG(DEBUG, __FUNCTION__, " Phone Id ", phoneId, " dial number ", dialNumber);
-    telux::common::Status status = dialCall(phoneId, dialNumber, callback, makeRttVoiceCall);
+    telux::common::Status status
+        = dialCall(phoneId, dialNumber, callback, nullptr, makeRttVoiceCall);
     return status;
 }
 
@@ -1870,4 +1887,58 @@ telux::common::ErrorCode CallManagerStub::getECallRedialConfig(
         }
     }
     return errorCode;
+}
+
+telux::common::Status CallManagerStub::setEmergencyMode(int phoneId, bool emergencyModeEnabled,
+    bool antennaSwitchEnabled, telux::common::ResponseCallback callback) {
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " CallManager is not ready ");
+        return telux::common::Status::NOTREADY;
+    }
+    ::telStub::SetEmergencyModeRequest request;
+    ::telStub::SetEmergencyModeResponse response;
+    ClientContext context;
+    telux::common::Status status = telux::common::Status::FAILED;
+
+    request.set_phone_id(phoneId);
+    request.set_emergency_mode_enabled(emergencyModeEnabled);
+    request.set_antenna_switch_enabled(antennaSwitchEnabled);
+    grpc::Status reqstatus = stub_->setEmergencyMode(&context, request, &response);
+    if (reqstatus.ok()) {
+        telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+        status                         = static_cast<telux::common::Status>(response.status());
+        int cbDelay                    = static_cast<int>(response.delay());
+        if (callback) {
+            auto f = std::async(std::launch::async, [this, error, callback, cbDelay]() {
+                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                callback(error);
+            }).share();
+            taskQ_->add(f);
+        }
+    }
+    return status;
+}
+
+telux::common::Status CallManagerStub::makeAecsCall(
+    int phoneId, const std::string &eCallIdentifier, MakeCallCallback callback) {
+    LOG(DEBUG, __FUNCTION__, " Phone Id ", phoneId, " dial number ", eCallIdentifier);
+    telux::common::Status status
+        = dialCall(phoneId, eCallIdentifier, nullptr, callback, makeAecsVoiceCall);
+    return status;
+}
+
+void CallManagerStub::updateLastFailCause(
+    bool isLastFailCauseInfoValid, CallEndCause causeCode, AecsCallEndReason reason) {
+    LOG(DEBUG, __FUNCTION__);
+    int size = 0;
+    {
+        std::lock_guard<std::mutex> lock(callManagerMutex_);
+        size = droppedCalls_.size();
+    }
+
+    LOG(DEBUG, __FUNCTION__, " size: ", size);
+    // If any dropped calls found, fetch last call fail cause
+    if ((size > 0) && (isLastFailCauseInfoValid)) {
+        notifyAndRemoveDroppedCalls(causeCode, reason);
+    }
 }

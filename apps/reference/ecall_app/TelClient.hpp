@@ -27,8 +27,7 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -390,6 +389,7 @@ class TelClient : public ICallListener,
      *
      */
     telux::common::ErrorCode getECallPostTestRegistrationTimer(int phoneId);
+
     void onIncomingCall(std::shared_ptr<ICall> call) override;
     void onCallInfoChange(std::shared_ptr<ICall> call) override;
     void onECallMsdTransmissionStatus(int phoneId, ErrorCode errorCode) override;
@@ -413,6 +413,9 @@ class TelClient : public ICallListener,
     bool isEraGlonassEnabled();
     void getCacheData(
         int &dialDuration, int &autoAnswerDuration, telux::tel::TestECallConfig &ngTestECallConfig);
+
+    // clean up objects and remove listener upon ecall menu exit
+    void cleanup();
 
     TelClient();
     ~TelClient();

@@ -27,8 +27,7 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -281,6 +280,12 @@ class ECallManager : public LocationListener,
     void onCallDisconnect() override;
     void onCallConnect(int phoneId) override;
 
+    /**
+     * This function disables the functionalities in various subsystems(location, audio, etc.)
+     * Typically performed when an eCall ends
+     */
+    void cleanup();
+
     ECallManager();
     ~ECallManager();
 
@@ -303,12 +308,6 @@ class ECallManager : public LocationListener,
      *
      */
     void setup(int phoneId);
-
-    /**
-     * This function disables the functionalities in various subsystems(location, audio, etc.)
-     * Typically performed when an eCall ends
-     */
-    void cleanup();
 
     /**
      * This function indicates if atleast one location fix is received after the eCall is triggered.

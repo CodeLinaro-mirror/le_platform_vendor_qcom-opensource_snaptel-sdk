@@ -34,7 +34,8 @@ enum CallApi {
     updateECallRawMsd                     = 8,
     makeVoiceCall                         = 9,
     makeRttVoiceCall                      = 10,
-    makeSelfTestERAGLONASSECallWithRawMsd = 11
+    makeSelfTestERAGLONASSECallWithRawMsd = 11,
+    makeAecsVoiceCall                     = 12
 };
 
 class Helper {

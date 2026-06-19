@@ -73,9 +73,6 @@ class SmsMenu : public ConsoleApp {
     std::shared_ptr<telux::tel::ISmsListener> smsListener_  = nullptr;
     int slot_                                               = DEFAULT_SLOT_ID;
     std::vector<std::shared_ptr<telux::tel::ISmsManager>> smsManagers_;
-
-    bool isDialable(char ch);
-    bool isValidPhoneNumber(std::string address);
 };
 
 #endif  // SMSMENU_HPP

@@ -27,40 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021-2023, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -168,7 +137,10 @@ using PduBuffer = std::vector<uint8_t>;
  */
 
 struct MessagePartInfo {
-   uint16_t refNumber;                     /**< Concatenated message reference number as per spec 3GPP TS 23.040 9.2.3.24.1. For each part of multipart message this message reference will be the same */
+   uint16_t refNumber;                     /**< Concatenated message reference number as per spec
+                                                3GPP TS 23.040 9.2.3.24.1. For each part of
+                                                multipart message this message reference will be
+                                                the same */
    uint8_t numberOfSegments;               /**< Number of segments */
    uint8_t segmentNumber;                  /**< Segment Number */
 
@@ -195,7 +167,9 @@ public:
    const std::string &getText() const;
 
    /**
-    * Get the originating address (sender address).
+    * Get the originating address (sender address). Supports International and ISDN address types
+    * with digits (0–9), ‘+’, and extended BCD characters (*, #, a, b, c). Alphanumeric addresses
+    * are not supported.
     *
     * @returns String containing sender address.
     */
@@ -373,7 +347,10 @@ public:
     * to invoke this API successfully.
     *
     * @param [in] message                 Message text to be send.
-    * @param [in] receiverAddress         Receiver or destination address
+    * @param [in] receiverAddress         Receiver or destination address. Supports International
+    *                                     and ISDN address types with digits (0–9), ‘+’, and
+    *                                     extended BCD characters (*, #, a, b, c). Alphanumeric
+    *                                     addresses are not supported.
     * @param [in] deliveryReportNeeded    Delivery status received in the listener API
     *                                     @ref telux::tel::ISmsListener if deliveryReportNeeded is
     *                                     true. Provided recipient responds to SMSC before the
@@ -605,7 +582,10 @@ public:
     * to invoke this API successfully.
     *
     * @param [in] message           Message text to be sent
-    * @param [in] receiverAddress   Receiver or destination address
+    * @param [in] receiverAddress   Receiver or destination address. Supports International and
+    *                               ISDN address types with digits (0–9), ‘+’, and extended BCD
+    *                               characters (*, #, a, b, c). Alphanumeric addresses are not
+    *                               supported.
     * @param [in] sentCallback      Optional callback pointer to get the response
     *                               of send SMS request.
     * @param [in] deliveryCallback  Optional callback pointer to get message
@@ -686,7 +666,11 @@ public:
     *                                 received.
     * @param [in] msgRef              Message reference number (as per spec 3GPP TS 23.040 9.2.2.3)
     *                                 for a single part message or part of multipart message.
-    * @param [in] receiverAddress     Receiver or destination address
+    * @param [in] receiverAddress     Receiver or destination address for which the delivery report
+    *                                 was received. Supports International and ISDN address types
+    *                                 with digits (0–9), ‘+’, and extended BCD
+    *                                 characters (*, #, a, b, c). Alphanumeric addresses are not
+    *                                 supported.
     * @param [in] error               @ref telux::common::ErrorCode
     *
     */

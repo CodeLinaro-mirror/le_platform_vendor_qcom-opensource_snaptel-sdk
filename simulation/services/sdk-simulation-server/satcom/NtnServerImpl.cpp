@@ -5,6 +5,8 @@
 
 #include <thread>
 #include <chrono>
+#include <algorithm>
+#include <cctype>
 
 #include "NtnServerImpl.hpp"
 #include "libs/common/Logger.hpp"
@@ -481,18 +483,64 @@ void NtnServerImpl::handleIncomingData(std::string event) {
     LOG(DEBUG, __FUNCTION__, " event:", event);
     std::string data = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
     try {
-        // Convert the data to a byte array
         std::vector<uint8_t> dataArray;
-        size_t pos = 0;
-        while ((pos = data.find(',')) != std::string::npos) {
-            uint8_t byte = static_cast<uint8_t>(std::stoi(data.substr(0, pos)));
-            dataArray.push_back(byte);
-            data.erase(0, pos + 1);
+        // Remove any whitespace
+        data.erase(std::remove_if(
+                       data.begin(), data.end(), [](unsigned char c) { return std::isspace(c); }),
+            data.end());
+        if (data.empty()) {
+            LOG(ERROR, __FUNCTION__, " Empty data string");
+            return;
         }
-        uint8_t byte = static_cast<uint8_t>(std::stoi(data));
-        dataArray.push_back(byte);
+        bool isHexFormat
+            = (data.length() > 2) && (data.substr(0, 2) == "0x" || data.substr(0, 2) == "0X");
+        if (isHexFormat) {
+            std::string hexData = data.substr(2);  // strip prefix
+            if (hexData.length() % 2 != 0
+                || hexData.find_first_not_of("0123456789ABCDEFabcdef") != std::string::npos) {
+                LOG(ERROR, __FUNCTION__, " Invalid hex data");
+                return;
+            }
+            for (size_t i = 0; i < hexData.length(); i += 2) {
+                std::string byteString = hexData.substr(i, 2);
+                uint8_t byte = static_cast<uint8_t>(std::strtoul(byteString.c_str(), nullptr, 16));
+                dataArray.push_back(byte);
+            }
+            LOG(DEBUG, __FUNCTION__, " Parsed as hex format, ", dataArray.size(), " bytes");
+        } else if (data.find(',') != std::string::npos) {
+            // Comma-separated decimal: "72,101,108,108,111" -> bytes [72, 101, 108, 108, 111]
+            size_t pos = 0;
+            while ((pos = data.find(',')) != std::string::npos) {
+                std::string token = data.substr(0, pos);
+                if (!token.empty()) {
+                    int val = std::stoi(token);
+                    if (val < 0 || val > 255) {
+                        LOG(ERROR, __FUNCTION__, " Byte value out of range: ", val);
+                        return;
+                    }
+                    dataArray.push_back(static_cast<uint8_t>(val));
+                }
+                data.erase(0, pos + 1);
+            }
+            if (!data.empty()) {
+                uint8_t byte = static_cast<uint8_t>(std::stoi(data));
+                dataArray.push_back(byte);
+            }
+            LOG(DEBUG, __FUNCTION__, " Parsed as comma-separated format, ", dataArray.size(),
+                " bytes");
+        } else {
+            LOG(ERROR, __FUNCTION__,
+                " Invalid data format. Expected hex with 0x prefix (0x48656C6C6F) or "
+                "comma-separated decimal (72,101,108,108,111)");
+            return;
+        }
 
-        // Post the event to EventService event queue
+        if (dataArray.empty()) {
+            LOG(ERROR, __FUNCTION__, " No data to send");
+            return;
+        }
+
+        // Post the event to EventService
         ::eventService::EventResponse anyResponse;
         satcomStub::IncomingDataEvent eventResponse;
         for (uint8_t byte : dataArray) {
@@ -502,6 +550,8 @@ void NtnServerImpl::handleIncomingData(std::string event) {
         anyResponse.mutable_any()->PackFrom(eventResponse);
         auto &eventImpl = EventService::getInstance();
         eventImpl.updateEventQueue(anyResponse);
+
+        LOG(DEBUG, __FUNCTION__, " Successfully queued incoming data event");
     } catch (const std::exception &ex) {
         LOG(ERROR, __FUNCTION__, "Exception occurred: ", ex.what());
         return;

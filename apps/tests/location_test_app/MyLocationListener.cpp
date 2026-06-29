@@ -269,6 +269,12 @@ void MyLocationListener::printLocationValidity(telux::loc::LocationInfoValidity 
    if((validityMask & telux::loc::HAS_TIMESTAMP_BIT)) {
       std::cout << "valid timestamp" << std::endl;
    }
+   if((validityMask & telux::loc::HAS_ELAPSED_REAL_TIME_BIT)) {
+      std::cout << "valid elapsed real time" << std::endl;
+   }
+   if((validityMask & telux::loc::HAS_ELAPSED_REAL_TIME_UNC_BIT)) {
+      std::cout << "valid elapsed real time uncertainty" << std::endl;
+   }
 }
 
 void MyLocationListener::printLocationTech(telux::loc::LocationTechnology techMask) {
@@ -1007,7 +1013,10 @@ void MyLocationListener::onBasicLocationUpdate(
              << "Horizontal uncertainty: " << locationInfo->getHorizontalUncertainty() << std::endl
              << "Vertical uncertainty: " << locationInfo->getVerticalUncertainty() << std::endl
              << "Speed uncertainty: " << locationInfo->getSpeedUncertainty() << std::endl
-             << "Heading uncertainty: " << locationInfo->getHeadingUncertainty() << std::endl;
+             << "Heading uncertainty: " << locationInfo->getHeadingUncertainty() << std::endl
+             << "Elapsed real time: " << locationInfo->getElapsedRealTime() << std::endl
+             << "Elapsed real time uncertainty: " << locationInfo->getElapsedRealTimeUncertainty()
+             << std::endl;
 
    std::cout << "*************************************************************" << std::endl;
 }
@@ -1051,6 +1060,9 @@ void MyLocationListener::onDetailedLocationUpdate(
       << "Magnetic deviation: " << locationInfo->getMagneticDeviation() << std::endl
       << "Speed uncertainty: " << locationInfo->getSpeedUncertainty() << std::endl
       << "Heading uncertainty: " << locationInfo->getHeadingUncertainty() << std::endl
+      << "Elapsed real time: " << locationInfo->getElapsedRealTime() << std::endl
+      << "Elapsed real time uncertainty: " << locationInfo->getElapsedRealTimeUncertainty()
+      << std::endl
       << "HorizontalUncertainty\nSemiMajor: " << locationInfo->getHorizontalUncertaintySemiMajor()
       << ", SemiMinor: " << locationInfo->getHorizontalUncertaintySemiMinor()
       << ", Azimuth: " << locationInfo->getHorizontalUncertaintyAzimuth() << std::endl
@@ -1182,6 +1194,9 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
         << "Magnetic deviation: " << locationInfo->getMagneticDeviation() << std::endl
         << "Speed uncertainty: " << locationInfo->getSpeedUncertainty() << std::endl
         << "Heading uncertainty: " << locationInfo->getHeadingUncertainty() << std::endl
+        << "Elapsed real time: " << locationInfo->getElapsedRealTime() << std::endl
+        << "Elapsed real time uncertainty: " << locationInfo->getElapsedRealTimeUncertainty()
+        << std::endl
         << "HorizontalUncertainty\nSemiMajor: " <<
             locationInfo->getHorizontalUncertaintySemiMajor()
         << ", SemiMinor: " << locationInfo->getHorizontalUncertaintySemiMinor()

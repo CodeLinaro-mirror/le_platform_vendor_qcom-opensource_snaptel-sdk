@@ -409,7 +409,7 @@ struct BackhaulInfo {
                          e.g. if the backhaul is Vlan over Ethernet (ETH) with
                          Vlan ID 4, Vlan ID should be set to 4 and backhaul type
                          should be set to ETH */
-    int staId = -1; /** Sta ID should be provided only when backhaul type is WLAN.
+    int staId = 0; /** Sta ID should be provided only when backhaul type is WLAN.
                         Clients should pass 0 for STA1 and 1 for STA2 */
 };
 

@@ -28,6 +28,7 @@
 #include "trigger/SMS/SMSTrigger.hpp"
 #include "../../common/utils/Utils.hpp"
 #include "console_app_framework/ConsoleApp.hpp"
+#include "WakeupHandler.hpp"
 
 #ifdef CAN_TRIGGER_SUPPORTED
 #include "trigger/CAN/CANTrigger.hpp"
@@ -66,6 +67,7 @@ class PowerRefDaemon : public ConsoleApp {
     shared_ptr<EventManager> eventManager_;
     shared_ptr<NAOIpTrigger> naoIpTrigger_;
     shared_ptr<SMSTrigger> smsTrigger_;
+    shared_ptr<WakeupHandler> wakeupHandler_;
 
     // Timer related members
     timer_t timerId_ = 0;

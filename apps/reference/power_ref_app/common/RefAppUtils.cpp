@@ -810,15 +810,10 @@ bool RefAppUtils::isWakeupListenerEnabled() {
 std::bitset<32> RefAppUtils::getTriggerResumeOnWakeupConfig() {
     std::string config
         = ConfigParser::getInstance()->getValue("WAKEUP_LISTENER", "TRIGGER_RESUME_ON_WAKEUP");
-    std::bitset<32> indBits{};
     if (not config.empty()) {
-        unsigned long tempValue;
-        std::istringstream ost(config);
-        ost >> std::hex >> tempValue;
-        std::bitset<32> indBitsConfig(tempValue);
-        indBits = indBitsConfig;
+        return std::bitset<32>(config);
     }
-    return indBits;
+    return std::bitset<32>{};
 }
 
 void RefAppUtils::logKpiFile(std::shared_ptr<Event> event) {

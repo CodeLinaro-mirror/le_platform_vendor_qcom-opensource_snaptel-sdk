@@ -41,8 +41,10 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <sstream>
 #include <vector>
 #include <csignal>
+#include <cinttypes>
 #include <mutex>
 #include <condition_variable>
 #include <cstdlib>
@@ -530,29 +532,58 @@ void WakeupReasonListener::onServiceStatusChange(telux::common::ServiceStatus ne
 }
 
 /*
- * Print details of the QMI message that caused the system wakeup.
+ * Print details of the wakeup event (QMI or WoW).
  */
-void WakeupReasonListener::onWakeup(telux::power::WakeupInfo wakeupInfo) {
+void WakeupReasonListener::onWakeup(const telux::power::WakeupEventInfo &wakeupInfo) {
 
-    std::printf("onWakeup()\n");
+    std::cout << "onWakeup()" << std::endl;
 
-    if (wakeupInfo.wakeupType != telux::power::WakeupType::QMI) {
-        std::printf("not QMI type wakeup");
-        return;
+    if (wakeupInfo.type == telux::power::WakeupType::QMI) {
+        std::cout << "Wakeup type : QMI" << std::endl;
+        std::cout << "serviceId : " << wakeupInfo.qmi.serviceId << std::endl;
+        std::cout << "sourceNodeId : " << wakeupInfo.qmi.sourceNodeId << std::endl;
+        std::cout << "destinationNodeId : " << wakeupInfo.qmi.destinationNodeId << std::endl;
+        if (wakeupInfo.qmi.isMsgIdValid) {
+            std::cout << "msgId : " << wakeupInfo.qmi.msgId << std::endl;
+        }
+        if (wakeupInfo.qmi.isPIDValid) {
+            std::cout << "pid : " << wakeupInfo.qmi.pid << std::endl;
+        }
+        if (wakeupInfo.qmi.isProcessNameValid) {
+            std::cout << "processName : " << wakeupInfo.qmi.processName << std::endl;
+        }
+    } else if (wakeupInfo.type == telux::power::WakeupType::WOW) {
+        std::cout << "Wakeup type : WoW (Wake-on-WLAN)" << std::endl;
+        std::cout << "timestamp : " << wakeupInfo.wow.timestamp << std::endl;
+        std::cout << "wakeupCategory : " << wowCategoryToStr(wakeupInfo.wow.wakeupCategory)
+                  << std::endl;
+        if (!wakeupInfo.wow.interfaceName.empty()) {
+            std::cout << "interfaceName : " << wakeupInfo.wow.interfaceName << std::endl;
+        }
+        if (!wakeupInfo.wow.macAddress.empty()) {
+            std::cout << "macAddress : " << wakeupInfo.wow.macAddress << std::endl;
+        }
+        if (!wakeupInfo.wow.pbmBuffer.empty()) {
+            std::cout << "pbmBuffer : " << wakeupInfo.wow.pbmBuffer << std::endl;
+        }
+    } else {
+        std::cout << "Unknown wakeup type" << std::endl;
     }
 
-    std::printf("serviceId : %u\n", wakeupInfo.qmiWakeupInfo.serviceId);
-    std::printf("sourceNodeId : %u\n", wakeupInfo.qmiWakeupInfo.sourceNodeId);
-    std::printf("destinationNodeId : %u\n", wakeupInfo.qmiWakeupInfo.destinationNodeId);
-
-    if (wakeupInfo.qmiWakeupInfo.isMsgIdValid) {
-        std::printf("msgId : %u\n", wakeupInfo.qmiWakeupInfo.msgId);
-    }
-    if (wakeupInfo.qmiWakeupInfo.isPIDValid) {
-        std::printf("pid : %u\n", wakeupInfo.qmiWakeupInfo.pid);
-    }
-    if (wakeupInfo.qmiWakeupInfo.isProcessNameValid) {
-        std::printf("processName : %s\n", wakeupInfo.qmiWakeupInfo.processName.c_str());
+    // Trigger RESUME if this wakeup type is in the trigger mask
+    if (resumeCallback_) {
+        bool triggerResume = false;
+        if (wakeupInfo.type == telux::power::WakeupType::QMI
+            && triggerResumeMask_.test(telux::power::WakeupIndicationsType::QMI_WAKEUP)) {
+            triggerResume = true;
+        } else if (wakeupInfo.type == telux::power::WakeupType::WOW
+                   && triggerResumeMask_.test(telux::power::WakeupIndicationsType::WOW_WAKEUP)) {
+            triggerResume = true;
+        }
+        if (triggerResume) {
+            std::cout << "Triggering RESUME on wakeup" << std::endl;
+            resumeCallback_();
+        }
     }
 }
 
@@ -596,7 +627,42 @@ void PowerMgmtTestApp::regForWakeupReason() {
         return;
     }
 
-    ec = wakeupMgr_->registerListener(wakeupReasonListener_);
+    // Prompt user to select indication types (comma-separated, e.g. "1,2")
+    std::cout << "Select wakeup indication(s) by comma-separated numbers:" << std::endl;
+    std::cout << "  1 : QMI wakeup reason" << std::endl;
+    std::cout << "  2 : WoW (Wake-on-WLAN) wakeup reason" << std::endl;
+    std::cout << "(For example: enter 1,2 to register for both): ";
+    std::string input;
+    std::getline(std::cin, input, '\n');
+
+    telux::power::WakeupIndications indications;
+    indications.set(telux::power::WakeupIndicationsType::DEFAULT);
+
+    std::stringstream ss(input);
+    std::string token;
+    bool anySelected = false;
+    while (std::getline(ss, token, ',')) {
+        try {
+            int opt = std::stoi(token);
+            if (opt == 1) {
+                indications.set(telux::power::WakeupIndicationsType::QMI_WAKEUP);
+                anySelected = true;
+            } else if (opt == 2) {
+                indications.set(telux::power::WakeupIndicationsType::WOW_WAKEUP);
+                anySelected = true;
+            } else {
+                std::cout << "Unknown option " << opt << ", skipping" << std::endl;
+            }
+        } catch (...) {
+            std::cout << "Invalid token '" << token << "', skipping" << std::endl;
+        }
+    }
+    if (!anySelected) {
+        std::cout << "No valid indication selected, defaulting to QMI wakeup" << std::endl;
+        indications.set(telux::power::WakeupIndicationsType::QMI_WAKEUP);
+    }
+
+    ec = wakeupMgr_->registerListener(wakeupReasonListener_, indications);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         std::cout << "Can't register listener, err " << static_cast<int>(ec) << std::endl;
         wakeupReasonListener_ = nullptr;
@@ -606,7 +672,39 @@ void PowerMgmtTestApp::regForWakeupReason() {
         return;
     }
 
-    std::cout << "Started listening" << std::endl;
+    // Ask user if they want to trigger RESUME on specific wakeup indication types
+    std::cout << "Trigger RESUME on wakeup? (comma-separated, 0=No, 1=QMI, 2=WoW): ";
+    std::string resumeInput;
+    std::getline(std::cin, resumeInput, '\n');
+
+    telux::power::WakeupIndications triggerResumeMask;
+    bool anyResumeTrigger = false;
+    if (!resumeInput.empty() && resumeInput != "0") {
+        std::stringstream rss(resumeInput);
+        std::string rtok;
+        while (std::getline(rss, rtok, ',')) {
+            try {
+                int ropt = std::stoi(rtok);
+                if (ropt == 1) {
+                    triggerResumeMask.set(telux::power::WakeupIndicationsType::QMI_WAKEUP);
+                    anyResumeTrigger = true;
+                } else if (ropt == 2) {
+                    triggerResumeMask.set(telux::power::WakeupIndicationsType::WOW_WAKEUP);
+                    anyResumeTrigger = true;
+                }
+            } catch (...) {
+            }
+        }
+    }
+
+    if (anyResumeTrigger) {
+        auto self = shared_from_this();
+        wakeupReasonListener_->setTriggerResumeCallback(triggerResumeMask,
+            [self]() { self->sendActivityStateCommandEx(ALL_MACHINES, TcuActivityState::RESUME); });
+        std::cout << "RESUME will be triggered on matching wakeup indications" << std::endl;
+    }
+
+    std::cout << "Started listening for selected wakeup indications" << std::endl;
     return;
 }
 

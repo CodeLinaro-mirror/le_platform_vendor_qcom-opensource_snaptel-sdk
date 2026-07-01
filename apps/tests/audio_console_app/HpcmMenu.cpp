@@ -345,7 +345,7 @@ void HpcmMenu::startHpcmAudio(std::vector<std::string> userInput) {
     // in a separate thread
     std::lock_guard<std::mutex> lk(mutex_);
 
-    StreamConfig config;
+    StreamConfig config{};
     telux::common::Status status = telux::common::Status::FAILED;
     if (!hpcmReady_.load()) {
         std::cout << "Audio Service UNAVAILABLE" << std::endl;

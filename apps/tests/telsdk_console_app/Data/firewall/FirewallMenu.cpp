@@ -213,9 +213,9 @@ void FirewallMenu::parseProtoInfo(std::shared_ptr<IIpFilter> filter,
 }
 
 void FirewallMenu::setFirewall(std::vector<std::string> inputCommand) {
-    bool fwEnable     = false;
-    bool allowPackets = false;
-    telux::common::Status retStat;
+    bool fwEnable                 = false;
+    bool allowPackets             = false;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
 
     std::cout << "Set Firewall\n";
     telux::data::net::FirewallConfig firewallConfig = {};
@@ -257,7 +257,7 @@ void FirewallMenu::setFirewall(std::vector<std::string> inputCommand) {
 }
 
 void FirewallMenu::requestFirewallStatus(std::vector<std::string> inputCommand) {
-    telux::common::Status retStat;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
 
     std::cout << "request Firewall Status\n";
     BackhaulInfo bhInfo = {};
@@ -639,7 +639,7 @@ std::vector<std::shared_ptr<IFirewallEntry>> FirewallMenu::configureNewFirewallE
 }
 
 void FirewallMenu::addHwAccelerationFirewallEntry(std::vector<std::string> inputCommand) {
-    telux::common::Status retStat;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
     std::cout << "Add hardware acceleration firewall entry \n";
     BackhaulInfo bhInfo = {};
     DataUtils::populateBackhaulInfo(bhInfo);
@@ -667,7 +667,7 @@ void FirewallMenu::addHwAccelerationFirewallEntry(std::vector<std::string> input
 }
 
 void FirewallMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
-    telux::common::Status retStat;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
     std::cout << "add Firewall Entry\n";
     BackhaulInfo bhInfo = {};
     DataUtils::populateBackhaulInfo(bhInfo);
@@ -692,7 +692,7 @@ void FirewallMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
 }
 
 void FirewallMenu::requestHwAccelerationFirewallEntries(std::vector<std::string> inputCommand) {
-    telux::common::Status retStat;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
 
     std::cout << "request hardware acceleration firewall entry\n";
     BackhaulInfo bhInfo = {};
@@ -718,7 +718,7 @@ void FirewallMenu::requestHwAccelerationFirewallEntries(std::vector<std::string>
 }
 
 void FirewallMenu::requestFirewallEntries(std::vector<std::string> inputCommand) {
-    telux::common::Status retStat;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
 
     std::cout << "request Firewall Entry\n";
     BackhaulInfo bhInfo = {};
@@ -828,7 +828,7 @@ void FirewallMenu::displayFirewallEntry() {
 }
 
 void FirewallMenu::removeFirewallEntry(std::vector<std::string> inputCommand) {
-    telux::common::Status retStat;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
 
     std::cout << "remove Firewall Entry\n";
     BackhaulInfo bhInfo = {};
@@ -852,7 +852,7 @@ void FirewallMenu::removeFirewallEntry(std::vector<std::string> inputCommand) {
 }
 
 void FirewallMenu::enableDmz(std::vector<std::string> inputCommand) {
-    telux::common::Status retStat;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
 
     std::cout << "Add DMZ\n";
     BackhaulInfo bhInfo = {};
@@ -879,7 +879,7 @@ void FirewallMenu::enableDmz(std::vector<std::string> inputCommand) {
 }
 
 void FirewallMenu::disableDmz(std::vector<std::string> inputCommand) {
-    telux::common::Status retStat;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
     std::cout << "Remove DMZ\n";
     BackhaulInfo bhInfo = {};
     DataUtils::populateBackhaulInfo(bhInfo);
@@ -905,7 +905,7 @@ void FirewallMenu::disableDmz(std::vector<std::string> inputCommand) {
 }
 
 void FirewallMenu::requestDmzEntry(std::vector<std::string> inputCommand) {
-    telux::common::Status retStat;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
     std::cout << "request Dmz Entries\n";
     BackhaulInfo bhInfo = {};
     DataUtils::populateBackhaulInfo(bhInfo);

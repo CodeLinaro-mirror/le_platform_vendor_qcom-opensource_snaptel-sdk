@@ -143,11 +143,11 @@ void L2tpMenu::onInitComplete(telux::common::ServiceStatus status) {
 
 void L2tpMenu::setConfig(std::vector<std::string> inputCommand) {
     std::cout << "Set L2TP Unamanged Tunnel\n";
-    telux::common::Status retStat;
-    bool enable      = true;
-    bool enableMss   = false;
-    bool enableMtu   = false;
-    uint32_t mtuSize = 0;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    bool enable                   = true;
+    bool enableMss                = false;
+    bool enableMtu                = false;
+    uint32_t mtuSize              = 0;
     int inputFlag;
     std::cout << "Enable/Disable L2TP for unmanaged tunnels\n (1-enable, 0-disable): ";
     std::cin >> inputFlag;
@@ -194,7 +194,7 @@ void L2tpMenu::setConfig(std::vector<std::string> inputCommand) {
 
 void L2tpMenu::addTunnel(std::vector<std::string> inputCommand) {
     std::cout << "Set L2TP Configuration\n";
-    telux::common::Status retStat;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
     telux::data::net::L2tpTunnelConfig l2tpTunnelConfig;
     char delimiter = '\n';
     std::cin.get();
@@ -368,15 +368,15 @@ void L2tpMenu::requestConfig(std::vector<std::string> inputCommand) {
     };
 
     std::cout << "Request L2TP Configuration\n";
-    telux::common::Status retStat;
-    retStat = l2tpManager_->requestConfig(respCb);
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    retStat                       = l2tpManager_->requestConfig(respCb);
     Utils::printStatus(retStat);
 }
 
 void L2tpMenu::removeTunnel(std::vector<std::string> inputCommand) {
     std::cout << "Remove L2TP Tunnel\n";
-    telux::common::Status retStat;
-    auto respCb = [](telux::common::ErrorCode error) {
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    auto respCb                   = [](telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
         std::cout << "CALLBACK: "
                   << "Remove L2TP Configuration Response"
@@ -395,8 +395,8 @@ void L2tpMenu::removeTunnel(std::vector<std::string> inputCommand) {
 
 void L2tpMenu::addSessionToTunnel(std::vector<std::string> inputCommand) {
     std::cout << "Add Session To Tunnel\n";
-    telux::common::Status retStat;
-    auto respCb = [](telux::common::ErrorCode error) {
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    auto respCb                   = [](telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
         std::cout << "CALLBACK: "
                   << "Add L2TP Session to Tunnel Response"
@@ -425,8 +425,8 @@ void L2tpMenu::addSessionToTunnel(std::vector<std::string> inputCommand) {
 
 void L2tpMenu::removeSessionFromTunnel(std::vector<std::string> inputCommand) {
     std::cout << "Remove Session From Tunnel\n";
-    telux::common::Status retStat;
-    auto respCb = [](telux::common::ErrorCode error) {
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    auto respCb                   = [](telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
         std::cout << "CALLBACK: "
                   << "Remove L2TP Session From Tunnel Response"
@@ -449,7 +449,7 @@ void L2tpMenu::removeSessionFromTunnel(std::vector<std::string> inputCommand) {
 
 void L2tpMenu::bindSessionToBackhaul(std::vector<std::string> inputCommand) {
     std::cout << "Bind Session To Backhaul\n";
-    telux::common::Status retStat;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
 
     auto respCb = [](telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
@@ -476,7 +476,7 @@ void L2tpMenu::bindSessionToBackhaul(std::vector<std::string> inputCommand) {
 
 void L2tpMenu::unbindSessionFromBackhaul(std::vector<std::string> inputCommand) {
     std::cout << "Unbind Session From Backhaul\n";
-    telux::common::Status retStat;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
 
     auto respCb = [](telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
@@ -503,7 +503,7 @@ void L2tpMenu::unbindSessionFromBackhaul(std::vector<std::string> inputCommand) 
 
 void L2tpMenu::querySessionToBackhaulMapping(std::vector<std::string> inputCommand) {
     std::cout << "Query Session To Backhaul Mappings\n";
-    telux::common::Status retStat;
+    telux::common::Status retStat          = telux::common::Status::SUCCESS;
     telux::data::BackhaulType backhaulType = BackhaulType::WWAN;
 
     int bhType;

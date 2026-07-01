@@ -359,7 +359,7 @@ void DataQosTestApp::consoleinit() {
 
 void DataQosTestApp::getTft(std::vector<std::string> inputCommand) {
     std::cout << "\nGet tft " << std::endl;
-    telux::common::Status retStat;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
 
     if (dataConnMgr_) {
         // requesting local data calls and present list to user.

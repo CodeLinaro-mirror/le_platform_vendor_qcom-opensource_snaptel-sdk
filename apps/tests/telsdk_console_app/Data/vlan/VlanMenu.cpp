@@ -134,9 +134,9 @@ void VlanMenu::onInitComplete(telux::common::ServiceStatus status) {
 }
 
 void VlanMenu::createVlan(std::vector<std::string> inputCommand) {
-    telux::common::Status retStat;
-    int operationType;
-    bool subSystemStatus = false;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    int operationType             = 0;
+    bool subSystemStatus          = false;
 
     std::cout << "Create VLAN \n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
@@ -149,7 +149,7 @@ void VlanMenu::createVlan(std::vector<std::string> inputCommand) {
         std::cout << "Vlan Manager is not ready" << std::endl;
         return;
     }
-    int ifaceType;
+    int ifaceType = 0;
 #ifdef TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED
     if (opType == telux::data::OperationType::DATA_LOCAL) {
         std::cout << "Enter Interface Type\n (1-WLAN, 2-ETH, 3-ECM, 4-RNDIS, 5-MHI, ";
@@ -187,12 +187,12 @@ void VlanMenu::createVlan(std::vector<std::string> inputCommand) {
 #endif
     telux::data::InterfaceType infType = static_cast<telux::data::InterfaceType>(ifaceType);
 
-    int vlanId;
+    int vlanId = 0;
     std::cout << "Enter VLAN Id: ";
     std::cin >> vlanId;
     Utils::validateInput(vlanId);
 
-    int pcp;
+    int pcp = 0;
     std::cout << "Do you want to enter Vlan Priority? (0-No, 1-Yes): ";
     std::cin >> pcp;
     std::cout << std::endl;
@@ -211,7 +211,7 @@ void VlanMenu::createVlan(std::vector<std::string> inputCommand) {
         }
     }
 
-    int acc;
+    int acc = 0;
     std::cout << "Enter acceleration  (0-false, 1-true): ";
     std::cin >> acc;
     Utils::validateInput(acc);
@@ -265,9 +265,9 @@ void VlanMenu::createVlan(std::vector<std::string> inputCommand) {
 }
 
 void VlanMenu::removeVlan(std::vector<std::string> inputCommand) {
-    telux::common::Status retStat;
-    int operationType;
-    bool subSystemStatus = false;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    int operationType             = 0;
+    bool subSystemStatus          = false;
 
     std::cout << "Remove VLAN \n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
@@ -281,7 +281,7 @@ void VlanMenu::removeVlan(std::vector<std::string> inputCommand) {
         return;
     }
 
-    int ifaceType;
+    int ifaceType = 0;
 #ifdef TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED
     if (opType == telux::data::OperationType::DATA_LOCAL) {
         std::cout << "Enter Interface Type\n (1-WLAN, 2-ETH, 3-ECM, 4-RNDIS, 5-MHI, ";
@@ -318,7 +318,7 @@ void VlanMenu::removeVlan(std::vector<std::string> inputCommand) {
                                         static_cast<int>(telux::data::InterfaceType::VMTAP1)});
 #endif
     telux::data::InterfaceType infType = static_cast<telux::data::InterfaceType>(ifaceType);
-    int vlanId;
+    int vlanId                         = 0;
     std::cout << "Enter VLAN Id: ";
     std::cin >> vlanId;
     Utils::validateInput(vlanId);
@@ -336,9 +336,9 @@ void VlanMenu::removeVlan(std::vector<std::string> inputCommand) {
 }
 
 void VlanMenu::queryVlanInfo(std::vector<std::string> inputCommand) {
-    telux::common::Status retStat;
-    int operationType;
-    bool subSystemStatus = false;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    int operationType             = 0;
+    bool subSystemStatus          = false;
 
     std::cout << "Query VLAN info\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
@@ -396,7 +396,7 @@ void VlanMenu::bindToBackhaul(std::vector<std::string> inputCommand) {
 
     telux::data::net::VlanBindConfig vlanBindConfig = {};
     DataUtils::populateBackhaulInfo(vlanBindConfig.bhInfo);
-    int vlanId;
+    int vlanId = 0;
     std::cout << "Enter Vlan Id: ";
     std::cin >> vlanId;
     Utils::validateInput(vlanId);
@@ -416,9 +416,9 @@ void VlanMenu::bindToBackhaul(std::vector<std::string> inputCommand) {
 }
 
 void VlanMenu::unbindFromBackhaul(std::vector<std::string> inputCommand) {
-    telux::common::Status retStat;
-    int operationType;
-    bool subSystemStatus = false;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    int operationType             = 0;
+    bool subSystemStatus          = false;
 
     std::cout << "Unbind from Backhaul" << std::endl;
 
@@ -436,7 +436,7 @@ void VlanMenu::unbindFromBackhaul(std::vector<std::string> inputCommand) {
     telux::data::net::VlanBindConfig vlanBindConfig = {};
     DataUtils::populateBackhaulInfo(vlanBindConfig.bhInfo);
 
-    int vlanId;
+    int vlanId = 0;
     std::cout << "Enter Vlan Id: ";
     std::cin >> vlanId;
     Utils::validateInput(vlanId);
@@ -456,8 +456,8 @@ void VlanMenu::unbindFromBackhaul(std::vector<std::string> inputCommand) {
 
 void VlanMenu::queryVlanToBackhaulBindings(std::vector<std::string> inputCommand) {
     std::cout << "Query VLAN To Backhaul Bindings " << std::endl;
-    telux::common::Status retStat;
-    int operationType, slotId = DEFAULT_SLOT_ID;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    int operationType = 0, slotId = DEFAULT_SLOT_ID;
     bool subSystemStatus = false;
 
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
@@ -473,7 +473,7 @@ void VlanMenu::queryVlanToBackhaulBindings(std::vector<std::string> inputCommand
     }
 
     telux::data::BackhaulType backhaulType = {};
-    int backhaul;
+    int backhaul                           = 0;
     std::cout << "Enter Backhaul Type (0-Wlan, 1-WWAN, 2-ETH): ";
     std::cin >> backhaul;
     Utils::validateInput(backhaul, {0, 1, 2});

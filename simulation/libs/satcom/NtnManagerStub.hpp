@@ -6,6 +6,7 @@
 #ifndef NTNMANAGERSTUB_HPP
 #define NTNMANAGERSTUB_HPP
 
+#include <set>
 #include <telux/satcom/NtnManager.hpp>
 #include <telux/common/CommonDefines.hpp>
 
@@ -64,6 +65,8 @@ class NtnManagerStub : public INtnManager,
  private:
     std::mutex mtx_;
     std::mutex initMtx_;
+    std::set<TransactionId> pendingTransactions_;
+    std::mutex pendingMtx_;
     telux::common::ServiceStatus subSystemStatus_;
     std::unique_ptr<::satcomStub::NtnManager::Stub> stub_;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;

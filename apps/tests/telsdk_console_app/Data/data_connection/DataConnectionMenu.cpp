@@ -242,12 +242,12 @@ void DataConnectionMenu::startDataCall(std::vector<std::string> inputCommand) {
         return;
     }
 
-    int ipFamilyType;
-    int operationType;
+    int ipFamilyType  = 0;
+    int operationType = 0;
 
     getDataCallParams(params.profileId, ipFamilyType, operationType);
 
-    int userChoice;
+    int userChoice = 0;
     std::cout << "Start data call on specific interface name? (1-Yes, 0-No): ";
     std::cin >> userChoice;
     Utils::validateInput(userChoice);
@@ -281,8 +281,8 @@ void DataConnectionMenu::stopDataCall(std::vector<std::string> inputCommand) {
         return;
     }
 
-    int ipFamilyType;
-    int operationType;
+    int ipFamilyType  = 0;
+    int operationType = 0;
 
     getDataCallParams(params.profileId, ipFamilyType, operationType);
 
@@ -305,9 +305,9 @@ void DataConnectionMenu::startDataCall_V1(std::vector<std::string> inputCommand)
         return;
     }
     telux::common::Status retStat = telux::common::Status::SUCCESS;
-    int profileId;
-    int ipFamilyType;
-    int operationType;
+    int profileId                 = 0;
+    int ipFamilyType              = 0;
+    int operationType             = 0;
 
     getDataCallParams(profileId, ipFamilyType, operationType);
 
@@ -332,9 +332,9 @@ void DataConnectionMenu::stopDataCall_V1(std::vector<std::string> inputCommand) 
         return;
     }
 
-    int profileId;
-    int ipFamilyType;
-    int operationType;
+    int profileId     = 0;
+    int ipFamilyType  = 0;
+    int operationType = 0;
 
     getDataCallParams(profileId, ipFamilyType, operationType);
 
@@ -376,7 +376,7 @@ void DataConnectionMenu::requestDataCallStatistics(std::vector<std::string> inpu
         return;
     }
 
-    int profileId;
+    int profileId = 0;
     std::cout << "Enter Profile Id: ";
     std::cin >> profileId;
     Utils::validateInput(profileId);
@@ -404,7 +404,7 @@ void DataConnectionMenu::resetDataCallStatistics(std::vector<std::string> inputC
         return;
     }
 
-    int profileId;
+    int profileId = 0;
     std::cout << "Enter Profile Id: ";
     std::cin >> profileId;
     Utils::validateInput(profileId);
@@ -444,7 +444,7 @@ void DataConnectionMenu::requestDataCallList() {
         return;
     }
 
-    int operationType;
+    int operationType = 0;
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
     Utils::validateInput(
@@ -470,7 +470,7 @@ void DataConnectionMenu::setDefaultProfile() {
         return;
     }
 
-    int operationType;
+    int operationType = 0;
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
     Utils::validateInput(
@@ -478,7 +478,7 @@ void DataConnectionMenu::setDefaultProfile() {
                            static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
 
-    int profileId;
+    int profileId = 0;
     std::cout << "Enter Profile Id: ";
     std::cin >> profileId;
     Utils::validateInput(profileId);
@@ -517,7 +517,7 @@ void DataConnectionMenu::requestDataCallBitRate(std::vector<std::string> inputCo
         std::cout << "\nData Connection Manager on slot " << slotId << " is not ready" << std::endl;
         return;
     }
-    int profileId;
+    int profileId = 0;
     std::cout << "Enter Profile Id: ";
     std::cin >> profileId;
     Utils::validateInput(profileId);
@@ -554,8 +554,8 @@ void DataConnectionMenu::getDefaultProfile() {
         std::cout << "\nData Connection Manager on slot " << slotId << " is not ready" << std::endl;
         return;
     }
-    int profileId;
-    int operationType;
+    int profileId     = 0;
+    int operationType = 0;
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
     Utils::validateInput(
@@ -604,12 +604,12 @@ void DataConnectionMenu::setRoamingMode(std::vector<std::string> inputCommand) {
         roamEnable = true;
     }
 
-    int profileId;
+    int profileId = 0;
     std::cout << "Enter Profile Id: ";
     std::cin >> profileId;
     Utils::validateInput(profileId);
 
-    int operationType;
+    int operationType = 0;
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
     Utils::validateInput(
@@ -641,19 +641,19 @@ void DataConnectionMenu::setRoamingMode(std::vector<std::string> inputCommand) {
 }
 
 void DataConnectionMenu::requestRoamingMode(std::vector<std::string> inputCommand) {
-    telux::common::Status retStat;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
 
     std::cout << "request Roaming Mode\n";
     int slotId = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
         slotId = Utils::getValidSlotId();
     }
-    int profileId;
+    int profileId = 0;
     std::cout << "Enter Profile Id: ";
     std::cin >> profileId;
     Utils::validateInput(profileId);
 
-    int operationType;
+    int operationType = 0;
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
     Utils::validateInput(
@@ -768,12 +768,12 @@ void DataConnectionMenu::requestTrafficFlowTemplate(std::vector<std::string> inp
         std::cout << "\nData Connection Manager on slot " << slotId << " is not ready" << std::endl;
         return;
     }
-    int profileId;
+    int profileId = 0;
     std::cout << "Enter Profile Id: ";
     std::cin >> profileId;
     Utils::validateInput(profileId);
 
-    int ipFamilyType;
+    int ipFamilyType = 0;
     std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
     std::cin >> ipFamilyType;
     Utils::validateInput(ipFamilyType, {static_cast<int>(telux::data::IpFamilyType::IPV4),
@@ -819,8 +819,8 @@ void DataConnectionMenu::requestTrafficFlowTemplate(std::vector<std::string> inp
 
 void DataConnectionMenu::requestThrottledApnsInfo() {
     std::cout << "\nRequest Throttled APN Info" << std::endl;
-    telux::common::Status retStat;
-    int slotId = DEFAULT_SLOT_ID;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    int slotId                    = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
         slotId = Utils::getValidSlotId();
     }
@@ -836,8 +836,8 @@ void DataConnectionMenu::requestThrottledApnsInfo() {
 
 void DataConnectionMenu::registerForThroughput(std::vector<std::string> inputCommand) {
     std::cout << "\nRegister For Throughput" << std::endl;
-    telux::common::Status retStat;
-    int slotId = DEFAULT_SLOT_ID;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    int slotId                    = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
         slotId = Utils::getValidSlotId();
     }
@@ -855,8 +855,8 @@ void DataConnectionMenu::registerForThroughput(std::vector<std::string> inputCom
 
 void DataConnectionMenu::deregisterForThroughput(std::vector<std::string> inputCommand) {
     std::cout << "\nDeregister for Throughput" << std::endl;
-    telux::common::Status retStat;
-    int slotId = DEFAULT_SLOT_ID;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    int slotId                    = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
         slotId = Utils::getValidSlotId();
     }
@@ -895,8 +895,8 @@ void DataConnectionMenu::setThroughputInterval(std::vector<std::string> inputCom
 
 void DataConnectionMenu::getLastThroughputInfo(std::vector<std::string> inputCommand) {
     std::cout << "\nGet Last Throughput Info" << std::endl;
-    telux::common::Status retStat;
-    int slotId = DEFAULT_SLOT_ID;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    int slotId                    = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
         slotId = Utils::getValidSlotId();
     }

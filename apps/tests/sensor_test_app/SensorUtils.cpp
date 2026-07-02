@@ -130,7 +130,7 @@ SensorConfiguration SensorUtils::getSensorConfig(std::shared_ptr<SensorClient> s
         SensorUtils::getInput("Enter isRotated: ", isRotated);
 
         // Set the sensor configuration
-        SensorConfiguration s;
+        SensorConfiguration s{};
         s.samplingRate = samplingRate;
         s.batchCount   = batchCount;
         s.isRotated    = isRotated;

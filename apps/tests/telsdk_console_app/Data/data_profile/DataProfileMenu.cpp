@@ -387,7 +387,7 @@ void DataProfileMenu::modifyProfile(std::vector<std::string> inputCommand) {
         return;
     }
 
-    int profileId;
+    int profileId = 0;
     std::cout << "Enter profile Id to Modify : ";
     std::cin >> profileId;
     Utils::validateInput(profileId);

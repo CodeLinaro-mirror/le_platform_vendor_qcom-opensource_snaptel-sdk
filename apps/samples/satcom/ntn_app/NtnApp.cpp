@@ -309,7 +309,7 @@ class NtnApp : public INtnListener, public std::enable_shared_from_this<NtnApp> 
     int setLocationFix() {
         std::string filename
             = std::string(DEFAULT_CSV_FILE_PATH) + std::string(DEFAULT_CSV_FILE_NAME);
-        telux::satcom::LocationFix fixParams;
+        telux::satcom::LocationFix fixParams{};
         telux::common::ErrorCode err;
 
         updateLocationFixParams(filename, fixParams);

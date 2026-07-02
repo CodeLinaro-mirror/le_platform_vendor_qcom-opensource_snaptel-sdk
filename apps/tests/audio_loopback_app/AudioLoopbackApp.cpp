@@ -105,7 +105,7 @@ Status AudioLoopbackApp::init() {
 }
 
 Status AudioLoopbackApp::createLoopbackStream() {
-    StreamConfig config;
+    StreamConfig config{};
     config.type       = StreamType::LOOPBACK;
     config.slotId     = DEFAULT_SLOT_ID;
     config.sampleRate = SAMPLE_RATE;

@@ -26,12 +26,6 @@ set(TARGET_POWER_REF_DAEMON_SOURCES
     common/RefAppUtils.cpp
     Event.cpp
     TCPKeepAliveHandler.cpp
-    WakeupHandler.cpp
-    trigger/GPIO/GPIOTrigger.cpp
-    trigger/NAOIP/filter/DataConfigParser.cpp
-    trigger/NAOIP/filter/DataFilterController.cpp
-    trigger/NAOIP/NAOIpTrigger.cpp
-    trigger/SMS/SMSTrigger.cpp
     common/socket/ConnectionHandler.cpp
     common/socket/TCPClient.cpp
     common/socket/TCPServer.cpp
@@ -48,6 +42,7 @@ if (NOT TELUX_POWER_REFD_EAP)
     list(APPEND TARGET_POWER_REF_DAEMON_SOURCES
         EventManager.cpp
         PowerRefDaemon.cpp
+        WakeupHandler.cpp
         trigger/GPIO/GPIOTrigger.cpp
         trigger/NAOIP/NAOIpTrigger.cpp
         trigger/SMS/SMSTrigger.cpp

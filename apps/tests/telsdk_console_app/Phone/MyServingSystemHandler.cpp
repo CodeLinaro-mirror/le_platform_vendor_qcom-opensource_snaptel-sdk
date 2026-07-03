@@ -1086,7 +1086,12 @@ void MyServingSystemListener::onNetworkRejection(telux::tel::NetworkRejectInfo r
         << "\n Service Domain: "
         << MyServingSystemHelper::getServiceDomain(rejectInfo.rejectSrvInfo.domain)
         << "\n Reject cause: " << static_cast<int>(rejectInfo.rejectCause)
-        << "\n MCC: " << rejectInfo.mcc << "\n MNC: " << rejectInfo.mnc;
+        << "\n MCC: " << rejectInfo.mcc << "\n MNC: " << rejectInfo.mnc << "\n Cell ID: ";
+    if (rejectInfo.cellId != 0xFFFFFFFFFFFFFFFF) {
+        std::cout << rejectInfo.cellId << std::endl;
+    } else {
+        std::cout << "UNAVAILABLE" << std::endl;
+    }
 }
 
 void MyServingSystemListener::onCallBarringInfoChanged(

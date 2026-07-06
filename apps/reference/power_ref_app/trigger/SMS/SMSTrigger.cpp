@@ -103,14 +103,17 @@ void SMSTrigger::onIncomingSms(
         LOG(DEBUG, __FUNCTION__, " sendData status = ", static_cast<int>(ret));
     }
 #endif
-
-    std::async(std::launch::async, [this, text] {
+    // The async is needed to make sure the SDK TCU activitiy manager API is invoked on another
+    // thread since this context (function) originates from the SDK thread
+    auto future = std::async(std::launch::async, [this, text] {
         TcuActivityState tcuActivityState = TcuActivityState::UNKNOWN;
         std::string machineName           = ALL_MACHINES;
         if (validateTrigger(text, tcuActivityState, machineName)) {
             this->triggerEvent(tcuActivityState, machineName);
         }
     });
+
+    future.wait();
 }
 
 void SMSTrigger::onEventRejected(shared_ptr<Event> event, EventStatus reason) {

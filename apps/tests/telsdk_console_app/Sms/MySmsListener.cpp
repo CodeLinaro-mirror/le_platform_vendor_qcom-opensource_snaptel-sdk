@@ -243,6 +243,8 @@ std::string SmsStorageCallback::convertStorageTypeToString(telux::tel::StorageTy
          return "NONE";
       case telux::tel::StorageType::SIM:
          return "SIM";
+      case telux::tel::StorageType::NV:
+         return "NV";
    }
    return "Unknown";
 }

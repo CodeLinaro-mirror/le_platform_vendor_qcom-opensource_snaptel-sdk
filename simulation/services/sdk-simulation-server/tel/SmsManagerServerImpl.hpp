@@ -157,9 +157,10 @@ private:
     void getJsonForSystemData(int phoneId, std::string& jsonfilename, Json::Value& rootObj );
     void getJsonForApiResponseSlot(int phoneId, std::string& jsonfilename,
         Json::Value& rootObj );
-    int getSMSStorage(int phoneId);
-    void parseMessageAtIndex(int phoneId, int index,SmsMsg& msg );
-    telux::common::ErrorCode deletedSmsatIndex(int phoneId, std::vector<int> index);
+    int getSMSStorage(int phoneId, std::string storageName);
+    void parseMessageAtIndex(int phoneId, int index, SmsMsg& msg, std::string storageName);
+    telux::common::ErrorCode deletedSmsatIndex(int phoneId, std::vector<int> index,
+        std::string storageName);
     void handleIncomingSms(std::string eventParams);
     void handleMemoryFullEvent(std::string eventParams);
     void triggerIncomingSmsEvent(int phoneId, int numberOfSegments,
@@ -172,9 +173,9 @@ private:
      * It shifts all the elements of current database to right for indexes greater than new index
      * and pushes the data of new message on corresponding index in database.
      */
-    void sortDatabase(int phoneId, Json::Value newSms, int index);
+    void sortDatabase(int phoneId, Json::Value newSms, int index, std::string storageName);
     void onEventUpdate(std::string event);
     /* Returns the message index of new MT SMS database, where the new MT SMS can be stored */
-    int getNewSmsIndex(int phoneId);
+    int getNewSmsIndex(int phoneId, std::string storageName);
 };
 #endif // SMS_MANAGER_SERVER_HPP

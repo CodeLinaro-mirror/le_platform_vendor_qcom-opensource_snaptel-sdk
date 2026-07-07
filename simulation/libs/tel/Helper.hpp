@@ -77,6 +77,8 @@ public:
     static telux::tel::StorageType getstorageType(std::string storageType ) {
         if(storageType == "SIM") {
             return telux::tel::StorageType::SIM;
+        } else if (storageType == "NV") {
+            return telux::tel::StorageType::NV;
         } else if (storageType == "NONE") {
             return telux::tel::StorageType::NONE;
         } else {
@@ -88,6 +90,8 @@ public:
         switch(type) {
             case telux::tel::StorageType::SIM:
                 return "SIM";
+            case telux::tel::StorageType::NV:
+                return "NV";
             case telux::tel::StorageType::NONE:
                 return "NONE";
             case telux::tel::StorageType::UNKNOWN:

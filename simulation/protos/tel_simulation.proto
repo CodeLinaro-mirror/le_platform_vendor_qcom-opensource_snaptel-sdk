@@ -961,10 +961,11 @@ message SmsTagType {
   }
 }
 
-message RequestSmsMessageListRequest {
-  int32 phone_id = 1;
-  SmsTagType.TagType tag_type = 2;
-}
+ message RequestSmsMessageListRequest {
+    int32 phone_id = 1;
+    SmsTagType.TagType tag_type = 2;
+    StorageType.Type storage_type = 3;
+ }
 
 message SmsMetaInfo {
   bool isMetaInfoValid = 1;
@@ -980,10 +981,11 @@ message RequestSmsMessageListReply {
   bool iscallback = 5;
 }
 
-message ReadMessageRequest {
-  int32 phone_id = 1;
-  uint32 msg_index = 2;
-}
+ message ReadMessageRequest {
+    int32 phone_id = 1;
+    uint32 msg_index = 2;
+    StorageType.Type storage_type = 3;
+ }
 
 message ReadMessageReply {
   SmsMessage sms_message = 1;
@@ -995,7 +997,10 @@ message ReadMessageReply {
 
 message IsMemoryFullRequest { int32 phone_id = 1; }
 
-message IsMemoryFullReply { bool ismemoryfull = 1; }
+ message IsMemoryFullReply {
+    bool ismemoryfull = 1;
+    StorageType.Type storage_type = 2;
+ }
 
 message DelType {
   enum DeleteType {
@@ -1006,26 +1011,28 @@ message DelType {
   }
 }
 
-message DeleteMessageRequest {
-  int32 phone_id = 1;
-  DelType.DeleteType del_type = 2;
-  SmsTagType.TagType tag_type = 3;
-  uint32 msg_index = 4;
-}
-message DeleteMessageRequestReply {
-  commonStub.ErrorCode error = 1;
-  commonStub.Status status = 2;
-  int32 delay = 3;
-  bool iscallback = 4;
-}
+ message DeleteMessageRequest {
+    int32 phone_id = 1;
+    DelType.DeleteType del_type = 2;
+    SmsTagType.TagType tag_type = 3;
+    uint32 msg_index = 4;
+    StorageType.Type storage_type = 5;
+ }
+ message DeleteMessageRequestReply {
+    commonStub.ErrorCode error = 1;
+    commonStub.Status status = 2;
+    int32 delay = 3;
+    bool iscallback = 4;
+ }
 
-message StorageType {
-  enum Type {
-    NONE = 0;
-    UNKNOWN = -1;
-    SIM = 1;
-  }
-}
+ message StorageType {
+    enum Type {
+       NONE = 0;
+       UNKNOWN = -1;
+       SIM = 1;
+       NV = 2;
+    }
+ }
 
 message RequestPreferredStorageRequest { int32 phone_id = 1; }
 
@@ -1048,19 +1055,23 @@ message SetPreferredStorageReply {
   bool iscallback = 4;
 }
 
-message SetTagRequest {
-  int32 phone_id = 1;
-  uint32 msg_index = 2;
-  SmsTagType.TagType tag_type = 3;
-}
-message SetTagReply {
-  commonStub.ErrorCode error = 1;
-  commonStub.Status status = 2;
-  int32 delay = 3;
-  bool iscallback = 4;
-}
+ message SetTagRequest {
+    int32 phone_id = 1;
+    uint32 msg_index = 2;
+    SmsTagType.TagType tag_type = 3;
+    StorageType.Type storage_type = 4;
+ }
+ message SetTagReply {
+    commonStub.ErrorCode error = 1;
+    commonStub.Status status = 2;
+    int32 delay = 3;
+    bool iscallback = 4;
+ }
 
-message RequestStorageDetailsRequest { int32 phone_id = 1; }
+ message RequestStorageDetailsRequest {
+    int32 phone_id = 1;
+    StorageType.Type storage_type = 2;
+ }
 
 message RequestStorageDetailsReply {
   uint32 max_count = 1;

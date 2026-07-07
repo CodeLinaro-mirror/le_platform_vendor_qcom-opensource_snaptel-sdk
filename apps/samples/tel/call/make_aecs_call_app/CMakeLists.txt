@@ -1,21 +1,23 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.10.2)
 
 set(TARGET_CALL_APP make_aecs_call_app)
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(TELUXTEL REQUIRED telux-tel)
+
 set(CALL_APP_SOURCES
     MakeAecsCall.cpp
-    ${telematics-apps_SOURCE_DIR}/common/ConfigParser.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../../../common/ConfigParser.cpp
 )
 
-# set global variables
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
+add_executable(${TARGET_CALL_APP} ${CALL_APP_SOURCES})
 
-add_executable (${TARGET_CALL_APP} ${CALL_APP_SOURCES})
-target_include_directories(${TARGET_CALL_APP} BEFORE PUBLIC
-                           "${telematics-apps_SOURCE_DIR}/common" )
-target_link_libraries(${TARGET_CALL_APP} telux_tel telux_common)
+target_include_directories(${TARGET_CALL_APP} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_LIST_DIR}/../../../../common)
 
-# install to target
-install ( TARGETS ${TARGET_CALL_APP}
-          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-          ARCHIVE DESTINATION ${CMAKE_INSTALL_BINDIR} )
+target_compile_options(${TARGET_CALL_APP} PRIVATE -std=c++11 -Wall -Werror)
+
+target_link_libraries(${TARGET_CALL_APP} PRIVATE ${TELUXTEL_LIBRARIES} telux_common pthread)
+
+install(TARGETS ${TARGET_CALL_APP} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

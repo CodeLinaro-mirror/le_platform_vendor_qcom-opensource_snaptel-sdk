@@ -52,6 +52,11 @@ class SubsystemManagerStub : public ISubsystemManager,
 
     telux::common::Status triggerMpssRestart(MpssRestartResponseCb cb) override;
 
+    telux::common::ErrorCode setEdlConfigurations(const EdlConfigs &edlConfigs) override;
+    telux::common::ErrorCode getEdlConfigurations(EdlConfigs &edlConfigs) override;
+    telux::common::ErrorCode triggerEdl() override;
+    telux::common::ErrorCode getEdlState(EdlState &edlState) override;
+
  protected:
     telux::common::Status init() override;
     void cleanup() override;

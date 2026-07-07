@@ -265,6 +265,24 @@ class ILocationListener : public telux::common::ISDKListener {
     }
 
     /**
+     * This function is invoked when the SV residual report is received during a positioning
+     * session. Support for residual reporting callbacks is available only for specific engine
+     * types and requires the appropriate license on supported platforms.
+     *
+     * On platforms with access control enabled, the client needs to have TELUX_LOC_DATA permission
+     * for this listener API to be invoked.
+     *
+     * @param [in] gnssSvResidualReport - @ref telux::loc::GnssSvResidualReport containing SV
+     * Residual information.
+     *
+     * @note  Eval: This is a new API and is being evaluated. It is subject to change
+     *              and could break backwards compatibility.
+     */
+    virtual void onGnssSVResidualInfo(
+        const telux::loc::GnssSvResidualReport &gnssSvResidualReport) {
+    }
+
+    /**
      * Destructor of ILocationListener
      */
     virtual ~ILocationListener() {

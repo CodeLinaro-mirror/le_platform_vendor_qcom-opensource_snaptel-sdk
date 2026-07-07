@@ -123,6 +123,7 @@ class LocationMenu : public ConsoleApp {
     void enableEphemerisInfoLogs();
     void enableEngineNmeaInfoLogs();
     void enableExtendedInfoLogs();
+    void enableSvResidualInfoLogs();
     void dgnssInject(std::vector<std::string> userInput);
     void bodyToSensorUtility(telux::loc::DREngineConfiguration &drConfig);
     void speedScaleUtility(telux::loc::DREngineConfiguration &drConfig);

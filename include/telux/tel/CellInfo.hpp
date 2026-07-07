@@ -46,6 +46,7 @@
 #include <string>
 
 #include "telux/tel/SignalStrength.hpp"
+#include <cstdint>
 
 namespace telux {
 

@@ -34,8 +34,6 @@ class TcuActivityManagerWrapper : public ITcuActivityManager {
         std::weak_ptr<IServiceStatusListener> listener) override;
     telux::common::Status deregisterServiceStateListener(
         std::weak_ptr<IServiceStatusListener> listener) override;
-    bool isReady() override;
-    std::future<bool> onReady() override;
     telux::common::ServiceStatus getServiceStatus() override;
     telux::common::Status setActivityState(
         TcuActivityState state, telux::common::ResponseCallback callback = nullptr) override;

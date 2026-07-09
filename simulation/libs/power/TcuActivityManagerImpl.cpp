@@ -31,31 +31,10 @@ TcuActivityManagerImpl::~TcuActivityManagerImpl() {
     LOG(INFO, __FUNCTION__);
 }
 
-bool TcuActivityManagerImpl::isReady() {
-    LOG(WARNING, __FUNCTION__, " deprecated API used!");
-    std::lock_guard<std::mutex> lock(mutex_);
-    return (subSystemStatus_ == telux::common::ServiceStatus::SERVICE_AVAILABLE);
-}
-
 telux::common::ServiceStatus TcuActivityManagerImpl::getServiceStatus() {
     LOG(DEBUG, __FUNCTION__);
     std::lock_guard<std::mutex> lock(mutex_);
     return subSystemStatus_;
-}
-
-bool TcuActivityManagerImpl::waitForInitialization() {
-    LOG(DEBUG, __FUNCTION__);
-    std::unique_lock<std::mutex> cvLock(mutex_);
-    while (subSystemStatus_ != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        initCV_.wait(cvLock);
-    }
-    return true;
-}
-
-std::future<bool> TcuActivityManagerImpl::onReady() {
-    LOG(WARNING, __FUNCTION__, " deprecated API used!");
-    auto f = std::async(std::launch::async, [&] { return waitForInitialization(); });
-    return f;
 }
 
 void TcuActivityManagerImpl::setServiceStatusAndNotify(telux::common::ServiceStatus status) {
@@ -176,7 +155,6 @@ void TcuActivityManagerImpl::initSync() {
             LOG(ERROR, __FUNCTION__, " FAILED to register for TCU-activity state events");
         }
         setServiceStatusAndNotify(telux::common::ServiceStatus::SERVICE_AVAILABLE);
-        initCV_.notify_all();
         return;
     } while (false);
     cleanup(false);

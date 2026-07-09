@@ -98,6 +98,12 @@ void BridgeManagerStub::invokeCallback(
     taskQ_->add(f);
 }
 
+void BridgeManagerStub::setSubSystemStatus(telux::common::ServiceStatus status) {
+    LOG(DEBUG, __FUNCTION__, " to status: ", static_cast<int>(status));
+    std::lock_guard<std::mutex> lk(mtx_);
+    subSystemStatus_ = status;
+}
+
 void BridgeManagerStub::setSubsystemReady(bool status) {
     LOG(DEBUG, __FUNCTION__, " status: ", status);
     std::lock_guard<std::mutex> lk(mtx_);
@@ -105,36 +111,9 @@ void BridgeManagerStub::setSubsystemReady(bool status) {
     cv_.notify_all();
 }
 
-std::future<bool> BridgeManagerStub::onSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    auto future = std::async(
-        std::launch::async, [&] { return BridgeManagerStub::waitForInitialization(); });
-    return future;
-}
-
-bool BridgeManagerStub::waitForInitialization() {
-    LOG(INFO, __FUNCTION__);
-    std::unique_lock<std::mutex> lock(mtx_);
-    if (!isSubsystemReady()) {
-        cv_.wait(lock);
-    }
-    return isSubsystemReady();
-}
-
-void BridgeManagerStub::setSubSystemStatus(telux::common::ServiceStatus status) {
-    LOG(DEBUG, __FUNCTION__, " to status: ", static_cast<int>(status));
-    std::lock_guard<std::mutex> lk(mtx_);
-    subSystemStatus_ = status;
-}
-
 telux::common::ServiceStatus BridgeManagerStub::getServiceStatus() {
     LOG(DEBUG, __FUNCTION__);
     return subSystemStatus_;
-}
-
-bool BridgeManagerStub::isSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    return ready_;
 }
 
 telux::common::Status BridgeManagerStub::registerListener(std::weak_ptr<IBridgeListener> listener) {

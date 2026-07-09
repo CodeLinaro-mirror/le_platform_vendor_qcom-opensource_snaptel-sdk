@@ -48,16 +48,6 @@ std::string SubscriptionStub::getIccId() {
     return iccId_;
 }
 
-int SubscriptionStub::getMcc() {
-    LOG(DEBUG, __FUNCTION__, mcc_);
-    return mcc_;
-}
-
-int SubscriptionStub::getMnc() {
-    LOG(DEBUG, __FUNCTION__, mnc_);
-    return mnc_;
-}
-
 std::string SubscriptionStub::getMobileCountryCode() {
     LOG(DEBUG, __FUNCTION__, mcc_);
     return std::to_string(mcc_);

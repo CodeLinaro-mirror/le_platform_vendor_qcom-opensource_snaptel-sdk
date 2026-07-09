@@ -83,8 +83,6 @@ class SensorClientStub : public ISensorClient,
     SensorConfiguration getConfiguration() override;
     telux::common::Status activate() override;
     telux::common::Status deactivate() override;
-    telux::common::Status enableLowPowerMode() override;
-    telux::common::Status disableLowPowerMode() override;
     telux::common::Status selfTest(SelfTestType selfTestType, SelfTestResultCallback cb) override;
     telux::common::Status registerListener(std::weak_ptr<ISensorEventListener> listener) override;
     telux::common::Status deregisterListener(std::weak_ptr<ISensorEventListener> listener) override;

@@ -48,24 +48,6 @@ DgnssManagerStub::DgnssManagerStub(DgnssDataFormat dataFormat) {
     dataFormat_ = dataFormat;
 }
 
-std::future<bool> DgnssManagerStub::onSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    auto f = std::async(std::launch::async, [&] { return waitForInitialization(); });
-    return f;
-}
-
-bool DgnssManagerStub::waitForInitialization() {
-    LOG(DEBUG, __FUNCTION__);
-    std::unique_lock<std::mutex> cvLock(mutex_);
-    cv_.wait(cvLock);
-    return isSubsystemReady();
-}
-
-bool DgnssManagerStub::isSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    return getServiceStatus() == telux::common::ServiceStatus::SERVICE_AVAILABLE;
-}
-
 telux::common::ServiceStatus DgnssManagerStub::getServiceStatus() {
     LOG(DEBUG, __FUNCTION__);
     return telux::common::ServiceStatus::SERVICE_AVAILABLE;
@@ -100,7 +82,6 @@ void DgnssManagerStub::initSync(telux::common::InitResponseCb callback) {
 
     std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
     callback(serviceStatus);
-    cv_.notify_all();
 }
 
 telux::common::Status DgnssManagerStub::registerListener(

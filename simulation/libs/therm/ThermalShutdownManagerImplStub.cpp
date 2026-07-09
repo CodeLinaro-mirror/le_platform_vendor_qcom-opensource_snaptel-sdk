@@ -17,18 +17,9 @@ ThermalShutdownManagerImplStub::ThermalShutdownManagerImplStub() {
 ThermalShutdownManagerImplStub::~ThermalShutdownManagerImplStub() {
 }
 
-bool ThermalShutdownManagerImplStub::isReady() {
-    return true;
-}
-
 telux::common::ServiceStatus ThermalShutdownManagerImplStub::getServiceStatus() {
     LOG(DEBUG, __FUNCTION__);
     return telux::common::ServiceStatus::SERVICE_AVAILABLE;
-}
-
-std::future<bool> ThermalShutdownManagerImplStub::onReady() {
-    auto f = std::async(std::launch::async, [&] { return true; });
-    return f;
 }
 
 Status ThermalShutdownManagerImplStub::registerListener(
@@ -56,10 +47,6 @@ Status ThermalShutdownManagerImplStub::setAutoShutdownMode(
 telux::common::Status ThermalShutdownManagerImplStub::getAutoShutdownMode(
     GetAutoShutdownModeResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
-    if (!isReady()) {
-        LOG(ERROR, __FUNCTION__, "Thermal shutdown manager is not ready");
-        return Status::NOTREADY;
-    }
 
     return telux::common::Status::NOTSUPPORTED;
 }

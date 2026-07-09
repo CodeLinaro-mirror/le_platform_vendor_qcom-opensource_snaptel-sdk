@@ -104,6 +104,12 @@ void VlanManagerStub::invokeCallback(
     taskQ_->add(f);
 }
 
+void VlanManagerStub::setSubSystemStatus(telux::common::ServiceStatus status) {
+    LOG(DEBUG, __FUNCTION__, " to status: ", static_cast<int>(status));
+    std::lock_guard<std::mutex> lk(mtx_);
+    subSystemStatus_ = status;
+}
+
 void VlanManagerStub::setSubsystemReady(bool status) {
     LOG(DEBUG, __FUNCTION__, " status: ", status);
     std::lock_guard<std::mutex> lk(mtx_);
@@ -111,36 +117,9 @@ void VlanManagerStub::setSubsystemReady(bool status) {
     cv_.notify_all();
 }
 
-std::future<bool> VlanManagerStub::onSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    auto future
-        = std::async(std::launch::async, [&] { return VlanManagerStub::waitForInitialization(); });
-    return future;
-}
-
-bool VlanManagerStub::waitForInitialization() {
-    LOG(INFO, __FUNCTION__);
-    std::unique_lock<std::mutex> lock(mtx_);
-    if (!isSubsystemReady()) {
-        cv_.wait(lock);
-    }
-    return isSubsystemReady();
-}
-
-void VlanManagerStub::setSubSystemStatus(telux::common::ServiceStatus status) {
-    LOG(DEBUG, __FUNCTION__, " to status: ", static_cast<int>(status));
-    std::lock_guard<std::mutex> lk(mtx_);
-    subSystemStatus_ = status;
-}
-
 telux::common::ServiceStatus VlanManagerStub::getServiceStatus() {
     LOG(DEBUG, __FUNCTION__);
     return subSystemStatus_;
-}
-
-bool VlanManagerStub::isSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    return ready_;
 }
 
 telux::data::OperationType VlanManagerStub::getOperationType() {

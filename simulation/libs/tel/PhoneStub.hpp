@@ -35,10 +35,9 @@ class PhoneStub : public IPhone,
     telux::common::Status getPhoneId(int &phId);
     RadioState getRadioState();
     void setRadioState(RadioState radioState);
-    ServiceState getServiceState();
-    void setServiceState(ServiceState serviceState);
+    VoiceServiceState getServiceState();
+    void setServiceState(VoiceServiceState serviceState);
     void updateRadioState(RadioState radioState);
-    telux::common::Status requestVoiceRadioTechnology(VoiceRadioTechResponseCb callback) override;
     telux::common::Status requestVoiceServiceState(
         std::weak_ptr<IVoiceServiceStateCallback> callback);
     telux::common::Status setRadioPower(
@@ -68,7 +67,7 @@ class PhoneStub : public IPhone,
     std::atomic<bool> ready_;
     std::atomic<RadioState> radioState_;
     std::atomic<bool> radioStateInitialized_;
-    std::atomic<ServiceState> serviceState_;
+    std::atomic<VoiceServiceState> serviceState_;
     std::atomic<bool> serviceStateInitialized_;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     std::unique_ptr<::telStub::PhoneService::Stub> stub_;

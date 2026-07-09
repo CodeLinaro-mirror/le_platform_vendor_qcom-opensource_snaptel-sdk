@@ -47,9 +47,6 @@ class SuppServicesManagerStub : public ISuppServicesManager,
     telux::common::Status setOirPref(ServiceClass serviceClass, SuppServicesStatus suppSvcStatus,
         SetSuppSvcPrefCallback callback = nullptr) override;
     telux::common::Status requestOirPref(ServiceClass serviceClass, GetOirPrefCb callback) override;
-    telux::common::Status requestCallWaitingPref(GetCallWaitingPrefCb callback) override;
-    telux::common::Status requestForwardingPref(
-        ServiceClass serviceClass, ForwardReason reason, GetForwardingPrefCb callback) override;
 
     void onServiceStatusChange(telux::common::ServiceStatus status);
     void cleanup();

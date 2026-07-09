@@ -2841,8 +2841,6 @@ message GsmCellIdentity {
 
 message GsmSignalStrengthInfo {
     int32 gsm_signal_strength = 1;
-    int32 gsm_bit_error_rate = 2;
-    int32 timing_advance = 3;
     int32 gsm_rssi = 4;
 }
 
@@ -2862,7 +2860,6 @@ message WcdmaCellIdentity {
 
 message WcdmaSignalStrengthInfo {
     int32 signal_strength = 1;
-    int32 bit_error_rate = 2;
     int32 ecio = 3;
     int32 rscp = 4;
     int32 rssi = 5;
@@ -2887,8 +2884,6 @@ message LteSignalStrengthInfo {
     int32 lte_rsrp = 2;
     int32 lte_rsrq = 3;
     int32 lte_rssnr = 4;
-    int32 lte_cqi = 5;
-    int32 timing_advance = 6;
     int32 lte_rssi = 7;
 }
 
@@ -3327,25 +3322,6 @@ message GetRrcStateReply {
 message RrcStateEvent {
    int32 phone_id = 1;
    RrcState rrc_state = 2;
-}
-
-enum ServiceState {
-   EMERGENCY_ONLY = 0; /**< Only emergency calls allowed */
-   IN_SERVICE = 1;     /**< Normal operation, device is registered with a carrier and
-                        online */
-   OUT_OF_SERVICE = 2; /**< Device is not registered with any carrier */
-   RADIO_OFF = 3;      /**< Device radio is off - Airplane mode for example */
-   UNKNOWN_STATE = 10; /**< Unknown */
-};
-
-message ServiceStateChangeEvent {
-    ServiceState service_state = 1;
-    int32 phone_id = 2;
-}
-
-message VoiceRadioTechnologyChangeEvent {
-    RadioTechnology radio_technology = 1;
-    int32 phone_id = 2;
 }
 
 // --- ImsService start ---

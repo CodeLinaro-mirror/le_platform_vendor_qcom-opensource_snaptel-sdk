@@ -712,10 +712,6 @@ void OperatingModeTransitionManager::notifyAll(telStub::OperatingMode mode) {
             || mode == telStub::OperatingMode::PERSISTENT_LOW_POWER
             || mode == telStub::OperatingMode::AIRPLANE) {
 
-            telStub::ServiceStateChangeEvent serviceStateChangeEvent
-                = TelUtil::createServiceStateEvent(slotId, telStub::ServiceState::OUT_OF_SERVICE);
-            notificationBuilder->addServiceStateChangeEvent(slotId, serviceStateChangeEvent);
-
             telStub::VoiceServiceStateEvent voiceServiceStateEvent
                 = TelUtil::createVoiceServiceStateEvent(slotId,
                     telStub::VoiceServiceState::NOT_REG_AND_SEARCHING,
@@ -727,11 +723,6 @@ void OperatingModeTransitionManager::notifyAll(telStub::OperatingMode mode) {
                 = TelUtil::createSignalStrengthWithDefaultValues(slotId);
             notificationBuilder->addSignalStrengthChangeEvent(slotId, signalStrengthChangeEvent);
 
-            telStub::VoiceRadioTechnologyChangeEvent voiceRadioTechnologyChangeEvent
-                = TelUtil::createVoiceRadioTechnologyChangeEvent(
-                    slotId, telStub::RadioTechnology::RADIO_TECH_IS95A);
-            notificationBuilder->addVoiceRadioTechnologyChangeEvent(
-                slotId, voiceRadioTechnologyChangeEvent);
             std::shared_ptr<Notification> notification = notificationBuilder->build();
             notification->notify();
         } else if (mode == telStub::OperatingMode::ONLINE) {
@@ -742,14 +733,6 @@ void OperatingModeTransitionManager::notifyAll(telStub::OperatingMode mode) {
             notificationBuilder->addSignalStrengthChangeEvent(slotId, signalStrengthChangeEvent);
 
             ::telStub::RadioTechnology cachedServingRat = getCachedServingRat(slotId);
-            telStub::VoiceRadioTechnologyChangeEvent voiceRadioTechnologyChangeEvent
-                = TelUtil::createVoiceRadioTechnologyChangeEvent(slotId, cachedServingRat);
-            notificationBuilder->addVoiceRadioTechnologyChangeEvent(
-                slotId, voiceRadioTechnologyChangeEvent);
-
-            telStub::ServiceStateChangeEvent serviceStateChangeEvent
-                = TelUtil::createServiceStateEvent(slotId, telStub::ServiceState::IN_SERVICE);
-            notificationBuilder->addServiceStateChangeEvent(slotId, serviceStateChangeEvent);
 
             telStub::VoiceServiceStateEvent voiceServiceStateEvent
                 = TelUtil::createVoiceServiceStateEvent(slotId,
@@ -861,40 +844,6 @@ void TelephonyNotificationBuilder::addSignalStrengthChangeEvent(
 void TelephonyNotificationBuilder::addOperatingModeChangeEvent(telStub::OperatingModeEvent &event) {
     LOG(DEBUG, __FUNCTION__);
     telux::common::ErrorCode error = TelUtil::writeOperatingModeToJsonFile(event);
-    if (error == telux::common::ErrorCode::SUCCESS) {
-        ::eventService::EventResponse anyResponse;
-        anyResponse.set_filter(telux::tel::TEL_PHONE_FILTER);
-        anyResponse.mutable_any()->PackFrom(event);
-        {
-            std::lock_guard<std::mutex> lck(notificationBuilderMutex_);
-            events_.emplace_back(anyResponse);
-        }
-    } else {
-        LOG(ERROR, __FUNCTION__, " Writing event to JSON failed");
-    }
-}
-
-void TelephonyNotificationBuilder::addServiceStateChangeEvent(
-    int phoneId, telStub::ServiceStateChangeEvent &event) {
-    LOG(DEBUG, __FUNCTION__);
-    telux::common::ErrorCode error = TelUtil::writeServiceStateToJsonFile(phoneId, event);
-    if (error == telux::common::ErrorCode::SUCCESS) {
-        ::eventService::EventResponse anyResponse;
-        anyResponse.set_filter(telux::tel::TEL_PHONE_FILTER);
-        anyResponse.mutable_any()->PackFrom(event);
-        {
-            std::lock_guard<std::mutex> lck(notificationBuilderMutex_);
-            events_.emplace_back(anyResponse);
-        }
-    } else {
-        LOG(ERROR, __FUNCTION__, " Writing event to JSON failed");
-    }
-}
-
-void TelephonyNotificationBuilder::addVoiceRadioTechnologyChangeEvent(
-    int phoneId, telStub::VoiceRadioTechnologyChangeEvent &event) {
-    LOG(DEBUG, __FUNCTION__);
-    telux::common::ErrorCode error = TelUtil::writeVoiceRadioTechnologyToJsonFile(phoneId, event);
     if (error == telux::common::ErrorCode::SUCCESS) {
         ::eventService::EventResponse anyResponse;
         anyResponse.set_filter(telux::tel::TEL_PHONE_FILTER);

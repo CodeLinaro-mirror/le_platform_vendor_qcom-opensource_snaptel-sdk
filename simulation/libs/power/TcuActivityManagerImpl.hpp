@@ -29,10 +29,6 @@ class TcuActivityManagerImpl : public ITcuActivityManager,
  public:
     TcuActivityManagerImpl(ClientInstanceConfig config);
 
-    bool isReady() override;
-
-    std::future<bool> onReady() override;
-
     telux::common::Status getMachineName(std::string &machineName) override;
 
     telux::common::Status getAllMachineNames(std::vector<std::string> &machineNames) override;
@@ -93,9 +89,7 @@ class TcuActivityManagerImpl : public ITcuActivityManager,
     telux::common::AsyncTaskQueue<void> taskQ_;
     std::shared_ptr<telux::power::PowerGrpcClient> grpcClient_;
     ClientInstanceConfig config_;
-    std::condition_variable initCV_;
 
-    bool waitForInitialization();
     void initSync();
 
     telux::common::ServiceStatus subSystemStatus_

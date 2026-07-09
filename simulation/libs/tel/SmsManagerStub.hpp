@@ -68,11 +68,6 @@ class SmsManagerStub : public ISmsManager,
 
     telux::common::Status removeListener(std::weak_ptr<ISmsListener> listener) override;
 
-    telux::common::Status sendSms(const std::string &message, const std::string &receiverAddress,
-        std::shared_ptr<telux::common::ICommandResponseCallback> sentCallback = nullptr,
-        std::shared_ptr<telux::common::ICommandResponseCallback> deliveryCallback
-        = nullptr) override;
-
     telux::common::Status sendRawSms(
         const std::vector<PduBuffer> rawPdus, SmsResponseCb sentCallback = nullptr) override;
 
@@ -110,10 +105,6 @@ class SmsManagerStub : public ISmsManager,
 
     MessageAttributes calculateMessageAttributes(const std::string &message) override;
 
-    telux::common::Status sendSms(std::string message, std::string receiverAddress,
-        bool deliveryReportNeeded = true, SmsResponseCb sentCallback = nullptr,
-        std::string smscAddr = "") override;
-
     telux::common::Status sendSmsEx(std::string message, std::string receiverAddress,
         bool deliveryReportNeeded = true, SmsResponseCbEx sentCallback = nullptr,
         std::string smscAddr = "") override;
@@ -141,9 +132,6 @@ class SmsManagerStub : public ISmsManager,
         std::vector<int> refs, telux::common::ErrorCode error, int deliveryCallbackDelay);
     void invokeDeliveryReportListener(
         std::string receiverAddress, int noofdeliveryreport, std::vector<smsDeliveryInfo> infos);
-    void invokesendSmsCallback(int cbDelay,
-        std::shared_ptr<telux::common::ICommandResponseCallback> callback,
-        telux::common::ErrorCode error);
     void invokeRequestSmsInfoListCb(std::vector<SmsMetaInfo> infos, telux::common::ErrorCode error,
         RequestSmsInfoListCb callback, int cbDelay);
     void invokeResponseCallback(

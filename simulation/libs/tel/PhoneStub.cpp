@@ -19,7 +19,7 @@ PhoneStub::PhoneStub(int phoneId)
     ready_                   = false;
     radioState_              = RadioState::RADIO_STATE_UNAVAILABLE;
     radioStateInitialized_   = false;
-    serviceState_            = ServiceState::OUT_OF_SERVICE;
+    serviceState_            = VoiceServiceState::UNKNOWN;
     serviceStateInitialized_ = false;
     taskQ_                   = std::make_shared<AsyncTaskQueue<void>>();
 }
@@ -62,13 +62,13 @@ void PhoneStub::setRadioState(RadioState radioState) {
     updateReady();
 }
 
-ServiceState PhoneStub::getServiceState() {
-    ServiceState srvState = serviceState_;
+VoiceServiceState PhoneStub::getServiceState() {
+    VoiceServiceState srvState = serviceState_;
     LOG(DEBUG, __FUNCTION__, " Service state: ", static_cast<int>(srvState));
     return serviceState_;
 }
 
-void PhoneStub::setServiceState(ServiceState serviceState) {
+void PhoneStub::setServiceState(VoiceServiceState serviceState) {
     LOG(DEBUG, __FUNCTION__, " Service state: ", static_cast<int>(serviceState));
     serviceState_            = serviceState;
     serviceStateInitialized_ = true;
@@ -107,30 +107,14 @@ void PhoneStub::updateReady() {
 void PhoneStub::handleDeprecatedVoiceServiceStateResponse(
     const std::shared_ptr<VoiceServiceInfo> &serviceInfo) {
     LOG(DEBUG, __FUNCTION__);
-    ServiceState srvState;
-    srvState = getServiceState();
+    VoiceServiceState srvState = getServiceState();
     if (serviceInfo) {
-        // check for emergency based on registration state
-        if (serviceInfo->isEmergency()) {
-            LOG(DEBUG, "ServiceState : EMERGENCY_ONLY mode");
-            srvState = ServiceState::EMERGENCY_ONLY;
-        } else if (serviceInfo->isOutOfService()) {
-            LOG(DEBUG, "ServiceState : OUT_OF_SERVICE mode");
-            srvState = ServiceState::OUT_OF_SERVICE;
-        } else {
-            LOG(DEBUG, "ServiceState : IN_SERVICE mode");
-            srvState = ServiceState::IN_SERVICE;
-        }
+        srvState = serviceInfo->getVoiceServiceState();
     }
 
     if ((getServiceState() != srvState) || (!serviceStateInitialized_)) {
         setServiceState(srvState);
     }
-}
-
-telux::common::Status PhoneStub::requestVoiceRadioTechnology(VoiceRadioTechResponseCb callback) {
-    LOG(DEBUG, __FUNCTION__, " phoneId ", phoneId_);
-    return telux::common::Status::NOTSUPPORTED;
 }
 
 telux::common::Status PhoneStub::requestVoiceServiceState(
@@ -257,16 +241,11 @@ telux::common::Status PhoneStub::requestCellInfo(telux::tel::CellInfoCallback ca
                                             ->mutable_gsm_cell_info()
                                             ->mutable_gsm_signal_strength_info()
                                             ->gsm_signal_strength();
-                int gsmBitErrorRate = response.mutable_cell_info_list(i)
-                                          ->mutable_gsm_cell_info()
-                                          ->mutable_gsm_signal_strength_info()
-                                          ->gsm_bit_error_rate();
                 int gsmRssi = response.mutable_cell_info_list(i)
                                   ->mutable_gsm_cell_info()
                                   ->mutable_gsm_signal_strength_info()
                                   ->gsm_rssi();
-                GsmSignalStrengthInfo gsmCellSS(
-                    gsmSignalStrength, gsmBitErrorRate, INVALID_SIGNAL_STRENGTH_VALUE, gsmRssi);
+                GsmSignalStrengthInfo gsmCellSS(gsmSignalStrength, gsmRssi);
                 GsmCellIdentity gsmCI(gsmMcc, gsmMnc, gsmLac, gsmCid, gsmArfcn, gsmBsic);
                 auto gsmCellInfo = std::make_shared<GsmCellInfo>(registered, gsmCI, gsmCellSS);
                 cellInfoList.emplace_back(gsmCellInfo);
@@ -301,10 +280,6 @@ telux::common::Status PhoneStub::requestCellInfo(telux::tel::CellInfoCallback ca
                                               ->mutable_wcdma_cell_info()
                                               ->mutable_wcdma_signal_strength_info()
                                               ->signal_strength();
-                int wcdmaBitErrorRate = response.mutable_cell_info_list(i)
-                                            ->mutable_wcdma_cell_info()
-                                            ->mutable_wcdma_signal_strength_info()
-                                            ->bit_error_rate();
                 int wcdmaEcio = response.mutable_cell_info_list(i)
                                     ->mutable_wcdma_cell_info()
                                     ->mutable_wcdma_signal_strength_info()
@@ -318,7 +293,7 @@ telux::common::Status PhoneStub::requestCellInfo(telux::tel::CellInfoCallback ca
                                     ->mutable_wcdma_signal_strength_info()
                                     ->rssi();
                 WcdmaSignalStrengthInfo wcdmaCellSS(
-                    wcdmaSignalStrength, wcdmaBitErrorRate, wcdmaEcio, wcdmaRscp, wcdmaRssi);
+                    wcdmaSignalStrength, wcdmaEcio, wcdmaRscp, wcdmaRssi);
                 WcdmaCellIdentity wcdmaCI(
                     wcdmaMcc, wcdmaMnc, wcdmaLac, wcdmaCid, wcdmaPsc, wcdmaArfcn);
                 auto wcdmaCellInfo
@@ -367,20 +342,12 @@ telux::common::Status PhoneStub::requestCellInfo(telux::tel::CellInfoCallback ca
                                    ->mutable_lte_cell_info()
                                    ->mutable_lte_signal_strength_info()
                                    ->lte_rssnr();
-                int lteCqi = response.mutable_cell_info_list(i)
-                                 ->mutable_lte_cell_info()
-                                 ->mutable_lte_signal_strength_info()
-                                 ->lte_cqi();
-                int lteTimingAdvance = response.mutable_cell_info_list(i)
-                                           ->mutable_lte_cell_info()
-                                           ->mutable_lte_signal_strength_info()
-                                           ->timing_advance();
                 int lteRssi = response.mutable_cell_info_list(i)
                                   ->mutable_lte_cell_info()
                                   ->mutable_lte_signal_strength_info()
                                   ->lte_rssi();
-                LteSignalStrengthInfo lteCellSS(lteSignalStrength, lteRsrp, lteRsrq, lteRssnr,
-                    lteCqi, lteTimingAdvance, lteRssi);
+                LteSignalStrengthInfo lteCellSS(
+                    lteSignalStrength, lteRsrp, lteRsrq, lteRssnr, lteRssi);
                 LteCellIdentity lteCI(lteMcc, lteMnc, lteCi, ltePci, lteTac, lteEarfcn);
                 auto lteCellInfo = std::make_shared<LteCellInfo>(registered, lteCI, lteCellSS);
                 cellInfoList.emplace_back(lteCellInfo);
@@ -553,10 +520,6 @@ telux::common::Status PhoneStub::requestSignalStrength(
         = std::make_shared<GsmSignalStrengthInfo>(response.mutable_signal_strength()
                                                       ->mutable_gsm_signal_strength_info()
                                                       ->gsm_signal_strength(),
-            response.mutable_signal_strength()
-                ->mutable_gsm_signal_strength_info()
-                ->gsm_bit_error_rate(),
-            INVALID_SIGNAL_STRENGTH_VALUE,
             response.mutable_signal_strength()->mutable_gsm_signal_strength_info()->gsm_rssi());
     std::shared_ptr<LteSignalStrengthInfo> lteSignalStrength
         = std::make_shared<LteSignalStrengthInfo>(response.mutable_signal_strength()
@@ -565,13 +528,10 @@ telux::common::Status PhoneStub::requestSignalStrength(
             response.mutable_signal_strength()->mutable_lte_signal_strength_info()->lte_rsrp(),
             response.mutable_signal_strength()->mutable_lte_signal_strength_info()->lte_rsrq(),
             response.mutable_signal_strength()->mutable_lte_signal_strength_info()->lte_rssnr(),
-            response.mutable_signal_strength()->mutable_lte_signal_strength_info()->lte_cqi(),
-            response.mutable_signal_strength()->mutable_lte_signal_strength_info()->timing_advance(),
             response.mutable_signal_strength()->mutable_lte_signal_strength_info()->lte_rssi());
     std::shared_ptr<WcdmaSignalStrengthInfo> wcdmaSignalStrength = std::make_shared<
         WcdmaSignalStrengthInfo>(
         response.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->signal_strength(),
-        response.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->bit_error_rate(),
         response.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->ecio(),
         response.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->rscp(),
         response.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->rssi());
@@ -588,9 +548,9 @@ telux::common::Status PhoneStub::requestSignalStrength(
             response.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->rsrq(),
             response.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->rssnr(),
             response.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->rssi());
-    signalStrengthNotify = std::make_shared<SignalStrength>(lteSignalStrength, gsmSignalStrength,
-        nullptr /*cdma deprecated*/, wcdmaSignalStrength, nullptr /*tdscdma deprecated*/,
-        nr5gSignalStrength, nb1NtnSignalStrength);
+    signalStrengthNotify = std::make_shared<SignalStrength>(
+        lteSignalStrength, gsmSignalStrength, wcdmaSignalStrength, nr5gSignalStrength,
+        nb1NtnSignalStrength);
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
     telux::common::Status status   = static_cast<telux::common::Status>(response.status());
     bool isCallbackNeeded          = static_cast<bool>(response.iscallback());
@@ -710,7 +670,8 @@ telux::common::Status PhoneStub::requestOperatorInfo(OperatorInfoCallback callba
     telux::common::BoolValue isHome = BoolValue::STATE_FALSE;
 
     // TODO set operator name only when device is service mode
-    if (getServiceState() == ServiceState::IN_SERVICE) {
+    VoiceServiceState srvState = getServiceState();
+    if (srvState == VoiceServiceState::REG_HOME || srvState == VoiceServiceState::REG_ROAMING) {
         plmnInfo.longName  = response.mutable_plmn_info()->long_name();
         plmnInfo.shortName = response.mutable_plmn_info()->short_name();
         plmnInfo.plmn      = response.mutable_plmn_info()->plmn();

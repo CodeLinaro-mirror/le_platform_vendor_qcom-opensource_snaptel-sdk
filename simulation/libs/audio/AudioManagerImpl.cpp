@@ -169,7 +169,6 @@ void AudioManagerImpl::initSync() {
         isInitComplete_ = true;
     }
 
-    cv_.notify_all();
 }
 
 /*
@@ -799,30 +798,6 @@ void AudioManagerImpl::onCreateTranscoderResult(
     createdTranscoders_.push_back(transcoder);
 
     cmdCallbackMgr_.executeCallback(resultListener, transcoder, ec);
-}
-
-/* deprecated */
-bool AudioManagerImpl::isSubsystemReady() {
-    LOG(WARNING, __FUNCTION__, " deprecated API used!");
-    return (getServiceStatus() == telux::common::ServiceStatus::SERVICE_AVAILABLE);
-}
-
-bool AudioManagerImpl::waitForInitialization() {
-    if (isSubsystemReady()) {
-        return true;
-    }
-
-    std::unique_lock<std::mutex> cvLock(serviceStatusGuard_);
-    cv_.wait(cvLock,
-        [&] { return (serviceCurrentStatus_ == telux::common::ServiceStatus::SERVICE_AVAILABLE); });
-
-    return true;
-}
-
-/* deprecated */
-std::future<bool> AudioManagerImpl::onSubsystemReady() {
-    LOG(WARNING, __FUNCTION__, " deprecated API used!");
-    return std::async(std::launch::async, [&] { return waitForInitialization(); });
 }
 
 }  // End of namespace audio

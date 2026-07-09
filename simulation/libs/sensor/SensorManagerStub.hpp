@@ -84,8 +84,6 @@ class SensorManagerStub : public ISensorManager,
      *
      */
     telux::common::Status getAvailableSensorInfo(std::vector<SensorInfo> &info) override;
-    telux::common::Status getSensor(
-        std::shared_ptr<ISensorClient> &sensor, std::string name) override;
     telux::common::Status getSensorClient(
         std::shared_ptr<ISensorClient> &sensor, std::string name) override;
     telux::common::Status setEulerAngleConfig(EulerAngleConfig eulerAngleConfig) override;

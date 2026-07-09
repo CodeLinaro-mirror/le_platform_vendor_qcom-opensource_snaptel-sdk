@@ -163,43 +163,6 @@ telux::common::Status CallStub::reject(
 }
 
 /**
- * Rejects the call, sends an SMS to caller. Only applicalbe for CallState::INCOMING and
- * CallState::WAITING
- */
-telux::common::Status CallStub::reject(const std::string &rejectSMS,
-    std::shared_ptr<telux::common::ICommandResponseCallback> callback) {
-    LOG(DEBUG, "rejectSms()");
-    telux::common::Status status = telux::common::Status::FAILED;
-    if (callInfo_.callState == CallState::CALL_INCOMING
-        || callInfo_.callState == CallState::CALL_WAITING) {
-        ::telStub::RejectWithSMSRequest request;
-        ::telStub::RejectWithSMSReply response;
-        ClientContext context;
-        request.set_phone_id(phoneId_);
-        request.set_call_index(callInfo_.index);
-        LOG(DEBUG, "Reject(), phoneId ", phoneId_, "CallIndex", callInfo_.index);
-        grpc::Status reqstatus = stub_->RejectWithSMS(&context, request, &response);
-        if (!reqstatus.ok()) {
-            return telux::common::Status::FAILED;
-        }
-        telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
-        status                         = static_cast<telux::common::Status>(response.status());
-        bool isCallbackNeeded          = static_cast<bool>(response.iscallback());
-        int delay                      = static_cast<int>(response.delay());
-        if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
-            auto f1 = std::async(std::launch::async, [this, error, callback, delay]() {
-                this->invokeCommandCallback(callback, error, delay);
-            }).share();
-            taskQ_->add(f1);
-        }
-    } else {
-        LOG(ERROR, "call in wrong state:", (int)callInfo_.callState);
-        return telux::common::Status::INVALIDSTATE;
-    }
-    return status;
-}
-
-/**
  * Hangup the call if the call state is either active, hold, dialing, waiting or alerting
  */
 telux::common::Status CallStub::hangup(

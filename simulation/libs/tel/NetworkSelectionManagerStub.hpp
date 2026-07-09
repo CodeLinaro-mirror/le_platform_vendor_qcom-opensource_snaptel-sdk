@@ -32,8 +32,6 @@ class NetworkSelectionManagerStub
     telux::common::Status init(telux::common::InitResponseCb callback);
     ~NetworkSelectionManagerStub();
 
-    bool isSubsystemReady() override;
-    std::future<bool> onSubsystemReady() override;
     telux::common::ServiceStatus getServiceStatus() override;
 
     telux::common::Status registerListener(
@@ -71,7 +69,6 @@ class NetworkSelectionManagerStub
  private:
     int phoneId_;
     std::mutex mtx_;
-    std::condition_variable cv_;
     telux::common::InitResponseCb initCb_;
     int cbDelay_;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_ = nullptr;
@@ -79,9 +76,6 @@ class NetworkSelectionManagerStub
         = nullptr;
     std::unique_ptr<::telStub::NetworkSelectionService::Stub> stub_;
     telux::common::ServiceStatus subSystemStatus_;
-    bool ready_ = false;
-    bool waitForInitialization();
-    void setSubsystemReady(bool status);
     void setServiceStatus(telux::common::ServiceStatus status);
     void initSync();
     void handleSelectionModeChanged(::telStub::SelectionModeChangeEvent event);

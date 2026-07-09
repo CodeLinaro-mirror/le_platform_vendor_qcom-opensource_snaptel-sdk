@@ -56,20 +56,6 @@ GsmCellIdentity::GsmCellIdentity(
 }
 
 // GSM cell info
-const int GsmCellIdentity::getMcc() {
-    if (mcc_.empty()) {
-        return INVALID_VALUE;
-    }
-    return stoi(mcc_);
-}
-
-const int GsmCellIdentity::getMnc() {
-    if (mnc_.empty()) {
-        return INVALID_VALUE;
-    }
-    return stoi(mnc_);
-}
-
 const std::string GsmCellIdentity::getMobileCountryCode() {
     return mcc_;
 }
@@ -92,52 +78,6 @@ const int GsmCellIdentity::getArfcn() {
 
 const int GsmCellIdentity::getBaseStationIdentityCode() {
     return bsic_;
-}
-
-/**
- * CDMA CellInfo  implementation
- */
-CdmaCellInfo::CdmaCellInfo(int registered, CdmaCellIdentity id, CdmaSignalStrengthInfo ssInfo)
-   : id_(id)
-   , ssInfo_(ssInfo) {
-    registered_ = registered;
-    type_       = CellType::CDMA;
-}
-
-CdmaCellIdentity CdmaCellInfo::getCellIdentity() {
-    return id_;
-}
-
-CdmaSignalStrengthInfo CdmaCellInfo::getSignalStrengthInfo() {
-    return ssInfo_;
-}
-
-CdmaCellIdentity::CdmaCellIdentity(int nid, int sid, int stationId, int longitude, int latitude)
-   : nid_(nid)
-   , sid_(sid)
-   , stationId_(stationId)
-   , longitude_(longitude)
-   , latitude_(latitude) {
-}
-// CDMA cell info
-const int CdmaCellIdentity::getNid() {
-    return nid_;
-}
-
-const int CdmaCellIdentity::getSid() {
-    return sid_;
-}
-
-const int CdmaCellIdentity::getBaseStationId() {
-    return stationId_;
-}
-
-const int CdmaCellIdentity::getLongitude() {
-    return longitude_;
-}
-
-const int CdmaCellIdentity::getLatitude() {
-    return latitude_;
 }
 
 /**
@@ -168,20 +108,6 @@ LteCellIdentity::LteCellIdentity(
    , earfcn_(earfcn) {
 }
 // LTE cell info
-const int LteCellIdentity::getMcc() {
-    if (mcc_.empty()) {
-        return INVALID_VALUE;
-    }
-    return stoi(mcc_);
-}
-
-const int LteCellIdentity::getMnc() {
-    if (mnc_.empty()) {
-        return INVALID_VALUE;
-    }
-    return stoi(mnc_);
-}
-
 const std::string LteCellIdentity::getMobileCountryCode() {
     return mcc_;
 }
@@ -236,20 +162,6 @@ WcdmaCellIdentity::WcdmaCellIdentity(
 }
 
 // WCDMA cell info
-const int WcdmaCellIdentity::getMcc() {
-    if (mcc_.empty()) {
-        return INVALID_VALUE;
-    }
-    return stoi(mcc_);
-}
-
-const int WcdmaCellIdentity::getMnc() {
-    if (mnc_.empty()) {
-        return INVALID_VALUE;
-    }
-    return stoi(mnc_);
-}
-
 const std::string WcdmaCellIdentity::getMobileCountryCode() {
     return mcc_;
 }
@@ -272,69 +184,6 @@ const int WcdmaCellIdentity::getPrimaryScramblingCode() {
 
 const int WcdmaCellIdentity::getUarfcn() {
     return uarfcn_;
-}
-
-/**
- * TDSCDMA CellInfo  implementation
- */
-TdscdmaCellInfo::TdscdmaCellInfo(
-    int registered, TdscdmaCellIdentity id, TdscdmaSignalStrengthInfo ssInfo)
-   : id_(id)
-   , ssInfo_(ssInfo) {
-    registered_ = registered;
-    type_       = CellType::TDSCDMA;
-}
-
-TdscdmaCellIdentity TdscdmaCellInfo::getCellIdentity() {
-    return id_;
-}
-
-TdscdmaSignalStrengthInfo TdscdmaCellInfo::getSignalStrengthInfo() {
-    return ssInfo_;
-}
-
-TdscdmaCellIdentity::TdscdmaCellIdentity(
-    std::string mcc, std::string mnc, int lac, int cid, int cpid)
-   : mcc_(mcc)
-   , mnc_(mnc)
-   , lac_(lac)
-   , cid_(cid)
-   , cpid_(cpid) {
-}
-
-// TDSCDMA cell info
-const int TdscdmaCellIdentity::getMcc() {
-    if (mcc_.empty()) {
-        return INVALID_VALUE;
-    }
-    return stoi(mcc_);
-}
-
-const int TdscdmaCellIdentity::getMnc() {
-    if (mnc_.empty()) {
-        return INVALID_VALUE;
-    }
-    return stoi(mnc_);
-}
-
-const std::string TdscdmaCellIdentity::getMobileCountryCode() {
-    return mcc_;
-}
-
-const std::string TdscdmaCellIdentity::getMobileNetworkCode() {
-    return mnc_;
-}
-
-const int TdscdmaCellIdentity::getLac() {
-    return lac_;
-}
-
-const int TdscdmaCellIdentity::getIdentity() {
-    return cid_;
-}
-
-const int TdscdmaCellIdentity::getParametersId() {
-    return cpid_;
 }
 
 /**

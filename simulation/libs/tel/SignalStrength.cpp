@@ -13,26 +13,10 @@
 // GSM constants
 #define MAX_GSM_LEVEL 31
 #define MIN_GSM_LEVEL 0
-#define GSM_MAX_BIT_ERROR_RATE 7
-#define GSM_MIN_BIT_ERROR_RATE 0
-#define GSM_MAX_TIMING_ADVANCE 219
-#define GSM_MIN_TIMING_ADVANCE 0
 #define GSM_DBM_CONVERSION_FACTOR -113
 #define GSM_DBM_MULTIPLICATION_FACTOR 2
 #define MIN_GSM_RSSI -100
 #define MAX_GSM_RSSI -25
-
-// CDMA & EVDO constants
-#define MAX_CDMA_DBM 0
-#define MIN_CDMA_DBM -120
-#define MAX_CDMA_ECIO 0
-#define MIN_CDMA_ECIO -160
-#define MAX_EVDO_DBM 0
-#define MIN_EVDO_DBM -120
-#define MIN_EVDO_ECIO -160
-#define MAX_EVDO_ECIO 0
-#define MIN_EVDO_SNR 0
-#define MAX_EVDO_SNR 8
 
 // LTE constants
 #define MAX_LTE_RSSNR_LEVEL 300
@@ -48,18 +32,12 @@
 #define MAX_LTE_RSRP -43
 #define MIN_LTE_RSRQ -34
 #define MAX_LTE_RSRQ 3
-#define MIN_LTE_CQI 0
-#define MAX_LTE_CQI 15
-#define MIN_LTE_TIMING_ADVANCE 0
-#define MAX_LTE_TIMING_ADVANCE 2147483646
 #define MIN_LTE_RSSI -100
 #define MAX_LTE_RSSI -25
 
 // wcdma constants
 #define MAX_WCDMA_LEVEL 31
 #define MIN_WCDMA_LEVEL 0
-#define MAX_WCDMA_BIT_ERROR_RATE 7
-#define MIN_WCDMA_BIT_ERROR_RATE 0
 #define MIN_WCDMA_ECIO -20
 #define MAX_WCDMA_ECIO 0
 #define WCDMA_SIGNAL_STRENGTH_CONVERSION_FACTOR 120
@@ -69,10 +47,6 @@
 #define WCDMA_DBM_MULTIPLICATION_FACTOR 2
 #define MIN_WCDMA_RSSI -100
 #define MAX_WCDMA_RSSI -25
-
-// TDSCDMA constants
-#define MIN_TDSCDMA_RSCP -120
-#define MAX_TDSCDMA_RSCP -25
 
 // NR5G constants
 #define MIN_NR5G_SIGNAL_STRENGTH 0
@@ -138,38 +112,6 @@ std::map<SignalStrengthLevel, int> lteLevelMap {
    {SignalStrengthLevel::LEVEL_3, 7},
    {SignalStrengthLevel::LEVEL_4, 9},
    {SignalStrengthLevel::LEVEL_5, 12},
-};
-
-std::map<SignalStrengthLevel, int> cdmaDbmMap {
-   {SignalStrengthLevel::LEVEL_1, -110},
-   {SignalStrengthLevel::LEVEL_2, -100},
-   {SignalStrengthLevel::LEVEL_3, -95},
-   {SignalStrengthLevel::LEVEL_4, -85},
-   {SignalStrengthLevel::LEVEL_5, -75},
-};
-
-std::map<SignalStrengthLevel, int> cdmaEcioMap {
-   {SignalStrengthLevel::LEVEL_1, -160},
-   {SignalStrengthLevel::LEVEL_2, -150},
-   {SignalStrengthLevel::LEVEL_3, -130},
-   {SignalStrengthLevel::LEVEL_4, -110},
-   {SignalStrengthLevel::LEVEL_5, -90},
-};
-
-std::map<SignalStrengthLevel, int> evdoDbmMap {
-   {SignalStrengthLevel::LEVEL_1, -115},
-   {SignalStrengthLevel::LEVEL_2, -105},
-   {SignalStrengthLevel::LEVEL_3, -90},
-   {SignalStrengthLevel::LEVEL_4, -75},
-   {SignalStrengthLevel::LEVEL_5, -65},
-};
-
-std::map<SignalStrengthLevel, int> evdoSnrMap {
-   {SignalStrengthLevel::LEVEL_1, 0},
-   {SignalStrengthLevel::LEVEL_2, 1},
-   {SignalStrengthLevel::LEVEL_3, 3},
-   {SignalStrengthLevel::LEVEL_4, 5},
-   {SignalStrengthLevel::LEVEL_5, 7},
 };
 
 std::map<SignalStrengthLevel, int> wcdmaRscpLevelMap {
@@ -243,16 +185,12 @@ inline int inRange(int value, int min, int max) {
 
 SignalStrength::SignalStrength(std::shared_ptr<LteSignalStrengthInfo> lteSignalStrengthInfo,
     std::shared_ptr<GsmSignalStrengthInfo> gsmSignalStrengthInfo,
-    std::shared_ptr<CdmaSignalStrengthInfo> cdmaSignalStrengthInfo,
     std::shared_ptr<WcdmaSignalStrengthInfo> wcdmaSignalStrengthInfo,
-    std::shared_ptr<TdscdmaSignalStrengthInfo> tdscdmaSignalStrengthInfo,
     std::shared_ptr<Nr5gSignalStrengthInfo> nr5gSignalStrengthInfo,
     std::shared_ptr<Nb1NtnSignalStrengthInfo> nb1NtnSignalStrengthInfo)
    : lteSS_(lteSignalStrengthInfo)
    , gsmSS_(gsmSignalStrengthInfo)
-   , cdmaSS_(cdmaSignalStrengthInfo)
    , wcdmaSS_(wcdmaSignalStrengthInfo)
-   , tdscdmaSS_(tdscdmaSignalStrengthInfo)
    , nr5gSS_(nr5gSignalStrengthInfo)
    , nb1NtnSS_(nb1NtnSignalStrengthInfo) {
     LOG(DEBUG, "Signal Strength Constructor");
@@ -266,16 +204,8 @@ std::shared_ptr<GsmSignalStrengthInfo> SignalStrength::getGsmSignalStrength() {
     return gsmSS_;
 }
 
-std::shared_ptr<CdmaSignalStrengthInfo> SignalStrength::getCdmaSignalStrength() {
-    return cdmaSS_;
-}
-
 std::shared_ptr<WcdmaSignalStrengthInfo> SignalStrength::getWcdmaSignalStrength() {
     return wcdmaSS_;
-}
-
-std::shared_ptr<TdscdmaSignalStrengthInfo> SignalStrength::getTdscdmaSignalStrength() {
-    return tdscdmaSS_;
 }
 
 std::shared_ptr<Nr5gSignalStrengthInfo> SignalStrength::getNr5gSignalStrength() {
@@ -286,12 +216,11 @@ std::shared_ptr<Nb1NtnSignalStrengthInfo> SignalStrength::getNb1NtnSignalStrengt
     return nb1NtnSS_;
 }
 
-LteSignalStrengthInfo::LteSignalStrengthInfo(int lteSignalStrength, int lteRsrp, int lteRsrq,
-    int lteRssnr, int lteCqi, int timingAdvance, int lteRssi) {
+LteSignalStrengthInfo::LteSignalStrengthInfo(
+    int lteSignalStrength, int lteRsrp, int lteRsrq, int lteRssnr, int lteRssi) {
 
     LOG(DEBUG, __FUNCTION__, " Before range check, Signal Strength: ", lteSignalStrength,
-        " RSRP: ", lteRsrp, " RSRQ: ", lteRsrq, " RSSNR: ", lteRssnr, " CQI: ", lteCqi,
-        " Timing Advance: ", timingAdvance, " RSSI: ", lteRssi);
+        " RSRP: ", lteRsrp, " RSRQ: ", lteRsrq, " RSSNR: ", lteRssnr, " RSSI: ", lteRssi);
 
     lteSignalStrength_
         = inRange(lteSignalStrength, MIN_LTE_SIGNAL_STRENGTH, MAX_LTE_SIGNAL_STRENGTH);
@@ -306,13 +235,10 @@ LteSignalStrengthInfo::LteSignalStrengthInfo(int lteSignalStrength, int lteRsrp,
     } else {
         lteAsu_ = lteRsrp + LTE_SIGNAL_STRENGTH_CONVERSION_FACTOR;
     }
-    lteRsrq_       = inRange(lteRsrq, MIN_LTE_RSRQ, MAX_LTE_RSRQ);
-    lteRssnr_      = inRange(lteRssnr, MIN_LTE_RSSNR_LEVEL, MAX_LTE_RSSNR_LEVEL);
-    lteCqi_        = inRange(lteCqi, MIN_LTE_CQI, MAX_LTE_CQI);
-    timingAdvance_ = inRange(timingAdvance, MIN_LTE_TIMING_ADVANCE, MAX_LTE_TIMING_ADVANCE);
+    lteRsrq_  = inRange(lteRsrq, MIN_LTE_RSRQ, MAX_LTE_RSRQ);
+    lteRssnr_ = inRange(lteRssnr, MIN_LTE_RSSNR_LEVEL, MAX_LTE_RSSNR_LEVEL);
     LOG(DEBUG, __FUNCTION__, " After range check, Signal Strength: ", lteSignalStrength_,
-        " RSRP: ", lteRsrp_, " RSRQ: ", lteRsrq_, " RSSNR: ", lteRssnr_, " CQI: ", lteCqi_,
-        " Timing Advance: ", timingAdvance_, " RSSI: ", lteRssi_);
+        " RSRP: ", lteRsrp_, " RSRQ: ", lteRsrq_, " RSSNR: ", lteRssnr_, " RSSI: ", lteRssi_);
 }
 
 const int LteSignalStrengthInfo::getLteSignalStrength() const {
@@ -325,14 +251,6 @@ const int LteSignalStrengthInfo::getLteReferenceSignalReceiveQuality() const {
 
 const int LteSignalStrengthInfo::getLteReferenceSignalSnr() const {
     return lteRssnr_;
-}
-
-const int LteSignalStrengthInfo::getLteChannelQualityIndicator() const {
-    return lteCqi_;
-}
-
-const int LteSignalStrengthInfo::getTimingAdvance() const {
-    return timingAdvance_;
 }
 
 const int LteSignalStrengthInfo::getDbm() const {
@@ -376,29 +294,18 @@ const SignalStrengthLevel LteSignalStrengthInfo::getLevel() const {
     return sigStrengthLevel;
 }
 
-GsmSignalStrengthInfo::GsmSignalStrengthInfo(
-    int gsmSignalStrength, int gsmBitErrorRate, int timingAdvance, int gsmRssi) {
+GsmSignalStrengthInfo::GsmSignalStrengthInfo(int gsmSignalStrength, int gsmRssi) {
 
     LOG(DEBUG, __FUNCTION__, " Before range check, Signal Strength: ", gsmSignalStrength,
-        " Error Rate: ", gsmBitErrorRate, " Timing Advance: ", timingAdvance, " RSSI: ", gsmRssi);
+        " RSSI: ", gsmRssi);
     gsmSignalStrength_ = inRange(gsmSignalStrength, MIN_GSM_LEVEL, MAX_GSM_LEVEL);
     rssi_              = inRange(gsmRssi, MIN_GSM_RSSI, MAX_GSM_RSSI);
-    gsmBitErrorRate_   = inRange(gsmBitErrorRate, GSM_MIN_BIT_ERROR_RATE, GSM_MAX_BIT_ERROR_RATE);
-    timingAdvance_     = inRange(timingAdvance, GSM_MIN_TIMING_ADVANCE, GSM_MAX_TIMING_ADVANCE);
     LOG(DEBUG, __FUNCTION__, " After range check, Signal Strength: ", gsmSignalStrength_,
-        " Error Rate: ", gsmBitErrorRate_, " Timing Advance: ", timingAdvance_, " RSSI: ", rssi_);
+        " RSSI: ", rssi_);
 }
 
 const int GsmSignalStrengthInfo::getGsmSignalStrength() const {
     return gsmSignalStrength_;
-}
-
-const int GsmSignalStrengthInfo::getGsmBitErrorRate() const {
-    return gsmBitErrorRate_;
-}
-
-const int GsmSignalStrengthInfo::getTimingAdvance() {
-    return timingAdvance_;
 }
 
 const int GsmSignalStrengthInfo::getDbm() const {
@@ -418,115 +325,17 @@ const SignalStrengthLevel GsmSignalStrengthInfo::getLevel() const {
     return SignalStrengthLevel::LEVEL_UNKNOWN;
 }
 
-CdmaSignalStrengthInfo::CdmaSignalStrengthInfo(
-    int cdmaDbm, int cdmaEcio, int evdoDbm, int evdoEcio, int evdoSignalNoiseRatio) {
-
-    LOG(DEBUG, __FUNCTION__);
-    cdmaDbm_              = inRange(cdmaDbm, MIN_CDMA_DBM, MAX_CDMA_DBM);
-    cdmaEcio_             = inRange(cdmaEcio, MIN_CDMA_ECIO, MAX_CDMA_ECIO);
-    evdoDbm_              = inRange(evdoDbm, MIN_EVDO_DBM, MAX_EVDO_DBM);
-    evdoEcio_             = inRange(evdoEcio, MIN_EVDO_ECIO, MAX_EVDO_ECIO);
-    evdoSignalNoiseRatio_ = inRange(evdoSignalNoiseRatio, MIN_EVDO_SNR, MAX_EVDO_SNR);
-}
-
-const int CdmaSignalStrengthInfo::getCdmaEcio() const {
-    return cdmaEcio_;
-}
-
-const int CdmaSignalStrengthInfo::getEvdoEcio() const {
-    return evdoEcio_;
-}
-
-const int CdmaSignalStrengthInfo::getEvdoSignalNoiseRatio() const {
-    return evdoSignalNoiseRatio_;
-}
-
-const int CdmaSignalStrengthInfo::getDbm() const {
-    int dbm;
-    int cdmaDbm = (cdmaDbm_ > MAX_CDMA_DBM) ? cdmaDbm_ : MIN_CDMA_DBM;
-    int evdoDbm = (evdoDbm_ > MAX_EVDO_DBM) ? evdoDbm_ : MIN_EVDO_DBM;
-    dbm         = cdmaDbm < evdoDbm ? cdmaDbm : evdoDbm;
-    LOG(DEBUG, __FUNCTION__, "Cdma/Evdo Dbm =", dbm);
-    return dbm;
-}
-
-const int CdmaSignalStrengthInfo::getCdmaDbm() const {
-    return cdmaDbm_;
-}
-
-const int CdmaSignalStrengthInfo::getEvdoDbm() const {
-    return evdoDbm_;
-}
-
-const SignalStrengthLevel CdmaSignalStrengthInfo::getLevel() const {
-    SignalStrengthLevel cdmaLevel = getCdmaLevel();
-    SignalStrengthLevel evdoLevel = getEvdoLevel();
-
-    // if evdo level is unknown return cdmaLevel
-    if (evdoLevel == SignalStrengthLevel::LEVEL_UNKNOWN) {
-        return cdmaLevel;
-    }
-
-    // if cdma level is unknown return evdoLevel
-    if (cdmaLevel == SignalStrengthLevel::LEVEL_UNKNOWN) {
-        return evdoLevel;
-    }
-
-    return (cdmaLevel < evdoLevel) ? cdmaLevel : evdoLevel;
-}
-
-const SignalStrengthLevel CdmaSignalStrengthInfo::getCdmaLevel() const {
-    SignalStrengthLevel cdmaDbmLevel = SignalStrengthLevel::LEVEL_UNKNOWN;
-    if (cdmaDbm_ >= MIN_CDMA_DBM && cdmaDbm_ <= MAX_CDMA_DBM) {
-        cdmaDbmLevel = calculateLevel(cdmaDbm_, cdmaDbmMap);
-    }
-
-    SignalStrengthLevel cdmaEcioLevel = SignalStrengthLevel::LEVEL_UNKNOWN;
-    if (cdmaEcio_ >= MIN_CDMA_ECIO && cdmaEcio_ <= MAX_CDMA_ECIO) {
-        cdmaEcioLevel = calculateLevel(cdmaEcio_, cdmaEcioMap);
-    }
-
-    return (cdmaDbmLevel < cdmaEcioLevel) ? cdmaDbmLevel : cdmaEcioLevel;
-}
-
-const SignalStrengthLevel CdmaSignalStrengthInfo::getEvdoLevel() const {
-    SignalStrengthLevel evdoDbmLevel = SignalStrengthLevel::LEVEL_UNKNOWN;
-    if (evdoDbm_ >= MIN_EVDO_DBM && evdoDbm_ <= MAX_EVDO_DBM) {
-        evdoDbmLevel = calculateLevel(evdoDbm_, evdoDbmMap);
-    }
-
-    SignalStrengthLevel evdoSnrLevel = SignalStrengthLevel::LEVEL_UNKNOWN;
-    if ((evdoSignalNoiseRatio_ > MIN_EVDO_SNR) && (evdoSignalNoiseRatio_ <= MAX_EVDO_SNR)) {
-        evdoSnrLevel = calculateLevel(evdoSignalNoiseRatio_, evdoSnrMap);
-    }
-
-    return (evdoDbmLevel < evdoSnrLevel) ? evdoDbmLevel : evdoSnrLevel;
-}
-
-WcdmaSignalStrengthInfo::WcdmaSignalStrengthInfo(int signalStrength, int bitErrorRate) {
-    LOG(DEBUG, __FUNCTION__, " Before range check, Signal Strength: ", signalStrength,
-        " Error Rate: ", bitErrorRate);
-    signalStrength_ = inRange(signalStrength, MIN_WCDMA_LEVEL, MAX_WCDMA_LEVEL);
-    rssi_           = (signalStrength_ == INVALID_SIGNAL_STRENGTH_VALUE)
-                          ? INVALID_SIGNAL_STRENGTH_VALUE
-                          : (GSM_DBM_CONVERSION_FACTOR + GSM_DBM_MULTIPLICATION_FACTOR * signalStrength_);
-    bitErrorRate_   = inRange(bitErrorRate, MIN_WCDMA_BIT_ERROR_RATE, MAX_WCDMA_BIT_ERROR_RATE);
-    LOG(DEBUG, __FUNCTION__, " Before range check, Signal Strength: ", signalStrength,
-        " Error Rate: ", bitErrorRate, " RSSI: ", rssi_);
-}
-
 WcdmaSignalStrengthInfo::WcdmaSignalStrengthInfo(
-    int signalStrength, int bitErrorRate, int ecio, int rscp, int rssi) {
+    int signalStrength, int ecio, int rscp, int rssi) {
     LOG(DEBUG, __FUNCTION__, " Before range check, Signal Strength: ", signalStrength,
-        " Error Rate: ", bitErrorRate, " ECIO: ", ecio, " RSCP: ", rscp, " RSSI: ", rssi);
+        " ECIO: ", ecio, " RSCP: ", rscp, " RSSI: ", rssi);
     signalStrength_ = inRange(signalStrength, MIN_WCDMA_LEVEL, MAX_WCDMA_LEVEL);
     rssi_           = inRange(rssi, MIN_WCDMA_RSSI, MAX_WCDMA_RSSI);
-    bitErrorRate_   = inRange(bitErrorRate, MIN_WCDMA_BIT_ERROR_RATE, MAX_WCDMA_BIT_ERROR_RATE);
     ecio_           = inRange(ecio, MIN_WCDMA_ECIO, MAX_WCDMA_ECIO);
     rscp_           = inRange(rscp, MIN_WCDMA_RSCP, MAX_WCDMA_RSCP);
     signalStrength_ = rscp_;
     LOG(DEBUG, __FUNCTION__, " After range check, Signal Strength: ", signalStrength_,
-        " Error Rate: ", bitErrorRate_, " ECIO: ", ecio_, " RSCP: ", rscp_, " RSSI: ", rssi_);
+        " ECIO: ", ecio_, " RSCP: ", rscp_, " RSSI: ", rssi_);
 }
 
 const SignalStrengthLevel WcdmaSignalStrengthInfo::getLevel() const {
@@ -559,12 +368,6 @@ const int WcdmaSignalStrengthInfo::getSignalStrength() const {
     return INVALID_SIGNAL_STRENGTH_VALUE;
 }
 
-const int WcdmaSignalStrengthInfo::getBitErrorRate() const {
-    // bit error rate (0-7, 99) as defined in TS 27.007 8.5
-    LOG(DEBUG, __FUNCTION__);
-    return bitErrorRate_;
-}
-
 const int WcdmaSignalStrengthInfo::getEcio() const {
     LOG(DEBUG, __FUNCTION__, " ECIO: ", ecio_);
     return ecio_;
@@ -572,15 +375,6 @@ const int WcdmaSignalStrengthInfo::getEcio() const {
 
 const int WcdmaSignalStrengthInfo::getRscp() const {
     LOG(DEBUG, __FUNCTION__, " RSCP: ", rscp_);
-    return rscp_;
-}
-
-TdscdmaSignalStrengthInfo::TdscdmaSignalStrengthInfo(int rscp) {
-    LOG(DEBUG, __FUNCTION__);
-    rscp_ = inRange(rscp, MIN_TDSCDMA_RSCP, MAX_TDSCDMA_RSCP);
-}
-
-const int TdscdmaSignalStrengthInfo::getRscp() const {
     return rscp_;
 }
 

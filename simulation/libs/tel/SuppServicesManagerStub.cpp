@@ -420,15 +420,3 @@ telux::common::Status SuppServicesManagerStub::requestOirPref(
     }
     return status;
 }
-
-// deprecated API
-telux::common::Status SuppServicesManagerStub::requestCallWaitingPref(
-    GetCallWaitingPrefCb callback) {
-    return telux::common::Status::NOTSUPPORTED;
-}
-
-// deprecated API
-telux::common::Status SuppServicesManagerStub::requestForwardingPref(
-    ServiceClass serviceClass, ForwardReason reason, GetForwardingPrefCb callback) {
-    return telux::common::Status::NOTSUPPORTED;
-}

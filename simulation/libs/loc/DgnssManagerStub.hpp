@@ -58,13 +58,6 @@ namespace loc {
  */
 class DgnssManagerStub : public IDgnssManager {
  public:
-    /**
-     * Checks the status of location Dgnss subsystems and returns the result.
-     *
-     * returns True if location Dgnss subsystem is ready for service otherwise false.
-     *
-     */
-    bool isSubsystemReady() override;
 
     /**
      * This status indicates whether the object is in a usable state.
@@ -75,15 +68,6 @@ class DgnssManagerStub : public IDgnssManager {
      *
      */
     telux::common::ServiceStatus getServiceStatus() override;
-
-    /**
-     * Wait for location Dgnss subsystem to be ready.
-     *
-     * returns  A future that caller can wait on to be notified when location
-     *           Dgnss subsystem is ready.
-     *
-     */
-    std::future<bool> onSubsystemReady() override;
 
     /**
      * Register a listener for Dgnss injection status update.
@@ -154,10 +138,7 @@ class DgnssManagerStub : public IDgnssManager {
     telux::common::AsyncTaskQueue<void> taskQ_;
     std::weak_ptr<IDgnssStatusListener> statusListener_;
     std::shared_ptr<std::string> dataSource_ = nullptr;
-    std::mutex mutex_;
-    std::condition_variable cv_;
     void initSync(telux::common::InitResponseCb callback);
-    bool waitForInitialization();
 };
 
 }  // end of namespace loc

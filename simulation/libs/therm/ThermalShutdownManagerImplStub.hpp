@@ -16,8 +16,6 @@ class ThermalShutdownManagerImplStub
    : public IThermalShutdownManager,
      public std::enable_shared_from_this<ThermalShutdownManagerImplStub> {
  public:
-    bool isReady() override;
-    std::future<bool> onReady() override;
     telux::common::ServiceStatus getServiceStatus() override;
     telux::common::Status registerListener(
         std::weak_ptr<IThermalShutdownListener> listener) override;

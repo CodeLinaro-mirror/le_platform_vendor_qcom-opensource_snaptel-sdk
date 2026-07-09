@@ -67,8 +67,6 @@ class CallStub : public ICall {
     telux::common::Status reject(
         std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
 
-    telux::common::Status reject(const std::string &rejectSMS,
-        std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
     telux::common::Status hangup(
         std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr);
     telux::common::Status playDtmfTone(

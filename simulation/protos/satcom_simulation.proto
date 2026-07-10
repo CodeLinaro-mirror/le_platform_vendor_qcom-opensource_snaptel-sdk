@@ -64,7 +64,7 @@ message EnableNtnRequest {
 
 message SendDataReply {
     uint32 transaction_id = 1;
-    DefaultReply reply = 2;
+    commonStub.Status status = 2;
 }
 
 message GetNtnCapabilitiesReply {

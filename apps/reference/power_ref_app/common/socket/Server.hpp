@@ -35,7 +35,7 @@ class IServer : public IIPConnection {
     virtual bool ensureAllPacketsAcknowledged() override                      = 0;
 
     virtual void registerListener(std::shared_ptr<ISocketConnectionListener> listener) override {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         listeners_.push_back(listener);
     }
 

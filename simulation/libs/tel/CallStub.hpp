@@ -31,6 +31,14 @@ using telStub::DialerService;
 namespace telux {
 namespace tel {
 
+enum class AecsCallEndReason {
+    DROPPED     = 2, /* AECS call connected and failed unexpectedly */
+    ORIG_FAILED = 4, /* AECS call origination fails */
+    FAILED      = 5, /* AECS call failed permanently */
+    COMPLETED   = 6, /* AECS call ended or disconnected */
+    UNSPECIFIED = 0xffff, /* AECS call fail reason is not available */
+};
+
 struct CallInfo {
     int index                     = INVALID;  // Connection Index
     CallDirection callDirection   = CallDirection::NONE;  // enumeration for MO / MT call
@@ -48,6 +56,8 @@ struct CallInfo {
     CallType callType             = CallType::UNKNOWN;
     std::string callReason        = "";
     NetworkMode networkMode       = NetworkMode::UNKNOWN;
+    bool isAecsCallDrop           = false;
+    RedialState redialState       = RedialState::UNKNOWN;
 };
 
 class CallStub : public ICall {
@@ -105,6 +115,17 @@ class CallStub : public ICall {
     bool isInfoStale(const std::shared_ptr<CallStub> &ci);
     telux::common::Status updateCallInfo(std::shared_ptr<CallStub> &callInfo);
     void logCallDetails();
+    bool isAecsCallDrop();
+    telux::tel::RedialState getRedialState();
+    /**
+     * Set the cause of this call
+     */
+    void setCallEndCause(CallEndCause causeCode);
+
+    /**
+     * Set the call end reason for AECS call failure.
+     */
+    void setAecsCallEndReason(AecsCallEndReason reason);
 
  private:
     std::unique_ptr<::telStub::DialerService::Stub> stub_;

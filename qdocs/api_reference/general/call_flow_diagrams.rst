@@ -2577,7 +2577,7 @@ Call flow to manage thermal auto-shutdown from an eCall application
 24. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
 
 
-TCU Activity Management
+Power
 -----------------------
 
 An application can get the appropriate TCU-activity manager (i.e. slave or master) object from the power factory.
@@ -2642,6 +2642,28 @@ Call flow to set the TCU-activity state
 10. The application waits for consolidated acknowledgement status and analyzes the response. If status is not SUCCESS and the master expects to stop state transition considering the provided information, then call setActivityState and revert state, or else state transition will proceed after the configured timeout in /etc/power_state.conf.
 11. Application can remove listener.
 12. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
+
+Call flow for Wake Up Manager initialization and event handling
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. figure:: /../images/wakeup_manager_call_flow.png
+
+1. Application requests PowerFactory to call getWakeupManager with a callback function to obtain the IWakeupManager interface.
+2. PowerFactory creates an IWakeupManager instance internally.
+3. PowerFactory returns the IWakeupManager instance to the Application, after which the Application waits for initialization callback and service availability.
+4. Application registers a listener (IWakeupListener) with IWakeupManager using the required WakeupIndications, configuring the bitmask based on interested wakeup events.
+5. Application receives SUCCESS status confirming successful listener registration and is ready to receive wakeup notifications.
+6. QMI wakeup event is detected internally by IWakeupManager when a modem-triggered activity occurs.
+7. IWakeupManager invokes onWakeup on the Application with WakeupEventInfo populated with QmiWakeupInfo, indicating a QMI-based wakeup.
+8. Application extracts and processes QMI wakeup details such as serviceId, nodeIds, msgId, pid, and processName to identify the source and action.
+9. Application optionally triggers a system resume based on the processed QMI wakeup information.
+10. WoW (Wake-on-WLAN) wakeup event is detected internally by IWakeupManager due to network-triggered activity.
+11. IWakeupManager invokes onWakeup on the Application with WakeupEventInfo populated with WowWakeupInfo, indicating a WoW-based wakeup.
+12. Application extracts and processes WoW wakeup details such as timestamp, MAC address, reason, interface, and PBM.
+13. Application optionally triggers a system resume based on the WoW wakeup event.
+14. Application deregisters the wakeup listener from IWakeupManager when notifications are no longer required.
+15. Application receives SUCCESS status confirming successful listener deregistration, and no further wakeup notifications are delivered.
+
 
 Modem Config
 ------------

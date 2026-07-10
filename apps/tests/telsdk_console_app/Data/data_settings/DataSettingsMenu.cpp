@@ -138,9 +138,9 @@ void DataSettingsMenu::onInitComplete(telux::common::ServiceStatus status) {
 }
 
 void DataSettingsMenu::setBackhaulPref(std::vector<std::string> inputCommand) {
-    telux::common::Status retStat;
-    int operationType;
-    bool subSystemStatus = false;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    int operationType             = 0;
+    bool subSystemStatus          = false;
 
     std::cout << "Set Backhaul Preference \n";
 #if defined(TELUX_FOR_EXTERNAL_AP) || defined(TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED)
@@ -187,8 +187,8 @@ void DataSettingsMenu::setBackhaulPref(std::vector<std::string> inputCommand) {
 }
 
 void DataSettingsMenu::requestBackhaulPref(std::vector<std::string> inputCommand) {
-    telux::common::Status retStat;
-    bool subSystemStatus = false;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    bool subSystemStatus          = false;
 
     std::cout << "Request Backhaul Preference \n";
 #if defined(TELUX_FOR_EXTERNAL_AP) || defined(TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED)
@@ -239,10 +239,10 @@ void DataSettingsMenu::requestBackhaulPref(std::vector<std::string> inputCommand
 
 void DataSettingsMenu::setBandInterferenceConfig(std::vector<std::string> inputCommand) {
     std::cout << "Set Band Interference Configuration" << std::endl;
-    telux::common::Status retStat;
-    int operationType;
-    bool enable   = true;
-    int userInput = 0;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    int operationType             = 0;
+    bool enable                   = true;
+    int userInput                 = 0;
 
     std::shared_ptr<BandInterferenceConfig> config = nullptr;
 #if defined(TELUX_FOR_EXTERNAL_AP) || defined(TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED)
@@ -325,10 +325,10 @@ void DataSettingsMenu::setBandInterferenceConfig(std::vector<std::string> inputC
 
 void DataSettingsMenu::requestBandInterferenceConfig(std::vector<std::string> inputCommand) {
     std::cout << "Request Band Interference Configuration" << std::endl;
-    telux::common::Status retStat;
-    int operationType;
-    bool enable   = true;
-    int userInput = 0;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    int operationType             = 0;
+    bool enable                   = true;
+    int userInput                 = 0;
 
 #if defined(TELUX_FOR_EXTERNAL_AP) || defined(TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED)
     telux::data::OperationType opType = telux::data::OperationType::DATA_REMOTE;
@@ -369,8 +369,8 @@ void DataSettingsMenu::requestBandInterferenceConfig(std::vector<std::string> in
 }
 
 void DataSettingsMenu::requestDdsSwitch(std::vector<std::string> inputCommand) {
-    telux::common::Status retStat;
-    int operationType;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    int operationType             = 0;
 
     std::cout << "Trigger DDS Switch \n";
 
@@ -415,8 +415,8 @@ void DataSettingsMenu::requestDdsSwitch(std::vector<std::string> inputCommand) {
 }
 
 void DataSettingsMenu::requestCurrentDds(std::vector<std::string> inputCommand) {
-    telux::common::Status retStat;
-    int operationType;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    int operationType             = 0;
 
     std::cout << "Request current DDS info \n";
 
@@ -460,7 +460,7 @@ void DataSettingsMenu::setWwanConnectivityConfig(std::vector<std::string> inputC
 
     std::cout << "Configure WWAN Connectivity \n";
 
-    int operationType;
+    int operationType = 0;
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
     DataUtils::validateInput(operationType, {0, 1});
@@ -506,7 +506,7 @@ void DataSettingsMenu::requestWwanConnectivityConfig(std::vector<std::string> in
         slotId = Utils::getValidSlotId();
     }
 
-    int operationType;
+    int operationType = 0;
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
     DataUtils::validateInput(operationType, {0, 1});
@@ -538,8 +538,8 @@ void DataSettingsMenu::requestWwanConnectivityConfig(std::vector<std::string> in
 }
 
 void DataSettingsMenu::setMacSecState(std::vector<std::string> inputCommand) {
-    telux::common::Status retStat;
-    int operationType;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    int operationType             = 0;
 
     std::cout << "Trigger MACsec state change \n";
 
@@ -575,8 +575,8 @@ void DataSettingsMenu::setMacSecState(std::vector<std::string> inputCommand) {
 }
 
 void DataSettingsMenu::requestMacSecState(std::vector<std::string> inputCommand) {
-    telux::common::Status retStat;
-    int operationType;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    int operationType             = 0;
 
     std::cout << "Request MACsec state \n";
 
@@ -609,9 +609,9 @@ void DataSettingsMenu::requestMacSecState(std::vector<std::string> inputCommand)
 }
 
 void DataSettingsMenu::restoreFactorySettings(std::vector<std::string> inputCommand) {
-    telux::common::Status retStat;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
 
-    int operationType;
+    int operationType = 0;
     std::cout << "Restore Network Settings To Factory\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
@@ -915,8 +915,8 @@ void DataSettingsMenu::getIPPTNatConfig(std::vector<std::string> inputCommand) {
 }
 
 void DataSettingsMenu::switchBackHaul(std::vector<std::string> inputCommand) {
-    telux::common::Status retStat;
-    int operationType;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    int operationType             = 0;
 
     std::cout << "Switch BackHaul / Route Backhaul Traffic\n";
 
@@ -957,6 +957,11 @@ void DataSettingsMenu::switchBackHaul(std::vector<std::string> inputCommand) {
         source.slotId = static_cast<SlotId>(slotId);
     } else {
         source.backhaul = telux::data::BackhaulType::WLAN;
+        int staId       = -1;
+        std::cout << "Enter the sta Id associated with backhaul: ";
+        std::cin >> staId;
+        Utils::validateInput(staId);
+        source.staId = staId;
     }
 
     std::cout << "Enter Backhaul Type to switch to (0-Wlan, 1-WWAN): ";
@@ -978,6 +983,11 @@ void DataSettingsMenu::switchBackHaul(std::vector<std::string> inputCommand) {
         dest.slotId = static_cast<SlotId>(slotId);
     } else {
         dest.backhaul = telux::data::BackhaulType::WLAN;
+        int staId     = -1;
+        std::cout << "Enter the sta Id associated with backhaul: ";
+        std::cin >> staId;
+        Utils::validateInput(staId);
+        dest.staId = staId;
     }
     // Callback
     auto respCb = [](telux::common::ErrorCode error) {

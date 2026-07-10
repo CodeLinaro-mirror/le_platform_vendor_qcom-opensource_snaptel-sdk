@@ -5,7 +5,8 @@
 
 /**
  * @file SubsystemManager.hpp
- * @brief Provides ability to monitor operational status of the various subsystems.
+ * @brief Provides ability to monitor operational status of the various subsystems
+ * and trigger graceful MPSS restart.
  */
 
 #ifndef TELUX_PLATFORM_SUBSYSTEMMANAGER_HPP
@@ -24,11 +25,14 @@ namespace platform {
  * @{ */
 
 /**
- * Receives notification whenever a subsystem's operational state is changed.
+ * Interface for Subsystem listener object. Client needs to implement this interface to get
+ * notifications like onStateChange.
+ *
  */
 class ISubsystemListener : public telux::common::ISDKListener {
  public:
     /**
+     * API to receive notification whenever a subsystem's operational state is changed.
      * Provides latest state of the subsystem.
      *
      * @param[in] subsystemInfo Subsystem whose state has changed
@@ -46,6 +50,15 @@ class ISubsystemListener : public telux::common::ISDKListener {
 };
 
 /**
+ * This function is called as a response to
+ * @ref telux::platform::ISubsystemManager::triggerMpssRestart API.
+ *
+ * @param[in] error - Return code which indicates whether the operation succeeded
+ *                    or not.
+ */
+using MpssRestartResponseCb = std::function<void(telux::common::ErrorCode error)>;
+
+/**
  * ISubsystemManager is used to monitor operational status of the various subsystems.
  *
  * Consider a fusion architecture where an external application processor (EAP) is
@@ -56,6 +69,10 @@ class ISubsystemListener : public telux::common::ISDKListener {
  *
  * Similarly, in standalone architecture, an application running on the MDM SoC can
  * monitor state of the MDM's subsystems.
+ *
+ * ISubsystemManager can be used by clients running on an External Application Processor (EAP)
+ * or from the integrated application processor on the MDM to trigger the MPSS restart.
+ *
  */
 class ISubsystemManager {
  public:
@@ -65,7 +82,7 @@ class ISubsystemManager {
      * @param[in] listener Receives notifications
      * @param[in] subsystems List of subsystems to monitor
      *
-     * @returns @ref telux::common::Status::SUCCESS if the listener is registered,
+     * @returns @ref telux::common::ErrorCode::SUCCESS if the listener is registered,
      *          otherwise, an appropriate error code
      *
      * @note Eval: This is a new API and is being evaluated. It is subject
@@ -80,7 +97,7 @@ class ISubsystemManager {
      *
      * @param[in] listener Listener to deregister
      *
-     * @returns @ref telux::common::Status::SUCCESS if the listener is deregistered,
+     * @returns @ref telux::common::ErrorCode::SUCCESS if the listener is deregistered,
      *          otherwise, an appropriate error code
      *
      * @note Eval: This is a new API and is being evaluated. It is subject
@@ -99,6 +116,24 @@ class ISubsystemManager {
      *          re-initialization
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
+
+    /**
+     * This API is used to trigger the graceful modem DSP restart from APSS/EAP.
+     *
+     * On platforms with Access control enabled, caller needs to have
+     * TELUX_PLATFORM_SUBSYS_RESTART_CTRL permission to invoke this API successfully.
+     *
+     * @param [in] cb - Callback to get the actual result of the restart operation.
+     *                  The callback will be invoked once the restart operation completes
+     *                  or fails, with an appropriate error code.
+     *
+     * @returns @ref telux::common::Status::SUCCESS if the request to trigger graceful restart
+     *          is successful, otherwise, an appropriate status.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject
+     *             to change and could break backwards compatibility.
+     */
+    virtual telux::common::Status triggerMpssRestart(MpssRestartResponseCb cb) = 0;
 
     /**
      * Performs cleanup and destroys the ISubsystemManager instance.

@@ -2150,8 +2150,8 @@ int ApplicationBase::adjustSpsPeriodicity(int intervalMs) {
 
 int ApplicationBase::restartTxFlows() {
     uint8_t i = 0;
-    EventFlowInfo eventInfo;
-    SpsFlowInfo spsInfo;
+    EventFlowInfo eventInfo{};
+    SpsFlowInfo spsInfo{};
     // close all flows before re-setup
     std::cout << "Closing and restarting all tx flows\n";
     for (uint8_t i = 0; i < this->eventTransmits.size(); i++) {
@@ -2259,8 +2259,8 @@ int ApplicationBase::restartRxSubs() {
 
 int ApplicationBase::setup(MessageType msgType, bool reSetup) {
     uint8_t i = 0;
-    EventFlowInfo eventInfo;
-    SpsFlowInfo spsInfo;
+    EventFlowInfo eventInfo{};
+    SpsFlowInfo spsInfo{};
 
     // close all flows before re-setup
     if (true == reSetup) {

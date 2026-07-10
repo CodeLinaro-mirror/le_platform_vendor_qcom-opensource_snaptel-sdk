@@ -338,7 +338,7 @@ struct SensorFeature {
  */
 struct SensorFeatureEvent {
     /**
-     * Best estimate of timestamp indicating the time of occurance of the event,
+     * Best estimate of timestamp indicating the time of occurrence of the event,
      * nanosecond since boot-up
      */
     uint64_t timestamp;
@@ -381,7 +381,7 @@ enum SensorResultType {
 /**
  * @brief Represents the result of the sensor self test when
  * @ref telux::sensor::ISensorClient::selfTest is invoked with the
- * @ref telux::sensor::SelfTestAdvancedParamsCallback callback.
+ * @ref telux::sensor::SelfTestExResultCallback callback.
  *
  */
 struct SelfTestResultParams {

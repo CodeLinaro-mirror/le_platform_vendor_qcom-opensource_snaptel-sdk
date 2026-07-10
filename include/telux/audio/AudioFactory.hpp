@@ -35,7 +35,7 @@
 
 /**
  * @file  AudioFactory.hpp
- * @brief Factory to created IAudioManager instance.
+ * @brief Factory to create IAudioManager instance.
  */
 
 #ifndef TELUX_AUDIO_AUDIOFACTORY_HPP

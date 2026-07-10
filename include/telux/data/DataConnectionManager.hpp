@@ -242,11 +242,11 @@ const DataConnectionIndications DEFAULT_INDICATIONS
  *    other clients in the system, and no error is detected, getDataCallStatus() of
  *    @ref telux::data::IDataCall object will return NET_CONNECTED and onDataCallInfoChanged will
  *    not get called.
- *  - If any client attemp to stop data call and error detected, error argument will contain error
+ *  - If any client attempt to stop data call and error detected, error argument will contain error
  *    code and onDataCallInfoChanged will not get called.
  *  - If the client tries to start a data call on specific profile id and network interface name
-and:
-*       - If data call already exists with the same profile ID but a different network interface
+ *    and:
+ *      - If data call already exists with the same profile ID but a different network interface
  *        then error will be set to telux::ErrorCode::DEVICE_IN_USE and onDataCallInfoChanged
  *        will not get called.
  *      - If data call already exists with the same network interface but different profile ID then
@@ -263,7 +263,7 @@ and:
  *  Note: Telsdk broadcasts changes in any data call status to all available clients through the
  *        listener interface telux::data::IDataConnectionListener::onDataCallInfoChanged.
  *        Therefore, clients could get notification about data calls and their status changes that
- *        might not be relevent to the client. Client could also get successful connection
+ *        might not be relevant to the client. Client could also get successful connection
  *        notifications of data call client previously failed to connect.
  *        The notification could be a consequence of another client activity or system is set to
  *        automatically reconnect failed data calls.
@@ -299,7 +299,7 @@ using StatisticsResponseCb
  * The callback can be invoked from multiple different threads.
  * The implementation should be thread safe.
  *
- * @param [in] dataCall        vector of of IDataCall list
+ * @param [in] dataCall        vector of IDataCall list
  * @param [in] error           Return code for whether the operation succeeded or failed
  *
  */
@@ -457,7 +457,7 @@ class IDataConnectionManager {
      * report NO_NETWORK_FOUND error in such scenario.
      * if enabled, clients can bring up data call made on such profile id and slot id successfully
      * even if device is in roaming area.
-     * Configuration changes will be persistant across multiple boots.
+     * Configuration changes will be persistent across multiple boots.
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_DATA_SETTING permission
      * to invoke this API successfully.
@@ -579,7 +579,7 @@ class IDataConnectionManager {
      * from all default indications  @ref telux::data::DataConnectionIndicationsType::DEFAULT
      *
      * For example- Client registers for both DEFAULT and THROUGHPUT indication.
-     * During dergisteration, if client only provides DEFAULT indication in
+     * During deregistration, if client only provides DEFAULT indication in
      * the indication list, the listener will be deregistered from the DEFAULT indication
      * but will still be registered to the THROUGHPUT indication.
      *

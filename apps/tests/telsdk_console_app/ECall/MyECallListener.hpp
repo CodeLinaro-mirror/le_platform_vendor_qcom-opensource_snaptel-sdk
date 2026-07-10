@@ -42,6 +42,8 @@
 #include <telux/tel/Call.hpp>
 #include <telux/tel/CallListener.hpp>
 
+using namespace telux::common;
+
 class MyECallListener : public telux::tel::ICallListener {
     void onIncomingCall(std::shared_ptr<telux::tel::ICall> call) override;
     void onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) override;

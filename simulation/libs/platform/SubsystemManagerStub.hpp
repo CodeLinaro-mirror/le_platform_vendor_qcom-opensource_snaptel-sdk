@@ -50,6 +50,8 @@ class SubsystemManagerStub : public ISubsystemManager,
 
     telux::common::Status initSyncComplete(telux::common::ServiceStatus srvcStatus) override;
 
+    telux::common::Status triggerMpssRestart(MpssRestartResponseCb cb) override;
+
  protected:
     telux::common::Status init() override;
     void cleanup() override;

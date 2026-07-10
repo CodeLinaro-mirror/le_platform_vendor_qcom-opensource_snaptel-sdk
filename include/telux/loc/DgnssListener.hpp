@@ -70,7 +70,7 @@ class IDgnssStatusListener {
     }
 
     /**
-     * Destructor of IRTCMStatusListener
+     * Destructor of IDgnssStatusListener
      */
     virtual ~IDgnssStatusListener() {
     }

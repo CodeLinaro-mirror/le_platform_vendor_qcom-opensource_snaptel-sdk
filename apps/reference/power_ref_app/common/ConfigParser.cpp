@@ -8,7 +8,7 @@
 ConfigParser *ConfigParser::instance = nullptr;
 
 ConfigParser *ConfigParser::getInstance(std::string configFile) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     if (!instance)
         instance = new ConfigParser(configFile);
     return instance;
@@ -18,7 +18,7 @@ ConfigParser *ConfigParser::getInstance(std::string configFile) {
  * Check if a file exists.
  */
 inline bool fileExists(const std::string &configFile) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     std::ifstream f(configFile.c_str());
     return f.good();
 }
@@ -28,7 +28,7 @@ std::string trim(const std::string &str) {
 }
 
 bool isEqual(std::string &str1, std::string &str2) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     return ((str1.size() == str2.size())
             && std::equal(str1.begin(), str1.end(), str2.begin(), [](char &c1, char &c2) {
                    return (c1 == c2 || std::toupper(c1) == std::toupper(c2));
@@ -40,17 +40,17 @@ bool isEqual(std::string &str1, std::string &str2) {
  *                             key=value pair
  */
 ConfigParser::ConfigParser(std::string configFile) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     configFile_ = configFile;
     if (fileExists(configFile_)) {
         readConfigFile(configFile_);
     } else {
-        LOG(DEBUG, __FUNCTION__, " Config file does not exists: ", configFile_);
+        LOGFD(" Config file does not exists: %s", configFile_.c_str());
     }
 }
 
 ConfigParser::~ConfigParser() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
 }
 
 /**
@@ -58,7 +58,7 @@ ConfigParser::~ConfigParser() {
  *
  */
 std::map<std::string, std::map<std::string, std::string>> ConfigParser::getAllConfig() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     return configMap_;  // return an empty string when the setting is not configured.
 }
 
@@ -70,7 +70,7 @@ std::map<std::string, std::map<std::string, std::string>> ConfigParser::getAllCo
  * @returns valid value or empty string in case of Error.
  */
 std::string ConfigParser::getValue(std::string section, std::string key) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     auto settingsIterator = configMap_.find(section);
     if (settingsIterator != configMap_.end()) {
         auto settingsIteratorInner = settingsIterator->second.find(key);
@@ -87,7 +87,7 @@ std::string ConfigParser::getValue(std::string section, std::string key) {
 }
 
 std::map<std::string, std::string> ConfigParser::getSectionValue(std::string section) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     auto settingsIterator = configMap_.find(section);
     if (settingsIterator != configMap_.end()) {
         return settingsIterator->second;
@@ -100,7 +100,7 @@ std::map<std::string, std::string> ConfigParser::getSectionValue(std::string sec
 
 std::vector<std::map<std::string, std::string>> ConfigParser::getDuplicateSectionValue(
     std::string section) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     std::vector<std::map<std::string, std::string>> bunchOfRequestedSectionMap;
     std::map<std::string, std::string> requestedSectionMap;
 
@@ -155,11 +155,11 @@ std::vector<std::map<std::string, std::string>> ConfigParser::getDuplicateSectio
     }
 
     for (size_t i = 0; i < bunchOfRequestedSectionMap.size(); ++i) {
-        LOG(DEBUG, __FUNCTION__, "Map ", i + 1);
+        LOGFD("Map %zu", i + 1);
         for (const auto &pair : bunchOfRequestedSectionMap[i]) {
-            LOG(DEBUG, __FUNCTION__, "  ", pair.first, " : ", pair.second);
+            LOGFD(" %s : %s", pair.first.c_str(), pair.second.c_str());
         }
-        LOG(DEBUG, __FUNCTION__, "-----------------");
+        LOGFD("-----------------");
     }
     return bunchOfRequestedSectionMap;
 }
@@ -170,7 +170,7 @@ std::vector<std::map<std::string, std::string>> ConfigParser::getDuplicateSectio
  *
  */
 std::string ConfigParser::getConfigFilePath() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     char path[PATH_MAX];
     ssize_t count        = readlink("/proc/self/exe", path, PATH_MAX);
     std::string fullPath = std::string(path, (count > 0) ? count : 0);
@@ -185,7 +185,7 @@ std::string ConfigParser::getConfigFilePath() {
  * Removes any leading or trailing spaces around Key and Value if any.
  */
 void ConfigParser::readConfigFile(std::string configFile) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
 
     std::string current;
 

@@ -15,13 +15,13 @@ extern "C" {
 #include "PowerRefDaemonSlave.hpp"
 
 PowerRefDaemonSlave &PowerRefDaemonSlave::getInstance() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     static PowerRefDaemonSlave instance;
     return instance;
 }
 
 telux::common::Status PowerRefDaemonSlave::init() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     telux::common::Status initStatus = telux::common::Status::SUCCESS;
     config_                          = ConfigParser::getInstance();
 
@@ -29,21 +29,21 @@ telux::common::Status PowerRefDaemonSlave::init() {
         // Initialize TcuActivityMonitor
         std::shared_ptr<TcuActivityMonitor> tcuActivityMonitor = TcuActivityMonitor::getInstance();
         if (tcuActivityMonitor && tcuActivityMonitor->init()) {
-            LOG(DEBUG, __FUNCTION__, " TcuActivityMonitor init succeeded");
+            LOGFD(" TcuActivityMonitor init succeeded");
             tcuActivityMonitor_ = tcuActivityMonitor;
         } else {
-            LOG(ERROR, __FUNCTION__, " TcuActivityMonitor init failed");
+            LOGFE(" TcuActivityMonitor init failed");
             initStatus = telux::common::Status::FAILED;
             break;
         }
 
         // Get and log the current TCU activity state
         TcuActivityState currentState = tcuActivityMonitor_->getCurrentActivityState();
-        LOG(DEBUG, __FUNCTION__, " Current TCU activity state: ", static_cast<int>(currentState));
+        LOGFD(" Current TCU activity state: %d", static_cast<int>(currentState));
 
         // Get and log the local machine name
         std::string machineName = tcuActivityMonitor_->getLocalMachineName();
-        LOG(DEBUG, __FUNCTION__, " Local machine name: ", machineName);
+        LOGFD(" Local machine name: %s", machineName.c_str());
 
     } while (0);
 
@@ -51,7 +51,7 @@ telux::common::Status PowerRefDaemonSlave::init() {
 }
 
 int PowerRefDaemonSlave::startDaemon(int argc, char **argv) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     if (parseArguments(argc, argv) != telux::common::Status::SUCCESS) {
         return EXIT_FAILURE;
     }
@@ -86,7 +86,7 @@ int PowerRefDaemonSlave::startDaemon(int argc, char **argv) {
 }
 
 void PowerRefDaemonSlave::stopDaemon() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     std::lock_guard<std::mutex> lock(mtx_);
     exiting_ = true;
     fflush(stdout);
@@ -94,7 +94,7 @@ void PowerRefDaemonSlave::stopDaemon() {
 }
 
 void PowerRefDaemonSlave::signalHandler(int signum) {
-    LOG(DEBUG, __FUNCTION__, "Received signal = ", signum, " terminating program.");
+    LOGFD("Received signal = %d terminating program.", signum);
     PowerRefDaemonSlave::getInstance().stopDaemon();
 
     struct sigaction defaultAction = {};
@@ -102,7 +102,7 @@ void PowerRefDaemonSlave::signalHandler(int signum) {
     defaultAction.sa_handler = SIG_DFL;
     sigaction(signum, &defaultAction, NULL);
     if (std::raise(signum) != 0) {
-        LOG(ERROR, __FUNCTION__, "raise(): error \n");
+        LOGFE("raise(): error \n");
     }
 }
 
@@ -119,7 +119,7 @@ void PowerRefDaemonSlave::printUsage(char **argv) {
 }
 
 telux::common::Status PowerRefDaemonSlave::parseArguments(int argc, char **argv) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     int c;
     struct option long_options[]
         = {{"help", no_argument, 0, 'h'}, {"kpi", no_argument, 0, 'k'}, {0, 0, 0, 0}};

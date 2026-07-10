@@ -125,6 +125,27 @@ void SubsystemApp::deRegisterListener() {
     std::cout << "Listener deregistered" << std::endl;
 }
 
+void SubsystemApp::triggerMpssRestart() {
+    if (subsystemMgr_) {
+        telux::common::Status status = subsystemMgr_->triggerMpssRestart(
+            [](telux::common::ErrorCode error) {
+                if (error == telux::common::ErrorCode::SUCCESS) {
+                    std::cout << "Modem DSP Restart succeeded" << std::endl;
+                } else {
+                    std::cout << "Modem DSP Restart failed with error: " << static_cast<int>(error)
+                              << std::endl;
+                }
+            });
+        if (status == telux::common::Status::SUCCESS) {
+            std::cout << "Triggered Modem DSP restart successfully" << std::endl;
+        } else {
+            std::cout << "Failed to trigger Modem DSP restart" << std::endl;
+        }
+    } else {
+        std::cout << "Subsystem Mgr not present" << std::endl;
+    }
+}
+
 /*
  *  Prepare the menu and display it on the console.
  */
@@ -157,7 +178,12 @@ void SubsystemApp::init() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "Stop monitoring subsystems",
             {}, std::bind(&SubsystemApp::deRegisterListener, this)));
 
-    std::vector<std::shared_ptr<ConsoleAppCommand>> mainCmds = {regListener, deregListener};
+    std::shared_ptr<ConsoleAppCommand> triggerMpssRestartCmd
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "3", "Trigger Mpss restart", {}, std::bind(&SubsystemApp::triggerMpssRestart, this)));
+
+    std::vector<std::shared_ptr<ConsoleAppCommand>> mainCmds
+        = {regListener, deregListener, triggerMpssRestartCmd};
 
     ConsoleApp::addCommands(mainCmds);
     ConsoleApp::displayMenu();

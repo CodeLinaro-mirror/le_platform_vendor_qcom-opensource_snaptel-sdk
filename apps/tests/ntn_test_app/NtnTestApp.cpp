@@ -45,7 +45,7 @@ std::string NtnTestApp::toString(NtnState state) {
         case NtnState::OUT_OF_SERVICE:
             return "OUT_OF_SERVICE";
         case NtnState::IN_SERVICE:
-            return "IN_SREVICE";
+            return "IN_SERVICE";
     }
     return "-";
 }

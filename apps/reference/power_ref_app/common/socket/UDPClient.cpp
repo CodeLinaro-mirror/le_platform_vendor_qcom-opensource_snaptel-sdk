@@ -27,42 +27,42 @@ class UDPClient : public IIPConnection {
 
  public:
     UDPClient() {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
     }
     ~UDPClient() {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         cleanup();
     }
 
     bool isStarted() override {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         return !receivedStopClient_;
     }
 
     bool isConnected() override {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         return isConnected_;
     }
 
     std::shared_ptr<Connection> getConnectionParams() override {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         std::unique_lock<std::mutex> lock(mtx_);
         return connectionConfig_;
     }
 
     bool bindToDevice(int clientSocket, std::string deviceName) {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         if (setsockopt(
                 clientSocket, SOL_SOCKET, SO_BINDTODEVICE, deviceName.c_str(), deviceName.size())
             != 0) {
-            LOG(ERROR, __FUNCTION__, "Failed to bind to device: ", strerror(errno));
+            LOGFE("Failed to bind to device: %s", strerror(errno));
             return false;
         }
         return true;
     }
 
     bool updateConnectionParams() {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         char ip_str[INET6_ADDRSTRLEN];
         uint16_t port;
 
@@ -70,7 +70,7 @@ class UDPClient : public IIPConnection {
         struct sockaddr_storage local_addr;
         socklen_t addr_len = sizeof(local_addr);
         if (getsockname(clientSocket_, (struct sockaddr *)&local_addr, &addr_len) < 0) {
-            LOG(ERROR, __FUNCTION__, "Error getting local address");
+            LOGFE("Error getting local address");
             close(clientSocket_);
             isConnected_ = false;
             return false;
@@ -95,7 +95,7 @@ class UDPClient : public IIPConnection {
         struct sockaddr_storage remote_addr;
         addr_len = sizeof(remote_addr);
         if (getpeername(clientSocket_, (struct sockaddr *)&remote_addr, &addr_len) < 0) {
-            LOG(ERROR, __FUNCTION__, "Error getting remote address");
+            LOGFE("Error getting remote address");
             close(clientSocket_);
             isConnected_ = false;
             return false;
@@ -119,13 +119,13 @@ class UDPClient : public IIPConnection {
             listener->onConnect(connectionConfig_);
         }
 
-        LOG(DEBUG, __FUNCTION__, connectionConfig_->toString());
+        LOGFD("%s", connectionConfig_->toString().c_str());
         return true;
     }
     bool readLoop() {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         if (clientSocket_ < 0) {
-            LOG(ERROR, __FUNCTION__, " Invalid socket descriptor");
+            LOGFE("Invalid socket descriptor");
             return false;
         }
 
@@ -145,12 +145,12 @@ class UDPClient : public IIPConnection {
 
                 n = recv(clientSocket_, static_cast<void *>(&msg), sizeof(msg), 0);
                 if (n <= 0) {
-                    LOG(ERROR, __FUNCTION__, " connection interrupted or closed");
+                    LOGFE("connection interrupted or closed");
                     isConnected_ = false;
                     break;
                 }
 
-                LOG(DEBUG, __FUNCTION__, " length = ", n);
+                LOGFD("length = %zd", n);
                 for (auto listener : listeners_) {
                     listener->messageReceived(msg, n, connectionConfig_);
                 }
@@ -162,20 +162,20 @@ class UDPClient : public IIPConnection {
             }
 
             if (close(clientSocket_) == -1) {
-                LOG(ERROR, __FUNCTION__, "close failed errno = ", std::string(strerror(errno)));
+                LOGFE("close failed errno = %s", strerror(errno));
             }
 
         } catch (const std::exception &e) {
             isConnected_ = false;
-            LOG(ERROR, __FUNCTION__, " exception: ", std::string(e.what()));
+            LOGFE("exception: %s", e.what());
         }
 
-        LOG(DEBUG, __FUNCTION__, " exit ");
+        LOGFD("exit");
         return true;
     }
 
     bool start(std::shared_ptr<Connection> connectionConfig) override {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         receivedStopClient_ = false;
         connectionConfig_   = connectionConfig;
         std::lock_guard<std::mutex> lk(mtx_);
@@ -191,7 +191,7 @@ class UDPClient : public IIPConnection {
         std::thread([=]() {
             isConnected_ = false;
             do {
-                LOG(DEBUG, __FUNCTION__, " UDP client starting...");
+                LOGFD("UDP client starting...");
 
                 if (!setupSocketAndBind())
                     return;
@@ -207,12 +207,12 @@ class UDPClient : public IIPConnection {
     }
 
     bool setupSocketAndBind() {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         int domain
             = (connectionConfig_->ipFamily == telux::data::IpFamilyType::IPV6) ? AF_INET6 : AF_INET;
         clientSocket_ = socket(domain, SOCK_DGRAM, 0);
         if (clientSocket_ < 0) {
-            LOG(ERROR, __FUNCTION__, " socket : ", std::string(strerror(errno)));
+            LOGFE("socket : %s", strerror(errno));
             return false;
         }
 
@@ -233,7 +233,7 @@ class UDPClient : public IIPConnection {
             setsockopt(clientSocket_, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
             setsockopt(clientSocket_, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse));
             if (bind(clientSocket_, sockAddrBind, sockSize) < 0) {
-                LOG(ERROR, __FUNCTION__, " bind : ", std::string(strerror(errno)));
+                LOGFE("bind : %s", strerror(errno));
                 return false;
             }
         }
@@ -241,7 +241,7 @@ class UDPClient : public IIPConnection {
     }
 
     bool connectToServer() {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         struct sockaddr *sockAddrConnect = nullptr;
         socklen_t sockSize               = 0;
 
@@ -249,7 +249,7 @@ class UDPClient : public IIPConnection {
             struct sockaddr_in v4ServerAddr = {};
             if (!inet_pton(
                     AF_INET, connectionConfig_->serverIpAddr.c_str(), &(v4ServerAddr.sin_addr))) {
-                LOG(ERROR, __FUNCTION__, " failed destination IPv4 parsing");
+                LOGFE("failed destination IPv4 parsing");
                 return false;
             }
             v4ServerAddr.sin_family = AF_INET;
@@ -260,7 +260,7 @@ class UDPClient : public IIPConnection {
             struct sockaddr_in6 v6ServerAddr = {};
             if (!inet_pton(
                     AF_INET6, connectionConfig_->serverIpAddr.c_str(), &(v6ServerAddr.sin6_addr))) {
-                LOG(ERROR, __FUNCTION__, " failed destination IPv6 parsing");
+                LOGFE("failed destination IPv6 parsing");
                 return false;
             }
             v6ServerAddr.sin6_family = AF_INET6;
@@ -270,8 +270,8 @@ class UDPClient : public IIPConnection {
         }
 
         if (connect(clientSocket_, sockAddrConnect, sockSize) == -1) {
-            LOG(ERROR, __FUNCTION__, " connect : ", std::string(strerror(errno)),
-                "; Connection config: ", connectionConfig_->toString());
+            LOGFE("connect : %s; Connection config: %s", strerror(errno),
+                connectionConfig_->toString().c_str());
             return false;
         }
 
@@ -285,8 +285,7 @@ class UDPClient : public IIPConnection {
                 if (!inet_pton(AF_INET,
                         this->connectionConfig_->dataCall->getIpv4Info().addr.ifAddress.c_str(),
                         &(v4ClientAddr.sin_addr))) {
-                    LOG(ERROR, __FUNCTION__, " failed source IPv4 parsing ",
-                        std::string(strerror(errno)));
+                    LOGFE("failed source IPv4 parsing %s", strerror(errno));
                     return false;
                 }
             }
@@ -302,8 +301,7 @@ class UDPClient : public IIPConnection {
                 if (!inet_pton(AF_INET6,
                         connectionConfig_->dataCall->getIpv6Info().addr.ifAddress.c_str(),
                         &(v6ClientAddr.sin6_addr))) {
-                    LOG(ERROR, __FUNCTION__, " failed source IPv6 parsing ",
-                        std::string(strerror(errno)));
+                    LOGFE("failed source IPv6 parsing %s", strerror(errno));
                     return false;
                 }
             }
@@ -318,22 +316,22 @@ class UDPClient : public IIPConnection {
     }
 
     void cleanup() override {
-        LOG(ERROR, __FUNCTION__, " Stopping  client ");
+        LOGFE("Stopping client");
         receivedStopClient_ = true;
         isConnected_        = false;
         if (clientSocket_ != -1) {
             if (close(clientSocket_) == -1) {
-                LOG(ERROR, __FUNCTION__, " close : ", std::string(strerror(errno)));
+                LOGFE("close : %s", strerror(errno));
             }
         }
         clientSocket_ = -1;
     }
 
     bool sendMessage(IPMessage &msg) override {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         if (send(clientSocket_, static_cast<const void *>(&msg), sizeof(IPMessage), 0)
             != sizeof(IPMessage)) {
-            LOG(ERROR, __FUNCTION__, " send : ", std::string(strerror(errno)));
+            LOGFE("send : %s", strerror(errno));
             for (auto listener : listeners_) {
                 listener->onDisconnect(connectionConfig_);
             }

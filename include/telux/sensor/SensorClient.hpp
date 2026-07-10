@@ -68,7 +68,7 @@ class ISensorEventListener : public telux::common::ISDKListener {
      * This function is called to notify about available sensor events. Note the following
      * constraints on this listener API
      * It shall not perform time consuming (compute or I/O intensive) operations on this thread
-     * It shall not inovke an sensor APIs on this thread due to the underlying concurrency model
+     * It shall not invoke any sensor APIs on this thread due to the underlying concurrency model
      *
      * On platforms with Access control enabled, the client needs to have TELUX_SENSOR_DATA_READ
      * permission for this listener API to be invoked.
@@ -130,7 +130,7 @@ class ISensorClient {
     /**
      * Get the information related to sensor
      *
-     * @returns information retated to sensor - @ref telux::sensor::SensorInfo
+     * @returns information related to sensor - @ref telux::sensor::SensorInfo
      *
      */
     virtual SensorInfo getSensorInfo() = 0;
@@ -220,7 +220,7 @@ class ISensorClient {
     /**
      * Initiate self test on this sensor
      *
-     * If there are no active data acquistion sessions corresponding to this sensor,
+     * If there are no active data acquisition sessions corresponding to this sensor,
      * the @ref SensorResultType will be set to @ref CURRENT and
      * the self test will be performed for a given @ref SelfTestType.
      *
@@ -304,7 +304,7 @@ class ISensorClient {
     /**
      * Initiate self test on this sensor
      *
-     * If there are no active data acquistion sessions corresponding to this sensor,
+     * If there are no active data acquisition sessions corresponding to this sensor,
      * the self test will be performed based on the @ref SelfTestType passed.
      *
      * If there are active data acquisition sessions corresponding to this sensor,
@@ -330,7 +330,7 @@ class ISensorClient {
         = 0;
 };
 
-// Note that the class ISensor is an alias for ISensorClient and ISensor would deprecated and
+// Note that the class ISensor is an alias for ISensorClient and ISensor would be deprecated and
 // eventually removed. As of now, it is retained for backward compatibility.
 using ISensor = ISensorClient;
 

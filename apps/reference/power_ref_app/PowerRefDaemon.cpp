@@ -24,7 +24,7 @@ extern "C" {
 #define RESUME_TIMER_WAKELOCK "power_ref_resume_timer"
 
 PowerRefDaemon &PowerRefDaemon::getInstance() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     static PowerRefDaemon instance;
     return instance;
 }
@@ -38,24 +38,24 @@ PowerRefDaemon::~PowerRefDaemon() {
 
         // Now safely delete the timer
         if (timer_delete(timerId_) == -1) {
-            LOG(ERROR, __FUNCTION__, "Failed to delete timer: ", strerror(errno));
+            LOGFE("Failed to delete timer: %s", strerror(errno));
         }
         timerId_ = 0;
     }
 }
 
 telux::common::Status PowerRefDaemon::init() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     telux::common::Status initStatus = telux::common::Status::SUCCESS;
     config_                          = ConfigParser::getInstance();
 
     do {
         shared_ptr<EventManager> eventManager(EventManager::getInstance());
         if (eventManager && eventManager->init()) {
-            LOG(DEBUG, __FUNCTION__, " eventManager init succeed");
+            LOGFD("eventManager init succeed");
             eventManager_ = eventManager;
         } else {
-            LOG(ERROR, __FUNCTION__, " eventManager init failed");
+            LOGFE("eventManager init failed");
             initStatus = telux::common::Status::FAILED;
             break;
         }
@@ -75,54 +75,66 @@ telux::common::Status PowerRefDaemon::init() {
         // If NTN is enabled, disallow NAOIP and CAN triggers
         if (ntnEnabled_) {
             allowNaoIp = false;
-            LOG(DEBUG, __FUNCTION__, " NTN enabled: only SMS trigger will run");
+            LOGFD(" NTN enabled: only SMS trigger will run");
         }
 #endif
 
         if (config_->getValue("TRIGGER", "NAOIP_TRIGGER") == "ENABLE" && allowNaoIp) {
             naoIpTrigger_ = make_shared<NAOIpTrigger>(eventManager);
             if (naoIpTrigger_ && naoIpTrigger_->init()) {
-                LOG(DEBUG, __FUNCTION__, " naoIpTrigger init succeed");
+                LOGFD("naoIpTrigger init succeed");
             } else {
-                LOG(ERROR, __FUNCTION__, " naoIpTrigger init failed");
+                LOGFE("naoIpTrigger init failed");
                 initStatus = telux::common::Status::FAILED;
                 break;
             }
         } else {
-            LOG(DEBUG, __FUNCTION__, " naoIpTrigger ",
-                config_->getValue("TRIGGER", "NAOIP_TRIGGER"));
+            LOGFD("naoIpTrigger %s", config_->getValue("TRIGGER", "NAOIP_TRIGGER").c_str());
         }
 
         // Register for SMS trigger regardless of NTN enabled/disabled.
         if (config_->getValue("TRIGGER", "SMS_TRIGGER") == "ENABLE") {
             smsTrigger_ = make_shared<SMSTrigger>(eventManager);
             if (smsTrigger_ && smsTrigger_->init()) {
-                LOG(DEBUG, __FUNCTION__, " smsTrigger init succeeded");
+                LOGFD("smsTrigger init succeeded");
             } else {
-                LOG(ERROR, __FUNCTION__, " smsTrigger init failed");
+                LOGFE("smsTrigger init failed");
                 initStatus = telux::common::Status::FAILED;
                 break;
             }
         } else {
-            LOG(DEBUG, __FUNCTION__, " smsTrigger ", config_->getValue("TRIGGER", "SMS_TRIGGER"));
+            LOGFD("smsTrigger %s", config_->getValue("TRIGGER", "SMS_TRIGGER").c_str());
+        }
+
+        if (RefAppUtils::isWakeupListenerEnabled()) {
+            wakeupHandler_ = WakeupHandler::getInstance(eventManager);
+            if (wakeupHandler_ && wakeupHandler_->init()) {
+                LOGFI("wakeupHandler init succeeded");
+            } else {
+                LOGFE("wakeupHandler init failed");
+                initStatus = telux::common::Status::FAILED;
+                break;
+            }
+        } else {
+            LOGFI("wakeupHandler not enabled");
         }
 
         if (config_->getValue("TRIGGER", "CAN_TRIGGER") == "ENABLE") {
 #ifdef CAN_TRIGGER_SUPPORTED
             canTrigger_ = CANTrigger::getInstance(eventManager);
             if (canTrigger_ && canTrigger_->init()) {
-                LOG(DEBUG, __FUNCTION__, " canTrigger init succeeded");
+                LOGFD(" canTrigger init succeeded");
             } else {
-                LOG(ERROR, __FUNCTION__, " canTrigger init failed");
+                LOGFE(" canTrigger init failed");
                 initStatus = telux::common::Status::FAILED;
                 break;
             }
 #else  // CAN_TRIGGER_SUPPORTED
-            LOG(ERROR, " CAN trigger is not supported");
+            LOGE(" CAN trigger is not supported");
 #endif  // CAN_TRIGGER_SUPPORTED
 
         } else {
-            LOG(DEBUG, __FUNCTION__, " CAN trigger ", config_->getValue("TRIGGER", "CAN_TRIGGER"));
+            LOGFD("CAN trigger %s", config_->getValue("TRIGGER", "CAN_TRIGGER").c_str());
         }
 
 #ifdef TELSDK_FEATURE_SATCOM_ENABLED
@@ -135,17 +147,17 @@ telux::common::Status PowerRefDaemon::init() {
                 // Enable NTN
                 telux::common::ErrorCode err = ntnClient_->enableNtn();
                 if (err == telux::common::ErrorCode::SUCCESS) {
-                    LOG(DEBUG, __FUNCTION__, " ntn enable success");
+                    LOGFD(" ntn enable success");
                     if (smsTrigger_) {
                         // Needed for SMS trigger
                         smsTrigger_->setNtnClientInstance(ntnClient_);
                     }
                 } else {
                     std::string ec = Utils::getErrorCodeAsString(err);
-                    LOG(ERROR, __FUNCTION__, " ntn enable failed, ec: ", ec);
+                    LOGFE(" ntn enable failed, ec: %s", ec.c_str());
                 }
             } else {
-                LOG(ERROR, __FUNCTION__, " ntn init failed");
+                LOGFE(" ntn init failed");
             }
         }
 #endif
@@ -156,7 +168,7 @@ telux::common::Status PowerRefDaemon::init() {
 }
 
 int PowerRefDaemon::startDaemon(int argc, char **argv) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
 
     struct sigaction sigAction = {};
     sigAction.sa_handler       = signalHandler;
@@ -200,7 +212,7 @@ int PowerRefDaemon::startDaemon(int argc, char **argv) {
 }
 
 void PowerRefDaemon::stopDaemon() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     exiting_ = true;
     if (naoIpTrigger_)
         naoIpTrigger_.reset();
@@ -220,7 +232,7 @@ void PowerRefDaemon::stopDaemon() {
 }
 
 void PowerRefDaemon::signalHandler(int signum) {
-    LOG(DEBUG, __FUNCTION__, "Received signal = ", signum, " terminating program.");
+    LOGFD("Received signal = %d terminating program.", signum);
     PowerRefDaemon::getInstance().stopDaemon();
 }
 
@@ -241,7 +253,7 @@ void PowerRefDaemon::printUsage(char **argv) {
 
 telux::common::Status PowerRefDaemon::parseArguments(
     int argc, char **argv, bool &isSlave, bool &isConsole) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     int c;
     struct option long_options[] = {{"help", no_argument, 0, 'h'}, {"slave", no_argument, 0, 's'},
         {"console", no_argument, 0, 'c'}, {"kpi", no_argument, 0, 'k'}, {0, 0, 0, 0}};
@@ -274,7 +286,7 @@ telux::common::Status PowerRefDaemon::parseArguments(
 }
 
 void PowerRefDaemon::initConsole() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     // Initialize console commands
     std::shared_ptr<ConsoleAppCommand> suspendCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "Suspend_System", {},
@@ -300,7 +312,7 @@ void PowerRefDaemon::initConsole() {
 }
 
 void PowerRefDaemon::triggerActivityState(TcuActivityState state) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
 
     std::string machineName = ALL_MACHINES;
     std::cout << "Enter machine name (or leave empty for ALL_MACHINES): ";
@@ -320,10 +332,10 @@ void PowerRefDaemon::triggerActivityState(TcuActivityState state) {
             eventManager_->pushEvent(event);
             std::cout << "Event triggered: " << event->toString() << std::endl;
         } else {
-            LOG(ERROR, __FUNCTION__, "Event manager is not available");
+            LOGFE("Event manager is not available");
         }
     } else {
-        LOG(ERROR, __FUNCTION__, "Unable to create event");
+        LOGFE("Unable to create event");
     }
 }
 
@@ -332,7 +344,7 @@ void PowerRefDaemon::setConsoleMode(bool enable) {
 }
 
 void PowerRefDaemon::configureResumeTimer() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
 
     // Get timer duration from user
     std::cout << "Enter resume timer duration in seconds: ";
@@ -372,7 +384,7 @@ void PowerRefDaemon::configureResumeTimer() {
 }
 
 bool PowerRefDaemon::createResumeTimer(int seconds, const std::string &machineName) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
 
     // Store the machine name for use in the timer callback
     timerMachineName_ = machineName;
@@ -393,7 +405,7 @@ bool PowerRefDaemon::createResumeTimer(int seconds, const std::string &machineNa
 
     // Create a new timer
     if (timer_create(CLOCK_BOOTTIME_ALARM, &sev, &timerId_) == -1) {
-        LOG(ERROR, __FUNCTION__, "Failed to create timer: ", strerror(errno));
+        LOGFE("Failed to create timer: %s", strerror(errno));
         return false;
     }
 
@@ -407,13 +419,13 @@ bool PowerRefDaemon::createResumeTimer(int seconds, const std::string &machineNa
     its.it_interval.tv_nsec = 0;
 
     if (timer_settime(timerId_, 0, &its, NULL) == -1) {
-        LOG(ERROR, __FUNCTION__, "Failed to set timer: ", strerror(errno));
+        LOGFE("Failed to set timer: %s", strerror(errno));
         timer_delete(timerId_);
         timerId_ = 0;
         return false;
     }
 
-    LOG(DEBUG, __FUNCTION__, "Resume timer set for ", seconds, " seconds");
+    LOGFD("Resume timer set for %d seconds", seconds);
     return true;
 }
 
@@ -426,7 +438,7 @@ void PowerRefDaemon::timerCallback(union sigval sv) {
 }
 
 void PowerRefDaemon::handleTimerExpiry() {
-    LOG(DEBUG, __FUNCTION__, "Resume timer expired");
+    LOGFD("Resume timer expired");
 
     // Acquire wake lock to prevent the system from going back to sleep
     writeToSystemNode(WAKELOCK_PATH, RESUME_TIMER_WAKELOCK, strlen(RESUME_TIMER_WAKELOCK));
@@ -436,11 +448,11 @@ void PowerRefDaemon::handleTimerExpiry() {
         timerMachineName_.empty() ? ALL_MACHINES : timerMachineName_, TriggerType::TIMER_TRIGGER);
 
     if (event && eventManager_) {
-        LOG(DEBUG, __FUNCTION__, "Triggering resume event");
+        LOGFD("Triggering resume event");
         RefAppUtils::logKpiFile(event);
         eventManager_->pushEvent(event);
     } else {
-        LOG(ERROR, __FUNCTION__, "Failed to create or push resume event");
+        LOGFE("Failed to create or push resume event");
     }
 
     // Release the wake lock after a short delay to ensure the event is processed
@@ -452,10 +464,10 @@ void PowerRefDaemon::handleTimerExpiry() {
 void PowerRefDaemon::writeToSystemNode(const char *nodepath, const char *value, size_t length) {
     int fd = open(nodepath, O_WRONLY | O_APPEND | O_NONBLOCK);
     if (fd < 0) {
-        LOG(ERROR, __FUNCTION__, "Opening of ", nodepath, " node failed: ", strerror(errno));
+        LOGFE("Opening of %s node failed: %s", nodepath, strerror(errno));
     } else {
         if (write(fd, value, length) == -1) {
-            LOG(ERROR, __FUNCTION__, "Writing to ", nodepath, " node failed: ", strerror(errno));
+            LOGFE("Writing to %s node failed: %s", nodepath, strerror(errno));
         }
         close(fd);
     }

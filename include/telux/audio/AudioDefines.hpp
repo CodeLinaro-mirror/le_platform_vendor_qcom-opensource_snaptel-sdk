@@ -180,7 +180,7 @@ enum ChannelType {
 };
 
 /**
- *  Describes the arrangment of audio samples in a given audio frame through
+ *  Describes the arrangement of audio samples in a given audio frame through
  *  @ref ChannelType.
  */
 using ChannelTypeMask = int;
@@ -397,7 +397,7 @@ struct StreamConfig {
 struct FormatInfo {
 
     /** Sample rate in Hz, typical values 8k/16k/32k/48k
-     *  Sample rate is a dummy paramter for voice stream and compressed playback */
+     *  Sample rate is a dummy parameter for voice stream and compressed playback */
     uint32_t sampleRate;
 
     /** Refer to @ref ChannelTypeMask */

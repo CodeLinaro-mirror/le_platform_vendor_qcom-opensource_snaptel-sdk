@@ -615,7 +615,7 @@ std::string DataUtils::backhaulToString(telux::data::BackhaulType backhaul) {
 
 // Retuns true if multiple backhauls are supported
 void DataUtils::populateBackhaulInfo(telux::data::BackhaulInfo &backhaulInfo) {
-    int backhaul = 0, profileId = 0, vlanId = -1;
+    int backhaul = 0, profileId = 0, vlanId = -1, staId = -1;
     std::cout << "Enter Backhaul Type (0-Wlan, 1-WWAN, 2-ETH): ";
     std::cin >> backhaul;
     Utils::validateInput(backhaul, {0, 1, 2});
@@ -633,6 +633,10 @@ void DataUtils::populateBackhaulInfo(telux::data::BackhaulInfo &backhaulInfo) {
         backhaulInfo.profileId = profileId;
     } else if (backhaul == 0) {
         backhaulInfo.backhaul = telux::data::BackhaulType::WLAN;
+        std::cout << "Enter the sta Id associated with backhaul: ";
+        std::cin >> staId;
+        Utils::validateInput(staId);
+        backhaulInfo.staId = staId;
     } else if (backhaul == 2) {
         backhaulInfo.backhaul = telux::data::BackhaulType::ETH;
         std::cout << "Enter the vlan Id associated with backhaul: ";

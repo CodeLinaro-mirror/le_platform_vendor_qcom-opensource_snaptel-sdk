@@ -42,6 +42,7 @@ if (NOT TELUX_POWER_REFD_EAP)
     list(APPEND TARGET_POWER_REF_DAEMON_SOURCES
         EventManager.cpp
         PowerRefDaemon.cpp
+        WakeupHandler.cpp
         trigger/GPIO/GPIOTrigger.cpp
         trigger/NAOIP/NAOIpTrigger.cpp
         trigger/SMS/SMSTrigger.cpp

@@ -128,7 +128,7 @@ class GeoNetUtils {
      * border of the area, or < 0 if the point is outside of the area.
      */
     static int GeoRelativePosition(int x, int y, int a, int b, GeoAreaType Type) {
-        int f;
+        int f{};
         if (x == 0 && y == 0)
             return 1;
         x *= x;

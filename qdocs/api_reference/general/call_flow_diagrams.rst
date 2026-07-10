@@ -2797,26 +2797,6 @@ objects have been created, the following steps ensure a cleanup of the sensor su
 5. Release the instance of ISensorFeatureManager by setting it to nullptr. Since the application
    owns the object, this would result in the sensor feature manager getting destroyed.
 
-Call flow for sensor power control
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. figure:: /../images/sensor_power_control_call_flow.png
-
-The below points are to be noted for sensor power control
-
-a) Power control is not offered by all sensor manufacturers. If the underlying hardware sensor does
-not support power control, the power control APIs fail.
-b) Enabling or disabling low power mode for the sensor is only possible when the sensor is not
-activated.
-
-For achieving power control, the following steps are to be followed
-
-1. Deactivate the sensor. This will stop the notifications about sensor events to the registered
-   listeners.
-2. Perform the required power control by enabling or disabling low power mode for the sensor.
-3. Activate the sensor.
-4. When the sensor is activated successfully, the sensor data is sent to the registered listeners.
-
 Call flow for sensor feature control
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -74,6 +74,8 @@ class MyLocationListener : public telux::loc::ILocationListener,
 
     void onGnssExtendedDataInfo(const std::vector<uint8_t> &payload) override;
 
+    void onGnssSVResidualInfo(const telux::loc::GnssSvResidualReport &svResReport) override;
+
     void setDetailedLocationReportFlag(bool enable);
     void setDetailedEngineLocReportFlag(bool enable);
     void setBasicLocationReportFlag(bool enable);
@@ -88,6 +90,7 @@ class MyLocationListener : public telux::loc::ILocationListener,
     void setRecordingFlag(bool enable);
     void setExtendedInfoFlag(bool enable);
     void setNtnRecordingFlag(bool enable);
+    void setSvResidualInfoFlag(bool enable);
 
     ~MyLocationListener() {
     }
@@ -105,6 +108,7 @@ class MyLocationListener : public telux::loc::ILocationListener,
     bool isExtendedInfoFlagEnabled_       = false;
     std::string extendedDataPayload_      = "1,2,3,4,5,6,7,8,9,10";
     bool isNtnRecordingEnabled_           = false;
+    bool isSvResidualInfoFlagEnabled_     = false;
 
     void printSbasCorrectionEx(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
     void printNavigationSolutionEx(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
@@ -112,7 +116,7 @@ class MyLocationListener : public telux::loc::ILocationListener,
     void printLocationPositionTech(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
     void printLocationPositionDynamics(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
     void printGnssMeasurementInfo(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
-    void printGnssSystemTime(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
+    void printGnssSystemTime(const telux::loc::SystemTime &sysTime);
     void printLocationValidity(telux::loc::LocationInfoValidity validityMask);
     void printLocationExValidity(telux::loc::LocationInfoExValidity validityMask);
     void printLocationTech(telux::loc::LocationTechnology techMask);
@@ -125,7 +129,7 @@ class MyLocationListener : public telux::loc::ILocationListener,
     void printSvUsedInPosition(telux::loc::SvUsedInPosition svUsedInPosition);
     void printCalibrationStatus(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
     void printSolutionStatus(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
-    void printLocOutputEngineType(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
+    void printLocOutputEngineType(telux::loc::LocationAggregationType locEngineType);
     void printLocOutputEngineMask(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
     void printMeasurementsClockValidity(telux::loc::GnssMeasurementsClockValidity flags);
     void printMeasurementsDataValidity(telux::loc::GnssMeasurementsDataValidity flags);
@@ -144,6 +148,12 @@ class MyLocationListener : public telux::loc::ILocationListener,
     void printEphAct(telux::loc::GnssEphAction ephAct);
     void printGpsQzssEphData(const telux::loc::GpsQzssEphemeris &ephData);
     void printDgnssStationIds(std::vector<uint16_t> dgnssStationIds);
+    void printResidualPVTInfo(const telux::loc::ResidualPVTInfo &pvt);
+    void printSvResidualValidity(uint32_t mask);
+    void printSvResidualDataVector(
+        const std::vector<telux::loc::SvResidualData> &svResidualDataList);
+    void printSvAvailValidity(uint32_t mask);
+    void printSvAvailabilityUsage(const telux::loc::SvAvailabilityUsage &svAvailabilityUsage);
 
     void recordLocationInfo(const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo);
     void recordNtnLocationInfo(const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo);

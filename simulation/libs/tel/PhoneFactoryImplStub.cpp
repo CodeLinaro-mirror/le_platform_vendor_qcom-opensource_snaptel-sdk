@@ -920,11 +920,6 @@ void PhoneFactoryImplStub::onImsSettingsManagerResponse(telux::common::ServiceSt
     }
 }
 
-std::shared_ptr<IEcallManager> PhoneFactoryImplStub::getEcallManager(
-    telux::common::InitResponseCb callback) {
-    return nullptr;
-}
-
 std::shared_ptr<IHttpTransactionManager> PhoneFactoryImplStub::getHttpTransactionManager(
     telux::common::InitResponseCb callback) {
     return nullptr;

@@ -27,8 +27,6 @@ class SubscriptionStub : public ISubscription {
     ~SubscriptionStub();
     std::string getCarrierName() override;
     std::string getIccId() override;
-    int getMcc() override;
-    int getMnc() override;
     std::string getMobileCountryCode() override;
     std::string getMobileNetworkCode() override;
     std::string getPhoneNumber() override;

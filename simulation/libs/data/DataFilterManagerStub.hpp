@@ -28,10 +28,6 @@ class DataFilterManagerStub : public IDataFilterManager,
 
     telux::common::Status init(telux::common::InitResponseCb callback);
 
-    bool isReady() override;
-
-    std::future<bool> onReady() override;
-
     telux::common::ServiceStatus getServiceStatus() override;
 
     telux::common::Status setDataRestrictMode(
@@ -83,12 +79,9 @@ class DataFilterManagerStub : public IDataFilterManager,
     void invokeInitCallback(telux::common::ServiceStatus status);
     void invokeCallback(
         telux::common::ResponseCallback callback, telux::common::ErrorCode error, int cbDelay);
-    bool waitForInitialization();
 
     std::mutex mtx_;
     std::mutex initMtx_;
-    std::mutex mutex_;
-    std::condition_variable initCV_;
 
     std::unique_ptr<::dataStub::DataFilterManager::Stub> stub_;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;

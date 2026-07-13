@@ -768,23 +768,17 @@ void CallManagerStub::handleECallEvent(::telStub::ECallInfoEvent event) {
             slotId, ECallMsdTransmissionStatus::LL_ACK_RECEIVED);
     } else if (input == "MSD_TRANSMISSION_SUCCESS") {
         invokeECallMsdTransmissionStatuslisteners(slotId, ECallMsdTransmissionStatus::SUCCESS);
-        invokeECallMsdTransmissionStatuslisteners(slotId, telux::common::ErrorCode::SUCCESS);
     } else if (input == "MSD_TRANSMISSION_FAILURE") {
         invokeECallMsdTransmissionStatuslisteners(slotId, ECallMsdTransmissionStatus::FAILURE);
-        invokeECallMsdTransmissionStatuslisteners(
-            slotId, telux::common::ErrorCode::GENERIC_FAILURE);
     } else if (input == "OUTBAND_MSD_TRANSMISSION_STARTED") {
         invokeECallMsdTransmissionStatuslisteners(
             slotId, ECallMsdTransmissionStatus::OUTBAND_MSD_TRANSMISSION_STARTED);
     } else if (input == "OUTBAND_MSD_TRANSMISSION_SUCCESS") {
         invokeECallMsdTransmissionStatuslisteners(
             slotId, ECallMsdTransmissionStatus::OUTBAND_MSD_TRANSMISSION_SUCCESS);
-        invokeECallMsdTransmissionStatuslisteners(slotId, telux::common::ErrorCode::SUCCESS);
     } else if (input == "OUTBAND_MSD_TRANSMISSION_FAILURE") {
         invokeECallMsdTransmissionStatuslisteners(
             slotId, ECallMsdTransmissionStatus::OUTBAND_MSD_TRANSMISSION_FAILURE);
-        invokeECallMsdTransmissionStatuslisteners(
-            slotId, telux::common::ErrorCode::GENERIC_FAILURE);
     } else if (input == "LL_NACK_DUE_TO_T7_EXPIRY") {
         invokeECallMsdTransmissionStatuslisteners(
             slotId, ECallMsdTransmissionStatus::LL_NACK_DUE_TO_T7_EXPIRY);
@@ -806,23 +800,6 @@ void CallManagerStub::invokeECallMsdTransmissionStatuslisteners(
         for (auto &wp : applisteners) {
             if (auto sp = wp.lock()) {
                 sp->onECallMsdTransmissionStatus(phoneId, msdTransmissionStatus);
-            }
-        }
-    } else {
-        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
-    }
-}
-
-void CallManagerStub::invokeECallMsdTransmissionStatuslisteners(
-    int phoneId, telux::common::ErrorCode errorCode) {
-    LOG(DEBUG, __FUNCTION__);
-    std::vector<std::weak_ptr<ICallListener>> applisteners;
-    if (listenerMgr_) {
-        listenerMgr_->getAvailableListeners(applisteners);
-        // Notify respective events
-        for (auto &wp : applisteners) {
-            if (auto sp = wp.lock()) {
-                sp->onECallMsdTransmissionStatus(phoneId, errorCode);
             }
         }
     } else {

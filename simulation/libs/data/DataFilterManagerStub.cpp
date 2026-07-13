@@ -46,28 +46,6 @@ telux::common::Status DataFilterManagerStub::init(telux::common::InitResponseCb 
     return telux::common::Status::SUCCESS;
 }
 
-bool DataFilterManagerStub::isReady() {
-    std::lock_guard<std::mutex> lock(mutex_);
-    return (subSystemStatus_ == telux::common::ServiceStatus::SERVICE_AVAILABLE) ? true : false;
-}
-
-std::future<bool> DataFilterManagerStub::onReady() {
-    std::future<bool> f;
-    f = std::async(std::launch::async, [&] { return waitForInitialization(); });
-    return f;
-}
-
-bool DataFilterManagerStub::waitForInitialization() {
-    LOG(DEBUG, __FUNCTION__);
-    {
-        std::unique_lock<std::mutex> cvLock(mutex_);
-        if (subSystemStatus_ != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            initCV_.wait(cvLock);
-        }
-    }
-    return isReady();
-}
-
 void DataFilterManagerStub::initSync(telux::common::InitResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
 

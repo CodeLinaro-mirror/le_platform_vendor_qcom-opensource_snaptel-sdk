@@ -444,16 +444,6 @@ telux::common::Status SensorClientStub::selfTest(
     return status;
 }
 
-telux::common::Status SensorClientStub::enableLowPowerMode() {
-    LOG(DEBUG, sensorLogPrefix_, __FUNCTION__);
-    return telux::common::Status::NOTSUPPORTED;
-}
-
-telux::common::Status SensorClientStub::disableLowPowerMode() {
-    LOG(DEBUG, sensorLogPrefix_, __FUNCTION__);
-    return telux::common::Status::NOTSUPPORTED;
-}
-
 void SensorClientStub::onConfigurationUpdate(
     int sensorId, float samplingRate, int batchCount, bool isRotated) {
     LOG(INFO, sensorLogPrefix_, "Received configuration update on sensor: [", sensorId, ", ",

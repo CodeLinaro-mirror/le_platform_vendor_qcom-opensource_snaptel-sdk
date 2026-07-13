@@ -59,8 +59,6 @@ class ServingSystemManagerStub : public IServingSystemManager,
     telux::common::Status init(telux::common::InitResponseCb callback);
     ~ServingSystemManagerStub();
 
-    bool isSubsystemReady() override;
-    std::future<bool> onSubsystemReady() override;
     telux::common::ServiceStatus getServiceStatus() override;
 
     telux::common::Status setRatPreference(
@@ -100,16 +98,12 @@ class ServingSystemManagerStub : public IServingSystemManager,
  private:
     int phoneId_;
     std::mutex mtx_;
-    std::condition_variable cv_;
     telux::common::InitResponseCb initCb_;
     int cbDelay_;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_                          = nullptr;
     std::shared_ptr<telux::common::ListenerManager<IServingSystemListener>> listenerMgr_ = nullptr;
     std::unique_ptr<::telStub::ServingSystemService::Stub> stub_;
     telux::common::ServiceStatus subSystemStatus_;
-    bool ready_ = false;
-    bool waitForInitialization();
-    void setSubsystemReady(bool status);
     void setServiceStatus(telux::common::ServiceStatus status);
     void initSync();
     void handleSystemInfoChanged(::telStub::SystemInfoEvent event);

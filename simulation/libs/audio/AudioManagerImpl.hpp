@@ -90,10 +90,6 @@ class AudioManagerImpl : public IAudioManager,
     void onCreateTranscoderResult(
         telux::common::ErrorCode ec, CreatedTranscoderInfo transcoderInfo, int cmdId) override;
 
-    /* deprecated */
-    bool isSubsystemReady() override;
-    std::future<bool> onSubsystemReady() override;
-
  private:
     static std::mutex serviceStatusGuard_;
     static std::atomic<bool> exitNow_;
@@ -102,7 +98,6 @@ class AudioManagerImpl : public IAudioManager,
     std::shared_ptr<ICommunicator> transportClient_;
     telux::common::AsyncTaskQueue<void> asyncTaskQueue_;
     std::shared_ptr<telux::common::ListenerManager<IAudioListener>> serviceStatusListenerMgr_;
-    std::condition_variable cv_;
     std::vector<std::weak_ptr<AudioStreamImpl>> createdStreams_;
     std::vector<std::weak_ptr<TranscoderImpl>> createdTranscoders_;
 
@@ -116,7 +111,6 @@ class AudioManagerImpl : public IAudioManager,
     telux::common::ServiceStatus serviceCurrentStatus_
         = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
 
-    bool waitForInitialization(void);
     void sendNewStatusToClients(telux::common::ServiceStatus newStatus);
 
     AudioManagerImpl(AudioManagerImpl const &)            = delete;

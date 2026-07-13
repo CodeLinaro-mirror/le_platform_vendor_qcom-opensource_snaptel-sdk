@@ -1242,8 +1242,6 @@ class LocationInfoEx : public ILocationInfoEx {
 class SVInfo : public ISVInfo {
     GnssConstellationType constellation_     = GnssConstellationType::UNKNOWN;
     uint16_t id_                             = 0;
-    SVHealthStatus healthStatus_             = SVHealthStatus::UNKNOWN;
-    SVStatus status_                         = SVStatus::UNKNOWN;
     SVInfoAvailability isEphemerisAvailable_ = SVInfoAvailability::UNKNOWN;
     SVInfoAvailability isAlmanacAvailable_   = SVInfoAvailability::UNKNOWN;
     SVInfoAvailability isFixUsed_            = SVInfoAvailability::UNKNOWN;
@@ -1254,6 +1252,8 @@ class SVInfo : public ISVInfo {
     GnssSignal signalType_                   = UNKNOWN_SIGNAL_MASK;
     uint16_t glonassFcn_                     = 0;
     double basebandCnr_                      = 0.0;
+    SVHealthStatus healthStatus_             = SVHealthStatus::UNKNOWN;
+    SVStatus status_                         = SVStatus::UNKNOWN;
 
  public:
     /**
@@ -1275,30 +1275,6 @@ class SVInfo : public ISVInfo {
      */
     uint16_t getId() {
         return id_;
-    }
-
-    /**
-     * Health status of satellite vehicle.
-     *
-     * returns  HealthStatus of Satellite Vehicle if available else returns
-     * UNKNOWN.
-     *          - ref SVHealthStatus
-     *
-     */
-    SVHealthStatus getSVHealthStatus() {
-        return healthStatus_;
-    }
-
-    /**
-     * Status of satellite vehicle.
-     *
-     * note    This API is work-in-progress and is subject to change.
-     * returns Satellite Vehicle Status if available else returns UNKNOWN.
-     *          - ref SVStatus
-     *
-     */
-    SVStatus getStatus() {
-        return status_;
     }
 
     /**
@@ -1417,12 +1393,6 @@ class SVInfo : public ISVInfo {
     void setId(uint16_t val) {
         id_ = val;
     }
-    void setSVHealthStatus(SVHealthStatus val) {
-        healthStatus_ = val;
-    }
-    void setStatus(SVStatus &val) {
-        status_ = val;
-    }
     void setHasEphemeris(SVInfoAvailability val) {
         isEphemerisAvailable_ = val;
     }
@@ -1453,6 +1423,12 @@ class SVInfo : public ISVInfo {
     void setBasebandCnr(double cnr) {
         basebandCnr_ = cnr;
     }
+    void setSVHealthStatus(SVHealthStatus val) {
+        healthStatus_ = val;
+    }
+    void setStatus(SVStatus &val) {
+        status_ = val;
+    }
 };
 
 class GnssSVInfo : public IGnssSVInfo {
@@ -1460,16 +1436,6 @@ class GnssSVInfo : public IGnssSVInfo {
     std::vector<std::shared_ptr<ISVInfo>> svInfoList;
 
  public:
-    /**
-     * Indicates whether altitude is assumed or calculated.
-     *
-     * returns ref AltitudeType if available else returns UNKNOWN.
-     *
-     */
-    AltitudeType getAltitudeType() {
-        return altitudeType;
-    }
-
     /**
      * Pointer to satellite vehicles information for all GNSS
      * constellations except GPS.

@@ -129,7 +129,6 @@ class CallManagerStub : public ICallManager,
     void invokeECallHlapTimerEventlisteners(int phoneId, ECallHlapTimerEvents timersStatus);
     void invokeECallMsdTransmissionStatuslisteners(
         int phoneId, telux::tel::ECallMsdTransmissionStatus msdTransmissionStatus);
-    void invokeECallMsdTransmissionStatuslisteners(int phoneId, telux::common::ErrorCode errorCode);
     void logCallDetails(std::shared_ptr<ICall> info);
     void findMatchingCall(int index, std::string remotePartyNumber, int phoneId, int cbDelay,
         std::shared_ptr<IMakeCallCallback> iMakecallback, MakeCallCallback callback,

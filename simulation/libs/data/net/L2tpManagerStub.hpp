@@ -29,8 +29,6 @@ class L2tpManagerStub : public IL2tpManager, public IL2tpListener {
     telux::common::Status init(telux::common::InitResponseCb callback);
 
     telux::common::ServiceStatus getServiceStatus() override;
-    bool isSubsystemReady() override;
-    std::future<bool> onSubsystemReady() override;
 
     telux::common::Status setConfig(bool enable, bool enableMss, bool enableMtu,
         telux::common::ResponseCallback callback = nullptr, uint32_t mtuSize = 1422) override;
@@ -76,7 +74,6 @@ class L2tpManagerStub : public IL2tpManager, public IL2tpListener {
     std::shared_ptr<telux::common::ListenerManager<IL2tpListener>> listenerMgr_;
 
     void initSync(telux::common::InitResponseCb callback);
-    bool waitForInitialization();
     void setSubsystemReady(bool status);
     void setSubSystemStatus(telux::common::ServiceStatus status);
     void invokeInitCallback(telux::common::ServiceStatus status);

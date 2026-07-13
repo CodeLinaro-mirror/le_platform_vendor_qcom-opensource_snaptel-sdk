@@ -51,30 +51,9 @@ telux::common::Status DataProfileManagerStub::cleanup() {
     return telux::common::Status::SUCCESS;
 }
 
-std::future<bool> DataProfileManagerStub::onSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    auto future = std::async(
-        std::launch::async, [&] { return DataProfileManagerStub::waitForInitialization(); });
-    return future;
-}
-
-bool DataProfileManagerStub::waitForInitialization() {
-    LOG(INFO, __FUNCTION__);
-    std::unique_lock<std::mutex> lock(mtx_);
-    if (!isSubsystemReady()) {
-        cv_.wait(lock);
-    }
-    return isSubsystemReady();
-}
-
 telux::common::ServiceStatus DataProfileManagerStub::getServiceStatus() {
     LOG(DEBUG, __FUNCTION__);
     return subSystemStatus_;
-}
-
-bool DataProfileManagerStub::isSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    return ready_;
 }
 
 void DataProfileManagerStub::initSync(telux::common::InitResponseCb callback) {
@@ -133,7 +112,7 @@ telux::common::Status DataProfileManagerStub::registerListener(
     std::weak_ptr<IDataProfileListener> listener) {
     LOG(DEBUG, __FUNCTION__);
 
-    if (!isSubsystemReady()) {
+    if (!ready_) {
         LOG(ERROR, __FUNCTION__, " Data profile subsystem not ready");
         return telux::common::Status::NOTREADY;
     }
@@ -160,7 +139,7 @@ telux::common::Status DataProfileManagerStub::registerListener(
 telux::common::Status DataProfileManagerStub::deregisterListener(
     std::weak_ptr<telux::data::IDataProfileListener> listener) {
     LOG(DEBUG, __FUNCTION__);
-    if (!isSubsystemReady()) {
+    if (!ready_) {
         LOG(ERROR, __FUNCTION__, " Data profile subsystem not ready");
         return telux::common::Status::NOTREADY;
     }

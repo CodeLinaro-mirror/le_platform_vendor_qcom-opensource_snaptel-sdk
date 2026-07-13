@@ -30,8 +30,6 @@ class DataConnectionManagerStub : public IDataConnectionManager,
     telux::common::Status init(telux::common::InitResponseCb callback);
 
     telux::common::ServiceStatus getServiceStatus() override;
-    bool isSubsystemReady() override;
-    std::future<bool> onSubsystemReady() override;
 
     telux::common::Status setDefaultProfile(OperationType oprType, uint8_t profileId,
         telux::common::ResponseCallback callback = nullptr) override;
@@ -98,7 +96,6 @@ class DataConnectionManagerStub : public IDataConnectionManager,
     std::shared_ptr<DataEventListener> eventListener_;
 
     void initSync(telux::common::InitResponseCb callback);
-    bool waitForInitialization();
     void setSubsystemReady(bool status);
     void setSubSystemStatus(telux::common::ServiceStatus status);
     void invokeCallback(

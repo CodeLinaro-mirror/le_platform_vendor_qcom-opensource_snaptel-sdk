@@ -69,27 +69,16 @@
 #define DEFAULT_RECEIVER_PHONE_NUMBER "+1xxxxxxxxxx"
 #define DEFAULT_MESSAGE "Default test msg"
 
-class SMSSentStatusReceiver : public telux::common::ICommandResponseCallback {
+/* Step - 6 */
+class SMSDeliveryStatusReceiver : public telux::tel::ISmsListener {
  public:
-    /* Step - 5 */
-    void commandResponse(telux::common::ErrorCode ec) override {
-        if (ec == telux::common::ErrorCode::SUCCESS) {
-            std::cout << "Message sent successfully" << std::endl;
-            return;
-        }
-        std::cout << "Can't send msg, err " << static_cast<int>(ec) << std::endl;
-    }
-};
-
-class SMSDeliveryStatusReceiver : public telux::common::ICommandResponseCallback {
- public:
-    /* Step - 6 */
-    void commandResponse(telux::common::ErrorCode ec) override {
-        if (ec == telux::common::ErrorCode::SUCCESS) {
+    void onDeliveryReport(int phoneId, int msgRef, std::string receiverAddress,
+        telux::common::ErrorCode error) override {
+        if (error == telux::common::ErrorCode::SUCCESS) {
             std::cout << "Message delivered successfully" << std::endl;
             return;
         }
-        std::cout << "Can't deliver msg, err " << static_cast<int>(ec) << std::endl;
+        std::cout << "Message not delivered, err " << static_cast<int>(error) << std::endl;
     }
 };
 
@@ -119,6 +108,14 @@ class SMSSender : public std::enable_shared_from_this<SMSSender> {
             return -EIO;
         }
 
+        try {
+            smsDeliveryCb_ = std::make_shared<SMSDeliveryStatusReceiver>();
+        } catch (const std::exception &e) {
+            std::cout << "Can't allocate SMS delivery status receiver" << std::endl;
+            return -ENOMEM;
+        }
+        smsManager_->registerListener(smsDeliveryCb_);
+
         std::cout << "Initialization complete" << std::endl;
         return 0;
     }
@@ -127,16 +124,6 @@ class SMSSender : public std::enable_shared_from_this<SMSSender> {
         telux::common::Status status;
         std::string message;
         std::string receiverAddress;
-        std::shared_ptr<telux::common::ICommandResponseCallback> smsSentCb;
-        std::shared_ptr<telux::common::ICommandResponseCallback> smsDeliveryCb;
-
-        try {
-            smsSentCb     = std::make_shared<SMSSentStatusReceiver>();
-            smsDeliveryCb = std::make_shared<SMSDeliveryStatusReceiver>();
-        } catch (const std::exception &e) {
-            std::cout << "Can't allocate msg status receiver" << std::endl;
-            return -ENOMEM;
-        }
 
         message         = configParser->getValue(std::string("MESSAGE"));
         receiverAddress = configParser->getValue(std::string("RECEIVER_NUMBER"));
@@ -148,7 +135,16 @@ class SMSSender : public std::enable_shared_from_this<SMSSender> {
         }
 
         /* Step - 4 */
-        status = smsManager_->sendSms(message, receiverAddress, smsSentCb, smsDeliveryCb);
+        status = smsManager_->sendSmsEx(message, receiverAddress, true,
+            [](std::vector<int> msgRefs, telux::common::ErrorCode errorCode,
+                telux::tel::SmsFailureCause info) {
+                if (errorCode == telux::common::ErrorCode::SUCCESS) {
+                    std::cout << "Message sent successfully" << std::endl;
+                } else {
+                    std::cout << "Can't send msg, err " << static_cast<int>(errorCode)
+                              << std::endl;
+                }
+            });
         if (status != telux::common::Status::SUCCESS) {
             std::cout << "Can't send message, err " << static_cast<int>(status) << std::endl;
             return -EIO;
@@ -163,6 +159,7 @@ class SMSSender : public std::enable_shared_from_this<SMSSender> {
 
  private:
     std::shared_ptr<telux::tel::ISmsManager> smsManager_;
+    std::shared_ptr<SMSDeliveryStatusReceiver> smsDeliveryCb_;
 };
 
 int main(int argc, char *argv[]) {

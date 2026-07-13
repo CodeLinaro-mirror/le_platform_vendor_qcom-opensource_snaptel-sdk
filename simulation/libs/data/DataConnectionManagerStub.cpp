@@ -198,30 +198,9 @@ void DataConnectionManagerStub::setSubsystemReady(bool status) {
     cv_.notify_all();
 }
 
-std::future<bool> DataConnectionManagerStub::onSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    auto future = std::async(
-        std::launch::async, [&] { return DataConnectionManagerStub::waitForInitialization(); });
-    return future;
-}
-
-bool DataConnectionManagerStub::waitForInitialization() {
-    LOG(INFO, __FUNCTION__);
-    std::unique_lock<std::mutex> lock(mtx_);
-    if (!isSubsystemReady()) {
-        cv_.wait(lock);
-    }
-    return isSubsystemReady();
-}
-
 telux::common::ServiceStatus DataConnectionManagerStub::getServiceStatus() {
     LOG(DEBUG, __FUNCTION__);
     return subSystemStatus_;
-}
-
-bool DataConnectionManagerStub::isSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    return ready_;
 }
 
 void DataConnectionManagerStub::invokeCallback(
@@ -247,7 +226,7 @@ telux::common::Status DataConnectionManagerStub::setDefaultProfile(
         return telux::common::Status::NOTSUPPORTED;
     }
 
-    if (!isSubsystemReady()) {
+    if (!ready_) {
         LOG(ERROR, __FUNCTION__, " Data subsystem not ready");
         return telux::common::Status::NOTREADY;
     }
@@ -297,7 +276,7 @@ telux::common::Status DataConnectionManagerStub::getDefaultProfile(
         return telux::common::Status::NOTSUPPORTED;
     }
 
-    if (!isSubsystemReady()) {
+    if (!ready_) {
         LOG(ERROR, __FUNCTION__, " Data subsystem not ready");
         return telux::common::Status::NOTREADY;
     }
@@ -355,7 +334,7 @@ telux::common::Status DataConnectionManagerStub::setRoamingMode(bool enable, uin
         return telux::common::Status::NOTSUPPORTED;
     }
 
-    if (!isSubsystemReady()) {
+    if (!ready_) {
         LOG(ERROR, __FUNCTION__, " Data subsystem not ready");
         return telux::common::Status::NOTREADY;
     }
@@ -411,7 +390,7 @@ telux::common::Status DataConnectionManagerStub::requestRoamingMode(
         return telux::common::Status::NOTSUPPORTED;
     }
 
-    if (!isSubsystemReady()) {
+    if (!ready_) {
         LOG(ERROR, __FUNCTION__, " Data subsystem not ready");
         return telux::common::Status::NOTREADY;
     }
@@ -629,7 +608,7 @@ telux::common::Status DataConnectionManagerStub::startDataCall(
         return telux::common::Status::NOTSUPPORTED;
     }
 
-    if (!isSubsystemReady()) {
+    if (!ready_) {
         LOG(ERROR, __FUNCTION__, " Data subsystem not ready");
         return telux::common::Status::NOTREADY;
     }
@@ -741,7 +720,7 @@ telux::common::Status DataConnectionManagerStub::startDataCall(int profileId,
         return telux::common::Status::NOTSUPPORTED;
     }
 
-    if (!isSubsystemReady()) {
+    if (!ready_) {
         LOG(ERROR, __FUNCTION__, " Data subsystem not ready");
         return telux::common::Status::NOTREADY;
     }
@@ -847,7 +826,7 @@ telux::common::Status DataConnectionManagerStub::stopDataCall(
         return telux::common::Status::NOTSUPPORTED;
     }
 
-    if (!isSubsystemReady()) {
+    if (!ready_) {
         LOG(ERROR, __FUNCTION__, " Data subsystem not ready");
         return telux::common::Status::NOTREADY;
     }
@@ -1023,7 +1002,7 @@ telux::common::Status DataConnectionManagerStub::stopDataCall(int profileId,
         return telux::common::Status::NOTSUPPORTED;
     }
 
-    if (!isSubsystemReady()) {
+    if (!ready_) {
         LOG(ERROR, __FUNCTION__, " Data subsystem not ready");
         return telux::common::Status::NOTREADY;
     }
@@ -1162,7 +1141,7 @@ telux::common::Status DataConnectionManagerStub::requestDataCallList(
         return telux::common::Status::NOTSUPPORTED;
     }
 
-    if (!isSubsystemReady()) {
+    if (!ready_) {
         LOG(ERROR, __FUNCTION__, " Data subsystem not ready");
         return telux::common::Status::NOTREADY;
     }
@@ -1215,7 +1194,7 @@ telux::common::Status DataConnectionManagerStub::requestDataCallList(
 telux::common::Status DataConnectionManagerStub::requestThrottledApnInfo(ThrottleInfoCb callback) {
     LOG(DEBUG, __FUNCTION__);
 
-    if (!isSubsystemReady()) {
+    if (!ready_) {
         LOG(ERROR, __FUNCTION__, " Data subsystem is not ready");
         return telux::common::Status::NOTREADY;
     }

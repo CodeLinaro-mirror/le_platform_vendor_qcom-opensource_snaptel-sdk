@@ -310,9 +310,6 @@ class TelephonyNotificationBuilder
     void addVoiceServiceStateChangeEvent(int phoneId, telStub::VoiceServiceStateEvent &event);
     void addOperatingModeChangeEvent(telStub::OperatingModeEvent &event);
     void addSignalStrengthChangeEvent(int phoneId, telStub::SignalStrengthChangeEvent &event);
-    void addServiceStateChangeEvent(int phoneId, telStub::ServiceStateChangeEvent &event);
-    void addVoiceRadioTechnologyChangeEvent(
-        int phoneId, telStub::VoiceRadioTechnologyChangeEvent &event);
     std::shared_ptr<Notification> build();
 
  private:
@@ -425,7 +422,6 @@ class OperatingModeTransitionManager
     telux::common::ErrorCode initOperatingMode();
     telux::common::ErrorCode initSignalStrength();
     telux::common::ErrorCode initServingRat();
-    telux::common::ErrorCode initServiceState();
 };
 
 }  // namespace tel

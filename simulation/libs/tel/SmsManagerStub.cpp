@@ -132,84 +132,6 @@ telux::common::Status SmsManagerStub::removeListener(std::weak_ptr<ISmsListener>
     return status;
 }
 
-telux::common::Status SmsManagerStub::sendSms(const std::string &message,
-    const std::string &receiverAddress,
-    std::shared_ptr<telux::common::ICommandResponseCallback> sentCallback,
-    std::shared_ptr<telux::common::ICommandResponseCallback> deliveryCallback) {
-    LOG(DEBUG, __FUNCTION__);
-    bool isDeliveryReportNeeded = true;
-
-    if (message.empty() || receiverAddress.empty()) {
-        LOG(ERROR, __FUNCTION__, " Either message or receiver address is empty");
-        return telux::common::Status::INVALIDPARAM;
-    }
-    if (telux::common::ServiceStatus::SERVICE_AVAILABLE != getServiceStatus()) {
-        LOG(ERROR, __FUNCTION__, " SMS Manager is not ready");
-        return telux::common::Status::NOTREADY;
-    }
-
-    if (!sentCallback) {
-        LOG(DEBUG, __FUNCTION__, " Sent callback is null");
-    }
-    if (!deliveryCallback) {
-        LOG(DEBUG, __FUNCTION__, " Delivery callback is null");
-        isDeliveryReportNeeded = false;
-    }
-    ::telStub::SendSmsWithoutSmscRequest request;
-    ::telStub::SendSmsWithoutSmscReply response;
-    ClientContext context;
-
-    request.set_phone_id(phoneId_);
-
-    grpc::Status reqstatus = stub_->SendSmsWithoutSmsc(&context, request, &response);
-    if (!reqstatus.ok()) {
-        return telux::common::Status::FAILED;
-    }
-
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    telux::common::ErrorCode sentCallbackErrorcode
-        = static_cast<telux::common::ErrorCode>(response.sentcallback_errorcode());
-    int noofsegments      = static_cast<int>(response.noofsegments());
-    int sentCallbackDelay = static_cast<int>(response.sentcallback_callbackdelay());
-    std::string ref       = static_cast<std::string>(response.sentcallback_msgrefs());
-    std::vector<int> refs = CommonUtils::convertStringToVector(ref);
-    telux::common::ErrorCode deliveryCallbackErrorCode
-        = static_cast<telux::common::ErrorCode>(response.deliverycallback_errorcode());
-    int deliveryCallbackDelay = static_cast<int>(response.deliverycallback_callbackdelay());
-
-    LOG(DEBUG, __FUNCTION__, " Invoking callback for old SMS API");
-    // Sending the callback response.
-    if (status == telux::common::Status::SUCCESS) {
-        auto f1 = std::async(
-            std::launch::async, [this, sentCallbackDelay, sentCallback, sentCallbackErrorcode]() {
-                this->invokesendSmsCallback(sentCallbackDelay, sentCallback, sentCallbackErrorcode);
-            }).share();
-        taskQ_->add(f1);
-        // Send delivery report to listeners.
-        if ((isDeliveryReportNeeded)
-            && (sentCallbackErrorcode == telux::common::ErrorCode::SUCCESS)) {
-            LOG(DEBUG, __FUNCTION__, " Invoking delivery report to listeners");
-            auto f2 = std::async(
-                std::launch::async, [this, receiverAddress, noofsegments, refs,
-                                        deliveryCallbackErrorCode, deliveryCallbackDelay]() {
-                    this->invokeDeliveryReportListener(receiverAddress, noofsegments, refs,
-                        deliveryCallbackErrorCode, deliveryCallbackDelay);
-                }).share();
-            taskQ_->add(f2);
-
-            // Sending the delivery callback Response.
-            LOG(DEBUG, __FUNCTION__, " Invoking delivery callback");
-            auto f3 = std::async(std::launch::async,
-                [this, deliveryCallbackDelay, deliveryCallback, deliveryCallbackErrorCode]() {
-                    this->invokesendSmsCallback(
-                        deliveryCallbackDelay, deliveryCallback, deliveryCallbackErrorCode);
-                }).share();
-            taskQ_->add(f3);
-        }
-    }
-    return status;
-}
-
 telux::common::Status SmsManagerStub::sendSmsEx(std::string message, std::string receiverAddress,
     bool deliveryReportNeeded, SmsResponseCbEx sentCallback, std::string smscAddr) {
     LOG(DEBUG, __FUNCTION__);
@@ -267,72 +189,6 @@ telux::common::Status SmsManagerStub::sendSmsEx(std::string message, std::string
                 this->invokeCallbackExt(
                     smsResponseCbDelay, smsResponsecbErrorCode, refs, cause, sentCallback);
             }).share();
-        taskQ_->add(f1);
-
-        // Notifying listeners about the change event.
-        if ((deliveryReportNeeded)
-            && (smsResponsecbErrorCode == telux::common::ErrorCode::SUCCESS)) {
-            auto f2
-                = std::async(std::launch::async, [this, receiverAddress, noofsegments, infos]() {
-                      this->invokeDeliveryReportListener(receiverAddress, noofsegments, infos);
-                  }).share();
-            taskQ_->add(f2);
-        }
-    }
-    return status;
-}
-
-telux::common::Status SmsManagerStub::sendSms(std::string message, std::string receiverAddress,
-    bool deliveryReportNeeded, SmsResponseCb sentCallback, std::string smscAddr) {
-    LOG(DEBUG, __FUNCTION__);
-    if (message.empty() || receiverAddress.empty()) {
-        LOG(ERROR, __FUNCTION__, " either message or receiver address is empty");
-        return telux::common::Status::INVALIDPARAM;
-    }
-    if (telux::common::ServiceStatus::SERVICE_AVAILABLE != getServiceStatus()) {
-        LOG(ERROR, __FUNCTION__, " SMS Manager is not ready");
-        return telux::common::Status::NOTREADY;
-    }
-    if (!sentCallback) {
-        LOG(DEBUG, __FUNCTION__, " Sent callback is null");
-    }
-    ::telStub::SendSmsRequest request;
-    ::telStub::SendSmsReply response;
-    ClientContext context;
-
-    request.set_phone_id(phoneId_);
-
-    grpc::Status reqstatus = stub_->SendSms(&context, request, &response);
-    if (!reqstatus.ok()) {
-        return telux::common::Status::FAILED;
-    }
-
-    telux::common::Status status = static_cast<telux::common::Status>(response.status());
-    int noofsegments             = static_cast<int>(response.noofsegments());
-    telux::common::ErrorCode smsResponsecbErrorCode
-        = static_cast<telux::common::ErrorCode>(response.smsresponsecb_errorcode());
-    int smsResponseCbDelay = static_cast<int>(response.smsresponsecb_callbackdelay());
-    std::string ref        = static_cast<std::string>(response.sentcallback_msgrefs());
-    std::vector<int> refs  = CommonUtils::convertStringToVector(ref);
-    std::vector<smsDeliveryInfo> infos;
-
-    for (int i = 0; i < response.records_size(); i++) {
-        smsDeliveryInfo info;
-        info.errorCode = static_cast<telux::common::ErrorCode>(
-            response.mutable_records(i)->ondeliveryreport_errorcode());
-        info.cbDelay = static_cast<int>(response.mutable_records(i)->deliverycallbackdelay());
-        info.msgRef  = static_cast<int>(response.mutable_records(i)->ondeliveryreportmsgref());
-        LOG(DEBUG, __FUNCTION__, "errorCode ", static_cast<int>(info.errorCode), "cbDelay ",
-            info.cbDelay, "msgRef ", info.msgRef);
-        infos.emplace_back(info);
-    }
-
-    if (status == telux::common::Status::SUCCESS) {
-        // Invoking response callback
-        auto f1 = std::async(std::launch::async, [this, smsResponseCbDelay, smsResponsecbErrorCode,
-                                                     refs, sentCallback]() {
-            this->invokeCallback(smsResponseCbDelay, smsResponsecbErrorCode, refs, sentCallback);
-        }).share();
         taskQ_->add(f1);
 
         // Notifying listeners about the change event.
@@ -551,17 +407,6 @@ void SmsManagerStub::invokeCallbackExt(int cbDelay, ErrorCode error, std::vector
     }
 }
 
-void SmsManagerStub::invokesendSmsCallback(int cbDelay,
-    std::shared_ptr<telux::common::ICommandResponseCallback> callback,
-    telux::common::ErrorCode error) {
-    LOG(DEBUG, __FUNCTION__);
-    std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-    auto f1 = std::async(std::launch::async, [this, callback, error]() {
-        callback->commandResponse(error);
-    }).share();
-    taskQ_->add(f1);
-}
-
 telux::common::Status SmsManagerStub::requestSmscAddress(
     std::shared_ptr<ISmscAddressCallback> callback) {
     LOG(DEBUG, __FUNCTION__);
@@ -747,7 +592,7 @@ telux::common::Status SmsManagerStub::readMessage(
     metaInfo.tagType     = static_cast<telux::tel::SmsTagType>(response.sms_message().tag_type());
     metaInfo.msgIndex    = static_cast<int>((response.sms_message()).msg_index());
 
-    SmsMessage msg(text, sender, receiver, encoding, pdu, rawPdu, Info, isMetaInfoValid, metaInfo);
+    SmsMessage msg(text, sender, receiver, encoding, rawPdu, Info, isMetaInfoValid, metaInfo);
 
     // Sending the Callback Response.
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
@@ -987,24 +832,22 @@ MessageAttributes SmsManagerStub::calculateMessageAttributes(const std::string &
  * SmsMessage class to expose details to user application..
  */
 SmsMessage::SmsMessage(std::string text, std::string sender, std::string receiver,
-    SmsEncoding encoding, std::string pdu, PduBuffer rawPdu, std::shared_ptr<MessagePartInfo> info)
+    SmsEncoding encoding, PduBuffer rawPdu, std::shared_ptr<MessagePartInfo> info)
    : text_(text)
    , sender_(sender)
    , receiver_(receiver)
    , encoding_(encoding)
-   , pdu_(pdu)
    , rawPdu_(rawPdu)
    , msgPartInfo_(info) {
 }
 
 SmsMessage::SmsMessage(std::string text, std::string sender, std::string receiver,
-    SmsEncoding encoding, std::string pdu, PduBuffer rawPdu, std::shared_ptr<MessagePartInfo> info,
+    SmsEncoding encoding, PduBuffer rawPdu, std::shared_ptr<MessagePartInfo> info,
     bool isMetaInfoValid, SmsMetaInfo metaInfo)
    : text_(text)
    , sender_(sender)
    , receiver_(receiver)
    , encoding_(encoding)
-   , pdu_(pdu)
    , rawPdu_(rawPdu)
    , msgPartInfo_(info)
    , isMetaInfoValid_(isMetaInfoValid)
@@ -1025,10 +868,6 @@ const std::string &SmsMessage::getReceiver() const {
 
 SmsEncoding SmsMessage::getEncoding() const {
     return encoding_;
-}
-
-const std::string &SmsMessage::getPdu() const {
-    return pdu_;
 }
 
 PduBuffer SmsMessage::getRawPdu() const {
@@ -1105,7 +944,7 @@ void SmsManagerStub::handleIncomingSms(::telStub::SmsMessage event) {
     metaInfo.msgIndex = msgIndex;
     metaInfo.tagType  = tagType;
     SmsMessage msg(
-        text, sender, receiver, encoding, pdu, pduBuffer, info, isMetaInfoValid, metaInfo);
+        text, sender, receiver, encoding, pduBuffer, info, isMetaInfoValid, metaInfo);
     auto sharedPtr = std::make_shared<SmsMessage>(msg);
     // Invoke incomingSms notification to clients
     invokeIncomingSmslisteners(phoneId, sharedPtr);

@@ -25,8 +25,6 @@ class NatManagerStub : public INatManager, public INatListener {
     telux::common::Status init(telux::common::InitResponseCb callback);
 
     telux::common::ServiceStatus getServiceStatus() override;
-    bool isSubsystemReady() override;
-    std::future<bool> onSubsystemReady() override;
 
     telux::common::Status registerListener(std::weak_ptr<INatListener> listener) override;
     telux::common::Status deregisterListener(std::weak_ptr<INatListener> listener) override;
@@ -69,7 +67,6 @@ class NatManagerStub : public INatManager, public INatListener {
     telux::data::OperationType oprType_;
 
     void initSync(telux::common::InitResponseCb callback);
-    bool waitForInitialization();
     void setSubsystemReady(bool status);
     void setSubSystemStatus(telux::common::ServiceStatus status);
     void invokeInitCallback(telux::common::ServiceStatus status);

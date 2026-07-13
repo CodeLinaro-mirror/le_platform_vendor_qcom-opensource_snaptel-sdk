@@ -37,16 +37,8 @@ void TcuActivityManagerWrapper::cleanup() {
     tcuActivityMgrImpl_ = nullptr;
 }
 
-bool TcuActivityManagerWrapper::isReady() {
-    return tcuActivityMgrImpl_->isReady();
-}
-
 telux::common::ServiceStatus TcuActivityManagerWrapper::getServiceStatus() {
     return tcuActivityMgrImpl_->getServiceStatus();
-}
-
-std::future<bool> TcuActivityManagerWrapper::onReady() {
-    return tcuActivityMgrImpl_->onReady();
 }
 
 Status TcuActivityManagerWrapper::registerListener(std::weak_ptr<ITcuActivityListener> listener) {

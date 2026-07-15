@@ -384,6 +384,12 @@ class IDataConnectionManager {
      * On platforms with Access control enabled, Caller needs to have TELUX_DATA_CALL_OPS permission
      * to invoke this API successfully.
      *
+     * Configuring data.manage_roaming_for_datacalls in tel.conf controls the roaming behavior for
+     * data calls. If not defined or set to false (default), roaming is enabled for data calls
+     * initiated through @ref telux::data::IDataConnectionManager::startDataCall.
+     * If set to true, roaming is disabled by default. Applications can enable roaming by using the
+     * @ref telux::data::IDataConnectionManager::setRoamingMode API.
+     *
      * @note       if application starts data call on IPV4V6 then it's expected to stop the
      *             data call on same ip family type (i.e IPV4V6).
      *

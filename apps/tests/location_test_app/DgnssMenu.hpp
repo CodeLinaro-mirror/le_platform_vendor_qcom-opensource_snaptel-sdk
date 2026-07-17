@@ -49,6 +49,8 @@
 
 using namespace telux::loc;
 
+#define RESP_BUFFER_SIZE    1032
+
 enum class DgnssSourceType {
     FILE_SOURCE = 0,
     SERVER_SOURCE = 1
@@ -85,5 +87,11 @@ private:
    bool reconnect_ = false;
    DgnssSourceType dgnssSourceType_;
    DgnssDataFormat dataFormat_;
+
+   // RTCM3 stream reassembly state (for messages split across recv() boundaries)
+   uint8_t truncBuffer_[RESP_BUFFER_SIZE] = {};
+   bool append_ = false;
+   int appendOffset_ = 0;
+   int pendingMsgLen_ = 0;
 };
 #endif  // DGNSMENU_HPP

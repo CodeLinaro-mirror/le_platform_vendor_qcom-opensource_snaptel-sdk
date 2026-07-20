@@ -85,9 +85,8 @@ bool DataProfileMenu::init() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "create_profile", {},
             std::bind(&DataProfileMenu::createProfile, this, std::placeholders::_1)));
 
-    std::shared_ptr<ConsoleAppCommand> deleteProfileMenu
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "delete_profile",
-            {"slotId (1-Primary, 2-Secondary)", "profileId", "techPref (0-3GPP, 1-3GPP2)"},
+    std::shared_ptr<ConsoleAppCommand> deleteProfileMenu = std::make_shared<ConsoleAppCommand>(
+        ConsoleAppCommand("3", "delete_profile", {"slotId (1-Primary, 2-Secondary)", "profileId"},
             std::bind(&DataProfileMenu::deleteProfile, this, std::placeholders::_1)));
 
     std::shared_ptr<ConsoleAppCommand> modifyProfileMenu
@@ -100,7 +99,7 @@ bool DataProfileMenu::init() {
 
     std::shared_ptr<ConsoleAppCommand> requestProfileByIdMenu
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6", "request_profile_by_id",
-            {"slotId (1-Primary, 2-Secondary)", "profileId", "techPref (0-3GPP, 1-3GPP2)"},
+            {"slotId (1-Primary, 2-Secondary)", "profileId"},
             std::bind(&DataProfileMenu::requestProfileById, this, std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {reqProfile, createProfileMenu,
@@ -196,11 +195,8 @@ void DataProfileMenu::onInitCompleted(telux::common::ServiceStatus status) {
 
 void DataProfileMenu::getProfileParamsFromUser() {
     char delimiter = '\n';
-    int techPref;
-    std::cout << "Enter Tech Preference (0-3GPP, 1-3GPP2): ";
-    std::cin >> techPref;
-    Utils::validateInput(techPref, {static_cast<int>(telux::data::TechPreference::TP_3GPP),
-                                       static_cast<int>(telux::data::TechPreference::TP_3GPP2)});
+    int techPref   = 0;  // 0-3GPP
+    std::cout << "Tech Preference is 3GPP" << std::endl;
 
     std::string profileName;
     std::cout << "Enter profileName : ";
@@ -338,11 +334,10 @@ void DataProfileMenu::createProfile(std::vector<std::string> inputCommand) {
 }
 
 void DataProfileMenu::deleteProfile(std::vector<std::string> inputCommand) {
-    int slotId, profileId, techPrefId;
+    int slotId, profileId;
     try {
-        slotId     = std::stoi(inputCommand[1]);
-        profileId  = std::stoi(inputCommand[2]);
-        techPrefId = std::stoi(inputCommand[3]);
+        slotId    = std::stoi(inputCommand[1]);
+        profileId = std::stoi(inputCommand[2]);
     } catch (const std::exception &e) {
         std::cout << "ERROR: Invalid input, please enter numerical values " << std::endl;
         return;
@@ -364,12 +359,8 @@ void DataProfileMenu::deleteProfile(std::vector<std::string> inputCommand) {
     }
 
     std::cout << "\nDeleting Profile " << profileId << " on slotId " << slotId << std::endl;
-    telux::data::TechPreference tp = telux::data::TechPreference::UNKNOWN;
-    if (techPrefId == 0) {
-        tp = telux::data::TechPreference::TP_3GPP;
-    } else if (techPrefId == 1) {
-        tp = telux::data::TechPreference::TP_3GPP2;
-    }
+    telux::data::TechPreference tp = telux::data::TechPreference::TP_3GPP;
+
     telux::common::Status status
         = dataProfileManagerMap_[static_cast<SlotId>(slotId)]->deleteProfile(
             profileId, tp, myDeleteProfileCb_[static_cast<SlotId>(slotId)]);
@@ -412,11 +403,8 @@ void DataProfileMenu::queryProfile(std::vector<std::string> inputCommand) {
     }
 
     char delimiter = '\n';
-    int techPref;
-    std::cout << "Enter Tech Preference (0-3GPP, 1-3GPP2): ";
-    std::cin >> techPref;
-    Utils::validateInput(techPref, {static_cast<int>(telux::data::TechPreference::TP_3GPP),
-                                       static_cast<int>(telux::data::TechPreference::TP_3GPP2)});
+    int techPref   = 0;  // 0-3GPP
+    std::cout << "Tech Preference is 3GPP" << std::endl;
 
     std::string profileName;
     std::cout << "Enter profileName: ";
@@ -485,11 +473,10 @@ void DataProfileMenu::queryProfile(std::vector<std::string> inputCommand) {
 }
 
 void DataProfileMenu::requestProfileById(std::vector<std::string> inputCommand) {
-    int slotId, profileId, techPrefId;
+    int slotId, profileId;
     try {
-        slotId     = std::stoi(inputCommand[1]);
-        profileId  = std::stoi(inputCommand[2]);
-        techPrefId = std::stoi(inputCommand[3]);
+        slotId    = std::stoi(inputCommand[1]);
+        profileId = std::stoi(inputCommand[2]);
     } catch (const std::exception &e) {
         std::cout << "ERROR: Invalid input, please enter numerical values " << std::endl;
         return;
@@ -505,12 +492,8 @@ void DataProfileMenu::requestProfileById(std::vector<std::string> inputCommand) 
     }
 
     std::cout << "\nRequest Profile By Id " << profileId << " on slotId " << slotId << std::endl;
-    telux::data::TechPreference tp = telux::data::TechPreference::UNKNOWN;
-    if (techPrefId == 0) {
-        tp = telux::data::TechPreference::TP_3GPP;
-    } else if (techPrefId == 1) {
-        tp = telux::data::TechPreference::TP_3GPP2;
-    }
+    telux::data::TechPreference tp = telux::data::TechPreference::TP_3GPP;
+
     telux::common::Status status
         = dataProfileManagerMap_[static_cast<SlotId>(slotId)]->requestProfile(
             profileId, tp, myDataProfileCbForGetProfileById_[static_cast<SlotId>(slotId)]);

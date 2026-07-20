@@ -1740,6 +1740,8 @@ The following managers are currently available in the simulation:
 13. DataControlManager
 14. DataLinkManager
 15. QoSManager
+16. ClientManager
+17. KeepAliveManager
 
 
 Data APIs Response handling
@@ -1842,6 +1844,111 @@ Additional notes
 1. To simulate data calls, the framework requires physical interfaces provided by the host or docker environment, to be configured.
 2. Listener APIs under IServingSystemListener are not yet supported in simulation.
 3. SSR use-cases are not yet supported.
+4. Data calls are reference-counted across owners: a call is torn down only when the last owner
+   stops it. A client that is not an owner receives ``DEVICE_IN_USE``.
+5. DataLinkManager — ETH mode transition
+
+   - The simulation supports the full ETH mode-change flow (``setPeerEthCapability`` →
+     ``onEthModeChangeRequest`` → ``setPeerModeChangeRequestStatus(ACCEPTED/COMPLETED)`` →
+     ``onEthModeChangeTransactionStatus``) but does not enforce call ordering. Communicating
+     the new mode to the peer over a non-ETH interconnect is an out-of-band client action.
+
+6. L2TP — ``addSession`` / ``removeSession``
+
+   - Session add/remove is persistent across reboots and modifies only the session config,
+     not the tunnel. Tunnel fields are untouched by session operations.
+
+7. L2TP — ``bindSessionToBackhaul``
+
+   - Binding is persistent across reboots. Supported backhauls are WWAN and ETH.
+
+8. Firewall — HW acceleration rules
+
+   - HW-acceleration rules are keyed per profile ID (per-PDN). The same rule must be added
+     once per profile ID. A rule under a different profile ID is treated as a distinct entry.
+
+9. ClientManager — per-device data usage
+
+   - Provides per-device data usage for devices connected to the MDM over wired (Ethernet)
+     or wireless (WLAN) interconnects. Each record is keyed by MAC address. Requires
+     data-usage monitoring to be enabled first (see ``getDeviceDataUsageStats`` above).
+
+10. KeepAliveManager — TCP keep-alive (Monitor mode)
+
+    - Monitor-mode flow: call ``enableTCPMonitor`` first (modem learns TCP session parameters
+      by observing traffic), then call ``startTCPKeepAliveOffload(monHandle, interval, handle)``
+      with the returned monitor handle. A Default mode (explicit parameters) also exists.
+
+11. ``setDataRestrictMode`` / ``addDataRestrictFilters`` — pre-requisite
+
+    - An active data call must exist on the same slot before calling these APIs. Without an
+      active call on the slot the request fails.
+
+12. ``makeDormant`` — pre-requisite
+
+    - An active data call must exist on the same slot. The call fails if no active call exists
+      on the slot.
+
+13. ``setIpConfig(RECONFIGURE)`` / ``setIpConfig(DISABLE)`` — pre-requisite
+
+    - A prior ``setIpConfig(ENABLE)`` for the same ``vlanId`` + ``ipFamily`` combination is
+      required. The API returns an internal error if that entry does not already exist.
+
+14. ``getDeviceDataUsageStats`` — pre-requisite
+
+    - Device data usage monitoring must be enabled before querying usage stats. Enable it by
+      injecting the ``deviceDataUsageMonitoringUpdate`` event via the event injector. Monitoring
+      is disabled by default; the query fails until it has been enabled.
+
+15. ``onThrottledApnInfoChanged`` listener — pre-requisite
+
+    - Inject ``throttle_apn_event = START`` and ensure throttle entries are present in the state
+      JSON. The listener fires periodically while throttling is active.
+
+16. ``onDdsSwitchRecommendation`` listener — pre-requisite
+
+    - ``configureDdsSwitchRecommendation`` must be called first to enable recommendation events.
+      Recommendation events are suppressed until configured.
+
+17. L2TP — ``setConfig(enable=true)`` pre-requisite for ``addTunnel``
+
+    - ``setConfig(enable=true, ...)`` must be called before ``addTunnel``. ``addTunnel`` returns
+      ``NOT_SUPPORTED`` while L2TP is disabled.
+
+18. Firewall — DMZ (``enableDmz`` / ``disableDmz``)
+
+    - DMZ operates per backhaul. The backhaul is keyed by ``slotId`` + ``profileId`` for WWAN
+      or by ``vlanId`` for ETH. ``disableDmz`` requires the IP family type to be specified.
+
+19. ``addDataRestrictFilters`` — rule count limit
+
+    - A maximum of 5 filter rules may be added per call (valid range 1–5). Passing 0 rules or
+      more than 5 is rejected with an invalid-parameter error.
+
+20. VLAN — creating a VLAN with a bridge is not supported for WAN
+
+    - Creating a VLAN with a bridge is not allowed when ``NetworkType::WAN`` is specified. The
+      API returns an invalid-argument error in that case.
+
+21. ``restoreFactorySettings`` — limited scope
+
+    - Resets VLAN state only: ``vlanConfig`` and ``vlanBindConfig`` are cleared. Other subsystem
+      state (L2TP, firewall, data settings) is NOT reset.
+
+22. DDS switch — TEMPORARY mode not persisted
+
+    - A temporary DDS switch is not written to persistent storage and is lost if the simulation
+      server restarts.
+
+23. DDS switch — PERMANENT mode persisted
+
+    - A permanent DDS switch is written to the state JSON and survives a simulation server
+      restart.
+
+24. ``setWwanConnectivityConfig(false)`` — per-slot call control
+
+    - Disconnects any existing WWAN calls on the specified slot and blocks new calls on that
+      slot (new calls return ``NOT_SUPPORTED``). This applies per-slot, not globally.
 
 
 .. _sim-reference-thermal:
@@ -2517,6 +2624,23 @@ Sample input:
 
  telsdk_event_injector -f ntn -e stateChange <state>
  telsdk_event_injector -f ntn -e stateChange 2
+
+Additional Notes
+""""""""""""""""
+
+1. ``enableNtn(true)`` must be called before any ``stateChange`` event injection. Injecting
+   a state change without first enabling NTN has no effect.
+
+2. External GNSS response flow
+
+   - ``setLocationFix()`` must be called while the modem is in ``OUT_OF_SERVICE`` state.
+     The location fix drives the transition to ``IN_SERVICE``. Applies to external-GNSS mode only.
+
+3. Switching back to terrestrial network
+
+   - There is no automatic switch back. The client must explicitly call ``enableNtn(false)``.
+     Cellular-coverage notifications do not change NTN state on their own.
+
 
 .. _sim-reference-wlan:
 

@@ -561,25 +561,25 @@ void SmsMenu::setTag(std::vector<std::string> userInput) {
 }
 
 void SmsMenu::requestStorageDetails(std::vector<std::string> userInput) {
-   std::cout << " Request Storage Details \n" << std::endl;
-   auto smsManager = smsManagers_[slot_ - 1];
-   char delimiter = '\n';
-   std::string storageType;
-   std::cout << "Enter Storage type : \nSIM = 1 \nNV = 2 \nChoose type: ";
-   std::getline(std::cin, storageType, delimiter);
-   int type = -1;
-   try {
-      type = stoi(storageType);
-   } catch (const std::exception &e) {
-      std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
-         << storageType << std::endl;
-      return;
-   }
-   auto ret = smsManager->requestStorageDetails(SmsStorageCallback::reqStorageDetailsResponse,
-       static_cast<telux::tel::StorageType>(type));
-   if(ret == telux::common::Status::SUCCESS) {
-      std::cout << "Request for SIM storage details succeeded" << std::endl;
-   } else {
-      std::cout << "Request for SIM storage details failed" << std::endl;
-   }
+    std::cout << " Request Storage Details \n" << std::endl;
+    auto smsManager = smsManagers_[slot_ - 1];
+    char delimiter  = '\n';
+    std::string storageType;
+    std::cout << "Enter Storage type : \nSIM = 1 \nNV = 2 \nChoose type: ";
+    std::getline(std::cin, storageType, delimiter);
+    int type = -1;
+    try {
+        type = stoi(storageType);
+    } catch (const std::exception &e) {
+        std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: " << storageType
+                  << std::endl;
+        return;
+    }
+    auto ret = smsManager->requestStorageDetails(
+        SmsStorageCallback::reqStorageDetailsResponse, static_cast<telux::tel::StorageType>(type));
+    if (ret == telux::common::Status::SUCCESS) {
+        std::cout << "Request for storage details succeeded" << std::endl;
+    } else {
+        std::cout << "Request for storage details failed" << std::endl;
+    }
 }

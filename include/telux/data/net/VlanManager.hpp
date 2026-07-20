@@ -135,26 +135,6 @@ class IVlanManager {
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
-     * Checks if the VLAN manager subsystem is ready.
-     *
-     * @returns True if VLAN Manager is ready for service, otherwise
-     * returns false.
-     *
-     * @deprecated Use getServiceStatus API.
-     */
-    virtual bool isSubsystemReady() = 0;
-
-    /**
-     * Wait for VLAN manager subsystem to be ready.
-     *
-     * @returns A future that caller can wait on to be notified
-     * when VLAN manager is ready.
-     *
-     * @deprecated Use InitResponseCb callback in factory API getVlanManager.
-     */
-    virtual std::future<bool> onSubsystemReady() = 0;
-
-    /**
      * Create a VLAN associated with multiple interfaces
      * Creates VLAN on hardware interface @ref telux::data::InterfaceType, assigns VLAN id, assigns
      * VLAN priority level (according to IEEE 802.1p priority code point-PCP), assigns network type,

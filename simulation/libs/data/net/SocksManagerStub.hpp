@@ -25,8 +25,6 @@ class SocksManagerStub : public ISocksManager, public ISocksListener {
     telux::common::Status init(telux::common::InitResponseCb callback);
 
     telux::common::ServiceStatus getServiceStatus() override;
-    bool isSubsystemReady() override;
-    std::future<bool> onSubsystemReady() override;
 
     telux::common::Status enableSocks(
         bool enable, telux::common::ResponseCallback callback = nullptr) override;
@@ -51,7 +49,6 @@ class SocksManagerStub : public ISocksManager, public ISocksListener {
     telux::data::OperationType oprType_;
 
     void initSync(telux::common::InitResponseCb callback);
-    bool waitForInitialization();
     void setSubsystemReady(bool status);
     void setSubSystemStatus(telux::common::ServiceStatus status);
     void invokeInitCallback(telux::common::ServiceStatus status);

@@ -186,26 +186,6 @@ class INatManager {
     virtual telux::data::OperationType getOperationType() = 0;
 
     /**
-     * Checks if the NAT manager subsystem is ready.
-     *
-     * @returns True if NAT Manager is ready for service, otherwise
-     * returns false.
-     *
-     * @deprecated Use getServiceStatus API.
-     */
-    virtual bool isSubsystemReady() = 0;
-
-    /**
-     * Wait for NAT manager subsystem to be ready.
-     *
-     * @returns A future that caller can wait on to be notified
-     * when NAT manager is ready.
-     *
-     * @deprecated Use InitResponseCb callback in factory API getNatManager.
-     */
-    virtual std::future<bool> onSubsystemReady() = 0;
-
-    /**
      * Adds a static Network Address Translation (NAT) entry in the NAT table, these
      * entries are persistent across object, connection and reboot lifetimes. To remove
      * an entry it needs a explicit call to removeStaticNatEntry() API, it supports both

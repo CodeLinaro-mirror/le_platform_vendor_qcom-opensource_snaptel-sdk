@@ -100,6 +100,12 @@ void SocksManagerStub::invokeCallback(
     taskQ_->add(f);
 }
 
+void SocksManagerStub::setSubSystemStatus(telux::common::ServiceStatus status) {
+    LOG(DEBUG, __FUNCTION__, " to status: ", static_cast<int>(status));
+    std::lock_guard<std::mutex> lk(mtx_);
+    subSystemStatus_ = status;
+}
+
 void SocksManagerStub::setSubsystemReady(bool status) {
     LOG(DEBUG, __FUNCTION__, " status: ", status);
     std::lock_guard<std::mutex> lk(mtx_);
@@ -107,36 +113,9 @@ void SocksManagerStub::setSubsystemReady(bool status) {
     cv_.notify_all();
 }
 
-std::future<bool> SocksManagerStub::onSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    auto future
-        = std::async(std::launch::async, [&] { return SocksManagerStub::waitForInitialization(); });
-    return future;
-}
-
-bool SocksManagerStub::waitForInitialization() {
-    LOG(INFO, __FUNCTION__);
-    std::unique_lock<std::mutex> lock(mtx_);
-    if (!isSubsystemReady()) {
-        cv_.wait(lock);
-    }
-    return isSubsystemReady();
-}
-
-void SocksManagerStub::setSubSystemStatus(telux::common::ServiceStatus status) {
-    LOG(DEBUG, __FUNCTION__, " to status: ", static_cast<int>(status));
-    std::lock_guard<std::mutex> lk(mtx_);
-    subSystemStatus_ = status;
-}
-
 telux::common::ServiceStatus SocksManagerStub::getServiceStatus() {
     LOG(DEBUG, __FUNCTION__);
     return subSystemStatus_;
-}
-
-bool SocksManagerStub::isSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    return ready_;
 }
 
 telux::common::Status SocksManagerStub::enableSocks(

@@ -259,26 +259,6 @@ void SensorControlMenu::deactivateSensor(std::vector<std::string> userInput) {
     sensor->deactivate();
 }
 
-void SensorControlMenu::enableLowPowerMode(std::vector<std::string> userInput) {
-    int cid = -1;
-    SensorUtils::getInput("Enter Client ID: ", cid);
-    std::shared_ptr<SensorClient> sensor = SensorUtils::getSensorClient(cid, sensorClients_);
-    if (sensor == nullptr) {
-        return;
-    }
-    sensor->enableLowPowerMode();
-}
-
-void SensorControlMenu::disableLowPowerMode(std::vector<std::string> userInput) {
-    int cid = -1;
-    SensorUtils::getInput("Enter Client ID: ", cid);
-    std::shared_ptr<SensorClient> sensor = SensorUtils::getSensorClient(cid, sensorClients_);
-    if (sensor == nullptr) {
-        return;
-    }
-    sensor->disableLowPowerMode();
-}
-
 void SensorControlMenu::deleteSensorClient(std::vector<std::string> userInput) {
     int cid = -1;
     SensorUtils::getInput("Enter Client ID: ", cid);

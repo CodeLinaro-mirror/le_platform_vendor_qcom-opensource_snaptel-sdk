@@ -98,21 +98,6 @@ class ICallListener : public common::IServiceStatusListener {
     }
 
     /**
-     * This function is called when device completes MSD Transmission.
-     *
-     * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
-     * permission to receive this notification.
-     *
-     * @param [in] phoneId - Unique Id of phone on which MSD Transmission Status is being reported
-     * @param [in] errorCode - Indicates MSD Transmission status i.e. success or failure
-     *
-     * @deprecated Use another onECallMsdTransmissionStatus() API with argument
-     * @ref ECallMsdTransmissionStatus
-     */
-    virtual void onECallMsdTransmissionStatus(int phoneId, telux::common::ErrorCode errorCode) {
-    }
-
-    /**
      * This function is called when there is Minimum Set of Data (MSD) transmission.
      * The MSD transmission happens at call connect and also when the modem or client
      * responds to MSD pull request from PSAP.

@@ -161,27 +161,6 @@ class IL2tpManager {
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
-     * Checks if the L2tp manager subsystem is ready.
-     *
-     * @returns True if L2tp Manager is ready for service, otherwise
-     *          returns false.
-     *
-     * @note    This API will be deprecated. getServiceStatus API is recommended as an alternative
-     */
-    virtual bool isSubsystemReady() = 0;
-
-    /**
-     * Wait for L2tp manager subsystem to be ready.
-     *
-     * @returns A future that caller can wait on to be notified
-     *          when L2tp manager is ready.
-     *
-     * @note    This API will be deprecated. Callback of type InitResponseCb argument in data
-     *          factory API getL2tpManager is recommended as an alternative.
-     */
-    virtual std::future<bool> onSubsystemReady() = 0;
-
-    /**
      * Enable L2TP for unmanaged Tunnel State
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG

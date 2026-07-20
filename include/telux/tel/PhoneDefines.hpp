@@ -572,18 +572,6 @@ enum class RadioState {
     RADIO_STATE_ON          = 10, /**< Radio is on */
 };
 
-/**
- * Defines the service states
- *
- * @deprecated Use requestVoiceServiceState() API or  to know the status of phone
- */
-enum class ServiceState {
-    EMERGENCY_ONLY, /**< Only emergency calls allowed */
-    IN_SERVICE, /**< Normal operation, device is registered with a carrier and
-                     online */
-    OUT_OF_SERVICE, /**< Device is not registered with any carrier */
-    RADIO_OFF, /**< Device radio is off - Airplane mode for example */
-};
 
 /**
  * Defines all available radio access technologies

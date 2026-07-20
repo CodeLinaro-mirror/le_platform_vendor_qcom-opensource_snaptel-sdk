@@ -65,34 +65,6 @@ void MyPhoneListener::onServiceStatusChange(telux::common::ServiceStatus status)
     PRINT_NOTIFICATION << " Phone onServiceStatusChange" << stat << "\n";
 }
 
-void MyPhoneListener::onServiceStateChanged(int phoneId, telux::tel::ServiceState state) {
-    std::cout << "\n";
-    PRINT_NOTIFICATION << "OnServiceStateChanged for PhoneId = " << phoneId
-                       << " ,ServiceState = " << serviceStateToString(state) << std::endl;
-}
-
-std::string MyPhoneListener::serviceStateToString(telux::tel::ServiceState serviceState) {
-    std::string state = "";
-    switch (serviceState) {
-        case telux::tel::ServiceState::EMERGENCY_ONLY:
-            state = "Emergency Only";
-            break;
-        case telux::tel::ServiceState::IN_SERVICE:
-            state = "In Service";
-            break;
-        case telux::tel::ServiceState::OUT_OF_SERVICE:
-            state = "Out Of Service";
-            break;
-        case telux::tel::ServiceState::RADIO_OFF:
-            state = "Radio Off";
-            break;
-        default:
-            state = "Unknown";
-            break;
-    }
-    return state;
-}
-
 void MyPhoneListener::onSignalStrengthChanged(
     int phoneId, std::shared_ptr<telux::tel::SignalStrength> signalStrength) {
     std::cout << std::endl << std::endl;
@@ -105,16 +77,6 @@ void MyPhoneListener::onSignalStrengthChanged(
         } else {
             PRINT_NOTIFICATION << "GSM Signal Strength: "
                                << signalStrength->getGsmSignalStrength()->getGsmSignalStrength()
-                               << std::endl;
-        }
-
-        if (signalStrength->getGsmSignalStrength()->getGsmBitErrorRate()
-            == INVALID_SIGNAL_STRENGTH_VALUE) {
-            PRINT_NOTIFICATION << "GSM Bit Error Rate: "
-                               << "UNAVAILABLE" << std::endl;
-        } else {
-            PRINT_NOTIFICATION << "GSM Bit Error Rate: "
-                               << signalStrength->getGsmSignalStrength()->getGsmBitErrorRate()
                                << std::endl;
         }
 
@@ -132,16 +94,6 @@ void MyPhoneListener::onSignalStrengthChanged(
         } else {
             PRINT_NOTIFICATION << "GSM Received Signal Strength Indicator(in dBm): "
                                << signalStrength->getGsmSignalStrength()->getRssi() << std::endl;
-        }
-
-        if (signalStrength->getGsmSignalStrength()->getTimingAdvance()
-            == INVALID_SIGNAL_STRENGTH_VALUE) {
-            PRINT_NOTIFICATION << "GSM Timing Advance(in bit periods): "
-                               << "UNAVAILABLE" << std::endl;
-        } else {
-            PRINT_NOTIFICATION << "GSM Timing Advance(in bit periods): "
-                               << signalStrength->getGsmSignalStrength()->getTimingAdvance()
-                               << std::endl;
         }
 
         PRINT_NOTIFICATION << "GSM Signal Level: "
@@ -238,16 +190,6 @@ void MyPhoneListener::onSignalStrengthChanged(
         } else {
             PRINT_NOTIFICATION << "WCDMA Received Signal Strength Indicator(in dBm): "
                                << signalStrength->getWcdmaSignalStrength()->getRssi() << std::endl;
-        }
-
-        if (signalStrength->getWcdmaSignalStrength()->getBitErrorRate()
-            == INVALID_SIGNAL_STRENGTH_VALUE) {
-            PRINT_NOTIFICATION << "WCDMA Bit Error Rate: "
-                               << "UNAVAILABLE" << std::endl;
-        } else {
-            PRINT_NOTIFICATION << "WCDMA Bit Error Rate: "
-                               << signalStrength->getWcdmaSignalStrength()->getBitErrorRate()
-                               << std::endl;
         }
 
         if (signalStrength->getWcdmaSignalStrength()->getEcio() == INVALID_SIGNAL_STRENGTH_VALUE) {
@@ -382,25 +324,6 @@ std::string MyPhoneHelper::signalLevelToString(telux::tel::SignalStrengthLevel l
         default:
             return "Invalid Signal Level";
     }
-}
-
-std::string MyPhoneListener::radioStateToString(telux::tel::RadioState radioState) {
-    std::string state = "";
-    switch (radioState) {
-        case telux::tel::RadioState::RADIO_STATE_OFF:
-            state = "Off";
-            break;
-        case telux::tel::RadioState::RADIO_STATE_UNAVAILABLE:
-            state = "Unavailable";
-            break;
-        case telux::tel::RadioState::RADIO_STATE_ON:
-            state = "On";
-            break;
-        default:
-            state = "Unknown";
-            break;
-    }
-    return state;
 }
 
 std::string MyPhoneHelper::radioTechToString(telux::tel::RadioTechnology radioTech) {
@@ -543,14 +466,6 @@ std::string MyPhoneHelper::voiceServiceStateToString(telux::tel::VoiceServiceSta
             break;
     }
     return state;
-}
-
-void MyPhoneListener::onVoiceRadioTechnologyChanged(
-    int phoneId, telux::tel::RadioTechnology radioTechnology) {
-    std::cout << "\n";
-    PRINT_NOTIFICATION << "Received unsol response, PhoneId " << phoneId << std::endl;
-    PRINT_NOTIFICATION << "Changed Radio technology " << static_cast<int>(radioTechnology)
-                       << std::endl;
 }
 
 void MyPhoneListener::onVoiceServiceStateChanged(
@@ -709,10 +624,20 @@ void MyGetOperatingModeCallback::operatingModeResponse(
         PRINT_CB << "requestOperatingMode response successful" << std::endl;
         PRINT_CB << "Operating Mode: " << MyPhoneHelper::operatingModeToString(operatingMode)
                  << std::endl;
+        operatingMode_ = operatingMode;
     } else {
         PRINT_CB << "requestOperatingMode is failed, errorCode: " << static_cast<int>(error)
                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     }
+    try {
+        opCallbackPromise_.set_value(error);
+    } catch (const std::future_error& e) {
+        // Already satisfied, ignore
+    }
+}
+
+telux::tel::OperatingMode MyGetOperatingModeCallback::getOperatingMode() {
+    return operatingMode_;
 }
 
 void MyPhoneListener::onOperatingModeChanged(telux::tel::OperatingMode mode) {
@@ -779,16 +704,6 @@ void MyPhoneHelper::printCellInfoDetails(
                                    << std::endl;
             }
 
-            if (gsmCellInfo->getSignalStrengthInfo().getGsmBitErrorRate()
-                == INVALID_SIGNAL_STRENGTH_VALUE) {
-                PRINT_NOTIFICATION << "GSM Bit Error Rate: "
-                                   << "UNAVAILABLE" << std::endl;
-            } else {
-                PRINT_NOTIFICATION << "GSM Bit Error Rate: "
-                                   << gsmCellInfo->getSignalStrengthInfo().getGsmBitErrorRate()
-                                   << std::endl;
-            }
-
             if (gsmCellInfo->getSignalStrengthInfo().getDbm() == INVALID_SIGNAL_STRENGTH_VALUE) {
                 PRINT_NOTIFICATION << "GSM Signal Strength(in dBm): "
                                    << "UNAVAILABLE" << std::endl;
@@ -803,16 +718,6 @@ void MyPhoneHelper::printCellInfoDetails(
             } else {
                 PRINT_NOTIFICATION << "GSM Received Signal Strength Indicator(in dBm): "
                                    << gsmCellInfo->getSignalStrengthInfo().getRssi() << std::endl;
-            }
-
-            if (gsmCellInfo->getSignalStrengthInfo().getTimingAdvance()
-                == INVALID_SIGNAL_STRENGTH_VALUE) {
-                PRINT_NOTIFICATION << "GSM Timing Advance(in bit periods): "
-                                   << "UNAVAILABLE" << std::endl;
-            } else {
-                PRINT_NOTIFICATION << "GSM Timing Advance(in bit periods): "
-                                   << gsmCellInfo->getSignalStrengthInfo().getTimingAdvance()
-                                   << std::endl;
             }
 
             PRINT_NOTIFICATION
@@ -894,15 +799,6 @@ void MyPhoneHelper::printCellInfoDetails(
                     << std::endl;
             }
 
-            if (lteCellInfo->getSignalStrengthInfo().getTimingAdvance()
-                == INVALID_SIGNAL_STRENGTH_VALUE) {
-                PRINT_NOTIFICATION << "LTE Timing Advance: "
-                                   << "UNAVAILABLE" << std::endl;
-            } else {
-                PRINT_NOTIFICATION << "LTE Timing Advance: "
-                                   << lteCellInfo->getSignalStrengthInfo().getTimingAdvance()
-                                   << std::endl;
-            }
             PRINT_NOTIFICATION
                 << "LTE Signal Level: "
                 << signalLevelToString(lteCellInfo->getSignalStrengthInfo().getLevel())
@@ -963,15 +859,6 @@ void MyPhoneHelper::printCellInfoDetails(
                                    << wcdmaCellInfo->getSignalStrengthInfo().getRssi() << std::endl;
             }
 
-            if (wcdmaCellInfo->getSignalStrengthInfo().getBitErrorRate()
-                == INVALID_SIGNAL_STRENGTH_VALUE) {
-                PRINT_NOTIFICATION << "WCDMA Bit Error Rate: "
-                                   << "UNAVAILABLE" << std::endl;
-            } else {
-                PRINT_NOTIFICATION << "WCDMA Bit Error Rate: "
-                                   << wcdmaCellInfo->getSignalStrengthInfo().getBitErrorRate()
-                                   << std::endl;
-            }
             PRINT_NOTIFICATION
                 << "WCDMA Signal Level: "
                 << signalLevelToString(wcdmaCellInfo->getSignalStrengthInfo().getLevel())

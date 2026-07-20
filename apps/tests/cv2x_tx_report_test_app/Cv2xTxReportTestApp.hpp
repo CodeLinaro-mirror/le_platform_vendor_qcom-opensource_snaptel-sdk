@@ -66,8 +66,6 @@ class Cv2xStatusListener : public ICv2xListener {
 
     Cv2xStatus getCv2xStatus();
 
-    void onStatusChanged(Cv2xStatus status) override;
-
     void waitCv2xActive();
 
     void stopWaitCv2xActive();

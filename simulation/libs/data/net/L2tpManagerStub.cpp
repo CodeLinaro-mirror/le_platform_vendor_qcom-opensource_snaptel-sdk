@@ -104,6 +104,12 @@ void L2tpManagerStub::invokeCallback(
     taskQ_->add(f);
 }
 
+void L2tpManagerStub::setSubSystemStatus(telux::common::ServiceStatus status) {
+    LOG(DEBUG, __FUNCTION__, " to status: ", static_cast<int>(status));
+    std::lock_guard<std::mutex> lk(mtx_);
+    subSystemStatus_ = status;
+}
+
 void L2tpManagerStub::setSubsystemReady(bool status) {
     LOG(DEBUG, __FUNCTION__, " status: ", status);
     std::lock_guard<std::mutex> lk(mtx_);
@@ -111,36 +117,9 @@ void L2tpManagerStub::setSubsystemReady(bool status) {
     cv_.notify_all();
 }
 
-std::future<bool> L2tpManagerStub::onSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    auto future
-        = std::async(std::launch::async, [&] { return L2tpManagerStub::waitForInitialization(); });
-    return future;
-}
-
-bool L2tpManagerStub::waitForInitialization() {
-    LOG(INFO, __FUNCTION__);
-    std::unique_lock<std::mutex> lock(mtx_);
-    if (!isSubsystemReady()) {
-        cv_.wait(lock);
-    }
-    return isSubsystemReady();
-}
-
-void L2tpManagerStub::setSubSystemStatus(telux::common::ServiceStatus status) {
-    LOG(DEBUG, __FUNCTION__, " to status: ", static_cast<int>(status));
-    std::lock_guard<std::mutex> lk(mtx_);
-    subSystemStatus_ = status;
-}
-
 telux::common::ServiceStatus L2tpManagerStub::getServiceStatus() {
     LOG(DEBUG, __FUNCTION__);
     return subSystemStatus_;
-}
-
-bool L2tpManagerStub::isSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    return ready_;
 }
 
 telux::common::Status L2tpManagerStub::setConfig(bool enable, bool enableMss, bool enableMtu,

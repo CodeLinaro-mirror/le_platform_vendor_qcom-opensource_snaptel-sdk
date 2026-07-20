@@ -104,6 +104,12 @@ void FirewallManagerStub::invokeCallback(
     taskQ_->add(f);
 }
 
+void FirewallManagerStub::setSubSystemStatus(telux::common::ServiceStatus status) {
+    LOG(DEBUG, __FUNCTION__, " to status: ", static_cast<int>(status));
+    std::lock_guard<std::mutex> lk(mtx_);
+    subSystemStatus_ = status;
+}
+
 void FirewallManagerStub::setSubsystemReady(bool status) {
     LOG(DEBUG, __FUNCTION__, " status: ", status);
     std::lock_guard<std::mutex> lk(mtx_);
@@ -111,36 +117,9 @@ void FirewallManagerStub::setSubsystemReady(bool status) {
     cv_.notify_all();
 }
 
-std::future<bool> FirewallManagerStub::onSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    auto future = std::async(
-        std::launch::async, [&] { return FirewallManagerStub::waitForInitialization(); });
-    return future;
-}
-
-bool FirewallManagerStub::waitForInitialization() {
-    LOG(INFO, __FUNCTION__);
-    std::unique_lock<std::mutex> lock(mtx_);
-    if (!isSubsystemReady()) {
-        cv_.wait(lock);
-    }
-    return isSubsystemReady();
-}
-
-void FirewallManagerStub::setSubSystemStatus(telux::common::ServiceStatus status) {
-    LOG(DEBUG, __FUNCTION__, " to status: ", static_cast<int>(status));
-    std::lock_guard<std::mutex> lk(mtx_);
-    subSystemStatus_ = status;
-}
-
 telux::common::ServiceStatus FirewallManagerStub::getServiceStatus() {
     LOG(DEBUG, __FUNCTION__);
     return subSystemStatus_;
-}
-
-bool FirewallManagerStub::isSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    return ready_;
 }
 
 telux::data::OperationType FirewallManagerStub::getOperationType() {

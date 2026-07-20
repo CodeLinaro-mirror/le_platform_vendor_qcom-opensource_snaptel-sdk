@@ -64,24 +64,6 @@ class ISignalStrengthCallback;
 class IVoiceServiceStateCallback;
 
 /**
- * This function is called with the response to requestVoiceRadioTechnology API.
- *
- * The callback can be invoked from multiple different threads.
- * The implementation should be thread safe.
- *
- * @param [in] radioTech  Pointer to radio technology
- * @param [in] error      Return code for whether the operation
- *                        succeeded or failed
- *                        - @ref telux::common::ErrorCode::SUCCESS
- *                        - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
- *                        - @ref telux::common::ErrorCode::GENERIC_FAILURE
- *
- * @deprecated Use IVoiceServiceStateCallback instead
- */
-using VoiceRadioTechResponseCb
-    = std::function<void(telux::tel::RadioTechnology radioTech, telux::common::ErrorCode error)>;
-
-/**
  * This function is called with the response to requestCellInfo API.
  *
  * The callback can be invoked from multiple different threads.
@@ -149,39 +131,6 @@ class IPhone {
     virtual telux::common::Status getPhoneId(int &phoneId) = 0;
 
     /**
-     * Get Radio state of device.
-     *
-     * @returns @ref RadioState
-     *
-     * @deprecated Use IPhoneManager::requestOperatingMode() API instead
-     */
-    virtual RadioState getRadioState() = 0;
-
-    /**
-     * Request for Radio technology type (3GPP/3GPP2) used for voice.
-     *
-     * @param [in] callback  callback pointer to get the response of radio power
-     *                       request @ref telux::tel::VoiceRadioTechResponseCb
-     *
-     * @returns Status of requestVoiceRadioTechnology i.e. success or suitable
-     * error code @ref telux::common::Status.
-     *
-     * @deprecated Use requestVoiceServiceState() API to get VoiceServiceInfo which
-     *             has API to get radio technology i.e VoiceServiceInfo::getRadioTechnology()
-     */
-    virtual telux::common::Status requestVoiceRadioTechnology(VoiceRadioTechResponseCb callback)
-        = 0;
-
-    /**
-     * Get service state of the phone.
-     *
-     * @returns    @ref ServiceState
-     *
-     * @deprecated Use requestVoiceServiceState() API
-     */
-    virtual ServiceState getServiceState() = 0;
-
-    /**
      * Request for voice service state to get the information of phone serving
      * states
      *
@@ -193,24 +142,6 @@ class IPhone {
      */
     virtual telux::common::Status requestVoiceServiceState(
         std::weak_ptr<IVoiceServiceStateCallback> callback)
-        = 0;
-
-    /**
-     * Set the radio power on or off.
-     *
-     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_PHONE_MGMT
-     * permission to invoke this API successfully.
-     *
-     * @param [in] enable    Flag that determines whether to turn radio on or off
-     * @param [in] callback  Optional callback pointer to get the response of set
-     *                       radio power request
-     *
-     * @returns Status of setRadioPower i.e. success or suitable error code.
-     *
-     * @deprecated Use IPhoneManager::setOperatingMode() API instead
-     */
-    virtual telux::common::Status setRadioPower(
-        bool enable, std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)
         = 0;
 
     /**

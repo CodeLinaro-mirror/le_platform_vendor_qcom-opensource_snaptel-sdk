@@ -2797,26 +2797,6 @@ objects have been created, the following steps ensure a cleanup of the sensor su
 5. Release the instance of ISensorFeatureManager by setting it to nullptr. Since the application
    owns the object, this would result in the sensor feature manager getting destroyed.
 
-Call flow for sensor power control
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. figure:: /../images/sensor_power_control_call_flow.png
-
-The below points are to be noted for sensor power control
-
-a) Power control is not offered by all sensor manufacturers. If the underlying hardware sensor does
-not support power control, the power control APIs fail.
-b) Enabling or disabling low power mode for the sensor is only possible when the sensor is not
-activated.
-
-For achieving power control, the following steps are to be followed
-
-1. Deactivate the sensor. This will stop the notifications about sensor events to the registered
-   listeners.
-2. Perform the required power control by enabling or disabling low power mode for the sensor.
-3. Activate the sensor.
-4. When the sensor is activated successfully, the sensor data is sent to the registered listeners.
-
 Call flow for sensor feature control
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -3135,130 +3115,20 @@ Call flow to register listener and receive reports (Wi-Fi)
 WLAN
 ----
 
-Call flow to modify WLAN configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Call flow for WLAN Control Manager - OSS Interface Management
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. figure:: /../images/wlan_modify_config.png
+``IWlanControlManager`` is currently unavailable. ``WlanFactory::getWlanControlManager()``
+returns a valid object whose ``getServiceStatus()`` always reports ``SERVICE_FAILED``.
+The initialization callback is invoked with ``SERVICE_FAILED`` and no API operations
+are available at this time.
 
-1. Application requests IWlanDeviceManager object from WLAN factory.
-2. WLAN factory returns a shared pointer to the IWlanDeviceManger object to the application.
-3. Application can use IWlanDeviceManager::getServiceStatus to determine if the system is ready.
-4. The application receives the status, i.e., SERVICE_AVAILABLE or SERVICE_UNAVAILABLE, to indicate if the subsystem is ready.
-
-   a. If the subsystem is not ready, the application can wait for the callback provided in Step 1 for subsystem initialization status.
-   b. Application provided callback is invoked with subsystem status (SERVICE_AVAILABLE/SERVICE_FAILED).
-
-5. When the subsystem is ready, application calls IWlanDeviceManager::getStatus to get WLAN enablement status.
-6. Application receives WLAN enablement status.
-
-   a. If WLAN is enabled, application calls IWlanDeviceManager::enable(false) to disable WLAN.
-   b. Application receives WLAN disablement response and waits for WLAN status indication.
-   c. Application receives WLAN status indication IWlanDeviceManager::onEnableChanged(false) to indicate WLAN is disabled.
-
-7. Application sets desired configuration using IWlanDeviceManager::setMode to set desired number of access points and stations to be enabled.
-8. Application receives response.
-9. Application calls IWlanDeviceManager::enable(true) to enable WLAN.
-10. Application receives WLAN enablement response and waits for WLAN status indication.
-11. Application receives WLAN status indication IWlanDeviceManager::onEnableChanged(true) to indicate WLAN is enbaled.
-
-Call flow to modify WLAN station configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. figure:: /../images/wlan_modify_station_config.png
-
-1. Application requests IWlanDeviceManager object from WLAN factory.
-2. WLAN factory returns shared pointer to IWlandeviceManager to the application.
-3. Application can use IWlanDeviceManager::getServiceStatus to determine if the system is ready.
-4. The application receives the Status i.e. either SERVICE_AVAILABLE or SERVICE_UNAVALABLE to indicate whether sub-system is ready or not.
-
-   a. If subsystem is not ready, then the application could wait for callback provided in step 1 for subsystem initialization status.
-   b. Application provided callback is invoked with subsystem status (SERVICE_AVAILABLE/SERVICE_FAILED).
-
-5. On Readiness, requests IStaInterfaceManager object from WLAN factory.
-6. WLAN factory returns shared pointer to IStaInterfaceManager to the application.
-7. Application calls IStaInterfaceManager::setIpConfig to set desired IP configurations.
-8. Application receives response set IP configuration.
-9. Application calls IStaInterfaceManager::managerStaService to restart wpa_supplicant daemon.
-10. Application receives response to restart wpa_supplicant daemon and station configuration shall be active at this stage.
-
-Call flow to start scan, add network config, or remove network config
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. figure:: /../images/wlan_sta_scan_network_config_update.png
-
-1. Application requests IWlanDeviceManager object from WLAN factory.
-2. WLAN factory returns a shared pointer to IWlanDeviceManager to the application.
-3. Application can use IWlanDeviceManager::getServiceStatus to determine if the system is ready.
-4. The application receives the status, i.e., either SERVICE_AVAILABLE or SERVICE_UNAVAILABLE, to indicate whether the subsystem is ready or not.
-
-   a. If the subsystem is not ready, then the application could wait for the callback provided in step 1 for sub-system initialization status.
-   b. The application provided callback is invoked with sub-system status (SERVICE_AVAILABLE/SERVICE_FAILED).
-
-5. Upon readiness, the application requests the IStaInterfaceManager object from the WLAN factory.
-6. WLAN factory returns shared pointer to IStaInterfaceManager to the application.
-7. The application creates a listener object of type IStaListener and registers with IStaInterfaceManager for notifications.
-8. Application calls IStaInterfaceManager::startScan to initiate station scan process.
-9. Application receives the result (SUCCESS or suitable failure) of startScan request.
-9. Application receives onScanResultUpdated() notification when scan results are available.
-10. Application calls IStaInterfaceManager::addNetworkConfig to add and store new network configuration persistently. If the enable flag is set to true, the system proceeds as follows:
-
-   a. If the requested station is already in connected state, the new configuration is stored and no attempt would be made to connect
-      to the requested network.
-   b. If the requested station is not in connected state, then along with storing the configuration, an attempt would be made to
-      connect to requested network, subsequently, the connection status would be notified via the onStationStatusChanged indication.
-
-11. Application can optionally call IStaInterfaceManager::removeNetworkConfig, to remove the specified network configuration entry
-    from the saved network configurations, subsequently, disconnect from the external AP if it is the active connection.
-    Connection status is notified via onStationStatusChanged indication.
-
-
-Call flow to get network configs, connect and disconnect
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. figure:: /../images/wlan_sta_connection_update.png
-
-1. Application requests IWlanDeviceManager object from WLAN factory.
-2. WLAN factory returns a shared pointer to IWlanDeviceManager to the application.
-3. Application can use IWlanDeviceManager::getServiceStatus to determine if the system is ready.
-4. The application receives the status, i.e., either SERVICE_AVAILABLE or SERVICE_UNAVAILABLE, to indicate whether the subsystem is ready or not.
-
-   a. If the subsystem is not ready, then the application could wait for the callback provided in step 1 for sub-system initialization status.
-   b. The application provided callback is invoked with subsystem status (SERVICE_AVAILABLE/SERVICE_FAILED).
-
-5. Upon readiness, the application requests the IStaInterfaceManager object from the WLAN factory.
-6. WLAN factory returns shared pointer to IStaInterfaceManager to the application.
-7. The application creates a listener object of type IStaListener and registers with IStaInterfaceManager for notifications.
-8. Application calls IStaInterfaceManager::getNetworkConfigs to retrieve the list of network block entries stored in the saved network configurations.
-9. Application receives the result (SUCCESS or suitable failure) of IStaInterfaceManager::getNetworkConfigs request.
-10. Application calls IStaInterfaceManager::connect to connect to the specified network ID from the saved network configurations.
-11. Application receives the result (SUCCESS or suitable failure) of IStaInterfaceManager::connect request.
-
-   a. If the connection attempt is successful, the corresponding status is notified via the onStationStatusChanged indication.
-   b. If the connection attempt fails due to incorrect PSK or AP not found in the vicinity, association failure will also be
-      notified via the onStationStatusChanged indication.
-12. Application can optionally call IStaInterfaceManager::disconnect to disconnect from the active station connection.
-13. Application receives the result (SUCCESS or suitable failure) of IStaInterfaceManager::disconnect request.
-14. Application receives onStationStatusChanged notification if the disconnection attempt was successful.
-
-Call flow to Modify WLAN Access Point Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. figure:: /../images/wlan_modify_ap_config.png
-
-1. Application requests IWlanDeviceManager object from WLAN factory.
-2. WLAN factory returns shared pointer to IWlandeviceManager to the application.
-3. Application can use IWlanDeviceManager::getServiceStatus to determine if the system is ready.
-4. The application receives the Status i.e. either SERVICE_AVAILABLE or SERVICE_UNAVALABLE to indicate whether sub-system is ready or not.
-
-   a. If subsystem is not ready, then the application could wait for callback provided in step 1 for subsystem initialization status.
-   b. Application pprovided callback is invoked with subsystem status (SERVICE_AVAILABLE/SERVICE_FAILED).
-
-5. On Readiness, requests IApInterfaceManager object from WLAN factory.
-6. WLAN factory returns shared pointer to IApInterfaceManager to the application.
-7. Application calls IApInterfaceManager::setConfig to set desired IP configurations.
-8. Application receives response set configuration.
-9. Application calls IApInterfaceManager::managerApService to restart hostapd daemon.
-10. Application receives response to restart hostapd daemon and access point configuration shall be active at this stage.
+1. Application requests ``IWlanControlManager`` object from ``WlanFactory`` using
+   ``getWlanControlManager(initCb)``.
+2. ``WlanFactory`` returns a shared pointer to ``IWlanControlManager``. The initialization
+   callback is invoked asynchronously with ``SERVICE_FAILED``.
+3. Application calls ``IWlanControlManager::getServiceStatus()``, receives ``SERVICE_FAILED``,
+   and does not proceed further.
 
 SATCOM
 ------

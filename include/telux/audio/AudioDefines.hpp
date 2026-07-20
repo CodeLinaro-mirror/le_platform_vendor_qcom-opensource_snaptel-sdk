@@ -353,9 +353,6 @@ struct StreamConfig {
     /** @ref StreamType - defines purpose of the stream */
     StreamType type;
 
-    /** @deprecated, use the @ref StreamConfig::slotId field instead of this */
-    int modemSubId = 1;
-
     /** SlotId - specifies the slot ID where the UICC card is inserted */
     SlotId slotId = INVALID_SLOT_ID;
 

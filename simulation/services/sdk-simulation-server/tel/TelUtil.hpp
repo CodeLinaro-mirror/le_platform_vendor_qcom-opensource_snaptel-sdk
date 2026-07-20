@@ -55,10 +55,6 @@ class TelUtil {
         int phoneId, telStub::VoiceServiceStateEvent &event);
     static telux::common::ErrorCode readOperatingModeEventFromJsonFile(
         telStub::OperatingModeEvent &event);
-    static telux::common::ErrorCode readServiceStateEventFromJsonFile(
-        int phoneId, telStub::ServiceStateChangeEvent &event);
-    static telux::common::ErrorCode readVoiceRadioTechnologyEventFromJsonFile(
-        int phoneId, telStub::VoiceRadioTechnologyChangeEvent &event);
     static telux::common::ErrorCode readEcallOperatingModeEventFromJsonFile(
         int phoneId, telStub::ECallModeInfoChangeEvent &event);
     static telux::common::ErrorCode readOperatorInfoEventFromJsonFile(
@@ -66,8 +62,6 @@ class TelUtil {
 
     static telux::common::ErrorCode readSignalStrengthFromJsonFile(
         int phoneId, telStub::SignalStrength &signalStrength);
-    static telux::common::ErrorCode readServiceStateFromJsonFile(
-        int phoneId, telStub::ServiceState &state);
     static telux::common::ErrorCode readVoiceRadioTechnologyFromJsonFile(
         int phoneId, telStub::RadioTechnology &rat);
     static telux::common::ErrorCode readSystemInfoFromJsonFile(int phoneId,
@@ -82,10 +76,6 @@ class TelUtil {
         int phoneId, telStub::VoiceServiceStateEvent &event);
     static telux::common::ErrorCode writeOperatingModeToJsonFile(
         telStub::OperatingModeEvent &event);
-    static telux::common::ErrorCode writeServiceStateToJsonFile(
-        int phoneId, telStub::ServiceStateChangeEvent &event);
-    static telux::common::ErrorCode writeVoiceRadioTechnologyToJsonFile(
-        int phoneId, telStub::VoiceRadioTechnologyChangeEvent &event);
     static telux::common::ErrorCode writeSystemInfoToJsonFile(int phoneId,
         telStub::RadioTechnology &servingRat, telStub::ServiceDomainInfo_Domain &servingDomain);
 
@@ -124,10 +114,6 @@ class TelUtil {
     static telStub::VoiceServiceStateEvent createVoiceServiceStateEvent(
         int phoneId, int voiceServiceState, int voiceServiceDenialCause, int radioTech);
     static telStub::OperatingModeEvent createOperatingModeEvent(telStub::OperatingMode mode);
-    static telStub::ServiceStateChangeEvent createServiceStateEvent(
-        int phoneId, telStub::ServiceState serviceState);
-    static telStub::VoiceRadioTechnologyChangeEvent createVoiceRadioTechnologyChangeEvent(
-        int phoneId, telStub::RadioTechnology rat);
     static int checkSignalStrengthCriteriaAndNotify(
         int phoneId, int rat, int sigMeasType, int oldValue, int newValue);
 

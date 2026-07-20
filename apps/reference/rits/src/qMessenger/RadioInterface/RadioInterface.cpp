@@ -178,23 +178,6 @@ int Cv2xStatusListener::waitForCv2xRxStatus(telux::cv2x::Cv2xStatusType status, 
     return 0;
 }
 
-void Cv2xStatusListener::onStatusChanged(telux::cv2x::Cv2xStatus status) {
-    telux::cv2x::Cv2xStatus preStatus;
-    {
-        std::lock_guard<std::mutex> lock(mtx_);
-        preStatus   = cv2xStatus_;
-        cv2xStatus_ = status;
-    }
-
-    if (status.rxStatus != preStatus.rxStatus or status.txStatus != preStatus.txStatus) {
-        if (radioVerbosity) {
-            cout << "Cv2x status updated, rxStatus:" << static_cast<int>(status.rxStatus);
-            cout << ", txStatus:" << static_cast<int>(status.txStatus) << endl;
-        }
-        cv_.notify_all();
-    }
-}
-
 void Cv2xStatusListener::deinit() {
     // set cv2x status to unknown during exit
     std::lock_guard<std::mutex> lock(mtx_);
@@ -617,7 +600,7 @@ int RadioInterface::onWraTimedout(void) {
 }
 
 shared_ptr<ICv2xRadioManager> RadioInterface::getCv2xRadioManager() {
-    if (nullptr == cv2xRadioManager_ or not cv2xRadioManager_->isReady()) {
+    if (nullptr == cv2xRadioManager_ or cv2xRadioManager_->getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         cout << "cv2x radio manager is not ready." << endl;
         return nullptr;
     }

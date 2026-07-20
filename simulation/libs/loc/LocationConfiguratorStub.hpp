@@ -141,14 +141,6 @@ class LocationConfiguratorStub : public ILocationConfigurator,
         const telux::loc::XtraStatus xtraStatus, telux::common::ErrorCode error)>;
 
     /**
-     * Checks the status of location configuration subsystems and returns the result.
-     *
-     * returns True if location configuration subsystem is ready for service otherwise false.
-     *
-     */
-    bool isSubsystemReady() override;
-
-    /**
      * This status indicates whether the object is in a usable state.
      *
      * returns SERVICE_AVAILABLE    -  If location manager is ready for service.
@@ -157,15 +149,6 @@ class LocationConfiguratorStub : public ILocationConfigurator,
      *
      */
     telux::common::ServiceStatus getServiceStatus() override;
-
-    /**
-     * Wait for location configuration subsystem to be ready.
-     *
-     * returns  A future that caller can wait on to be notified when location
-     *           configuration subsystem is ready.
-     *
-     */
-    std::future<bool> onSubsystemReady() override;
 
     /**
      * This API enables or disables the constrained time uncertainty(C-TUNC) feature. When the
@@ -765,7 +748,6 @@ class LocationConfiguratorStub : public ILocationConfigurator,
     void invokeGnssConstellationUpdate(uint32_t enabledMask);
     bool xtraEnabled_;
     uint32_t registrationMask_ = 0;
-    bool waitForInitialization();
     void initSync(telux::common::InitResponseCb callback);
     void handleXtraUpdateEvent(::locStub::XtraStatusEvent xtraEvent);
     void handleGnssConstellationUpdateEvent(::locStub::GnssUpdateEvent GnssEvent);
@@ -796,7 +778,6 @@ class LocationConfiguratorStub : public ILocationConfigurator,
         registrationMap_;
     telux::common::AsyncTaskQueue<void> taskQ_;
     std::mutex mutex_;
-    std::condition_variable cv_;
     telux::common::ServiceStatus managerStatus_;
     std::weak_ptr<telux::loc::LocationConfiguratorStub> myself_;
     std::unique_ptr<::locStub::LocationConfiguratorService::Stub> stub_;

@@ -172,6 +172,11 @@ class Utils {
      *      o/p: 80, 180, 300, 300, 120, 89, 89, 09, 50, 200
      */
     static std::vector<int> convertStringToVector(std::string input);
+
+    /**
+     * Convert vector to hex string
+     */
+    static std::string toHexString(const std::vector<uint8_t> &buffer);
 };
 
 #endif

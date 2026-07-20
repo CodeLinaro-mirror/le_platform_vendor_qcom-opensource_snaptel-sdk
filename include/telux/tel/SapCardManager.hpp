@@ -154,17 +154,6 @@ class ISapCardManager {
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
-     * Get SIM access profile (SAP) client connection state.
-     *
-     * @param [out] sapState   @ref SapState of the SIM Card
-     *
-     * @returns Status of getState i.e. success or suitable status code.
-     *
-     * @deprecated Use requestSapState() API below to get SAP state
-     */
-    virtual telux::common::Status getState(SapState &sapState) = 0;
-
-    /**
      * Get SIM access profile(SAP) client connection state.
      *
      * @param [out] callback   Callback function pointer to get the response of requestSapState.

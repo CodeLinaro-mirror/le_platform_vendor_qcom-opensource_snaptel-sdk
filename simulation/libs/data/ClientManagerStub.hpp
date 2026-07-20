@@ -41,7 +41,6 @@ class ClientManagerStub : public IClientManager,
 
  private:
     void initSync(telux::common::InitResponseCb callback);
-    void setSubsystemReady(bool status);
     void setSubSystemStatus(telux::common::ServiceStatus status);
     void invokeInitCallback(telux::common::ServiceStatus status);
     void handleDeviceDataUsageReset(

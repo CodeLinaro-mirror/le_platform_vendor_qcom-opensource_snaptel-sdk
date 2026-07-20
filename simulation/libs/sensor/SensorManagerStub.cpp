@@ -164,12 +164,6 @@ telux::common::Status SensorManagerStub::getAvailableSensorInfo(std::vector<Sens
     return telux::common::Status::SUCCESS;
 }
 
-telux::common::Status SensorManagerStub::getSensor(
-    std::shared_ptr<ISensorClient> &sensor, std::string name) {
-    LOG(DEBUG, __FUNCTION__);
-    return getSensorClient(sensor, name);
-}
-
 telux::common::Status SensorManagerStub::getSensorClient(
     std::shared_ptr<ISensorClient> &sensor, std::string name) {
     LOG(DEBUG, __FUNCTION__);

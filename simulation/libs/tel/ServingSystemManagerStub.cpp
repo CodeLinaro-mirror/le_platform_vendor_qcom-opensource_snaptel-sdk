@@ -73,9 +73,6 @@ void ServingSystemManagerStub::initSync() {
     }
     LOG(DEBUG, __FUNCTION__, " callback delay ", cbDelay_, " callback status ",
         static_cast<int>(cbStatus));
-    bool isSubsystemReady
-        = (cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) ? true : false;
-    setSubsystemReady(isSubsystemReady);
     setServiceStatus(cbStatus);
 }
 
@@ -98,31 +95,6 @@ void ServingSystemManagerStub::cleanup() {
     ::google::protobuf::Empty response;
 
     stub_->CleanUpService(&context, request, &response);
-}
-
-void ServingSystemManagerStub::setSubsystemReady(bool status) {
-    LOG(DEBUG, __FUNCTION__, " status: ", status);
-    std::lock_guard<std::mutex> lk(mtx_);
-    ready_ = status;
-    cv_.notify_all();
-}
-
-bool ServingSystemManagerStub::isSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    return ready_;
-}
-
-bool ServingSystemManagerStub::waitForInitialization() {
-    std::unique_lock<std::mutex> cvLock(mtx_);
-    while (!isSubsystemReady()) {
-        cv_.wait(cvLock);
-    }
-    return isSubsystemReady();
-}
-
-std::future<bool> ServingSystemManagerStub::onSubsystemReady() {
-    auto f = std::async(std::launch::async, [&] { return waitForInitialization(); });
-    return f;
 }
 
 telux::common::ServiceStatus ServingSystemManagerStub::getServiceStatus() {

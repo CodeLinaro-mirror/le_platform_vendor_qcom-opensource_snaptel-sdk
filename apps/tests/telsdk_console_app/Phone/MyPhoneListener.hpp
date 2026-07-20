@@ -36,6 +36,7 @@
 #ifndef MYPHONELISTENER_HPP
 #define MYPHONELISTENER_HPP
 
+#include <future>
 #include <telux/tel/Phone.hpp>
 #include <telux/tel/PhoneListener.hpp>
 #include <telux/tel/PhoneDefines.hpp>
@@ -47,11 +48,8 @@
 class MyPhoneListener : public telux::tel::IPhoneListener {
  public:
     void onServiceStatusChange(telux::common::ServiceStatus status) override;
-    void onServiceStateChanged(int phoneId, telux::tel::ServiceState state) override;
     void onSignalStrengthChanged(
         int phoneId, std::shared_ptr<telux::tel::SignalStrength> signalStrength) override;
-    void onVoiceRadioTechnologyChanged(
-        int phoneId, telux::tel::RadioTechnology radioTechnology) override;
     void onVoiceServiceStateChanged(
         int phoneId, const std::shared_ptr<telux::tel::VoiceServiceInfo> &serviceInfo) override;
     void onOperatingModeChanged(telux::tel::OperatingMode mode) override;
@@ -64,8 +62,6 @@ class MyPhoneListener : public telux::tel::IPhoneListener {
     }
 
  private:
-    std::string radioStateToString(telux::tel::RadioState radioState);
-    std::string serviceStateToString(telux::tel::ServiceState serviceState);
     std::string eCallModeReasonToString(telux::tel::ECallModeReason reason);
     std::vector<telux::tel::VoiceServiceState> voiceSrvcState_
         = {telux::tel::VoiceServiceState::UNKNOWN, telux::tel::VoiceServiceState::UNKNOWN};
@@ -92,6 +88,15 @@ class MyGetOperatingModeCallback : public telux::tel::IOperatingModeCallback {
  public:
     void operatingModeResponse(
         telux::tel::OperatingMode operatingMode, telux::common::ErrorCode error) override;
+    telux::tel::OperatingMode getOperatingMode();
+
+    std::future<telux::common::ErrorCode> getFuture() {
+        return opCallbackPromise_.get_future();
+    }
+
+ private:
+    std::promise<telux::common::ErrorCode> opCallbackPromise_;
+    telux::tel::OperatingMode operatingMode_;
 };
 
 class MySetOperatingModeCallback {

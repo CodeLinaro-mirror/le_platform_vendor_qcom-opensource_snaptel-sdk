@@ -112,24 +112,6 @@ class IBridgeManager {
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
-     * Checks if the Bridge manager subsystem is ready.
-     *
-     * @returns True if the Bridge Manager is ready for service, otherwise returns false.
-     *
-     *  @deprecated Use getServiceStatus API.
-     */
-    virtual bool isSubsystemReady() = 0;
-
-    /**
-     * Wait for Bridge manager subsystem to be ready.
-     *
-     * @returns A future that caller can wait until the Bridge Manager succeed/fail to be ready.
-     *
-     * @deprecated Use InitResponseCb callback in factory API getBridgeManager.
-     */
-    virtual std::future<bool> onSubsystemReady() = 0;
-
-    /**
      * Enable/Disable the software bridge in the system.
      * It will affect all the configured software bridges for various interfaces.
      *

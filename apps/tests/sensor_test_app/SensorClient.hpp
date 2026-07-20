@@ -63,8 +63,6 @@ class SensorClient : public ISensorEventListener,
     telux::common::Status configure(SensorConfiguration config);
     telux::common::Status activate();
     telux::common::Status deactivate();
-    void enableLowPowerMode();
-    void disableLowPowerMode();
     telux::common::Status selfTest(SelfTestType selfTestType);
     telux::common::Status selfTestEx(SelfTestType selfTestType);
     std::shared_ptr<ISensorClient> getSensorClient() const {

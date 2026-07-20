@@ -4,10 +4,7 @@ set(TARGET_WLAN_TEST_APP wlan_test_app)
 
 set(WLAN_APP_SOURCES
     WlanTestApp.cpp
-    WlanDeviceManagerMenu.cpp
-    WlanApInterfaceManagerMenu.cpp
-    WlanStaInterfaceManagerMenu.cpp
-    WlanUtils.cpp
+    WlanControlManagerMenu.cpp
     ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/Utils.cpp
     ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleAppCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleApp.cpp

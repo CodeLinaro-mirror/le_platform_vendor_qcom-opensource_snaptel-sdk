@@ -622,26 +622,6 @@ using RrcStateCallback
 class IServingSystemManager {
  public:
     /**
-     * Checks the status of serving subsystem and returns the result.
-     *
-     * @returns True if serving subsystem is ready for service otherwise false.
-     *
-     * @deprecated Use IServingSystemManager::getServiceStatus() API.
-     */
-    virtual bool isSubsystemReady() = 0;
-
-    /**
-     * Wait for serving subsystem to be ready.
-     *
-     * @returns  A future that caller can wait on to be notified when serving
-     *           subsystem is ready.
-     *
-     * @deprecated Use InitResponseCb in PhoneFactory::getServingSystemManager instead, to
-     *             get notified about subsystem readiness.
-     */
-    virtual std::future<bool> onSubsystemReady() = 0;
-
-    /**
      * This status indicates whether the IServingSystemManager object is in a usable state.
      *
      * @returns SERVICE_AVAILABLE    -  If Serving System manager is ready for service.

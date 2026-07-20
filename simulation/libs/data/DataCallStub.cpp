@@ -34,11 +34,6 @@ const std::string &DataCallStub::getInterfaceName() {
     return ifaceName_;
 }
 
-DataBearerTechnology DataCallStub::getCurrentBearerTech() {
-    lock_guard<mutex> lock(statusMutex_);
-    return bearerTech_;
-}
-
 DataCallEndReason DataCallStub::getDataCallEndReason() {
     lock_guard<mutex> lock(statusMutex_);
     return endReason_;
@@ -146,8 +141,6 @@ telux::common::Status DataCallStub::requestDataCallBitRate(
         BitRateInfo bitRate{};
         bitRate.maxTxRate = MAX_LTE_TX_RATE;
         bitRate.maxRxRate = MAX_LTE_RX_RATE;
-        bitRate.txRate    = LTE_AVG_TX_RATE;
-        bitRate.rxRate    = LTE_AVG_RX_RATE;
         ErrorCode error   = ErrorCode::SUCCESS;
         callback(bitRate, error);
     }).share();

@@ -73,9 +73,6 @@ void NetworkSelectionManagerStub::initSync() {
     }
     LOG(DEBUG, __FUNCTION__, " callback delay ", cbDelay_, " callback status ",
         static_cast<int>(cbStatus));
-    bool isSubsystemReady
-        = (cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) ? true : false;
-    setSubsystemReady(isSubsystemReady);
     setServiceStatus(cbStatus);
 }
 
@@ -103,31 +100,6 @@ void NetworkSelectionManagerStub::cleanup() {
 telux::common::ServiceStatus NetworkSelectionManagerStub::getServiceStatus() {
     LOG(DEBUG, __FUNCTION__);
     return subSystemStatus_;
-}
-
-void NetworkSelectionManagerStub::setSubsystemReady(bool status) {
-    LOG(DEBUG, __FUNCTION__, " status: ", status);
-    std::lock_guard<std::mutex> lk(mtx_);
-    ready_ = status;
-    cv_.notify_all();
-}
-
-bool NetworkSelectionManagerStub::isSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    return ready_;
-}
-
-bool NetworkSelectionManagerStub::waitForInitialization() {
-    std::unique_lock<std::mutex> cvLock(mtx_);
-    while (!isSubsystemReady()) {
-        cv_.wait(cvLock);
-    }
-    return isSubsystemReady();
-}
-
-std::future<bool> NetworkSelectionManagerStub::onSubsystemReady() {
-    auto f = std::async(std::launch::async, [&] { return waitForInitialization(); });
-    return f;
 }
 
 telux::common::Status NetworkSelectionManagerStub::registerListener(

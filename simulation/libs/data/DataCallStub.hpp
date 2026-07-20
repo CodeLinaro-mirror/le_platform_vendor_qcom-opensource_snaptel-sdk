@@ -25,7 +25,6 @@ class DataCallStub : public IDataCall {
     DataCallStub(std::string ifaceName);
     ~DataCallStub();
     const std::string &getInterfaceName() override;
-    DataBearerTechnology getCurrentBearerTech() override;
     DataCallEndReason getDataCallEndReason() override;
     DataCallStatus getDataCallStatus() override;
     void getDataCallStatus(DataCallStatus &ipv4, DataCallStatus &ipv6) const;

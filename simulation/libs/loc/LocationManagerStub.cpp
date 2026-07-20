@@ -62,24 +62,6 @@ LocationManagerStub::LocationManagerStub() {
     filter_        = nullptr;
 }
 
-std::future<bool> LocationManagerStub::onSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    auto f = std::async(std::launch::async, [&] { return waitForInitialization(); });
-    return f;
-}
-
-bool LocationManagerStub::waitForInitialization() {
-    LOG(DEBUG, __FUNCTION__);
-    std::unique_lock<std::mutex> cvLock(mutex_);
-    cv_.wait(cvLock);
-    return isSubsystemReady();
-}
-
-bool LocationManagerStub::isSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    return getServiceStatus() == telux::common::ServiceStatus::SERVICE_AVAILABLE;
-}
-
 telux::common::ServiceStatus LocationManagerStub::getServiceStatus() {
     LOG(DEBUG, __FUNCTION__);
     std::lock_guard<std::mutex> lock(mutex_);
@@ -137,7 +119,6 @@ void LocationManagerStub::initSync(telux::common::InitResponseCb callback) {
         auto myself       = shared_from_this();
         myselfForReports_ = myself;
     }
-    cv_.notify_all();
 }
 
 telux::common::Status LocationManagerStub::registerListenerEx(

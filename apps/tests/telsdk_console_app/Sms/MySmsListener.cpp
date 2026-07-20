@@ -47,7 +47,8 @@ void MySmsListener::onIncomingSms(int phoneId, std::shared_ptr<telux::tel::SmsMe
     if (partInfo) {
         PRINT_NOTIFICATION << "Received SMS on phone ID " << phoneId
                            << " from: " << smsMsg->getSender() << " to: " << smsMsg->getReceiver()
-                           << "\n Message: " << smsMsg->getText() << "\n PDU: " << smsMsg->getPdu()
+                           << "\n Message: " << smsMsg->getText()
+                           << "\n raw PDU: " << Utils::toHexString(smsMsg->getRawPdu())
                            << " \n RefNumber:" << static_cast<int>(partInfo->refNumber)
                            << " NumberOfSegments:" << static_cast<int>(partInfo->numberOfSegments)
                            << " SegmentNumber: " << static_cast<int>(partInfo->segmentNumber)
@@ -55,7 +56,8 @@ void MySmsListener::onIncomingSms(int phoneId, std::shared_ptr<telux::tel::SmsMe
     } else {
         PRINT_NOTIFICATION << "Received SMS on phone ID " << phoneId
                            << " from: " << smsMsg->getSender() << " to: " << smsMsg->getReceiver()
-                           << "\n Message: " << smsMsg->getText() << "\n PDU: " << smsMsg->getPdu()
+                           << "\n Message: " << smsMsg->getText()
+                           << "\n raw PDU: " << Utils::toHexString(smsMsg->getRawPdu())
                            << std::endl;
     }
 
@@ -89,7 +91,7 @@ void MySmsListener::onIncomingSms(
             std::cout << "\033[1;35mSegment: \033[0m" << static_cast<int>(partInfo->segmentNumber)
                       << "\n SMS Part on phone ID " << phoneId << " from: " << smsMsg.getSender()
                       << " to: " << smsMsg.getReceiver() << "\n Message Part: " << smsMsg.getText()
-                      << "\n PDU: " << smsMsg.getPdu()
+                      << "\n raw PDU: " << Utils::toHexString(smsMsg.getRawPdu())
                       << "\n RefNumber:" << static_cast<int>(partInfo->refNumber)
                       << " NumberOfSegments:" << static_cast<int>(partInfo->numberOfSegments)
                       << " SegmentNumber: " << static_cast<int>(partInfo->segmentNumber)
@@ -273,13 +275,15 @@ void SmsStorageCallback::readMsgResponse(
         std::shared_ptr<telux::tel::MessagePartInfo> partInfo = smsMsg.getMessagePartInfo();
         if (partInfo) {
             PRINT_CB << " Multi Part Message " << std::endl;
-            PRINT_CB << " Message: " << smsMsg.getText() << "\n PDU: " << smsMsg.getPdu()
+            PRINT_CB << " Message: " << smsMsg.getText()
+                     << "\n raw PDU: " << Utils::toHexString(smsMsg.getRawPdu())
                      << " \n RefNumber:" << static_cast<int>(partInfo->refNumber)
                      << " NumberOfSegments:" << static_cast<int>(partInfo->numberOfSegments)
                      << " SegmentNumber: " << static_cast<int>(partInfo->segmentNumber)
                      << std::endl;
         } else {
-            PRINT_CB << "\n Message: " << smsMsg.getText() << "\n PDU: " << smsMsg.getPdu()
+            PRINT_CB << "\n Message: " << smsMsg.getText()
+                     << "\n raw PDU: " << Utils::toHexString(smsMsg.getRawPdu())
                      << std::endl;
         }
     } else {

@@ -178,13 +178,13 @@
             "slotId:           integer, valid slotIds are 1 & 2 only.",
             "Note: Signal Strength is separated by comma and each RAT signal info is represented as below",
             "rat:     string, RAT type. RAT for retrieving Signal Strength information. valid values are GSM, LTE, WCDMA, NR5G, NB1_NTN.",
-            "In case of RAT is GSM,   integer, p1->gsmSignalStrength, p2->gsmBitErrorRate, p3->gsmRssi.",
-            "In case of RAT is LTE,   integer, p1->lteSignalStrength, p2->lteRsrp, p3->lteRsrq, p4->lteRssnr, p5->lteCqi, p6->timingAdvance, p7->lteRssi.",
-            "In case of RAT is WCDMA, integer, p1->signalstrength, p2-> bitErrorRate, p3->ecio, p4->rscp, p5->rssi.",
+            "In case of RAT is GSM,   integer, p1->gsmSignalStrength, p2->gsmRssi.",
+            "In case of RAT is LTE,   integer, p1->lteSignalStrength, p2->lteRsrp, p3->lteRsrq, p4->lteRssnr, p5->lteRssi.",
+            "In case of RAT is WCDMA, integer, p1->signalstrength, p2->ecio, p3->rscp, p4->rssi.",
             "In case of RAT is NR5G,  integer, p1->rsrp, p2->rsrq, p3->rssnr.",
             "In case of RAT is NB1_NTN,  integer, p1->signalStrength, p2->rsrp, p3->rsrq, p4->rssnr, p5->rssi.",
             "CDMA and TDSCDMA are deprecated.",
-            "example: telsdk_event_injector -f tel_phone -e \"signalStrengthUpdate 1 ,GSM 28 3 -57 ,WCDMA 29 6 -10 -54 -55 ,LTE 23 -50 -5 200 13 11 -67 ,NR5G -50 15 300 ,NB1_NTN 23 -50 -5 200 -67\""
+            "example: telsdk_event_injector -f tel_phone -e \"signalStrengthUpdate 1 ,GSM 28 -57 ,WCDMA 29 -10 -54 -55 ,LTE 23 -50 -5 200 -67 ,NR5G -50 15 300 ,NB1_NTN 23 -50 -5 200 -67\""
         ],
         "cellInfoListUpdate": [
             "telsdk_event_injector -f tel_phone -e cellInfoListUpdate <slotId> ,<cellType1> <isRegistered> <p1> <p2> <p3> <....> ,<cellType2> <isRegistered> <p1> <p2> <p3> <....>",
@@ -192,12 +192,12 @@
             "Note: Cell info list is separated by comma and each RAT cell info is represented as below",
             "cellType:     integer, Cell type. Valid cellTypes are GSM-1, LTE-3, WCDMA-4, NR5G-6, NB1_NTN-7 (CDMA and TDSCDMA not supported)",
             "isRegistered: integer, Registered cell or not, Valid values are 1 or 0",
-            "GSM cell info:  <cellType> <isRegistered> <p1->mcc> <p2->mnc> <p3->lac> <p4->cid> <p5->arfcn> <p6->bsic> <p7->gsmSignalStrength> <p8->gsmBitErrorRate> <p9->gsmRssi>",
-            "WCDMA cell info:  <cellType> <isRegistered> <p1->mcc> <p2->mnc> <p3->lac> <p4->cid> <p5->psc> <p6->uarfcn> <p7->signalStrength> <p8->bitErrorRate> <p9->ecio> <p10->rscp> <p11->rssi>",
-            "LTE cell info:  <cellType> <isRegistered> <p1->mcc> <p2->mnc> <p3->ci> <p4->pci> <p5->tac> <p6->earfcn> <p7->lteSignalStrength> <p8->lteRsrp> <p9->lteRsrq> <p10->lteRssnr> <p11->lteCqi> <p12->timingAdvance> <p13->rssi>",
+            "GSM cell info:  <cellType> <isRegistered> <p1->mcc> <p2->mnc> <p3->lac> <p4->cid> <p5->arfcn> <p6->bsic> <p7->gsmSignalStrength> <p8->gsmRssi>",
+            "WCDMA cell info:  <cellType> <isRegistered> <p1->mcc> <p2->mnc> <p3->lac> <p4->cid> <p5->psc> <p6->uarfcn> <p7->signalStrength> <p8->ecio> <p9->rscp> <p10->rssi>",
+            "LTE cell info:  <cellType> <isRegistered> <p1->mcc> <p2->mnc> <p3->ci> <p4->pci> <p5->tac> <p6->earfcn> <p7->lteSignalStrength> <p8->lteRsrp> <p9->lteRsrq> <p10->lteRssnr> <p11->rssi>",
             "NR5G cell info:  <cellType> <isRegistered> <p1->mcc> <p2->mnc> <p3->ci> <p4->pci> <p5->tac> <p6->arfcn> <p7->rsrp> <p8->rsrq> <p9->rssnr>",
             "NB1_NTN cell info:  <cellType> <isRegistered> <p1->mcc> <p2->mnc> <p3->ci> <p4->tac> <p5->earfcn> <p6->signalStrength> <p7->rsrp> <p8->rsrq> <p9->rssnr>  <p10->rssi>",
-            "example: telsdk_event_injector -f tel_phone -e \"cellInfoListUpdate 1 ,1 1 310 00 70 81 10 1 28 5 -57,4 0 311 00 70 81 10 1 30 3 -10 -54 -55,3 0 312 00 10 11 13 14 23 -50 -5 200 13 11 -67,6 0 313 00 10 20 30 40 -50 15 300,7 0 311 00 70 10 1 10 -10 -54 200 -67\""
+            "example: telsdk_event_injector -f tel_phone -e \"cellInfoListUpdate 1 ,1 1 310 00 70 81 10 1 28 -57,4 0 311 00 70 81 10 1 30 -10 -54 -55,3 0 312 00 10 11 13 14 23 -50 -5 200 -67,6 0 313 00 10 20 30 40 -50 15 300,7 0 311 00 70 10 1 10 -10 -54 200 -67\""
         ],
         "voiceServiceStateUpdate": [
             "telsdk_event_injector -f tel_phone -e voiceServiceStateUpdate <slotId> <voiceServiceState> <voiceServiceDenialCause> <radioTech>",

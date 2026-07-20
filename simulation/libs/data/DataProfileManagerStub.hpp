@@ -24,8 +24,6 @@ class DataProfileManagerStub : public IDataProfileManager, public IDataProfileLi
     ~DataProfileManagerStub();
 
     telux::common::ServiceStatus getServiceStatus() override;
-    bool isSubsystemReady() override;
-    std::future<bool> onSubsystemReady() override;
 
     telux::common::Status createProfile(const ProfileParams &profileParams,
         std::shared_ptr<IDataCreateProfileCallback> callback = nullptr) override;
@@ -67,7 +65,6 @@ class DataProfileManagerStub : public IDataProfileManager, public IDataProfileLi
     std::unique_ptr<::dataStub::DataProfileManager::Stub> stub_;
 
     void initSync(telux::common::InitResponseCb callback);
-    bool waitForInitialization();
     void setSubsystemReady(bool status);
     void setSubSystemStatus(telux::common::ServiceStatus status);
     void getAvailableListeners(

@@ -46,6 +46,7 @@
 #include <string>
 
 #include "telux/tel/SignalStrength.hpp"
+#include <cstdint>
 
 namespace telux {
 
@@ -75,24 +76,6 @@ enum class CellType {
 class GsmCellIdentity {
  public:
     GsmCellIdentity(std::string mcc, std::string mnc, int lac, int cid, int arfcn, int bsic);
-    /**
-     * Get the Mobile Country Code.
-     *
-     * @returns Mcc value.
-     *
-     * @deprecated Use getMobileCountryCode() API instead
-     */
-    const int getMcc();
-
-    /**
-     * Get the Mobile Network Code.
-     *
-     * @returns Mnc value.
-     *
-     * @deprecated Use getMobileNetworkCode() API instead
-     */
-    const int getMnc();
-
     /**
      * Get the Mobile Country Code.
      *
@@ -147,82 +130,12 @@ class GsmCellIdentity {
 };
 
 /**
- * CdmaCellIdentity class provides methods to get the network identifier, system identifier, base
- * station identifier, longitude and latitude.
- *
- * @deprecated As of version 1.53.0 this API is no longer supported.
- */
-class CdmaCellIdentity {
- public:
-    CdmaCellIdentity(int networkId, int systemId, int baseStationId, int longitude, int latitude);
-    /**
-     * Get the network identifier.
-     *
-     * @returns Network identifier.
-     */
-    const int getNid();
-
-    /**
-     * Get the system identifier.
-     *
-     * @returns System identifier.
-     */
-    const int getSid();
-
-    /**
-     * Get the base station identifier.
-     *
-     * @returns Base station identifier.
-     */
-    const int getBaseStationId();
-
-    /**
-     * Get the longitude.
-     *
-     * @returns Longitude.
-     */
-    const int getLongitude();
-
-    /**
-     * Get the latitude.
-     *
-     * @returns Latitude.
-     */
-    const int getLatitude();
-
- private:
-    int nid_;
-    int sid_;
-    int stationId_;
-    int longitude_;
-    int latitude_;
-};
-
-/**
  * LteCellIdentity class provides methods to get the mobile country code, mobile network
  * code, cell identity, physical cell identifier, tracking area code and absolute Rf channel number.
  */
 class LteCellIdentity {
  public:
     LteCellIdentity(std::string mcc, std::string mnc, int ci, int pci, int tac, int earfcn);
-    /**
-     * Get the Mobile Country Code.
-     *
-     * @returns Mcc value.
-     *
-     * @deprecated Use getMobileCountryCode() API instead
-     */
-    const int getMcc();
-
-    /**
-     * Get the Mobile Network Code.
-     *
-     * @returns Mnc value.
-     *
-     * @deprecated Use getMobileNetworkCode() API instead
-     */
-    const int getMnc();
-
     /**
      * Get the Mobile Country Code.
      *
@@ -289,24 +202,6 @@ class WcdmaCellIdentity {
      *
      * @returns Mcc value.
      *
-     * @deprecated Use getMobileCountryCode() API instead
-     */
-    const int getMcc();
-
-    /**
-     * Get the Mobile Network Code.
-     *
-     * @returns Mnc value.
-     *
-     * @deprecated Use getMobileNetworkCode() API instead
-     */
-    const int getMnc();
-
-    /**
-     * Get the Mobile Country Code.
-     *
-     * @returns Mcc value.
-     *
      */
     const std::string getMobileCountryCode();
 
@@ -353,78 +248,6 @@ class WcdmaCellIdentity {
     int cid_;
     int psc_;
     int uarfcn_;
-};
-
-/**
- * TdscdmaCellIdentity class provides methods to get the mobile country code, mobile
- * network code, location area code, cell identity and cell parameters identifier.
- *
- * @deprecated As of version 1.53.0 this API is no longer supported.
- */
-class TdscdmaCellIdentity {
- public:
-    TdscdmaCellIdentity(std::string mcc, std::string mnc, int lac, int cid, int cpid);
-    /**
-     * Get the Mobile Country Code.
-     *
-     * @returns Mcc value.
-     *
-     * @deprecated Use getMobileCountryCode() API instead
-     */
-    const int getMcc();
-
-    /**
-     * Get the Mobile Network Code.
-     *
-     * @returns Mnc value.
-     *
-     * @deprecated Use getMobileNetworkCode() API instead
-     */
-    const int getMnc();
-
-    /**
-     * Get the Mobile Country Code.
-     *
-     * @returns Mcc value.
-     *
-     */
-    const std::string getMobileCountryCode();
-
-    /**
-     * Get the Mobile Network Code.
-     *
-     * @returns Mnc value.
-     *
-     */
-    const std::string getMobileNetworkCode();
-
-    /**
-     * Get the location area code
-     *
-     * @returns Location area code.
-     */
-    const int getLac();
-
-    /**
-     * Get the cell identity.
-     *
-     * @returns Cell identity.
-     */
-    const int getIdentity();
-
-    /**
-     * Get the cell parameters identifier.
-     *
-     * @returns Cell parameters identifier.
-     */
-    const int getParametersId();
-
- private:
-    std::string mcc_;
-    std::string mnc_;
-    int lac_;
-    int cid_;
-    int cpid_;
 };
 
 /**
@@ -608,41 +431,6 @@ class GsmCellInfo : public CellInfo {
 };
 
 /**
- *CdmaCellInfo class provides methods to get cell type, cell registration status, cell
- *identity and signal strength information.
- *
- * @deprecated As of version 1.53.0 this API is no longer supported.
- */
-class CdmaCellInfo : public CellInfo {
- public:
-    /**
-     * CdmaCellInfo constructor
-     * @param [in] registered - Registration status of the cell.
-     * @param [in] id - CDMA cell identity.
-     * @param [in] ssInfo - CDMA cell signal strength.
-     */
-    CdmaCellInfo(int registered, CdmaCellIdentity id, CdmaSignalStrengthInfo ssInfo);
-
-    /**
-     * Get CDMA cell identity information.
-     *
-     * @returns CdmaCellIdentity.
-     */
-    CdmaCellIdentity getCellIdentity();
-
-    /**
-     * Get CDMA cell signal strength information.
-     *
-     * @returns CdmaSignalStrengthInfo.
-     */
-    CdmaSignalStrengthInfo getSignalStrengthInfo();
-
- private:
-    CdmaCellIdentity id_;
-    CdmaSignalStrengthInfo ssInfo_;
-};
-
-/**
  *LteCellInfo class provides methods to get cell type, cell registration status, cell
  *identity and signal strength information.
  */
@@ -708,40 +496,6 @@ class WcdmaCellInfo : public CellInfo {
     WcdmaSignalStrengthInfo ssInfo_;
 };
 
-/**
- *TdscdmaCellInfo class provides methods to get cell type, cell registration status, cell
- *identity and signal strength information.
- *
- * @deprecated As of version 1.53.0 this API is no longer supported.
- */
-class TdscdmaCellInfo : public CellInfo {
- public:
-    /**
-     * TdscdmaCellInfo constructor.
-     * @param [in] registered - Registration status of the cell
-     * @param [in] id - TDSCDMA cell identity.
-     * @param [in] ssInfo - TDSCDMA cell signal strength.
-     */
-    TdscdmaCellInfo(int registered, TdscdmaCellIdentity id, TdscdmaSignalStrengthInfo ssInfo);
-
-    /**
-     * Get TDSCDMA cell identity information.
-     *
-     * @returns TdscdmaCellIdentity.
-     */
-    TdscdmaCellIdentity getCellIdentity();
-
-    /**
-     * Get TDSCDMA cell signal strength information.
-     *
-     * @returns TdscdmaSignalStrengthInfo.
-     */
-    TdscdmaSignalStrengthInfo getSignalStrengthInfo();
-
- private:
-    TdscdmaCellIdentity id_;
-    TdscdmaSignalStrengthInfo ssInfo_;
-};
 
 /**
  * Nr5gCellInfo class provides methods to get cell type, cell registration status, cell

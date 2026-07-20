@@ -123,14 +123,6 @@ class LocationManagerStub : public ILocationManager,
         = std::function<void(const std::shared_ptr<ILocationInfoBase> terrestrialInfo)>;
 
     /**
-     * Checks the status of location subsystems and returns the result.
-     *
-     * returns True if location subsystem is ready for service otherwise false.
-     *
-     */
-    bool isSubsystemReady() override;
-
-    /**
      * This status indicates whether the object is in a usable state.
      *
      * returns SERVICE_AVAILABLE    -  If location manager is ready for service.
@@ -138,15 +130,6 @@ class LocationManagerStub : public ILocationManager,
      *          SERVICE_FAILED       -  If location manager encountered an irrecoverable failure.
      */
     telux::common::ServiceStatus getServiceStatus() override;
-
-    /**
-     * Wait for location subsystem to be ready.
-     *
-     * returns  A future that caller can wait on to be notified when location
-     *           subsystem is ready.
-     *
-     */
-    std::future<bool> onSubsystemReady() override;
 
     /**
      * Register a listener for specific updates from location manager like
@@ -508,9 +491,7 @@ class LocationManagerStub : public ILocationManager,
     std::unique_ptr<::locStub::LocationManagerService::Stub> stub_;
     LocReqEngine engineType_;
 
-    bool waitForInitialization();
     void initSync(telux::common::InitResponseCb callback);
-    std::condition_variable cv_;
     telux::common::AsyncTaskQueue<void> taskQ_;
     telux::common::ServiceStatus managerStatus_;
     std::shared_ptr<LocationReportFilter> filter_;

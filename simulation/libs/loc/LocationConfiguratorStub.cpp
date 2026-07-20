@@ -55,24 +55,6 @@ LocationConfiguratorStub::LocationConfiguratorStub() {
     stub_          = CommonUtils::getGrpcStub<LocationConfiguratorService>();
 }
 
-std::future<bool> LocationConfiguratorStub::onSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    auto f = std::async(std::launch::async, [&] { return waitForInitialization(); });
-    return f;
-}
-
-bool LocationConfiguratorStub::waitForInitialization() {
-    LOG(DEBUG, __FUNCTION__);
-    std::unique_lock<std::mutex> cvLock(mutex_);
-    cv_.wait(cvLock);
-    return isSubsystemReady();
-}
-
-bool LocationConfiguratorStub::isSubsystemReady() {
-    LOG(DEBUG, __FUNCTION__);
-    return getServiceStatus() == telux::common::ServiceStatus::SERVICE_AVAILABLE;
-}
-
 telux::common::ServiceStatus LocationConfiguratorStub::getServiceStatus() {
     LOG(DEBUG, __FUNCTION__);
     std::lock_guard<std::mutex> lock(mutex_);
@@ -116,7 +98,6 @@ void LocationConfiguratorStub::initSync(telux::common::InitResponseCb callback) 
         std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
         callback(managerStatus_);
     }
-    cv_.notify_all();
 }
 
 void LocationConfiguratorStub::onEventUpdate(google::protobuf::Any event) {
@@ -253,8 +234,7 @@ telux::common::Status LocationConfiguratorStub::configureLeverArm(
         if (itr.first == LeverArmType::LEVER_ARM_TYPE_DR_IMU_TO_GNSS) {
             configMap.insert({2, params});
         }
-        if ((itr.first == LeverArmType::LEVER_ARM_TYPE_VEPP_IMU_TO_GNSS)
-            || (itr.first == LeverArmType::LEVER_ARM_TYPE_VPE_IMU_TO_GNSS)) {
+        if ((itr.first == LeverArmType::LEVER_ARM_TYPE_VPE_IMU_TO_GNSS)) {
             configMap.insert({3, params});
         }
     }

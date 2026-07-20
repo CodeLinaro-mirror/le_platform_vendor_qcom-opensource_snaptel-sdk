@@ -3,12 +3,16 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include <future>
+#include <sstream>
+#include <iomanip>
+
 #include "SMSTrigger.hpp"
 #include <telux/common/Log.hpp>
-#include <future>
 #include <telux/common/DeviceConfig.hpp>
 #include <telux/tel/PhoneFactory.hpp>
 #include "common/RefAppUtils.hpp"
+#include "Utils.hpp"
 
 SMSTrigger::SMSTrigger(std::shared_ptr<EventManager> eventManager) {
     LOG(DEBUG, __FUNCTION__);
@@ -76,12 +80,13 @@ void SMSTrigger::onIncomingSms(
         text = text + smsMsg.getText();
 
         std::shared_ptr<telux::tel::MessagePartInfo> partInfo = smsMsg.getMessagePartInfo();
+
         if (partInfo) {
             std::string tmpLog = " mSegment: " + std::to_string(partInfo->segmentNumber)
                                  + "\n SMS Part on phone ID " + std::to_string(phoneId)
                                  + " from: " + smsMsg.getSender() + " to: " + smsMsg.getReceiver()
                                  + "\n Message Part: " + smsMsg.getText()
-                                 + "\n PDU: " + smsMsg.getPdu()
+                                 + "\n Raw PDU (hex): " + Utils::toHexString(smsMsg.getRawPdu())
                                  + "\n RefNumber:" + std::to_string(partInfo->refNumber)
                                  + " NumberOfSegments:" + std::to_string(partInfo->numberOfSegments)
                                  + " SegmentNumber: " + std::to_string(partInfo->segmentNumber);
@@ -98,14 +103,17 @@ void SMSTrigger::onIncomingSms(
         LOG(DEBUG, __FUNCTION__, " sendData status = ", static_cast<int>(ret));
     }
 #endif
-
-    std::async(std::launch::async, [this, text] {
+    // The async is needed to make sure the SDK TCU activitiy manager API is invoked on another
+    // thread since this context (function) originates from the SDK thread
+    auto future = std::async(std::launch::async, [this, text] {
         TcuActivityState tcuActivityState = TcuActivityState::UNKNOWN;
         std::string machineName           = ALL_MACHINES;
         if (validateTrigger(text, tcuActivityState, machineName)) {
             this->triggerEvent(tcuActivityState, machineName);
         }
     });
+
+    future.wait();
 }
 
 void SMSTrigger::onEventRejected(shared_ptr<Event> event, EventStatus reason) {

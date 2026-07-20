@@ -62,8 +62,6 @@ class PhoneFactoryImplStub : public PhoneFactory {
         telux::common::InitResponseCb callback = nullptr) override;
     virtual std::shared_ptr<IImsSettingsManager> getImsSettingsManager(
         telux::common::InitResponseCb callback = nullptr) override;
-    virtual std::shared_ptr<IEcallManager> getEcallManager(
-        telux::common::InitResponseCb callback = nullptr) override;
     virtual std::shared_ptr<IHttpTransactionManager> getHttpTransactionManager(
         telux::common::InitResponseCb callback = nullptr) override;
     virtual std::shared_ptr<IImsServingSystemManager> getImsServingSystemManager(

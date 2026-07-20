@@ -273,35 +273,6 @@ class ISensorClient {
     virtual ~ISensorClient(){};
 
     /**
-     * Deprecated APIs
-     *
-     */
-
-    /**
-     * Request the sensor to operate in low power mode. The sensor should be in deactivated state to
-     * exercise this API. The success of this request depends on the capabilities of the
-     * underlying hardware.
-     *
-     * @returns status of request - @ref telux::common::Status
-     *
-     * @deprecated This API is no longer supported.
-     *
-     */
-    virtual telux::common::Status enableLowPowerMode() = 0;
-
-    /**
-     * Request the sensor to exit low power mode. The sensor should be in deactivated state to
-     * exercise this API. The success of this request depends on the capabilities of the
-     * underlying hardware.
-     *
-     * @returns status of request - @ref telux::common::Status
-     *
-     * @deprecated This API is no longer supported.
-     *
-     */
-    virtual telux::common::Status disableLowPowerMode() = 0;
-
-    /**
      * Initiate self test on this sensor
      *
      * If there are no active data acquistion sessions corresponding to this sensor,
@@ -329,10 +300,6 @@ class ISensorClient {
     virtual telux::common::Status selfTest(SelfTestType selfTestType, SelfTestResultCallback cb)
         = 0;
 };
-
-// Note that the class ISensor is an alias for ISensorClient and ISensor would deprecated and
-// eventually removed. As of now, it is retained for backward compatibility.
-using ISensor = ISensorClient;
 
 /** @} */ /* end_addtogroup telematics_sensor_control */
 }  // namespace sensor

@@ -70,6 +70,7 @@ enum class DataStallReason {
     WLAN_AP_DATA_STALL = 11,     /**< Data stall in the WLAN Access Point interface */
     WLAN_STA_DATA_STALL = 12,    /**< Data stall in the WLAN Station interface */
     WWAN_DATA_STALL = 13,        /**< Data stall in the WWAN data path */
+    WLAN_HW_DATA_STALL = 14,     /**< Data stall in the WLAN hardware (FW/IPA) data path */
 };
 
 /**

@@ -28,10 +28,9 @@
  */
 /*
  * Changes from Qualcomm Technologies, Inc. are provided under the following license:
- *
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
- */
+*/
 
 #include <iostream>
 #include <iomanip>
@@ -287,6 +286,93 @@ std::string DataUtils::serviceRatToString(telux::data::NetworkRat rat) {
             break;
     }
     return ratStr;
+}
+
+void DataUtils::printServiceOptionMaskToString(telux::data::ServiceOptionMask mask) {
+    if (mask.test(telux::data::ServiceOptionType::WCDMA)) {
+        std::cout << "WCDMA" << std::endl;
+    }
+    if (mask.test(telux::data::ServiceOptionType::HSDPA)) {
+        std::cout << "HSDPA" << std::endl;
+    }
+    if (mask.test(telux::data::ServiceOptionType::HSUPA)) {
+        std::cout << "HSUPA" << std::endl;
+    }
+    if (mask.test(telux::data::ServiceOptionType::HSDPAPLUS)) {
+        std::cout << "HSDPAPLUS" << std::endl;
+    }
+    if (mask.test(telux::data::ServiceOptionType::DC_HSDPAPLUS)) {
+        std::cout << "DC_HSDPAPLUS" << std::endl;
+    }
+    if (mask.test(telux::data::ServiceOptionType::QAM64)) {
+        std::cout << "64_QAM" << std::endl;
+    }
+    if (mask.test(telux::data::ServiceOptionType::HSPA)) {
+        std::cout << "HSPA" << std::endl;
+    }
+    if (mask.test(telux::data::ServiceOptionType::GPRS)) {
+        std::cout << "GPRS" << std::endl;
+    }
+    if (mask.test(telux::data::ServiceOptionType::EDGE)) {
+        std::cout << "EDGE" << std::endl;
+    }
+    if (mask.test(telux::data::ServiceOptionType::GSM)) {
+        std::cout << "GSM" << std::endl;
+    }
+    if (mask.test(telux::data::ServiceOptionType::S2B)) {
+        std::cout << "S2B" << std::endl;
+    }
+    if (mask.test(telux::data::ServiceOptionType::LIMITED_SRVC_3GPP)) {
+        std::cout << "3GPP_LIMITED_SRVC" << std::endl;
+    }
+    if (mask.test(telux::data::ServiceOptionType::FDD_3GPP)) {
+        std::cout << "3GPP_FDD" << std::endl;
+    }
+    if (mask.test(telux::data::ServiceOptionType::LTE_TDD)) {
+        std::cout << "LTE_TDD" << std::endl;
+    }
+    if (mask.test(telux::data::ServiceOptionType::TDSCDMA)) {
+        std::cout << "TDSCDMA" << std::endl;
+    }
+    if (mask.test(telux::data::ServiceOptionType::DC_HSUPA)) {
+        std::cout << "DC_HSUPA" << std::endl;
+    }
+    if (mask.test(telux::data::ServiceOptionType::CA_DL_3GPP)) {
+        std::cout << "3GPP_CA_DL" << std::endl;
+    }
+    if (mask.test(telux::data::ServiceOptionType::CA_UL_3GPP)) {
+        std::cout << "3GPP_CA_UL" << std::endl;
+    }
+    if (mask.test(telux::data::ServiceOptionType::LIMITED_SRVC_S2B)) {
+        std::cout << "S2B_LIMITED_SRVC" << std::endl;
+    }
+    if (mask.test(telux::data::ServiceOptionType::FOUR_POINT_FIVE_G)) {
+        std::cout << "4.5G" << std::endl;
+    }
+    if (mask.test(telux::data::ServiceOptionType::FOUR_POINT_FIVE_G_PLUS)) {
+        std::cout << "4.5G_PLUS" << std::endl;
+    }
+    if (mask.test(telux::data::ServiceOptionType::TDD_5G)) {
+        std::cout << "5G_TDD" << std::endl;
+    }
+    if (mask.test(telux::data::ServiceOptionType::SUB6_5G)) {
+        std::cout << "5G_SUB6" << std::endl;
+    }
+    if (mask.test(telux::data::ServiceOptionType::MMWAVE_5G)) {
+        std::cout << "5G_MMWAVE" << std::endl;
+    }
+    if (mask.test(telux::data::ServiceOptionType::NSA_5G)) {
+        std::cout << "5G_NSA" << std::endl;
+    }
+    if (mask.test(telux::data::ServiceOptionType::SA_5G)) {
+        std::cout << "5G_SA" << std::endl;
+    }
+    if (mask.test(telux::data::ServiceOptionType::LIMITED_SRVC_5G)) {
+        std::cout << "5G_LIMITED_SRVC" << std::endl;
+    }
+    if (mask.to_ullong() == 0) {
+        std::cout << "SO_UNSPECIFIED" << std::endl;
+    }
 }
 
 std::string DataUtils::backhaulToString(telux::data::BackhaulType backhaul) {

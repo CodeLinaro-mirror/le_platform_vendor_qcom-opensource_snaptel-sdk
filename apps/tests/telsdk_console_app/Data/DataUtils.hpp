@@ -26,14 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 /*
  * Changes from Qualcomm Technologies, Inc. are provided under the following license:
- *
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
- */
-
+*/
 #ifndef DATAUTILS_HPP
 #define DATAUTILS_HPP
 
@@ -65,6 +62,7 @@ public:
    static telux::data::IpProtocol getProtcol(std::string protoStr);
    static std::string drbStatusToString(telux::data::DrbStatus stat);
    static std::string serviceRatToString(telux::data::NetworkRat rat);
+   static void printServiceOptionMaskToString(telux::data::ServiceOptionMask mask);
    static std::string backhaulToString(telux::data::BackhaulType backhaul);
    //Retuns true if multiple backhauls are supported
    static bool populateBackhaulInfo(telux::data::BackhaulInfo& backhaulInfo);

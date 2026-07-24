@@ -43,6 +43,7 @@ extern "C" {
 #include <telux/data/DataFactory.hpp>
 #include <telux/common/DeviceConfig.hpp>
 #include "../../../../common/utils/Utils.hpp"
+#include "../DataUtils.hpp"
 
 #include "L2tpMenu.hpp"
 
@@ -142,11 +143,11 @@ void L2tpMenu::onInitComplete(telux::common::ServiceStatus status) {
 
 void L2tpMenu::setConfig(std::vector<std::string> inputCommand) {
     std::cout << "Set L2TP Unamanged Tunnel\n";
-    telux::common::Status retStat;
-    bool enable      = true;
-    bool enableMss   = false;
-    bool enableMtu   = false;
-    uint32_t mtuSize = 0;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    bool enable                   = true;
+    bool enableMss                = false;
+    bool enableMtu                = false;
+    uint32_t mtuSize              = 0;
     int inputFlag;
     std::cout << "Enable/Disable L2TP for unmanaged tunnels\n (1-enable, 0-disable): ";
     std::cin >> inputFlag;
@@ -193,7 +194,7 @@ void L2tpMenu::setConfig(std::vector<std::string> inputCommand) {
 
 void L2tpMenu::addTunnel(std::vector<std::string> inputCommand) {
     std::cout << "Set L2TP Configuration\n";
-    telux::common::Status retStat;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
     telux::data::net::L2tpTunnelConfig l2tpTunnelConfig;
     char delimiter = '\n';
     std::cin.get();
@@ -367,15 +368,15 @@ void L2tpMenu::requestConfig(std::vector<std::string> inputCommand) {
     };
 
     std::cout << "Request L2TP Configuration\n";
-    telux::common::Status retStat;
-    retStat = l2tpManager_->requestConfig(respCb);
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    retStat                       = l2tpManager_->requestConfig(respCb);
     Utils::printStatus(retStat);
 }
 
 void L2tpMenu::removeTunnel(std::vector<std::string> inputCommand) {
     std::cout << "Remove L2TP Tunnel\n";
-    telux::common::Status retStat;
-    auto respCb = [](telux::common::ErrorCode error) {
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    auto respCb                   = [](telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
         std::cout << "CALLBACK: "
                   << "Remove L2TP Configuration Response"
@@ -394,8 +395,8 @@ void L2tpMenu::removeTunnel(std::vector<std::string> inputCommand) {
 
 void L2tpMenu::addSessionToTunnel(std::vector<std::string> inputCommand) {
     std::cout << "Add Session To Tunnel\n";
-    telux::common::Status retStat;
-    auto respCb = [](telux::common::ErrorCode error) {
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    auto respCb                   = [](telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
         std::cout << "CALLBACK: "
                   << "Add L2TP Session to Tunnel Response"
@@ -424,8 +425,8 @@ void L2tpMenu::addSessionToTunnel(std::vector<std::string> inputCommand) {
 
 void L2tpMenu::removeSessionFromTunnel(std::vector<std::string> inputCommand) {
     std::cout << "Remove Session From Tunnel\n";
-    telux::common::Status retStat;
-    auto respCb = [](telux::common::ErrorCode error) {
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    auto respCb                   = [](telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
         std::cout << "CALLBACK: "
                   << "Remove L2TP Session From Tunnel Response"
@@ -448,7 +449,7 @@ void L2tpMenu::removeSessionFromTunnel(std::vector<std::string> inputCommand) {
 
 void L2tpMenu::bindSessionToBackhaul(std::vector<std::string> inputCommand) {
     std::cout << "Bind Session To Backhaul\n";
-    telux::common::Status retStat;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
 
     auto respCb = [](telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
@@ -467,38 +468,15 @@ void L2tpMenu::bindSessionToBackhaul(std::vector<std::string> inputCommand) {
     Utils::validateInput(sessionId);
     bindConfig.locId = sessionId;
 
-    int bhType;
-    bindConfig.bhInfo.backhaul = BackhaulType::WWAN;
-    std::cout << "Enter backhaul type (1-WWAN, 2-ETH): ";
-    std::cin >> bhType;
-    Utils::validateInput(bhType, {1, 2});
-    bindConfig.bhInfo.backhaul = (bhType == 1 ? BackhaulType::WWAN : BackhaulType::ETH);
+    DataUtils::populateBackhaulInfo(bindConfig.bhInfo);
 
-    if (bindConfig.bhInfo.backhaul == BackhaulType::WWAN) {
-        int profileId;
-        std::cout << "Enter Profile Id to bind session to: ";
-        std::cin >> profileId;
-        Utils::validateInput(profileId);
-        bindConfig.bhInfo.profileId = profileId;
-        int slotId                  = DEFAULT_SLOT_ID;
-        if (telux::common::DeviceConfig::isMultiSimSupported()) {
-            slotId = Utils::getValidSlotId();
-        }
-        bindConfig.bhInfo.slotId = static_cast<SlotId>(slotId);
-    } else if (bindConfig.bhInfo.backhaul == BackhaulType::ETH) {
-        int vlanId;
-        std::cout << "Enter Vlan Id to bind session to: ";
-        std::cin >> vlanId;
-        Utils::validateInput(vlanId);
-        bindConfig.bhInfo.vlanId = vlanId;
-    }
     retStat = l2tpManager_->bindSessionToBackhaul(bindConfig, respCb);
     Utils::printStatus(retStat);
 }
 
 void L2tpMenu::unbindSessionFromBackhaul(std::vector<std::string> inputCommand) {
     std::cout << "Unbind Session From Backhaul\n";
-    telux::common::Status retStat;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
 
     auto respCb = [](telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
@@ -517,31 +495,7 @@ void L2tpMenu::unbindSessionFromBackhaul(std::vector<std::string> inputCommand) 
     Utils::validateInput(sessionId);
     bindConfig.locId = sessionId;
 
-    int bhType;
-    bindConfig.bhInfo.backhaul = BackhaulType::WWAN;
-    std::cout << "Enter backhaul type (1-WWAN, 2-ETH): ";
-    std::cin >> bhType;
-    Utils::validateInput(bhType, {1, 2});
-    bindConfig.bhInfo.backhaul = (bhType == 1 ? BackhaulType::WWAN : BackhaulType::ETH);
-
-    if (bindConfig.bhInfo.backhaul == BackhaulType::WWAN) {
-        int profileId;
-        std::cout << "Enter Profile Id to unbind session from: ";
-        std::cin >> profileId;
-        Utils::validateInput(profileId);
-        bindConfig.bhInfo.profileId = profileId;
-        int slotId                  = DEFAULT_SLOT_ID;
-        if (telux::common::DeviceConfig::isMultiSimSupported()) {
-            slotId = Utils::getValidSlotId();
-        }
-        bindConfig.bhInfo.slotId = static_cast<SlotId>(slotId);
-    } else if (bindConfig.bhInfo.backhaul == BackhaulType::ETH) {
-        int vlanId;
-        std::cout << "Enter Vlan Id to bind session to: ";
-        std::cin >> vlanId;
-        Utils::validateInput(vlanId);
-        bindConfig.bhInfo.vlanId = vlanId;
-    }
+    DataUtils::populateBackhaulInfo(bindConfig.bhInfo);
 
     retStat = l2tpManager_->unbindSessionFromBackhaul(bindConfig, respCb);
     Utils::printStatus(retStat);
@@ -549,14 +503,24 @@ void L2tpMenu::unbindSessionFromBackhaul(std::vector<std::string> inputCommand) 
 
 void L2tpMenu::querySessionToBackhaulMapping(std::vector<std::string> inputCommand) {
     std::cout << "Query Session To Backhaul Mappings\n";
-    telux::common::Status retStat;
+    telux::common::Status retStat          = telux::common::Status::SUCCESS;
     telux::data::BackhaulType backhaulType = BackhaulType::WWAN;
 
     int bhType;
-    std::cout << "Enter backhaul type (1-WWAN, 2-ETH): ";
+    std::cout << "Enter backhaul type (0-WLAN, 1-WWAN, 2-ETH): ";
     std::cin >> bhType;
-    Utils::validateInput(bhType, {1, 2});
-    backhaulType = (bhType == 1 ? BackhaulType::WWAN : BackhaulType::ETH);
+    Utils::validateInput(bhType, {0, 1, 2});
+    switch (bhType) {
+        case 0:
+            backhaulType = BackhaulType::WLAN;
+            break;
+        case 1:
+            backhaulType = BackhaulType::WWAN;
+            break;
+        case 2:
+            backhaulType = BackhaulType::ETH;
+            break;
+    }
 
     auto respCb = [](const std::vector<telux::data::net::L2tpSessionBindConfig> bindings,
                       telux::common::ErrorCode error) {
@@ -569,11 +533,7 @@ void L2tpMenu::querySessionToBackhaulMapping(std::vector<std::string> inputComma
         if (error == telux::common::ErrorCode::SUCCESS) {
             if (bindings.size() > 0) {
                 for (auto c : bindings) {
-                    std::string bh = (c.bhInfo.backhaul == telux::data::BackhaulType::ETH
-                                          ? "ETH"
-                                          : (c.bhInfo.backhaul == telux::data::BackhaulType::WWAN
-                                                  ? "WWAN"
-                                                  : "UNKNOWN"));
+                    std::string bh = DataUtils::backhaulToString(c.bhInfo.backhaul);
                     if (c.bhInfo.backhaul == telux::data::BackhaulType::WWAN) {
                         std::cout << "Backhaul: " << bh << ", profId: " << (int)c.bhInfo.profileId
                                   << ", slotId: " << c.bhInfo.slotId << ", Local id: " << c.locId
@@ -581,6 +541,10 @@ void L2tpMenu::querySessionToBackhaulMapping(std::vector<std::string> inputComma
                     } else if (c.bhInfo.backhaul == telux::data::BackhaulType::ETH) {
                         std::cout << "Backhaul: " << bh
                                   << ", vlanId associated with session: " << (int)c.bhInfo.vlanId
+                                  << ", Local id: " << c.locId << "\n";
+                    } else if (c.bhInfo.backhaul == telux::data::BackhaulType::WLAN) {
+                        std::cout << "Backhaul: " << bh
+                                  << ", staId associated with session: " << (int)c.bhInfo.staId
                                   << ", Local id: " << c.locId << "\n";
                     }
                 }

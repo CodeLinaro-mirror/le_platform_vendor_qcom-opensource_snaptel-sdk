@@ -236,7 +236,7 @@ class ILocationConfigurator {
         = 0;
 
     /**
-     * This API sets the lever arm parameters for the vehicle. LeverArm is sytem level parameters
+     * This API sets the lever arm parameters for the vehicle. LeverArm is system level parameters
      * and it is not expected to change. So, it is needed to issue configureLeverArm once for every
      * application processor boot-up. For multiple invocations of this API client should wait for
      * the command to finish, e.g.: via ResponseCallback received before issuing a second
@@ -441,7 +441,7 @@ class ILocationConfigurator {
      * filtered out in the filtered position solution and will have negative performance impact.
      *
      * This setting does not impact the SV information and SV measurement reports retrieved from
-     * APIs such as IGnssSvINfo::getSVInfoList, ILocationListener::onGnssMeasurementsInfo.
+     * APIs such as IGnssSVInfo::getSVInfoList, ILocationListener::onGnssMeasurementsInfo.
      *
      * To apply the setting, the GNSS standard position engine(SPE) will require GNSS measurement
      * engine and position engine to be turned off briefly. This may cause glitch for on-going
@@ -541,27 +541,53 @@ class ILocationConfigurator {
         = 0;
 
     /**
-     * This API is used to instruct the specified engine to be in the suspended/running state.
-     * When the engine is placed in suspended state, the engine will stop. If there is an on-going
-     * session, engine will no longer produce fixes. In the suspended state, calling API to delete
-     * aiding data from the paused engine may not have effect. Request to delete Aiding data shall
-     * be issued after engine resume.
+     * This API instructs the specified position engine to transition to the run state indicated by
+     * @ref telux::loc::LocationEngineRunState
      *
-     * Currently, only DR engine will support this request. The request to suspend/running DR engine
-     * can be made with or without an on-going session. With DR engine, on resume, GNSS position &
-     * heading re-acquisition may be needed for DR to engage.
+     * The SUSPENDED and RUNNING states provide pause and resume control of the engine. These states
+     * are supported by the QDR engine and, on select software product lines, may also be supported
+     * by the precise position engine.
      *
-     * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
-     * invoke this API successfully.
+     * When an engine is placed in the SUSPENDED state, it suspends functional operation and stops
+     * producing fixes while remaining resident in memory. If an on-going session exists, it is
+     * halted. In this state, requests to delete aiding data may not take effect; such requests
+     * should be issued after the engine is transitioned back to RUNNING.
      *
-     * @param [in] engineType - the engine that is instructed to change its run state.
+     * For both QDR and precise position engines, a transition from SUSPENDED to RUNNING may cause
+     * the engine to restart execution without retaining prior positioning or calibration history.
+     * Positioning will resume only if there is already an active session; otherwise, an explicit
+     * session request is required after resumption
      *
-     * @param [in] engineState - the new engine run state that the engine is instructed to be in.
+     * The SUSPEND_RETAIN state provides pause functionality while retaining useful internal
+     * state data. This state is applicable to the QDR engine only. While configuring this
+     * state, it is strongly advised to link it to a vehicle condition in which the vehicle
+     * is expected to remain stationary, and the engine should be transitioned back to
+     * RUNNING before the vehicle is expected to move.
      *
-     * @param [in] callback - Optional callback to get the response of configureEngineState.
+     * For QDR engine, transition out of SUSPEND_RETAIN occurs either via an explicit request
+     * to set the state to RUNNING using this API or when the device is taken through
+     * suspend/resume or reboot power-state cycles.
      *
-     * @returns Status of configureEngineState i.e. success or suitable status code.
+     * Requests to change engine run state can be made with or without an on-going session.
+     * On transition to RUNNING, GNSS position and heading re-acquisition may be required for
+     * DR engine engagement. If the engine is already in the requested state, the request is
+     * treated as a no-op; the API will return success and the asynchronous callback will
+     * return telux::common::ErrorCode::SUCCESS. If a requested run state is not supported
+     * for the specified engine, the asynchronous callback will return
+     * telux::common::ErrorCode::NOT_SUPPORTED.
      *
+     * On platforms with access control enabled, caller needs to have TELUX_LOC_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param [in] engineType - The engine whose run state is to be changed
+     * @param [in] engineState - The requested engine run state.
+     * @param [in] callback - Optional callback to receive the asynchronous processing status.
+     *
+     * @returns Status of configureEngineState i.e. success or suitable status code. If the request
+     * is accepted for processing, the final result is delivered asynchronously via the callback
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+     *             break backwards compatibility.
      */
 
     virtual telux::common::Status configureEngineState(const EngineType engineType,
@@ -627,11 +653,11 @@ class ILocationConfigurator {
      * will receive via @ref ILocationListener class APIs.
      * NMEA updates can be received by either:
      * a) Setting the
-     * @ref telux::loc::GnssReportType::NMEA bit in the reportMask passed as a paramter to
+     * @ref telux::loc::GnssReportType::NMEA bit in the reportMask passed as a parameter to
      * @ref ILocationManager::startDetailedReports OR @ref
      * ILocationManager::startDetailedEngineReports and receive the sentences via @ref
      * ILocationListener::onGnssNmeaInfo. b) Setting the
-     * @ref telux::loc::GnssReportType::ENGINE_NMEA bit in the reportMask passed as a paramter to
+     * @ref telux::loc::GnssReportType::ENGINE_NMEA bit in the reportMask passed as a parameter to
      * @ref ILocationManager::startDetailedEngineReports
      * and receive the sentences via @ref ILocationListener::onEngineNmeaInfo.
      *

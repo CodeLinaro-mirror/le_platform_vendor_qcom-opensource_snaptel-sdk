@@ -207,6 +207,7 @@ telux::common::Status DataProfileManagerStub::createProfile(
     request.set_emergency_capability(
         (::dataStub::EmergencyCapability)profileParams.emergencyAllowed);
     request.set_clat_enabled(profileParams.clatEnabled);
+    request.set_enable_pcscf_via_pco(profileParams.enablePcscfViaPco);
 
     grpc::Status reqStatus = stub_->CreateProfile(&context, request, &response);
 
@@ -311,6 +312,7 @@ telux::common::Status DataProfileManagerStub::modifyProfile(uint8_t profileId,
     request.set_emergency_capability(
         (::dataStub::EmergencyCapability)profileParams.emergencyAllowed);
     request.set_clat_enabled(profileParams.clatEnabled);
+    request.set_enable_pcscf_via_pco(profileParams.enablePcscfViaPco);
 
     grpc::Status reqStatus = stub_->ModifyProfile(&context, request, &response);
 
@@ -382,10 +384,12 @@ telux::common::Status DataProfileManagerStub::requestProfile(uint8_t profileId,
             response.profile().auth_type().auth_type());
         EmergencyCapability emergencyAllowed = static_cast<telux::data::EmergencyCapability>(
             response.profile().emergency_capability());
-        bool clatEnabled = response.profile().clat_enabled();
+        bool clatEnabled       = response.profile().clat_enabled();
+        bool enablePcscfViaPco = response.profile().enable_pcscf_via_pco();
 
-        queryProfile = std::make_shared<DataProfile>(profileId, name, apn, username, password,
-            ipFamily, techPref, authType, apnTypes, emergencyAllowed, clatEnabled);
+        queryProfile
+            = std::make_shared<DataProfile>(profileId, name, apn, username, password, ipFamily,
+                techPref, authType, apnTypes, emergencyAllowed, clatEnabled, enablePcscfViaPco);
 
         LOG(DEBUG, __FUNCTION__, " requestProfile successful profileId:", profileId);
         if (callback && (delay != SKIP_CALLBACK)) {
@@ -442,10 +446,12 @@ telux::common::Status DataProfileManagerStub::requestProfileList(
                 response.mutable_profiles(idx)->auth_type().auth_type());
             EmergencyCapability emergencyAllowed = static_cast<telux::data::EmergencyCapability>(
                 response.mutable_profiles(idx)->emergency_capability());
-            bool clatEnabled = response.mutable_profiles(idx)->clat_enabled();
+            bool clatEnabled       = response.mutable_profiles(idx)->clat_enabled();
+            bool enablePcscfViaPco = response.mutable_profiles(idx)->enable_pcscf_via_pco();
 
-            auto queryProfile = std::make_shared<DataProfile>(profileId, name, apn, username,
-                password, ipFamily, techPref, authType, apnTypes, emergencyAllowed, clatEnabled);
+            auto queryProfile
+                = std::make_shared<DataProfile>(profileId, name, apn, username, password, ipFamily,
+                    techPref, authType, apnTypes, emergencyAllowed, clatEnabled, enablePcscfViaPco);
             LOG(DEBUG, __FUNCTION__, " requestProfileList successful profileId:", profileId);
             requestedProfiles.push_back(queryProfile);
         }
@@ -488,6 +494,7 @@ telux::common::Status DataProfileManagerStub::queryProfile(
     request.set_emergency_capability(
         (::dataStub::EmergencyCapability)profileParams.emergencyAllowed);
     request.set_clat_enabled(profileParams.clatEnabled);
+    request.set_enable_pcscf_via_pco(profileParams.enablePcscfViaPco);
 
     grpc::Status reqStatus = stub_->QueryProfile(&context, request, &response);
 
@@ -518,10 +525,12 @@ telux::common::Status DataProfileManagerStub::queryProfile(
                 response.mutable_profiles(idx)->auth_type().auth_type());
             EmergencyCapability emergencyAllowed = static_cast<telux::data::EmergencyCapability>(
                 response.mutable_profiles(idx)->emergency_capability());
-            bool clatEnabled = response.mutable_profiles(idx)->clat_enabled();
+            bool clatEnabled       = response.mutable_profiles(idx)->clat_enabled();
+            bool enablePcscfViaPco = response.mutable_profiles(idx)->enable_pcscf_via_pco();
 
-            auto queryProfile = std::make_shared<DataProfile>(profileId, name, apn, username,
-                password, ipFamily, techPref, authType, apnTypes, emergencyAllowed, clatEnabled);
+            auto queryProfile
+                = std::make_shared<DataProfile>(profileId, name, apn, username, password, ipFamily,
+                    techPref, authType, apnTypes, emergencyAllowed, clatEnabled, enablePcscfViaPco);
             queriedProfiles.push_back(queryProfile);
         }
 

@@ -36,6 +36,7 @@
 #ifndef POWERTESTAPP_HPP
 #define POWERTESTAPP_HPP
 
+#include <functional>
 #include <memory>
 
 #include <telux/power/TcuActivityDefines.hpp>
@@ -54,8 +55,39 @@ using namespace telux::common;
 
 class WakeupReasonListener : public telux::power::IWakeupListener {
  public:
-    void onWakeup(telux::power::WakeupInfo wakeupInfo) override;
+    void onWakeup(const telux::power::WakeupEventInfo &wakeupInfo) override;
     void onServiceStatusChange(telux::common::ServiceStatus newStatus) override;
+
+    /**
+     * Set a callback to be invoked when a wakeup indication matching
+     * triggerResumeMask is received. Used to auto-trigger RESUME.
+     */
+    void setTriggerResumeCallback(
+        telux::power::WakeupIndications triggerResumeMask, std::function<void()> callback) {
+        triggerResumeMask_ = triggerResumeMask;
+        resumeCallback_    = callback;
+    }
+
+ private:
+    telux::power::WakeupIndications triggerResumeMask_;
+    std::function<void()> resumeCallback_;
+
+    static const char *wowCategoryToStr(telux::power::WowWakeupCategory category) {
+        switch (category) {
+            case telux::power::WowWakeupCategory::WLAN_PROTOCOL:
+                return "WLAN_PROTOCOL";
+            case telux::power::WowWakeupCategory::OFFLOAD:
+                return "OFFLOAD";
+            case telux::power::WowWakeupCategory::PATTERN_FILTER:
+                return "PATTERN_FILTER";
+            case telux::power::WowWakeupCategory::MAGIC_PACKET:
+                return "MAGIC_PACKET";
+            case telux::power::WowWakeupCategory::SYSTEM:
+                return "SYSTEM";
+            default:
+                return "UNSPECIFIED";
+        }
+    }
 };
 
 class PowerMgmtTestApp : public ITcuActivityListener,

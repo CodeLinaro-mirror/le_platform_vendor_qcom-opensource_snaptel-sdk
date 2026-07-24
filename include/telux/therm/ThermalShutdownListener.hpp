@@ -39,8 +39,8 @@
  * @brief      IThermalShutdownListener provides callback methods for listening to notifications
  *             when automatic thermal shutdown mode is enabled/disabled or will be enabled
  *             imminently.
- *             Client need to implement these methods. The methods in listener can be invoked from
- *             multiple threads.So the client needs to make sure that the implementation is
+ *             Client needs to implement these methods. The methods in listener can be invoked from
+ *             multiple threads. So the client needs to make sure that the implementation is
  *             thread-safe.
  */
 
@@ -79,7 +79,7 @@ class IThermalShutdownListener : public common::IServiceStatusListener {
 
     /**
      * This function is called when the automatic shutdown mode is about to change to ENABLE.
-     * Clients that want to keep the shutdown mode disabled, needs to set it accordingly with in the
+     * Clients that want to keep the shutdown mode disabled, need to set it accordingly within the
      * imminentDuration time. If disabled successfully within imminentDuration time, the system
      * timer for auto-enablement will be reset.
      *

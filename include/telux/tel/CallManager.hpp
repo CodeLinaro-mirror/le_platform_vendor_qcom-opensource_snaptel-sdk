@@ -27,8 +27,7 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -222,6 +221,89 @@ class ICallManager {
      */
     virtual telux::common::Status makeRttCall(int phoneId, const std::string &dialNumber,
         std::shared_ptr<IMakeCallCallback> callback = nullptr)
+        = 0;
+
+    /**
+     * Initiates an automotive Accident Emergency Call System (AECS) call.
+     *
+     * Prerequisites and behavior:
+     * - The UE must be in full service to initiate the call.
+     * - To enable AECS call optimizations:
+     *   On multi-SIM (DSDS) devices, when the application selects a phone and initiates an AECS
+     *   call on the selected phone, the modem will suspend the other phone. After completion of
+     *   both the voice call and Minimum Set of data (MSD) delivery, the modem will resume the
+     *   suspended phone.
+     *   On single-SIM devices, and to allow the modem to distinguish AECS calls from other
+     *   incoming calls, the application must enter emergency mode by invoking @ref
+     *   telux::tel::ICallManager::setEmergencyMode before initiating the AECS call.
+     * - Any on-going call on the phone that will be suspended (in the case of multi-SIM devices)
+     *   will be terminated by the modem when entering emergency mode.
+     * - Any on-going non-AECS call on the selected phone must be terminated by the application
+     *   before initiating the AECS call.
+     * - Once emergency mode is set, the application may transmit the Minimum Set of Data (MSD).
+     *   MSD transmission may be performed via HTTP or SMS. To send MSD over SMS, use @ref
+     *   telux::tel::ISmsManager::sendRawSms.
+     * - After the AECS call and MSD transmission are complete, the application must exit
+     *   emergency mode by invoking @ref telux::tel::ICallManager::setEmergencyMode to disable
+     *   AECS call optimizations and resume any suspended phone (in the case of multi-SIM devices).
+     *
+     * Additional Information:
+     * - If an AECS call is already in progress, the application must not initiate another AECS
+     *   call and must not disconnect the on-going AECS call.
+     * - In case of call origination failure, the modem will silently retry for up to 45 seconds.
+     *   If the call still fails after this period, or if the modem does not initiate retries and
+     *   ends the call, the application must retry the AECS call within 2 minutes, at least for
+     *   60 minutes, in accordance with AECS specification GB-45672-2025.
+     * - If the AECS call is dropped, the application is responsible for redialing based on its own
+     *   retry logic.
+     * - If MSD delivery fails, the application must retry MSD transmission within 2 minutes, at
+     *   least for 60 minutes, in accordance with AECS specification GB-45672-2025.
+     * - The application should reject any incoming non-AECS call while an AECS call is in progress.
+     * - The AECS specification does not define T2 (call clear-down fallback timer) or T9
+     *   (NAD minimum network-registration timer) to limit prolonged emergency call connection or
+     *   to ensure post-call network registration. The application may implement equivalent T2/T9
+     *   logic outside the AECS framework, but this is not mandated by the specification.
+     * - The application must not hang up an AECS call. The call should be terminated by the AECSP
+     *   (similar to a PSAP) after completion of the call and MSD transmission.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+     * permission to successfully invoke this API.
+     *
+     * @param [in] phoneId           Represents phone corresponding to which on make AECS
+     *                               call operation is performed.
+     * @param [in] eCallIdentifier   String representing the dialing number or Uniform
+     *                               Resource Name(URN) for PS based call.
+     * @param [in] callback          Optional callback pointer to get the response of
+     *                               makeAecsCall request.
+     *                               Possible(not exhaustive) error codes for callback response
+     *                               - @ref telux::common::ErrorCode::SUCCESS
+     *                               - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
+     *                               - @ref telux::common::ErrorCode::DIAL_MODIFIED_TO_USSD
+     *                               - @ref telux::common::ErrorCode::DIAL_MODIFIED_TO_SS
+     *                               - @ref telux::common::ErrorCode::DIAL_MODIFIED_TO_DIAL
+     *                               - @ref telux::common::ErrorCode::INVALID_ARGUMENTS
+     *                               - @ref telux::common::ErrorCode::NO_MEMORY
+     *                               - @ref telux::common::ErrorCode::INVALID_STATE
+     *                               - @ref telux::common::ErrorCode::NO_RESOURCES
+     *                               - @ref telux::common::ErrorCode::INTERNAL_ERR
+     *                               - @ref telux::common::ErrorCode::FDN_CHECK_FAILURE
+     *                               - @ref telux::common::ErrorCode::MODEM_ERR
+     *                               - @ref telux::common::ErrorCode::NO_SUBSCRIPTION
+     *                               - @ref telux::common::ErrorCode::NO_NETWORK_FOUND
+     *                               - @ref telux::common::ErrorCode::INVALID_CALL_ID
+     *                               - @ref telux::common::ErrorCode::DEVICE_IN_USE
+     *                               - @ref telux::common::ErrorCode::MODE_NOT_SUPPORTED
+     *                               - @ref telux::common::ErrorCode::ABORTED
+     *                               - @ref telux::common::ErrorCode::GENERIC_FAILURE
+     *
+     * @returns Status of makeAecsCall i.e. success or suitable status code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     *
+     */
+    virtual telux::common::Status makeAecsCall(
+        int phoneId, const std::string &eCallIdentifier, MakeCallCallback callback = nullptr)
         = 0;
 
     /**
@@ -1092,6 +1174,52 @@ class ICallManager {
         = 0;
 
     /**
+     * Enable or disable emergency mode configuration for AECS (Automated Emergency Call System)
+     * calls.
+     *
+     * This API enables or disables emergency mode and optionally allows antenna switching for
+     * AECS call:
+     *   - When emergency mode is enabled on the phone identifier, other subscriptions
+     *     in DSDS/DSDA mode will be suspended.
+     *   - If antenna switching is enabled, the system will automatically select the best
+     *     alternative antenna if the active one becomes damaged.
+     *
+     * For incoming AECS call from AECSP:
+     *   - This API must be called first to enable emergency mode.
+     *
+     * After the AECS call ends:
+     *   - The user should disable emergency mode and turn off antenna switching if previously
+     *     enabled.
+     *
+     * @note Antenna switching cannot be enabled when emergency mode is disabled. i.e., Setting
+     *       emergencyModeEnabled = false while antennaSwitchEnabled = true is not supported and
+     *       will return @ref telux::common::ErrorCode::INVALID_ARGUMENTS.
+     * @note This API is platform-dependent. Ensure the platform supports antenna switching
+     *       before enabling antenna switching.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+     * permission to successfully invoke this API.
+     *
+     * @param [in] phoneId          Represents the phone corresponding to which the emergency
+     *                              mode is configured.
+     * @param [in] emergencyModeEnabled If true, enables emergency mode in SS/DSDS/DSDA;
+     *                                  if false, disables emergency mode in SS/DSDS/DSDA.
+     * @param [in] antennaSwitchEnabled If true, enables automatic antenna switching mode;
+     *                                  if false, disables automatic antenna switching mode.
+     * @param [in] callback         Optional callback pointer to get the response of the
+     *                              setEmergencyMode request.
+     *
+     * @returns Status of the setEmergencyMode request; either success or the suitable error code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     *
+     */
+    virtual telux::common::Status setEmergencyMode(int phoneId, bool emergencyModeEnabled,
+        bool antennaSwitchEnabled = false, telux::common::ResponseCallback callback = nullptr)
+        = 0;
+
+    /**
      * Add a listener to listen for incoming call, call info change and eCall MSD
      * transmission status change.
      *
@@ -1100,7 +1228,6 @@ class ICallManager {
      *
      * @returns Status of registerListener i.e. success or suitable error code.
      */
-
     virtual telux::common::Status registerListener(
         std::shared_ptr<telux::tel::ICallListener> listener)
         = 0;

@@ -20,6 +20,15 @@ class StateChangeListener : public telux::platform::ISubsystemListener {
         telux::common::OperationalStatus newOperationalStatus) override;
 };
 
+/* Registered automatically at startup to receive EDL notifications only. */
+class EdlListener : public telux::platform::ISubsystemListener {
+
+ public:
+    void onEdlConfigUpdate(const telux::platform::EdlConfigs &edlConfigs) override;
+    void onEdlStateChanged(telux::platform::EdlState edlState) override;
+    void onEdlOperationResult(bool success) override;
+};
+
 class SubsystemApp : public ConsoleApp {
 
  public:
@@ -29,10 +38,17 @@ class SubsystemApp : public ConsoleApp {
     void init(void);
     void registerListener(void);
     void deRegisterListener(void);
+    void triggerMpssRestart(void);
+    void setEdlConfigurations(void);
+    void getEdlConfigurations(void);
+    void triggerEdl(void);
+    void getEdlState(void);
+    static std::string edlStateToString(telux::platform::EdlState edlState);
 
  private:
     UserUtils userUtils_;
     std::shared_ptr<StateChangeListener> stateChangeListener_;
+    std::shared_ptr<EdlListener> edlListener_;
     std::shared_ptr<telux::platform::ISubsystemManager> subsystemMgr_;
 
     void getSubsystemsToMonitor(std::vector<telux::common::SubsystemInfo> &listOfSubsystems);

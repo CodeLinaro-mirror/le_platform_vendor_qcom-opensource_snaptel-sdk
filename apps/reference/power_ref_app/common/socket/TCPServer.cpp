@@ -11,48 +11,48 @@
 class TCPServer : public IServer {
  public:
     TCPServer() {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
     }
     ~TCPServer() {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         cleanup();
     }
 
     bool isStarted() override {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         return !this->isReceivedStopServer_;
     }
 
     bool isConnected() override {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         return this->isConnected_;
     }
 
     std::shared_ptr<Connection> getConnectionParams() override {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         return connectionConfig_;
     }
 
     bool bindToDevice(int clientSocket, std::string deviceName) {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         if (setsockopt(
                 clientSocket, SOL_SOCKET, SO_BINDTODEVICE, deviceName.c_str(), deviceName.size())
             != 0) {
-            LOG(ERROR, __FUNCTION__, "Failed to bind to device: ", strerror(errno));
+            LOGFE("Failed to bind to device: %s", strerror(errno));
             return false;
         }
         return true;
     }
 
     bool start(std::shared_ptr<Connection> connectionConfig) override {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         connectionConfig_     = connectionConfig;
         isReceivedStopServer_ = false;
         int domain
             = connectionConfig->ipFamily == telux::data::IpFamilyType::IPV4 ? AF_INET : AF_INET6;
         serverSocket_ = socket(domain, SOCK_STREAM, 0);
         if (serverSocket_ == -1) {
-            LOG(ERROR, __FUNCTION__, " socket : ", std::string(strerror(errno)));
+            LOGFE("socket : %s", strerror(errno));
             this->isConnected_ = false;
             return false;
         }
@@ -65,10 +65,10 @@ class TCPServer : public IServer {
     }
 
     bool sendMessage(IPMessage &msg) override {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         if (send(clientSocket_, static_cast<const void *>(&msg), sizeof(IPMessage), 0)
             != sizeof(IPMessage)) {
-            LOG(ERROR, __FUNCTION__, " send : ", std::string(strerror(errno)));
+            LOGFE("send : %s", strerror(errno));
             this->isConnected_ = false;
             for (auto listener : listeners_) {
                 listener->onDisconnect(connectionConfig_);
@@ -80,7 +80,7 @@ class TCPServer : public IServer {
     }
 
     bool ensureAllPacketsAcknowledged() override {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         if (connectionConfig_->protocol == Protocol::TCP) {
             while (true) {
                 struct tcp_info info;
@@ -90,7 +90,7 @@ class TCPServer : public IServer {
                         break;  // All ACKs received
                     }
                 } else {
-                    LOG(ERROR, __FUNCTION__, " getsockopt : ", std::string(strerror(errno)));
+                    LOGFE("getsockopt : %s", strerror(errno));
                     return false;
                 }
                 usleep(100000);  // Sleep 100ms to avoid busy-waiting
@@ -100,23 +100,23 @@ class TCPServer : public IServer {
     }
 
     void cleanup() override {
-        LOG(DEBUG, __FUNCTION__, " Stopping TCP Server ");
+        LOGFD("Stopping TCP Server");
         this->isReceivedStopServer_ = true;
         this->isConnected_          = false;
         if (serverSocket_ != -1) {
             if (shutdown(serverSocket_, SHUT_RDWR) == -1) {
-                LOG(ERROR, __FUNCTION__, " shutdown ", std::string(strerror(errno)));
+                LOGFE("shutdown %s", strerror(errno));
             }
             if (close(serverSocket_) == -1) {
-                LOG(ERROR, __FUNCTION__, " close ", std::string(strerror(errno)));
+                LOGFE("close %s", strerror(errno));
             }
         }
         if (clientSocket_ != -1) {
             if (shutdown(clientSocket_, SHUT_RDWR) == -1) {
-                LOG(ERROR, __FUNCTION__, "client shutdown ", std::string(strerror(errno)));
+                LOGFE("client shutdown %s", strerror(errno));
             }
             if (close(clientSocket_) == -1) {
-                LOG(ERROR, __FUNCTION__, "client close ", std::string(strerror(errno)));
+                LOGFE("client close %s", strerror(errno));
             }
         }
         serverSocket_ = -1;
@@ -128,7 +128,7 @@ class TCPServer : public IServer {
     int clientSocket_ = -1;
 
     bool bindSocket() {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         struct sockaddr *sockAddr = nullptr;
         socklen_t sockSize        = 0;
         int reuse                 = 1;
@@ -136,13 +136,13 @@ class TCPServer : public IServer {
         // Call bindToDevice after accept
         if (!connectionConfig_->configuredInterfaceName.empty()) {
             if (!bindToDevice(clientSocket_, connectionConfig_->configuredInterfaceName)) {
-                LOG(ERROR, __FUNCTION__, " bind : ", connectionConfig_->configuredInterfaceName,
-                    " ", std::string(strerror(errno)));
+                LOGFE(" bind : %s %s", connectionConfig_->configuredInterfaceName.c_str(),
+                    std::string(strerror(errno)).c_str());
             }
         } else {
             if (!bindToDevice(
                     this->clientSocket_, connectionConfig_->dataCall->getInterfaceName())) {
-                LOG(ERROR, __FUNCTION__, " Failed to bind to device");
+                LOGFE(" Failed to bind to device");
             }
         }
 
@@ -153,35 +153,33 @@ class TCPServer : public IServer {
             struct sockaddr_in v4ServerAddr {};
             memset(&v4ServerAddr, 0, sizeof(v4ServerAddr));
             if (!this->connectionConfig_->serverIpAddr.empty()) {
-                LOG(DEBUG, __FUNCTION__,
-                    " IPv4 address format: ", this->connectionConfig_->serverIpAddr);
+                LOGFD(" IPv4 address format: %s", this->connectionConfig_->serverIpAddr.c_str());
 
                 int ret = inet_pton(AF_INET, this->connectionConfig_->serverIpAddr.c_str(),
                     &(v4ServerAddr.sin_addr));
                 if (ret <= 0) {
                     if (ret == 0) {
-                        LOG(ERROR, __FUNCTION__, " Invalid IPv4 address format: ",
-                            this->connectionConfig_->serverIpAddr);
+                        LOGFE(" Invalid IPv4 address format: %s",
+                            this->connectionConfig_->serverIpAddr.c_str());
                     } else {
-                        LOG(ERROR, __FUNCTION__,
-                            " inet_pton failed: ", std::string(strerror(errno)));
+                        LOGFE(" inet_pton failed: ", std::string(strerror(errno)).c_str());
                     }
                     return false;
                 }
 
             } else if (!this->connectionConfig_->dataCall->getIpv4Info().addr.ifAddress.empty()) {
-                LOG(DEBUG, __FUNCTION__, " IPv4 address format: ",
-                    this->connectionConfig_->dataCall->getIpv4Info().addr.ifAddress);
+                LOGFE(" IPv4 address format: %s",
+                    (this->connectionConfig_->dataCall->getIpv4Info().addr.ifAddress).c_str());
                 int ret = inet_pton(AF_INET,
                     this->connectionConfig_->dataCall->getIpv4Info().addr.ifAddress.c_str(),
                     &(v4ServerAddr.sin_addr));
                 if (ret <= 0) {
                     if (ret == 0) {
-                        LOG(ERROR, __FUNCTION__, " Invalid IPv4 address format: ",
-                            this->connectionConfig_->dataCall->getIpv4Info().addr.ifAddress);
+                        LOGFE("Invalid IPv4 address format: %s",
+                            (this->connectionConfig_->dataCall->getIpv4Info().addr.ifAddress)
+                                .c_str());
                     } else {
-                        LOG(ERROR, __FUNCTION__,
-                            " inet_pton failed: ", std::string(strerror(errno)));
+                        LOGFE(" inet_pton failed: %s", std::string(strerror(errno)).c_str());
                     }
                     return false;
                 }
@@ -192,7 +190,7 @@ class TCPServer : public IServer {
             sockSize                = sizeof(sockaddr_in);
 
             if (bind(this->serverSocket_, sockAddr, sockSize) < 0) {
-                LOG(ERROR, __FUNCTION__, " bind : ", std::string(strerror(errno)));
+                LOGFE(" bind : %s", std::string(strerror(errno)).c_str());
                 this->isConnected_ = false;
                 if (this->serverSocket_ != -1) {
                     close(this->serverSocket_);
@@ -206,18 +204,18 @@ class TCPServer : public IServer {
             struct sockaddr_in6 v6ServerAddr = {};
             memset(&v6ServerAddr, 0, sizeof(v6ServerAddr));
             if (!this->connectionConfig_->dataCall->getIpv6Info().addr.ifAddress.empty()) {
-                LOG(ERROR, __FUNCTION__, " IPv6 address format: ",
-                    this->connectionConfig_->dataCall->getIpv6Info().addr.ifAddress);
+                LOGFE(" IPv6 address format: %s",
+                    (this->connectionConfig_->dataCall->getIpv6Info().addr.ifAddress).c_str());
                 int ret = inet_pton(AF_INET6,
                     this->connectionConfig_->dataCall->getIpv6Info().addr.ifAddress.c_str(),
                     &(v6ServerAddr.sin6_addr));
                 if (ret <= 0) {
                     if (ret == 0) {
-                        LOG(ERROR, __FUNCTION__, " Invalid IPv6 address format: ",
-                            this->connectionConfig_->dataCall->getIpv6Info().addr.ifAddress);
+                        LOGFE(" Invalid IPv6 address format: %s",
+                            (this->connectionConfig_->dataCall->getIpv6Info().addr.ifAddress)
+                                .c_str());
                     } else {
-                        LOG(ERROR, __FUNCTION__,
-                            " inet_pton failed: ", std::string(strerror(errno)));
+                        LOGFE(" inet_pton failed: %s", strerror(errno));
                     }
                     return false;
                 }
@@ -228,7 +226,7 @@ class TCPServer : public IServer {
             sockSize                 = sizeof(sockaddr_in6);
 
             if (bind(this->serverSocket_, sockAddr, sockSize) < 0) {
-                LOG(ERROR, __FUNCTION__, " bind : ", std::string(strerror(errno)));
+                LOGFE(" bind : %s", strerror(errno));
                 this->isConnected_ = false;
                 if (this->serverSocket_ != -1) {
                     close(this->serverSocket_);
@@ -241,10 +239,10 @@ class TCPServer : public IServer {
     }
 
     void listenTCPSync() {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
 
         if (listen(this->serverSocket_, 3) < 0) {
-            LOG(ERROR, __FUNCTION__, " listen failed: ", std::string(strerror(errno)));
+            LOGFE("listen failed: %s", strerror(errno));
             return;
         }
 
@@ -255,20 +253,20 @@ class TCPServer : public IServer {
             this->clientSocket_ = accept(this->serverSocket_,
                 reinterpret_cast<struct sockaddr *>(&clientAddr), &clientAddrLen);
             if (this->clientSocket_ < 0) {
-                LOG(ERROR, __FUNCTION__, " accept failed: ", std::string(strerror(errno)));
+                LOGFE("accept failed: %s", strerror(errno));
                 continue;
             }
 
             // Call bindToDevice after accept
             if (!connectionConfig_->configuredInterfaceName.empty()) {
                 if (!bindToDevice(clientSocket_, connectionConfig_->configuredInterfaceName)) {
-                    LOG(ERROR, __FUNCTION__, " bind : ", connectionConfig_->configuredInterfaceName,
-                        " ", std::string(strerror(errno)));
+                    LOGFE(" bind : %s %s", connectionConfig_->configuredInterfaceName.c_str(),
+                        strerror(errno));
                 }
             } else {
                 if (!bindToDevice(
                         this->clientSocket_, connectionConfig_->dataCall->getInterfaceName())) {
-                    LOG(ERROR, __FUNCTION__, " Failed to bind to device");
+                    LOGFE(" Failed to bind to device");
                 }
             }
 
@@ -288,14 +286,14 @@ class TCPServer : public IServer {
             // Filter by IP and port if configured
             if (!this->connectionConfig_->clientIpAddr.empty()
                 && strcmp(clientIp, this->connectionConfig_->clientIpAddr.c_str()) != 0) {
-                LOG(WARNING, __FUNCTION__, " rejected client IP: ", clientIp);
+                LOGFW(" rejected client IP: %s", clientIp);
                 // close(this->clientSocket_);
                 // continue;
             }
 
             if (this->connectionConfig_->clientPort != 0
                 && this->connectionConfig_->clientPort != clientPort) {
-                LOG(WARNING, __FUNCTION__, " rejected client port: ", clientPort);
+                LOGFW(" rejected client port: %u", clientPort);
                 // close(this->clientSocket_);
                 // continue;
             }
@@ -310,26 +308,26 @@ class TCPServer : public IServer {
                     ssize_t n
                         = recv(this->clientSocket_, static_cast<void *>(&msg), sizeof(msg), 0);
                     if (n <= 0) {
-                        LOG(ERROR, __FUNCTION__, " trigger connection interrupted ");
+                        LOGFE("trigger connection interrupted");
                         this->isConnected_ = false;
                         break;
                     }
                     for (auto listener : listeners_) {
                         listener->messageReceived(msg, n, connectionConfig_);
                     }
-                    LOG(DEBUG, __FUNCTION__, " length = ", n);
+                    LOGFD("length = %zd", n);
                 } while (true);
             } catch (const std::exception &e) {
                 this->isConnected_ = false;
-                LOG(ERROR, __FUNCTION__, " exception: ", std::string(e.what()));
+                LOGFE("exception: %s", e.what());
             }
 
             // Always clean up socket
             if (shutdown(this->clientSocket_, SHUT_RDWR) == -1) {
-                LOG(ERROR, __FUNCTION__, " shutdown failed: ", std::string(strerror(errno)));
+                LOGFE("shutdown failed: %s", strerror(errno));
             }
             if (close(this->clientSocket_) == -1) {
-                LOG(ERROR, __FUNCTION__, " close failed: ", std::string(strerror(errno)));
+                LOGFE("close failed: %s", strerror(errno));
             }
             for (auto listener : listeners_) {
                 listener->onDisconnect(this->connectionConfig_);
@@ -338,11 +336,11 @@ class TCPServer : public IServer {
         } while (!this->isReceivedStopServer_);
 
         close(this->serverSocket_);
-        LOG(DEBUG, __FUNCTION__, " exit ");
+        LOGFD("exit");
     }
 
     bool updateConnectionParams() {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         int soc = clientSocket_;
 
         char ipStr[INET6_ADDRSTRLEN];
@@ -351,7 +349,7 @@ class TCPServer : public IServer {
         socklen_t addrLen = sizeof(localAddr);
 
         if (getsockname(soc, (struct sockaddr *)&localAddr, &addrLen) == -1) {
-            LOG(ERROR, __FUNCTION__, " getsockname failed: ", strerror(errno));
+            LOGFE("getsockname failed: %s", strerror(errno));
             return false;
         }
 
@@ -366,7 +364,7 @@ class TCPServer : public IServer {
             port                        = ntohs(addr_in6->sin6_port);
             connectionConfig_->ipFamily = telux::data::IpFamilyType::IPV6;
         } else {
-            LOG(ERROR, __FUNCTION__, " Unknown address family");
+            LOGFE("Unknown address family");
             return false;
         }
 
@@ -377,7 +375,7 @@ class TCPServer : public IServer {
         struct sockaddr_storage peerAddr;
         addrLen = sizeof(peerAddr);
         if (getpeername(soc, (struct sockaddr *)&peerAddr, &addrLen) == -1) {
-            LOG(ERROR, __FUNCTION__, " getpeername failed: ", strerror(errno));
+            LOGFE("getpeername failed: %s", strerror(errno));
             return false;
         }
 
@@ -390,7 +388,7 @@ class TCPServer : public IServer {
             inet_ntop(AF_INET6, &(addr_in6->sin6_addr), ipStr, sizeof(ipStr));
             port = ntohs(addr_in6->sin6_port);
         } else {
-            LOG(ERROR, __FUNCTION__, " Unknown peer address family");
+            LOGFE("Unknown peer address family");
             return false;
         }
 

@@ -7,7 +7,7 @@
  * @file       StaInterfaceManager.hpp
  *
  * @brief      Primary interface for Wi-Fi Station Mode.
- *             it provide APIs for Wi-Fi Station mode configurations and management.
+ *             it provides APIs for Wi-Fi Station mode configurations and management.
  *
  */
 
@@ -41,17 +41,9 @@ using NetworkId = uint16_t;
  * Priority is used to determine the order in which persistent network
  * configurations are selected when multiple network entries are present and
  * network with higher priority value is preferred over those with lower
- * values, it should be set to 0 if you do not want specify priority.
+ * values, it should be set to 0 if you do not want to specify priority.
  */
 using Priority = uint16_t;
-
-/**
- * Station Connection IP Type.
- */
-enum class StaIpConfig {
-    DYNAMIC_IP = 1, /**< Station is configured with dynamic IP */
-    STATIC_IP  = 2, /**< Station is configured with Static IP  */
-};
 
 /**
  * Bridge/Router Mode.
@@ -59,16 +51,6 @@ enum class StaIpConfig {
 enum class StaBridgeMode {
     ROUTER = 0, /**<  Station is in Router Mode      */
     BRIDGE = 1 /**<  Station is in Bridge Mode      */
-};
-
-/**
- * Static IP Configuration.
- */
-struct StaStaticIpConfig {
-    std::string ipAddr; /**<   IPv4 address to be assigned. */
-    std::string gwIpAddr; /**<   IPv4 address of the gateway. */
-    std::string netMask; /**<   Subnet mask.                 */
-    std::string dnsAddr; /**<   DNS IPv4 address.            */
 };
 
 /**
@@ -274,7 +256,7 @@ class IStaInterfaceManager {
      *
      * @note Preferential connection to a specific band set via
      * @ref telux::wlan::StaNetworkConfigEntry::band is established or maintained only if the
-     * link to the external AP remains stable. otherwise, this preference is ignored and the STA
+     * link to the external AP remains stable. Otherwise, this preference is ignored and the STA
      * connects to an AP that can provide a reliable radio link without considering the band that
      * it operates on.
      *

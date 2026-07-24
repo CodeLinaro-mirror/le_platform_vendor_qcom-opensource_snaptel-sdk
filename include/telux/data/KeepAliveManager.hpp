@@ -19,7 +19,7 @@
  *           the modem to learn the TCP session parameters used to set up TCP-keepAlive offloading.
  *
  *           The monitor allows the client to use TCP-keepAlive offloading without the need to
- *           retreive the TCP session parameters from the AP/EAP.
+ *           retrieve the TCP session parameters from the AP/EAP.
  *         @note The supported configuration is the TCP client running within the MDM and the TCP
  *         server operating outside of the MDM.
  */
@@ -42,7 +42,7 @@ namespace data {
 struct TCPKAParams {
     std::string srcIp; /**< Source IPv4/IPv6 address */
     std::string dstIp; /**< Destination IPv4/IPv6 address */
-    int srcPort; /* Source port */
+    int srcPort; /**< Source port */
     int dstPort; /**< Destination port */
 };
 
@@ -127,7 +127,7 @@ class IKeepAliveManager {
     virtual telux::common::ErrorCode disableTCPMonitor(const MonitorHandleType monHandle) = 0;
 
     /**
-     * Starts TCP keep-alive offloading based on the TCP keep-alive offloading parameter`s.
+     * Starts TCP keep-alive offloading based on the TCP keep-alive offloading parameters.
      *
      * This variant of the startTCPKeepAliveOffload API requires the user to specify the
      * TCP connection parameters (source IP, destination IP, source port, destination port)

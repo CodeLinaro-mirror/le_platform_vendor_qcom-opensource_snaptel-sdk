@@ -150,7 +150,7 @@ class ILocationListener : public telux::common::ISDKListener {
      * This function is called when device receives GNSS NMEA sentences from FUSED engine.
      *
      * To receive these updates, clients need to set the @ref telux::loc::GnssReportType::NMEA bit
-     * in the reportMask passed as a paramter to @ref ILocationManager::startDetailedReports or
+     * in the reportMask passed as a parameter to @ref ILocationManager::startDetailedReports or
      * @ref ILocationManager::startDetailedEngineReports.
      *
      * Also refer to @ref ILocationManager::startDetailedEngineReports to understand the usage
@@ -169,7 +169,7 @@ class ILocationListener : public telux::common::ISDKListener {
      * This function is called when device receives NMEA sentences from a specific engine.
      *
      * To receive these updates, clients need to set the @ref
-     * telux::loc::GnssReportType::ENGINE_NMEA bit in the reportMask passed as a paramter to @ref
+     * telux::loc::GnssReportType::ENGINE_NMEA bit in the reportMask passed as a parameter to @ref
      * ILocationManager::startDetailedEngineReports.
      *
      * Also refer to @ref ILocationManager::startDetailedEngineReports to understand the usage
@@ -262,6 +262,24 @@ class ILocationListener : public telux::common::ISDKListener {
      *              and could break backwards compatibility.
      */
     virtual void onGnssExtendedDataInfo(const std::vector<uint8_t> &payload) {
+    }
+
+    /**
+     * This function is invoked when the SV residual report is received during a positioning
+     * session. Support for residual reporting callbacks is available only for specific engine
+     * types and requires the appropriate license on supported platforms.
+     *
+     * On platforms with access control enabled, the client needs to have TELUX_LOC_DATA permission
+     * for this listener API to be invoked.
+     *
+     * @param [in] gnssSvResidualReport - @ref telux::loc::GnssSvResidualReport containing SV
+     * Residual information.
+     *
+     * @note  Eval: This is a new API and is being evaluated. It is subject to change
+     *              and could break backwards compatibility.
+     */
+    virtual void onGnssSVResidualInfo(
+        const telux::loc::GnssSvResidualReport &gnssSvResidualReport) {
     }
 
     /**

@@ -81,7 +81,9 @@ enum class DgnssDataFormat {
     /** Source data format is RTCM_3 */
     DATA_FORMAT_RTCM_3 = 1,
     /** Source data format is 3GPP RTK Rel-15 */
-    DATA_FORMAT_3GPP_RTK_R15 = 2
+    DATA_FORMAT_3GPP_RTK_R15 = 2,
+    /** Source data format is RTX */
+    DATA_FORMAT_RTX = 3
 };
 
 /**
@@ -103,9 +105,9 @@ enum class DgnssStatus {
     /** Data source is usable */
     DATA_SOURCE_USABLE = 5,
     /** Data source is not usable, for example,
-     * the reference station is too far away to improve the potion accuracy */
+     * the reference station is too far away to improve the position accuracy */
     DATA_SOURCE_NOT_USABLE = 6,
-    /** The CDFW service askes the source client to stop
+    /** The CDFW service asks the source client to stop
      *  injecting the correction data */
     CDFW_STOP_SOURCE_INJECT = 7
 };
@@ -371,7 +373,7 @@ struct GnssKinematicsData {
  * The location info is calculated according to the vehicle's GNSS antenna where as Vehicle
  * Reference Point(VRP) refers to a point on the vehicle where the display of the car sits.
  * The VRP based info is calculated by adding that extra difference between GNSS antenna and
- * the VRP on the top where the location info is recieved. The VRP parameters can be configured
+ * the VRP on the top where the location info is received. The VRP parameters can be configured
  * through @ref ILocationConfigurator::configureLeverArm.
  * LLAInfo specifies latitude, longitude and altitude info of location for VRP-based.
  */
@@ -639,7 +641,7 @@ enum LocCapabilityType {
      */
     QWES_CV2X_LOCATION_PREMIUM = (1 << 9),
     /** Support PPE (Precise Positioning Engine) library is enabled or Precise Positioning Framework
-     *  (PPF) is available. This includes features for Carrier Phase and SV Ephermeris.
+     *  (PPF) is available. This includes features for Carrier Phase and SV Ephemeris.
      */
     QWES_PPE = (1 << 10),
     /** Support QDR2_C license bundle is enabled. */
@@ -799,11 +801,11 @@ enum LocationInfoExValidityType {
     HAS_HOR_RELIABILITY = (1ULL << 3),
     /** valid vertical reliability */
     HAS_VER_RELIABILITY = (1ULL << 4),
-    /** valid elipsode semi major */
+    /** valid ellipse semi major */
     HAS_HOR_ACCURACY_ELIP_SEMI_MAJOR = (1ULL << 5),
-    /** valid elipsode semi minor */
+    /** valid ellipse semi minor */
     HAS_HOR_ACCURACY_ELIP_SEMI_MINOR = (1ULL << 6),
-    /** valid accuracy elipsode azimuth */
+    /** valid accuracy ellipse azimuth */
     HAS_HOR_ACCURACY_ELIP_AZIMUTH = (1ULL << 7),
     /** valid gnss sv used in pos data */
     HAS_GNSS_SV_USED_DATA = (1ULL << 8),
@@ -1527,7 +1529,7 @@ enum GnssEphSource {
 
 /** Specifies the action to be performed by the clients on the ephemeris info received. */
 enum GnssEphAction {
-    /** Epehmeris Action Unknown  */
+    /** Ephemeris Action Unknown  */
     EPH_ACTION_UNKNOWN = 0,
     /** Update ephemeris data */
     EPH_ACTION_UPDATE = 1,
@@ -1677,8 +1679,8 @@ enum GpsQzssExtEphValidityType {
     /** Valid validtyPeriod*/
     GPS_QZSS_EXT_EPH_VALIDITY_PERIOD_VALID = (1 << 10),
     /** Valid deltaNdot */
-    GPS_QZSS_EXT_EPH_DELTA_NDOT_VALID = (1 < 11),
-    /** Valid delaA*/
+    GPS_QZSS_EXT_EPH_DELTA_NDOT_VALID = (1 << 11),
+    /** Valid deltaA*/
     GPS_QZSS_EXT_EPH_DELTAA_VALID = (1 << 12),
     /** Valid adot */
     GPS_QZSS_EXT_EPH_ADOT_VALID = (1 << 13)
@@ -2128,7 +2130,7 @@ struct GnssEphemeris {
 
 /** Specify leap second change event info.*/
 struct LeapSecondChangeInfo {
-    /** GPS timestamp that corrresponds to the last known leap
+    /** GPS timestamp that corresponds to the last known leap
      *  second change event.
      *  The info can be available on two scenario:
      *  1: This leap second change event has been scheduled and yet
@@ -2444,7 +2446,9 @@ enum GnssReportType {
      */
     EPHEMERIS = (1 << 8),
     /** GNSS extended data */
-    EXTENDED_DATA = (1 << 9)
+    EXTENDED_DATA = (1 << 9),
+    /* SV Residual Reports */
+    SV_RESIDUAL = (1 << 10)
 };
 
 /** Specifies the applicable reports using the bits represented in GnssReportType */
@@ -2506,27 +2510,52 @@ enum class EngineType {
 };
 
 /**
- * Specify the position engine run state */
+ * Specify the position engine run state.
+ */
 enum class LocationEngineRunState {
     /** Unknown engine run state. */
     UNKNOWN = -1,
     /**
-     * Request the position engine to be put into suspended state.
-     * When put in this state the QDR engine will discard calibration data.
+     * Request the position engine to be put into SUSPENDED state.
      *
+     * This state suspends the functional operation of the engine
+     * while keeping the engine process resident in memory. When placed
+     * in this state, the engine stops producing position fixes.
+     *
+     * SUSPENDED and RUNNING states are supported by the QDR engine and, on
+     * select software product lines, may also be supported by the
+     * precise position engine.
+     *
+     * When the engine is subsequently transitioned from SUSPENDED to
+     * RUNNING, the engine may restart its execution without retaining
+     * any prior positioning or calibration history.
      */
     SUSPENDED = 1,
-    /** Request the position engine to be put into running state. */
+    /**
+     * Request the position engine to be put into RUNNING state.
+     *
+     * This state resumes normal engine execution after a prior SUSPENDED
+     * or SUSPEND_RETAIN state. On transition to RESUME, the engine may restart
+     * execution without restoring prior positioning or calibration history.
+     *
+     * GNSS position and heading re-acquisition may be required for DR
+     * engine engagement.
+     */
     RUNNING = 2,
     /**
-     * Request the position engine to be put into suspend state while
-     * retaining any calibration data.
-     * While configuring this engine state via @ref ILocationConfigurator::configureEngineState,
-     * the vehicle is expected to be stationary and should be set to RUNNING
-     * before the vehicle is expected to move(for example,on Ignition On).
-     * This state is applicable when the client expects QDR to retain necessary data for
-     * subsequent resume/reboot while being suspended.
+     * Request the selected position engine to be put into SUSPENDED state
+     * while retaining useful internal state data.
      *
+     * This state is applicable to the QDR engine only. It is strongly
+     * advised to link this state to a vehicle condition in which the
+     * vehicle is expected to remain stationary at the time of invocation
+     * of the API and subsequently until the engine is transitioned back
+     * to RUNNING.
+     *
+     * For QDR engine, transition out of SUSPEND_RETAIN occurs either
+     * when the state is explicitly changed to RUNNING via this API or
+     * when the device is taken through suspend/resume or reboot
+     * power-state cycles.
      */
     SUSPEND_RETAIN = 3
 };
@@ -2606,7 +2635,7 @@ struct XtraConfig {
     /**
      * Path to the certificate authority (CA) repository that needs
      * to be used for XTRA assistance data download.
-     * If empty string is specified, device default CA repositaory
+     * If empty string is specified, device default CA repository
      * will be used.
      */
     std::string caPath;
@@ -2769,6 +2798,281 @@ enum SbasCorrectionType {
  * to improve the performance of GNSS output.
  */
 using SbasCorrection = std::bitset<SBAS_COUNT>;
+
+/**
+ * Specify validity mask bits for SvResidualData fields. Set a bit when the corresponding field
+ * in SvResidualData is valid.
+ */
+enum SvResidualInfoValidityType {
+    /** Validity of pseudorange residual.*/
+    PR_RES_VALID = (1 << 0),
+    /** Validity of pseudorange residual uncertainty.*/
+    PR_UNC_VALID = (1 << 1),
+    /** Validity of carrier phase residual.*/
+    CP_RES_VALID = (1 << 2),
+    /** Validity of carrier phase residual uncertainty.*/
+    CP_UNC_VALID = (1 << 3),
+    /** Validity of doppler residual.*/
+    DOPPLER_RES_VALID = (1 << 4),
+    /** Validity of doppler residual uncertainty.*/
+    DOPPLER_UNC_VALID = (1 << 5),
+    /** Validity of issue of data ephemeris (for GPS/BDS/GAL).*/
+    IODE_VALID = (1 << 6),
+    /** Validity of GLONASS ephemeris epoch parameter (Tb).*/
+    GLO_TB_VALID = (1 << 7),
+    /** Validity of frequency number for GLONASS SV.*/
+    FREQ_NUM_VALID = (1 << 8),
+    /** Validity of SV carrier to noise ratio at antenna (dB-Hz).*/
+    CNO_VALID = (1 << 9),
+    /** Validity of SV azimuth (radians).*/
+    AZIM_VALID = (1 << 10),
+    /** Validity of SV elevation (radians).*/
+    ELEV_VALID = (1 << 11)
+};
+
+/**
+ * Specify satellite residual information for a single satellite vehicle (SV).
+ * Provides code, carrier, and doppler residuals along with uncertainties. Each field is valid
+ * only when the corresponding validityMask bit is set.
+ * Pseudorange residual: difference between observed code range and modeled code range (meters).
+ * Carrier phase residual: difference between observed phase and modeled phase, converted to meters.
+ * Doppler residual: difference between observed range rate and modeled line-of-sight rate
+ * (meters/second). Azimuth and elevation: provided in radians for diagnostic precision.
+ */
+struct SvResidualData {
+    /** Unique SV identifier. */
+    uint16_t svId;
+    /** GnssSignalType mask */
+    GnssSignal gnssSignalType;
+    /** Validity mask for SvResidualData fields */
+    uint32_t validityMask;
+    /** Pseudorange residual in meters. */
+    float prResidual;
+    /** Pseudorange residual uncertainty in meters. */
+    float prUncertainty;
+    /** Carrier phase residual in meters. */
+    float cpResidual;
+    /** Carrier phase residual uncertainty in meters. */
+    float cpUncertainty;
+    /** Doppler residual in meters/second. */
+    float dopplerResidual;
+    /** Doppler residual uncertainty in meters/second. */
+    float dopplerUncertainty;
+    /** Issue of data ephemeris (for GPS/BDS/GAL). */
+    uint8_t iodephemeris;
+    /** GLONASS ephemeris epoch parameter (Tb). */
+    uint8_t gloTbEpoch;
+    /** Frequency number for GLONASS SV (-7 ~ +6), invalid for other constellations. */
+    int8_t gloFreqNum;
+    /** SV carrier to noise ratio at antenna (dB-Hz). */
+    float carrierNoiseRatio;
+    /** SV azimuth (radians). */
+    double azimuth;
+    /** SV elevation (radians). */
+    double elevation;
+};
+
+/**
+ * Validity mask bits for SvAvailabilityUsage fields. Set a bit when the corresponding field in
+ * SvAvailabilityUsage is valid.
+ */
+enum SvAvailabilityUsageValidityType {
+    /** Validity of number of GPS SVs with valid measurement.*/
+    GPS_NUM_SV_MEAS_VALID = (1 << 0),
+    /** Validity of number of GPS SVs used in position fix.*/
+    GPS_NUM_SV_POS_FIX_VALID = (1 << 1),
+    /** Validity of number of GPS SVs used in velocity fix.*/
+    GPS_NUM_SV_VEL_FIX_VALID = (1 << 2),
+    /** Validity of bitmask for GPS SVs used for calculating position fix.*/
+    GPS_SV_MASK_USED_VALID = (1 << 3),
+    /** Validity of number of GLONASS SVs with valid measurement.*/
+    GLO_NUM_SV_MEAS_VALID = (1 << 4),
+    /** Validity of number of GLONASS SVs used in position fix.*/
+    GLO_NUM_SV_POS_FIX_VALID = (1 << 5),
+    /** Validity of number of GLONASS SVs used in velocity fix.*/
+    GLO_NUM_SV_VEL_FIX_VALID = (1 << 6),
+    /** Validity of bitmask for GLONASS SVs used for calculating position fix.*/
+    GLO_SV_MASK_USED_VALID = (1 << 7),
+    /** Validity of number of BDS SVs with valid measurement.*/
+    BDS_NUM_SV_MEAS_VALID = (1 << 8),
+    /** Validity of number of BDS SVs used in position fix.*/
+    BDS_NUM_SV_POS_FIX_VALID = (1 << 9),
+    /** Validity of number of BDS SVs used in velocity fix.*/
+    BDS_NUM_SV_VEL_FIX_VALID = (1 << 10),
+    /** Validity of bitmask for BDS SVs used for calculating position fix.*/
+    BDS_SV_MASK_USED_VALID = (1 << 11),
+    /** Validity of number of GALILEO SVs with valid measurement.*/
+    GAL_NUM_SV_MEAS_VALID = (1 << 12),
+    /** Validity of number of GALILEO SVs used in position fix.*/
+    GAL_NUM_SV_POS_FIX_VALID = (1 << 13),
+    /** Validity of number of GALILEO SVs used in velocity fix.*/
+    GAL_NUM_SV_VEL_FIX_VALID = (1 << 14),
+    /** Validity of bitmask for GALILEO SVs used for calculating position fix.*/
+    GAL_SV_MASK_USED_VALID = (1 << 15),
+    /** Validity of number of QZSS SVs with valid measurement.*/
+    QZSS_NUM_SV_MEAS_VALID = (1 << 16),
+    /** Validity of number of QZSS SVs used in position fix.*/
+    QZSS_NUM_SV_POS_FIX_VALID = (1 << 17),
+    /** Validity of number of QZSS SVs used in velocity fix.*/
+    QZSS_NUM_SV_VEL_FIX_VALID = (1 << 18),
+    /** Validity of bitmask for QZSS SVs used for calculating position fix.*/
+    QZSS_SV_MASK_USED_VALID = (1 << 19),
+    /** Validity of number of NAVIC SVs with valid measurement.*/
+    NAVIC_NUM_SV_MEAS_VALID = (1 << 20),
+    /** Validity of number of NAVIC SVs used in position fix.*/
+    NAVIC_NUM_SV_POS_FIX_VALID = (1 << 21),
+    /** Validity of number of NAVIC SVs used in velocity fix.*/
+    NAVIC_NUM_SV_VEL_FIX_VALID = (1 << 22),
+    /** Validity of bitmask for NAVIC SVs used for calculating position fix.*/
+    NAVIC_SV_MASK_USED_VALID = (1 << 23)
+};
+
+/**
+ * Specify satellite vehicle (SV) availability and usage information per constellation.
+ * Provides counts of SVs measured and used in position/velocity fixes per constellation. Bitmasks
+ * of SVs used for position fix calculations. Each field is valid only if the corresponding bit in
+ * validityMask is set.
+ */
+struct SvAvailabilityUsage {
+    /** Validity mask for SvAvailabilityUsage fields */
+    uint32_t validityMask;
+    /** Number of GPS SVs with valid measurement (detected by searcher). */
+    uint8_t gpsSvCountMeasured;
+    /** Number of GPS SVs used in position fix. */
+    uint8_t gpsSvCountInPositionFix;
+    /** Number of GPS SVs used in velocity fix. */
+    uint8_t gpsSvCountInVelocityFix;
+    /** Bitmask for GPS SVs used for calculating position fix. */
+    uint32_t gpsSvUsedMask;
+    /** Number of GLONASS SVs with valid measurement. */
+    uint8_t glonassSvCountMeasured;
+    /** Number of GLONASS SVs used in position fix. */
+    uint8_t glonassSvCountInPositionFix;
+    /** Number of GLONASS SVs used in velocity fix. */
+    uint8_t glonassSvCountInVelocityFix;
+    /** Bitmask for GLONASS SVs used for calculating position fix. */
+    uint32_t glonassSvUsedMask;
+    /** Number of BDS SVs with valid measurement. */
+    uint8_t beidouSvCountMeasured;
+    /** Number of BDS SVs used in position fix. */
+    uint8_t beidouSvCountInPositionFix;
+    /** Number of BDS SVs used in velocity fix. */
+    uint8_t beidouSvCountInVelocityFix;
+    /** Bitmask for BDS SVs used for calculating position fix. */
+    uint64_t beidouSvUsedMask;
+    /** Number of GALILEO SVs with valid measurement. */
+    uint8_t galileoSvCountMeasured;
+    /** Number of GALILEO SVs used in position fix. */
+    uint8_t galileoSvCountInPositionFix;
+    /** Number of GALILEO SVs used in velocity fix. */
+    uint8_t galileoSvCountInVelocityFix;
+    /** Bitmask for GALILEO SVs used for calculating position fix. */
+    uint64_t galileoSvUsedMask;
+    /** Number of QZSS SVs with valid measurement. */
+    uint8_t qzssSvCountMeasured;
+    /** Number of QZSS SVs used in position fix. */
+    uint8_t qzssSvCountInPositionFix;
+    /** Number of QZSS SVs used in velocity fix. */
+    uint8_t qzssSvCountInVelocityFix;
+    /** Bitmask for QZSS SVs used for calculating position fix. */
+    uint16_t qzssSvUsedMask;
+    /** Number of NAVIC SVs with valid measurement. */
+    uint8_t navicSvCountMeasured;
+    /** Number of NAVIC SVs used in position fix. */
+    uint8_t navicSvCountInPositionFix;
+    /** Number of NAVIC SVs used in velocity fix. */
+    uint8_t navicSvCountInVelocityFix;
+    /** Bitmask for NAVIC SVs used for calculating position fix. */
+    uint16_t navicSvUsedMask;
+};
+
+/**
+ * Validity mask bits for ResidualPVTInfo fields. Set a bit when the corresponding field in
+ * ResidualPVTInfo is valid.
+ */
+enum ResidualPVTInfoValidityType {
+    /** Validity of reference latitude, longitude, altitude.*/
+    POS_LLA_VALID = (1 << 0),
+    /** Validity of reference east, north, up velocity.*/
+    POS_VEL_ENU_VALID = (1 << 1),
+    /** Validity of heading angle.*/
+    HEADING_VALID = (1 << 2),
+    /** Validity of heading uncertainty.*/
+    HEADING_UNC_VALID = (1 << 3),
+    /** Validity of position (Lat, Long) uncertainty.*/
+    PUNC_LAT_LON_VALID = (1 << 4),
+    /** Validity of vertical position uncertainty.*/
+    PUNC_VERT_VALID = (1 << 5),
+    /** Validity of east, north velocity uncertainty.*/
+    VUNC_EAST_NORTH_VALID = (1 << 6),
+    /** Validity of vertical velocity uncertainty.*/
+    VUNC_VERT_VALID = (1 << 7),
+    /** Validity of receiver's clock.*/
+    CLOCK_BIAS_VALID = (1 << 8),
+    /** Validity of receiver's clock uncertainty.*/
+    CLOCK_BIAS_UNC_VALID = (1 << 9),
+    /** Validity of receiver's clock drift rate.*/
+    CLOCK_DRIFT_VALID = (1 << 10),
+    /** Validity of receiver's clock frequency bias uncertainty.*/
+    CLOCK_DRIFT_UNC_VALID = (1 << 11),
+    /** Validity of position dilution of precision.*/
+    PDOP_VALID = (1 << 12)
+};
+
+/** Specify reference position used to compute satellite vehicle (SV) residuals for an epoch. */
+struct ResidualPVTInfo {
+    /** Validity mask for ResidualPVTInfo fields. */
+    uint32_t validityMask;
+    /** Reference latitude (radians), longitude (radians), altitude (meters). */
+    double refPosLla[3];
+    /** Reference east, north, up velocity, in meters/second. */
+    float refVelEnu[3];
+    /** Heading angle, [0, 2*pi] (rad). Referenced to north (0 rad). */
+    float headingAngle;
+    /** Heading uncertainty (rad). Uncertainty is defined with 68% confidence level. */
+    float headingUnc;
+    /**
+     * Position (Lat, Long) uncertainty (m): [0] Lat, [1] Lon.
+     * Uncertainty is defined with 68% confidence level.
+     */
+    float posUncLatLonMeters[2];
+    /** Vertical position uncertainty (m). Uncertainty is defined with 68% confidence level. */
+    float posUncVertMeters;
+    /**
+     * East, north velocity uncertainty (m/s): [0] east, [1] north.
+     * Uncertainty is defined with 68% confidence level.
+     */
+    float velUncEastNorthMps[2];
+    /** Vertical velocity uncertainty (m/s). Uncertainty is defined with 68% confidence level. */
+    float velUncVertMps;
+    /** Receiver's clock bias (m). */
+    float clockBiasMeters;
+    /** Receiver's clock uncertainty (m). Uncertainty is defined with 68% confidence level. */
+    float clockBiasUncMeters;
+    /** Receiver's clock drift rate (m/s). */
+    float clockDriftRateMps;
+    /**
+     * Receiver's clock frequency bias uncertainty (m/s).
+     * Uncertainty is defined with 68% confidence level.
+     */
+    float clockDriftRateUncMps;
+    /** Position dilution of precision (unitless). */
+    float positionDop;
+};
+
+/** GNSS satellite vehicle (SV) residual report for all satellites in an epoch.*/
+struct GnssSvResidualReport {
+    /** Location engine type that produced this SV residual report. */
+    LocationAggregationType locEngineType;
+    /** GNSS system time for the report epoch (source constellation + time). */
+    SystemTime gnssSystemTime;
+    /** Reference position used for residual computation. */
+    ResidualPVTInfo residualPVTInfo;
+    /** Residual information for each SV included in the epoch. */
+    std::vector<SvResidualData> svResidualData;
+    /** SV availability and usage information per-constellation for the epoch. */
+    SvAvailabilityUsage svAvailabilityUsage;
+};
 
 /**
  * @brief ILocationInfoBase provides interface to get basic position related

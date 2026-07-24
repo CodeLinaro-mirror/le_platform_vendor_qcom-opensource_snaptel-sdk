@@ -370,5 +370,30 @@ telux::common::ErrorCode SubsystemManagerStub::deRegisterListener(
     return telux::common::ErrorCode::SUCCESS;
 }
 
+telux::common::Status SubsystemManagerStub::triggerMpssRestart(MpssRestartResponseCb cb) {
+    LOG(DEBUG, __FUNCTION__);
+    return telux::common::Status::NOTSUPPORTED;
+}
+
+telux::common::ErrorCode SubsystemManagerStub::setEdlConfigurations(const EdlConfigs &edlConfigs) {
+    LOG(DEBUG, __FUNCTION__);
+    return telux::common::ErrorCode::NOT_SUPPORTED;
+}
+
+telux::common::ErrorCode SubsystemManagerStub::getEdlConfigurations(EdlConfigs &edlConfigs) {
+    LOG(DEBUG, __FUNCTION__);
+    return telux::common::ErrorCode::NOT_SUPPORTED;
+}
+
+telux::common::ErrorCode SubsystemManagerStub::triggerEdl() {
+    LOG(DEBUG, __FUNCTION__);
+    return telux::common::ErrorCode::NOT_SUPPORTED;
+}
+
+telux::common::ErrorCode SubsystemManagerStub::getEdlState(EdlState &edlState) {
+    LOG(DEBUG, __FUNCTION__);
+    return telux::common::ErrorCode::NOT_SUPPORTED;
+}
+
 }  // End of namespace platform
 }  // End of namespace telux

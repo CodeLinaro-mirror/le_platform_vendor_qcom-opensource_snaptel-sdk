@@ -185,18 +185,18 @@ class QMonitor {
     class Configuration {
      public:
         // TCP IP4 Server Options
-        int sockDomain   = AF_INET;
-        int sockType     = SOCK_STREAM;
-        int sockProtocol = IPPROTO_TCP;
-        int sockLevel    = SOL_SOCKET;
-        int sockOptName  = SO_REUSEADDR | SO_REUSEPORT;
-        int sockOpt      = DEFAULT_SOCK_OPT;
-        struct sockaddr_in sockAddress;
-        int bufferSize   = MAX_BUFFER_SIZE;
-        int connBacklog  = BACKLOG_LENGTH;
-        int blocking     = false;  // Detaches connection handler if false.
-        Alert debugLevel = NO_ALERT;
-        Alert logLevel   = NO_ALERT;
+        int sockDomain                 = AF_INET;
+        int sockType                   = SOCK_STREAM;
+        int sockProtocol               = IPPROTO_TCP;
+        int sockLevel                  = SOL_SOCKET;
+        int sockOptName                = SO_REUSEADDR | SO_REUSEPORT;
+        int sockOpt                    = DEFAULT_SOCK_OPT;
+        struct sockaddr_in sockAddress = {};
+        int bufferSize                 = MAX_BUFFER_SIZE;
+        int connBacklog                = BACKLOG_LENGTH;
+        int blocking                   = false;  // Detaches connection handler if false.
+        Alert debugLevel               = NO_ALERT;
+        Alert logLevel                 = NO_ALERT;
 
         Configuration(const char charAddr[] = DEFAULT_ADDRESS, const int port = DEFAULT_PORT) {
             this->sockAddress.sin_family = this->sockDomain;

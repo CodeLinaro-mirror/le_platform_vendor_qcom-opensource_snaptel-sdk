@@ -10,8 +10,7 @@
             "error": "SUCCESS"
         },
         "sendData": {
-            "status": "SUCCESS",
-            "error": "SUCCESS"
+            "status": "SUCCESS"
         },
         "abortData": {
             "error": "SUCCESS"

@@ -8,7 +8,7 @@
  *
  * @brief   TimeListener provides callback methods for listening to the time information.
  *          Client needs to implement these methods. The methods in listener can be invoked
- *          from multiple threads.So the client needs to make sure that the implementation
+ *          from multiple threads. So the client needs to make sure that the implementation
  *          is thread-safe.
  */
 
@@ -58,7 +58,7 @@ class ITimeListener : public telux::common::ISDKListener {
      * telux::cv2x::ICv2xRadioManager::injectCoarseUtcTime().
      *
      * @param [out] utcInMs - Milliseconds since Jan 1, 1970. 0 if no time
-     *                        available via SLSS (Sidelink Synchronisation Signal).
+     *                        available via SLSS (Sidelink Synchronization Signal).
      *
      */
     virtual void onCv2xUtcTimeUpdate(const uint64_t utcInMs) {

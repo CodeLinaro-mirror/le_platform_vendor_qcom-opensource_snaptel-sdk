@@ -21,21 +21,21 @@ int main(int argc, char *argv[]) {
     std::vector<std::string> supplementaryGrps{"system", "diag", "radio", "logd", "dlt"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1) {
-        LOG(DEBUG, __FUNCTION__, " Adding supplementary groups failed ");
+        LOGFD("Adding supplementary groups failed");
     }
 
     // Check for KPI logging option
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-k") == 0 || strcmp(argv[i], "--kpi") == 0) {
             RefAppUtils::setKpiLoggingEnabled(true);
-            LOG(DEBUG, __FUNCTION__, " KPI logging enabled");
+            LOGFD("KPI logging enabled");
             break;
         }
     }
 
 #ifdef TELUX_POWER_REFD_EAP
     // In EAP mode, always run as slave
-    LOG(DEBUG, __FUNCTION__, " Starting in slave mode (EAP build)");
+    LOGFD("Starting in slave mode (EAP build)");
     return PowerRefDaemonSlave::getInstance().startDaemon(argc, argv);
 #else
 
@@ -49,12 +49,12 @@ int main(int argc, char *argv[]) {
 
     // In normal mode, run as master or slave based on command line arguments
     if (isSlave) {
-        LOG(DEBUG, __FUNCTION__, " Starting in slave mode");
+        LOGFD("Starting in slave mode");
         return PowerRefDaemonSlave::getInstance().startDaemon(argc, argv);
     } else {
-        LOG(DEBUG, __FUNCTION__, " Starting in master mode");
+        LOGFD("Starting in master mode");
         if (isConsole) {
-            LOG(DEBUG, __FUNCTION__, " Running with console interface");
+            LOGFD("Running with console interface");
             PowerRefDaemon::getInstance().setConsoleMode(true);
         }
         return PowerRefDaemon::getInstance().startDaemon(argc, argv);

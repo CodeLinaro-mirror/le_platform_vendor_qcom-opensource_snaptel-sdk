@@ -437,6 +437,8 @@ void MyServingSystemListener::onSystemInfoChanged(telux::tel::ServingSystemInfo 
                        << MyServingSystemHelper::getRadioTechnology(sysInfo.rat) << std::endl;
     PRINT_NOTIFICATION << " Service domain is "
                        << MyServingSystemHelper::getServiceDomain(sysInfo.domain) << std::endl;
+    PRINT_NOTIFICATION << " Service registration state is "
+                       << MyServingSystemHelper::getServiceState(sysInfo.state) << std::endl;
 }
 
 void MyServingSystemListener::onDcStatusChanged(telux::tel::DcStatus dcStatus) {

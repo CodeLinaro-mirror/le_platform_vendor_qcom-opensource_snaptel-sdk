@@ -7,7 +7,7 @@
  * @file       WlanDeviceManager.hpp
  *
  * @brief      WlanDeviceManager is a primary interface for configuring WLAN (Wireless Local
- *             Area Network). it provide APIs for configuring WLAN connectivity.
+ *             Area Network). it provides APIs for configuring WLAN connectivity.
  *
  */
 
@@ -29,25 +29,6 @@ namespace wlan {
 class IWlanListener;
 
 /**
- * Wlan Interface State
- */
-enum class InterfaceState {
-    INACTIVE = 0x00, /**<  Interface is Inactive  */
-    ACTIVE   = 0x01, /**<  Interface is Active    */
-};
-
-/**
- * Wlan Interface Device
- */
-enum class HwDeviceType {
-    UNKNOWN = 0, /**<  Wlan device is Unknown   */
-    QCA6574 = 1, /**<  Wlan device is QCA6574   */
-    QCA6696 = 2, /**<  Wlan device is QCA6696   */
-    QCA6595 = 3, /**<  Wlan device is QCA6595   */
-    QCA6797 = 4, /**<  Wlan device is QCA6797   */
-};
-
-/**
  * Wlan Device Performance State
  */
 enum class DevicePerfState {
@@ -55,15 +36,6 @@ enum class DevicePerfState {
     FULL     = 1, /**<  Device is in full performance state      */
     REDUCED  = 2, /**<  Device is in reduced performance state   */
     SHUTDOWN = 3, /**<  Device is shutdown                       */
-};
-
-/**
- * Wlan Interface status
- */
-struct InterfaceStatus {
-    HwDeviceType device; /**> WiFi hardware type           */
-    std::vector<ApStatus> apStatus; /**< Vector of active APs status  */
-    std::vector<StaStatus> staStatus; /**< Vector of active Sta status  */
 };
 
 /**
@@ -82,7 +54,7 @@ struct RegulatoryParams {
 
 /**
  *@brief     WlanDeviceManager is a primary interface for configuring Wireless LAN.
- *           it provide APIs to enable, configure, activate, and modify modes
+ *           it provides APIs to enable, configure, activate, and modify modes
  */
 class IWlanDeviceManager {
  public:
@@ -228,7 +200,7 @@ class IWlanDeviceManager {
      * @ref telux::wlan::IApInterfaceManager::manageApService or
      * @ref telux::wlan::IStaInterfaceManager::manageStaService.
      *
-     * @param [in] txPower              Transmit Power to be set in mutiple of 100 milliwatts.
+     * @param [in] txPower              Transmit Power to be set in multiple of 100 milliwatts.
      *                                  For instance, if txPower equals 15, transmit power will be
      *                                  set to 1500 milliwatts.
      *
@@ -257,7 +229,7 @@ class IWlanDeviceManager {
      * This restriction exists because the driver or firmware provides transmit power information
      * only when an interface is fully initialized and actively transmitting or receiving data.
      *
-     * @param [out] txPowerMw           Current Transmit Power in mutiple of 100 milliwatts.
+     * @param [out] txPowerMw           Current Transmit Power in multiple of 100 milliwatts.
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *

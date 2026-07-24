@@ -11,12 +11,12 @@
 #include "common/RefAppUtils.hpp"
 
 SMSTrigger::SMSTrigger(std::shared_ptr<EventManager> eventManager) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     eventManager_ = eventManager;
 }
 
 SMSTrigger::~SMSTrigger() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     if (smsManager_) {
         smsManager_->removeListener(myself_);
         smsManager_ = nullptr;
@@ -24,7 +24,7 @@ SMSTrigger::~SMSTrigger() {
 }
 
 bool SMSTrigger::init() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
 
     config_ = ConfigParser::getInstance();
     loadConfig();
@@ -34,7 +34,7 @@ bool SMSTrigger::init() {
     int slotId             = stoi(configSlot);
 
     if (slotId == MAX_SLOT_ID && !telux::common::DeviceConfig::isMultiSimSupported()) {
-        LOG(ERROR, __FUNCTION__, " ERROR - multi sim support not available. slotId = ", configSlot);
+        LOGFE("ERROR - multi sim support not available. slotId = %s", configSlot.c_str());
         return false;
     }
 
@@ -42,22 +42,22 @@ bool SMSTrigger::init() {
     auto smsMgr = phoneFactory.getSmsManager(
         slotId, [&](telux::common::ServiceStatus status) { prom.set_value(status); });
     if (!smsMgr) {
-        LOG(ERROR, __FUNCTION__, " ERROR - Failed to get SMS Manager instance slotId = ", slotId);
+        LOGFE("ERROR - Failed to get SMS Manager instance slotId = %d", slotId);
         return false;
     }
     myself_ = shared_from_this();
-    LOG(DEBUG, __FUNCTION__, " Waiting for SMS Manager to be ready slotId = ", slotId);
+    LOGFD("Waiting for SMS Manager to be ready slotId = %d", slotId);
     telux::common::ServiceStatus smsMgrStatus = prom.get_future().get();
     if (smsMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        LOG(DEBUG, __FUNCTION__, " SMS Manager is ready slotId = ", slotId);
+        LOGFD("SMS Manager is ready slotId = %d", slotId);
         auto status = smsMgr->registerListener(myself_);
         if (status != telux::common::Status::SUCCESS) {
-            LOG(ERROR, __FUNCTION__, " ERROR - Failed to register listener slotId = ", slotId);
+            LOGFE("ERROR - Failed to register listener slotId = %d", slotId);
             return false;
         }
         smsManager_ = smsMgr;
     } else {
-        LOG(ERROR, __FUNCTION__, " ERROR - Unable to initialize SMS Manager slotId = ", slotId);
+        LOGFE("ERROR - Unable to initialize SMS Manager slotId = %d", slotId);
         return false;
     }
 
@@ -67,10 +67,10 @@ bool SMSTrigger::init() {
 void SMSTrigger::onIncomingSms(
     int phoneId, std::shared_ptr<std::vector<telux::tel::SmsMessage>> msgs) {
     eventManager_->holdWakeLock("SMSReceived");
-    LOG(DEBUG, __FUNCTION__, " Consolidated Multipart Message: ");
+    LOGFD("Consolidated Multipart Message:");
     std::string text                             = "";
     std::vector<telux::tel::SmsMessage> messages = *(msgs.get());
-    LOG(DEBUG, __FUNCTION__, "Count :", messages.size());
+    LOGFD("Count: %zu", messages.size());
 
     for (telux::tel::SmsMessage smsMsg : messages) {
         text = text + smsMsg.getText();
@@ -85,17 +85,17 @@ void SMSTrigger::onIncomingSms(
                                  + "\n RefNumber:" + std::to_string(partInfo->refNumber)
                                  + " NumberOfSegments:" + std::to_string(partInfo->numberOfSegments)
                                  + " SegmentNumber: " + std::to_string(partInfo->segmentNumber);
-            LOG(DEBUG, __FUNCTION__, tmpLog);
+            LOGFD("%s", tmpLog.c_str());
         }
     }
-    LOG(DEBUG, __FUNCTION__, " Complete Message :", text);
+    LOGFD("Complete Message: %s", text.c_str());
 
 #ifdef TELSDK_FEATURE_SATCOM_ENABLED
     // Send NTN Data
     auto sp = ntnClient_.lock();
     if (sp) {
         telux::common::Status ret = sp->sendDataString(text);
-        LOG(DEBUG, __FUNCTION__, " sendData status = ", static_cast<int>(ret));
+        LOGFD("sendData status = %d", static_cast<int>(ret));
     }
 #endif
 
@@ -110,15 +110,15 @@ void SMSTrigger::onIncomingSms(
 }
 
 void SMSTrigger::onEventRejected(shared_ptr<Event> event, EventStatus reason) {
-    LOG(DEBUG, __FUNCTION__, " ", event->toString());
+    LOGFD("%s", event->toString().c_str());
 }
 
 void SMSTrigger::onEventProcessed(shared_ptr<Event> event, bool success) {
-    LOG(DEBUG, __FUNCTION__, " ", event->toString());
+    LOGFD("%s", event->toString().c_str());
 }
 
 void SMSTrigger::triggerEvent(TcuActivityState eventState, std::string machineName) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
 
     std::shared_ptr<Event> event
         = std::make_shared<Event>(eventState, machineName, TriggerType::SMS_TRIGGER);
@@ -127,16 +127,16 @@ void SMSTrigger::triggerEvent(TcuActivityState eventState, std::string machineNa
             RefAppUtils::logKpiFile(event);
             eventManager_->pushEvent(event);
         } else {
-            LOG(ERROR, __FUNCTION__, "  event manager is not available ");
+            LOGFE("event manager is not available");
         }
     } else {
-        LOG(ERROR, __FUNCTION__, " unable to create event");
+        LOGFE("unable to create event");
     }
 }
 
 bool SMSTrigger::validateTrigger(
     std::string text, TcuActivityState &tcuActivityState, std::string &machineName) {
-    LOG(DEBUG, __FUNCTION__, " ", text);
+    LOGFD("%s", text.c_str());
     // to avoid \n and \ in a string which might lead to not matching trigger text
     text.erase(std::remove(text.begin(), text.end(), '\n'), text.cend());
     text.erase(std::remove(text.begin(), text.end(), '\\'), text.cend());
@@ -148,10 +148,10 @@ bool SMSTrigger::validateTrigger(
     }
 
     if (triggerText_.find(text) == triggerText_.end()) {
-        LOG(ERROR, __FUNCTION__, " invalid trigger text, text = ", text);
+        LOGFE("invalid trigger text, text = %s", text.c_str());
     } else {
-        LOG(INFO, __FUNCTION__, " valid trigger text, text = ", text,
-            "\n , machine name = ", machineName);
+        LOGFI(
+            "valid trigger text, text = %s, machine name = %s", text.c_str(), machineName.c_str());
         tcuActivityState = triggerText_[text];
         return true;
     }
@@ -159,7 +159,7 @@ bool SMSTrigger::validateTrigger(
 }
 
 bool SMSTrigger::loadConfig() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     std::map<std::string, TcuActivityState> expectedTrigger{
         {TRIGGER_SUSPEND, TcuActivityState::SUSPEND}, {TRIGGER_RESUME, TcuActivityState::RESUME},
         {TRIGGER_SHUTDOWN, TcuActivityState::SHUTDOWN}};
@@ -169,14 +169,14 @@ bool SMSTrigger::loadConfig() {
             configTriggerText = config_->getValue("SMS_TRIGGER", itr->first);
             if (!configTriggerText.empty()) {
                 if (triggerText_.find(configTriggerText) != triggerText_.end()) {
-                    LOG(ERROR, __FUNCTION__, " Error : same trigger for multiple state");
+                    LOGFE("Error : same trigger for multiple state");
                     return false;
                 }
                 triggerText_.insert({configTriggerText, itr->second});
             }
         }
     } catch (const std::invalid_argument &ia) {
-        LOG(ERROR, __FUNCTION__, " Error : invalid argument");
+        LOGFE("Error : invalid argument");
         return false;
     }
     return true;

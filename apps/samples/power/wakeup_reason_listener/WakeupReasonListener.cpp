@@ -36,10 +36,9 @@
 
 class WakeupReasonListener : public telux::power::IWakeupListener {
  public:
-    /* Step - 5 */
+    /* Step - 5: Handle deprecated API (for backward compatibility) */
     void onWakeup(telux::power::WakeupInfo wakeupInfo) override {
-
-        std::printf("onWakeup()\n");
+        std::printf("onWakeup(WakeupInfo) - deprecated API\n");
         if (wakeupInfo.wakeupType != telux::power::WakeupType::QMI) {
             return;
         }
@@ -56,6 +55,53 @@ class WakeupReasonListener : public telux::power::IWakeupListener {
         }
         if (wakeupInfo.qmiWakeupInfo.isProcessNameValid) {
             std::printf("processName : %s\n", wakeupInfo.qmiWakeupInfo.processName.c_str());
+        }
+    }
+
+    /* Step - 5: Handle new API (recommended) */
+    void onWakeup(const telux::power::WakeupEventInfo &eventInfo) override {
+        std::printf("onWakeup(WakeupEventInfo) - new API\n");
+        if (eventInfo.type == telux::power::WakeupType::QMI) {
+            std::printf("QMI Wakeup Event:\n");
+            std::printf("  serviceId : %u\n", eventInfo.qmi.serviceId);
+            std::printf("  sourceNodeId : %u\n", eventInfo.qmi.sourceNodeId);
+            std::printf("  destinationNodeId : %u\n", eventInfo.qmi.destinationNodeId);
+
+            if (eventInfo.qmi.isMsgIdValid) {
+                std::printf("  msgId : %u\n", eventInfo.qmi.msgId);
+            }
+            if (eventInfo.qmi.isPIDValid) {
+                std::printf("  pid : %u\n", eventInfo.qmi.pid);
+            }
+            if (eventInfo.qmi.isProcessNameValid) {
+                std::printf("  processName : %s\n", eventInfo.qmi.processName.c_str());
+            }
+        } else if (eventInfo.type == telux::power::WakeupType::WOW) {
+            std::printf("WoW Wakeup Event:\n");
+            std::printf("  wakeupCategory : %s\n", wowCategoryToStr(eventInfo.wow.wakeupCategory));
+            std::printf("  macAddress : %s\n", eventInfo.wow.macAddress.c_str());
+            std::printf("  interfaceName : %s\n", eventInfo.wow.interfaceName.c_str());
+            if (!eventInfo.wow.pbmBuffer.empty()) {
+                std::printf("  pbmBuffer : %s\n", eventInfo.wow.pbmBuffer.c_str());
+            }
+        }
+    }
+
+ private:
+    static const char *wowCategoryToStr(telux::power::WowWakeupCategory category) {
+        switch (category) {
+            case telux::power::WowWakeupCategory::WLAN_PROTOCOL:
+                return "WLAN_PROTOCOL";
+            case telux::power::WowWakeupCategory::OFFLOAD:
+                return "OFFLOAD";
+            case telux::power::WowWakeupCategory::PATTERN_FILTER:
+                return "PATTERN_FILTER";
+            case telux::power::WowWakeupCategory::MAGIC_PACKET:
+                return "MAGIC_PACKET";
+            case telux::power::WowWakeupCategory::SYSTEM:
+                return "SYSTEM";
+            default:
+                return "UNSPECIFIED";
         }
     }
 };

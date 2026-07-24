@@ -261,7 +261,10 @@ class DataFactory {
      * @param [in] clientCallback   Optional callback to get the initialization status of
      *                              Data Settings manager @ref telux::common::InitResponseCb
      *
-     * @returns instance of IDataSettingsManager
+     * @returns instance of IDataSettingsManager, or nullptr if the given oprType is not
+     *          supported on this build variant. DATA_LOCAL is not supported when
+     *          FEATURE_EXTERNAL_AP or secondary-VM support is enabled; DATA_REMOTE is not
+     *          supported otherwise.
      *
      */
     virtual std::shared_ptr<telux::data::IDataSettingsManager> getDataSettingsManager(
@@ -285,7 +288,7 @@ class DataFactory {
      * Get DualData Manager
      *
      * @param [in] clientCallback   Optional callback to get the initialization status of
-     *                              DuaData manager @ref telux::common::InitResponseCb
+     *                              DualData manager @ref telux::common::InitResponseCb
      *
      * @returns instance of IDualDataManager
      *

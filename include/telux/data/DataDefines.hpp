@@ -225,7 +225,14 @@ struct ProfileParams {
     EmergencyCapability emergencyAllowed
         = telux::data::EmergencyCapability::UNSPECIFIED; /**< Emergency services are allowed if
                                                            this field is set to ALLOWED*/
-    bool clatEnabled = false; /**< Enable or disable CLAT */
+    bool clatEnabled       = false; /**< Enable or disable CLAT */
+    bool enablePcscfViaPco = false; /**< Enable PCSCF address request
+                                       via PCO. When enabled, the UE
+                                       will request PCSCF server
+                                       addresses from the network during
+                                       PDN connection establishment. This
+                                       is typically used for IMS services.
+                                       Default is false. */
 };
 
 /**
@@ -402,6 +409,8 @@ struct BackhaulInfo {
                          e.g. if the backhaul is Vlan over Ethernet (ETH) with
                          Vlan ID 4, Vlan ID should be set to 4 and backhaul type
                          should be set to ETH */
+    int staId = 0; /** Sta ID should be provided only when backhaul type is WLAN.
+                        Clients should pass 0 for STA1 and 1 for STA2 */
 };
 
 enum class IpAssignType {

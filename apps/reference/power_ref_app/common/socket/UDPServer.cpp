@@ -10,48 +10,48 @@
 class UDPServer : public IServer {
  public:
     UDPServer() {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
     }
     ~UDPServer() {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         cleanup();
     }
 
     bool isStarted() override {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         return !this->isReceivedStopServer_;
     }
 
     bool isConnected() override {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         return this->isConnected_;
     }
 
     std::shared_ptr<Connection> getConnectionParams() override {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         return connectionConfig_;
     }
 
     bool bindToDevice(int clientSocket, std::string deviceName) {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         if (setsockopt(
                 clientSocket, SOL_SOCKET, SO_BINDTODEVICE, deviceName.c_str(), deviceName.size())
             != 0) {
-            LOG(ERROR, __FUNCTION__, "Failed to bind to device: ", strerror(errno));
+            LOGFE("Failed to bind to device: %s", strerror(errno));
             return false;
         }
         return true;
     }
 
     bool start(std::shared_ptr<Connection> connectionConfig) override {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         this->connectionConfig_     = connectionConfig;
         this->isReceivedStopServer_ = false;
         int domain
             = connectionConfig->ipFamily == telux::data::IpFamilyType::IPV4 ? AF_INET : AF_INET6;
         serverSocket_ = socket(domain, SOCK_DGRAM, 0);
         if (serverSocket_ == -1) {
-            LOG(ERROR, __FUNCTION__, " socket:", std::string(strerror(errno)));
+            LOGFE("socket: %s", strerror(errno));
             this->isConnected_ = false;
             return false;
         }
@@ -64,10 +64,10 @@ class UDPServer : public IServer {
     }
 
     bool sendMessage(IPMessage &msg) override {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         if (send(serverSocket_, static_cast<const void *>(&msg), sizeof(IPMessage), 0)
             != sizeof(IPMessage)) {
-            LOG(ERROR, __FUNCTION__, " send:", std::string(strerror(errno)));
+            LOGFE("send: %s", strerror(errno));
             this->isConnected_ = false;
 
             for (auto listener : listeners_) {
@@ -80,20 +80,20 @@ class UDPServer : public IServer {
     }
 
     bool ensureAllPacketsAcknowledged() override {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         return true;
     }
 
     void cleanup() override {
-        LOG(DEBUG, __FUNCTION__, " StoppingUDPServer");
+        LOGFD("StoppingUDPServer");
         this->isReceivedStopServer_ = true;
         this->isConnected_          = false;
         if (serverSocket_) {
             if (shutdown(serverSocket_, SHUT_RDWR) == -1) {
-                LOG(ERROR, __FUNCTION__, " shutdown", std::string(strerror(errno)));
+                LOGFE("shutdown %s", strerror(errno));
             }
             if (close(serverSocket_) == -1) {
-                LOG(ERROR, __FUNCTION__, " close", std::string(strerror(errno)));
+                LOGFE("close %s", strerror(errno));
             }
         }
         serverSocket_ = 0;
@@ -103,7 +103,7 @@ class UDPServer : public IServer {
     int serverSocket_;
 
     bool bindSocket() {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         struct sockaddr *sockAddr = nullptr;
         socklen_t sockSize        = 0;
         int reuse                 = 1;
@@ -140,7 +140,7 @@ class UDPServer : public IServer {
                 = connectionConfig_->dataCall->getIpv6Info().addr.ifAddress;
         }
         if (bind(serverSocket_, sockAddr, sockSize) < 0) {
-            LOG(ERROR, __FUNCTION__, " bind:", std::string(strerror(errno)));
+            LOGFE("bind: %s", strerror(errno));
             this->isConnected_ = false;
             return false;
         }
@@ -149,7 +149,7 @@ class UDPServer : public IServer {
     }
 
     void listenUDPSync() {
-        LOG(DEBUG, __FUNCTION__);
+        LOGFD();
         do {
             IPMessage msg;
             memset(&msg, 0, sizeof(msg));
@@ -158,7 +158,7 @@ class UDPServer : public IServer {
             ssize_t bytesReceived = recvfrom(serverSocket_, static_cast<void *>(&msg), sizeof(msg),
                 0, (struct sockaddr *)&clientAddr, &clientAddrLen);
             if (bytesReceived < 0) {
-                LOG(ERROR, __FUNCTION__, " Error receiving data:", strerror(errno));
+                LOGFE("Error receiving data: %s", strerror(errno));
                 close(serverSocket_);
                 return;
             }

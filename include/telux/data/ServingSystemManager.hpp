@@ -245,7 +245,7 @@ class IServingSystemManager {
      *
      * @returns
      * telux::common::ErrorCode::SUCCESS if request is honored by network.
-     * telux::common::ErrorCode::INVALID_STATE is returned if:
+     * telux::common::ErrorCode::INCOMPATIBLE_STATE is returned if:
      *  - The device is not camped on WCDMA.
      *  - There are no active data calls.
      *  - Any Data calls is going through bring up/tear down.

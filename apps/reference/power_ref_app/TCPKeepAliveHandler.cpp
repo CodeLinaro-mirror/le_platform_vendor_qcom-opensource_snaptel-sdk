@@ -37,7 +37,7 @@ bool TCPKeepAliveHandler::init() {
 
     std::vector<std::shared_ptr<Connection>> connectionList = RefAppUtils::getConnectionConfigs();
     if (!connectionHandler_->start(connectionList)) {
-        LOG(DEBUG, __FUNCTION__, " Connection handler is failed");
+        LOGFD("Connection handler is failed");
         return false;
     }
 
@@ -48,7 +48,7 @@ bool TCPKeepAliveHandler::init() {
         if (connection->socketConnection != nullptr) {
             connection->socketConnection->registerListener(listener);
         } else {
-            LOG(DEBUG, __FUNCTION__, " socket connection failed");
+            LOGFD("socket connection failed");
             return false;
         }
 
@@ -57,21 +57,21 @@ bool TCPKeepAliveHandler::init() {
         std::shared_ptr<telux::data::IKeepAliveManager> keepAliveManager
             = dataFactory.getKeepAliveManager(
                 connection->slotId, [&kaProm](telux::common::ServiceStatus status) {
-                    LOG(DEBUG, __FUNCTION__, " Callback invoked ", static_cast<int>(status));
+                    LOGD("Callback invoked %d", static_cast<int>(status));
                     kaProm.set_value(status);
                 });
 
         if (!keepAliveManager) {
-            LOG(DEBUG, __FUNCTION__, " Failed to get keepAliveMgr object");
+            LOGFD("Failed to get keepAliveMgr object");
             return false;
         }
 
-        LOG(DEBUG, __FUNCTION__, " Initializing keep alive subsystem Please wait");
+        LOGFD("Initializing keep alive subsystem Please wait");
         telux::common::ServiceStatus subSystemStatus = kaProm.get_future().get();
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            LOG(DEBUG, __FUNCTION__, " Keep alive Manager is ready");
+            LOGFD("Keep alive Manager is ready");
         } else {
-            LOG(DEBUG, __FUNCTION__, " Keep alive Manager is failed");
+            LOGFD("Keep alive Manager is failed");
             keepAliveManager = nullptr;
             return false;
         }
@@ -82,37 +82,37 @@ bool TCPKeepAliveHandler::init() {
 }
 
 void TCPKeepAliveHandler::onConnect(std::shared_ptr<Connection> connection) {
-    LOG(DEBUG, __FUNCTION__, connection->toString());
+    LOGFD("%s", connection->toString().c_str());
 }
 
 void TCPKeepAliveHandler::messageReceived(
     IPMessage msg, int length, std::shared_ptr<Connection> connection) {
     std::string msgString = std::string(msg.msg, length);
-    LOG(DEBUG, __FUNCTION__, connection->toString(), "\n message: ", msgString);
+    LOGFD("%s\n message: %s", connection->toString().c_str(), msgString.c_str());
 }
 
 void TCPKeepAliveHandler::onDisconnect(std::shared_ptr<Connection> connection) {
-    LOG(DEBUG, __FUNCTION__, connection->toString());
+    LOGFD("%s", connection->toString().c_str());
 }
 
 void TCPKeepAliveHandler::onEventRejected(shared_ptr<Event> event, EventStatus reason) {
 }
 
 bool TCPKeepAliveHandler::startKAOffload() {
-    LOG(DEBUG, __FUNCTION__, "connection list size: ", connectionKaInfoList_.size());
+    LOGFD("connection list size: %zu", connectionKaInfoList_.size());
 
     for (auto connectionKaInfo : connectionKaInfoList_) {
         if (connectionKaInfo->monitorHandle && connectionKaInfo->offloadHandle) {
-            LOG(DEBUG, __FUNCTION__, " KA offload already started");
+            LOGFD("KA offload already started");
             continue;
         }
         if (!(connectionKaInfo->connection && connectionKaInfo->connection->socketConnection
                 && connectionKaInfo->connection->isKeepAliveEnabled
                 && connectionKaInfo->connection->socketConnection->isConnected())) {
-            LOG(DEBUG, __FUNCTION__, " not starting keep alive ");
+            LOGFD(" not starting keep alive ");
             continue;
         }
-        LOG(DEBUG, __FUNCTION__, connectionKaInfo->connection->toString());
+        LOGFD("%s", connectionKaInfo->connection->toString().c_str());
         if ((!connectionKaInfo->connection->serverIpAddr.empty())
             && (!connectionKaInfo->connection->clientIpAddr.empty())) {
             telux::data::TCPKAParams kaPram = {};
@@ -143,9 +143,9 @@ bool TCPKeepAliveHandler::startKAOffload() {
                         connectionKaInfo->connection->keepAliveInterval,
                         connectionKaInfo->offloadHandle)
                     == telux::common::ErrorCode::SUCCESS) {
-                    LOG(DEBUG, __FUNCTION__, " SUCCESS startTCPKeepAliveOffload");
+                    LOGFD(" SUCCESS startTCPKeepAliveOffload");
                 } else {
-                    LOG(ERROR, __FUNCTION__, " issue in startTCPKeepAliveOffload");
+                    LOGFE("issue in startTCPKeepAliveOffload");
                 }
             }
         }
@@ -157,7 +157,7 @@ bool TCPKeepAliveHandler::sendMessageToAll(std::string string) {
     for (auto connectionKaInfo : connectionKaInfoList_) {
         if (!(connectionKaInfo->connection && connectionKaInfo->connection->socketConnection
                 && connectionKaInfo->connection->socketConnection->isConnected())) {
-            LOG(DEBUG, __FUNCTION__, " connection not connected");
+            LOGFD(" connection not connected");
             continue;
         }
         IPMessage msg{};
@@ -166,7 +166,7 @@ bool TCPKeepAliveHandler::sendMessageToAll(std::string string) {
         if (!connectionKaInfo->connection->socketConnection->sendMessage(msg)) {
             return false;
         }
-        LOG(DEBUG, __FUNCTION__, connectionKaInfo->connection->toString());
+        LOGFD(" %s ", connectionKaInfo->connection->toString().c_str());
     }
     return true;
 }
@@ -202,15 +202,15 @@ void TCPKeepAliveHandler::onKeepAliveStatusChange(
     telux::common::ErrorCode error, telux::data::TCPKAOffloadHandle handle) {
     if (error != telux::common::ErrorCode::SUCCESS) {
         if (error == ErrorCode::NETWORK_ERR) {
-            LOG(ERROR, __FUNCTION__, "TCP keep-alive offloading error NETWORK_ERR.");
+            LOGFE("TCP keep-alive offloading error NETWORK_ERR.");
         } else if (error == ErrorCode::CANCELLED) {
-            LOG(ERROR, __FUNCTION__, "TCP keep-alive offloading error ErrorCode::CANCELLED.");
+            LOGFE("TCP keep-alive offloading error ErrorCode::CANCELLED.");
         } else {
-            LOG(ERROR, __FUNCTION__, "TCP keep-alive offloading error : ", static_cast<int>(error));
+            LOGFE("TCP keep-alive offloading error : %d", static_cast<int>(error));
         }
     }
 }
 
 void TCPKeepAliveHandler::onServiceStatusChange(telux::common::ServiceStatus status) {
-    LOG(ERROR, __FUNCTION__, " keep alive manager status: ", static_cast<int>(status));
+    LOGFE("keep alive manager status: %d", static_cast<int>(status));
 }

@@ -14,12 +14,12 @@ std::shared_ptr<ConnectionHandler> ConnectionHandler::instance = nullptr;
 std::once_flag ConnectionHandler::initInstanceFlag;
 
 std::vector<std::shared_ptr<Connection>> ConnectionHandler::getConnectionList() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     return connectionConfigList_;
 }
 
 ConnectionHandler::~ConnectionHandler() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     for (const auto &entry : connectionConfigList_) {
         entry->dataConnectionManager = nullptr;
     }
@@ -27,22 +27,22 @@ ConnectionHandler::~ConnectionHandler() {
 }
 
 std::shared_ptr<ConnectionHandler> ConnectionHandler::getInstance() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     std::call_once(initInstanceFlag, &ConnectionHandler::initSingleton);
     return instance;
 }
 
 ConnectionHandler::ConnectionHandler() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
 }
 
 void ConnectionHandler::initSingleton() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     instance.reset(new ConnectionHandler());
 }
 
 bool ConnectionHandler::initialiseSocketConnection(std::shared_ptr<Connection> connectionConfig) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     if (connectionConfig->connectionRole == ConnectionRole::CLIENT) {
         if (connectionConfig->protocol == Protocol::TCP) {
             connectionConfig->socketConnection = std::make_shared<TCPClient>();
@@ -57,7 +57,7 @@ bool ConnectionHandler::initialiseSocketConnection(std::shared_ptr<Connection> c
         }
     }
     if (!connectionConfig->socketConnection) {
-        LOG(ERROR, __FUNCTION__, " failed to create socket connection object");
+        LOGFE("failed to create socket connection object");
         return false;
     }
     return true;
@@ -65,11 +65,11 @@ bool ConnectionHandler::initialiseSocketConnection(std::shared_ptr<Connection> c
 
 // Start server/client
 bool ConnectionHandler::start(std::vector<std::shared_ptr<Connection>> &connectionConfigList) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     {
         std::unique_lock<std::mutex> lck(mtx_);
         if (isStarted_) {
-            LOG(DEBUG, __FUNCTION__, " already started");
+            LOGFD("already started");
             if (!isCompleted_) {
                 cvStatusUpdate_.wait(lck, [this] { return (bool)isCompleted_; });
             }
@@ -83,7 +83,7 @@ bool ConnectionHandler::start(std::vector<std::shared_ptr<Connection>> &connecti
     }
 
     for (size_t i = 0; i < connectionConfigList.size(); ++i) {
-        LOG(DEBUG, __FUNCTION__, " Connection: ", connectionConfigList[i]->toString());
+        LOGFD("Connection: %s", connectionConfigList[i]->toString().c_str());
         std::shared_ptr<Connection> connectionConfig = connectionConfigList[i];
         SlotId slotId                                = connectionConfig->slotId;
         connectionConfig->dataConnectionManager      = initDataConnectionManager(slotId);
@@ -105,10 +105,10 @@ bool ConnectionHandler::start(std::vector<std::shared_ptr<Connection>> &connecti
                     triggerReconnect_ = false;
                 }
 
-                LOG(DEBUG, __FUNCTION__, " Connection: ", connectionConfig->toString());
+                LOGFD("Connection: %s", connectionConfig->toString().c_str());
                 if (!connectionConfig->socketConnection->isConnected()) {
                     if (!connectionConfig->socketConnection->start(connectionConfig)) {
-                        LOG(ERROR, __FUNCTION__, " failed to start socket connection");
+                        LOGFE("failed to start socket connection");
                     }
                 }
                 {
@@ -125,7 +125,7 @@ bool ConnectionHandler::start(std::vector<std::shared_ptr<Connection>> &connecti
 }
 
 void ConnectionHandler::cleanup() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     std::unique_lock<std::mutex> lock(mtx_);
     isCleanupTriggered_ = true;
     cvStatusUpdate_.notify_all();
@@ -139,7 +139,7 @@ void ConnectionHandler::cleanup() {
 
 void ConnectionHandler::onDataCallInfoChanged(
     const std::shared_ptr<telux::data::IDataCall> &dataCall) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     logDataCallDetails(dataCall);
 
     for (const auto &entry : connectionConfigList_) {
@@ -162,8 +162,7 @@ void ConnectionHandler::onDataCallInfoChanged(
 }
 
 void ConnectionHandler::onServiceStatusChange(telux::common::ServiceStatus status) {
-    LOG(DEBUG, __FUNCTION__,
-        " DataConnectionListener status = ", RefAppUtils::serviceStatusToString(status));
+    LOGFD("DataConnectionListener status = %s", RefAppUtils::serviceStatusToString(status).c_str());
     bool dcmStatus = status == telux::common::ServiceStatus::SERVICE_AVAILABLE ? true : false;
 
     if (!dcmStatus) {
@@ -173,12 +172,12 @@ void ConnectionHandler::onServiceStatusChange(telux::common::ServiceStatus statu
         }
         cvStatusUpdate_.notify_all();
     }
-    LOG(INFO, __FUNCTION__, " isConnectionMgrReady_ = ", (int)dcmStatus);
+    LOGFI("isConnectionMgrReady_ = %d", (int)dcmStatus);
 }
 
 std::shared_ptr<telux::data::IDataConnectionManager> ConnectionHandler::initDataConnectionManager(
     SlotId slotId) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     std::shared_ptr<telux::data::IDataConnectionManager> dataConnectionManager;
     do {
         std::promise<telux::common::ServiceStatus> dcmProm;
@@ -188,41 +187,41 @@ std::shared_ptr<telux::data::IDataConnectionManager> ConnectionHandler::initData
             slotId, [&dcmProm](telux::common::ServiceStatus status) { dcmProm.set_value(status); });
 
         if (!dataConnectionManager) {
-            LOG(ERROR, __FUNCTION__, " Failed to get DataConnectionManager object");
+            LOGFE("Failed to get DataConnectionManager object");
             break;
         }
 
         // wait for connection manager to get ready
-        LOG(DEBUG, __FUNCTION__, " Initializing Data connection manager subsystem Please wait");
+        LOGFD("Initializing Data connection manager subsystem Please wait");
         telux::common::ServiceStatus subSystemStatus = dcmProm.get_future().get();
 
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            LOG(DEBUG, __FUNCTION__, " Data Connection Manager is ready");
+            LOGFD("Data Connection Manager is ready");
 
             if (dataConnectionManager->registerListener(this->shared_from_this())
                 != telux::common::Status::SUCCESS) {
-                LOG(ERROR, __FUNCTION__, " Unable to register data connection manager listener");
+                LOGFE("Unable to register data connection manager listener");
             }
         } else {
-            LOG(ERROR, __FUNCTION__, " Data Connection Manager is failed");
+            LOGFE("Data Connection Manager is failed");
         }
     } while (0);
     return dataConnectionManager;
 }
 
 void ConnectionHandler::waitForDataServiceAvailability(std::shared_ptr<Connection> connection) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     connection->dataServiceProvider = std::make_shared<DataServiceProvider>(connection->slotId);
 
     if (!connection->dataServiceProvider->init()) {
-        LOG(ERROR, __FUNCTION__, "Failed to initialize DataServiceProvider");
+        LOGFE("Failed to initialize DataServiceProvider");
         return;
     }
     connection->dataServiceProvider->waitForDataServiceState();
 }
 
 bool ConnectionHandler::startDataCall(std::shared_ptr<Connection> connection) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     telux::data::DataCallParams params;
     params.profileId    = connection->profileId;
     params.ipFamilyType = connection->ipFamily;
@@ -235,26 +234,25 @@ bool ConnectionHandler::startDataCall(std::shared_ptr<Connection> connection) {
     std::future<void> dataCallFuture = dataCallPromise.get_future();
 
     // Define the lambda callback
-    auto dataCallCallback = [&dataCallPromise, &connection](
-                                const std::shared_ptr<telux::data::IDataCall> &dataCall,
-                                telux::common::ErrorCode error) {
-        if (error == telux::common::ErrorCode::SUCCESS) {
-            if (telux::data::DataCallStatus::NET_CONNECTED == dataCall->getDataCallStatus()) {
-                LOG(DEBUG, __FUNCTION__, " start DataCallResponseCb is successful - NO_EFFECT,",
-                    "data call already connected");
-                connection->dataCall = dataCall;
-            } else if (telux::data::DataCallStatus::NET_CONNECTING
-                       == dataCall->getDataCallStatus()) {
-                LOG(DEBUG, __FUNCTION__, " start DataCallResponseCb is successful");
-            }
-        } else {
-            LOG(ERROR, __FUNCTION__,
-                "start DataCallResponseCb failed, errorCode: ", static_cast<int>(error));
-        }
+    auto dataCallCallback
+        = [&dataCallPromise, &connection](const std::shared_ptr<telux::data::IDataCall> &dataCall,
+              telux::common::ErrorCode error) {
+              if (error == telux::common::ErrorCode::SUCCESS) {
+                  if (telux::data::DataCallStatus::NET_CONNECTED == dataCall->getDataCallStatus()) {
+                      LOGFD("start DataCallResponseCb is successful - NO_EFFECT, data call already "
+                            "connected");
+                      connection->dataCall = dataCall;
+                  } else if (telux::data::DataCallStatus::NET_CONNECTING
+                             == dataCall->getDataCallStatus()) {
+                      LOGFD("start DataCallResponseCb is successful");
+                  }
+              } else {
+                  LOGFE("start DataCallResponseCb failed, errorCode: %d", static_cast<int>(error));
+              }
 
-        // Signal completion
-        dataCallPromise.set_value();
-    };
+              // Signal completion
+              dataCallPromise.set_value();
+          };
 
     // Before starting a data call, check whether the data service is ready to set up a data call
     // or not
@@ -264,7 +262,7 @@ bool ConnectionHandler::startDataCall(std::shared_ptr<Connection> connection) {
     int attempt     = 0;
     while (!connection->dataCall && attempt < maxAttempts) {
         auto retStat = connection->dataConnectionManager->startDataCall(params, dataCallCallback);
-        LOG(DEBUG, __FUNCTION__, " start DataCall return status: ", static_cast<int>(retStat));
+        LOGFD("start DataCall return status: %d", static_cast<int>(retStat));
         if (retStat == telux::common::Status::SUCCESS) {
             dataCallFuture.wait();
         }
@@ -273,7 +271,7 @@ bool ConnectionHandler::startDataCall(std::shared_ptr<Connection> connection) {
         if (!cvStatusUpdate_.wait_until(lck, timeoutTime,
                 [this, connection] { return connection->dataCall || isCleanupTriggered_; })) {
             attempt++;
-            LOG(DEBUG, __FUNCTION__, " Retrying startDataCall...");
+            LOGFD("Retrying startDataCall...");
         }
     }
     return connection->dataCall != nullptr;
@@ -281,7 +279,7 @@ bool ConnectionHandler::startDataCall(std::shared_ptr<Connection> connection) {
 
 void ConnectionHandler::logDataCallDetails(
     const std::shared_ptr<telux::data::IDataCall> &dataCall) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     std::string tmpLog;
     tmpLog = " ** DataCall details **\n SlotID: " + std::to_string((int)dataCall->getSlotId())
              + "\n ProfileID: " + std::to_string((int)dataCall->getProfileId())
@@ -289,33 +287,33 @@ void ConnectionHandler::logDataCallDetails(
              + std::to_string((int)dataCall->getDataCallStatus()) + "\n DataCallEndReason: Type = "
              + std::to_string(static_cast<int>(dataCall->getDataCallEndReason().type));
 
-    LOG(DEBUG, __FUNCTION__, tmpLog);
+    LOGFD("%s", tmpLog.c_str());
     std::list<telux::data::IpAddrInfo> ipAddrList = dataCall->getIpAddressInfo();
     for (auto &it : ipAddrList) {
         tmpLog = "\n ifAddress: " + it.ifAddress + "\n primaryDnsAddress: " + it.primaryDnsAddress
                  + "\n secondaryDnsAddress: " + it.secondaryDnsAddress;
-        LOG(DEBUG, __FUNCTION__, tmpLog);
+        LOGFD("%s", tmpLog.c_str());
     }
     tmpLog
         = " IpFamilyType: " + std::to_string(static_cast<int>(dataCall->getIpFamilyType()))
           + "\nTechPreference: " + std::to_string(static_cast<int>(dataCall->getTechPreference()))
           + "\n DataBearerTechnology: "
           + std::to_string(static_cast<int>(dataCall->getCurrentBearerTech()));
-    LOG(DEBUG, __FUNCTION__, tmpLog);
+    LOGFD("%s", tmpLog.c_str());
 }
 
 DataServiceProvider::DataServiceProvider(SlotId slotId)
    : slotId_(slotId)
    , inService_(false) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
 }
 
 void DataServiceProvider::onServiceStatusChange(telux::common::ServiceStatus status) {
-    LOG(DEBUG, __FUNCTION__, " ServiceStatus: ", static_cast<int>(status));
+    LOGFD("ServiceStatus: %d", static_cast<int>(status));
 }
 
 void DataServiceProvider::onServiceStateChanged(telux::data::ServiceStatus status) {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     if (status.serviceState == telux::data::DataServiceState::IN_SERVICE) {
         {
             std::lock_guard<std::mutex> lock(mutex_);
@@ -331,7 +329,7 @@ void DataServiceProvider::onServiceStateChanged(telux::data::ServiceStatus statu
 }
 
 void DataServiceProvider::waitForDataServiceState() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     std::promise<void> promise;
     std::future<void> future = promise.get_future();
     bool callbackExecuted    = false;
@@ -352,8 +350,7 @@ void DataServiceProvider::waitForDataServiceState() {
 
     auto status = servingSystemManager_->requestServiceStatus(callback);
     if (status != telux::common::Status::SUCCESS) {
-        LOG(ERROR, __FUNCTION__,
-            "requestServiceStatus failed with status: ", static_cast<int>(status));
+        LOGFE("requestServiceStatus failed with status: %d", static_cast<int>(status));
         return;
     }
 
@@ -368,7 +365,7 @@ void DataServiceProvider::waitForDataServiceState() {
 }
 
 bool DataServiceProvider::init() {
-    LOG(DEBUG, __FUNCTION__);
+    LOGFD();
     std::shared_ptr<telux::data::IServingSystemManager> dataServingSystemManager;
     do {
         std::promise<telux::common::ServiceStatus> dcmProm;
@@ -378,22 +375,22 @@ bool DataServiceProvider::init() {
             [&dcmProm](telux::common::ServiceStatus status) { dcmProm.set_value(status); });
 
         if (!dataServingSystemManager) {
-            LOG(ERROR, __FUNCTION__, " Failed to get dataServingSystemManager object");
+            LOGFE("Failed to get dataServingSystemManager object");
             return false;
         }
 
         // wait for serving system manager to get ready
-        LOG(DEBUG, __FUNCTION__, " Initializing dataServingSystemManager subsystem Please wait");
+        LOGFD("Initializing dataServingSystemManager subsystem Please wait");
         telux::common::ServiceStatus subSystemStatus = dcmProm.get_future().get();
 
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            LOG(DEBUG, __FUNCTION__, " dataServingSystemManager is ready");
+            LOGFD("dataServingSystemManager is ready");
             if (dataServingSystemManager->registerListener(this->shared_from_this())
                 != telux::common::Status::SUCCESS) {
-                LOG(ERROR, __FUNCTION__, " Unable to register dataServingSystemManager listener");
+                LOGFE("Unable to register dataServingSystemManager listener");
             }
         } else {
-            LOG(ERROR, __FUNCTION__, " dataServingSystemManager is failed");
+            LOGFE("dataServingSystemManager is failed");
         }
     } while (0);
     servingSystemManager_ = dataServingSystemManager;

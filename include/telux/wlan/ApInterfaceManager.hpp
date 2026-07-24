@@ -7,7 +7,7 @@
  * @file       ApInterfaceManager.hpp
  *
  * @brief      Primary interface for Wi-Fi Access Points.
- *             It provide APIs for Access Points configurations and management.
+ *             It provides APIs for Access Points configurations and management.
  *
  */
 
@@ -29,14 +29,6 @@ class IApListener;
  * @{ */
 
 #define INVALID_AP_ID 0
-
-/**
- * AP Interworking Information
- */
-enum class ApInterworking {
-    INTERNET_ACCESS = 0, /**<  AP with internet access only - No LAN access   */
-    FULL_ACCESS     = 1 /**<  AP Can Access LAN and Internet                 */
-};
 
 /**
  * AP Client Connection Status
@@ -142,7 +134,7 @@ struct ApNetConfig {
     ApInfo info; /**< AP type                                          */
     std::string ssid; /**< SSID for AP                                      */
     bool isVisible; /**< AP broadcast SSID                                */
-    ApElementInfoConfig elementInfoConfig; /**< AP broadcast it's capabilities (Such as CarPlay) */
+    ApElementInfoConfig elementInfoConfig; /**< AP broadcasts its capabilities (Such as CarPlay) */
     ApInterworking interworking; /**< AP network access (internet/local)               */
     ApSecurity apSecurity; /**< AP Security settings                             */
     std::string passPhrase; /**< Passphrase for SSID used                         */
@@ -341,7 +333,7 @@ class IApInterfaceManager {
     /**
      * Execute an operation on hostapd service. Provides ability for client to either stop/start or
      * restart hostapd service for selected access point. Restarting hostapd service is required
-     * for any changes made to hosapd.conf file and changes made by
+     * for any changes made to hostapd.conf file and changes made by
      * @ref telux::wlan::IApInterfaceManager::setConfig to take effect.
      * Stop/Start operation @ref telux::wlan::ServiceOperation will Stop/Start WiFi service for
      * access point.

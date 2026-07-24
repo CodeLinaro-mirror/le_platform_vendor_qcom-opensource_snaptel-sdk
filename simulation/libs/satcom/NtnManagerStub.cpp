@@ -161,9 +161,7 @@ telux::common::Status NtnManagerStub::sendData(
 
     grpc::Status reqStatus = stub_->SendData(&context, request, &response);
 
-    telux::common::Status status = static_cast<telux::common::Status>(response.reply().status());
-    telux::common::ErrorCode error
-        = static_cast<telux::common::ErrorCode>(response.reply().error());
+    telux::common::Status status = static_cast<telux::common::Status>(response.status());
 
     if (!reqStatus.ok()) {
         LOG(ERROR, __FUNCTION__, " SendData request failed");
@@ -171,11 +169,18 @@ telux::common::Status NtnManagerStub::sendData(
         return status;
     }
 
-    if (error == telux::common::ErrorCode::SUCCESS) {
+    if (status == telux::common::Status::SUCCESS) {
         TransactionId = response.transaction_id();
-        auto task     = std::async(std::launch::async, [this, error, TransactionId] {
+        {
+            std::lock_guard<std::mutex> lk(pendingMtx_);
+            pendingTransactions_.insert(TransactionId);
+        }
+        auto task = std::async(std::launch::async, [this, TransactionId] {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            onDataAck(error, TransactionId);
+            std::lock_guard<std::mutex> lk(pendingMtx_);
+            if (pendingTransactions_.erase(TransactionId)) {
+                onDataAck(telux::common::ErrorCode::SUCCESS, TransactionId);
+            }
         }).share();
         taskQ_->add(task);
     }
@@ -602,13 +607,27 @@ void NtnManagerStub::handleIncomingDataEvent(::satcomStub::IncomingDataEvent inc
 
 void NtnManagerStub::handleDataAckEvent(::satcomStub::DataAckEvent dataAckEvent) {
     LOG(DEBUG, __FUNCTION__);
-
     uint32_t transactionId         = dataAckEvent.transaction_id();
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(dataAckEvent.error());
 
-    LOG(DEBUG, __FUNCTION__, " transactionId:", transactionId, " error:", static_cast<int>(error));
-
-    onDataAck(error, transactionId);
+    if (transactionId == 0 && error == telux::common::ErrorCode::ABORTED) {
+        // Abort all pending transactions individually
+        std::set<TransactionId> toAbort;
+        {
+            std::lock_guard<std::mutex> lk(pendingMtx_);
+            toAbort = std::move(pendingTransactions_);
+            pendingTransactions_.clear();
+        }
+        for (auto id : toAbort) {
+            onDataAck(telux::common::ErrorCode::ABORTED, id);
+        }
+    } else {
+        {
+            std::lock_guard<std::mutex> lk(pendingMtx_);
+            pendingTransactions_.erase(transactionId);
+        }
+        onDataAck(error, transactionId);
+    }
 }
 
 }  // namespace satcom

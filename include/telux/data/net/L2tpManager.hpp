@@ -351,7 +351,7 @@ class IL2tpManager {
         = 0;
 
     /**
-     * Register L2TP Manager as listener for Data Service heath events like data service available
+     * Register L2TP Manager as listener for Data Service health events like data service available
      * or data service not available.
      *
      * @param [in] listener    pointer of IL2tpListener object that processes the

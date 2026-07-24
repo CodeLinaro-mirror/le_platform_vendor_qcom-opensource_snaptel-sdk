@@ -1588,6 +1588,67 @@ Start TCP keep alive offload to modem
 9. The modem returns ``tcpKAOffloadHandle`` and ``ErrorCode``. Once offload is started, TCP keep-alive messages are sent by the modem at the configured interval. This continues even if the device enters suspend mode.
 10. Any TCP packet transfer over the same session results in failure or stopping of the keep-alive offload. The application is notified via ``onKeepAliveStatusChange(NETWORK_ERR, tcpKAOffloadHandle)`` from ``IKeepAliveListener``.
 
+N79-WLAN Co-EX Handling Call Flow
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. figure:: /../images/data_n79_wlan_coex_call_flow.png
+
+This call flow describes how an application configures and responds to N79-WLAN co-existence
+interference management using ``IDataSettingsManager``. When the UE is on the N79 5G band,
+WLAN 5 GHz operation may be impaired. The framework notifies the application to tune WLAN
+interfaces away from 5 GHz, and back again when the conflict is resolved.
+
+This flow applies only when the WLAN band priority is configured as N79 and the client manages
+WLAN interfaces via Linux OSS APIs (i.e., ``isWlanExternallyManaged`` is set).
+
+1. Application requests ``IDataSettingsManager`` object from ``DataFactory`` using
+   ``getDataSettingsManager(opType, initCb)``, where ``opType`` is ``LOCAL(0)`` and ``initCb``
+   is the initialization callback.
+2. ``DataFactory`` returns a shared pointer to ``IDataSettingsManager`` to the application.
+3. Application calls ``IDataSettingsManager::getServiceStatus()`` to determine if the subsystem
+   is ready.
+4. The application receives the status, i.e., either ``SERVICE_AVAILABLE`` or
+   ``SERVICE_UNAVAILABLE``, to indicate whether the subsystem is ready or not.
+
+   a. If the subsystem is not ready, the application should wait for the initialization callback
+      provided in step 1.
+   b. The application-provided callback is invoked with subsystem status
+      (``SERVICE_AVAILABLE``/``SERVICE_FAILED``).
+
+5. Application creates a listener object of type ``IDataSettingsListener`` and registers it with
+   ``IDataSettingsManager::registerListener()``.
+6. ``IDataSettingsManager`` returns ``Status::SUCCESS`` to confirm listener registration.
+7. Application calls ``IDataSettingsManager::setBandInterferenceConfig(enable=true, config, callback)``
+   to enable N79-WLAN co-existence interference management, specifying the band priority
+   (``N79``) and the N79 wait time in seconds (e.g., 30 seconds).
+8. ``IDataSettingsManager`` returns ``Status::SUCCESS`` synchronously, and the application
+   receives an asynchronous callback with ``ErrorCode`` confirming the configuration was applied.
+9. Application calls ``IDataSettingsManager::requestBandInterferenceConfig(callback)`` to query
+   the current band interference configuration.
+10. ``IDataSettingsManager`` returns ``Status::SUCCESS`` synchronously, and the application
+    receives an asynchronous callback with the current configuration (``isEnabled``, ``config``,
+    ``ErrorCode``).
+
+When the UE moves onto the N79 5G band and a WLAN 5 GHz conflict is detected:
+
+11. The ``IDataSettingsListener::onCoexActionRequired(CoexAction::WLAN_5GHZ_TUNE_AWAY)``
+    notification is delivered to the application. This is fired only when band priority is set to
+    N79 and WLAN is managed via Linux OSS APIs.
+12. Application tunes WLAN SAP/STA interfaces from 5 GHz to 2.4 GHz using Linux OSS APIs.
+
+When the UE moves off the N79 5G band and the N79 wait timer expires:
+
+13. The ``IDataSettingsListener::onCoexActionRequired(CoexAction::WLAN_5GHZ_ALLOWED)``
+    notification is delivered to the application.
+14. Application tunes WLAN SAP/STA interfaces back to 5 GHz using Linux OSS APIs.
+
+15. Application calls ``IDataSettingsManager::setBandInterferenceConfig(enable=false, config=nullptr, callback)``
+    to disable N79-WLAN co-existence interference management.
+16. ``IDataSettingsManager`` returns ``Status::SUCCESS`` synchronously, and the application
+    receives an asynchronous callback with ``ErrorCode`` confirming the configuration was applied.
+17. Application calls ``IDataSettingsManager::deregisterListener()`` to remove the listener.
+18. ``IDataSettingsManager`` returns ``Status::SUCCESS``.
+
 C-V2X
 -----
 
@@ -2577,7 +2638,7 @@ Call flow to manage thermal auto-shutdown from an eCall application
 24. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
 
 
-TCU Activity Management
+Power
 -----------------------
 
 An application can get the appropriate TCU-activity manager (i.e. slave or master) object from the power factory.
@@ -2642,6 +2703,28 @@ Call flow to set the TCU-activity state
 10. The application waits for consolidated acknowledgement status and analyzes the response. If status is not SUCCESS and the master expects to stop state transition considering the provided information, then call setActivityState and revert state, or else state transition will proceed after the configured timeout in /etc/power_state.conf.
 11. Application can remove listener.
 12. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
+
+Call flow for Wake Up Manager initialization and event handling
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. figure:: /../images/wakeup_manager_call_flow.png
+
+1. Application requests PowerFactory to call getWakeupManager with a callback function to obtain the IWakeupManager interface.
+2. PowerFactory creates an IWakeupManager instance internally.
+3. PowerFactory returns the IWakeupManager instance to the Application, after which the Application waits for initialization callback and service availability.
+4. Application registers a listener (IWakeupListener) with IWakeupManager using the required WakeupIndications, configuring the bitmask based on interested wakeup events.
+5. Application receives SUCCESS status confirming successful listener registration and is ready to receive wakeup notifications.
+6. QMI wakeup event is detected internally by IWakeupManager when a modem-triggered activity occurs.
+7. IWakeupManager invokes onWakeup on the Application with WakeupEventInfo populated with QmiWakeupInfo, indicating a QMI-based wakeup.
+8. Application extracts and processes QMI wakeup details such as serviceId, nodeIds, msgId, pid, and processName to identify the source and action.
+9. Application optionally triggers a system resume based on the processed QMI wakeup information.
+10. WoW (Wake-on-WLAN) wakeup event is detected internally by IWakeupManager due to network-triggered activity.
+11. IWakeupManager invokes onWakeup on the Application with WakeupEventInfo populated with WowWakeupInfo, indicating a WoW-based wakeup.
+12. Application extracts and processes WoW wakeup details such as timestamp, MAC address, reason, interface, and PBM.
+13. Application optionally triggers a system resume based on the WoW wakeup event.
+14. Application deregisters the wakeup listener from IWakeupManager when notifications are no longer required.
+15. Application receives SUCCESS status confirming successful listener deregistration, and no further wakeup notifications are delivered.
+
 
 Modem Config
 ------------
@@ -2954,6 +3037,51 @@ is available.
 4. Once the self test is completed, the callback gets invoked indicating the result of the self
    test.
 
+Call flow for EDL (Emergency Download) management
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. figure:: /../images/platform_edl_call_flow.png
+
+1. Get the reference to the SubsystemFactory singleton using
+   ``SubsystemFactory::getInstance()``.
+2. Request an ``ISubsystemManager`` instance from SubsystemFactory, providing an optional
+   initialization callback. The factory creates a new SubsystemManagerImpl if one does not
+   already exist.
+3. Call ``ISubsystemManager::getServiceStatus()`` to determine whether the subsystem
+   service is ready. If the status is ``SERVICE_UNAVAILABLE``, wait for the initialization
+   callback to be invoked with the updated ``ServiceStatus``.
+4. Create a listener class that implements ``ISubsystemListener`` and register it with
+   ``ISubsystemManager::registerListener()``, specifying the subsystems to monitor
+   (e.g. ``{subsystem=APSS, location=REMOTE_PROC}``). The listener will receive both
+   subsystem state change notifications and EDL lifecycle notifications.
+5. Set the EDL configuration parameters (image path, rawprogram XML and patch XML) using
+   ``ISubsystemManager::setEdlConfigurations()``. On success, all registered listeners are
+   notified via ``ISubsystemListener::onEdlConfigUpdate()`` with the updated configuration.
+6. Optionally verify the stored configuration by calling
+   ``ISubsystemManager::getEdlConfigurations()``.
+7. Initiate the EDL operation by calling ``ISubsystemManager::triggerEdl()``. The call
+   returns immediately with ``ErrorCode::SUCCESS`` if the request was accepted. A valid EDL
+   configuration must have been set prior to this call, otherwise the request is rejected.
+8. The EDL lifecycle proceeds asynchronously. Phase transitions are reported to all registered
+   listeners via ``ISubsystemListener::onEdlStateChanged()``:
+
+   a. ``MOVING_TO_EDL`` — an attempt to place the target device into EDL mode is in progress.
+   b. ``MOVED_TO_EDL`` — the target device has entered EDL mode and image flashing can begin.
+   c. ``FLASHING`` — the image write operation is in progress.
+   d. ``FLASHED`` — the image write completed successfully (success path only).
+
+9. Once the EDL operation concludes, ``ISubsystemListener::onEdlOperationResult()`` is
+   invoked once with the final outcome:
+
+   a. ``success=true`` — the EDL and flashing operations completed successfully.
+   b. ``success=false`` — a failure occurred at one of the lifecycle stages. The last
+      ``onEdlStateChanged()`` notification indicates the stage at which the failure occurred.
+
+10. At any point, the current EDL phase can be polled synchronously using
+    ``ISubsystemManager::getEdlState()`` as an alternative to the listener notifications.
+11. When monitoring is no longer required, call ``ISubsystemManager::deRegisterListener()``
+    to remove the listener.
+
 Security Management
 -------------------
 
@@ -3263,6 +3391,72 @@ Call flow to Modify WLAN Access Point Configuration
 8. Application receives response set configuration.
 9. Application calls IApInterfaceManager::managerApService to restart hostapd daemon.
 10. Application receives response to restart hostapd daemon and access point configuration shall be active at this stage.
+
+Call flow for WLAN Control Manager - OSS Interface Management
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. figure:: /../images/wlan_control_manager.png
+
+This call flow describes how an application uses ``IWlanControlManager`` to configure and
+monitor WLAN interfaces that are controlled via Linux OSS APIs (i.e., when
+``isWlanExternallyManaged`` is set). It covers AP interworking configuration, station IP
+configuration, interface status queries, and runtime AP/STA status notifications.
+
+1. Application requests ``IWlanControlManager`` object from ``WlanFactory`` using
+   ``getWlanControlManager(initCb)``.
+2. ``WlanFactory`` returns a shared pointer to ``IWlanControlManager`` to the application.
+3. Application calls ``IWlanControlManager::getServiceStatus()`` to determine if the subsystem
+   is ready.
+4. The application receives the status, i.e., either ``SERVICE_AVAILABLE`` or
+   ``SERVICE_UNAVAILABLE``, to indicate whether the subsystem is ready or not.
+
+   a. If the subsystem is not ready, the application should wait for the initialization callback
+      provided in step 1.
+   b. The application-provided callback is invoked with subsystem status
+      (``SERVICE_AVAILABLE``/``SERVICE_FAILED``).
+
+5. Application creates a listener object of type ``IWlanControlListener`` and registers it with
+   ``IWlanControlManager::registerListener()``.
+6. ``IWlanControlManager`` returns ``ErrorCode::SUCCESS`` to confirm listener registration.
+7. Application calls ``IWlanControlManager::setApInterworking(PRIMARY, FULL_ACCESS)`` to
+   configure the interworking capability for each AP before bringing up interfaces via Linux
+   OSS APIs.
+8. ``IWlanControlManager`` returns ``ErrorCode::SUCCESS``.
+9. Application calls ``IWlanControlManager::getApInterworking(PRIMARY, interworking)`` to
+   query the current AP interworking configuration.
+10. ``IWlanControlManager`` returns ``ErrorCode::SUCCESS`` along with the interworking value.
+11. Application calls ``IWlanControlManager::setStaIpConfig(staId, ipConfig, staticIpConfig)``
+    to configure whether the station uses dynamic or static IP assignment.
+
+    a. For static IP: ``ipConfig`` is set to ``STATIC_IP`` and ``staticIpConfig`` carries
+       the IPv4 address, gateway, subnet mask, and DNS address.
+    b. For dynamic IP: ``ipConfig`` is set to ``DYNAMIC_IP``; ``staticIpConfig`` is not used.
+
+12. ``IWlanControlManager`` returns ``ErrorCode::SUCCESS``.
+13. Application calls ``IWlanControlManager::getStaIpConfig(staId, ipConfig, staticIpConfig)``
+    to query the currently configured IP type for the station.
+
+    a. If the station is configured for static IP, ``ipConfig`` is ``STATIC_IP`` and
+       ``staticIpConfig`` is populated with the address, gateway, netmask, and DNS.
+    b. If the station is configured for dynamic IP, ``ipConfig`` is ``DYNAMIC_IP``.
+
+14. ``IWlanControlManager`` returns ``ErrorCode::SUCCESS`` along with ``ipConfig`` and, if
+    applicable, ``staticIpConfig``.
+15. Application calls ``IWlanControlManager::getInterfaceStatus(status)`` to query current
+    active AP and STA interface status (interface name, IP address, MAC address, band, SSID,
+    and connection state).
+16. ``IWlanControlManager`` returns ``ErrorCode::SUCCESS`` along with the interface status
+    vector.
+17. When an AP network interface is added to or removed from the bridge by the framework, the
+    ``IWlanControlListener::onApStatusChanged(status)`` notification is delivered to the
+    application. The application updates its AP state and adjusts routing/firewall rules as
+    required.
+18. When station connection state changes (connected with IP assigned, IP assignment failed,
+    or disconnected), the ``IWlanControlListener::onStationStatusChanged(staStatus)``
+    notification is delivered. The application updates routing tables or fallback logic as
+    required.
+19. Application calls ``IWlanControlManager::deregisterListener()`` to remove the listener.
+20. ``IWlanControlManager`` returns ``ErrorCode::SUCCESS``.
 
 SATCOM
 ------

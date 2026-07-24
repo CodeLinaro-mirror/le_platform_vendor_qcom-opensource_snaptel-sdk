@@ -248,16 +248,22 @@ void DataProfileMenu::getProfileParamsFromUser() {
     std::cout << "Enter CLAT enabled: (0-Disabled, 1-Enabled): ";
     std::cin >> clatEnabled;
 
-    params_.profileName      = profileName;
-    params_.techPref         = static_cast<telux::data::TechPreference>(techPref);
-    params_.authType         = static_cast<telux::data::AuthProtocolType>(authType);
-    params_.ipFamilyType     = static_cast<telux::data::IpFamilyType>(ipFamilyType);
-    params_.apn              = apnName;
-    params_.apnTypes         = mask;
-    params_.userName         = username;
-    params_.password         = password;
-    params_.emergencyAllowed = static_cast<telux::data::EmergencyCapability>(emergencyAllowed);
-    params_.clatEnabled      = clatEnabled;
+    int enablePcscfViaPco;
+    std::cout << "Enable PCSCF address via PCO: (0-No, 1-Yes): ";
+    std::cin >> enablePcscfViaPco;
+    Utils::validateInput(enablePcscfViaPco, {0, 1});
+
+    params_.profileName       = profileName;
+    params_.techPref          = static_cast<telux::data::TechPreference>(techPref);
+    params_.authType          = static_cast<telux::data::AuthProtocolType>(authType);
+    params_.ipFamilyType      = static_cast<telux::data::IpFamilyType>(ipFamilyType);
+    params_.apn               = apnName;
+    params_.apnTypes          = mask;
+    params_.userName          = username;
+    params_.password          = password;
+    params_.emergencyAllowed  = static_cast<telux::data::EmergencyCapability>(emergencyAllowed);
+    params_.clatEnabled       = clatEnabled;
+    params_.enablePcscfViaPco = static_cast<bool>(enablePcscfViaPco);
 }
 
 ApnTypes DataProfileMenu::getApnMask() {
@@ -381,7 +387,7 @@ void DataProfileMenu::modifyProfile(std::vector<std::string> inputCommand) {
         return;
     }
 
-    int profileId;
+    int profileId = 0;
     std::cout << "Enter profile Id to Modify : ";
     std::cin >> profileId;
     Utils::validateInput(profileId);
@@ -455,6 +461,12 @@ void DataProfileMenu::queryProfile(std::vector<std::string> inputCommand) {
     bool clatEnabled;
     std::cout << "Enter CLAT enabled: (0-Disabled, 1-Enabled): ";
     std::cin >> clatEnabled;
+
+    int enablePcscfViaPco;
+    std::cout << "Enable PCSCF address via PCO: (0-No, 1-Yes): ";
+    std::cin >> enablePcscfViaPco;
+    Utils::validateInput(enablePcscfViaPco, {0, 1});
+    params_.enablePcscfViaPco = static_cast<bool>(enablePcscfViaPco);
 
     params_.profileName      = profileName;
     params_.techPref         = static_cast<telux::data::TechPreference>(techPref);

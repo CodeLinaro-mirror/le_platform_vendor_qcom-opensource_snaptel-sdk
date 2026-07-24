@@ -12,6 +12,7 @@ class UserUtils {
  public:
     bool getYesNoFromUser(std::string choiceToDisplay);
     bool getLocalRemoteFromUser();
+    std::string getStringFromUser(std::string prompt);
 };
 
 #endif  // USERUTILS_HPP

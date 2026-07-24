@@ -68,7 +68,7 @@ enum class StaInterfaceStatus {
     CONNECTED            = 2, /**< Station interface is connected                */
     DISCONNECTED         = 3, /**< Station interface is disconnected             */
     ASSOCIATION_FAILED   = 4, /**< Station is unable to associate with AP        */
-    IP_ASSIGNMENT_FAILED = 5, /**< Station in unable to get IP address via DHCP  */
+    IP_ASSIGNMENT_FAILED = 5, /**< Station is unable to get IP address via DHCP  */
 };
 
 /**
@@ -111,6 +111,14 @@ struct ApStatus {
 };
 
 /**
+ * AP Interworking Information
+ */
+enum class ApInterworking {
+    INTERNET_ACCESS = 0, /**<  AP with internet access only - No LAN access   */
+    FULL_ACCESS     = 1 /**<  AP Can Access LAN and Internet                 */
+};
+
+/**
  * Station Status
  */
 struct StaStatus {
@@ -126,7 +134,7 @@ struct StaStatus {
 /**
  * This applies in architectures where the modem is attached to an External Application
  * Processor(EAP). An API that sets or configure Wlan can be invoked from the EAP or from
- * the modems Internal Application Processor (IAP). This type  specifies where the operation
+ * the modem's Internal Application Processor (IAP). This type  specifies where the operation
  * should be carried out.
  */
 enum class OperationType {
@@ -152,6 +160,52 @@ enum class ServiceOperation {
     STOP    = 0x00, /**<  Stop service       */
     START   = 0x01, /**<  Start service      */
     RESTART = 0x02, /**<  Restart service    */
+};
+
+/**
+ * Station Connection IP Type.
+ */
+enum class StaIpConfig {
+    DYNAMIC_IP = 1, /**< Station is configured with dynamic IP */
+    STATIC_IP  = 2, /**< Station is configured with Static IP  */
+};
+
+/**
+ * Static IP Configuration.
+ */
+struct StaStaticIpConfig {
+    std::string ipAddr; /**<   IPv4 address to be assigned. */
+    std::string gwIpAddr; /**<   IPv4 address of the gateway. */
+    std::string netMask; /**<   Subnet mask.                 */
+    std::string dnsAddr; /**<   DNS IPv4 address.            */
+};
+
+/**
+ * Wlan Interface State
+ */
+enum class InterfaceState {
+    INACTIVE = 0x00, /**<  Interface is Inactive  */
+    ACTIVE   = 0x01, /**<  Interface is Active    */
+};
+
+/**
+ * Wlan Interface Device
+ */
+enum class HwDeviceType {
+    UNKNOWN = 0, /**<  Wlan device is Unknown   */
+    QCA6574 = 1, /**<  Wlan device is QCA6574   */
+    QCA6696 = 2, /**<  Wlan device is QCA6696   */
+    QCA6595 = 3, /**<  Wlan device is QCA6595   */
+    QCA6797 = 4, /**<  Wlan device is QCA6797   */
+};
+
+/**
+ * Wlan Interface status
+ */
+struct InterfaceStatus {
+    HwDeviceType device; /**< WiFi hardware type           */
+    std::vector<ApStatus> apStatus; /**< Vector of active APs status  */
+    std::vector<StaStatus> staStatus; /**< Vector of active Sta status  */
 };
 
 /** @} */ /* end_addtogroup telematics_wlan */

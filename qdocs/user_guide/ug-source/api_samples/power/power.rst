@@ -1,6 +1,6 @@
 .. _power:
 
-Power 
+Power
 ============
 
 .. toctree::
@@ -8,6 +8,7 @@ Power
 
    get_tcu_activity_state_notifications
    set_tcu_activity_state
+   wakeup_reason_listener
 
 
 ..

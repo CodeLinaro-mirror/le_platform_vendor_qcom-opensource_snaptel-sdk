@@ -614,6 +614,7 @@ grpc::Status DataLinkServerImpl::SetPeerModeChangeRequestStatus(ServerContext *c
 
 void DataLinkServerImpl::handleOnEthModeChangeTransactionStatus(std::string event) {
     LOG(DEBUG, __FUNCTION__);
+
     std::string ethModeStr = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
     std::string statusStr  = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
     int ethModeVal         = -1;
@@ -626,28 +627,39 @@ void DataLinkServerImpl::handleOnEthModeChangeTransactionStatus(std::string even
         LOG(ERROR, __FUNCTION__, "Failed to parse event parameters: ", e.what());
         return;
     }
+
     dataStub::EthModeEnum transactionEthMode = static_cast<dataStub::EthModeEnum>(ethModeVal);
     dataStub::ModeChangeStatusEnum transactionStatus
         = static_cast<dataStub::ModeChangeStatusEnum>(statusVal);
 
     std::string subsystem = "IDataLinkManager";
-    JsonData data;
-    telux::common::ErrorCode error = CommonUtils::readJsonData(DATA_LINK_MANAGER_API_JSON,
-        DATA_LINK_MANAGER_STATE_JSON, subsystem, "onEthModeChangeTransactionStatus", data);
+    Json::Value stateRootObj;
+    telux::common::ErrorCode error
+        = JsonParser::readFromJsonFile(stateRootObj, DATA_LINK_MANAGER_STATE_JSON);
 
-    if (error == telux::common::ErrorCode::SUCCESS) {
-
-        data.stateRootObj[subsystem]["lastTransactionEthMode"]
-            = ethModeEnumToString(transactionEthMode);
-        data.stateRootObj[subsystem]["lastTransactionStatus"]
-            = ModeChangeStatusEnumToString(transactionStatus);
-        JsonParser::writeToJsonFile(data.stateRootObj, DATA_LINK_MANAGER_STATE_JSON);
-        LOG(DEBUG, __FUNCTION__, "Updated state JSON with lastTransactionEthMode: ",
-            ethModeEnumToString(transactionEthMode),
-            ", lastTransactionStatus: ", ModeChangeStatusEnumToString(transactionStatus));
-    } else {
-        LOG(ERROR, __FUNCTION__, "Failed for onEthModeChangeTransactionStatus.");
+    if (error != telux::common::ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, "Failed to read state JSON");
+        return;
     }
+
+    if (stateRootObj.isNull() || stateRootObj.empty() || !stateRootObj.isMember(subsystem)) {
+        LOG(ERROR, __FUNCTION__, "Invalid JSON structure");
+        return;
+    }
+
+    stateRootObj[subsystem]["lastTransactionEthMode"] = ethModeEnumToString(transactionEthMode);
+    stateRootObj[subsystem]["lastTransactionStatus"]
+        = ModeChangeStatusEnumToString(transactionStatus);
+
+    error = JsonParser::writeToJsonFile(stateRootObj, DATA_LINK_MANAGER_STATE_JSON);
+    if (error != telux::common::ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, "Failed to write state JSON");
+        return;
+    }
+
+    LOG(DEBUG, __FUNCTION__,
+        "Updated state JSON with lastTransactionEthMode: ", ethModeEnumToString(transactionEthMode),
+        ", lastTransactionStatus: ", ModeChangeStatusEnumToString(transactionStatus));
 
     ::dataStub::EthModeChangeTransactionStatusEvent indication;
     ::eventService::EventResponse anyResponse;
@@ -658,6 +670,7 @@ void DataLinkServerImpl::handleOnEthModeChangeTransactionStatus(std::string even
     anyResponse.set_filter(ETH_MODE_EVENTS_FILTER);
     anyResponse.mutable_any()->PackFrom(indication);
     clientEvent_.updateEventQueue(anyResponse);
+
     LOG(DEBUG, __FUNCTION__,
         "Published onEthModeChangeTransactionStatus event for mode: ", ethModeVal,
         " status: ", statusVal);
@@ -665,6 +678,7 @@ void DataLinkServerImpl::handleOnEthModeChangeTransactionStatus(std::string even
 
 void DataLinkServerImpl::handleOnEthModeChangeRequest(std::string event) {
     LOG(DEBUG, __FUNCTION__);
+
     std::string ethModeStr = EventParserUtil::getNextToken(event, DEFAULT_DELIMITER);
     int ethModeVal         = -1;
 
@@ -674,88 +688,82 @@ void DataLinkServerImpl::handleOnEthModeChangeRequest(std::string event) {
         LOG(ERROR, __FUNCTION__, "Failed to parse ethModeType parameter: ", e.what());
         return;
     }
+
     dataStub::EthModeEnum ethModeType = static_cast<dataStub::EthModeEnum>(ethModeVal);
+    std::string requestedModeStr      = ethModeEnumToString(ethModeType);
+
     LOG(DEBUG, __FUNCTION__, "ethModeVal: ", ethModeVal,
         ", ethModeType enum: ", static_cast<int>(ethModeType),
-        ", converted string: ", ethModeEnumToString(ethModeType));
+        ", converted string: ", requestedModeStr);
 
     std::string subsystem = "IDataLinkManager";
     Json::Value stateRootObj;
     telux::common::ErrorCode error
         = JsonParser::readFromJsonFile(stateRootObj, DATA_LINK_MANAGER_STATE_JSON);
 
-    if (error == telux::common::ErrorCode::SUCCESS) {
-        bool isModeSupported = false;
-
-        // Verify the JSON structure exists
-        if (!stateRootObj.isMember(subsystem) || !stateRootObj[subsystem].isMember("eth0Config")
-            || !stateRootObj[subsystem]["eth0Config"].isMember("ethModes")) {
-            LOG(ERROR, __FUNCTION__, " Invalid JSON structure - missing required fields");
-            return;
-        }
-
-        const Json::Value &supportedModes = stateRootObj[subsystem]["eth0Config"]["ethModes"];
-
-        std::string requestedModeStr = ethModeEnumToString(ethModeType);
-        LOG(DEBUG, __FUNCTION__, " Requested mode string: '", requestedModeStr,
-            "' (length: ", requestedModeStr.length(), ")");
-        LOG(DEBUG, __FUNCTION__,
-            " supportedModes.isArray(): ", supportedModes.isArray() ? "true" : "false");
-        LOG(DEBUG, __FUNCTION__, " supportedModes.size(): ", supportedModes.size());
-
-        if (supportedModes.isArray()) {
-            for (unsigned int i = 0; i < supportedModes.size(); i++) {
-                if (supportedModes[i].isString()) {
-                    std::string supportedMode = supportedModes[i].asString();
-                    LOG(DEBUG, __FUNCTION__, "  Mode[", i, "]: '", supportedMode,
-                        "' (length: ", supportedMode.length(), ")");
-
-                    if (supportedMode == requestedModeStr) {
-                        LOG(DEBUG, __FUNCTION__, "  Comparison result: MATCH");
-                        isModeSupported = true;
-                        break;
-                    } else {
-                        LOG(DEBUG, __FUNCTION__, "  Comparison result: NO MATCH");
-                    }
-                }
-            }
-        }
-
-        if (!isModeSupported) {
-            LOG(DEBUG, __FUNCTION__, "Injected eth mode is NOT supported! Rejecting injection.");
-            ::dataStub::EthModeChangeTransactionStatusEvent indication;
-            ::eventService::EventResponse anyResponse;
-
-            indication.set_eth_mode_type(ethModeType);
-            indication.set_status(dataStub::ModeChangeStatusEnum::ModeChangeStatusEnum_REJECTED);
-
-            anyResponse.set_filter(ETH_MODE_EVENTS_FILTER);
-            anyResponse.mutable_any()->PackFrom(indication);
-            clientEvent_.updateEventQueue(anyResponse);
-
-            LOG(DEBUG, __FUNCTION__,
-                "Published REJECTED status for unsupported mode: ", ethModeVal);
-            return;
-        }
-
-        stateRootObj[subsystem]["eth0Config"]["ethLinkState"] = "DOWN";
-        stateRootObj[subsystem]["eth0Config"]["currentMode"]  = ethModeEnumToString(ethModeType);
-
-        JsonParser::writeToJsonFile(stateRootObj, DATA_LINK_MANAGER_STATE_JSON);
-        LOG(DEBUG, __FUNCTION__,
-            "Updated state JSON with requested ethMode: ", ethModeEnumToString(ethModeType));
-    } else {
-        LOG(ERROR, __FUNCTION__, "Failed to read JSON state for onEthModeChangeRequest.");
+    if (error != telux::common::ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, "Failed to read JSON state");
         return;
     }
+
+    if (stateRootObj.isNull() || stateRootObj.empty()) {
+        LOG(ERROR, __FUNCTION__, "JSON is null or empty despite SUCCESS return");
+        return;
+    }
+
+    if (!stateRootObj.isMember(subsystem) || !stateRootObj[subsystem].isMember("eth0Config")
+        || !stateRootObj[subsystem]["eth0Config"].isMember("ethModes")) {
+        LOG(ERROR, __FUNCTION__, "Invalid JSON structure - missing required fields");
+        return;
+    }
+
+    const Json::Value &supportedModes = stateRootObj[subsystem]["eth0Config"]["ethModes"];
+    bool isModeSupported              = false;
+
+    if (supportedModes.isArray()) {
+        for (const auto &mode : supportedModes) {
+            if (mode.isString() && mode.asString() == requestedModeStr) {
+                isModeSupported = true;
+                LOG(DEBUG, __FUNCTION__, "Mode MATCH found: ", requestedModeStr);
+                break;
+            }
+        }
+    }
+
+    if (!isModeSupported) {
+        LOG(DEBUG, __FUNCTION__, "Mode NOT supported, rejecting: ", requestedModeStr);
+
+        ::dataStub::EthModeChangeTransactionStatusEvent indication;
+        ::eventService::EventResponse anyResponse;
+
+        indication.set_eth_mode_type(ethModeType);
+        indication.set_status(dataStub::ModeChangeStatusEnum::ModeChangeStatusEnum_REJECTED);
+        anyResponse.set_filter(ETH_MODE_EVENTS_FILTER);
+        anyResponse.mutable_any()->PackFrom(indication);
+        clientEvent_.updateEventQueue(anyResponse);
+
+        LOG(DEBUG, __FUNCTION__, "Published REJECTED status for unsupported mode: ", ethModeVal);
+        return;
+    }
+
+    stateRootObj[subsystem]["eth0Config"]["ethLinkState"] = "DOWN";
+    stateRootObj[subsystem]["eth0Config"]["currentMode"]  = requestedModeStr;
+
+    error = JsonParser::writeToJsonFile(stateRootObj, DATA_LINK_MANAGER_STATE_JSON);
+    if (error != telux::common::ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, "Failed to write state JSON");
+        return;
+    }
+
+    LOG(DEBUG, __FUNCTION__, "Updated state JSON with mode: ", requestedModeStr);
 
     ::dataStub::EthModeChangeRequestEvent indication;
     ::eventService::EventResponse anyResponse;
 
     indication.set_eth_mode_type(ethModeType);
-
     anyResponse.set_filter(ETH_MODE_EVENTS_FILTER);
     anyResponse.mutable_any()->PackFrom(indication);
     clientEvent_.updateEventQueue(anyResponse);
+
     LOG(DEBUG, __FUNCTION__, "Published onEthModeChangeRequest event for mode: ", ethModeVal);
 }

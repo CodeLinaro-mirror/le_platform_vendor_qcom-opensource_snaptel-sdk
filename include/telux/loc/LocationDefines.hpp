@@ -2445,7 +2445,11 @@ enum GnssReportType {
      * whenever there is an update in the ephemeris information for a constellation.
      */
     EPHEMERIS = (1 << 8),
-    /** GNSS extended data */
+    /**
+     * GNSS extended data
+     * @deprecated This report type is not supported on some platforms.
+     * Use @ref GnssReportType::SV_RESIDUAL instead.
+     */
     EXTENDED_DATA = (1 << 9),
     /* SV Residual Reports */
     SV_RESIDUAL = (1 << 10)

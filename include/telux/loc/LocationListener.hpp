@@ -260,6 +260,8 @@ class ILocationListener : public telux::common::ISDKListener {
      *
      * @note  Eval: This is a new API and is being evaluated. It is subject to change
      *              and could break backwards compatibility.
+     *
+     * @deprecated This API is deprecated on some platform, use onGnssSVResidualInfo() API instead.
      */
     virtual void onGnssExtendedDataInfo(const std::vector<uint8_t> &payload) {
     }

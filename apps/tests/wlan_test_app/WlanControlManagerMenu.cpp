@@ -8,8 +8,8 @@
 #define PRINT_NOTIFICATION std::cout << std::endl << "\033[1;35mNOTIFICATION: \033[0m" << std::endl
 
 WlanControlManagerMenu::WlanControlManagerMenu(std::string appName, std::string cursor)
-    : ConsoleApp(appName, cursor) {
-    menuOptionsAdded_ = false;
+   : ConsoleApp(appName, cursor) {
+    menuOptionsAdded_       = false;
     subSystemStatusUpdated_ = false;
 }
 
@@ -21,11 +21,11 @@ WlanControlManagerMenu::~WlanControlManagerMenu() {
 
 bool WlanControlManagerMenu::isSubSystemReady() {
     telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
-    subSystemStatusUpdated_ = false;
+    subSystemStatusUpdated_                      = false;
     if (wlanControlManager_ == nullptr) {
-        auto initCb =
-            std::bind(&WlanControlManagerMenu::onInitComplete, this, std::placeholders::_1);
-        auto &wlanFactory = telux::wlan::WlanFactory::getInstance();
+        auto initCb
+            = std::bind(&WlanControlManagerMenu::onInitComplete, this, std::placeholders::_1);
+        auto &wlanFactory   = telux::wlan::WlanFactory::getInstance();
         wlanControlManager_ = wlanFactory.getWlanControlManager(initCb);
         if (wlanControlManager_ == nullptr) {
             std::cout << "\nError encountered in initializing Wlan Control Manager" << std::endl;
@@ -36,8 +36,8 @@ bool WlanControlManagerMenu::isSubSystemReady() {
     {
         std::unique_lock<std::mutex> lck(mtx_);
         std::cout << "\nInitializing WlanControlManager, Please wait ..." << std::endl;
-        bool notified = cv_.wait_for(lck, std::chrono::seconds(5),
-            [this]{ return this->subSystemStatusUpdated_; });
+        bool notified = cv_.wait_for(
+            lck, std::chrono::seconds(5), [this] { return this->subSystemStatusUpdated_; });
         if (!notified) {
             std::cout << "\nWlan Control Manager initialization timed out" << std::endl;
             wlanControlManager_ = nullptr;

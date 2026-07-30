@@ -710,7 +710,6 @@ class ICv2xRadio {
     virtual telux::common::Status injectVehicleSpeed(
         uint32_t speed, telux::common::ResponseCallback cb)
         = 0;
-
 };
 
 /** @} */ /* end_addtogroup telematics_cv2x_cpp */

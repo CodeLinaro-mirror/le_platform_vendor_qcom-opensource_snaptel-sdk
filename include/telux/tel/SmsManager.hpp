@@ -207,8 +207,8 @@ class SmsMessage {
         PduBuffer pduBuffer, std::shared_ptr<MessagePartInfo> info);
 
     SmsMessage(std::string text, std::string sender, std::string receiver, SmsEncoding encoding,
-        PduBuffer pduBuffer, std::shared_ptr<MessagePartInfo> info,
-        bool isMetaInfoValid, SmsMetaInfo metaInfo);
+        PduBuffer pduBuffer, std::shared_ptr<MessagePartInfo> info, bool isMetaInfoValid,
+        SmsMetaInfo metaInfo);
 
     /**
      * Get the message text for the single part message or part of the multipart message.

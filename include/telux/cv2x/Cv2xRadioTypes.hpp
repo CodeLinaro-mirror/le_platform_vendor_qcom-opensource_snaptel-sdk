@@ -334,7 +334,7 @@ struct SpsFlowInfo {
          There are limits on which intervals the underlying radio supports.
          Use requestCapabilities() to discover minPeriodicityMultiplierMs and
          maximumPeriodicityMs. */
-    uint64_t periodicityMs = 100;
+    uint64_t periodicityMs  = 100;
     uint32_t nbytesReserved = 0u;
     /**< Number of bytes of TX bandwidth that are sent every periodicity
          interval. */

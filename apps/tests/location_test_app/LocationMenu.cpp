@@ -810,7 +810,7 @@ void LocationMenu::configureLeverArm(std::vector<std::string> userInput) {
             } else {
                 leverArmTypeOption = 1;
             }
-            if(leverArmTypeOption == 1) {
+            if (leverArmTypeOption == 1) {
                 leverArmType = LEVER_ARM_TYPE_GNSS_TO_VRP;
             } else if (leverArmTypeOption == 2) {
                 leverArmType = LEVER_ARM_TYPE_DR_IMU_TO_GNSS;
@@ -819,7 +819,7 @@ void LocationMenu::configureLeverArm(std::vector<std::string> userInput) {
             } else {
                 std::cout << "invalid LeverArmType, enter again." << std::endl;
                 continue;
-             }
+            }
             std::cout << "leverArmTypeOption : " << leverArmTypeOption << std::endl;
             std::cout << "leverArmType : " << leverArmType << std::endl;
             std::string forwardOffset;

@@ -49,8 +49,8 @@ class IWlanControlManager {
      * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
      *         break backwards compatibility.
      */
-    virtual telux::common::ErrorCode registerListener(
-        std::weak_ptr<IWlanControlListener> listener) = 0;
+    virtual telux::common::ErrorCode registerListener(std::weak_ptr<IWlanControlListener> listener)
+        = 0;
 
     /**
      * Removes a previously added listener.
@@ -63,14 +63,16 @@ class IWlanControlManager {
      *         break backwards compatibility.
      */
     virtual telux::common::ErrorCode deregisterListener(
-        std::weak_ptr<IWlanControlListener> listener) = 0;
+        std::weak_ptr<IWlanControlListener> listener)
+        = 0;
 
     virtual ~IWlanControlManager(){};
 };
 
 class IWlanControlListener : public telux::common::IServiceStatusListener {
  public:
-    virtual ~IWlanControlListener() {}
+    virtual ~IWlanControlListener() {
+    }
 };
 
 /** @} */ /* end_addtogroup telematics_wlan_control */

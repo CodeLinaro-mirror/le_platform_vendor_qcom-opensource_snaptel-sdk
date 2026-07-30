@@ -325,8 +325,7 @@ const SignalStrengthLevel GsmSignalStrengthInfo::getLevel() const {
     return SignalStrengthLevel::LEVEL_UNKNOWN;
 }
 
-WcdmaSignalStrengthInfo::WcdmaSignalStrengthInfo(
-    int signalStrength, int ecio, int rscp, int rssi) {
+WcdmaSignalStrengthInfo::WcdmaSignalStrengthInfo(int signalStrength, int ecio, int rscp, int rssi) {
     LOG(DEBUG, __FUNCTION__, " Before range check, Signal Strength: ", signalStrength,
         " ECIO: ", ecio, " RSCP: ", rscp, " RSSI: ", rssi);
     signalStrength_ = inRange(signalStrength, MIN_WCDMA_LEVEL, MAX_WCDMA_LEVEL);

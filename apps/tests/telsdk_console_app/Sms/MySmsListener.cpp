@@ -45,20 +45,18 @@ void MySmsListener::onIncomingSms(int phoneId, std::shared_ptr<telux::tel::SmsMe
     std::cout << std::endl << std::endl;
     std::shared_ptr<telux::tel::MessagePartInfo> partInfo = smsMsg->getMessagePartInfo();
     if (partInfo) {
-        PRINT_NOTIFICATION << "Received SMS on phone ID " << phoneId
-                           << " from: " << smsMsg->getSender() << " to: " << smsMsg->getReceiver()
-                           << "\n Message: " << smsMsg->getText()
-                           << "\n raw PDU: " << Utils::toHexString(smsMsg->getRawPdu())
-                           << " \n RefNumber:" << static_cast<int>(partInfo->refNumber)
-                           << " NumberOfSegments:" << static_cast<int>(partInfo->numberOfSegments)
-                           << " SegmentNumber: " << static_cast<int>(partInfo->segmentNumber)
-                           << std::endl;
+        PRINT_NOTIFICATION
+            << "Received SMS on phone ID " << phoneId << " from: " << smsMsg->getSender()
+            << " to: " << smsMsg->getReceiver() << "\n Message: " << smsMsg->getText()
+            << "\n raw PDU: " << Utils::toHexString(smsMsg->getRawPdu())
+            << " \n RefNumber:" << static_cast<int>(partInfo->refNumber)
+            << " NumberOfSegments:" << static_cast<int>(partInfo->numberOfSegments)
+            << " SegmentNumber: " << static_cast<int>(partInfo->segmentNumber) << std::endl;
     } else {
-        PRINT_NOTIFICATION << "Received SMS on phone ID " << phoneId
-                           << " from: " << smsMsg->getSender() << " to: " << smsMsg->getReceiver()
-                           << "\n Message: " << smsMsg->getText()
-                           << "\n raw PDU: " << Utils::toHexString(smsMsg->getRawPdu())
-                           << std::endl;
+        PRINT_NOTIFICATION
+            << "Received SMS on phone ID " << phoneId << " from: " << smsMsg->getSender()
+            << " to: " << smsMsg->getReceiver() << "\n Message: " << smsMsg->getText()
+            << "\n raw PDU: " << Utils::toHexString(smsMsg->getRawPdu()) << std::endl;
     }
 
     telux::tel::SmsMetaInfo metaInfo;
@@ -283,8 +281,7 @@ void SmsStorageCallback::readMsgResponse(
                      << std::endl;
         } else {
             PRINT_CB << "\n Message: " << smsMsg.getText()
-                     << "\n raw PDU: " << Utils::toHexString(smsMsg.getRawPdu())
-                     << std::endl;
+                     << "\n raw PDU: " << Utils::toHexString(smsMsg.getRawPdu()) << std::endl;
         }
     } else {
         PRINT_CB << " Request for read message failed with errorCode: " << static_cast<int>(error)

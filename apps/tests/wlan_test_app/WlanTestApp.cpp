@@ -17,8 +17,8 @@ WlanTestApp::~WlanTestApp() {
 
 bool WlanTestApp::initWlan() {
     if (wlanControlManagerMenu_ == nullptr) {
-        wlanControlManagerMenu_ =
-            std::make_shared<WlanControlManagerMenu>("Control Manager Menu", "ctrl> ");
+        wlanControlManagerMenu_
+            = std::make_shared<WlanControlManagerMenu>("Control Manager Menu", "ctrl> ");
     }
     if (wlanControlManagerMenu_->isSubSystemReady()) {
         return true;
@@ -33,9 +33,9 @@ bool WlanTestApp::initWlan() {
 bool WlanTestApp::init() {
     initWlan();
 
-    std::shared_ptr<ConsoleAppCommand> wlanControlManagerMenu =
-        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "control_manager_menu",
-        {}, std::bind(&WlanTestApp::wlanControlManagerMenu, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> wlanControlManagerMenu
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "control_manager_menu", {},
+            std::bind(&WlanTestApp::wlanControlManagerMenu, this, std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {wlanControlManagerMenu};
     addCommands(commandsList);

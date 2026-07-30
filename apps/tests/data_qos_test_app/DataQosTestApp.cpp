@@ -449,8 +449,7 @@ std::shared_ptr<DataQosTestApp> init() {
     // Use init callback to block until the manager is ready, avoiding a race on cold start.
     int slotId = DEFAULT_SLOT_ID;
     std::promise<telux::common::ServiceStatus> p;
-    dataQosApp->dataConnMgr_ = dataFactory.getDataConnectionManager(
-        static_cast<SlotId>(slotId),
+    dataQosApp->dataConnMgr_ = dataFactory.getDataConnectionManager(static_cast<SlotId>(slotId),
         [&p](telux::common::ServiceStatus status) { p.set_value(status); });
 
     // Check if data subsystem is ready

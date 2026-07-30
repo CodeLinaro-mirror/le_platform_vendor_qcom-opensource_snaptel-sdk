@@ -943,8 +943,7 @@ void SmsManagerStub::handleIncomingSms(::telStub::SmsMessage event) {
 
     metaInfo.msgIndex = msgIndex;
     metaInfo.tagType  = tagType;
-    SmsMessage msg(
-        text, sender, receiver, encoding, pduBuffer, info, isMetaInfoValid, metaInfo);
+    SmsMessage msg(text, sender, receiver, encoding, pduBuffer, info, isMetaInfoValid, metaInfo);
     auto sharedPtr = std::make_shared<SmsMessage>(msg);
     // Invoke incomingSms notification to clients
     invokeIncomingSmslisteners(phoneId, sharedPtr);

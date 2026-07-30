@@ -631,7 +631,7 @@ void MyGetOperatingModeCallback::operatingModeResponse(
     }
     try {
         opCallbackPromise_.set_value(error);
-    } catch (const std::future_error& e) {
+    } catch (const std::future_error &e) {
         // Already satisfied, ignore
     }
 }

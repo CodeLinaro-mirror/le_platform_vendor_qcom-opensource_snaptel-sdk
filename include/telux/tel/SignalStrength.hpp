@@ -314,7 +314,6 @@ class WcdmaSignalStrengthInfo {
     int rssi_;
 };
 
-
 /**
  * 5G NR signal strength provides methods to get signal strength and signal-to-noise ratio.
  */

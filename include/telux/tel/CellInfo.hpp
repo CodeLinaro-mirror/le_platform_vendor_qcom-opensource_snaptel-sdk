@@ -496,7 +496,6 @@ class WcdmaCellInfo : public CellInfo {
     WcdmaSignalStrengthInfo ssInfo_;
 };
 
-
 /**
  * Nr5gCellInfo class provides methods to get cell type, cell registration status, cell
  * identity and signal strength information corresponding to the Serving cell.

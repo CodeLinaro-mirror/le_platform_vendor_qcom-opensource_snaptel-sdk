@@ -179,7 +179,7 @@ bool PhoneMenu::init() {
                         phoneManager_->setOperatingMode(telux::tel::OperatingMode::ONLINE, nullptr);
                     }
                 }
-            } catch (const std::exception& e) {
+            } catch (const std::exception &e) {
                 std::cout << "Failed to get operating mode: " << e.what() << std::endl;
             }
         } else {

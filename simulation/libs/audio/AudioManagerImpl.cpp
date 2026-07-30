@@ -168,7 +168,6 @@ void AudioManagerImpl::initSync() {
 
         isInitComplete_ = true;
     }
-
 }
 
 /*

@@ -82,6 +82,8 @@ private:
     telux::satcom::NtnState ntnState_ = telux::satcom::NtnState::DISABLED;
     int capabilities_ = 0;
     telux::satcom::SignalStrength signalStrength_ = telux::satcom::SignalStrength::NONE;
+    bool gnssEnabled_                             = false;
+    bool locationFixReceived_                     = false;
 
     void onEventUpdate(std::string event);
     void handleStateChangeRequest(std::string event);

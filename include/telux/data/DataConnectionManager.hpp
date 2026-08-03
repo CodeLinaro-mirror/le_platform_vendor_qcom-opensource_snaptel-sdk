@@ -500,6 +500,12 @@ class IDataConnectionManager {
      * Clients might receive additional notification for the final data call status. For details
      * see @ref telux::data::DataCallResponseCb.
      *
+     * Configuring data.manage_roaming_for_datacalls in tel.conf controls the roaming behavior for
+     * data calls. If not defined or set to false (default), roaming is enabled for data calls
+     * initiated through @ref telux::data::IDataConnectionManager::startDataCall.
+     * If set to true, roaming is disabled by default. Applications can enable roaming by using the
+     * @ref telux::data::IDataConnectionManager::setRoamingMode API.
+     *
      * On platforms with access control enabled, the caller needs to have the TELUX_DATA_CALL_OPS
      * permission to successfully invoke this API.
      *
@@ -626,6 +632,12 @@ class IDataConnectionManager {
      * later with the error code and DataCall object associated with the requested call.
      * Clients might receive additional notifications for the final data call status. For
      * details see @ref telux::data::DataCallResponseCb.
+     *
+     * Configuring data.manage_roaming_for_datacalls in tel.conf controls the roaming behavior for
+     * data calls. If not defined or set to false (default), roaming is enabled for data calls
+     * initiated through @ref telux::data::IDataConnectionManager::startDataCall.
+     * If set to true, roaming is disabled by default. Applications can enable roaming by using the
+     * @ref telux::data::IDataConnectionManager::setRoamingMode API.
      *
      * On platforms with access control enabled, the caller needs to have the TELUX_DATA_CALL_OPS
      * permission to successfully invoke this API.

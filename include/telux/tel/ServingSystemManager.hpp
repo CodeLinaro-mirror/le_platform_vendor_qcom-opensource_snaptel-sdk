@@ -237,8 +237,11 @@ using RatPreference = std::bitset<16>;
  * @ref IServingSystemListener
  */
 enum ServingSystemNotificationType {
-    SYSTEM_INFO, /* Represents @ref telux::tel::IServingSystemListener::onSystemInfoChanged()
-                    and @ref telux::tel::IServingSystemListener::onDcStatusChanged() */
+    SYSTEM_INFO, /* Represents @ref telux::tel::IServingSystemListener::onSystemInfoChanged,
+                    @ref telux::tel::IServingSystemListener::onDcStatusChanged,
+                    @ref IServingSystemListener::onCallBarringInfoChanged,
+                    @ref IServingSystemListener::onSmsCapabilityChanged,
+                    @ref IServingSystemListener::onLteCsCapabilityChanged. */
     RF_BAND_INFO, /* Represents @ref telux::tel::IServingSystemListener::onRFBandInfoChanged */
     NETWORK_REJ_INFO, /* Represents @ref telux::tel::IServingSystemListener::onNetworkRejection */
     LTE_SIB16_NETWORK_TIME, /* Represents @ref
@@ -1105,6 +1108,108 @@ class IServingSystemManager {
     virtual telux::common::Status requestRrcState(RrcStateCallback callback) = 0;
 
     /**
+     * Configures notification filtering for @ref IServingSystemListener::onSystemInfoChanged,
+     * @ref IServingSystemListener::onCallBarringInfoChanged, and
+     * @ref IServingSystemListener::onSmsCapabilityChanged.
+     *
+     * When the SYSTEM_INFO notification type is enabled, all system information changes are
+     * reported to registered listeners by default. This API allows clients to restrict
+     * notifications to only the selected system information attributes defined by
+     * @ref SystemInfoNotificationFilter.
+     *
+     * After a filter mask is applied, notifications are generated only when one or more of the
+     * selected attributes change. For example, notifications may be triggered by service
+     * registration state changes, service loss or recovery, RAT transitions, or other configured
+     * system information updates.
+     *
+     * This mechanism helps reduce unnecessary notifications and device wakeups caused by
+     * unrelated system information changes. It is particularly useful for power-sensitive
+     * applications that are interested only in specific network state transitions.
+     *
+     * If @ref SystemInfoNotificationFilter::SRV_STATUS,
+     * @ref SystemInfoNotificationFilter::SRV_STATUS_TOGGLE, or both are included in the filter
+     * mask, @ref ServingSystemInfo updates are delivered through
+     * @ref IServingSystemListener::onSystemInfoChanged based on the following rules:
+     *
+     * - @ref SystemInfoNotificationFilter::SRV_STATUS
+     *   - Reports every service status transition within the same RAT, including transitions
+     *     between NO_SERVICE, LIMITED_SERVICE, IN_SERVICE, LIMITED_REGIONAL, and POWER_SAVE.
+     *   - Reports all service status transitions across RATs, including cases where the service
+     *     status remains unchanged but the RAT changes.
+     *
+     * - @ref SystemInfoNotificationFilter::SRV_STATUS_TOGGLE
+     *   - Reports only in-service/out-of-service boundary transitions:
+     *       - NO_SERVICE, LIMITED_SERVICE, LIMITED_REGIONAL, or POWER_SAVE -> IN_SERVICE
+     *       - IN_SERVICE -> NO_SERVICE, LIMITED_SERVICE, LIMITED_REGIONAL, or POWER_SAVE
+     *   - Does not report transitions that do not cross the in-service boundary (for example,
+     *     NO_SERVICE -> LIMITED_SERVICE or NO_SERVICE -> LIMITED_REGIONAL or NO_SERVICE ->
+     *     POWER_SAVE).
+     *
+     * - When both filters are enabled, notifications are generated for all service status changes
+     *   covered by either filter, including status transitions within the same RAT, and
+     *   RAT changes.
+     *
+     * A filter is applied only when the SYSTEM_INFO notification type has been enabled through
+     * @ref IServingSystemManager::registerListener.
+     *
+     * On platforms with access control enabled, the caller must have
+     * TELUX_TEL_SRV_SYSTEM_CONFIG permission to invoke this API successfully.
+     *
+     * @param[in] mask    Bit mask specifying the @ref SystemInfoNotificationFilter attributes
+     *                    that should trigger:
+     *                    - @ref IServingSystemListener::onSystemInfoChanged
+     *                    - @ref IServingSystemListener::onCallBarringInfoChanged
+     *                    - @ref IServingSystemListener::onSmsCapabilityChanged
+     *
+     *                    A value of @ref FILTER_MASK_NONE clears any previously configured filter
+     *                    and restores reporting of all eligible SYSTEM_INFO-related changes.
+     *
+     * @return @ref telux::common::ErrorCode indicating whether the filter was successfully
+     *         applied or the reason for failure.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode setSystemInfoNotificationFilter(
+        SystemInfoNotificationFilterMask mask = FILTER_MASK_NONE)
+        = 0;
+
+    /**
+     * Get the currently configured filter for system information which were registered using
+     * @ref IServingSystemManager::registerListener with @ref
+     * ServingSystemNotificationType::SYSTEM_INFO.
+     *
+     * On platforms with access control enabled, the caller needs to have
+     * TELUX_TEL_SRV_SYSTEM_READ permission to successfully invoke this API.
+     *
+     * @param [out] mask       Bit mask representing the set of attributes defined in
+     *                         @ref SystemInfoNotificationFilter that are currently configured to
+     *                         trigger @ref IServingSystemListener::onSystemInfoChanged,
+     *                         @ref IServingSystemListener::onCallBarringInfoChanged and
+     *                         @ref IServingSystemListener::onSmsCapabilityChanged
+     *                         notifications. An empty mask indicates that filtering is
+     *                         disabled and all system information changes are reported.
+     *
+     * @returns @ref telux::common::ErrorCode of getSystemInfoNotificationFilter i.e. success or
+     * suitable error code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode getSystemInfoNotificationFilter(
+        SystemInfoNotificationFilterMask &mask)
+        = 0;
+
+    /**
+     * Represents no filtering for system information notifications.
+     * When this constant value is passed to
+     * @ref IServingSystemManager::setSystemInfoNotificationFilter, all filtering is
+     * disabled and notifications are generated for every supported system
+     * information change.
+     */
+    static const uint64_t FILTER_MASK_NONE = 0x00000000;
+
+    /**
      * Register a listener for specific updates from serving system.
      *
      * @param [in] listener     Pointer of IServingSystemListener object that
@@ -1112,12 +1217,19 @@ class IServingSystemManager {
      * @param [in] mask         Bit mask representing a set of notifications that needs to be
      *                          registered - @ref ServingSystemNotificationMask
      *                          Notifications under IServingSystemListener that are not listed in
-     *                          in @ref ServingSystemNotificationType would always be registered by
+     *                          @ref ServingSystemNotificationType would always be registered by
      *                          default.
      *                          All the notifications will be registered when the client provides
      *                          ALL_NOTIFICATIONS as input. The bits that are not set in the mask
      * are ignored and do not have any effect on registration. To deregister, the API @ref
      * deregisterListener should be used.
+     *
+     * @note @ref IServingSystemManager::setSystemInfoNotificationFilter to receive
+     * notifications only for selected system information changes. The following notification
+     * types can be filtered.
+     * 1. @ref IServingSystemListener::onSystemInfoChanged
+     * 2. @ref IServingSystemListener::onCallBarringInfoChanged
+     * 3. @ref IServingSystemListener::onSmsCapabilityChanged
      *
      * @returns Status of registerListener i.e success or suitable status code.
      */
@@ -1140,7 +1252,7 @@ class IServingSystemManager {
      *                          an invalid operation.
      *                          To register again, the API @ref registerListener should be used.
      *
-     * @returns Status of removeListener i.e. success or suitable status code
+     * @returns Status of deregisterListener i.e. success or suitable status code
      */
     virtual telux::common::Status deregisterListener(std::weak_ptr<IServingSystemListener> listener,
         ServingSystemNotificationMask mask = ALL_NOTIFICATIONS)

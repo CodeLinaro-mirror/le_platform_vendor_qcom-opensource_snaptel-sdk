@@ -83,6 +83,10 @@ class ServingSystemMenu : public ConsoleApp {
     void setHplmnSearchTime(std::vector<std::string> userInput);
     void getHplmnSearchTime(std::vector<std::string> userInput);
     void requestRrcState(std::vector<std::string> userInput);
+    void registerListener(std::vector<std::string> userInput);
+    void deregisterListener(std::vector<std::string> userInput);
+    void getSystemInfoNotificationFilter(std::vector<std::string> userInput);
+    void setSystemInfoNotificationFilter(std::vector<std::string> userInput);
 
  private:
     // Member variable to keep the Listener object alive till application ends.

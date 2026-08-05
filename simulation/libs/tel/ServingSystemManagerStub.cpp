@@ -10,6 +10,66 @@
 using namespace telux::common;
 using namespace telux::tel;
 
+// Returns the call type barring status of the given domain (CS_ONLY/PS_ONLY) from a
+// GetCallBarringInfo/onCallBarringInfoChanged snapshot, or UNKNOWN if that domain isn't present.
+CallsAllowedInCell ServingSystemManagerStub::callTypeForDomain(
+    const std::vector<CallBarringInfo> &barringInfo, ServiceDomain domain) {
+    for (auto &info : barringInfo) {
+        if (info.domain == domain) {
+            return info.callType;
+        }
+    }
+    return CallsAllowedInCell::UNKNOWN;
+}
+
+// Decides whether a serving-system change qualifies for an onSystemInfoChanged notification
+// under the client-configured SystemInfoNotificationFilterMask, mirroring the real-device semantics
+// implemented in ServingSystemManagerImpl::onSystemInfoChanged. Covers every bit defined in
+// SystemInfoNotificationFilter.
+bool ServingSystemManagerStub::shouldReportSystemInfo(const ServingSystemInfo &prev,
+    const ServingSystemInfo &curr, const std::vector<CallBarringInfo> &prevBarringInfo,
+    const std::vector<CallBarringInfo> &currBarringInfo, const SmsCapability &prevSmsCapability,
+    const SmsCapability &currSmsCapability, SystemInfoNotificationFilterMask mask) {
+    if (mask.none()) {
+        return true;
+    }
+    bool wasInService = prev.state == ServiceRegistrationState::IN_SERVICE;
+    bool isInService  = curr.state == ServiceRegistrationState::IN_SERVICE;
+    if (mask.test(SystemInfoNotificationFilter::SRV_STATUS) && (prev.state != curr.state)) {
+        return true;
+    }
+    if (mask.test(SystemInfoNotificationFilter::SRV_DOMAIN) && (prev.domain != curr.domain)) {
+        return true;
+    }
+    if (mask.test(SystemInfoNotificationFilter::CS_BAR_STATUS)
+        && (callTypeForDomain(prevBarringInfo, ServiceDomain::CS_ONLY)
+            != callTypeForDomain(currBarringInfo, ServiceDomain::CS_ONLY))) {
+        return true;
+    }
+    if (mask.test(SystemInfoNotificationFilter::PS_BAR_STATUS)
+        && (callTypeForDomain(prevBarringInfo, ServiceDomain::PS_ONLY)
+            != callTypeForDomain(currBarringInfo, ServiceDomain::PS_ONLY))) {
+        return true;
+    }
+    if (mask.test(SystemInfoNotificationFilter::LTE_SMS_STATUS)
+        && ((prev.rat == RadioTechnology::RADIO_TECH_LTE)
+            || (curr.rat == RadioTechnology::RADIO_TECH_LTE))
+        && ((prevSmsCapability.domain != currSmsCapability.domain)
+            || (prevSmsCapability.smsStatus != currSmsCapability.smsStatus))) {
+        return true;
+    }
+    // SRV_STATUS_TOGGLE: in-service <-> out-of-service transitions
+    if (mask.test(SystemInfoNotificationFilter::SRV_STATUS_TOGGLE)
+        && (wasInService != isInService)) {
+        return true;
+    }
+    // SRV_RAT_TECH_CHANGE: any RAT change
+    if (mask.test(SystemInfoNotificationFilter::SRV_RAT_TECH_CHANGE) && (prev.rat != curr.rat)) {
+        return true;
+    }
+    return false;
+}
+
 ServingSystemManagerStub::ServingSystemManagerStub(int phoneId) {
     LOG(DEBUG, __FUNCTION__);
     phoneId_         = phoneId;
@@ -1018,6 +1078,30 @@ telux::common::ErrorCode ServingSystemManagerStub::getHplmnSearchTime(uint32_t &
     return error;
 }
 
+telux::common::ErrorCode ServingSystemManagerStub::setSystemInfoNotificationFilter(
+    SystemInfoNotificationFilterMask mask) {
+    LOG(DEBUG, __FUNCTION__, " mask: ", mask.to_string());
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+    std::lock_guard<std::mutex> lock(mtx_);
+    sysInfoFilterMask_ = mask;
+    return telux::common::ErrorCode::SUCCESS;
+}
+
+telux::common::ErrorCode ServingSystemManagerStub::getSystemInfoNotificationFilter(
+    SystemInfoNotificationFilterMask &mask) {
+    LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+    std::lock_guard<std::mutex> lock(mtx_);
+    mask = sysInfoFilterMask_;
+    return telux::common::ErrorCode::SUCCESS;
+}
+
 NetworkMode ServingSystemManagerStub::updateNetworkMode(
     WcdmaRrcState wcdmaRrcState, LteRrcState lteRrcState, Nr5gRrcState nr5gRrcState) {
     NetworkMode rat = NetworkMode::UNKNOWN;
@@ -1189,24 +1273,41 @@ void ServingSystemManagerStub::handleSystemInfoChanged(::telStub::SystemInfoEven
                 sp->onDcStatusChanged(dcStatus);
             }
         }
-        for (auto &wp : applisteners) {
-            if (auto sp = wp.lock()) {
-                sp->onSystemInfoChanged(info);
-            }
+        ServingSystemInfo prevInfo;
+        std::vector<CallBarringInfo> prevBarringInfo;
+        SmsCapability prevSmsCapability;
+        bool reportSystemInfo;
+        {
+            std::lock_guard<std::mutex> lock(mtx_);
+            prevInfo             = lastSystemInfo_;
+            prevBarringInfo      = lastCallBarringInfo_;
+            prevSmsCapability    = lastSmsCapability_;
+            reportSystemInfo     = shouldReportSystemInfo(prevInfo, info, prevBarringInfo, infos,
+                    prevSmsCapability, smsCapability, sysInfoFilterMask_);
+            lastSystemInfo_      = info;
+            lastCallBarringInfo_ = infos;
+            lastSmsCapability_   = smsCapability;
         }
-        for (auto &wp : applisteners) {
-            if (auto sp = wp.lock()) {
-                sp->onSmsCapabilityChanged(smsCapability);
+        if (reportSystemInfo) {
+            for (auto &wp : applisteners) {
+                if (auto sp = wp.lock()) {
+                    sp->onSystemInfoChanged(info);
+                }
+            }
+            for (auto &wp : applisteners) {
+                if (auto sp = wp.lock()) {
+                    sp->onSmsCapabilityChanged(smsCapability);
+                }
+            }
+            for (auto &wp : applisteners) {
+                if (auto sp = wp.lock()) {
+                    sp->onCallBarringInfoChanged(infos);
+                }
             }
         }
         for (auto &wp : applisteners) {
             if (auto sp = wp.lock()) {
                 sp->onLteCsCapabilityChanged(lteCapability);
-            }
-        }
-        for (auto &wp : applisteners) {
-            if (auto sp = wp.lock()) {
-                sp->onCallBarringInfoChanged(infos);
             }
         }
     } else {

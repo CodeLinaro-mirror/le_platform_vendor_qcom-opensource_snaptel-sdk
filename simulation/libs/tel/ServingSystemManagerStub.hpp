@@ -95,6 +95,10 @@ class ServingSystemManagerStub : public IServingSystemManager,
     telux::common::ErrorCode setHplmnSearchTime(uint32_t time) override;
     telux::common::ErrorCode getHplmnSearchTime(uint32_t &time) override;
     telux::common::Status requestRrcState(RrcStateCallback callback) override;
+    telux::common::ErrorCode setSystemInfoNotificationFilter(
+        SystemInfoNotificationFilterMask mask) override;
+    telux::common::ErrorCode getSystemInfoNotificationFilter(
+        SystemInfoNotificationFilterMask &mask) override;
     telux::common::Status registerListener(std::weak_ptr<IServingSystemListener> listener,
         ServingSystemNotificationMask mask) override;
     telux::common::Status deregisterListener(std::weak_ptr<IServingSystemListener> listener,
@@ -114,6 +118,12 @@ class ServingSystemManagerStub : public IServingSystemManager,
     std::unique_ptr<::telStub::ServingSystemService::Stub> stub_;
     telux::common::ServiceStatus subSystemStatus_;
     bool ready_ = false;
+    SystemInfoNotificationFilterMask sysInfoFilterMask_;
+    ServingSystemInfo lastSystemInfo_                 = {RadioTechnology::RADIO_TECH_UNKNOWN,
+                        ServiceDomain::UNKNOWN, ServiceRegistrationState::UNKNOWN};
+    std::vector<CallBarringInfo> lastCallBarringInfo_ = {};
+    SmsCapability lastSmsCapability_
+        = {RadioTechnology::RADIO_TECH_UNKNOWN, SmsDomain::UNKNOWN, NtnSmsStatus::UNKNOWN};
     bool waitForInitialization();
     void setSubsystemReady(bool status);
     void setServiceStatus(telux::common::ServiceStatus status);
@@ -126,6 +136,12 @@ class ServingSystemManagerStub : public IServingSystemManager,
     void handleRrcStateChange(::telStub::RrcStateEvent event);
     NetworkMode updateNetworkMode(
         WcdmaRrcState wcdmaRrcState, LteRrcState lteRrcState, Nr5gRrcState nr5gRrcState);
+    CallsAllowedInCell callTypeForDomain(
+        const std::vector<CallBarringInfo> &barringInfo, ServiceDomain domain);
+    bool shouldReportSystemInfo(const ServingSystemInfo &prev, const ServingSystemInfo &curr,
+        const std::vector<CallBarringInfo> &prevBarringInfo,
+        const std::vector<CallBarringInfo> &currBarringInfo, const SmsCapability &prevSmsCapability,
+        const SmsCapability &currSmsCapability, SystemInfoNotificationFilterMask mask);
 };
 
 }  // end of namespace tel

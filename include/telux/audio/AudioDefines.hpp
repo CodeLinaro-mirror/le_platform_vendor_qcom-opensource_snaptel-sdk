@@ -328,6 +328,8 @@ struct AmrwbpParams : FormatParams {
  *
  *  For playback:
  *      type, sampleRate, channelTypeMask, format, deviceTypes
+ *  For streaming audio playback from a remote source (e.g., eAVB):
+ *      type, sampleRate, channelTypeMask, format, deviceTypes, isStreaming
  *  For incall-playback:
  *      type, sampleRate, channelTypeMask, format, deviceTypes, voicePaths
  *  For hpcm-playback:
@@ -337,6 +339,8 @@ struct AmrwbpParams : FormatParams {
  *
  *  For capture:
  *      type, sampleRate, channelTypeMask, format, deviceTypes
+ *  For remote streaming audio capture (e.g., eAVB):
+ *      type, sampleRate, channelTypeMask, format, deviceTypes, isStreaming
  *  For incall-capture:
  *      type, sampleRate, channelTypeMask, format, deviceTypes, voicePaths
  *  For hpcm-capture:
@@ -386,6 +390,10 @@ struct StreamConfig {
 
     /** True - if voice call is used with HPCM, false otherwise */
     bool enableHpcm = false;
+
+    /** Indicates whether audio data is being received continuously from a remote source,
+     *  such as an eAVB (Ethernet Audio Video Bridging) stream. */
+    bool isStreaming = false;
 };
 
 /**

@@ -201,6 +201,8 @@ service DataFilterManager {
     rpc setIpPassThroughConfig(setIpptConfigRequest) returns (setIpptConfigReply) {}
     rpc getIpConfig(getIpConfigRequest) returns (getIpConfigReply) {}
     rpc setIpConfig(setIpConfigRequest) returns (setIpConfigReply) {}
+    rpc setMtu(setMtuRequest) returns (setMtuReply) {}
+    rpc getMtu(getMtuRequest) returns (getMtuReply) {}
     rpc SetIpPassThroughNatConfig(setIpptNatConfigRequest) returns (setIpptNatConfigReply) {}
     rpc GetIpPassThroughNatConfig(google.protobuf.Empty) returns (getIpptNatConfigReply) {}
     rpc RegisterOnWwanConnectivityConfigChange(google.protobuf.Empty) returns
@@ -834,6 +836,25 @@ message getIpptNatConfigReply {
 message setIpConfigReply {
     commonStub.ErrorCode error = 1;
 }
+
+message setMtuRequest {
+    int32 slot_id = 1;
+    uint32 ipv4_mtu = 2;
+}
+
+message setMtuReply {
+    commonStub.ErrorCode error = 1;
+}
+
+message getMtuRequest {
+    int32 slot_id = 1;
+}
+
+message getMtuReply {
+    uint32 ipv4_mtu = 1;
+    commonStub.ErrorCode error = 2;
+}
+
 message DataCallStatisticsRequest{
     int32 slot_id = 1;
     int32 profile_id = 2;

@@ -47,6 +47,12 @@
             "error": "SUCCESS",
             "status": "SUCCESS"
         },
+        "setMtu": {
+            "error": "SUCCESS"
+        },
+        "getMtu": {
+            "error": "SUCCESS"
+        },
         "setIpPassThroughConfig": {
             "error": "SUCCESS"
         },

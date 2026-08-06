@@ -157,6 +157,14 @@ using RequestCurrentDdsResponseCb
     = std::function<void(DdsInfo currentState, telux::common::ErrorCode error)>;
 
 /**
+ * Specifies the MTU configuration.
+ */
+struct MtuConfig {
+    SlotId slotId    = DEFAULT_SLOT_ID; /**< Slot to which the MTU value applies. */
+    uint32_t ipv4Mtu = 0; /**< IPv4 3GPP MTU value in bytes. Maximum value: 9216. */
+};
+
+/**
  * @brief Data Settings Manager class provides APIs related to the data subsystem settings.
  *        For example, ability to reset current network settings to factory settings, setting
  *        backhaul priority, and enabling roaming per PDN.
@@ -567,6 +575,56 @@ class IDataSettingsManager {
     virtual telux::common::ErrorCode getIpConfig(
         const IpConfigParams &ipConfigParams, IpConfig &ipConfig)
         = 0;
+
+    /**
+     * Set the default 3GPP MTU value for a slot.
+     *
+     * This value applies to IPv4 data calls system-wide for the given slot and is used as
+     * the fallback/default MTU whenever the network does not supply its own MTU for an active PDN.
+     * A network-provided MTU always takes precedence when available. This API does not affect IPv6
+     * MTU.
+     *
+     * Configuration changes will be persistent across reboots. This setting does not impact any
+     * data call that is already connected. It takes effect for subsequently established data calls.
+     *
+     * On platforms with Access control enabled, caller needs to have TELUX_DATA_SETTING permission
+     * to invoke this API successfully.
+     *
+     * @param [in] config   MTU settings to apply. @ref telux::data::MtuConfig::slotId selects the
+     *                       slot. @ref telux::data::MtuConfig::ipv4Mtu is the value in bytes
+     *                       (default 1500, maximum 9216). An out-of-range or otherwise invalid
+     * value is rejected (see @returns).
+     *
+     * @returns             @ref telux::common::ErrorCode as appropriate:
+     *                       - SUCCESS if the value was applied successfully.
+     *                       - ACCESS_DENIED if the caller lacks TELUX_DATA_SETTING permission.
+     *                       - SUBSYSTEM_UNAVAILABLE if the data settings manager service is not
+     *                         yet available.
+     *                       - INVALID_ARG if the value is out of range or otherwise malformed.
+     *                       - INTERNAL_ERR if the request could not be completed due to an internal
+     *                         or transport error.
+     */
+    virtual telux::common::ErrorCode setMtu(const MtuConfig &config) = 0;
+
+    /**
+     * Get the currently configured default 3GPP MTU value for a slot.
+     *
+     * Returns the configured default (see @ref setMtu). This is the fallback/default value used
+     * when no network-supplied MTU is in effect for a PDN, not necessarily the MTU currently
+     * observed on an active data call.
+     *
+     * @param [in,out] config   On input, @ref telux::data::MtuConfig::slotId selects the slot
+     *                          to query. On SUCCESS, @ref telux::data::MtuConfig::ipv4Mtu is filled
+     *                          with the current default MTU value in bytes.
+     *
+     * @returns              @ref telux::common::ErrorCode as appropriate:
+     *                        - SUCCESS if the value was retrieved successfully.
+     *                        - SUBSYSTEM_UNAVAILABLE if the data settings manager service is not
+     *                          yet available.
+     *                        - INTERNAL_ERR if the request could not be completed due to an
+     * internal or transport error.
+     */
+    virtual telux::common::ErrorCode getMtu(MtuConfig &config) = 0;
 
     /**
      * Register Data Settings Manager as listener for Data Service health events like data service

@@ -26,6 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 extern "C" {
 #include "unistd.h"
@@ -103,14 +108,18 @@ bool VlanMenu::init() {
 
         addCommands(commandsList);
     }
-    bool locSubSystemStatus = vlanManagerMap_[
-        telux::data::OperationType::DATA_LOCAL]->isSubsystemReady();
-    if (locSubSystemStatus) {
-        std::cout << "\nLocal VLAN Manager is ready" << std::endl;
+
+    bool locSubSystemStatus = false;
+    if (vlanManagerMap_.find(telux::data::OperationType::DATA_LOCAL) != vlanManagerMap_.end()) {
+        locSubSystemStatus = vlanManagerMap_[
+            telux::data::OperationType::DATA_LOCAL]->isSubsystemReady();
+        if (locSubSystemStatus) {
+            std::cout << "\nLocal VLAN Manager is ready" << std::endl;
+        } else {
+            std::cout << "\nLocal VLAN Manager is not ready" << std::endl;
+        }
     }
-    else {
-        std::cout << "\nLocal VLAN Manager is not ready" << std::endl;
-    }
+
     bool rmtSubSystemStatus = false;
     if (vlanManagerMap_.find(telux::data::OperationType::DATA_REMOTE) != vlanManagerMap_.end()) {
         rmtSubSystemStatus = vlanManagerMap_[
@@ -129,7 +138,6 @@ bool VlanMenu::init() {
 void VlanMenu::createVlan(std::vector<std::string> inputCommand) {
     telux::common::Status retStat;
     int operationType;
-    bool subSystemStatus = false;
 
     std::cout << "Create VLAN \n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
@@ -182,7 +190,6 @@ void VlanMenu::createVlan(std::vector<std::string> inputCommand) {
 void VlanMenu::removeVlan(std::vector<std::string> inputCommand) {
     telux::common::Status retStat;
     int operationType;
-    bool subSystemStatus = false;
 
     std::cout << "Remove VLAN \n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
@@ -220,7 +227,6 @@ void VlanMenu::removeVlan(std::vector<std::string> inputCommand) {
 void VlanMenu::queryVlanInfo(std::vector<std::string> inputCommand) {
     telux::common::Status retStat;
     int operationType;
-    bool subSystemStatus = false;
 
     std::cout << "Query VLAN info\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
@@ -252,7 +258,6 @@ void VlanMenu::queryVlanInfo(std::vector<std::string> inputCommand) {
 void VlanMenu::bindWithProfile(std::vector<std::string> inputCommand) {
     telux::common::Status retStat;
     int operationType;
-    bool subSystemStatus = false;
 
     std::cout << "Bind with profile\n";
 
@@ -299,7 +304,6 @@ void VlanMenu::bindWithProfile(std::vector<std::string> inputCommand) {
 void VlanMenu::unbindFromProfile(std::vector<std::string> inputCommand) {
     telux::common::Status retStat;
     int operationType;
-    bool subSystemStatus = false;
 
     std::cout << "Unbind with profile\n";
 
@@ -332,7 +336,7 @@ void VlanMenu::unbindFromProfile(std::vector<std::string> inputCommand) {
     auto respCb = [](telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
         std::cout << "CALLBACK: "
-                  << "bindWithProfile Response"
+                  << "unbindFromProfile Response"
                   << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
                   << ". ErrorCode: " << static_cast<int>(error)
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
@@ -346,7 +350,6 @@ void VlanMenu::unbindFromProfile(std::vector<std::string> inputCommand) {
 void VlanMenu::queryVlanMappingList(std::vector<std::string> inputCommand) {
     telux::common::Status retStat;
     int operationType;
-    bool subSystemStatus = false;
 
     std::cout << "Query VLAN Mapping List\n";
 

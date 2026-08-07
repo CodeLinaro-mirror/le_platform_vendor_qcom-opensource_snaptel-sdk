@@ -93,6 +93,8 @@ class MyServingSystemHelper {
  public:
     static std::string getRatPreference(telux::tel::RatPreference preference);
     static std::string getServiceDomainPref(telux::tel::ServiceDomainPreference preference);
+    static std::string getVoiceDomainPref(telux::tel::VoiceDomainPreference preference);
+    static std::string getDrxConfig(telux::tel::DrxConfig config);
     static std::string getServiceDomain(telux::tel::ServiceDomain domain);
     static std::string getRadioTechnology(telux::tel::RadioTechnology radioTech);
     static std::string getServiceState(telux::tel::ServiceRegistrationState state);
@@ -121,6 +123,7 @@ class MyServingSystemListener : public telux::tel::IServingSystemListener {
     void onServiceStatusChange(telux::common::ServiceStatus status) override;
     void onRatPreferenceChanged(telux::tel::RatPreference preference) override;
     void onServiceDomainPreferenceChanged(telux::tel::ServiceDomainPreference preference) override;
+    void onVoiceDomainPreferenceChanged(telux::tel::VoiceDomainPreference preference) override;
     void onSystemInfoChanged(telux::tel::ServingSystemInfo sysInfo) override;
     void onDcStatusChanged(telux::tel::DcStatus dcStatus) override;
     void onNetworkTimeChanged(telux::tel::NetworkTimeInfo info) override;

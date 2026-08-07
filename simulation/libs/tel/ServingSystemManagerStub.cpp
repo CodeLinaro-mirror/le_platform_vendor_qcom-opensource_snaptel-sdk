@@ -509,6 +509,93 @@ telux::common::Status ServingSystemManagerStub::requestServiceDomainPreference(
     return status;
 }
 
+telux::common::ErrorCode ServingSystemManagerStub::setVoiceDomainPreference(
+    VoiceDomainPreference preference) {
+    LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+    ::telStub::SetVoiceDomainPreferenceRequest request;
+    ::telStub::SetVoiceDomainPreferenceReply response;
+    ClientContext context;
+    request.set_phone_id(phoneId_);
+    request.set_voice_domain_pref(static_cast<telStub::VoiceDomainPreference_Pref>(preference));
+    grpc::Status reqstatus = stub_->SetVoiceDomainPreference(&context, request, &response);
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    }
+
+    return static_cast<telux::common::ErrorCode>(response.error());
+}
+
+telux::common::ErrorCode ServingSystemManagerStub::getVoiceDomainPreference(
+    VoiceDomainPreference &preference) {
+    LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+    ::telStub::GetVoiceDomainPreferenceRequest request;
+    ::telStub::GetVoiceDomainPreferenceReply response;
+    ClientContext context;
+    request.set_phone_id(phoneId_);
+
+    grpc::Status reqstatus = stub_->GetVoiceDomainPreference(&context, request, &response);
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    }
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        preference = static_cast<telux::tel::VoiceDomainPreference>(response.voice_domain_pref());
+    }
+    return error;
+}
+
+telux::common::ErrorCode ServingSystemManagerStub::setDrxConfig(DrxConfig config) {
+    LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+    ::telStub::SetDrxConfigRequest request;
+    ::telStub::SetDrxConfigReply response;
+    ClientContext context;
+    request.set_phone_id(phoneId_);
+    request.set_drx_config(static_cast<telStub::DrxConfig_Cycle>(config));
+    grpc::Status reqstatus = stub_->SetDrxConfig(&context, request, &response);
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    }
+    return static_cast<telux::common::ErrorCode>(response.error());
+}
+
+telux::common::ErrorCode ServingSystemManagerStub::getDrxConfig(DrxConfig &config) {
+    LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+    ::telStub::GetDrxConfigRequest request;
+    ::telStub::GetDrxConfigReply response;
+    ClientContext context;
+    request.set_phone_id(phoneId_);
+
+    grpc::Status reqstatus = stub_->GetDrxConfig(&context, request, &response);
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    }
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        config = static_cast<telux::tel::DrxConfig>(response.drx_config());
+    }
+    return error;
+}
+
 telux::common::Status ServingSystemManagerStub::getSystemInfo(ServingSystemInfo &sysInfo) {
     LOG(DEBUG, __FUNCTION__);
     if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
@@ -1130,75 +1217,99 @@ void ServingSystemManagerStub::handleSystemInfoChanged(::telStub::SystemInfoEven
 void ServingSystemManagerStub::handleSystemSelectionPreferenceChanged(
     ::telStub::SystemSelectionPreferenceEvent event) {
     LOG(DEBUG, __FUNCTION__);
-    int phoneId = event.phone_id();
-    if (phoneId_ != phoneId) {
-        LOG(DEBUG, __FUNCTION__, " Ignoring events for subcription ", phoneId);
-        return;
-    }
-    RatPreference preference;
-    for (auto &r : event.rat_pref_types()) {
-        preference.set(static_cast<int>(r));
-    }
-    if (preference[static_cast<int>(telux::tel::RatPrefType::PREF_NR5G)]) {
-        preference.reset(static_cast<int>(telux::tel::RatPrefType::PREF_NR5G_NSA));
-        preference.reset(static_cast<int>(telux::tel::RatPrefType::PREF_NR5G_SA));
-    }
-
-    ServiceDomainPreference domain
-        = static_cast<telux::tel::ServiceDomainPreference>(event.service_domain_pref());
-
-    std::vector<GsmRFBand> gsmBands     = {};
-    std::vector<WcdmaRFBand> wcdmaBands = {};
-    std::vector<LteRFBand> lteBands     = {};
-    std::vector<NrRFBand> saBands       = {};
-    std::vector<NrRFBand> nsaBands      = {};
-    for (auto &g : event.gsm_pref_bands()) {
-        gsmBands.push_back(static_cast<GsmRFBand>(g));
-    }
-    for (auto &w : event.wcdma_pref_bands()) {
-        wcdmaBands.push_back(static_cast<WcdmaRFBand>(w));
-    }
-    for (auto &l : event.lte_pref_bands()) {
-        lteBands.push_back(static_cast<LteRFBand>(l));
-    }
-    for (auto &n : event.nsa_pref_bands()) {
-        nsaBands.push_back(static_cast<NrRFBand>(n));
-    }
-    for (auto &s : event.sa_pref_bands()) {
-        saBands.push_back(static_cast<NrRFBand>(s));
-    }
-    auto builder                           = std::make_shared<RFBandListBuilder>();
-    telux::common::ErrorCode errCode       = telux::common::ErrorCode::UNKNOWN;
-    std::shared_ptr<IRFBandList> prefBands = builder->addGsmRFBands(gsmBands)
-                                                 .addWcdmaRFBands(wcdmaBands)
-                                                 .addLteRFBands(lteBands)
-                                                 .addNrRFBands(NrType::SA, saBands)
-                                                 .addNrRFBands(NrType::NSA, nsaBands)
-                                                 .build(errCode);
-
-    LOG(DEBUG, __FUNCTION__, " ServiceDomainPreference is  ", static_cast<int>(domain));
 
     std::vector<std::weak_ptr<IServingSystemListener>> applisteners;
     if (listenerMgr_) {
         listenerMgr_->getAvailableListeners(applisteners);
-        // Notify respective events
-        for (auto &wp : applisteners) {
-            if (auto sp = wp.lock()) {
-                sp->onRatPreferenceChanged(preference);
+        int phoneId = event.phone_id();
+        if (phoneId_ != phoneId) {
+            LOG(DEBUG, __FUNCTION__, " Ignoring events for subcription ", phoneId);
+            return;
+        }
+
+        if (event.rat_pref_types_size() > 0) {
+            RatPreference preference;
+            for (auto &r : event.rat_pref_types()) {
+                preference.set(static_cast<int>(r));
+            }
+            if (preference[static_cast<int>(telux::tel::RatPrefType::PREF_NR5G)]) {
+                preference.reset(static_cast<int>(telux::tel::RatPrefType::PREF_NR5G_NSA));
+                preference.reset(static_cast<int>(telux::tel::RatPrefType::PREF_NR5G_SA));
+            }
+            for (auto &wp : applisteners) {
+                if (auto sp = wp.lock()) {
+                    sp->onRatPreferenceChanged(preference);
+                }
+            }
+        }
+        if (event.has_service_domain_pref()) {
+            ServiceDomainPreference domain
+                = static_cast<telux::tel::ServiceDomainPreference>(event.service_domain_pref());
+            LOG(DEBUG, __FUNCTION__, " ServiceDomainPreference is  ", static_cast<int>(domain));
+            for (auto &wp : applisteners) {
+                if (auto sp = wp.lock()) {
+                    sp->onServiceDomainPreferenceChanged(domain);
+                }
+            }
+        }
+        if (event.has_voice_domain_pref()) {
+            VoiceDomainPreference voiceDomainPref
+                = static_cast<telux::tel::VoiceDomainPreference>(event.voice_domain_pref());
+            LOG(DEBUG, __FUNCTION__, " VoiceDomainPreference is  ",
+                static_cast<int>(voiceDomainPref));
+            for (auto &wp : applisteners) {
+                if (auto sp = wp.lock()) {
+                    sp->onVoiceDomainPreferenceChanged(voiceDomainPref);
+                }
             }
         }
 
-        for (auto &wp : applisteners) {
-            if (auto sp = wp.lock()) {
-                sp->onServiceDomainPreferenceChanged(domain);
+        std::vector<GsmRFBand> gsmBands     = {};
+        std::vector<WcdmaRFBand> wcdmaBands = {};
+        std::vector<LteRFBand> lteBands     = {};
+        std::vector<NrRFBand> saBands       = {};
+        std::vector<NrRFBand> nsaBands      = {};
+        bool gsm_wcdma_report               = false;
+        bool lte_report                     = false;
+        bool sa_report                      = false;
+        bool nsa_report                     = false;
+        for (auto &g : event.gsm_pref_bands()) {
+            gsmBands.push_back(static_cast<GsmRFBand>(g));
+            gsm_wcdma_report = true;
+        }
+        for (auto &w : event.wcdma_pref_bands()) {
+            wcdmaBands.push_back(static_cast<WcdmaRFBand>(w));
+            gsm_wcdma_report = true;
+        }
+        for (auto &l : event.lte_pref_bands()) {
+            lteBands.push_back(static_cast<LteRFBand>(l));
+            lte_report = true;
+        }
+        for (auto &n : event.nsa_pref_bands()) {
+            nsaBands.push_back(static_cast<NrRFBand>(n));
+            nsa_report = true;
+        }
+        for (auto &s : event.sa_pref_bands()) {
+            saBands.push_back(static_cast<NrRFBand>(s));
+            sa_report = true;
+        }
+        if (gsm_wcdma_report || lte_report || sa_report || nsa_report) {
+            auto builder                           = std::make_shared<RFBandListBuilder>();
+            telux::common::ErrorCode errCode       = telux::common::ErrorCode::UNKNOWN;
+            std::shared_ptr<IRFBandList> prefBands = builder->addGsmRFBands(gsmBands)
+                                                         .addWcdmaRFBands(wcdmaBands)
+                                                         .addLteRFBands(lteBands)
+                                                         .addNrRFBands(NrType::SA, saBands)
+                                                         .addNrRFBands(NrType::NSA, nsaBands)
+                                                         .build(errCode);
+
+            for (auto &wp : applisteners) {
+                if (auto sp = wp.lock()) {
+                    sp->onRFBandPreferenceChanged(prefBands);
+                }
             }
         }
 
-        for (auto &wp : applisteners) {
-            if (auto sp = wp.lock()) {
-                sp->onRFBandPreferenceChanged(prefBands);
-            }
-        }
     } else {
         LOG(ERROR, __FUNCTION__, " listenerMgr is null");
     }

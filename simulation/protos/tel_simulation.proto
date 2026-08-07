@@ -161,6 +161,14 @@
          returns (RequestServiceDomainPreferenceReply) {}
      rpc SetServiceDomainPreference (SetServiceDomainPreferenceRequest)
          returns (SetServiceDomainPreferenceReply) {}
+     rpc GetVoiceDomainPreference (GetVoiceDomainPreferenceRequest)
+         returns (GetVoiceDomainPreferenceReply) {}
+     rpc SetVoiceDomainPreference (SetVoiceDomainPreferenceRequest)
+         returns (SetVoiceDomainPreferenceReply) {}
+     rpc GetDrxConfig (GetDrxConfigRequest)
+         returns (GetDrxConfigReply) {}
+     rpc SetDrxConfig (SetDrxConfigRequest)
+         returns (SetDrxConfigReply) {}
      rpc GetSystemInfo (GetSystemInfoRequest) returns (GetSystemInfoReply) {}
      rpc GetDcStatus (GetDcStatusRequest) returns (GetDcStatusReply) {}
      rpc RequestNetworkTime (RequestNetworkTimeRequest) returns (RequestNetworkTimeReply) {}
@@ -312,12 +320,13 @@ message GetCardStateRequest {
  message SystemSelectionPreferenceEvent {
      int32 phone_id = 1;
      repeated RatPrefType rat_pref_types = 2;
-     ServiceDomainPreference.Pref service_domain_pref = 3;
+     optional ServiceDomainPreference.Pref service_domain_pref = 3;
      repeated GsmRFBand gsm_pref_bands = 4;
      repeated WcdmaRFBand wcdma_pref_bands = 5;
      repeated LteRFBand lte_pref_bands = 6;
      repeated NrRFBand nsa_pref_bands = 7;
      repeated NrRFBand sa_pref_bands = 8;
+     optional VoiceDomainPreference.Pref voice_domain_pref = 9;
  }
 
  message SystemInfoEvent {
@@ -2066,6 +2075,61 @@ enum NrRFBand {
      commonStub.Status status = 2;
      int32 delay = 3;
      bool is_callback = 4;
+ }
+
+ message VoiceDomainPreference {
+     enum Pref {
+         CS_ONLY = 0;
+         PS_ONLY = 1;
+         CS_PREF = 2;
+         PS_PREF = 3;
+     }
+ }
+
+ message GetVoiceDomainPreferenceRequest {
+     int32 phone_id = 1;
+ }
+
+ message GetVoiceDomainPreferenceReply {
+     commonStub.ErrorCode error = 1;
+     VoiceDomainPreference.Pref voice_domain_pref = 2;
+ }
+
+ message SetVoiceDomainPreferenceRequest {
+     int32 phone_id = 1;
+     VoiceDomainPreference.Pref voice_domain_pref = 2;
+ }
+
+ message SetVoiceDomainPreferenceReply {
+     commonStub.ErrorCode error = 1;
+ }
+
+ message DrxConfig {
+     enum Cycle {
+         UNKNOWN = 0;
+         CYCLE_320_MS = 6;
+         CYCLE_640_MS = 7;
+         CYCLE_1280_MS = 8;
+         CYCLE_2560_MS = 9;
+     }
+ }
+
+ message GetDrxConfigRequest {
+     int32 phone_id = 1;
+ }
+
+ message GetDrxConfigReply {
+     commonStub.ErrorCode error = 1;
+     DrxConfig.Cycle drx_config = 2;
+ }
+
+ message SetDrxConfigRequest {
+     int32 phone_id = 1;
+     DrxConfig.Cycle drx_config = 2;
+ }
+
+ message SetDrxConfigReply {
+     commonStub.ErrorCode error = 1;
  }
 
  message ServiceDomainInfo {

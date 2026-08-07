@@ -24,6 +24,22 @@
             "status" : "SUCCESS",
             "error" : "SUCCESS"
         },
+        "setVoiceDomainPreference" :
+        {
+            "error" : "SUCCESS"
+        },
+        "getVoiceDomainPreference" :
+        {
+            "error" : "SUCCESS"
+        },
+        "setDrxConfig" :
+        {
+            "error" : "SUCCESS"
+        },
+        "getDrxConfig" :
+        {
+            "error" : "SUCCESS"
+        },
         "getSystemInfo" :
         {
             "status" : "SUCCESS"

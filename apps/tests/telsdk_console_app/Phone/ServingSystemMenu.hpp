@@ -62,6 +62,10 @@ class ServingSystemMenu : public ConsoleApp {
     void setRatModePreference(std::vector<std::string> userInput);
     void getServiceDomainPreference(std::vector<std::string> userInput);
     void setServiceDomainPreference(std::vector<std::string> userInput);
+    void getVoiceDomainPreference(std::vector<std::string> userInput);
+    void setVoiceDomainPreference(std::vector<std::string> userInput);
+    void getDrxConfig(std::vector<std::string> userInput);
+    void setDrxConfig(std::vector<std::string> userInput);
     void selectSimSlot(std::vector<std::string> userInput);
     void getDualConnectivityStatus(std::vector<std::string> userInput);
     void getSystemInfo(std::vector<std::string> userInput);

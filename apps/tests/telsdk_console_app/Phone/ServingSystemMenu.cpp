@@ -46,6 +46,7 @@
 
 #include "MyServingSystemHandler.hpp"
 #include "ServingSystemMenu.hpp"
+#include "Utils.hpp"
 
 #define INVALID -1
 #define GSM_RAT 1
@@ -206,14 +207,32 @@ bool ServingSystemMenu::init() {
         std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("21", "Select_sim_slot", {},
                 std::bind(&ServingSystemMenu::selectSimSlot, this, std::placeholders::_1)));
-        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListNetworkSubMenu = {
-            getRatModePreferenceCommand, setRatModePreferenceCommand,
-            getServiceDomainPreferenceCommand, setServiceDomainPreferenceCommand,
-            getSystemInfoCommand, getDcStatusCommand, reqNetworkTimeCommand, reqRFBandInfoCommand,
-            getRejectInfoCommand, getCallBarringInfoCommand, getSmsCapabilityCommand,
-            getLteCsCapabilityCommand, requestRFBandCapabilityCommand, requestRFBandPrefCommand,
-            setRFBandPrefCommand, reqSib16NetworkTimeCommand, reqNr5gRrcUtcTimeCommand,
-            setHplmnSearchTimeCommand, getHplmnSearchTimeCommand, reqRrcStateCommand};
+        std::shared_ptr<ConsoleAppCommand> getVoiceDomainPreferenceCommand
+            = std::make_shared<ConsoleAppCommand>(
+                ConsoleAppCommand("22", "Get_voice_domain_preference", {},
+                    std::bind(&ServingSystemMenu::getVoiceDomainPreference, this,
+                        std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setVoiceDomainPreferenceCommand
+            = std::make_shared<ConsoleAppCommand>(
+                ConsoleAppCommand("23", "Set_voice_domain_preference", {},
+                    std::bind(&ServingSystemMenu::setVoiceDomainPreference, this,
+                        std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> getDrxConfigCommand
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("24", "Get_DRX_config", {},
+                std::bind(&ServingSystemMenu::getDrxConfig, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setDrxConfigCommand
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("25", "Set_DRX_config", {},
+                std::bind(&ServingSystemMenu::setDrxConfig, this, std::placeholders::_1)));
+        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListNetworkSubMenu
+            = {getRatModePreferenceCommand, setRatModePreferenceCommand,
+                getServiceDomainPreferenceCommand, setServiceDomainPreferenceCommand,
+                getSystemInfoCommand, getDcStatusCommand, reqNetworkTimeCommand,
+                reqRFBandInfoCommand, getRejectInfoCommand, getCallBarringInfoCommand,
+                getSmsCapabilityCommand, getLteCsCapabilityCommand, requestRFBandCapabilityCommand,
+                requestRFBandPrefCommand, setRFBandPrefCommand, reqSib16NetworkTimeCommand,
+                reqNr5gRrcUtcTimeCommand, setHplmnSearchTimeCommand, getHplmnSearchTimeCommand,
+                reqRrcStateCommand, getVoiceDomainPreferenceCommand,
+                setVoiceDomainPreferenceCommand, getDrxConfigCommand, setDrxConfigCommand};
 
         if (servingSystemMgrs_.size() > 1) {
             commandsListNetworkSubMenu.emplace_back(selectSimSlotCommand);
@@ -322,6 +341,95 @@ void ServingSystemMenu::setServiceDomainPreference(std::vector<std::string> user
             std::cout << "\nSet service domain preference request sent successfully\n";
         } else {
             std::cout << "\nSet service domain preference request failed \n";
+        }
+    }
+}
+
+void ServingSystemMenu::getVoiceDomainPreference(std::vector<std::string> userInput) {
+    auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+    if (servingSystemMgr) {
+        telux::tel::VoiceDomainPreference preference = telux::tel::VoiceDomainPreference::UNKNOWN;
+        auto error = servingSystemMgr->getVoiceDomainPreference(preference);
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "\n getVoiceDomainPreference is successful.\n Voice domain is "
+                      << MyServingSystemHelper::getVoiceDomainPref(preference) << std::endl;
+        } else {
+            std::cout
+                << "\n getVoiceDomainPreference failed, ErrorCode: " << static_cast<int>(error)
+                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        }
+    }
+}
+
+void ServingSystemMenu::setVoiceDomainPreference(std::vector<std::string> userInput) {
+    auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+    if (servingSystemMgr) {
+        std::string voiceDomain;
+        char delimiter = '\n';
+        int opt        = -1;
+        std::cout << "Enter voice domain preference: (0 - CS_ONLY, 1 - PS_ONLY, 2 - CS_PREF, "
+                     "3 - PS_PREF): ";
+        std::getline(std::cin, voiceDomain, delimiter);
+        if (!voiceDomain.empty()) {
+            try {
+                opt = std::stoi(voiceDomain);
+            } catch (const std::exception &e) {
+                std::cout << "ERROR: invalid input " << opt << std::endl;
+            }
+        } else {
+            std::cout << "Voice domain should not be empty";
+        }
+        telux::tel::VoiceDomainPreference voicePref
+            = static_cast<telux::tel::VoiceDomainPreference>(opt);
+        auto error = servingSystemMgr->setVoiceDomainPreference(voicePref);
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "\n setVoiceDomainPreference is successful \n" << std::endl;
+        } else {
+            std::cout
+                << "\n setVoiceDomainPreference failed, ErrorCode: " << static_cast<int>(error)
+                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        }
+    }
+}
+
+void ServingSystemMenu::getDrxConfig(std::vector<std::string> userInput) {
+    auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+    if (servingSystemMgr) {
+        telux::tel::DrxConfig config = telux::tel::DrxConfig::UNKNOWN;
+        auto error                   = servingSystemMgr->getDrxConfig(config);
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "\n getDrxConfig is successful.\n DRX cycle is "
+                      << MyServingSystemHelper::getDrxConfig(config) << std::endl;
+        } else {
+            std::cout << "\n getDrxConfig failed, ErrorCode: " << static_cast<int>(error)
+                      << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        }
+    }
+}
+
+void ServingSystemMenu::setDrxConfig(std::vector<std::string> userInput) {
+    auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+    if (servingSystemMgr) {
+        std::string drxCycle;
+        int opt = -1;
+        std::cout << "Enter DRX cycle: (6 - 320ms, 7 - 640ms, 8 - 1280ms, 9 - 2560ms): ";
+        std::cin >> drxCycle;
+        if (!drxCycle.empty()) {
+            try {
+                opt = std::stoi(drxCycle);
+            } catch (const std::exception &e) {
+                std::cout << "ERROR: invalid input " << opt << std::endl;
+            }
+        } else {
+            std::cout << "DRX cycle should not be empty";
+        }
+        telux::tel::DrxConfig config = static_cast<telux::tel::DrxConfig>(opt);
+        auto error                   = servingSystemMgr->setDrxConfig(config);
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "\n setDrxConfig is successful \n" << std::endl;
+        } else {
+            std::cout << "\n setDrxConfig failed, ErrorCode: " << static_cast<int>(error)
+                      << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
         }
     }
 }

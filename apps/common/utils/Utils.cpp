@@ -28,9 +28,8 @@
  */
 
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2022-2023, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -340,7 +339,10 @@ std::map<telux::common::ErrorCode, std::string> errorCodeToStringMap_ = {
    {telux::common::ErrorCode::DS_PROFILE_3GPP2_ERR_INVALID_IDENT_FOR_PROFILE,
     "DS_PROFILE_3GPP2_ERR_INVALID_IDENT_FOR_PROFILE"},
    {telux::common::ErrorCode::DS_PROFILE_3GPP2_ERR_OUT_OF_PROFILE,
-    "DS_PROFILE_3GPP2_ERR_OUT_OF_PROFILE"}};
+    "DS_PROFILE_3GPP2_ERR_OUT_OF_PROFILE"},
+   {telux::common::ErrorCode::SUBSYSTEM_UNAVAILABLE, "SUBSYSTEM_UNAVAILABLE"},
+   {telux::common::ErrorCode::OPERATION_TIMEOUT, "OPERATION_TIMEOUT"},
+   {telux::common::ErrorCode::ROLLBACK_FAILED, "ROLLBACK_FAILED"}};
 
 /**
  * Error descripton

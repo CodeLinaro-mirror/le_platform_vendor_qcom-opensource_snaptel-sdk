@@ -342,7 +342,10 @@ std::map<telux::common::ErrorCode, std::string> errorCodeToStringMap_ = {
     {telux::common::ErrorCode::DS_PROFILE_3GPP2_ERR_INVALID_IDENT_FOR_PROFILE,
         "DS_PROFILE_3GPP2_ERR_INVALID_IDENT_FOR_PROFILE"},
     {telux::common::ErrorCode::DS_PROFILE_3GPP2_ERR_OUT_OF_PROFILE,
-        "DS_PROFILE_3GPP2_ERR_OUT_OF_PROFILE"}};
+        "DS_PROFILE_3GPP2_ERR_OUT_OF_PROFILE"},
+    {telux::common::ErrorCode::SUBSYSTEM_UNAVAILABLE, "SUBSYSTEM_UNAVAILABLE"},
+    {telux::common::ErrorCode::OPERATION_TIMEOUT, "OPERATION_TIMEOUT"},
+    {telux::common::ErrorCode::ROLLBACK_FAILED, "ROLLBACK_FAILED"}};
 
 /**
  * Error descripton

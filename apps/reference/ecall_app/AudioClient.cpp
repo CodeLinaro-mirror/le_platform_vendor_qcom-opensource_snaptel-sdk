@@ -132,24 +132,38 @@ void AudioClient::onServiceStatusChange(ServiceStatus status) {
     }
 }
 
-// Callback which is invoked when Audio Manager initialization is processed(success or failure)
-static void initCb(telux::common::ServiceStatus status) {
-    if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << CLIENT_NAME << " Audio Manager is initialized successfully " << std::endl;
-    } else if (status == telux::common::ServiceStatus::SERVICE_FAILED) {
-        std::cout << CLIENT_NAME << " Audio Manager initialization failed" << std::endl;
-    }
-}
-
 // Initialize the audio subsystem
 telux::common::Status AudioClient::init() {
     // Get the AudioFactory and AudioManager instances.
     auto &audioFactory = AudioFactory::getInstance();
-    audioMgr_          = audioFactory.getAudioManager(&initCb);
-    if (audioMgr_ == nullptr) {
+    std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
+    audioMgr_ = audioFactory.getAudioManager([&prom](telux::common::ServiceStatus status) {
+        if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << CLIENT_NAME << " Audio Manager is initialized successfully " << std::endl;
+            prom.set_value(telux::common::ServiceStatus::SERVICE_AVAILABLE);
+        } else {
+            std::cout << CLIENT_NAME << " Audio Manager initialization failed" << std::endl;
+            prom.set_value(telux::common::ServiceStatus::SERVICE_FAILED);
+        }
+    });
+    if(audioMgr_ == nullptr) {
         std::cout << CLIENT_NAME << "*** ERROR - Failed to get Audio Manager instance" << std::endl;
         return telux::common::Status::FAILED;
     }
+
+    //  Check if audio subsystem is ready
+    //  If audio subsystem is not ready, wait for it to be ready
+    ServiceStatus managerStatus = audioMgr_->getServiceStatus();
+    if (managerStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << CLIENT_NAME << " Audio subsystem is not ready, Please wait ..." << std::endl;
+    }
+
+    managerStatus = prom.get_future().get();
+    if (managerStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << CLIENT_NAME << " Unable to initialise Audio subsystem " << std::endl;
+        return telux::common::Status::FAILED;
+    }
+
     auto status = audioMgr_->registerListener(shared_from_this());
     if (status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to register Audio listener" << std::endl;

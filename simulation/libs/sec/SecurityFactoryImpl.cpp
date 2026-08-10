@@ -81,41 +81,9 @@ std::shared_ptr<ICryptoManager> SecurityFactoryImpl::getCryptoManager(
 std::shared_ptr<ICryptoAcceleratorManager> SecurityFactoryImpl::getCryptoAcceleratorManager(
     telux::common::ErrorCode &ec, Mode mode, std::weak_ptr<ICryptoAcceleratorListener> caListener) {
 
-    std::shared_ptr<CryptoAcceleratorManagerImpl> cryptAccelMgr;
-
-    std::lock_guard<std::mutex> lock(secFactoryGuard_);
-
-    cryptAccelMgr = cryptAccelMgr_.lock();
-
-    if (cryptAccelMgr) {
-        if ((cryptAccelMode_ != mode) || (caListener_.lock() != caListener.lock())) {
-            LOG(ERROR, __FUNCTION__, " mode/listener mismatch");
-            ec = telux::common::ErrorCode::INVALID_ARGUMENTS;
-            return nullptr;
-        }
-        ec = telux::common::ErrorCode::SUCCESS;
-        return cryptAccelMgr;
-    }
-
-    try {
-        cryptAccelMgr = std::make_shared<CryptoAcceleratorManagerImpl>();
-    } catch (const std::exception &e) {
-        ec = telux::common::ErrorCode::NO_MEMORY;
-        LOG(ERROR, __FUNCTION__, " can't create CryptoAcceleratorManagerImpl");
-        return nullptr;
-    }
-
-    ec = cryptAccelMgr->init(mode, caListener);
-    if (ec != telux::common::ErrorCode::SUCCESS) {
-        return nullptr;
-    }
-
-    /* Save reference and mode locally */
-    cryptAccelMgr_  = cryptAccelMgr;
-    cryptAccelMode_ = mode;
-    caListener_     = caListener;
-
-    return cryptAccelMgr;
+    LOG(WARNING, __FUNCTION__, " CryptoAcceleratorManager is not supported");
+    ec = telux::common::ErrorCode::NOT_SUPPORTED;
+    return nullptr;
 }
 
 /**

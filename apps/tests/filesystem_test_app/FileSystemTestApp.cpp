@@ -1,7 +1,5 @@
 /*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- * Copyright (c) 2021, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -123,10 +121,20 @@ void FileSystemTestApp::consoleinit() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
             "7", "Start_AbSync", {}, std::bind(&FileSystemCommandMgr::startAbSync, myFsCmdMgr_)));
 
+    std::shared_ptr<ConsoleAppCommand> registerListenerWithMaskCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8",
+            "Register_Listener_With_Mask", {},
+            std::bind(&FileSystemCommandMgr::registerListenerWithMask, myFsCmdMgr_)));
+
+    std::shared_ptr<ConsoleAppCommand> deregisterListenerWithMaskCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("9",
+            "Deregister_Listener_With_Mask", {},
+            std::bind(&FileSystemCommandMgr::deregisterListenerWithMask, myFsCmdMgr_)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> fileSystemTestAppCommands
         = {startEfsBackupCommand, prepareForEcallCommand, eCallCompletedCommand,
             prepareForOtaStartCommand, otaCompletedCommand, prepareForOtaResumeCommand,
-            startAbSyncCommand};
+            startAbSyncCommand, registerListenerWithMaskCommand, deregisterListenerWithMaskCommand};
 
     ConsoleApp::addCommands(fileSystemTestAppCommands);
     ConsoleApp::displayMenu();

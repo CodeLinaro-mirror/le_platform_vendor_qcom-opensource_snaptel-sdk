@@ -1,35 +1,6 @@
 /*
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -107,6 +78,68 @@ void FileSystemCommandMgr::deregisterFromUpdates() {
         std::cout << APP_NAME
                   << " *** ERROR - Failed to deregister file system listener: " << std::endl;
         Utils::printStatus(status);
+    }
+}
+
+void FileSystemCommandMgr::registerListenerWithMask() {
+    if (!fsMgr_) {
+        std::cout << APP_NAME << "*** ERROR - Invalid instance of filesystem manager !"
+                  << std::endl;
+        return;
+    }
+    int choice = -1;
+    do {
+        FileSystemCommandMgr::getInput(
+            "Select indication(s) to register (1-Restore Only/2-Backup Only/3-All): ", choice);
+        if ((choice < 1) || (choice > 3)) {
+            std::cout << " Invalid input:  " << choice << ", please re-enter" << std::endl;
+        }
+    } while ((choice < 1) || (choice > 3));
+
+    FsIndicationMask mask = ALL_INDICATIONS;
+    if (choice == 1) {
+        mask = FsIndicationMask().set(EfsRestoreIndication);
+    } else if (choice == 2) {
+        mask = FsIndicationMask().set(EfsBackupIndication);
+    }
+
+    telux::common::Status status = fsMgr_->registerListener(fsListener_, mask);
+    std::cout << APP_NAME << " Register request -> ";
+    Utils::printStatus(status);
+    if ((status != telux::common::Status::SUCCESS) && (status != telux::common::Status::ALREADY)) {
+        std::cout << APP_NAME << " *** ERROR - Failed to register for File System events"
+                  << std::endl;
+    }
+}
+
+void FileSystemCommandMgr::deregisterListenerWithMask() {
+    if (!fsMgr_) {
+        std::cout << APP_NAME << "*** ERROR - Invalid instance of filesystem manager !"
+                  << std::endl;
+        return;
+    }
+    int choice = -1;
+    do {
+        FileSystemCommandMgr::getInput(
+            "Select indication(s) to deregister (1-Restore Only/2-Backup Only/3-All): ", choice);
+        if ((choice < 1) || (choice > 3)) {
+            std::cout << " Invalid input:  " << choice << ", please re-enter" << std::endl;
+        }
+    } while ((choice < 1) || (choice > 3));
+
+    FsIndicationMask mask = ALL_INDICATIONS;
+    if (choice == 1) {
+        mask = FsIndicationMask().set(EfsRestoreIndication);
+    } else if (choice == 2) {
+        mask = FsIndicationMask().set(EfsBackupIndication);
+    }
+
+    telux::common::Status status = fsMgr_->deregisterListener(fsListener_, mask);
+    std::cout << APP_NAME << " Deregister request -> ";
+    Utils::printStatus(status);
+    if ((status != telux::common::Status::SUCCESS) && (status != telux::common::Status::NOSUCH)) {
+        std::cout << APP_NAME << " *** ERROR - Failed to deregister file system listener"
+                  << std::endl;
     }
 }
 

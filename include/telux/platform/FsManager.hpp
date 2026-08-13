@@ -1,35 +1,6 @@
 /*
- *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -41,6 +12,7 @@
 #ifndef TELUX_PLATFORM_FSMANAGER_HPP
 #define TELUX_PLATFORM_FSMANAGER_HPP
 
+#include <cstdint>
 #include <memory>
 
 #include <telux/common/CommonDefines.hpp>
@@ -69,24 +41,51 @@ class IFsManager {
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
-     * Registers the listener for FileSystem Manager indications.
+     * Registers a listener for File System Manager indications.
      *
-     * @param [in] listener      - pointer to implemented listener.
+     * @param [in] listener      - Pointer to @ref IFsListener.
+     * @param [in] mask          - Bitmask specifying the indications to register, represented
+     *                             by @ref FsIndicationMask. Only indications defined in
+     *                             @ref FsIndicationType are controlled by this mask.
+     *                             Notifications exposed through @ref IFsListener that are not
+     *                             listed in @ref FsIndicationType (for example,
+     *                             OnFsOperationImminentEvent and service status notifications)
+     *                             are always registered by default.
+     *                             Specifying @ref ALL_INDICATIONS registers all indications
+     *                             defined in @ref FsIndicationType. Bits that do not correspond
+     *                             to a valid @ref FsIndicationType value are ignored.
+     *                             To remove indication registrations, use
+     *                             @ref deregisterListener.
      *
      * @returns status of the registration request.
      *
      */
-    virtual telux::common::Status registerListener(std::weak_ptr<IFsListener> listener) = 0;
+    virtual telux::common::Status registerListener(
+        std::weak_ptr<IFsListener> listener, FsIndicationMask mask = ALL_INDICATIONS) = 0;
 
     /**
-     * Deregisters the previously registered listener.
+     * Deregisters previously registered File System Manager indications.
      *
-     * @param [in] listener      - pointer to registered listener that needs to be removed.
+     * @param [in] listener      - Pointer to @ref IFsListener that needs to be removed.
+     * @param [in] mask          - Bitmask specifying the indications to deregister, represented
+     *                             by @ref FsIndicationMask. Only indications defined in
+     *                             @ref FsIndicationType are controlled by this mask.
+     *                             Notifications exposed through @ref IFsListener that are not
+     *                             listed in @ref FsIndicationType (for example,
+     *                             OnFsOperationImminentEvent and service status notifications)
+     *                             are deregistered only when @ref ALL_INDICATIONS is provided
+     *                             as input.
+     *                             Specifying @ref ALL_INDICATIONS deregisters all indications
+     *                             defined in @ref FsIndicationType. Bits that do not correspond
+     *                             to a valid @ref FsIndicationType value are ignored. Providing
+     *                             an empty mask is an invalid operation.
+     *                             To register again, use @ref registerListener.
      *
      * @returns status of the deregistration request.
      *
      */
-    virtual telux::common::Status deregisterListener(std::weak_ptr<IFsListener> listener) = 0;
+    virtual telux::common::Status deregisterListener(
+        std::weak_ptr<IFsListener> listener, FsIndicationMask mask = ALL_INDICATIONS) = 0;
 
     /**
      * Request to trigger an EFS backup. If the request is successful, the status of EFS backup

@@ -1128,3 +1128,8 @@ int MyCallListener::getCallsOnSlot(SlotId slotId) {
     }
     return numCalls;
 }
+
+void MyCallListener::onDtmfReceived(int phoneId, char dtmfTone) {
+    PRINT_NOTIFICATION << "DTMF tone received: '" << dtmfTone << "' on slot " << phoneId
+                       << std::endl;
+}

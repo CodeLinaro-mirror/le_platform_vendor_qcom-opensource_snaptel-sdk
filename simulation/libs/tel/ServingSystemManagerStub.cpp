@@ -978,6 +978,120 @@ telux::common::Status ServingSystemManagerStub::setRFBandPreferences(
     return status;
 }
 
+telux::common::ErrorCode ServingSystemManagerStub::getLteConnectedModeRsrpConfig(
+    LteConnectedModeConfig &config) {
+    LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+    ::telStub::RequestLteMl1ConnectedModeConfigRequest request;
+    ::telStub::RequestLteMl1ConnectedModeConfigReply response;
+    ClientContext context;
+    request.set_phone_id(phoneId_);
+
+    grpc::Status reqstatus = stub_->RequestLteMl1ConnectedModeConfig(&context, request, &response);
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    }
+    telux::common::ErrorCode errCode = static_cast<telux::common::ErrorCode>(response.error());
+    if (errCode != telux::common::ErrorCode::SUCCESS) {
+        return errCode;
+    }
+    config               = {};
+    config.callType      = static_cast<LteCallType>(response.config().call_type());
+    config.rsrqThreshold = response.config().rsrq_threshold();
+    config.rsrpOffset    = response.config().rsrp_offset();
+    return errCode;
+}
+
+telux::common::ErrorCode ServingSystemManagerStub::setLteConnectedModeRsrpConfig(
+    const LteConnectedModeConfig config) {
+    LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+    ::telStub::SetLteMl1ConnectedModeConfigRequest request;
+    ::telStub::SetLteMl1ConnectedModeConfigReply response;
+    ClientContext context;
+    request.set_phone_id(phoneId_);
+    request.mutable_config()->set_call_type(static_cast<int32_t>(config.callType));
+    request.mutable_config()->set_rsrq_threshold(config.rsrqThreshold);
+    request.mutable_config()->set_rsrp_offset(config.rsrpOffset);
+
+    grpc::Status reqstatus = stub_->SetLteMl1ConnectedModeConfig(&context, request, &response);
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    }
+    return static_cast<telux::common::ErrorCode>(response.error());
+}
+
+telux::common::ErrorCode ServingSystemManagerStub::getLteIdleModeRsrpConfig(
+    LteIdleModeConfig &config) {
+    LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+    ::telStub::RequestLteMl1IdleModeConfigRequest request;
+    ::telStub::RequestLteMl1IdleModeConfigReply response;
+    ClientContext context;
+    request.set_phone_id(phoneId_);
+
+    grpc::Status reqstatus = stub_->RequestLteMl1IdleModeConfig(&context, request, &response);
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    }
+    telux::common::ErrorCode errCode = static_cast<telux::common::ErrorCode>(response.error());
+    if (errCode != telux::common::ErrorCode::SUCCESS) {
+        return errCode;
+    }
+    config                 = {};
+    config.enabled         = response.config().enabled();
+    config.rsrqThreshold   = response.config().rsrq_threshold();
+    config.hysteresisDelta = response.config().hysteresis_delta();
+    config.rsrpOffset      = response.config().rsrp_offset();
+    int sampleIdx          = 0;
+    for (auto &s : response.config().num_samples()) {
+        if (sampleIdx >= static_cast<int>(config.numSamples.size())) {
+            break;
+        }
+        config.numSamples[sampleIdx++] = static_cast<uint8_t>(s);
+    }
+    return errCode;
+}
+
+telux::common::ErrorCode ServingSystemManagerStub::setLteIdleModeRsrpConfig(
+    const LteIdleModeConfig config) {
+    LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Service Status is UNAVAILABLE");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+    ::telStub::SetLteMl1IdleModeConfigRequest request;
+    ::telStub::SetLteMl1IdleModeConfigReply response;
+    ClientContext context;
+    request.set_phone_id(phoneId_);
+    request.mutable_config()->set_enabled(config.enabled);
+    request.mutable_config()->set_rsrq_threshold(config.rsrqThreshold);
+    request.mutable_config()->set_hysteresis_delta(config.hysteresisDelta);
+    request.mutable_config()->set_rsrp_offset(config.rsrpOffset);
+    for (auto &sample : config.numSamples) {
+        request.mutable_config()->add_num_samples(sample);
+    }
+
+    grpc::Status reqstatus = stub_->SetLteMl1IdleModeConfig(&context, request, &response);
+    if (!reqstatus.ok()) {
+        LOG(ERROR, __FUNCTION__, " Request failed ", reqstatus.error_message());
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    }
+    return static_cast<telux::common::ErrorCode>(response.error());
+}
+
 telux::common::Status ServingSystemManagerStub::requestRFBandCapability(
     RFBandCapabilityCallback callback) {
     LOG(DEBUG, __FUNCTION__);

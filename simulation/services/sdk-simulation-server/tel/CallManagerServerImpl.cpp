@@ -2489,6 +2489,70 @@ grpc::Status CallManagerServerImpl::getInProgressCalls(ServerContext *context,
     return grpc::Status::OK;
 }
 
+grpc::Status CallManagerServerImpl::SetNgEcallConfig(ServerContext *context,
+    const ::telStub::SetNgEcallConfigRequest *request,
+    telStub::SetNgEcallConfigResponse *response) {
+    LOG(DEBUG, __FUNCTION__);
+
+    telux::common::ErrorCode error;
+    telux::common::Status status;
+    int cbDelay;
+    int phoneId   = request->phone_id();
+    int isEnabled = request->is_enable();
+
+    Json::Value rootObj;
+    std::string jsonfilename               = "";
+    std::string jsonObjApiResponseFileName = "";
+    Json::Value jsonObjApiResponse;
+    std::string apiInput = "setNgEcallConfig";
+
+    getJsonForSystemData(phoneId, jsonfilename, rootObj);
+    getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
+    CommonUtils::getValues(jsonObjApiResponse, CALL_MANAGER, apiInput, status, error, cbDelay);
+
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! ");
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    rootObj[CALL_MANAGER]["ngEcallConfig"]["isEnable"] = isEnabled;
+    JsonParser::writeToJsonFile(rootObj, jsonfilename);
+    jsonObjSystemStateSlot_[phoneId] = rootObj;
+    response->set_error(static_cast<commonStub::ErrorCode>(error));
+    return grpc::Status::OK;
+}
+
+grpc::Status CallManagerServerImpl::GetNgEcallConfig(ServerContext *context,
+    const ::telStub::GetNgEcallConfigRequest *request,
+    telStub::GetNgEcallConfigResponse *response) {
+    LOG(DEBUG, __FUNCTION__);
+
+    telux::common::ErrorCode error;
+    telux::common::Status status;
+    std::string apiInput = "getNgEcallConfig";
+    int cbDelay;
+    int phoneId = request->phone_id();
+
+    Json::Value rootObj;
+    std::string jsonfilename               = "";
+    std::string jsonObjApiResponseFileName = "";
+    Json::Value jsonObjApiResponse;
+
+    getJsonForSystemData(phoneId, jsonfilename, rootObj);
+    getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
+    CommonUtils::getValues(jsonObjApiResponse, CALL_MANAGER, apiInput, status, error, cbDelay);
+
+    bool isEnabled = (rootObj[CALL_MANAGER]["ngEcallConfig"]["isEnable"].asInt() == 1);
+
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! ");
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+    response->set_is_enable(isEnabled);
+    response->set_error(static_cast<commonStub::ErrorCode>(error));
+    return grpc::Status::OK;
+}
+
 void CallManagerServerImpl::triggerCallInfoChange(int phoneId) {
     LOG(DEBUG, __FUNCTION__, "PhoneId ", phoneId);
     ::telStub::GetInProgressCallsData callStateChangeEvent;

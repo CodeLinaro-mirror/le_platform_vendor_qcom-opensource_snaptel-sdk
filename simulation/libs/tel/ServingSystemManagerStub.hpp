@@ -91,6 +91,11 @@ class ServingSystemManagerStub : public IServingSystemManager,
     telux::common::Status requestRFBandPreferences(RFBandPrefCallback callback) override;
     telux::common::Status setRFBandPreferences(std::shared_ptr<IRFBandList> prefList,
         common::ResponseCallback callback = nullptr) override;
+    telux::common::ErrorCode setLteConnectedModeRsrpConfig(
+        const LteConnectedModeConfig config) override;
+    telux::common::ErrorCode getLteConnectedModeRsrpConfig(LteConnectedModeConfig &config) override;
+    telux::common::ErrorCode setLteIdleModeRsrpConfig(const LteIdleModeConfig config) override;
+    telux::common::ErrorCode getLteIdleModeRsrpConfig(LteIdleModeConfig &config) override;
     telux::common::Status requestRFBandCapability(RFBandCapabilityCallback callback) override;
     telux::common::ErrorCode setHplmnSearchTime(uint32_t time) override;
     telux::common::ErrorCode getHplmnSearchTime(uint32_t &time) override;

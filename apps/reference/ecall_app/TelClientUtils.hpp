@@ -79,6 +79,11 @@ class TelClientUtils {
     static void printEcallConfig(EcallConfig config);
 
     /*
+     * Print whether NG eCall is disabled to stdout
+     */
+    static void printNgEcallConfig(bool enable);
+
+    /*
      * Prints the encoded optional additional data content.
      */
     static void printEncodedOptionalAdditionalDataContent(std::string encodedString);

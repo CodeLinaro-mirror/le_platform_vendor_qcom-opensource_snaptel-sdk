@@ -1047,6 +1047,10 @@ void TelClientUtils::printEcallConfig(EcallConfig config) {
     }
 }
 
+void TelClientUtils::printNgEcallConfig(bool enable) {
+    std::cout << CLIENT_NAME << " NG eCall: " << (enable ? "True" : "False") << std::endl;
+}
+
 void TelClientUtils::printEncodedOptionalAdditionalDataContent(std::string encodedString) {
     if (!encodedString.empty()) {
         std::cout << CLIENT_NAME << " Encoded optional additional data content: " << encodedString

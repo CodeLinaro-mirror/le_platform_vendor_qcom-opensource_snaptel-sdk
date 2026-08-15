@@ -1213,6 +1213,37 @@ telux::common::Status TelClient::restartECallHlapTimer(
     return telux::common::Status::SUCCESS;
 }
 
+telux::common::ErrorCode TelClient::setNgEcallConfig(int phoneId, bool isEnable) {
+    if (!callMgr_) {
+        std::cout << CLIENT_NAME << "Invalid Ecall Manager, Failed to set NG eCall configuration"
+                  << std::endl;
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+    auto errCode = callMgr_->setNgEcallConfig(phoneId, isEnable);
+    if (errCode != telux::common::ErrorCode::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to set NG eCall configuration" << std::endl;
+        return errCode;
+    }
+    std::cout << CLIENT_NAME << "Successfully set NG eCall configuration" << std::endl;
+    return errCode;
+}
+
+telux::common::ErrorCode TelClient::getNgEcallConfig(int phoneId) {
+    if (!callMgr_) {
+        std::cout << CLIENT_NAME << "Invalid Ecall Manager, Failed to get NG eCall configuration"
+                  << std::endl;
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+    bool isEnable = false;
+    auto errCode  = callMgr_->getNgEcallConfig(phoneId, isEnable);
+    if (errCode != telux::common::ErrorCode::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to get NG eCall configuration" << std::endl;
+        return errCode;
+    }
+    TelClientUtils::printNgEcallConfig(isEnable);
+    return errCode;
+}
+
 telux::common::Status TelClient::getEncodedOptionalAdditionalDataContent(
     ECallOptionalEuroNcapData optionalEuroNcapData, std::vector<uint8_t> &data) {
     if (!callMgr_) {

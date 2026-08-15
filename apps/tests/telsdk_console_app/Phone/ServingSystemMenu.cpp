@@ -241,9 +241,30 @@ bool ServingSystemMenu::init() {
                 ConsoleAppCommand("28", "Set_SystemInfo_Notification_Filter", {},
                     std::bind(&ServingSystemMenu::setSystemInfoNotificationFilter, this,
                         std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> getLteConnectedModeRsrpConfigCommand
+            = std::make_shared<ConsoleAppCommand>(
+                ConsoleAppCommand("29", "Get_LTE_Connected_Mode_RSRP_Config", {},
+                    std::bind(&ServingSystemMenu::getLteConnectedModeRsrpConfig, this,
+                        std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setLteConnectedModeRsrpConfigCommand
+            = std::make_shared<ConsoleAppCommand>(
+                ConsoleAppCommand("30", "Set_LTE_Connected_Mode_RSRP_Config", {},
+                    std::bind(&ServingSystemMenu::setLteConnectedModeRsrpConfig, this,
+                        std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> getLteIdleModeRsrpConfigCommand
+            = std::make_shared<ConsoleAppCommand>(
+                ConsoleAppCommand("31", "Get_LTE_Idle_Mode_RSRP_Config", {},
+                    std::bind(&ServingSystemMenu::getLteIdleModeRsrpConfig, this,
+                        std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setLteIdleModeRsrpConfigCommand
+            = std::make_shared<ConsoleAppCommand>(
+                ConsoleAppCommand("32", "Set_LTE_Idle_Mode_RSRP_Config", {},
+                    std::bind(&ServingSystemMenu::setLteIdleModeRsrpConfig, this,
+                        std::placeholders::_1)));
         std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("29", "Select_sim_slot", {},
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("33", "Select_sim_slot", {},
                 std::bind(&ServingSystemMenu::selectSimSlot, this, std::placeholders::_1)));
+
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListNetworkSubMenu = {
             getRatModePreferenceCommand, setRatModePreferenceCommand,
             getServiceDomainPreferenceCommand, setServiceDomainPreferenceCommand,
@@ -254,7 +275,9 @@ bool ServingSystemMenu::init() {
             setHplmnSearchTimeCommand, getHplmnSearchTimeCommand, reqRrcStateCommand,
             getVoiceDomainPreferenceCommand, setVoiceDomainPreferenceCommand, getDrxConfigCommand,
             setDrxConfigCommand, registerListenerCommand, deRegisterListenerCommand,
-            getSystemInfoNotificationFilterCommand, setSystemInfoNotificationFilterCommand};
+            getSystemInfoNotificationFilterCommand, setSystemInfoNotificationFilterCommand,
+            getLteConnectedModeRsrpConfigCommand, setLteConnectedModeRsrpConfigCommand,
+            getLteIdleModeRsrpConfigCommand, setLteIdleModeRsrpConfigCommand};
 
         if (servingSystemMgrs_.size() > 1) {
             commandsListNetworkSubMenu.emplace_back(selectSimSlotCommand);
@@ -843,6 +866,166 @@ void ServingSystemMenu::setRFBandPref(std::vector<std::string> userInput) {
         } else {
             std::cout << "\nBuild RF band preferences failed \n";
         }
+    }
+}
+
+void ServingSystemMenu::getLteConnectedModeRsrpConfig(std::vector<std::string> userInput) {
+    auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+    if (servingSystemMgr) {
+        telux::tel::LteConnectedModeConfig config = {};
+        auto ret = servingSystemMgr->getLteConnectedModeRsrpConfig(config);
+        if (ret == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "\n getLteConnectedModeRsrpConfig is successful.\n"
+                      << " callType: " << static_cast<int>(config.callType)
+                      << ", rsrqThreshold: " << config.rsrqThreshold
+                      << ", rsrpOffset: " << config.rsrpOffset << std::endl;
+        } else {
+            std::cout << "\nGet LTE connected-mode RSRP config failed \n";
+        }
+    } else {
+        std::cout << "ERROR - ServingSystemManger is null \n";
+    }
+}
+
+void ServingSystemMenu::setLteConnectedModeRsrpConfig(std::vector<std::string> userInput) {
+    auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+    if (servingSystemMgr) {
+        std::string tempStr                       = "";
+        char delimiter                            = '\n';
+        telux::tel::LteConnectedModeConfig config = {};
+
+        std::cout << "Enter RSRP event offset type "
+                     "(0-NONE/1-ALL_LTE_CALL/2-VOLTE_CALL): ";
+        std::getline(std::cin, tempStr, delimiter);
+        try {
+            config.callType = static_cast<telux::tel::LteCallType>(std::stoi(tempStr));
+        } catch (const std::exception &e) {
+            std::cout << "ERROR::Invalid input, please enter a numerical value \n";
+            return;
+        }
+
+        std::cout << "Enter RSRQ threshold (dB): ";
+        std::getline(std::cin, tempStr, delimiter);
+        try {
+            config.rsrqThreshold = std::stoi(tempStr);
+        } catch (const std::exception &e) {
+            std::cout << "ERROR::Invalid input, please enter a numerical value \n";
+            return;
+        }
+
+        std::cout << "Enter RSRP offset value (dB): ";
+        std::getline(std::cin, tempStr, delimiter);
+        try {
+            config.rsrpOffset = std::stoi(tempStr);
+        } catch (const std::exception &e) {
+            std::cout << "ERROR::Invalid input, please enter a numerical value \n";
+            return;
+        }
+
+        auto ret = servingSystemMgr->setLteConnectedModeRsrpConfig(config);
+        if (ret == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "\nSet LTE connected-mode RSRP config is successful\n";
+        } else {
+            std::cout << "\nSet LTE connected-mode RSRP config failed \n";
+        }
+    } else {
+        std::cout << "ERROR - ServingSystemManger is null \n";
+    }
+}
+
+void ServingSystemMenu::getLteIdleModeRsrpConfig(std::vector<std::string> userInput) {
+    auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+    if (servingSystemMgr) {
+        telux::tel::LteIdleModeConfig config = {};
+        auto ret                             = servingSystemMgr->getLteIdleModeRsrpConfig(config);
+        if (ret == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "\n getLteIdleModeRsrpConfig is successful.\n"
+                      << " enabled: " << config.enabled
+                      << ", rsrqThreshold: " << static_cast<int>(config.rsrqThreshold)
+                      << ", hysteresisDelta: " << static_cast<int>(config.hysteresisDelta)
+                      << ", rsrpOffset: " << static_cast<int>(config.rsrpOffset)
+                      << ", numSamples: [";
+            for (auto &s : config.numSamples) {
+                std::cout << static_cast<int>(s) << " ";
+            }
+            std::cout << "]" << std::endl;
+        } else {
+            std::cout << "\nGet LTE idle-mode RSRP config failed \n";
+        }
+    } else {
+        std::cout << "ERROR - ServingSystemManger is null \n";
+    }
+}
+
+void ServingSystemMenu::setLteIdleModeRsrpConfig(std::vector<std::string> userInput) {
+    auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+    if (servingSystemMgr) {
+        std::string tempStr                  = "";
+        char delimiter                       = '\n';
+        telux::tel::LteIdleModeConfig config = {};
+
+        std::cout << "Enable idle-mode RSRP offset optimization? (1-True/0-False): ";
+        std::getline(std::cin, tempStr, delimiter);
+        try {
+            config.enabled = static_cast<bool>(std::stoi(tempStr));
+        } catch (const std::exception &e) {
+            std::cout << "ERROR::Invalid input, please enter a numerical value \n";
+            return;
+        }
+
+        std::cout << "Enter RSRQ threshold (dB): ";
+        std::getline(std::cin, tempStr, delimiter);
+        try {
+            config.rsrqThreshold = static_cast<int8_t>(std::stoi(tempStr));
+        } catch (const std::exception &e) {
+            std::cout << "ERROR::Invalid input, please enter a numerical value \n";
+            return;
+        }
+
+        std::cout << "Enter hysteresis delta (dB): ";
+        std::getline(std::cin, tempStr, delimiter);
+        try {
+            config.hysteresisDelta = static_cast<uint8_t>(std::stoi(tempStr));
+        } catch (const std::exception &e) {
+            std::cout << "ERROR::Invalid input, please enter a numerical value \n";
+            return;
+        }
+
+        std::cout << "Enter RSRP offset (dB): ";
+        std::getline(std::cin, tempStr, delimiter);
+        try {
+            config.rsrpOffset = static_cast<uint8_t>(std::stoi(tempStr));
+        } catch (const std::exception &e) {
+            std::cout << "ERROR::Invalid input, please enter a numerical value \n";
+            return;
+        }
+
+        std::cout << "Enter " << config.numSamples.size()
+                  << " RSRQ filter sample counts, comma-separated (one per DRX cycle length - "
+                     "320/640/1280/2560 ms), e.g. 20,10,5,3: ";
+        std::getline(std::cin, tempStr, delimiter);
+        std::stringstream ss(tempStr);
+        int value  = 0;
+        size_t idx = 0;
+        while (ss >> value && idx < config.numSamples.size()) {
+            config.numSamples[idx++] = static_cast<uint8_t>(value);
+            if (ss.peek() == ',' || ss.peek() == ' ') {
+                ss.ignore();
+            }
+        }
+        if (idx != config.numSamples.size()) {
+            std::cout << "ERROR::Expected " << config.numSamples.size() << " sample counts \n";
+            return;
+        }
+
+        auto ret = servingSystemMgr->setLteIdleModeRsrpConfig(config);
+        if (ret == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "\nSet LTE idle-mode RSRP config is successful\n";
+        } else {
+            std::cout << "\nSet LTE idle-mode RSRP config failed \n";
+        }
+    } else {
+        std::cout << "ERROR - ServingSystemManger is null \n";
     }
 }
 

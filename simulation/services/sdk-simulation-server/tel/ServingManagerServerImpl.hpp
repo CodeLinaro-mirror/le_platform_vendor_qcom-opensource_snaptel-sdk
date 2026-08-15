@@ -83,6 +83,18 @@ class ServingManagerServerImpl final
     grpc::Status SetRFBandPreferences(ServerContext *context,
         const ::telStub::SetRFBandPreferencesRequest *request,
         telStub::SetRFBandPreferencesReply *response) override;
+    grpc::Status RequestLteMl1ConnectedModeConfig(ServerContext *context,
+        const ::telStub::RequestLteMl1ConnectedModeConfigRequest *request,
+        telStub::RequestLteMl1ConnectedModeConfigReply *response) override;
+    grpc::Status SetLteMl1ConnectedModeConfig(ServerContext *context,
+        const ::telStub::SetLteMl1ConnectedModeConfigRequest *request,
+        telStub::SetLteMl1ConnectedModeConfigReply *response) override;
+    grpc::Status RequestLteMl1IdleModeConfig(ServerContext *context,
+        const ::telStub::RequestLteMl1IdleModeConfigRequest *request,
+        telStub::RequestLteMl1IdleModeConfigReply *response) override;
+    grpc::Status SetLteMl1IdleModeConfig(ServerContext *context,
+        const ::telStub::SetLteMl1IdleModeConfigRequest *request,
+        telStub::SetLteMl1IdleModeConfigReply *response) override;
     grpc::Status RequestRFBandCapability(ServerContext *context,
         const ::telStub::RequestRFBandCapabilityRequest *request,
         telStub::RequestRFBandCapabilityReply *response) override;

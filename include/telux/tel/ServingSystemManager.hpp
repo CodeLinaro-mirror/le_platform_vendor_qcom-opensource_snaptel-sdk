@@ -51,6 +51,7 @@
 #include <bitset>
 #include <future>
 #include <memory>
+#include <array>
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/tel/PhoneDefines.hpp>
@@ -223,6 +224,50 @@ struct NetworkRejectInfo {
                             3GPP TS 24.501. */
     std::string mcc; /**< Mobile Country Code for rejection*/
     std::string mnc; /**< Mobile Network Code for rejection*/
+};
+
+/**
+ * Specifies the LTE call type for which the RSRP offset is applied in connected mode.
+ */
+enum class LteCallType {
+    NONE         = 0, /**< None */
+    ALL_LTE_CALL = 1, /**< Applies to LTE data and voice call */
+    VOLTE_CALL   = 2, /**< Applies to VoLTE calls only */
+};
+
+/**
+ * Defines the LTE connected-mode serving-cell RSRP offset configuration for a specified
+ * @ref LteCallType.
+ */
+struct LteConnectedModeConfig {
+    LteCallType callType; /**< LTE call type for which the RSRP offset is applied in connected
+                               mode */
+    int32_t rsrqThreshold; /**< RSRQ threshold in dB. The RSRP offset is applied only when RSRQ
+                                falls below this value */
+    int32_t rsrpOffset; /**< Offset in dB subtracted from RSRP when both call type and RSRQ
+                             threshold conditions are met */
+};
+
+/**
+ * Number of DRX-cycle-length buckets in @ref telux::tel::LteIdleModeConfig::numSamples:
+ * index 0 - 320 ms DRX cycle, 1 - 640 ms, 2 - 1280 ms, 3 - 2560 ms.
+ */
+static constexpr uint8_t LTE_ML1_IDLE_RSRP_N_DRX_CYCLES = 4;
+
+/**
+ * Defines LTE idle-mode RSRP offset optimization configuration
+ */
+struct LteIdleModeConfig {
+    bool enabled; /**< Enables or disables the idle-mode RSRP offset optimization feature,
+                       When disabled, all other fields in this structure are ignored */
+    int8_t rsrqThreshold; /**< Idle-mode RSRQ threshold in dB. The RSRP offset is applied when UE
+                             RSRQ falls below this value */
+    uint8_t hysteresisDelta; /**< Hysteresis delta in dB added to rsrqThreshold before the offset
+                                takes effect; prevents rapid toggling near the threshold boundary */
+    uint8_t rsrpOffset; /**< RSRP offset in dB applied to idle-mode RSRP when enabled and the
+                       threshold condition (rsrpThreshold and hysteresisDelta) is met */
+    std::array<uint8_t, LTE_ML1_IDLE_RSRP_N_DRX_CYCLES> numSamples; /**< Number of RSRQ filter
+                       samples per DRX cycle length */
 };
 
 /**
@@ -1027,6 +1072,84 @@ class IServingSystemManager {
     virtual telux::common::Status setRFBandPreferences(
         std::shared_ptr<IRFBandList> prefList, common::ResponseCallback callback = nullptr)
         = 0;
+
+    /**
+     * Set the LTE RSRP offset configuration in connected mode.
+     *
+     * The configuration specifies the call scenario, RSRQ threshold, and RSRP
+     * offset to be applied during LTE connected mode. The configured values
+     * persist across subsystem restarts (SSR) and device reboots.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param [in] config        LTE connected-mode configuration.
+     *                           @ref telux::tel::LteConnectedModeConfig
+     *
+     * @returns ErrorCode        indicating the status of the operation
+     *                           i.e. success or suitable error code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode setLteConnectedModeRsrpConfig(
+        const LteConnectedModeConfig config)
+        = 0;
+
+    /**
+     * Get the LTE RSRP offset configuration in connected mode.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+     * permission to successfully invoke this API.
+     *
+     * @param [out] config    Parameter to hold the fetched LTE connected-mode configuration.
+     *                        @ref telux::tel::LteConnectedModeConfig
+     *
+     * @returns ErrorCode     indicating the status of the operation
+     *                        i.e. success or suitable error code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode getLteConnectedModeRsrpConfig(LteConnectedModeConfig &config)
+        = 0;
+
+    /**
+     * Set the LTE idle-mode RSRP offset optimization configuration.
+     * The configuration specifies the criteria and offset values used for LTE
+     * idle-mode signal reporting optimization.
+     * The configured values persist across subsystem restarts (SSR) and device reboots.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param [in] config        LTE idle-mode optimization configuration.
+     *                           @ref telux::tel::LteIdleModeConfig
+     *
+     * @returns ErrorCode        indicating the status of the operation
+     *                           i.e. success or suitable error code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode setLteIdleModeRsrpConfig(const LteIdleModeConfig config) = 0;
+
+    /**
+     * Get the LTE RSRP offset optimization configuration in idle mode.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+     * permission to successfully invoke this API.
+     *
+     * @param [out] config    Parameter to hold the fetched LTE idle-mode configuration.
+     *                        @ref telux::tel::LteIdleModeConfig
+     *
+     * @returns ErrorCode     indicating the status of the operation
+     *                        i.e. success or suitable error code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode getLteIdleModeRsrpConfig(LteIdleModeConfig &config) = 0;
 
     /**
      * Request supported RF band capabilities for the device.

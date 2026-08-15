@@ -80,6 +80,22 @@
             "status" : "SUCCESS",
             "error" : "SUCCESS"
         },
+        "getLteConnectedModeRsrpConfig" :
+        {
+            "error" : "SUCCESS"
+        },
+        "setLteConnectedModeRsrpConfig" :
+        {
+            "error" : "SUCCESS"
+        },
+        "getLteIdleModeRsrpConfig" :
+        {
+            "error" : "SUCCESS"
+        },
+        "setLteIdleModeRsrpConfig" :
+        {
+            "error" : "SUCCESS"
+        },
         "requestRFBandCapability" :
         {
             "status" : "SUCCESS",

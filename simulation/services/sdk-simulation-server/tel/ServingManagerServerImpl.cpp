@@ -850,6 +850,125 @@ grpc::Status ServingManagerServerImpl::SetRFBandPreferences(ServerContext *conte
     return grpc::Status::OK;
 }
 
+grpc::Status ServingManagerServerImpl::RequestLteMl1ConnectedModeConfig(ServerContext *context,
+    const ::telStub::RequestLteMl1ConnectedModeConfigRequest *request,
+    telStub::RequestLteMl1ConnectedModeConfigReply *response) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath   = (request->phone_id() == SLOT_1) ? JSON_PATH1 : JSON_PATH2;
+    std::string stateJsonPath = (request->phone_id() == SLOT_1) ? JSON_PATH3 : JSON_PATH4;
+    std::string subsystem     = MANAGER;
+    std::string method        = "getLteConnectedModeRsrpConfig";
+    JsonData data;
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! ");
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    response->mutable_config()->set_call_type(
+        data.stateRootObj[MANAGER]["LteConnectedModeConfig"]["callType"].asInt());
+    response->mutable_config()->set_rsrq_threshold(
+        data.stateRootObj[MANAGER]["LteConnectedModeConfig"]["rsrqThreshold"].asInt());
+    response->mutable_config()->set_rsrp_offset(
+        data.stateRootObj[MANAGER]["LteConnectedModeConfig"]["rsrpOffset"].asInt());
+    response->set_error(static_cast<commonStub::ErrorCode>(error));
+    return grpc::Status::OK;
+}
+
+grpc::Status ServingManagerServerImpl::SetLteMl1ConnectedModeConfig(ServerContext *context,
+    const ::telStub::SetLteMl1ConnectedModeConfigRequest *request,
+    telStub::SetLteMl1ConnectedModeConfigReply *response) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath   = (request->phone_id() == SLOT_1) ? JSON_PATH1 : JSON_PATH2;
+    std::string stateJsonPath = (request->phone_id() == SLOT_1) ? JSON_PATH3 : JSON_PATH4;
+    std::string subsystem     = MANAGER;
+    std::string method        = "setLteConnectedModeRsrpConfig";
+    JsonData data;
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! ");
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    data.stateRootObj[MANAGER]["LteConnectedModeConfig"]["callType"]
+        = request->config().call_type();
+    data.stateRootObj[MANAGER]["LteConnectedModeConfig"]["rsrqThreshold"]
+        = request->config().rsrq_threshold();
+    data.stateRootObj[MANAGER]["LteConnectedModeConfig"]["rsrpOffset"]
+        = request->config().rsrp_offset();
+    JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
+    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    return grpc::Status::OK;
+}
+
+grpc::Status ServingManagerServerImpl::RequestLteMl1IdleModeConfig(ServerContext *context,
+    const ::telStub::RequestLteMl1IdleModeConfigRequest *request,
+    telStub::RequestLteMl1IdleModeConfigReply *response) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath   = (request->phone_id() == SLOT_1) ? JSON_PATH1 : JSON_PATH2;
+    std::string stateJsonPath = (request->phone_id() == SLOT_1) ? JSON_PATH3 : JSON_PATH4;
+    std::string subsystem     = MANAGER;
+    std::string method        = "getLteIdleModeRsrpConfig";
+    JsonData data;
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! ");
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    auto &idleObj = data.stateRootObj[MANAGER]["LteIdleModeConfig"];
+    response->mutable_config()->set_enabled(idleObj["enabled"].asBool());
+    response->mutable_config()->set_rsrq_threshold(idleObj["rsrqThreshold"].asInt());
+    response->mutable_config()->set_hysteresis_delta(idleObj["hysteresisDelta"].asInt());
+    response->mutable_config()->set_rsrp_offset(idleObj["rsrpOffset"].asInt());
+    std::string numSamplesStr = idleObj["numSamples"].asString();
+    for (auto &s : CommonUtils::convertStringToVector(numSamplesStr)) {
+        response->mutable_config()->add_num_samples(s);
+    }
+    response->set_error(static_cast<commonStub::ErrorCode>(error));
+    return grpc::Status::OK;
+}
+
+grpc::Status ServingManagerServerImpl::SetLteMl1IdleModeConfig(ServerContext *context,
+    const ::telStub::SetLteMl1IdleModeConfigRequest *request,
+    telStub::SetLteMl1IdleModeConfigReply *response) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath   = (request->phone_id() == SLOT_1) ? JSON_PATH1 : JSON_PATH2;
+    std::string stateJsonPath = (request->phone_id() == SLOT_1) ? JSON_PATH3 : JSON_PATH4;
+    std::string subsystem     = MANAGER;
+    std::string method        = "setLteIdleModeRsrpConfig";
+    JsonData data;
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! ");
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    std::vector<int> numSamples;
+    for (auto &s : request->config().num_samples()) {
+        numSamples.push_back(static_cast<int>(s));
+    }
+    data.stateRootObj[MANAGER]["LteIdleModeConfig"]["enabled"] = request->config().enabled();
+    data.stateRootObj[MANAGER]["LteIdleModeConfig"]["rsrqThreshold"]
+        = request->config().rsrq_threshold();
+    data.stateRootObj[MANAGER]["LteIdleModeConfig"]["hysteresisDelta"]
+        = request->config().hysteresis_delta();
+    data.stateRootObj[MANAGER]["LteIdleModeConfig"]["rsrpOffset"] = request->config().rsrp_offset();
+    data.stateRootObj[MANAGER]["LteIdleModeConfig"]["numSamples"]
+        = CommonUtils::convertIntVectorToString(numSamples);
+    JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
+    response->set_error(static_cast<commonStub::ErrorCode>(error));
+    return grpc::Status::OK;
+}
+
 grpc::Status ServingManagerServerImpl::RequestRFBandCapability(ServerContext *context,
     const ::telStub::RequestRFBandCapabilityRequest *request,
     telStub::RequestRFBandCapabilityReply *response) {

@@ -143,6 +143,8 @@
         returns (GetECallPostTestRegistrationTimerResponse) {}
      rpc restartECallHlapTimer(RestartECallHlapTimerRequest) returns (RestartECallHlapTimerResponse){}
      rpc setEmergencyMode(SetEmergencyModeRequest) returns (SetEmergencyModeResponse) {}
+     rpc SetNgEcallConfig(SetNgEcallConfigRequest) returns (SetNgEcallConfigResponse) {}
+     rpc GetNgEcallConfig(GetNgEcallConfigRequest) returns (GetNgEcallConfigResponse) {}
  }
 
  service ImsServingSystem {
@@ -189,6 +191,14 @@
          returns (RequestRFBandPreferencesReply) {}
      rpc SetRFBandPreferences (SetRFBandPreferencesRequest)
          returns (SetRFBandPreferencesReply) {}
+     rpc RequestLteMl1ConnectedModeConfig (RequestLteMl1ConnectedModeConfigRequest)
+         returns (RequestLteMl1ConnectedModeConfigReply) {}
+     rpc SetLteMl1ConnectedModeConfig (SetLteMl1ConnectedModeConfigRequest)
+         returns (SetLteMl1ConnectedModeConfigReply) {}
+     rpc RequestLteMl1IdleModeConfig (RequestLteMl1IdleModeConfigRequest)
+         returns (RequestLteMl1IdleModeConfigReply) {}
+     rpc SetLteMl1IdleModeConfig (SetLteMl1IdleModeConfigRequest)
+         returns (SetLteMl1IdleModeConfigReply) {}
      rpc RequestRFBandCapability (RequestRFBandCapabilityRequest)
          returns (RequestRFBandCapabilityReply) {}
      rpc GetHplmnSearchTime (GetHplmnSearchTimeRequest) returns (GetHplmnSearchTimeReply) {}
@@ -1379,7 +1389,27 @@ enum EcallHlapTimerId {
    bool iscallback = 4;
  }
 
- message Call {
+ message SetNgEcallConfigRequest {
+    int32 phone_id = 1;
+    bool is_enable = 2;
+    commonStub.ErrorCode error = 3;
+ }
+
+ message SetNgEcallConfigResponse {
+    commonStub.ErrorCode error = 1;
+ }
+ 
+ message GetNgEcallConfigRequest {
+    int32 phone_id = 1;
+    commonStub.ErrorCode error = 2;
+ }
+
+ message GetNgEcallConfigResponse {
+    bool is_enable = 2;
+    commonStub.ErrorCode error = 1;
+ }
+
+message Call {
      CallState call_state = 1;
      int32 call_index = 2;
      CallDirection.Direction call_direction = 3;
@@ -3418,6 +3448,56 @@ message SetRFBandPreferencesReply {
     commonStub.Status status = 2;
     int32 delay = 3;
     bool is_callback = 4;
+}
+
+message LteMl1ConnectedModeConfig {
+    int32 call_type = 1;    /* 0-NONE, 1-ALL_LTE_CALL, 2-VOLTE_CALL */
+    int32 rsrq_threshold = 2;    /* Serving RSRQ threshold in dB */
+    int32 rsrp_offset = 3;   /* RSRP offset in dB applied when conditions are met */
+}
+
+message RequestLteMl1ConnectedModeConfigRequest {
+    int32 phone_id = 1;
+}
+
+message RequestLteMl1ConnectedModeConfigReply {
+    LteMl1ConnectedModeConfig config = 1;
+    commonStub.ErrorCode error = 2;
+}
+
+message SetLteMl1ConnectedModeConfigRequest {
+    int32 phone_id = 1;
+    LteMl1ConnectedModeConfig config = 2;
+}
+
+message SetLteMl1ConnectedModeConfigReply {
+    commonStub.ErrorCode error = 1;
+}
+
+message LteMl1IdleModeConfig {
+    bool enabled = 1;             /* Master enable for idle-mode RSRP offset optimization */
+    int32 rsrq_threshold = 2;     /* Idle-mode RSRQ threshold in dB */
+    int32 hysteresis_delta = 3;   /* Hysteresis delta in dB */
+    int32 rsrp_offset = 4;             /* RSRP offset in dB applied when enabled */
+    repeated int32 num_samples = 5; /* RSRQ filter samples per DRX cycle length (4 entries) */
+}
+
+message RequestLteMl1IdleModeConfigRequest {
+    int32 phone_id = 1;
+}
+
+message RequestLteMl1IdleModeConfigReply {
+    LteMl1IdleModeConfig config = 1;
+    commonStub.ErrorCode error = 2;
+}
+
+message SetLteMl1IdleModeConfigRequest {
+    int32 phone_id = 1;
+    LteMl1IdleModeConfig config = 2;
+}
+
+message SetLteMl1IdleModeConfigReply {
+    commonStub.ErrorCode error = 1;
 }
 
 message RequestRFBandCapabilityRequest {

@@ -27,7 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -1063,6 +1064,49 @@ class ICallManager {
     virtual telux::common::Status restartECallHlapTimer(int phoneId, EcallHlapTimerId timerId,
         int duration, common::ResponseCallback callback = nullptr)
         = 0;
+
+    /**
+     * Enable or disable Next Generation (NG) eCall functionality.
+     * The configured value persists across subsystem restarts (SSR) and device reboot.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_TEL_ECALL_MGMT
+     * permission to invoke this API successfully.
+     *
+     * @param [in] phoneId  - ID of the phone/SIM slot for which the NG eCall is
+     *                        enabled or disabled.
+     * @param [in] isEnable - NG eCall configuration:
+     *                        - 'true'  : NG eCall is enabled.
+     *                        - 'false' : NG eCall is disabled.
+     *
+     * @returns ErrorCode indicating the status of the operation
+     *                    i.e. success or suitable error code.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     *
+     */
+    virtual telux::common::ErrorCode setNgEcallConfig(int phoneId, bool isEnable) = 0;
+
+    /**
+     * Get the current Next Generation (NG) eCall configuration for the specified phone/SIM slot.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_TEL_ECALL_MGMT
+     * permission to invoke this API successfully.
+     *
+     * @param [in]  phoneId - ID of the phone/SIM slot for which the NG eCall is
+     *                        enabled or disabled.
+     * @param [out] isEnable- Return the current NG eCall configuration:
+     *                        - 'true'  : NG eCall is enabled.
+     *                        - 'false' : NG eCall is disabled.
+     *
+     * @returns ErrorCode indicating the status of the operation
+     *                    i.e. success or suitable error code.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     *
+     */
+    virtual telux::common::ErrorCode getNgEcallConfig(int phoneId, bool &isEnable) = 0;
 
     /**
      * Retrieve the configured eCall redial parameters for call origination and call drop failures.

@@ -80,6 +80,10 @@ class ServingSystemMenu : public ConsoleApp {
     void requestRFBandCapability(std::vector<std::string> userInput);
     void requestRFBandPref(std::vector<std::string> userInput);
     void setRFBandPref(std::vector<std::string> userInput);
+    void getLteConnectedModeRsrpConfig(std::vector<std::string> userInput);
+    void setLteConnectedModeRsrpConfig(std::vector<std::string> userInput);
+    void getLteIdleModeRsrpConfig(std::vector<std::string> userInput);
+    void setLteIdleModeRsrpConfig(std::vector<std::string> userInput);
     void setHplmnSearchTime(std::vector<std::string> userInput);
     void getHplmnSearchTime(std::vector<std::string> userInput);
     void requestRrcState(std::vector<std::string> userInput);

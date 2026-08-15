@@ -27,7 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -156,6 +157,16 @@ class ECallApp : public ConsoleApp {
      * Function to restart eCall High Level Application Protocol (HLAP) from the user-interface
      */
     void restartECallHlapTimer();
+
+    /**
+     * Function to set the Next Generation (NG) eCall configuration.
+     */
+    void setNgEcallConfig();
+
+    /**
+     * Function to get the Next Generation (NG) eCall configuration.
+     */
+    void getNgEcallConfig();
 
     /**
      * Function to configure MSD transmission at call connect

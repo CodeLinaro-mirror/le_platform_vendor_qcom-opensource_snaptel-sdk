@@ -39,6 +39,10 @@
         {
             "emergencyModeEnabled" : 0,
             "antennaSwitchEnabled" : 0
+        },
+        "ngEcallConfig" :
+        {
+            "isEnable" : 1
         }
     }
 }

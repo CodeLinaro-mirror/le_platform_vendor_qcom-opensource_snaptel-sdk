@@ -155,6 +155,12 @@ class CallManagerServerImpl final : public telStub::DialerService::Service,
     grpc::Status setEmergencyMode(ServerContext *context,
         const telStub::SetEmergencyModeRequest *request,
         telStub::SetEmergencyModeResponse *response);
+    grpc::Status SetNgEcallConfig(ServerContext *context,
+        const ::telStub::SetNgEcallConfigRequest *request,
+        telStub::SetNgEcallConfigResponse *response);
+    grpc::Status GetNgEcallConfig(ServerContext *context,
+        const ::telStub::GetNgEcallConfigRequest *request,
+        telStub::GetNgEcallConfigResponse *response);
     void startTimer(std::string timer, int phoneId);
     void msdTransmissionStatus(std::string msdtransmision, int phoneId);
     void changeCallState(int phoneId, std::string callstate, int index, bool retainCache = false);

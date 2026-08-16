@@ -218,7 +218,9 @@ class SmsMessage {
     const std::string &getText() const;
 
     /**
-     * Get the originating address (sender address).
+     * Get the originating address (sender address). Supports International and ISDN address types
+     * with digits (0–9), ‘+’, and extended BCD characters (*, #, a, b, c). Alphanumeric addresses
+     * are not supported.
      *
      * @returns String containing sender address.
      */
@@ -425,7 +427,10 @@ class ISmsManager {
      * to invoke this API successfully.
      *
      * @param [in] message                 Message text to be send.
-     * @param [in] receiverAddress         Receiver or destination address
+     * @param [in] receiverAddress         Receiver or destination address. Supports International
+     *                                     and ISDN address types with digits (0–9), ‘+’, and
+     *                                     extended BCD characters (*, #, a, b, c). Alphanumeric
+     *                                     addresses are not supported.
      * @param [in] deliveryReportNeeded    Delivery status received in the listener API
      *                                     @ref telux::tel::ISmsListener if deliveryReportNeeded is
      *                                     true. Provided recipient responds to SMSC before the
@@ -434,7 +439,7 @@ class ISmsManager {
      * @param [in] sentCallback            Optional callback pointer to get the sent response for
      *                                     single part or multi-part SMS.
      * @param [in] smscAddr                SMS is sent to SMSC address. If SMSC address is empty
-     * then pre-configured SMSC address is used.
+     *                                     then pre-configured SMSC address is used.
      *
      * @returns Status of sendSmsEx i.e. success or suitable error code.
      *
@@ -688,15 +693,18 @@ class ISmsManager {
      * to invoke this API successfully.
      *
      * @param [in] message           Message text to be sent
-     * @param [in] receiverAddress   Receiver or destination address
+     * @param [in] receiverAddress   Receiver or destination address. Supports International
+     *                               and ISDN address types with digits (0–9), ‘+’, and
+     *                               extended BCD characters (*, #, a, b, c). Alphanumeric
+     *                               addresses are not supported.
      * @param [in] sentCallback      Optional callback pointer to get the response
      *                               of send SMS request.
      * @param [in] deliveryCallback  Optional callback pointer to get message
      *                               delivery status
      *
      * @deprecated Use API ISmsManager::sendSms(const std::string &message,
-          const std::string &receiverAddress, bool deliveryReportNeeded = true,
-          SmsResponseCb callback = nullptr, std::string smscAddr = "")
+     *     const std::string &receiverAddress, bool deliveryReportNeeded = true,
+     *     SmsResponseCb callback = nullptr, std::string smscAddr = "")
      *
      * @returns Status of sendSms i.e. success or suitable error code.
      *
@@ -717,7 +725,10 @@ class ISmsManager {
      * to invoke this API successfully.
      *
      * @param [in] message                 Message text to be send.
-     * @param [in] receiverAddress         Receiver or destination address
+     * @param [in] receiverAddress         Receiver or destination address. Supports International
+     *                                     and ISDN address types with digits (0–9), ‘+’, and
+     *                                     extended BCD characters (*, #, a, b, c). Alphanumeric
+     *                                     addresses are not supported.
      * @param [in] deliveryReportNeeded    Delivery status received in the listener API
      *                                     @ref telux::tel::ISmsListener if deliveryReportNeeded is
      *                                     true. Provided recipient responds to SMSC before the
@@ -826,7 +837,10 @@ class ISmsListener : public telux::common::IServiceStatusListener {
      *                                 received.
      * @param [in] msgRef              Message reference number (as per spec 3GPP TS 23.040 9.2.2.3)
      *                                 for a single part message or part of multipart message.
-     * @param [in] receiverAddress     Receiver or destination address
+     * @param [in] receiverAddress     Receiver or destination address. Supports International
+     *                                 and ISDN address types with digits (0–9), ‘+’, and
+     *                                 extended BCD characters (*, #, a, b, c). Alphanumeric
+     *                                 addresses are not supported.
      * @param [in] error               @ref telux::common::ErrorCode
      *
      */

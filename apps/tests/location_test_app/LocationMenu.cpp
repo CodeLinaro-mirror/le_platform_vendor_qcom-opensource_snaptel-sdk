@@ -518,7 +518,7 @@ void LocationMenu::startDetailedEngineReports(std::vector<std::string> userInput
             std::cout << " Enter the type of reports to enable : \n"
                          " (0- Location\n 1- SV\n 2- NMEA\n 3- DATA\n 4- Measurement\n "
                          "5- NHzMeasurement\n 6 - DisasterCrisis\n 7- EngineNMEA\n 8- Ephemeris\n "
-                         "9 - Extended Data) \n 10 - SvResidualInfo \n\n";
+                         "9 - Extended Data \n 10 - SvResidualInfo) \n\n";
             std::cout << " Enter your preference\n"
                          " (For example: enter 0,1 to choose Location & SV reports) : ";
             std::getline(std::cin, reportPreference, delimiter);

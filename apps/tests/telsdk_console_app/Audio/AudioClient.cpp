@@ -156,6 +156,10 @@ void AudioClient::startVoiceSession(SlotId slotId) {
     }
 
     setActiveSession(slotId);
+    if (!activeSession_) {
+        std::cout << "Invalid active voice session" << std::endl;
+        return;
+    }
     queryInputType();
     config_.slotId = slotId;
     config_.type   = StreamType::VOICE_CALL;
@@ -204,6 +208,10 @@ void AudioClient::stopVoiceSession(SlotId slotId) {
     }
 
     setActiveSession(slotId);
+    if (!activeSession_) {
+        std::cout << "Invalid active voice session" << std::endl;
+        return;
+    }
     auto status = activeSession_->stopAudio();
     if (status == Status::SUCCESS) {
         status = activeSession_->deleteStream();
@@ -333,6 +341,10 @@ void AudioClient::muteStream(SlotId slotId) {
     }
 
     setActiveSession(slotId);
+    if (!activeSession_) {
+        std::cout << "Invalid active voice session" << std::endl;
+        return;
+    }
     StreamMute mute{};
     mute.enable = true;
     mute.dir    = StreamDirection::RX;
@@ -359,13 +371,21 @@ void AudioClient::unmuteStream(SlotId slotId) {
         SlotId tmpSlotId{};
         tmpSlotId       = previousSlotId_;
         previousSlotId_ = currentSlotId_;
-        currentSlotId_  = previousSlotId_;
+        currentSlotId_  = tmpSlotId;
+        if (!activeSession_) {
+            std::cout << "Invalid active voice session" << std::endl;
+            return;
+        }
         if (activeSession_->getSlotId() != slotId) {
             return startVoiceSession(slotId);
         }
     }
 
     setActiveSession(slotId);
+    if (!activeSession_) {
+        std::cout << "Invalid active voice session" << std::endl;
+        return;
+    }
     StreamMute mute{};
     mute.enable = false;
     mute.dir    = StreamDirection::RX;

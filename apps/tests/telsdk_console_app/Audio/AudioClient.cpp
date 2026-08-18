@@ -28,10 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- *
- *  Copyright (c) 2021-2023,2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -152,6 +151,10 @@ void AudioClient::startVoiceSession(SlotId slotId) {
     }
 
     setActiveSession(slotId);
+    if (!activeSession_) {
+        std::cout << "Invalid active voice session" << std::endl;
+        return;
+    }
     queryInputType();
     config_.slotId = slotId;
     config_.type = StreamType::VOICE_CALL;
@@ -196,6 +199,10 @@ void AudioClient::stopVoiceSession(SlotId slotId) {
     }
 
     setActiveSession(slotId);
+    if (!activeSession_) {
+        std::cout << "Invalid active voice session" << std::endl;
+        return;
+    }
     auto status = activeSession_->stopAudio();
     if (status == Status::SUCCESS) {
         status = activeSession_->deleteStream();
@@ -309,6 +316,10 @@ void AudioClient::setMuteStatus(SlotId slotId, bool muteStatus) {
 void AudioClient::muteStream(SlotId slotId) {
 #ifdef TELSDK_FEATURE_AUDIO_ENABLED
     setActiveSession(slotId);
+    if (!activeSession_) {
+        std::cout << "Invalid active voice session" << std::endl;
+        return;
+    }
     StreamMute mute{};
     mute.enable = true;
     mute.dir = StreamDirection::RX;
@@ -330,13 +341,21 @@ void AudioClient::unmuteStream(SlotId slotId) {
         SlotId tmpSlotId{};
         tmpSlotId = previousSlotId_;
         previousSlotId_ = currentSlotId_;
-        currentSlotId_ = previousSlotId_;
+        currentSlotId_  = tmpSlotId;
+        if (!activeSession_) {
+            std::cout << "Invalid active voice session" << std::endl;
+            return;
+        }
         if (activeSession_->getSlotId() != slotId) {
             return startVoiceSession(slotId);
         }
     }
 
     setActiveSession(slotId);
+    if (!activeSession_) {
+        std::cout << "Invalid active voice session" << std::endl;
+        return;
+    }
     StreamMute mute{};
     mute.enable = false;
     mute.dir = StreamDirection::RX;

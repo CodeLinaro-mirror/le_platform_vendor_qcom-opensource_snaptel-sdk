@@ -174,9 +174,6 @@ class TcConfigBuilder {
      *
      * @param [in] trafficClass     The desired traffic class.
      * @return Reference to this builder for method chaining.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     TcConfigBuilder &setTrafficClass(TrafficClass trafficClass);
 
@@ -185,9 +182,6 @@ class TcConfigBuilder {
      *
      * @param [in] direction    The desired direction.
      * @return Reference to this builder for method chaining.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     TcConfigBuilder &setDirection(Direction direction);
 
@@ -222,9 +216,6 @@ class TcConfigBuilder {
      *
      * @param [in] dataPath     Expected data path
      * @return Reference to this builder for method chaining.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     TcConfigBuilder &setDataPath(DataPath dataPath);
 
@@ -237,9 +228,6 @@ class TcConfigBuilder {
      *
      * @param [in] bandwidthConfig     Expected bandwidth configuration
      * @return Reference to this builder for method chaining.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     TcConfigBuilder &setBandwidthConfig(BandwidthConfig bandwidthConfig);
 
@@ -247,9 +235,6 @@ class TcConfigBuilder {
      * @brief Builds the traffic class configuration.
      *
      * @return Shared pointer to the constructed traffic class configuration.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     std::shared_ptr<ITcConfig> build();
 
@@ -281,9 +266,6 @@ class IQoSFilter {
      * @brief Returns the Quality of Service (QoS) filter handle.
      *
      * @return QoS filter handle as a @ref QoSFilterHandle.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual QoSFilterHandle getHandle() = 0;
 
@@ -291,9 +273,6 @@ class IQoSFilter {
      * @brief Returns the installation status of a QoS filter.
      *
      * @return QoS filter status as a @ref QoSFilterStatus.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual QoSFilterStatus getStatus() = 0;
 
@@ -301,9 +280,6 @@ class IQoSFilter {
      * @brief Returns the traffic class.
      *
      * @return TrafficClass representing the traffic class.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual TrafficClass getTrafficClass() = 0;
 
@@ -311,18 +287,12 @@ class IQoSFilter {
      * @brief Returns a shared pointer to the traffic descriptor.
      *
      * @return Shared pointer to ITrafficFilter.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual std::shared_ptr<ITrafficFilter> getTrafficFilter() = 0;
 
     /**
      * @brief Converts the API object to a human-readable string.
      * @return A string representation of the API state.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual std::string toString() = 0;
 };
@@ -431,9 +401,6 @@ class IQoSManager {
      * @param [out] tcConfigErrorCode   Error code specific to @ref ITcConfig
      * @return Error code which indicates whether the operation succeeded or not
      *         @ref telux::common::ErrorCode
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual telux::common::ErrorCode createTrafficClass(
         std::shared_ptr<ITcConfig> tcConfig, TcConfigErrorCode &tcConfigErrorCode)
@@ -445,9 +412,6 @@ class IQoSManager {
      * @param [out] tcConfigs     Vector of traffic class configurations.
      * @return Error code which indicates whether the operation succeeded or not
      *         @ref telux::common::ErrorCode
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual telux::common::ErrorCode getAllTrafficClasses(
         std::vector<std::shared_ptr<ITcConfig>> &tcConfigs)
@@ -467,9 +431,6 @@ class IQoSManager {
      * @param [in] tcConfig   Traffic class config
      * @return Error code which indicates whether the operation succeeded or not
      *         @ref telux::common::ErrorCode
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual telux::common::ErrorCode deleteTrafficClass(std::shared_ptr<ITcConfig> tcConfig) = 0;
 
@@ -541,9 +502,6 @@ class IQoSManager {
      * @param [out] filterHandle        On successful addition QoS filter handle will be provided
      * @param [out] qosFilterErrorCode  Error code specific to @ref QoSFilterConfig
      * @return Error code which indicates whether the operation succeeded or not.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual telux::common::ErrorCode addQoSFilter(QoSFilterConfig qosFilterConfig,
         QoSFilterHandle &filterHandle, QoSFilterErrorCode &qosFilterErrorCode)
@@ -558,9 +516,6 @@ class IQoSManager {
      * @param [out] qosFilter           Shared pointer to QoSFilter corresponding to the handle.
      * @return Error code which indicates whether the operation succeeded or not
      *         @ref telux::common::ErrorCode
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual telux::common::ErrorCode getQosFilter(
         QoSFilterHandle filterHandle, std::shared_ptr<IQoSFilter> &qosFilter)
@@ -572,9 +527,6 @@ class IQoSManager {
      * @param [out] qosFilters     Vector of shared pointers to IQoSFilter.
      * @return Error code which indicates whether the operation succeeded or not
      *         @ref telux::common::ErrorCode
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual telux::common::ErrorCode getQosFilters(
         std::vector<std::shared_ptr<IQoSFilter>> &qosFilters)
@@ -594,9 +546,6 @@ class IQoSManager {
      * @param [in] qosFilterHandle      QoS filter handle to be deleted.
      * @return Error code which indicates whether the operation succeeded or not
      *         @ref telux::common::ErrorCode
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual telux::common::ErrorCode deleteQosFilter(QoSFilterHandle qosFilterHandle) = 0;
 
@@ -610,9 +559,6 @@ class IQoSManager {
      *
      * @return Error code which indicates whether the operation succeeded or not
      *         @ref telux::common::ErrorCode
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual telux::common::ErrorCode deleteAllQosConfigs() = 0;
 

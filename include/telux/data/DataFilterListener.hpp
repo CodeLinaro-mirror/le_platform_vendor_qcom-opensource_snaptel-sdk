@@ -78,9 +78,6 @@ class IDataFilterListener : public common::IServiceStatusListener {
      *  - All active data calls are terminated.
      *
      * @param [in] filterMode - state the current data filter mode
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void onDataFilterModeChange(DataRestrictModeType filterMode) {
     }

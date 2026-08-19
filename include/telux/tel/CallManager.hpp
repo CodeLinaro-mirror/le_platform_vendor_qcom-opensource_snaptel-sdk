@@ -215,9 +215,6 @@ class ICallManager {
      *                          - @ref telux::common::ErrorCode::GENERIC_FAILURE
      *
      * @returns Status of makeRttCall i.e. success or suitable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-     *          could break backward compatibility.
      */
     virtual telux::common::Status makeRttCall(int phoneId, const std::string &dialNumber,
         std::shared_ptr<IMakeCallCallback> callback = nullptr)
@@ -921,9 +918,6 @@ class ICallManager {
      *        - @ref telux::common::ErrorCode::SUCCESS
      *        - @ref telux::common::ErrorCode::INVALID_ARGUMENTS
      *        - @ref telux::common::ErrorCode::GENERIC_FAILURE
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::ErrorCode encodeECallMsd(
         telux::tel::ECallMsdData eCallMsdData, std::vector<uint8_t> &data)
@@ -941,9 +935,6 @@ class ICallManager {
      *
      * @returns Status of encodeEuroNcapOptionalAdditionalData i.e. success or
      * suitable error code.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status encodeEuroNcapOptionalAdditionalData(
         telux::tel::ECallOptionalEuroNcapData optionalEuroNcapData, std::vector<uint8_t> &data)
@@ -1022,9 +1013,6 @@ class ICallManager {
      *                            request.
      *
      * @returns Status of configureECallRedial i.e. success or suitable error code.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and could break
-     *             backwards compatibility.
      */
     virtual telux::common::Status configureECallRedial(RedialConfigType config,
         const std::vector<int> &timeGap, common::ResponseCallback callback = nullptr)
@@ -1056,9 +1044,6 @@ class ICallManager {
      *
      * @returns Status of restartECallHlapTimer i.e. success or suitable error code.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
-     *
      */
     virtual telux::common::Status restartECallHlapTimer(int phoneId, EcallHlapTimerId timerId,
         int duration, common::ResponseCallback callback = nullptr)
@@ -1076,9 +1061,6 @@ class ICallManager {
      *                              milliseconds for call drop failures.
      *
      * @returns ErrorCode for getECallRedialConfig i.e. success or suitable error code.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and could break
-     *             backwards compatibility.
      */
     virtual telux::common::ErrorCode getECallRedialConfig(
         std::vector<int> &callOrigTimeGap, std::vector<int> &callDropTimeGap)

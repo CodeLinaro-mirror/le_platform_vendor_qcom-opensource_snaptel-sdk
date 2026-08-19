@@ -480,9 +480,6 @@ class IDiagLogManager {
      * Returns current status of the log collection.
      *
      * @returns @ref diag::DiagStatus detailing log collection status.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *       break backwards compatibility.
      */
     virtual DiagStatus getStatus() = 0;
 
@@ -494,9 +491,6 @@ class IDiagLogManager {
      *
      * @returns @ref telux::common::Status::SUCCESS if the listener is registered,
      *          otherwise, an appropriate error code.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *       break backwards compatibility.
      */
     virtual telux::common::Status registerListener(std::weak_ptr<IDiagListener> listener) = 0;
 
@@ -507,9 +501,6 @@ class IDiagLogManager {
      *
      * @returns @ref telux::common::Status::SUCCESS if the listener is deregistered,
      *          otherwise, an appropriate error code.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *       break backwards compatibility.
      */
     virtual telux::common::Status deregisterListener(std::weak_ptr<IDiagListener> listener) = 0;
 
@@ -529,9 +520,6 @@ class IDiagLogManager {
      *          @ref telux::common::ErrorCode::INVALID_STATE, if the log collection is
      *          in progress, @ref telux::common::ErrorCode::MISSING_RESOURCE when running on
      *          EAP and remote MDM device cannot be detected, otherwise an appropriate error code.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *       break backwards compatibility.
      */
     virtual telux::common::ErrorCode setConfig(const DiagConfig config) = 0;
 
@@ -539,9 +527,6 @@ class IDiagLogManager {
      * Gets current log collection configuration.
      *
      * @returns current configuration @ref telux::platform::diag::DiagConfig.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *       break backwards compatibility.
      */
     virtual DiagConfig getConfig() = 0;
 
@@ -567,9 +552,6 @@ class IDiagLogManager {
      *          @ref telux::common::ErrorCode::INVALID_STATE if there is no collection in progress
      *          for given peripheral, @ref telux::common::ErrorCode::NOT_SUPPORTED if draining on
      *          given peripheral is not supported, an appropriate error code in all other cases.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *       break backwards compatibility.
      */
     virtual telux::common::ErrorCode drainPeripheralBuffers(Peripherals peripherals) = 0;
 
@@ -586,9 +568,6 @@ class IDiagLogManager {
      *          @ref telux::common::ErrorCode::NO_EFFECT, if the log collection has already
      *          started, @ref telux::common::ErrorCode:: INVALID_STATE if a valid config is
      *          not set before calling this method, otherwise an appropriate error code.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *       break backwards compatibility.
      */
     virtual telux::common::ErrorCode startLogCollection() = 0;
 
@@ -601,9 +580,6 @@ class IDiagLogManager {
      * @returns @ref telux::common::ErrorCode::SUCCESS, if the log collection is stopped,
      *          @ref telux::common::ErrorCode::NO_EFFECT, if the log collection has already
      *          stopped, otherwise an appropriate error code.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *       break backwards compatibility.
      */
     virtual telux::common::ErrorCode stopLogCollection() = 0;
 
@@ -634,9 +610,6 @@ class IDiagLogManager {
      *          @ref telux::common::ErrorCode::NO_EFFECT if draining is already in progress,
      *          an appropriate error code in all other cases.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *       break backwards compatibility.
-     *
      * @deprecated Use @ref IDiagLogManager::drainPeripheralBuffer() instead
      */
     virtual telux::common::ErrorCode startDrainingLogs() = 0;
@@ -653,9 +626,6 @@ class IDiagLogManager {
      *          @ref telux::common::ErrorCode::INVALID_STATE if there is no collection in progress,
      *          @ref telux::common::ErrorCode::NO_EFFECT if there is no draining in progress,
      *          an appropriate error code in all other cases.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *       break backwards compatibility.
      *
      * @deprecated This is no longer used.
      */

@@ -133,9 +133,6 @@ class ICall {
      * permission to invoke this API successfully.
      *
      * @returns integer representing low level call end cause.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-     *          could break backward compatibility.
      */
     virtual int getDetailedCauseCode() = 0;
 
@@ -330,9 +327,6 @@ class ICall {
      * permission to successfully invoke this API.
      *
      * @returns integer representing SIP error code.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-     *          could break backward compatibility.
      */
     virtual int getSipErrorCode() = 0;
 
@@ -344,9 +338,6 @@ class ICall {
      * permission to successfully invoke this API.
      *
      * @returns A string representing the reason for the incoming PS call.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-     *          could break backward compatibility.
      */
     virtual std::string getCallReason() = 0;
 
@@ -379,9 +370,6 @@ class ICall {
      * permission to successfully invoke this API.
      *
      * @returns RttMode - enumeration representing RTT mode @ref telux::tel::RttMode
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual RttMode getRttMode() = 0;
 
@@ -394,9 +382,6 @@ class ICall {
      * permission to successfully invoke this API.
      *
      * @returns RttMode - enumeration representing RTT mode @ref telux::tel::RttMode
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual RttMode getLocalRttCapability() = 0;
 
@@ -408,9 +393,6 @@ class ICall {
      * permission to successfully invoke this API.
      *
      * @returns RttMode - enumeration representing RTT mode @ref telux::tel::RttMode
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual RttMode getPeerRttCapability() = 0;
 
@@ -433,9 +415,6 @@ class ICall {
      *        - @ref telux::common::ErrorCode::GENERIC_FAILURE
      *
      * @returns Status of modify i.e. success or suitable error code.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status modify(
         RttMode mode, std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)
@@ -449,7 +428,6 @@ class ICall {
      * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_MGMT
      * permission to successfully invoke this API.
      *
-     *
      * @param [in] modifyResponseType -  Send the response to accept or reject the modify request
      *                                   Accept corresponds to true and reject corresponds to false
      * @param [in] callback -            Optional, callback pointer to get the response of
@@ -461,9 +439,6 @@ class ICall {
      *        - @ref telux::common::ErrorCode::GENERIC_FAILURE
      *
      * @returns Status of respondToModifyRequest i.e. success or suitable error code.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status respondToModifyRequest(bool modifyResponseType,
         std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)
@@ -476,9 +451,6 @@ class ICall {
      * permission to successfully invoke this API.
      *
      * @returns CallType - enumeration representing call type @ref telux::tel::CallType
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual CallType getCallType() = 0;
 
@@ -491,9 +463,6 @@ class ICall {
      * permission to successfully invoke this API.
      *
      * @returns NetworkMode - enumeration representing network mode @ref telux::tel::NetworkMode
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual NetworkMode getNetworkMode() = 0;
 

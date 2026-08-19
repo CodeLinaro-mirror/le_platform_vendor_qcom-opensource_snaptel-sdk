@@ -54,9 +54,6 @@ class ConnectionSecurityFactory {
      * @param [in] callback Callback to receive the WiFiSecurityManager initialization status.
      *
      * @returns IWiFiSecurityManager instance or nullptr, if an error occurred
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject
-     *             to change and could break backwards compatibility.
      */
     virtual std::shared_ptr<IWiFiSecurityManager> getWiFiSecurityManager(
         telux::common::InitResponseCb callback)

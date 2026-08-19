@@ -93,9 +93,6 @@ class LocationConfiguratorStub : public ILocationConfigurator,
      * param[in] error - Return code which indicates whether the operation succeeded
      *                    or not.
      *
-     * note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibilty.
-     *
      */
     using GetMinGpsWeekCallback
         = std::function<void(uint16_t minGpsWeek, telux::common::ErrorCode error)>;
@@ -108,9 +105,6 @@ class LocationConfiguratorStub : public ILocationConfigurator,
      * param[in] error - Return code which indicates whether the operation succeeded
      *                    or not.
      *
-     * note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibilty.
-     *
      */
     using GetMinSVElevationCallback
         = std::function<void(uint8_t minSVElevation, telux::common::ErrorCode error)>;
@@ -121,9 +115,6 @@ class LocationConfiguratorStub : public ILocationConfigurator,
      *
      * param[in] error - Return code which indicates whether the operation succeeded
      *                    or not.
-     *
-     * note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibilty.
      *
      */
     using GetRobustLocationCallback = std::function<void(
@@ -303,9 +294,6 @@ class LocationConfiguratorStub : public ILocationConfigurator,
      *
      * param [in] callback - Optional callback to get the response of configure robust location.
      *
-     * note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *             break backwards compatibility.
-     *
      */
 
     telux::common::Status configureRobustLocation(bool enable, bool enableForE911 = false,
@@ -317,9 +305,6 @@ class LocationConfiguratorStub : public ILocationConfigurator,
      * param [in] cb - callback to retrieve robust location information.
      *
      * returns Status of requestRobustLocation i.e. success or suitable status code.
-     *
-     * note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *             break backwards compatibility.
      *
      */
 
@@ -337,9 +322,6 @@ class LocationConfiguratorStub : public ILocationConfigurator,
      *
      * returns Status of configureMinGpsWeek i.e. success or suitable status code.
      *
-     * note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *             break backwards compatibility.
-     *
      */
 
     telux::common::Status configureMinGpsWeek(
@@ -351,9 +333,6 @@ class LocationConfiguratorStub : public ILocationConfigurator,
      * param [in] cb - callback to retrieve the minimum gps week.
      *
      * returns Status of requestMinGpsWeek i.e. success or suitable status code.
-     *
-     * note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *             break backwards compatibility.
      *
      */
 
@@ -387,9 +366,6 @@ class LocationConfiguratorStub : public ILocationConfigurator,
      *
      * returns Status of configureMinSVElevation i.e. success or suitable status code.
      *
-     * note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *             break backwards compatibility.
-     *
      */
 
     telux::common::Status configureMinSVElevation(
@@ -406,9 +382,6 @@ class LocationConfiguratorStub : public ILocationConfigurator,
      *
      * returns Status of requestMinSVElevation i.e. success or suitable status code.
      *
-     * note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *             break backwards compatibility.
-     *
      */
 
     telux::common::Status requestMinSVElevation(GetMinSVElevationCallback cb) override;
@@ -423,9 +396,6 @@ class LocationConfiguratorStub : public ILocationConfigurator,
      * param [in] callback - Optional callback to get the response of delete aiding data.
      *
      * returns Status of deleteAidingData i.e. success or suitable status code.
-     *
-     * note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *             break backwards compatibility.
      *
      */
 
@@ -492,9 +462,6 @@ class LocationConfiguratorStub : public ILocationConfigurator,
      *
      * returns Status of provideConsentForTerrestrialPositioning i.e. success or suitable
      *          status code.
-     *
-     * note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *             break backwards compatibility.
      */
 
     telux::common::Status provideConsentForTerrestrialPositioning(
@@ -516,9 +483,6 @@ class LocationConfiguratorStub : public ILocationConfigurator,
      * param [in] callback - Optional callback to get the response of configureNmeaTypes.
      *
      * returns Status of configureNmeaTypes i.e. success or suitable status code.
-     *
-     * note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *             break backwards compatibility.
      *
      */
 
@@ -547,9 +511,6 @@ class LocationConfiguratorStub : public ILocationConfigurator,
      *
      * @returns Status of configureNmea i.e. success or suitable status code.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *             break backwards compatibility.
-     *
      */
 
     telux::common::Status configureNmea(
@@ -577,9 +538,6 @@ class LocationConfiguratorStub : public ILocationConfigurator,
      *
      * returns Status of configureEngineIntegrityRisk i.e. success or suitable status code.
      *
-     * note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *             break backwards compatibility.
-     *
      */
 
     telux::common::Status configureEngineIntegrityRisk(const EngineType engineType,
@@ -604,9 +562,6 @@ class LocationConfiguratorStub : public ILocationConfigurator,
      *
      * @param [in] callback - Optional callback stating the response errorcode.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *             break backwards compatibility.
-     *
      */
 
     telux::common::Status configureXtraParams(bool enable, const XtraConfig configParams,
@@ -618,9 +573,6 @@ class LocationConfiguratorStub : public ILocationConfigurator,
      * is enabled, the client shall wait a few seconds before calling this API again.
      *
      * @param [in] callback - Callback to get the Xtra data status information.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *             break backwards compatibility.
      *
      */
 
@@ -634,9 +586,6 @@ class LocationConfiguratorStub : public ILocationConfigurator,
      *                              telux::loc::LocConfigIndicationsType.
      *
      * @param [in] listener - Pointer of ILocationConfigListener object.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *             break backwards compatibility.
      */
 
     telux::common::Status registerListener(LocConfigIndications indicationList,
@@ -649,9 +598,6 @@ class LocationConfiguratorStub : public ILocationConfigurator,
      *                              telux::loc::LocConfigIndicationsType.
      *
      * @param [in] listener - Pointer of ILocationConfigListener object.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *             break backwards compatibility.
      */
 
     telux::common::Status deRegisterListener(LocConfigIndications indicationList,
@@ -673,9 +619,6 @@ class LocationConfiguratorStub : public ILocationConfigurator,
      *
      * @returns Status of the injection i.e. success or suitable status code.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *             break backwards compatibility.
-     *
      */
 
     telux::common::Status injectMerkleTreeInformation(
@@ -692,9 +635,6 @@ class LocationConfiguratorStub : public ILocationConfigurator,
      * @param [in] callback - Optional callback to receive the result of the enablement/disablement.
      *
      * @returns Status of the enablement/disablement i.e. success or suitable status code.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
-     *             break backwards compatibility.
      *
      */
 

@@ -299,7 +299,6 @@ class IDataSettingsManager {
      *
      * @returns Status of requestWwanConnectivityConfig i.e. success or suitable status code.
      *
-     *
      */
     virtual telux::common::Status requestWwanConnectivityConfig(
         SlotId slotId, requestWwanConnectivityConfigResponseCb callback)
@@ -339,7 +338,6 @@ class IDataSettingsManager {
      * @param [in] callback    callback to get response for requestMacSecState.
      *
      * @returns Status of requestMacSecState, i.e., success or suitable status code.
-     *
      *
      */
     virtual telux::common::Status requestMacSecState(RequestMacSecSateResponseCb callback) = 0;
@@ -408,8 +406,6 @@ class IDataSettingsManager {
      * @returns               @ref telux::common::ErrorCode as appropriate.
      *
      * @note   @ref telux::data::IpAddrInfo gwMask is not required for this API.
-     *         Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
     virtual telux::common::ErrorCode setIpPassThroughConfig(
         const IpptParams &ipptParms, const IpptConfig &config)
@@ -429,8 +425,6 @@ class IDataSettingsManager {
      * @returns               @ref telux::common::ErrorCode as appropriate.
      *
      * @note   All active data calls must be disconnected before invoking this API.
-     *         Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
     virtual telux::common::ErrorCode setIpPassThroughNatConfig(bool enableNat = true) = 0;
 
@@ -444,9 +438,6 @@ class IDataSettingsManager {
      * @param [out] isNatEnabled  true if NAT is enabled, otherwise false.
      *
      * @returns               @ref telux::common::ErrorCode as appropriate.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
     virtual telux::common::ErrorCode getIpPassThroughNatConfig(bool &isNatEnabled) = 0;
 
@@ -460,9 +451,6 @@ class IDataSettingsManager {
      * @param [out] config    IP passthrough configuration, @ref telux::data::IpptConfig
      *
      * @returns              @ref telux::common::ErrorCode as appropriate.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
     virtual telux::common::ErrorCode getIpPassThroughConfig(
         const IpptParams &ipptParms, IpptConfig &config)
@@ -507,9 +495,6 @@ class IDataSettingsManager {
      * @param [in] ipConfig           @ref telux::data:IpConfig
      *
      * @returns                  @ref telux::common::ErrorCode as appropriate.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
     virtual telux::common::ErrorCode setIpConfig(
         const IpConfigParams &ipConfigParams, const IpConfig &ipConfig)
@@ -535,9 +520,6 @@ class IDataSettingsManager {
      * @param [out] ipConfig           @ref telux::data:IpConfig
      *
      * @returns                @ref telux::common::ErrorCode as appropriate.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
     virtual telux::common::ErrorCode getIpConfig(
         const IpConfigParams &ipConfigParams, IpConfig &ipConfig)

@@ -102,7 +102,6 @@ class ICallListener : public common::IServiceStatusListener {
      * The MSD transmission happens at call connect and also when the modem or client
      * responds to MSD pull request from PSAP.
      *
-     *
      * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
      * permission to receive this notification.
      *
@@ -196,9 +195,6 @@ class ICallListener : public common::IServiceStatusListener {
      * @param [in] isAlerting - true to start playing ringback tone, false to stop playing ringback
      * tone.
      * @param [in] phoneId - Unique Id of phone on which local ringback tone need to be triggered.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-     *          could break backward compatibility.
      */
     virtual void onRingbackTone(bool isAlerting, int phoneId) {
     }
@@ -215,9 +211,6 @@ class ICallListener : public common::IServiceStatusListener {
      * @param [in] rttMode - @ref telux::tel::RttMode::FULL to indicate a upgrade request,
      * @param [in] callId - Unique CallId on which upgrade request was triggered.
      * @param [in] phoneId - Unique Id of phone on which upgrade request was triggered.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-     *          could break backward compatibility.
      */
     virtual void onModifyCallRequest(RttMode rttMode, int callId, int phoneId) {
     }
@@ -231,9 +224,6 @@ class ICallListener : public common::IServiceStatusListener {
      * @param [in] phoneId  Unique Id of phone on which RTT message is received.
      * @param [in] message  Text message received from device is in UTF8 encoding format.
      *                      It supports the English language.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-     *          could break backward compatibility.
      */
     virtual void onRttMessage(int phoneId, std::string message) {
     }
@@ -273,9 +263,6 @@ class ICallListener : public common::IServiceStatusListener {
      *                       @ref telux::tel::ECallRedialInfo::reason can either be
      *                           telux::tel::ReasonType::CALL_CONNECTED or
      *                           telux::tel::ReasonType::MAX_REDIAL_ATTEMPTED.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-     *          could break backward compatibility.
      */
     virtual void onECallRedial(int phoneId, ECallRedialInfo info) {
     }
@@ -297,9 +284,6 @@ class ICallListener : public common::IServiceStatusListener {
      *                        Valid values:
      *                        • Digits: 0–9
      *                        • Special characters: '*' and '#'
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-     *          could break backward compatibility.
      */
     virtual void onDtmfReceived(int phoneId, char dtmfTone) {
     }

@@ -136,9 +136,6 @@ using L2tpConfigCb
  *                             @ref telux::data::net::L2tpSessionBindConfig
  * @param [in] error           Return code which indicates whether the operation
  *                             succeeded or not @ref telux::common::ErrorCode
- *
- * @note    Eval: This is a new API and is being evaluated.It is subject to change
- *          and could break backwards compatibility.
  */
 using L2tpSessionBindingsResponseCb = std::function<void(
     const std::vector<L2tpSessionBindConfig> bindings, telux::common::ErrorCode error)>;
@@ -239,9 +236,6 @@ class IL2tpManager {
      * @param [in] callback          Callback to get the addSession response; optional.
      *
      * @returns Status of addSession, i.e., success or applicable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status addSession(uint32_t tunnelId, L2tpSessionConfig sessionConfig,
         telux::common::ResponseCallback callback = nullptr)
@@ -261,9 +255,6 @@ class IL2tpManager {
      * @param [in] callback          Callback to get the removeSession response; optional.
      *
      * @returns Status of removeSession, i.e. success or applicable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status removeSession(
         uint32_t tunnelId, uint32_t sessionId, telux::common::ResponseCallback callback = nullptr)
@@ -284,9 +275,6 @@ class IL2tpManager {
      *
      * @returns Status of bindSessionToBackhaul(), i.e. success or applicable status code.
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
-     *
      */
     virtual telux::common::Status bindSessionToBackhaul(
         L2tpSessionBindConfig sessionBindConfig, telux::common::ResponseCallback callback = nullptr)
@@ -306,9 +294,6 @@ class IL2tpManager {
      *                                   optional.
      *
      * @returns Status of unbindSessionFromBackhaul(), i.e. success or applicable status code
-     *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::Status unbindSessionFromBackhaul(
         L2tpSessionBindConfig sessionBindConfig, telux::common::ResponseCallback callback = nullptr)
@@ -321,9 +306,6 @@ class IL2tpManager {
      * @param [in] callback    callback to get the querySessionToBackhaulBindings response; optional
      *
      * @returns Status of querySessionToBackhaulBindings(), i.e. success or applicable status code
-     *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::Status querySessionToBackhaulBindings(
         BackhaulType backhaul, L2tpSessionBindingsResponseCb callback)

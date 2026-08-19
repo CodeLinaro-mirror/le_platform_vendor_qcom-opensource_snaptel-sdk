@@ -136,9 +136,6 @@ class ITrafficFilter {
      * valid.
      *
      * @return TrafficFilterValidFields bit mask
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual TrafficFilterValidFields getTrafficFilterValidFields() = 0;
 
@@ -146,9 +143,6 @@ class ITrafficFilter {
      * @brief Returns the direction (e.g., UPLINK, DOWNLINK).
      *
      * @return Direction enum representing the traffic direction.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual Direction getDirection() = 0;
 
@@ -156,9 +150,6 @@ class ITrafficFilter {
      * @brief Returns the data path ( @ref DataPath ) of the traffic filter.
      *
      * @return Data path of the traffic filter.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual DataPath getDataPath() = 0;
 
@@ -166,18 +157,12 @@ class ITrafficFilter {
      * @brief Returns the Priority Code Point (PCP) value.
      *
      * @return PCP value as an int8_t.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual int8_t getPCP() = 0;
 
     /**
      * @brief Retrieves the IP protocol.
      * @return The IP protocol value @ref IpProtocol.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual IpProtocol getIPProtocol() = 0;
 
@@ -186,9 +171,6 @@ class ITrafficFilter {
      *
      * @param [in]  fieldType   Indicates whether the get is for the source or destination.
      * @return IPv4 address
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual std::string getIPv4Address(FieldType fieldType) = 0;
 
@@ -197,9 +179,6 @@ class ITrafficFilter {
      *
      * @param [in]  fieldType   Indicates whether the get is for the source or destination.
      * @return IPv6 address.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual std::string getIPv6Address(FieldType fieldType) = 0;
 
@@ -208,9 +187,6 @@ class ITrafficFilter {
      *
      * @param [in] fieldType     Indicates whether the get is for the source or destination.
      * @return The port configuration.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual PortConfig &getPortConfig(FieldType fieldType) = 0;
 
@@ -219,9 +195,6 @@ class ITrafficFilter {
      *
      * @param [in] fieldType     Indicates whether the get is for the source or destination.
      * @return The port.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual uint16_t getPort(FieldType fieldType) = 0;
 
@@ -231,9 +204,6 @@ class ITrafficFilter {
      * @param [in] fieldType     Indicates whether the get is for the source or destination.
      * @param [out] startPort    Start port number
      * @param [out] range        Port range
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and could
-     * break backwards compatibility.
      */
     virtual void getPortRange(FieldType fieldType, uint16_t &startPort, uint16_t &range) = 0;
 
@@ -242,18 +212,12 @@ class ITrafficFilter {
      *
      * @param [in] fieldType     Indicates whether the get is for the source or destination.
      * @return A vector of integers representing the source VLANs.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual std::vector<int> getVlanList(FieldType fieldType) = 0;
 
     /**
      * @brief Converts the API object to a human-readable string.
      * @return A string representation of the API state.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     virtual std::string toString() = 0;
 
@@ -269,26 +233,17 @@ class ITrafficFilter {
  *
  * Set the expected parameters, and then call the @ref
  * TrafficFilterBuilder::build method. It will return an instance of @ref ITrafficFilter.
- *
- * @note Eval: This is a new API and is being evaluated. It is subject to
- * change and could break backwards compatibility.
  */
 class TrafficFilterBuilder {
  public:
     /**
      * @brief Constructs a TrafficFilterBuilder.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     TrafficFilterBuilder();
 
     /**
      * @brief Builds the traffic filter.
      * @return Shared pointer to the constructed traffic filter.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     std::shared_ptr<ITrafficFilter> build();
 
@@ -297,9 +252,6 @@ class TrafficFilterBuilder {
      *
      * @param [in] direction    The desired direction.
      * @return Reference to this builder for method chaining.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     TrafficFilterBuilder &setDirection(Direction direction);
 
@@ -310,9 +262,6 @@ class TrafficFilterBuilder {
      *
      * @param [in] dataPath     Expected data path
      * @return Reference to this builder for method chaining.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     TrafficFilterBuilder &setDataPath(DataPath dataPath = DataPath::TETHERED_TO_WAN_HW);
 
@@ -321,9 +270,6 @@ class TrafficFilterBuilder {
      *
      * @param [in] pcp      The PCP value.
      * @return Reference to this builder for method chaining.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     TrafficFilterBuilder &setPCP(int8_t pcp);
 
@@ -333,9 +279,6 @@ class TrafficFilterBuilder {
      *
      * @param [in] ipProtocol   IP protocol (e.g., TCP, UDP).
      * @return Reference to this builder for method chaining.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     TrafficFilterBuilder &setIPProtocol(IpProtocol ipProtocol);
 
@@ -345,9 +288,6 @@ class TrafficFilterBuilder {
      * @param [in] ipv4Addr     IPv4 address.
      * @param [in] fieldType    Indicates whether the set is for the source or destination.
      * @return Reference to this builder for method chaining.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     TrafficFilterBuilder &setIPv4Address(std::string ipv4Addr, FieldType fieldType);
 
@@ -357,9 +297,6 @@ class TrafficFilterBuilder {
      * @param [in] ipv6Addr     IPv6 address.
      * @param [in] fieldType    Indicates whether the set is for the source or destination.
      * @return Reference to this builder for method chaining.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     TrafficFilterBuilder &setIPv6Address(std::string ipv6Addr, FieldType fieldType);
 
@@ -369,9 +306,6 @@ class TrafficFilterBuilder {
      * @param [in] portConfig       Port configuration
      * @param [in] fieldType        Indicates whether the set is for the source or destination.
      * @return Reference to this builder for method chaining.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     TrafficFilterBuilder &setPortConfig(PortConfig portConfig, FieldType fieldType);
 
@@ -382,9 +316,6 @@ class TrafficFilterBuilder {
      * @param [in] range        Port range
      * @param [in] fieldType    Indicates whether the set is for the source or destination.
      * @return Reference to this builder for method chaining.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     TrafficFilterBuilder &setPortRange(uint16_t startPort, uint16_t range, FieldType fieldType);
 
@@ -394,9 +325,6 @@ class TrafficFilterBuilder {
      * @param [in] port         port number
      * @param [in] fieldType    Indicates whether the set is for the source or destination.
      * @return Reference to this builder for method chaining.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     TrafficFilterBuilder &setPort(uint16_t port, FieldType fieldType);
 
@@ -406,9 +334,6 @@ class TrafficFilterBuilder {
      * @param [in] vlanList     Vector of VLAN IDs.
      * @param [in] fieldType    Indicates whether the set is for the source or destination.
      * @return Reference to this builder for method chaining.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     * change and could break backwards compatibility.
      */
     TrafficFilterBuilder &setVlanList(std::vector<int> vlanList, FieldType fieldType);
 

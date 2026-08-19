@@ -38,9 +38,6 @@
  *
  * @brief      Cv2xThrottleManager class encapsulate ThrottleManager client interface APIs
  *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change
- *          and could break backwards compatibility.
- *
  */
 
 #ifndef TELUX_CV2X_CV2XTHROTTLEMANAGER_HPP
@@ -81,7 +78,6 @@ class ICv2xThrottleManagerListener : public telux::common::ISDKListener {
      *
      * @param [in] rate the reported filter rate adjustment value.
      *
-     *
      */
     virtual void onFilterRateAdjustment(int rate) {
     }
@@ -98,9 +94,6 @@ class ICv2xThrottleManagerListener : public telux::common::ISDKListener {
      * This API is invoked when capacity of underlying message verification module is tampered
      *
      * @param [in] state - mvm state, true if mvm is in good state, otherwise false.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual void onSanityStateUpdate(bool state) {
     }

@@ -160,9 +160,6 @@ class INtnManager {
      *                                 crash in an underlying service.
      *          SERVICE_FAILED       - If NtnManager object encountered an irrecoverable failure.
      *
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
@@ -173,9 +170,6 @@ class INtnManager {
      *
      * @returns Error code which indicates whether operation succeeded or not.
      *
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::ErrorCode isNtnSupported(bool &isSupported) = 0;
 
@@ -199,9 +193,6 @@ class INtnManager {
      *                          get the ICCID of the SIM to be used for NTN.
      *
      * @returns Error code which indicates whether operation succeeded or not.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      *
      */
     virtual telux::common::ErrorCode enableNtn(
@@ -233,9 +224,6 @@ class INtnManager {
      * @returns @ref telux::common::Status::SUCCESS if the modem accepts the data packet to send
      *               over the NTN network or appropriate status otherwise.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
-     *
      */
     virtual telux::common::Status sendData(
         uint8_t *data, uint32_t size, bool isEmergency, TransactionId &TransactionId)
@@ -250,9 +238,6 @@ class INtnManager {
      * permission to invoke this API successfully.
      *
      * @returns Error code which indicates whether operation succeeded or not.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::ErrorCode abortData() = 0;
 
@@ -265,9 +250,6 @@ class INtnManager {
      * @param [out] capabilities Capabilities of the NTN network.
      *
      * @returns Error code which indicates whether operation succeeded or not.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::ErrorCode getNtnCapabilities(NtnCapabilities &capabilities) = 0;
 
@@ -277,9 +259,6 @@ class INtnManager {
      * @param [out] SignalStrength Signal strength of the NTN network.
      *
      * @returns Error code which indicates whether operation succeeded or not.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::ErrorCode getSignalStrength(SignalStrength &signalStrength) = 0;
 
@@ -297,9 +276,6 @@ class INtnManager {
      *
      * @returns Error code which indicates whether operation succeeded or not.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
-     *
      */
     virtual telux::common::ErrorCode updateSystemSelectionSpecifiers(
         std::vector<SystemSelectionSpecifier> &params)
@@ -310,9 +286,6 @@ class INtnManager {
      * refer to @NtnState
      *
      * @returns Current NTN state.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual NtnState getNtnState() = 0;
 
@@ -330,9 +303,6 @@ class INtnManager {
      * @param[in] enable True, to enable cellular scan.
      *
      * @returns Error code which indicates whether operation succeeded or not.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::ErrorCode enableCellularScan(bool enable) = 0;
 
@@ -351,9 +321,6 @@ class INtnManager {
      * @param[in] params location fix parameters.
      *
      * @returns Error code which indicates whether operation succeeded or not.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::ErrorCode setLocationFix(const LocationFix &params) = 0;
 
@@ -373,9 +340,6 @@ class INtnManager {
      * and the location fix request needs to be re-triggered.
      *
      * @returns Error code which indicates whether operation succeeded or not.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::ErrorCode locationFixResponse(LocationStatus status, uint64_t waitTime)
         = 0;
@@ -388,9 +352,6 @@ class INtnManager {
      *
      * @returns @ref telux::common::Status::SUCCESS if the listener is registered,
      * an appropriate status otherwise.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status registerListener(std::weak_ptr<INtnListener> listener) = 0;
 
@@ -402,9 +363,6 @@ class INtnManager {
      *
      * @returns @ref telux::common::Status::SUCCESS if the listener is registered,
      * an appropriate status otherwise.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status deregisterListener(std::weak_ptr<INtnListener> listener) = 0;
 
@@ -429,9 +387,6 @@ class INtnListener : public telux::common::ISDKListener {
      * This function is called when NTN state changes.
      *
      * @param [in] state State of the NTN network
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void onNtnStateChange(NtnState newState) {
     }
@@ -440,9 +395,6 @@ class INtnListener : public telux::common::ISDKListener {
      * This function is called when the capabilities of the NTN network change.
      *
      * @param [in] capabilities The updated capabilities of the NTN network.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void onCapabilitiesChange(NtnCapabilities capabilities) {
     }
@@ -451,9 +403,6 @@ class INtnListener : public telux::common::ISDKListener {
      * This function is called when signal strength of the NTN network changes.
      *
      * @param [in] signalStrength The signal strength of the NTN network.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void onSignalStrengthChange(SignalStrength signalStrength) {
     }
@@ -463,9 +412,6 @@ class INtnListener : public telux::common::ISDKListener {
      * the modem services are not available for any operations.
      *
      * @param [in] status - @ref telux::satcom::ServiceStatus
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void onServiceStatusChange(telux::common::ServiceStatus status) {
     }
@@ -478,9 +424,6 @@ class INtnListener : public telux::common::ISDKListener {
      * @param [in] err telux::common::ErrorCode::SUCCESS if acknowledgement was received or
      *                 error otherwise.
      * @param [in] id Transaction id of the sent data packet
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void onDataAck(telux::common::ErrorCode err, TransactionId id) {
     }
@@ -491,9 +434,6 @@ class INtnListener : public telux::common::ISDKListener {
      * @param [in] data Data packet received over NTN network. The implementation of this
      *                  function is responsible to manage the lifetime of the buffer.
      * @param [in] size Size of the buffer.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void onIncomingData(std::unique_ptr<uint8_t[]> data, uint32_t size) {
     }
@@ -506,9 +446,6 @@ class INtnListener : public telux::common::ISDKListener {
      * Cellular coverage is enabled by calling @ref telux::satcom::INtnManager::enableCellularScan.
      *
      * @param [in] isCellularCoverageAvailable Flag indicating availability of cellular coverage.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void onCellularCoverageAvailable(bool isCellularCoverageAvailable) {
     }
@@ -523,9 +460,6 @@ class INtnListener : public telux::common::ISDKListener {
      * fix shall be updated by calling @ref telux::satcom::INtnManager::setLocationFix.
      *
      * @param [in] reqReason   Provides the reason for expiration.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void onLocationFixRequest(LocationFixRequestReason reqReason) {
     }
@@ -536,9 +470,6 @@ class INtnListener : public telux::common::ISDKListener {
      * during NTN operation, if there is interference when both bands coexist.
      *
      * @param [in] bandValue   The current NTN band value.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void onNtnBandUpdate(uint32_t bandValue) {
     }

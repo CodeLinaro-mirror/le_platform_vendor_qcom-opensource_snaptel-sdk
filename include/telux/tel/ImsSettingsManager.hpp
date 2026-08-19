@@ -133,9 +133,6 @@ using ImsSipUserAgentConfigCb
  *                            disabled.
  * @param [in] error          Return code which indicates whether the operation
  *                            succeeded or not @ref telux::common::ErrorCode.
- *
- * @note   Eval: This is a new API and is being evaluated. It is subject to
- *         change and could break backwards compatibility.
  */
 using ImsVonrStatusCb
     = std::function<void(SlotId slotId, bool isEnable, telux::common::ErrorCode error)>;
@@ -180,9 +177,6 @@ class IImsSettingsManager {
      *
      * @returns Status of requestSipUserAgent i.e. success or suitable error code.
      *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
-     *
      */
     virtual telux::common::Status requestSipUserAgent(
         SlotId slotId, ImsSipUserAgentConfigCb callback)
@@ -200,9 +194,6 @@ class IImsSettingsManager {
      *                            configuration request.
      *
      * @returns Status of setSipUserAgent i.e. success or suitable error code.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      *
      */
     virtual telux::common::Status setSipUserAgent(
@@ -246,9 +237,6 @@ class IImsSettingsManager {
      *                            over NR service.
      *
      * @returns Status of toggleVonr i.e. success or suitable error code.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual telux::common::Status toggleVonr(
         SlotId slotId, bool isEnable, common::ResponseCallback callback = nullptr)
@@ -265,9 +253,6 @@ class IImsSettingsManager {
      *                         voice over NR service.
      *
      * @returns Status of requestVonrStatus i.e. success or suitable error code.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      *
      */
     virtual telux::common::Status requestVonrStatus(SlotId slotId, ImsVonrStatusCb callback) = 0;
@@ -324,9 +309,6 @@ class IImsSettingsListener : public telux::common::ISDKListener {
      * @param [in] slotId        SIM corresponding to slot identifier for which the IMS SIP user
      *                           agent is changed.
      * @param [in] sipUserAgent  Indicates the configured SIP User Agent.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      *
      */
     virtual void onImsSipUserAgentChange(SlotId slotId, std::string sipUserAgent) {

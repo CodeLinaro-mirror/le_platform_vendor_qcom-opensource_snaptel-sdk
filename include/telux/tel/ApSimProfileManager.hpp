@@ -62,9 +62,6 @@ class IApSimProfileManager {
      *          SERVICE_FAILED       - If ApSimProfile Manager encountered an irrecoverable
      *                                 failure.
      *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and
-     *         could break backwards compatibility.
-     *
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
@@ -92,9 +89,6 @@ class IApSimProfileManager {
      *                              response send to modem.
      *
      * @returns  Status of sendRetrieveProfileListResponse i.e. success or suitable error code.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and
-     *         could break backwards compatibility.
      */
     virtual telux::common::Status sendRetrieveProfileListResponse(SlotId slotId,
         ApduExchangeStatus result, uint32_t referenceId, std::vector<std::string> profileIccIds,
@@ -123,9 +117,6 @@ class IApSimProfileManager {
      *                              operation response send to the modem.
      *
      * @returns Status of sendProfileOperationResponse i.e. success or suitable error code.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and
-     *         could break backwards compatibility.
      */
     virtual telux::common::Status sendProfileOperationResponse(SlotId slotId,
         ApduExchangeStatus result, uint32_t referenceId,
@@ -143,9 +134,6 @@ class IApSimProfileManager {
      *                         notification.
      *
      * @returns Status of registerListener success or suitable status code.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and
-     *         could break backwards compatibility.
      */
     virtual telux::common::Status registerListener(std::weak_ptr<IApSimProfileListener> listener)
         = 0;
@@ -159,9 +147,6 @@ class IApSimProfileManager {
      * @param [in] listener    Pointer of IApSimProfileListener object that needs to be removed.
      *
      * @returns Status of deregisterListener success or suitable status code.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and
-     *         could break backwards compatibility.
      */
     virtual telux::common::Status deregisterListener(std::weak_ptr<IApSimProfileListener> listener)
         = 0;
@@ -212,9 +197,6 @@ class IApSimProfileListener : public telux::common::IServiceStatusListener {
      *                                 same reference id in a subsequent profiles list response.
      *                                 @ref telux::tel::IApSimProfileManager::
      *                                 sendRetrieveProfileListResponse
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and
-     *         could break backwards compatibility.
      */
     virtual void onRetrieveProfileListRequest(SlotId slotId, uint32_t referenceId) {
     }
@@ -254,9 +236,6 @@ class IApSimProfileListener : public telux::common::IServiceStatusListener {
      * @param [in] iccid               ICCID for the profile to enable or disable.
      * @param [in] isEnable            Indicates whether the profile should be enabled or disabled.
      *                                 true - Enable and false - Disable.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and
-     *         could break backwards compatibility.
      */
     virtual void onProfileOperationRequest(
         SlotId slotId, uint32_t referenceId, std::string iccid, bool isEnable) {

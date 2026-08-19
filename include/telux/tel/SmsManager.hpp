@@ -333,9 +333,6 @@ using SmsResponseCb
  *       type - either GW SMS or IMS SMS - based on the enumeration defined in
  *       @ref telux::tel::SmsFailureCause. The default return value is
  *       telux::tel::RpCause::UNKNOWN for GW SMS or -1 for IMS SMS, indicating no failure occurred.
- *
- * @note   Eval: This is a new API and is being evaluated. It is subject to
- *         change and could break backwards compatibility.
  */
 using SmsResponseCbEx = std::function<void(
     std::vector<int> msgRefs, telux::common::ErrorCode errorCode, SmsFailureCause info)>;
@@ -432,9 +429,6 @@ class ISmsManager {
      *                                     then pre-configured SMSC address is used.
      *
      * @returns Status of sendSmsEx i.e. success or suitable error code.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual telux::common::Status sendSmsEx(std::string message, std::string receiverAddress,
         bool deliveryReportNeeded, SmsResponseCbEx sentCallback = nullptr,
@@ -457,9 +451,6 @@ class ISmsManager {
      *                                 multi-part SMS.
      *
      * @returns Status of sendRawSmsEx i.e. success or suitable error code.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual telux::common::Status sendRawSmsEx(
         const std::vector<PduBuffer> rawPdus, SmsResponseCbEx sentCallback = nullptr)
@@ -580,7 +571,6 @@ class ISmsManager {
      * to the new storage. If client does not require messages to be stored by the platform,
      * then the storage could be set to @ref telux::tel::StorageType::NONE.
      * After an SSR or reboot, the preferred storage will persist.
-     *
      *
      * On platforms with access control enabled, the caller needs to have TELUX_TEL_SMS_CONFIG
      * permission to invoke this API successfully.
@@ -798,9 +788,6 @@ class ISmsListener : public telux::common::IServiceStatusListener {
      *                                 received.
      * @param [in] isOverIms           Send SMS over IMS or not
      * @param [in] cause               SMS failure cause code
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual void onOutgoingSmsFailure(int phoneId, bool isOverIms, SmsFailureCause cause) {
     }

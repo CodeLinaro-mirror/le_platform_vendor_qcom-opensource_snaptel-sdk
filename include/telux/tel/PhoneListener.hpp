@@ -140,9 +140,6 @@ class IPhoneListener : public common::IServiceStatusListener {
      *
      * @param [in] phoneId - Unique Id of phone for which operator information changed
      * @param [in] info - Indicates plmn information change reason @ref OperatorInfo
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void onOperatorInfoChange(int phoneId, telux::tel::PlmnInfo info) {
     }

@@ -127,9 +127,6 @@ class ICAControlManager {
      *
      * @returns @ref telux::common::Status::SUCCESS if the listener is registered,
      *          otherwise, an appropriate error code
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject
-     *             to change and could break backwards compatibility.
      */
     virtual telux::common::ErrorCode registerListener(
         std::weak_ptr<ICAControlManagerListener> listener)
@@ -142,9 +139,6 @@ class ICAControlManager {
      *
      * @returns @ref telux::common::Status::SUCCESS if the listener is unregistered,
      *          otherwise, an appropriate error code
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject
-     *             to change and could break backwards compatibility.
      */
     virtual telux::common::ErrorCode deRegisterListener(
         std::weak_ptr<ICAControlManagerListener> listener)
@@ -162,9 +156,6 @@ class ICAControlManager {
      *
      * @returns @ref telux::common::Status::SUCCESS if the monitoring started,
      *          otherwise, an appropriate error code
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject
-     *             to change and could break backwards compatibility.
      */
     virtual telux::common::ErrorCode startMonitoring(LoadConfig loadConfig) = 0;
 
@@ -176,9 +167,6 @@ class ICAControlManager {
      *
      * @returns @ref telux::common::Status::SUCCESS if the monitoring stopped,
      *          otherwise, an appropriate error code
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject
-     *             to change and could break backwards compatibility.
      */
     virtual telux::common::ErrorCode stopMonitoring() = 0;
 
@@ -189,9 +177,6 @@ class ICAControlManager {
      *
      * @returns @ref telux::common::Status::SUCCESS if the capacity is fetched,
      *          otherwise, an appropriate error code
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject
-     *             to change and could break backwards compatibility.
      */
     virtual telux::common::ErrorCode getCapacity(CACapacity &capacity) = 0;
 

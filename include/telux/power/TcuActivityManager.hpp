@@ -219,9 +219,6 @@ class ITcuActivityManager {
      *                   @ref telux::common::ErrorCode::OPERATION_NOT_ALLOWED if a slave client
      *                   tries to get state of a machine other than the one they're running on,
      *                   an appropriate error code otherwise.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject
-     *              to change and could break backwards compatibility.
      */
     virtual telux::common::ErrorCode getActivityState(
         std::string machineName, TcuActivityState &state)

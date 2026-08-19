@@ -175,9 +175,6 @@ class IDataFilterManager {
      * @returns Status of addDataRestrictFilters i.e. success or suitable status
      * code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
-     *
      */
     virtual telux::common::Status addDataRestrictFilters(
         std::vector<std::shared_ptr<IIpFilter>> &filters,

@@ -67,9 +67,6 @@ class ISubsystemManager {
      *
      * @returns @ref telux::common::Status::SUCCESS if the listener is registered,
      *          otherwise, an appropriate error code
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject
-     *             to change and could break backwards compatibility.
      */
     virtual telux::common::ErrorCode registerListener(std::weak_ptr<ISubsystemListener> listener,
         std::vector<telux::common::SubsystemInfo> subsystems)
@@ -82,9 +79,6 @@ class ISubsystemManager {
      *
      * @returns @ref telux::common::Status::SUCCESS if the listener is deregistered,
      *          otherwise, an appropriate error code
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject
-     *             to change and could break backwards compatibility.
      */
     virtual telux::common::ErrorCode deRegisterListener(std::weak_ptr<ISubsystemListener> listener)
         = 0;

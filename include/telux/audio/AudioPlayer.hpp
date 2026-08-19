@@ -167,9 +167,6 @@ class IAudioPlayer {
      *          if a playback is already in progress,
      *          @ref telux::common::ErrorCode::INVALID_ARGUMENTS, if no files are given,
      *          an appropriate error code in all other cases.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject
-     *             to change and could break backwards compatibility.
      */
     virtual telux::common::ErrorCode startPlayback(std::vector<PlaybackConfig> &playbackConfigs,
         std::weak_ptr<IPlayListListener> statusListener)
@@ -193,9 +190,6 @@ class IAudioPlayer {
      *          in-progress, @ref telux::common::ErrorCode::ACCESS_DENIED, if the caller
      *          doesn't have permission to call this API, an appropriate error code in
      *          all other cases.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject
-     *             to change and could break backwards compatibility.
      */
     virtual telux::common::ErrorCode stopPlayback() = 0;
 

@@ -193,9 +193,6 @@ class IBridgeManager {
      * @param [in] bridgeId       Bridge ID that will be mapped to the hardware interface
      *
      * @returns @ref telux::common::ErrorCode as appropriate.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
     virtual telux::common::ErrorCode setInterfaceBridge(InterfaceType ifaceType, uint32_t bridgeId)
         = 0;
@@ -207,9 +204,6 @@ class IBridgeManager {
      * @param [out] bridgeId      Bridge ID mapped to the hardware interface
      *
      * @returns @ref telux::common::ErrorCode as appropriate.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
     virtual telux::common::ErrorCode getInterfaceBridge(InterfaceType ifaceType, uint32_t &bridgeId)
         = 0;

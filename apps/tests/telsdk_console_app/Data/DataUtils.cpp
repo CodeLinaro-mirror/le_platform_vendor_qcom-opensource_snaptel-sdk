@@ -27,39 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <iostream>
@@ -324,4 +294,138 @@ bool DataUtils::populateBackhaulInfo(telux::data::BackhaulInfo& backhaulInfo) {
       backhaulInfo.profileId = profileId;
       return false;
     }
+}
+
+std::string DataUtils::networkModuleToString(telux::data::DataStallNetworkModule module) {
+    switch (module) {
+        case telux::data::DataStallNetworkModule::ETHERNET: return "ETHERNET";
+        case telux::data::DataStallNetworkModule::IPA: return "IPA";
+        case telux::data::DataStallNetworkModule::WWAN: return "WWAN";
+        case telux::data::DataStallNetworkModule::WLAN: return "WLAN";
+        default: return "UNKNOWN";
+    }
+}
+
+std::string DataUtils::stallReasonToString(telux::data::DataStallReason reason) {
+    switch (reason) {
+        case telux::data::DataStallReason::INVALID: return "INVALID";
+        case telux::data::DataStallReason::Q6_DATA_STALL: return "Q6_DATA_STALL";
+        case telux::data::DataStallReason::ETH_IPA_DATA_STALL: return "ETH_IPA_DATA_STALL";
+        case telux::data::DataStallReason::ETH_SW_DATA_STALL: return "ETH_SW_DATA_STALL";
+        case telux::data::DataStallReason::ETH_MAC_HW_DATA_STALL: return "ETH_MAC_HW_DATA_STALL";
+        case telux::data::DataStallReason::IPA_ETH_DATA_STALL: return "IPA_ETH_DATA_STALL";
+        case telux::data::DataStallReason::IPA_AP_DATA_STALL: return "IPA_AP_DATA_STALL";
+        case telux::data::DataStallReason::IPA_STA_DATA_STALL: return "IPA_STA_DATA_STALL";
+        case telux::data::DataStallReason::IPA_WLAN_DATA_STALL: return "IPA_WLAN_DATA_STALL";
+        case telux::data::DataStallReason::IPA_CONF_ETH_DATA_STALL: return "IPA_CONF_ETH_DATA_STALL";
+        case telux::data::DataStallReason::IPA_CONF_DATA_STALL: return "IPA_CONF_DATA_STALL";
+        case telux::data::DataStallReason::WLAN_AP_DATA_STALL: return "WLAN_AP_DATA_STALL";
+        case telux::data::DataStallReason::WLAN_STA_DATA_STALL: return "WLAN_STA_DATA_STALL";
+        default: return "UNKNOWN";
+    }
+}
+
+std::string DataUtils::recoveryActionToString(telux::data::DataStallRecoveryAction action) {
+    switch (action) {
+        case telux::data::DataStallRecoveryAction::NO_ACTION: return "NO_ACTION";
+        case telux::data::DataStallRecoveryAction::INTERNAL: return "INTERNAL";
+        case telux::data::DataStallRecoveryAction::LPM_TOGGLE: return "LPM_TOGGLE";
+        case telux::data::DataStallRecoveryAction::MODEM_SSR: return "MODEM_SSR";
+        case telux::data::DataStallRecoveryAction::DEVICE_REBOOT: return "DEVICE_REBOOT";
+        case telux::data::DataStallRecoveryAction::FACTORY_RESET: return "FACTORY_RESET";
+        case telux::data::DataStallRecoveryAction::ETH_IPA_SUSPEND_RESUME: return "ETH_IPA_SUSPEND_RESUME";
+        case telux::data::DataStallRecoveryAction::ETH_SW_TX_CHNL_REINIT: return "ETH_SW_TX_CHNL_REINIT";
+        case telux::data::DataStallRecoveryAction::ETH_SW_RX_CHNL_REINIT: return "ETH_SW_RX_CHNL_REINIT";
+        case telux::data::DataStallRecoveryAction::ETH_REINIT: return "ETH_REINIT";
+        case telux::data::DataStallRecoveryAction::WLAN_RECONNECT: return "WLAN_RECONNECT";
+        case telux::data::DataStallRecoveryAction::WLAN_AP_RECONNECT: return "WLAN_AP_RECONNECT";
+        case telux::data::DataStallRecoveryAction::WLAN_STA_RECONNECT: return "WLAN_STA_RECONNECT";
+        case telux::data::DataStallRecoveryAction::WLAN_DRIVER_RELOAD: return "WLAN_DRIVER_RELOAD";
+        case telux::data::DataStallRecoveryAction::IPACM_RESTART: return "IPACM_RESTART";
+        default: return "UNKNOWN";
+    }
+}
+
+std::string DataUtils::recoveryResultToString(telux::data::DataStallRecoveryResult result) {
+    switch (result) {
+        case telux::data::DataStallRecoveryResult::INVALID: return "INVALID";
+        case telux::data::DataStallRecoveryResult::RECOVERY_SUCCESS: return "RECOVERY_SUCCESS";
+        case telux::data::DataStallRecoveryResult::RECOVERY_ACTION_FAILURE: return "RECOVERY_ACTION_FAILURE";
+        case telux::data::DataStallRecoveryResult::RECOVERY_ACTION_SUCCESS: return "RECOVERY_ACTION_SUCCESS";
+        default: return "UNKNOWN";
+    }
+}
+
+std::string DataUtils::disablementReasonToString(telux::data::DataStallDisablementReason reason) {
+    switch (reason) {
+        case telux::data::DataStallDisablementReason::INVALID: return "INVALID";
+        case telux::data::DataStallDisablementReason::MAX_INSTANCE: return "MAX_INSTANCE";
+        case telux::data::DataStallDisablementReason::DURATION_EXPIRY: return "DURATION_EXPIRY";
+        case telux::data::DataStallDisablementReason::USER_TRIGGERED: return "USER_TRIGGERED";
+        case telux::data::DataStallDisablementReason::FACTORY_RESET: return "FACTORY_RESET";
+        case telux::data::DataStallDisablementReason::ETH_DISABLED: return "ETH_DISABLED";
+        case telux::data::DataStallDisablementReason::WLAN_DISABLED: return "WLAN_DISABLED";
+        default: return "UNKNOWN";
+    }
+}
+
+std::string DataUtils::restartTimerStatusToString(telux::data::DataStallRestartTimerStatus status) {
+    switch (status) {
+        case telux::data::DataStallRestartTimerStatus::INVALID: return "INVALID";
+        case telux::data::DataStallRestartTimerStatus::STARTED: return "STARTED";
+        case telux::data::DataStallRestartTimerStatus::INTERNAL_ERROR: return "INTERNAL_ERROR";
+        case telux::data::DataStallRestartTimerStatus::DURATION_NOT_SUPPORTED: return "DURATION_NOT_SUPPORTED";
+        case telux::data::DataStallRestartTimerStatus::STOPPED: return "STOPPED";
+        case telux::data::DataStallRestartTimerStatus::EXPIRED: return "EXPIRED";
+        default: return "UNKNOWN";
+    }
+}
+
+void DataUtils::printDataStallConfig(const telux::data::DataStallConfig &cfg) {
+    std::cout << "\n========================================" << std::endl;
+    std::cout << "Data Stall Configuration:" << std::endl;
+    std::cout << "Network Module: " << DataUtils::networkModuleToString(cfg.module) << std::endl;
+
+    if (cfg.module == telux::data::DataStallNetworkModule::WWAN) {
+        std::cout << "Slot Id: " << cfg.slotId << std::endl;
+        if (cfg.profileId != -1) {
+            std::cout << "Profile Id: " << cfg.profileId << std::endl;
+        }
+    }
+
+    std::cout << "Enable Recovery: " << (cfg.enableRecovery ? "Yes" : "No") << std::endl;
+    std::cout << "Enable Recovery Restart: " << (cfg.enableRecoveryRestart ? "Yes" : "No") << std::endl;
+
+    if (cfg.enableRecoveryRestart) {
+        std::cout << "Recovery Restart Time Duration: " << cfg.recoveryRestartTimeDuration
+                  << " seconds" << std::endl;
+    }
+
+    std::cout << "Packet Stats Timer Interval: " << cfg.packetStatsTimerInterval
+              << " seconds" << std::endl;
+
+    // WWAN‑only extended detection config
+    if (cfg.module == telux::data::DataStallNetworkModule::WWAN) {
+        std::cout << "\nExtended Detection Config:" << std::endl;
+        std::cout << "Active Connectivity Check: "
+                  << (cfg.extendedConfig.activeConnCheckEnable ? "Enabled" : "Disabled")
+                  << std::endl;
+
+        if (cfg.extendedConfig.activeConnCheckEnable) {
+            if (!cfg.extendedConfig.pingServerAddressV4.empty()) {
+                std::cout << "IPv4 Ping Server: " << cfg.extendedConfig.pingServerAddressV4
+                          << std::endl;
+            }
+            if (!cfg.extendedConfig.pingServerAddressV6.empty()) {
+                std::cout << "IPv6 Ping Server: " << cfg.extendedConfig.pingServerAddressV6
+                          << std::endl;
+            }
+        }
+
+        std::cout << "TX Threshold: " << static_cast<int>(cfg.extendedConfig.txThreshold)
+                  << std::endl;
+        std::cout << "RX Threshold: " << static_cast<int>(cfg.extendedConfig.rxThreshold)
+                  << std::endl;
+    }
+    std::cout << "========================================\n" << std::endl;
 }

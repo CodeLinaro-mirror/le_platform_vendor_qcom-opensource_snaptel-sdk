@@ -208,22 +208,18 @@ bool NAOIpTrigger::validateTrigger(
     return false;
 }
 
-void NAOIpTrigger::onDataRestrictModeChange(DataRestrictMode mode) {
+void NAOIpTrigger::onDataFilterModeChange(DataRestrictModeType filterMode) {
+    eventManager_->holdWakeLock("DataFilterDisabled");
     LOG(DEBUG, __FUNCTION__);
-    if (mode.filterMode == DataRestrictModeType::DISABLE) {
-        eventManager_->holdWakeLock("DataFilterDisabled");
-        std::unique_lock<std::mutex> lock(messageMtx_);
-        if (messageCv_.wait_for(lock, std::chrono::seconds(2)) == std::cv_status::timeout) {
-            if (eventManager_->getActivityState() == TcuActivityState::SUSPEND) {
-                if (tcpKeepAliveHandler_) {
-                    tcpKeepAliveHandler_->stopKAOffload();
-                    tcpKeepAliveHandler_->startKAOffload();
-                }
-                enableFilter();
+    if (filterMode == DataRestrictModeType::DISABLE) {
+        if (RefAppUtils::isAutoExitEnabled()) {
+            triggerEvent(TcuActivityState::RESUME, ALL_MACHINES);
+            if (tcpKeepAliveHandler_) {
+                tcpKeepAliveHandler_->stopKAOffload();
             }
         }
-        eventManager_->releaseWakeLock("DataFilterDisabled");
     }
+    eventManager_->releaseWakeLock("DataFilterDisabled");
 }
 
 void NAOIpTrigger::messageReceived(
@@ -237,7 +233,8 @@ void NAOIpTrigger::messageReceived(
     } else {
         RefAppUtils::logKpiFile("received TCP");
         LOG(ERROR, __FUNCTION__, " trigger not match ");
-        if (eventManager_->getActivityState() == TcuActivityState::SUSPEND) {
+        if (eventManager_->getActivityState() == TcuActivityState::SUSPEND
+            && !RefAppUtils::isAutoExitEnabled()) {
             if (tcpKeepAliveHandler_) {
                 tcpKeepAliveHandler_->stopKAOffload();
                 tcpKeepAliveHandler_->startKAOffload();

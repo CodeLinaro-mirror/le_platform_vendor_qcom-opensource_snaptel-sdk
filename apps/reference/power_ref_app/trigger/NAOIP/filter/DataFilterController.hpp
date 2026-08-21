@@ -74,7 +74,7 @@ class DataFilterController : public enable_shared_from_this<DataFilterController
      public:
         DataFilterListener(std::weak_ptr<DataFilterController> dataController);
 
-        void onDataRestrictModeChange(DataRestrictMode mode) override;
+        void onDataFilterModeChange(DataRestrictModeType filterMode) override;
         void onServiceStatusChange(telux::common::ServiceStatus status) override;
     };
     std::shared_ptr<DataFilterListener> dataFilterListener_;

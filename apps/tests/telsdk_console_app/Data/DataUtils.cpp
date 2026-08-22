@@ -321,6 +321,8 @@ std::string DataUtils::stallReasonToString(telux::data::DataStallReason reason) 
         case telux::data::DataStallReason::IPA_CONF_DATA_STALL: return "IPA_CONF_DATA_STALL";
         case telux::data::DataStallReason::WLAN_AP_DATA_STALL: return "WLAN_AP_DATA_STALL";
         case telux::data::DataStallReason::WLAN_STA_DATA_STALL: return "WLAN_STA_DATA_STALL";
+        case telux::data::DataStallReason::WWAN_DATA_STALL: return "WWAN_DATA_STALL";
+        case telux::data::DataStallReason::WLAN_HW_DATA_STALL: return "WLAN_HW_DATA_STALL";
         default: return "UNKNOWN";
     }
 }
@@ -345,10 +347,13 @@ std::string DataUtils::recoveryActionToString(telux::data::DataStallRecoveryActi
 
 std::string DataUtils::recoveryResultToString(telux::data::DataStallRecoveryResult result) {
     switch (result) {
-        case telux::data::DataStallRecoveryResult::INVALID: return "INVALID";
-        case telux::data::DataStallRecoveryResult::RECOVERY_SUCCESS: return "RECOVERY_SUCCESS";
-        case telux::data::DataStallRecoveryResult::RECOVERY_ACTION_FAILURE: return "RECOVERY_ACTION_FAILURE";
-        case telux::data::DataStallRecoveryResult::RECOVERY_ACTION_SUCCESS: return "RECOVERY_ACTION_SUCCESS";
+        case telux::data::DataStallRecoveryResult::INVALID: return "No recovery action";
+        case telux::data::DataStallRecoveryResult::RECOVERY_SUCCESS:
+            return "Recovery action is success and data stall is recovered";
+        case telux::data::DataStallRecoveryResult::RECOVERY_ACTION_FAILURE:
+            return "Recovery action is failed and data stall is not recovered";
+        case telux::data::DataStallRecoveryResult::RECOVERY_ACTION_SUCCESS:
+            return "Recovery action is success but data stall is not recovered";
         default: return "UNKNOWN";
     }
 }

@@ -41,7 +41,11 @@
 #include <telux/common/CommonDefines.hpp>
 #include <telux/tel/PhoneDefines.hpp>
 
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
 #include "../Audio/AudioClient.hpp"
+#endif
+
+using namespace telux::common;
 
 class MyCallListener : public telux::tel::ICallListener {
  public:

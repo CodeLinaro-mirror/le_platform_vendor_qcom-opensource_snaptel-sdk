@@ -56,7 +56,9 @@ extern "C" {
 
 #include "console_app_framework/ConsoleApp.hpp"
 #include "MsdSettings.hpp"
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
 #include "./../Audio/AudioClient.hpp"
+#endif
 
 #define CATEGORY_AUTO 1
 #define CATEGORY_MANUAL 2

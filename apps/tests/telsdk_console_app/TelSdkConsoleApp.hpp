@@ -48,7 +48,9 @@
 
 #include "ModemStatus.hpp"
 #include "console_app_framework/ConsoleApp.hpp"
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
 #include "Audio/AudioClient.hpp"
+#endif
 
 class TelSdkConsoleApp : public ConsoleApp {
  public:

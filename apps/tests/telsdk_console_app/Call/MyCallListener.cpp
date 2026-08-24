@@ -83,7 +83,8 @@ void MyCallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) {
     }
 
     if (call->getCallState() == telux::tel::CallState::CALL_ENDED) {
-        int phoneId                                     = call->getPhoneId();
+        int phoneId = call->getPhoneId();
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
         static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
         if (audioClient->isReady()) {
             int numCalls = getCallsOnSlot(static_cast<SlotId>(phoneId));
@@ -93,6 +94,9 @@ void MyCallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) {
                 audioClient->stopVoiceSession(static_cast<SlotId>(phoneId));
             }
         }
+#else
+        std::cout << "Audio is not supported, skipping stop voice session" << std::endl;
+#endif
         PRINT_NOTIFICATION
             << Utils::getCurrentTime()
             << " Cause of call termination: " << getCallEndCauseString(call->getCallEndCause())

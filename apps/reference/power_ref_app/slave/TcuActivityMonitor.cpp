@@ -6,6 +6,7 @@
 #include "TcuActivityMonitor.hpp"
 #include <iostream>
 #include "common/RefAppUtils.hpp"
+#include "KpiLogUtils.hpp"
 
 std::shared_ptr<TcuActivityMonitor> TcuActivityMonitor::getInstance() {
     static std::shared_ptr<TcuActivityMonitor> instance(new TcuActivityMonitor());
@@ -182,9 +183,13 @@ void TcuActivityMonitor::onTcuActivityStateUpdate(TcuActivityState state, std::s
             }
         } else if (state == TcuActivityState::RESUME) {
             LOGFD("Stopping TCP Keep-Alive offload due to RESUME state");
-            RefAppUtils::logKpiFile("resume from PMD");
+            if (RefAppUtils::isKpiLoggingEnabled()) {
+                KpiLogUtils::logKpiFile("resume", false, "M - Refd ");
+            }
             if (tcpKeepAliveHandler_->sendMessageToAll(localMachineName_ + " got resumed")) {
-                RefAppUtils::logKpiFile("TCP send");
+                if (RefAppUtils::isKpiLoggingEnabled()) {
+                    KpiLogUtils::logKpiFile("TCP", false, "M - Refd ");
+                }
             }
             tcpKeepAliveHandler_->stopKAOffload();
         }

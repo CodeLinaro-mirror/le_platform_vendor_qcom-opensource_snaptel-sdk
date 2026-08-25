@@ -49,31 +49,40 @@ enum class ApDeviceConnectionEvent {
 };
 
 /**
- * Wlan Security Mode
+ * Wlan Security Mode.
+ *
+ * @note This enum controls hostapd's "wpa" configuration key, a bitmask mapped to the legacy
+ * WPA and RSN generations as follows: @ref telux::wlan::SecMode::WPA sets wpa=1 (legacy WPA,
+ * pre-RSN), supporting PSK authentication. @ref telux::wlan::SecMode::WPA2 sets wpa=2 (RSN),
+ * the security generation that WPA3-Personal is also built on. @ref telux::wlan::SecMode::WPA3
+ * sets wpa=3, enabling legacy WPA and RSN together in mixed mode. WPA3-Personal is configured
+ * by selecting @ref telux::wlan::SecMode::WPA2 together with @ref telux::wlan::SecAuth::SAE.
  */
 enum class SecMode {
-    OPEN ,                         /**<  Open System Architecture    */
-    WEP  ,                         /**<  Wired Equivalent Privacy    */
-    WPA  ,                         /**<  Wi-Fi Protected Access      */
-    WPA2 ,                         /**<  Wi-Fi Protected Access II   */
-    WPA3 ,                         /**<  Wi-Fi Protected Access III  */
+    OPEN, /**<  Open System Architecture    */
+    WEP, /**<  Wired Equivalent Privacy    */
+    WPA, /**<  Legacy WPA (pre-RSN). Maps to hostapd wpa=1. Supports PSK authentication.    */
+    WPA2, /**<  RSN. Maps to hostapd wpa=2. Combine with SecAuth::SAE for WPA3-Personal.    */
+    WPA3, /**<  WPA + RSN mixed mode. Maps to hostapd wpa=3, enabling legacy WPA and RSN
+               together.                                                                    */
 };
 
 /**
  * Wlan Authentication Method
  */
 enum class SecAuth {
-    NONE    ,                      /**<  No Authentication - Open System                      */
-    PSK     ,                      /**<  Pre-Shared Key                                       */
-    EAP_SIM,                       /**<  EAP - Subscriber Identity Module                     */
-    EAP_AKA,                       /**<  EAP - Authentication and Key Agreement               */
-    EAP_LEAP,                      /**<  EAP - Lightweight Extensible Authentication Protocol */
-    EAP_TLS ,                      /**<  EAP - Transport Layer Security                       */
-    EAP_TTLS,                      /**<  EAP - Tunneled Transport Layer Security              */
-    EAP_PEAP,                      /**<  EAP - Protected EAP                                  */
-    EAP_FAST,                      /**<  EAP - Flexible Authentication via Secure Tunneling   */
-    EAP_PSK ,                      /**<  EAP - Pre-Shared Key                                 */
-    SAE,                           /**< Simultaneous Authentication of Equals                 */
+    NONE, /**<  No Authentication - Open System                      */
+    PSK, /**<  Pre-Shared Key                                       */
+    EAP_SIM, /**<  EAP - Subscriber Identity Module                     */
+    EAP_AKA, /**<  EAP - Authentication and Key Agreement               */
+    EAP_LEAP, /**<  EAP - Lightweight Extensible Authentication Protocol */
+    EAP_TLS, /**<  EAP - Transport Layer Security                       */
+    EAP_TTLS, /**<  EAP - Tunneled Transport Layer Security              */
+    EAP_PEAP, /**<  EAP - Protected EAP                                  */
+    EAP_FAST, /**<  EAP - Flexible Authentication via Secure Tunneling   */
+    EAP_PSK, /**<  EAP - Pre-Shared Key                                 */
+    SAE, /**< Simultaneous Authentication of Equals. Used together with
+              @ref telux::wlan::SecMode::WPA2 to configure WPA3-Personal security.  */
 };
 
 /**
@@ -210,6 +219,9 @@ class IApInterfaceManager {
     /**
      * Set Wlan Security Configuration: Used to change security settings of selected network.
      *
+     * Configuration will take effect after hostapd service is restarted by calling
+     * @ref telux::wlan::IApInterfaceManager::manageApService.
+     *
      * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_CONFIG
      * permission to invoke this API successfully.
      *
@@ -224,6 +236,9 @@ class IApInterfaceManager {
     /**
      * Set Access Point SSID: Used to change SSID of selected network.
      *
+     * Configuration will take effect after hostapd service is restarted by calling
+     * @ref telux::wlan::IApInterfaceManager::manageApService.
+     *
      * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_CONFIG
      * permission to invoke this API successfully.
      *
@@ -237,6 +252,9 @@ class IApInterfaceManager {
 
     /**
      * Set Access Point visibility: Used to change SSID broadcast of selected network.
+     *
+     * Configuration will take effect after hostapd service is restarted by calling
+     * @ref telux::wlan::IApInterfaceManager::manageApService.
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_CONFIG
      * permission to invoke this API successfully.
@@ -260,6 +278,9 @@ class IApInterfaceManager {
      * @ref telux::wlan::ApElementInfoConfig comply with applicable constraints and
      * interdependencies as defined in the IEEE 802.11 standard.
      *
+     * Configuration will take effect after hostapd service is restarted by calling
+     * @ref telux::wlan::IApInterfaceManager::manageApService.
+     *
      * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_CONFIG
      * permission to invoke this API successfully.
      *
@@ -273,6 +294,9 @@ class IApInterfaceManager {
 
     /**
      * Set Passphrase for Access Point: Used to change passphrase of selected network.
+     *
+     * Configuration will take effect after hostapd service is restarted by calling
+     * @ref telux::wlan::IApInterfaceManager::manageApService.
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_CONFIG
      * permission to invoke this API successfully.
@@ -351,6 +375,10 @@ class IApInterfaceManager {
      * @ref telux::wlan::IWlanDeviceManager::setMode.
      * Details about the AP status are provided via @ref telux::wlan::IApListener::onApStatusChanged
      *
+     * @note WLAN must be enabled with at least one AP operational before invoking this API.
+     * @ref telux::common::ErrorCode::INVALID_STATE is returned if this API is called to restart
+     * the AP while WLAN is disabled.
+     *
      * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_CONFIG
      * permission to invoke this API successfully.
      *
@@ -425,6 +453,6 @@ public:
 };
 
 /** @} */ /* end_addtogroup telematics_wlan_ap */
-}
-}
-#endif // TELUX_WLAN_APINTERFACEMANAGER_HPP
+}  // namespace wlan
+}  // namespace telux
+#endif  // TELUX_WLAN_APINTERFACEMANAGER_HPP

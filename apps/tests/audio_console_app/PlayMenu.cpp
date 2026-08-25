@@ -117,6 +117,7 @@ void PlayMenu::cleanup() {
             th.join();
         }
     }
+    runningThreads_.clear();
     pipeLineEmpty_   = true;
     audioPlayStream_ = nullptr;
     writeFail_       = false;
@@ -285,9 +286,9 @@ void PlayMenu::writeCallback(std::shared_ptr<telux::audio::IStreamBuffer> buffer
     }
 
     buffer->reset();
-    freeBuffers_.push(buffer);
     {
         std::lock_guard<std::mutex> lock(mutex_);
+        freeBuffers_.push(buffer);
         cv_.notify_all();
     }
     return;
@@ -419,10 +420,11 @@ void PlayMenu::play() {
                 std::cout << "Request to stop playback after pending buffers failed" << std::endl;
             }
         } else {
-            while (freeBuffers_.size() != TOTAL_BUFFERS) {
-                std::unique_lock<std::mutex> lock(mutex_);
-                cv_.wait(lock);
-            }
+            // When audio service becomes unavailable (SSR), the outstanding write
+            // callback if any, will not be called anymore, so, also wake up
+            // on !ready_ instead of waiting indefinitely for all buffers to be returned.
+            std::unique_lock<std::mutex> lock(mutex_);
+            cv_.wait(lock, [this] { return freeBuffers_.size() == TOTAL_BUFFERS || !ready_; });
         }
     }
 

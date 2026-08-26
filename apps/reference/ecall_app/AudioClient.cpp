@@ -135,7 +135,7 @@ void AudioClient::onServiceStatusChange(ServiceStatus status) {
 // Initialize the audio subsystem
 telux::common::Status AudioClient::init() {
     // Get the AudioFactory and AudioManager instances.
-    auto &audioFactory = AudioFactory::getInstance();
+    auto &audioFactory               = AudioFactory::getInstance();
     std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
     audioMgr_ = audioFactory.getAudioManager([&prom](telux::common::ServiceStatus status) {
         if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
@@ -146,7 +146,7 @@ telux::common::Status AudioClient::init() {
             prom.set_value(telux::common::ServiceStatus::SERVICE_FAILED);
         }
     });
-    if(audioMgr_ == nullptr) {
+    if (audioMgr_ == nullptr) {
         std::cout << CLIENT_NAME << "*** ERROR - Failed to get Audio Manager instance" << std::endl;
         return telux::common::Status::FAILED;
     }

@@ -100,7 +100,13 @@ struct ApNetInfo {
 };
 
 /**
- * AP Status for enabled Networks
+ * AP Status for enabled Networks.
+ *
+ * @note   If the AP is started and controlled by the OEM via Linux OSS APIs. Its network
+ *         interface is assigned a dummy IP address and added to a bridge; the DHCP server is
+ *         bound to that bridge, and AP clients obtain their IP address from it. Consequently,
+ *         @ref ipv4Address carries no networking significance, and AP type (see @ref network
+ *         and @ref telux::wlan::ApType) does not apply and is reported as ApType::UNKNOWN.
  */
 struct ApStatus {
     Id              id;              /**< AP id                                 */

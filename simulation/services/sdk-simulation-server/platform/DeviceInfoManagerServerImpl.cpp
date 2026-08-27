@@ -307,13 +307,13 @@ grpc::Status DeviceInfoManagerServerImpl::GetPlatformVersion(ServerContext *cont
 
     std::string modem;
     std::string meta_build_id;
-    std::string apps_fsl;
+    std::string apps_kernel;
     std::string apps;
 
     if (data.status == telux::common::Status::SUCCESS) {
         modem         = data.stateRootObj["Image_Build_IDs"]["modem"].asString();
         meta_build_id = data.stateRootObj["Metabuild_Info"]["Meta_Build_ID"].asString();
-        apps_fsl      = data.stateRootObj["Image_Build_IDs"]["apps_fsl"].asString();
+        apps_kernel   = data.stateRootObj["Image_Build_IDs"]["apps_kernel"].asString();
         apps          = data.stateRootObj["Image_Build_IDs"]["apps"].asString();
     }
 
@@ -322,7 +322,7 @@ grpc::Status DeviceInfoManagerServerImpl::GetPlatformVersion(ServerContext *cont
     response->mutable_reply()->set_delay(data.cbDelay);
     response->set_modem_details(modem);
     response->set_meta_details(meta_build_id);
-    response->set_external_app(apps_fsl);
+    response->set_external_app(apps_kernel);
     response->set_integrated_app(apps);
 
     return grpc::Status::OK;

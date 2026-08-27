@@ -272,13 +272,11 @@ int DgnssMenu::processRtcmFromServer(void) {
        memcpy(truncBuffer + appendOffset, buffer, appendSize);
        append = false;
        appendOffset = 0;
-       if (status_ != DgnssStatus::MESSAGE_PARSE_ERROR) {
-           std::cout << "append Injecting msg_type=" << msg_type_ << " length=" << totalSize << std::endl;
-           if (telux::common::Status::SUCCESS !=
-                   dgnssManager_->injectCorrectionData(truncBuffer, totalSize)) {
-               std::cout << "Injection failure" << std::endl;
-               return -1;
-           }
+       std::cout << "append Injecting msg_type=" << msg_type_ << " length=" << totalSize << std::endl;
+       if (telux::common::Status::SUCCESS !=
+               dgnssManager_->injectCorrectionData(truncBuffer, totalSize)) {
+           std::cout << "Injection failure" << std::endl;
+           return -1;
        }
    } else {
        appendSize = 0;
@@ -302,15 +300,13 @@ int DgnssMenu::processRtcmFromServer(void) {
                i += appendOffset;
                std::cout << "appendOffset=" << appendOffset << " i = " << i << std::endl;
            } else {
-               if (status_ != DgnssStatus::MESSAGE_PARSE_ERROR) {
-                   std::cout << "Injecting msg_type=" << msg_type_ << " length=" << length+6 << std::endl;
-                   if (telux::common::Status::SUCCESS !=
-                           dgnssManager_->injectCorrectionData(buffer + i, length + 6)) {
-                       std::cout << "Injection failure" << std::endl;
-                       return -1;
-                   }
-                   i += length + 6;
+               std::cout << "Injecting msg_type=" << msg_type_ << " length=" << length+6 << std::endl;
+               if (telux::common::Status::SUCCESS !=
+                       dgnssManager_->injectCorrectionData(buffer + i, length + 6)) {
+                   std::cout << "Injection failure" << std::endl;
+                   return -1;
                }
+               i += length + 6;
            }
        } else {
            i += 1;
@@ -354,7 +350,6 @@ int DgnssMenu::processRtcmFromFile(void) {
 }
 /* This funciton is invoked asynchronously in a seperate thread */
 void DgnssMenu::onDgnssStatusUpdate(DgnssStatus status) {
-   status_ = status;
    switch(status) {
        case DgnssStatus::DATA_SOURCE_NOT_SUPPORTED:
          std::cout << "RTCM data soure is not supported" << std::endl;

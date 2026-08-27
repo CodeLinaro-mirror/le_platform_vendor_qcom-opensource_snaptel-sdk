@@ -50,6 +50,9 @@ class IWlanControlManager {
      *
      * @returns operation error code (if any). @ref telux::common::ErrorCode
      *
+     * @note   See @ref telux::wlan::ApStatus for a limitation on the significance of AP type
+     *         and IP address reported for APs started and controlled via Linux OSS APIs.
+     *
      * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
      *         break backwards compatibility.
      */

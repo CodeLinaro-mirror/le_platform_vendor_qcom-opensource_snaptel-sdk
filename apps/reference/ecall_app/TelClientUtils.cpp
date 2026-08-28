@@ -60,6 +60,22 @@ std::string TelClientUtils::callDirectionToString(telux::tel::CallDirection cd) 
     }
 }
 
+std::string TelClientUtils::callTypeToString(telux::tel::CallType ct) {
+    switch (ct) {
+        case telux::tel::CallType::VOICE_CALL:
+            return std::string("Voice call");
+        case telux::tel::CallType::VOICE_IP_CALL:
+            return std::string("Voice IP call");
+        case telux::tel::CallType::EMERGENCY_CALL:
+            return std::string("Emergency call");
+        case telux::tel::CallType::EMERGENCY_IP_CALL:
+            return std::string("Emergency IP call");
+        default:
+            std::cout << CLIENT_NAME << "Unexpected call type = " << (int)ct << std::endl;
+            return std::string("unknown");
+    }
+}
+
 std::string TelClientUtils::networkModeToString(telux::tel::NetworkMode mode) {
     switch (mode) {
         case telux::tel::NetworkMode::GSM:

@@ -238,6 +238,7 @@ void TelClient::onCallInfoChange(std::shared_ptr<ICall> call) {
         << " Call State: " << TelClientUtils::callStateToString(call->getCallState())
         << "\n Call Index: " << (int)call->getCallIndex()
         << ", Call Direction: " << TelClientUtils::callDirectionToString(call->getCallDirection())
+        << ", Call Type: " << TelClientUtils::callTypeToString(call->getCallType())
         << ", Network Mode: " << TelClientUtils::networkModeToString(call->getNetworkMode())
         << ", Phone Number: " << call->getRemotePartyNumber() << std::endl;
     if (isEraGlonassEnabled()) {

@@ -222,7 +222,7 @@ enum class ErrorCode {
    MAX_QOS_REQUESTS_IN_USE = 1038,       /**< Maximum QoS requests in use */
    INCORRECT_FLOW_FILTER = 1039,         /**< Incorrect flow filter  */
    NETWORK_QOS_UNAWARE = 1040,           /**< Network QoS unaware */
-   INVALID_ID = 1041,                    /**< Invalid call ID was sent in the request */
+   INVALID_ID = 1041,                    /**< Invalid ID was sent in the request */
    REQUESTED_NUM_UNSUPPORTED = 1042,     /**< Requested message ID is not supported by the
                                               currently running software */
    INTERFACE_NOT_FOUND = 1043,           /**< Cannot retrieve the FMC interface */

@@ -184,6 +184,11 @@ class IStaInterfaceManager {
     /**
      * Enable Hotspot 2.0 Support
      *
+     * If API is called when WLAN is disabled, changes will take effect when WLAN is enabled using
+     * @ref telux::wlan::IWlanDeviceManager::enable API. If API is called when WLAN is enabled,
+     * changes will take effect after restarting wpa_supplicant by calling
+     * @ref telux::wlan::IStaInterfaceManager::manageStaService.
+     *
      * On platforms with Access control enabled, caller needs to have TELUX_WLAN_STA_CONFIG
      * permission to invoke this API successfully.
      *
@@ -364,6 +369,10 @@ class IStaInterfaceManager {
      * API is called.
      * This API should be called only after station mode is configured through
      * @ref telux::wlan::IDeviceManager::setMode
+     *
+     * @note WLAN must be enabled with at least one STA operational before invoking this API.
+     * @ref telux::common::ErrorCode::INVALID_STATE is returned if this API is called to restart
+     * the STA while WLAN is disabled.
      *
      * On platforms with Access control enabled, caller needs to have TELUX_WLAN_STA_CONFIG
      * permission to invoke this API successfully.

@@ -1792,6 +1792,7 @@ message RequestRegistrationInfoReply {
   commonStub.Status status = 6;
   int32 delay = 7;
   bool is_callback = 8;
+  repeated string uri_list = 9;
 }
 
 message RequestServiceInfoRequest { int32 slot_id = 1; }
@@ -1824,6 +1825,7 @@ message ImsRegStatusChangeEvent {
   RadioTechnology rat = 3;
   int32 error_code = 4;
   string error_string = 5;
+  repeated string uri_list = 6;
 }
 
 message ImsServiceInfoChangeEvent {

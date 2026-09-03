@@ -143,7 +143,7 @@ void ServingSystemListener::onLteAttachFailure(const telux::data::LteAttachFailu
         std::cout << std::setfill('0') << std::setw(2) << std::hex
                   << static_cast<int>(info.plmnId[i]);
     }
-    std::cout << std::endl;
+    std::cout << std::dec << std::endl;
 
     if (info.primaryPlmnId.size()) {
         std::cout << " Primary PLMN:";
@@ -151,7 +151,7 @@ void ServingSystemListener::onLteAttachFailure(const telux::data::LteAttachFailu
             std::cout << std::setfill('0') << std::setw(2) << std::hex
                       << static_cast<int>(info.primaryPlmnId[i]);
         }
-        std::cout << std::endl;
+        std::cout << std::dec << std::endl;
     }
     std::cout << std::endl;
 }

@@ -11,7 +11,10 @@
                     "ipFamilyType":"IPV4",
                     "authProtocolType":"AUTH_PAP",
                     "username":"",
-                    "password":""
+                    "password":"",
+                    "emergencyAllowed":2,
+                    "clatEnabled":false,
+                    "enablePcscfViaPco":false
                 },
                 {
                     "profileName":"profile2",
@@ -22,7 +25,10 @@
                     "ipFamilyType":"IPV4V6",
                     "authProtocolType":"AUTH_PAP",
                     "username":"",
-                    "password":""
+                    "password":"",
+                    "emergencyAllowed":2,
+                    "clatEnabled":false,
+                    "enablePcscfViaPco":false
                 }
             ]
         }

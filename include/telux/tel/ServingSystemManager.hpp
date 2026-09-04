@@ -101,6 +101,40 @@ enum class ServiceRegistrationState {
 };
 
 /**
+ * @brief Specifies the domain preference for voice call.
+ *
+ * Voice calls can be established using either the Circuit-Switched (CS)
+ * domain or the Packet-Switched (PS) domain (for example, VoLTE or VoNR).
+ * For preferred modes (CS_PREF and PS_PREF), the modem may attempt to use
+ * the alternate domain when the preferred domain is unavailable.
+ */
+enum class VoiceDomainPreference {
+    UNKNOWN = -1, /**< Voice domain preference is unavailable or not yet determined. */
+    CS_ONLY, /**< Circuit-Switched (CS) voice only; PS voice (e.g. VoLTE) is not used. */
+    PS_ONLY, /**< Packet-Switched (PS) voice only; CS fallback (CSFB) is not used. */
+    CS_PREF, /**< CS preferred; PS voice used as secondary if CS is unavailable. */
+    PS_PREF, /**< PS preferred (e.g. VoLTE/VoNR); CS used as fallback if PS is unavailable. */
+};
+
+/**
+ * @brief Specifies the DRX (Discontinuous Reception) cycle duration.
+ *
+ * DRX allows the modem to periodically disable receiver activity
+ * between paging or downlink monitoring occasions to reduce power
+ * consumption. The configured cycle duration defines the interval
+ * between these monitoring periods. Longer cycles provide greater
+ * power savings but may increase downlink responsiveness and paging
+ * latency.
+ */
+enum class DrxConfig {
+    UNKNOWN       = 0x00, /**< DRX cycle is unspecified or unavailable. */
+    CYCLE_320_MS  = 0x06, /**< Long DRX cycle of  320 ms. */
+    CYCLE_640_MS  = 0x07, /**< Long DRX cycle of  640 ms. */
+    CYCLE_1280_MS = 0x08, /**< Long DRX cycle of 1280 ms. */
+    CYCLE_2560_MS = 0x09, /**< Long DRX cycle of 2560 ms (maximum power saving). */
+};
+
+/**
  * Defines current serving system information
  */
 struct ServingSystemInfo {
@@ -703,7 +737,7 @@ class IServingSystemManager {
         = 0;
 
     /**
-     * Request for Service Domain Preference asynchronously.
+     * Request for Service Domain Preference.
      *
      * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
      * permission to successfully invoke this API.
@@ -717,6 +751,89 @@ class IServingSystemManager {
     virtual telux::common::Status requestServiceDomainPreference(
         ServiceDomainPreferenceCallback callback)
         = 0;
+
+    /**
+     * @brief Sets the preferred voice domain used for voice calls.
+     *
+     * This configuration determines whether voice calls prefer the Circuit-Switched (CS) domain,
+     * Packet-Switched (PS) domain (for example, VoLTE or VoNR), or a combination of both when
+     * multiple voice domain options are available.
+     *
+     * @ref telux::tel::ServingSystemManager::setServiceDomainPreference defines the service domains
+     * that are permitted (CS and/or PS) and takes precedence over Voice Domain Preference. If a
+     * voice domain preference is configured for a domain that is not allowed by
+     * ServiceDomainPreference, that domain will not be used.
+     *
+     * On platforms with access control enabled, the caller must have the
+     * TELUX_TEL_SRV_SYSTEM_CONFIG permission to invoke this API.
+     *
+     * The configured preference persists across subsystem restart (SSR) and device reboot.
+     *
+     * @param[in] preference Desired voice domain preference. See @ref
+     * telux::tel::VoiceDomainPreference.
+     *
+     * @return ErrorCode indicating the result of the operation. Returns an appropriate error code,
+     * such as @ref telux::common::ErrorCode::INVALID_ARG, when an invalid voice domain preference
+     * is specified.
+     *
+     * @note Eval: This is a new API under evaluation. It is subject to change and may not be
+     * backward compatible.
+     */
+    virtual telux::common::ErrorCode setVoiceDomainPreference(VoiceDomainPreference preference) = 0;
+
+    /**
+     * Gets the currently configured Voice Domain Preference synchronously.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+     * permission to successfully invoke this API.
+     *
+     * @param [out] preference  @ref telux::tel::VoiceDomainPreference, valid only if the return
+     * value is @ref telux::common::ErrorCode::SUCCESS.
+     *
+     * @returns ErrorCode of getVoiceDomainPreference i.e. success or suitable error code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode getVoiceDomainPreference(VoiceDomainPreference &preference)
+        = 0;
+
+    /**
+     * Sets the DRX (Discontinuous Reception) cycle duration.
+     *
+     * On platforms with access control enabled, the caller must have the
+     * TELUX_TEL_SRV_SYSTEM_CONFIG permission to invoke this API successfully.
+     *
+     * The DRX configuration is not persistent across SSR or device reboot.
+     * It must be configured again after an SSR or reboot, if required.
+     *
+     * @param[in] config Requested DRX cycle duration. See @ref telux::tel::DrxConfig.
+     *
+     * @return ErrorCode indicating the result of the operation. Returns success
+     *         if the DRX configuration is set successfully; otherwise, returns
+     *         an appropriate error code, such as @ref telux::tel::ErrorCode::INVALID_ARG when an
+     * invalid DRX configuration value is provided.
+     *
+     * @note Eval: This is a new API under evaluation. It is subject to
+     *       change and may not be backward compatible.
+     */
+    virtual telux::common::ErrorCode setDrxConfig(DrxConfig config) = 0;
+
+    /**
+     * Gets the currently configured DRX cycle duration.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+     * permission to successfully invoke this API.
+     *
+     * @param [out] config      @ref DrxConfig, valid only if the return value is
+     *                          @ref telux::common::ErrorCode::SUCCESS.
+     *
+     * @return ErrorCode of getDrxConfig i.e. success or suitable error code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode getDrxConfig(DrxConfig &config) = 0;
 
     /**
      * Get the Serving system information. Supports only 3GPP RATs.
@@ -1077,6 +1194,21 @@ class IServingSystemListener : public common::IServiceStatusListener {
      * @param [in] preference      @ref ServiceDomainPreference
      */
     virtual void onServiceDomainPreferenceChanged(ServiceDomainPreference preference) {
+    }
+
+    /**
+     * This function is called whenever voice domain preference changes — from the explicit
+     * setVoiceDomainPreference() call.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+     * permission to receive this notification.
+     *
+     * @param [in] preference      @ref VoiceDomainPreference
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual void onVoiceDomainPreferenceChanged(VoiceDomainPreference preference) {
     }
 
     /**

@@ -5,6 +5,10 @@
         "_comment_RATPreference" : "Refer telux::tel::RatPrefType for more details",
         "ServiceDomainPreference" : 2,
         "_comment_ServiceDomainPreference" : "Refer telux::tel::ServiceDomainPreference for more details",
+        "VoiceDomainPreference" : 3,
+        "_comment_VoiceDomainPreference" : "Refer telux::tel::VoiceDomainPreference for more details",
+        "DrxConfig" : 0,
+        "_comment_DrxConfig" : "Refer telux::tel::DrxConfig for more details",
         "DcStatus" :
         {
             "endcAvailability" : 0,

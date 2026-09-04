@@ -140,6 +140,49 @@ std::string MyServingSystemHelper::getServiceDomainPref(
     return prefString;
 }
 
+std::string MyServingSystemHelper::getVoiceDomainPref(
+    telux::tel::VoiceDomainPreference preference) {
+    std::string prefString = " Unknown";
+    switch (preference) {
+        case telux::tel::VoiceDomainPreference::CS_ONLY:
+            prefString = " Circuit Switched(CS) only";
+            break;
+        case telux::tel::VoiceDomainPreference::PS_ONLY:
+            prefString = " Packet Switched(PS) only";
+            break;
+        case telux::tel::VoiceDomainPreference::CS_PREF:
+            prefString = " Circuit Switched(CS) preferred";
+            break;
+        case telux::tel::VoiceDomainPreference::PS_PREF:
+            prefString = " Packet Switched(PS) preferred";
+            break;
+        default:
+            break;
+    }
+    return prefString;
+}
+
+std::string MyServingSystemHelper::getDrxConfig(telux::tel::DrxConfig config) {
+    std::string configString = " Unknown";
+    switch (config) {
+        case telux::tel::DrxConfig::CYCLE_320_MS:
+            configString = " 320 ms";
+            break;
+        case telux::tel::DrxConfig::CYCLE_640_MS:
+            configString = " 640 ms";
+            break;
+        case telux::tel::DrxConfig::CYCLE_1280_MS:
+            configString = " 1280 ms";
+            break;
+        case telux::tel::DrxConfig::CYCLE_2560_MS:
+            configString = " 2560 ms";
+            break;
+        default:
+            break;
+    }
+    return configString;
+}
+
 std::string MyServingSystemHelper::getServiceDomain(telux::tel::ServiceDomain domain) {
     std::string domainString = " Unknown ";
     switch (domain) {
@@ -428,6 +471,13 @@ void MyServingSystemListener::onServiceDomainPreferenceChanged(
     std::cout << "\n\n";
     PRINT_NOTIFICATION << " Service domain preference is"
                        << MyServingSystemHelper::getServiceDomainPref(preference) << std::endl;
+}
+
+void MyServingSystemListener::onVoiceDomainPreferenceChanged(
+    telux::tel::VoiceDomainPreference preference) {
+    std::cout << "\n\n";
+    PRINT_NOTIFICATION << " Voice domain preference is"
+                       << MyServingSystemHelper::getVoiceDomainPref(preference) << std::endl;
 }
 
 void MyServingSystemListener::onSystemInfoChanged(telux::tel::ServingSystemInfo sysInfo) {

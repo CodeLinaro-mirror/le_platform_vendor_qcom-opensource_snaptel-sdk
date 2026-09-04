@@ -72,6 +72,12 @@ class ServingSystemManagerStub : public IServingSystemManager,
     telux::common::Status requestServiceDomainPreference(
         ServiceDomainPreferenceCallback callback) override;
 
+    telux::common::ErrorCode setVoiceDomainPreference(VoiceDomainPreference preference) override;
+    telux::common::ErrorCode getVoiceDomainPreference(VoiceDomainPreference &preference) override;
+
+    telux::common::ErrorCode setDrxConfig(DrxConfig config) override;
+    telux::common::ErrorCode getDrxConfig(DrxConfig &config) override;
+
     telux::common::Status getSystemInfo(ServingSystemInfo &sysInfo) override;
     telux::tel::DcStatus getDcStatus() override;
     telux::common::Status requestNetworkTime(NetworkTimeResponseCallback callback) override;

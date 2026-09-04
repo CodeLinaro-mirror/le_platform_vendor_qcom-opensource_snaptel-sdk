@@ -44,6 +44,16 @@ class ServingManagerServerImpl final
     grpc::Status SetServiceDomainPreference(ServerContext *context,
         const ::telStub::SetServiceDomainPreferenceRequest *request,
         telStub::SetServiceDomainPreferenceReply *response) override;
+    grpc::Status GetVoiceDomainPreference(ServerContext *context,
+        const ::telStub::GetVoiceDomainPreferenceRequest *request,
+        telStub::GetVoiceDomainPreferenceReply *response) override;
+    grpc::Status SetVoiceDomainPreference(ServerContext *context,
+        const ::telStub::SetVoiceDomainPreferenceRequest *request,
+        telStub::SetVoiceDomainPreferenceReply *response) override;
+    grpc::Status GetDrxConfig(ServerContext *context, const ::telStub::GetDrxConfigRequest *request,
+        telStub::GetDrxConfigReply *response) override;
+    grpc::Status SetDrxConfig(ServerContext *context, const ::telStub::SetDrxConfigRequest *request,
+        telStub::SetDrxConfigReply *response) override;
     grpc::Status GetSystemInfo(ServerContext *context,
         const ::telStub::GetSystemInfoRequest *request,
         telStub::GetSystemInfoReply *response) override;

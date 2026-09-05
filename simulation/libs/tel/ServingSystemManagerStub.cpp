@@ -1390,14 +1390,22 @@ void ServingSystemManagerStub::handleSystemInfoChanged(::telStub::SystemInfoEven
         ServingSystemInfo prevInfo;
         std::vector<CallBarringInfo> prevBarringInfo;
         SmsCapability prevSmsCapability;
+        // Add a flag to track initialization
+        bool sysInfoInitialized_ = false;
         bool reportSystemInfo;
         {
             std::lock_guard<std::mutex> lock(mtx_);
-            prevInfo             = lastSystemInfo_;
-            prevBarringInfo      = lastCallBarringInfo_;
-            prevSmsCapability    = lastSmsCapability_;
-            reportSystemInfo     = shouldReportSystemInfo(prevInfo, info, prevBarringInfo, infos,
+            prevInfo          = lastSystemInfo_;
+            prevBarringInfo   = lastCallBarringInfo_;
+            prevSmsCapability = lastSmsCapability_;
+            if (!sysInfoInitialized_) {
+                // Always report the first event to initialize state
+                reportSystemInfo    = true;
+                sysInfoInitialized_ = true;
+            } else {
+                reportSystemInfo = shouldReportSystemInfo(prevInfo, info, prevBarringInfo, infos,
                     prevSmsCapability, smsCapability, sysInfoFilterMask_);
+            }
             lastSystemInfo_      = info;
             lastCallBarringInfo_ = infos;
             lastSmsCapability_   = smsCapability;

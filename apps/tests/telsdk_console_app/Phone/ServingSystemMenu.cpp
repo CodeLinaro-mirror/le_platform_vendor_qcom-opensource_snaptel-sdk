@@ -1120,6 +1120,11 @@ void ServingSystemMenu::requestRrcState(std::vector<std::string> userInput) {
 
 void ServingSystemMenu::registerListener(std::vector<std::string> inputCommand) {
     std::cout << " register serving system listener " << std::endl;
+    auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+    if (!servingSystemMgr) {
+        std::cout << "ERROR - ServingSystemManager is null\n";
+        return;
+    }
     std::string maskSelection = "";
     char delimiter            = '\n';
     std::cout << "Enter notification type bits to register, comma-separated:\n"
@@ -1154,18 +1159,21 @@ void ServingSystemMenu::registerListener(std::vector<std::string> inputCommand) 
             return;
         }
     }
-    for (auto index = 0; index < servingSystemMgrs_.size(); index++) {
-        auto status = servingSystemMgrs_[index]->registerListener(servingSystemListener_, mask);
-        if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Failed to registerListener for Serving system Manager\n";
-        } else {
-            std::cout << "Successfully registered listener with mask: " << mask.to_string() << "\n";
-        }
+    auto status = servingSystemMgr->registerListener(servingSystemListener_, mask);
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "Failed to registerListener for Serving system Manager\n";
+    } else {
+        std::cout << "Successfully registered listener with mask: " << mask.to_string() << "\n";
     }
 }
 
 void ServingSystemMenu::deregisterListener(std::vector<std::string> inputCommand) {
     std::cout << " deregister serving system listener " << std::endl;
+    auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+    if (!servingSystemMgr) {
+        std::cout << "ERROR - ServingSystemManager is null\n";
+        return;
+    }
     std::string maskSelection = "";
     char delimiter            = '\n';
     std::cout << "Enter notification type bits to deregister, comma-separated:\n"
@@ -1200,14 +1208,11 @@ void ServingSystemMenu::deregisterListener(std::vector<std::string> inputCommand
             return;
         }
     }
-    for (auto index = 0; index < servingSystemMgrs_.size(); index++) {
-        auto status = servingSystemMgrs_[index]->deregisterListener(servingSystemListener_, mask);
-        if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Failed to deregisterListener for Serving system Manager\n";
-        } else {
-            std::cout << "Successfully deregistered listener with mask: " << mask.to_string()
-                      << "\n";
-        }
+    auto status = servingSystemMgr->deregisterListener(servingSystemListener_, mask);
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "Failed to deregisterListener for Serving system Manager\n";
+    } else {
+        std::cout << "Successfully deregistered listener with mask: " << mask.to_string() << "\n";
     }
 }
 

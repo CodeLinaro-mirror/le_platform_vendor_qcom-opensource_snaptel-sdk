@@ -1235,19 +1235,42 @@ class IServingSystemManager {
      * @ref IServingSystemListener::onCallBarringInfoChanged, and
      * @ref IServingSystemListener::onSmsCapabilityChanged.
      *
-     * When the SYSTEM_INFO notification type is enabled, all system information changes are
-     * reported to registered listeners by default. This API allows clients to restrict
-     * notifications to only the selected system information attributes defined by
-     * @ref SystemInfoNotificationFilter.
+     * By default, when the SYSTEM_INFO notification type is enabled through
+     * @ref IServingSystemManager::registerListener, all system information changes are reported
+     * to registered listeners. This API allows clients to limit notifications to specific system
+     * information attributes defined by @ref SystemInfoNotificationFilter.
      *
-     * After a filter mask is applied, notifications are generated only when one or more of the
-     * selected attributes change. For example, notifications may be triggered by service
-     * registration state changes, service loss or recovery, RAT transitions, or other configured
-     * system information updates.
+     * Once a filter mask is applied, notifications are generated only when one or more selected
+     * attributes change. This can significantly reduce unnecessary notifications and device
+     * wakeups caused by unrelated network state updates, making it particularly useful for
+     * power-sensitive applications interested in only a subset of system information changes.
      *
-     * This mechanism helps reduce unnecessary notifications and device wakeups caused by
-     * unrelated system information changes. It is particularly useful for power-sensitive
-     * applications that are interested only in specific network state transitions.
+     * If @ref SystemInfoNotificationFilter::SRV_STATUS,
+     * @ref SystemInfoNotificationFilter::SRV_STATUS_TOGGLE, or both are included in the filter
+     * mask, @ref ServingSystemInfo updates are delivered through
+     * @ref IServingSystemListener::onSystemInfoChanged according to the following behavior:
+     *
+     * - @ref SystemInfoNotificationFilter::SRV_STATUS
+     *   - Reports every service status transition within the same RAT, including transitions
+     *     between NO_SERVICE, LIMITED_SERVICE, IN_SERVICE, LIMITED_REGIONAL, and POWER_SAVE.
+     *   - Reports RAT transitions even when the service status remains unchanged.
+     *
+     * - @ref SystemInfoNotificationFilter::SRV_STATUS_TOGGLE
+     *   - Reports only transitions crossing the in-service boundary:
+     *     - NO_SERVICE, LIMITED_SERVICE, LIMITED_REGIONAL, or POWER_SAVE -> IN_SERVICE
+     *     - IN_SERVICE -> NO_SERVICE, LIMITED_SERVICE, LIMITED_REGIONAL, or POWER_SAVE
+     *   - Does not report transitions that remain within the out-of-service states, for example:
+     *     - NO_SERVICE -> LIMITED_SERVICE
+     *     - NO_SERVICE -> LIMITED_REGIONAL
+     *     - NO_SERVICE -> POWER_SAVE
+     *
+     * - When both @ref SystemInfoNotificationFilter::SRV_STATUS and
+     *   @ref SystemInfoNotificationFilter::SRV_STATUS_TOGGLE are enabled, a notification is
+     *   generated whenever either filter condition is satisfied.
+     *   This includes all service status transitions as well as RAT changes.
+     *
+     * @note A filter takes effect only when the SYSTEM_INFO notification type is enabled through
+     * @ref IServingSystemManager::registerListener.
      *
      * If @ref SystemInfoNotificationFilter::SRV_STATUS,
      * @ref SystemInfoNotificationFilter::SRV_STATUS_TOGGLE, or both are included in the filter

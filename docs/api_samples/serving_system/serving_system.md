@@ -123,9 +123,11 @@ reported.
 
    ~~~~~~{.cpp}
    if(servingSystemMgr) {
+      ServiceDomainResponseCallback cb;
       telux::common::Status status = servingSystemMgr->requestServiceDomainPreference(
-         ServiceDomainResponseCallback::serviceDomainResponse);
-      std::cout << static_cast<int>(status) <<std::endl;
+          std::bind(&ServiceDomainResponseCallback::serviceDomainResponse, &cb,
+                  std::placeholders::_1, std::placeholders::_2));
+      std::cout << static_cast<int>(status) << std::endl;
    }
    ~~~~~~
 

@@ -550,8 +550,11 @@ of performNetworkScan API.
 
 @subsection serving_system_call_flow Serving System Manager Call Flow
 
-Serving system manager provides APIs to get and set RAT mode preference and get and set service domain preference.
-Registered listener will get notified for the change in RAT mode and service domain preference change.
+ServingSystemManager provides APIs to get and set RAT mode preferences and service domain
+preferences. Registered listeners are notified when these preferences change.
+It also provides setSystemInfoNotificationFilter() and getSystemInfoNotificationFilter() APIs to
+configure and query a filter that restricts onSystemInfoChanged(), onCallBarringInfoChanged(), and
+onSmsCapabilityChanged() notifications to selected system information attributes.
 
 @anchor fig_serving_system_call_flow
 @latexonly
@@ -596,6 +599,55 @@ of setServiceDomainPreference API.
 18. Registered listener will get notified for the service domain preference change.
 19. Application can deregister a listener there by it would not get notifications.
 20. Status of deregister listener i.e. either SUCCESS or other status will be returned to the application.
+
+@subsubsection system_info_notification_filtering_call_flow System Info Notification Filtering Call Flow
+
+@anchor fig_system_info_notification_filtering_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.38]{system_info_notification_filtering.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{System Info Notification Filtering Call Flow}
+  \label{fig_system_info_notification_filtering_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{system_info_notification_filtering.png,System Info Notification Filtering Call Flow,80,80,System Info Notification Filtering Call Flow}
+
+1. Application requests the PhoneFactory for a ServingSystemManager instance by calling
+getServingSystemManager(slotId, initCb).
+2. PhoneFactory returns an IServingSystemManager object, which the application uses to register
+and deregister listeners.
+3. Application registers a listener using registerListener(listener) to receive serving system
+notifications.
+4. The registration status, either SUCCESS or an error status, is returned to the application.
+5. The Modem/Network reports updates such as system information updates, LTE SMS capability
+changes, and other serving system information changes to the ServingSystemManager.
+6. The registered listener receives notifications through callbacks such as
+onSystemInfoChanged(ServingSystemInfo) and onSmsCapabilityChanged(SmsCapability).
+7. During device suspend, the application deregisters unnecessary notifications and retains only
+the required network state change notifications by calling deregisterListener(listener) with
+a notification mask that excludes SYSTEM_INFO.
+8. The deregistration status, either SUCCESS or an error status, is returned to the application.
+9. The application calls setSystemInfoNotificationFilter(SRV_STATUS_TOGGLE) to limit SYSTEM_INFO
+notifications to specific system information changes during suspend.
+10. The status of the setSystemInfoNotificationFilter() operation, either SUCCESS or an error code,
+is returned to the application.
+11. The application calls getSystemInfoNotificationFilter() to retrieve the currently applied
+filter.
+12. The currently configured filter mask is returned to the application.
+13. A network event matching the configured filter occurs, such as service loss or RAT change.
+14. The registered listener receives an onSystemInfoChanged(ServingSystemInfo) notification
+because the event matches the configured filter.
+15. Upon device resume, the application clears the notification filter by calling
+setSystemInfoNotificationFilter(FILTER_MASK_NONE) to restore unrestricted SYSTEM_INFO notifications
+and re-registers any notifications that were deregistered during suspend.
+16. The status of the filter reset operation, either SUCCESS or an error status, is returned to
+the application.
+17. The Modem/Network reports updated system information to the ServingSystemManager.
+18. The registered listener receives an onSystemInfoChanged(ServingSystemInfo) notification for
+the updated system information.
 
 @subsection get_applications Card-Get applications call flow
 

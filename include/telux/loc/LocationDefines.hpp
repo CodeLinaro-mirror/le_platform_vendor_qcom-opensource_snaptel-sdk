@@ -208,7 +208,7 @@ enum class DgnssDataFormat{
 };
 
 /**
- * Defines status reported by cdfw for RTCM injection.
+ * Defines status reported by the Dgnss subsystem for RTCM injection.
  */
 enum class DgnssStatus{
   /** Dgnss subsystem doesn't support the data source */
@@ -225,6 +225,10 @@ enum class DgnssStatus{
   MESSAGE_PARSE_ERROR                = 4,
   /** Data source is not usable anymore */
   DATA_SOURCE_NOT_USABLE             = 5,
+  /** The Dgnss service is unreachable */
+  SERVICE_DOWN                       = 6,
+  /** The Dgnss service is ready to accept correction data */
+  READY_TO_ACCEPT_DATA               = 7,
 };
 
 /**

@@ -437,6 +437,14 @@ void DgnssMenu::onDgnssStatusUpdate(DgnssStatus status) {
             std::cout << "Failed to create RTCM source" << std::endl;
          }
          break;
+       case DgnssStatus::SERVICE_DOWN:
+         std::cout << "Dgnss service is unreachable, wait for READY_TO_ACCEPT_DATA to retry"
+                    << " injection" << std::endl;
+         break;
+       case DgnssStatus::READY_TO_ACCEPT_DATA:
+         std::cout << "Dgnss service is ready to accept correction data"
+                    << std::endl;
+         break;
       default:
          std::cout << "Unknown RTCM status" << std::endl;
    }

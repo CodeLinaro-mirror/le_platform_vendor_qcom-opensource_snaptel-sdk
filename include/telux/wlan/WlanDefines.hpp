@@ -100,7 +100,13 @@ struct ApNetInfo {
 };
 
 /**
- * AP Status for enabled Networks
+ * AP Status for enabled Networks.
+ *
+ * @note   If the AP is started and controlled by the OEM via Linux OSS APIs. Its network
+ *         interface is assigned a dummy IP address and added to a bridge; the DHCP server is
+ *         bound to that bridge, and AP clients obtain their IP address from it. Consequently,
+ *         @ref ipv4Address carries no networking significance, and AP type (see @ref network
+ *         and @ref telux::wlan::ApType) does not apply and is reported as ApType::UNKNOWN.
  */
 struct ApStatus {
     Id              id;              /**< AP id                                 */
@@ -108,6 +114,14 @@ struct ApStatus {
     std::string     ipv4Address;     /**< Local AP IP V4 address                */
     std::string     macAddress;      /**< AP MAC address                        */
     std::vector<ApNetInfo> network;  /**< Settings for AP info                  */
+};
+
+/**
+ * AP Interworking Information
+ */
+enum class ApInterworking {
+    INTERNET_ACCESS = 0, /**<  AP with internet access only - No LAN access   */
+    FULL_ACCESS     = 1 /**<  AP Can Access LAN and Internet                 */
 };
 
 /**
@@ -152,6 +166,52 @@ enum class ServiceOperation {
     STOP      = 0x00,      /**<  Stop service       */
     START     = 0x01,      /**<  Start service      */
     RESTART   = 0x02,      /**<  Restart service    */
+};
+
+/**
+ * Station Connection IP Type.
+ */
+enum class StaIpConfig {
+    DYNAMIC_IP = 1, /**< Station is configured with dynamic IP */
+    STATIC_IP  = 2, /**< Station is configured with Static IP  */
+};
+
+/**
+ * Static IP Configuration.
+ */
+struct StaStaticIpConfig {
+    std::string ipAddr; /**<   IPv4 address to be assigned. */
+    std::string gwIpAddr; /**<   IPv4 address of the gateway. */
+    std::string netMask; /**<   Subnet mask.                 */
+    std::string dnsAddr; /**<   DNS IPv4 address.            */
+};
+
+/**
+ * Wlan Interface State
+ */
+enum class InterfaceState {
+    INACTIVE = 0x00, /**<  Interface is Inactive  */
+    ACTIVE   = 0x01, /**<  Interface is Active    */
+};
+
+/**
+ * Wlan Interface Device
+ */
+enum class HwDeviceType {
+    UNKNOWN = 0, /**<  Wlan device is Unknown   */
+    QCA6574 = 1, /**<  Wlan device is QCA6574   */
+    QCA6696 = 2, /**<  Wlan device is QCA6696   */
+    QCA6595 = 3, /**<  Wlan device is QCA6595   */
+    QCA6797 = 4, /**<  Wlan device is QCA6797   */
+};
+
+/**
+ * Wlan Interface status
+ */
+struct InterfaceStatus {
+    HwDeviceType device; /**< WiFi hardware type           */
+    std::vector<ApStatus> apStatus; /**< Vector of active APs status  */
+    std::vector<StaStatus> staStatus; /**< Vector of active Sta status  */
 };
 
 /** @} */ /* end_addtogroup telematics_wlan */

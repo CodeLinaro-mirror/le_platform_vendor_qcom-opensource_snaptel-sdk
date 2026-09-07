@@ -286,3 +286,14 @@ void MyLocationCommandCallback::onXtraStatusInfo(const telux::loc::XtraStatus xt
     std::cout << "Xtra Feature Validity: " << xtraStatus.xtraValidForHours << "\n";
     LocationUtils::displayXtraStatus(xtraStatus);
 }
+
+void MyLocationCommandCallback::onNavMsgAuthStatusInfo(const telux::loc::NavMsgAuthStatus status,
+    telux::common::ErrorCode error) {
+    std::cout << __FUNCTION__ << " : " << Utils::getErrorCodeAsString(error) << std::endl;
+    PRINT_CB << " ************ Request Nav Msg Auth Status ***************" << std::endl;
+    if (error != telux::common::ErrorCode::SUCCESS) {
+        return;
+    }
+    LocationUtils::displayNavMsgAuthStatus(status);
+    std::cout << " ****************************************************" << std::endl;
+}

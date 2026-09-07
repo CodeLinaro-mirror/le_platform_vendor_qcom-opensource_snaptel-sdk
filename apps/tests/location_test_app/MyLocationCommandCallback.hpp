@@ -88,6 +88,8 @@ class MyLocationCommandCallback : public telux::common::ICommandResponseCallback
         telux::loc::ILocationInfoBase> locationInfo);
     void onXtraStatusInfo(const telux::loc::XtraStatus xtraStatus,
         telux::common::ErrorCode error);
+    void onNavMsgAuthStatusInfo(const telux::loc::NavMsgAuthStatus status,
+        telux::common::ErrorCode error);
 
   private:
     std::string commandName_;

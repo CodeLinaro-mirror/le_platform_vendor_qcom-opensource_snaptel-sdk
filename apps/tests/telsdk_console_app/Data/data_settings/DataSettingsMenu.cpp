@@ -9,6 +9,7 @@ extern "C" {
 
 #include <algorithm>
 #include <iostream>
+#include <limits>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -90,7 +91,11 @@ bool DataSettingsMenu::init() {
                 std::make_pair("Set_IPPT_NAT_Config",
                     std::bind(&DataSettingsMenu::setIPPTNatConfig, this, std::placeholders::_1)),
                 std::make_pair("Get_IPPT_NAT_Config",
-                    std::bind(&DataSettingsMenu::getIPPTNatConfig, this, std::placeholders::_1))};
+                    std::bind(&DataSettingsMenu::getIPPTNatConfig, this, std::placeholders::_1)),
+                std::make_pair(
+                    "Set_MTU", std::bind(&DataSettingsMenu::setMtu, this, std::placeholders::_1)),
+                std::make_pair(
+                    "Get_MTU", std::bind(&DataSettingsMenu::getMtu, this, std::placeholders::_1))};
         std::vector<std::shared_ptr<ConsoleAppCommand>> settingsMenuCommandList;
         int commandId = 1;
         for (auto &menuItem : settingsCommandPairList) {
@@ -882,6 +887,77 @@ void DataSettingsMenu::getIpConfig(std::vector<std::string> inputCommand) {
         ifMaskAddr.s_addr = ipConfig.ipAddr.ifMask;
         PRINT_RESPONSE_DATA << "ifMask:\t\t" << inet_ntoa(ifMaskAddr) << std::endl;
     }
+}
+
+void DataSettingsMenu::setMtu(std::vector<std::string> inputCommand) {
+    telux::common::ErrorCode errCode;
+
+    std::cout << "Set MTU \n";
+
+#if defined(TELUX_FOR_EXTERNAL_AP) || defined(TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED)
+    telux::data::OperationType opType = telux::data::OperationType::DATA_REMOTE;
+#else
+    telux::data::OperationType opType = telux::data::OperationType::DATA_LOCAL;
+#endif
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+
+    int64_t ipv4MtuInput = 0;
+    std::cout << "Enter IPv4 MTU value in bytes (max 9216): ";
+    std::cin >> ipv4MtuInput;
+    Utils::validateInput(ipv4MtuInput);
+    if (ipv4MtuInput < 0 || ipv4MtuInput > std::numeric_limits<uint32_t>::max()) {
+        std::cout << "Invalid MTU value. Must be in range [0, "
+                  << std::numeric_limits<uint32_t>::max() << "]" << std::endl;
+        return;
+    }
+    uint32_t ipv4Mtu = static_cast<uint32_t>(ipv4MtuInput);
+
+    telux::data::MtuConfig mtuConfig;
+    mtuConfig.slotId  = static_cast<SlotId>(slotId);
+    mtuConfig.ipv4Mtu = ipv4Mtu;
+
+    errCode = dataSettingsManagerMap_[opType]->setMtu(mtuConfig);
+    std::cout << "Response: " << Utils::getErrorCodeAsString(errCode) << std::endl;
+}
+
+void DataSettingsMenu::getMtu(std::vector<std::string> inputCommand) {
+    telux::common::ErrorCode errCode;
+
+    std::cout << "Get MTU \n";
+
+#if defined(TELUX_FOR_EXTERNAL_AP) || defined(TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED)
+    telux::data::OperationType opType = telux::data::OperationType::DATA_REMOTE;
+#else
+    telux::data::OperationType opType = telux::data::OperationType::DATA_LOCAL;
+#endif
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+
+    telux::data::MtuConfig mtuConfig;
+    mtuConfig.slotId = static_cast<SlotId>(slotId);
+
+    errCode = dataSettingsManagerMap_[opType]->getMtu(mtuConfig);
+
+    std::cout << "Response: " << Utils::getErrorCodeAsString(errCode) << std::endl;
+    if (errCode != telux::common::ErrorCode::SUCCESS) {
+        return;
+    }
+    PRINT_RESPONSE_DATA << "IPv4 MTU:\t\t" << mtuConfig.ipv4Mtu << std::endl;
 }
 
 void DataSettingsMenu::setIPPTNatConfig(std::vector<std::string> inputCommand) {

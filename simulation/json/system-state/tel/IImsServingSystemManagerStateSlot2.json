@@ -10,7 +10,9 @@
             "errorCode" : 200,
             "_comment_errorCode" : "Refer telux::tel::ImsRegistrationInfo::errorCode for more details" ,
             "errorString" : "",
-            "_comment_errorString" : "Refer telux::tel::ImsRegistrationInfo::errorString for more details"
+            "_comment_errorString" : "Refer telux::tel::ImsRegistrationInfo::errorString for more details",
+            "uriList" : ["sip:+1984653739@operator2.com", "tel:+1984653739"],
+            "_comment_uriList" : "Refer telux::tel::ImsRegistrationInfo::publicUserIdentityUris for more details"
         },
         "ImsServiceInfo" :
         {

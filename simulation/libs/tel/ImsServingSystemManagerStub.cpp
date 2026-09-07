@@ -166,6 +166,9 @@ telux::common::Status
     info.rat = static_cast<telux::tel::RadioTechnology>(response.rat());
     info.errorCode = response.error_code();
     info.errorString = (response.error_string());
+    for (const auto &uri : response.uri_list()) {
+        info.publicUserIdentityUris.emplace_back(uri);
+    }
 
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
     telux::common::Status status = static_cast<telux::common::Status>(response.status());
@@ -280,6 +283,9 @@ void ImsServingSystemManagerStub::handleImsRegStatusChanged
     info.rat = static_cast<telux::tel::RadioTechnology>(event.rat());
     info.errorCode = event.error_code();
     info.errorString = event.error_string();
+    for (const auto &uri : event.uri_list()) {
+        info.publicUserIdentityUris.emplace_back(uri);
+    }
     std::vector<std::weak_ptr<IImsServingSystemListener>> applisteners;
     if (listenerMgr_) {
         listenerMgr_->getAvailableListeners(applisteners);

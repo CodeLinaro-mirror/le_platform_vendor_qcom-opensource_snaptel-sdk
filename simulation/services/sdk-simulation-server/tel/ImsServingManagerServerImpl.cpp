@@ -121,6 +121,11 @@ grpc::Status ImsServingManagerServerImpl::RequestRegistrationInfo(ServerContext*
             response->set_rat(rat);
             response->set_error_code(errorCode);
             response->set_error_string(errorString);
+            const Json::Value &uriList
+                = data.stateRootObj[MANAGER]["ImsRegistrationInfo"]["uriList"];
+            for (Json::ArrayIndex i = 0; i < uriList.size(); ++i) {
+                response->add_uri_list(uriList[i].asString());
+            }
     }
     //Create response
     if(data.cbDelay != -1) {
@@ -252,8 +257,8 @@ void ImsServingManagerServerImpl::handleImsRegStatusChanged(std::string eventPar
         // Read string to get radio technology
         token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
         int rat = std::stoi(token);
-        if (regStatus < (static_cast<int>(telStub::RadioTechnology::RADIO_TECH_UNKNOWN)) ||
-            regStatus > (static_cast<int>(telStub::RadioTechnology::RADIO_TECH_NR5G))) {
+        if (rat < (static_cast<int>(telStub::RadioTechnology::RADIO_TECH_UNKNOWN)) ||
+            rat > (static_cast<int>(telStub::RadioTechnology::RADIO_TECH_NR5G))) {
             LOG(ERROR, __FUNCTION__, " Invalid input for radio technology");
             return;
         }
@@ -278,6 +283,12 @@ void ImsServingManagerServerImpl::handleImsRegStatusChanged(std::string eventPar
         imsRegStatusEvent.set_rat(static_cast<telStub::RadioTechnology>(rat));
         imsRegStatusEvent.set_error_code(errorCode);
         imsRegStatusEvent.set_error_string(errorString);
+        // Populate uri_list from JSON state (URI list is not updated via event params;
+        // it reflects the persisted state in the JSON file)
+        const Json::Value &uriList = rootObj[MANAGER]["ImsRegistrationInfo"]["uriList"];
+        for (Json::ArrayIndex i = 0; i < uriList.size(); ++i) {
+            imsRegStatusEvent.add_uri_list(uriList[i].asString());
+        }
         LOG(DEBUG, __FUNCTION__, " regStatus: ", regStatus, " rat: ", rat,
             " errorCode: ", errorCode, " errorString: ", errorString);
     } catch(exception const & ex) {

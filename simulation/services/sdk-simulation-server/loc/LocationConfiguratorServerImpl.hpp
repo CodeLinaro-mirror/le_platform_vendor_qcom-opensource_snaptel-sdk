@@ -13,6 +13,7 @@
 #define LOC_CONFIG_SERVER_HPP
 
 #include <iostream>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <map>
@@ -100,6 +101,9 @@ class LocationConfiguratorServerImpl final
         locStub::LocManagerCommandReply *response);
     grpc::Status RequestXtraStatus(ServerContext *context, const google::protobuf::Empty *request,
         locStub::RequestXtraStatusReply *response);
+    grpc::Status RequestNavMsgAuthStatus(ServerContext *context,
+        const locStub::RequestNavMsgAuthStatusRequest *request,
+        locStub::RequestNavMsgAuthStatusReply *response);
     grpc::Status InjectMerkleTree(ServerContext *context, const google::protobuf::Empty *request,
         locStub::LocManagerCommandReply *response);
     grpc::Status ConfigureOsnma(ServerContext *context,
@@ -121,6 +125,16 @@ class LocationConfiguratorServerImpl final
     void onEventUpdate(std::string event);
     void handleXtraUpdateEvent(std::string event);
     void handleGnssConstellationUpdateEvent(std::string event);
+    void handleNavMsgAuthStatusEvent(std::string event);
+    static std::string getNextEventValue(
+        std::string &event, const std::string &fieldName, const std::string &defaultValue);
+    static std::string trimString(const std::string &value);
+    static uint32_t parseUint32(std::string value, uint32_t defaultValue);
+    static uint64_t parseUint64(std::string value, uint64_t defaultValue);
+    static bool addGalileoSvToMask(const std::string &token, uint64_t &mask);
+    static bool parseGalileoSvList(const std::string &list, uint64_t &mask);
+    static bool parseGalileoSvListFields(
+        const std::string &event, uint64_t &passedMask, uint64_t &failedMask);
     void triggerXtraStatusEvent();
     void triggerGnssConstellationUpdateEvent();
 };

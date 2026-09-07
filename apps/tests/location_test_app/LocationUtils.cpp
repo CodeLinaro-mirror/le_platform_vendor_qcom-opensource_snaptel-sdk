@@ -125,6 +125,88 @@ void LocationUtils::displayXtraStatus(telux::loc::XtraStatus xtraStatus) {
     }
 }
 
+/** Print the Galileo SV ids represented by a GalOsnmaStatus per-SV bitmask. */
+static void printGalOsnmaSvMask(const char *label, uint64_t svMask) {
+    std::cout << label;
+    if (svMask == 0) {
+        std::cout << " none";
+    }
+    for (uint8_t bit = 0; bit < telux::loc::GAL_OSNMA_SV_COUNT; bit++) {
+        if (svMask & (1ULL << bit)) {
+            std::cout << " " << (telux::loc::GAL_OSNMA_FIRST_SV_ID + bit);
+        }
+    }
+    std::cout << std::endl;
+}
+
+void LocationUtils::displayNavMsgAuthStatus(telux::loc::NavMsgAuthStatus navMsgAuthStatus) {
+    std::cout << "Constellation : ";
+    if (navMsgAuthStatus.constellation != telux::loc::GnssConstellationType::GALILEO) {
+        std::cout << "unsupported (" << static_cast<int>(navMsgAuthStatus.constellation) << ")"
+                  << std::endl;
+        return;
+    }
+    std::cout << "GALILEO" << std::endl;
+
+    const telux::loc::GalOsnmaStatus &galStatus = navMsgAuthStatus.galStatus;
+    std::cout << "Validity Mask : 0x" << std::hex << galStatus.validityMask << std::dec
+              << std::endl;
+
+    /** A field only carries a value when its validity bit is set. A clear bit means the
+     *  field was not reported, it does not mean false or zero. */
+    if (galStatus.validityMask & telux::loc::GAL_OSNMA_FEATURE_ENABLED_VALID) {
+        std::cout << "Feature Enabled : " << galStatus.featureEnabled << std::endl;
+    } else {
+        std::cout << "Feature Enabled : not reported" << std::endl;
+    }
+
+    if (galStatus.validityMask & telux::loc::GAL_OSNMA_MERKLE_TREE_PROVISIONED_VALID) {
+        std::cout << "Merkle Tree Provisioned : " << galStatus.merkleTreeProvisioned << std::endl;
+    } else {
+        std::cout << "Merkle Tree Provisioned : not reported" << std::endl;
+    }
+
+    if (galStatus.validityMask & telux::loc::GAL_OSNMA_PUBLIC_KEY_STATUS_VALID) {
+        std::cout << "Public Key Status :";
+        if (galStatus.publicKeyStatusMask == 0) {
+            std::cout << " unavailable";
+        }
+        if (galStatus.publicKeyStatusMask & telux::loc::GAL_OSNMA_PUBLIC_KEY_PROVISIONED) {
+            std::cout << " provisioned";
+        }
+        if (galStatus.publicKeyStatusMask & telux::loc::GAL_OSNMA_PUBLIC_KEY_VERIFIED) {
+            std::cout << " verified";
+        }
+        std::cout << std::endl;
+    } else {
+        std::cout << "Public Key Status : not reported" << std::endl;
+    }
+
+    if (galStatus.validityMask & telux::loc::GAL_OSNMA_GAL_WEEK_VALID) {
+        std::cout << "Gal Week : " << galStatus.galWeek << std::endl;
+    } else {
+        std::cout << "Gal Week : not reported" << std::endl;
+    }
+
+    if (galStatus.validityMask & telux::loc::GAL_OSNMA_GAL_SEC_OF_WEEK_VALID) {
+        std::cout << "Gal Sec Of Week : " << galStatus.galSecOfWeek << std::endl;
+    } else {
+        std::cout << "Gal Sec Of Week : not reported" << std::endl;
+    }
+
+    if (galStatus.validityMask & telux::loc::GAL_OSNMA_NAV_DATA_AUTH_PASSED_VALID) {
+        printGalOsnmaSvMask("Nav Data Auth Passed SVs :", galStatus.navDataAuthPassedMask);
+    } else {
+        std::cout << "Nav Data Auth Passed SVs : not reported" << std::endl;
+    }
+
+    if (galStatus.validityMask & telux::loc::GAL_OSNMA_NAV_DATA_AUTH_FAILED_VALID) {
+        printGalOsnmaSvMask("Nav Data Auth Failed SVs :", galStatus.navDataAuthFailedMask);
+    } else {
+        std::cout << "Nav Data Auth Failed SVs : not reported" << std::endl;
+    }
+}
+
 void LocationUtils::printGnssSignalType(telux::loc::GnssSignal signalTypeMask) {
     std::cout << "Gnss Signal Type :" << std::endl;
     if (signalTypeMask & telux::loc::GnssSignalType::GPS_L1CA) {

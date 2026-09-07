@@ -83,6 +83,20 @@
         "constellation_update":[
             "telsdk_event_injector -f loc_config -e constellation_update <mask>",
             "mask             A mask to enable different signals. Refer to telux::loc::GnssSignalType for the signals that can be enabled. An example of a valid mask is 0x1FFFFF."
+        ],
+        "nav_msg_auth_status":[
+            "telsdk_event_injector -f loc_config -e nav_msg_auth_status <validityMask> <featureEnabled> <merkleTreeProvisioned> <publicKeyStatusMask> <galWeek> <galSecOfWeek> <passedSvIdsCsv> <failedSvIdsCsv>",
+            "validityMask              Galileo OSNMA status validity mask. Example: 0x67 or 0x7f.",
+            "featureEnabled            0-disabled, 1-enabled.",
+            "merkleTreeProvisioned     0-not provisioned, 1-provisioned.",
+            "publicKeyStatusMask       Public key status mask. 1-provisioned, 2-verified, 3-provisioned and verified.",
+            "galWeek                   Galileo week for the status. Ignored by clients when its validity bit is clear.",
+            "galSecOfWeek              Galileo seconds of week for the status. Ignored by clients when its validity bit is clear.",
+            "passedSvIdsCsv            Comma-separated Galileo SV IDs that passed authentication. Valid range: 301 to 336. Pass an empty quoted string when no SV passed.",
+            "failedSvIdsCsv            Comma-separated Galileo SV IDs that failed authentication. Valid range: 301 to 336. Pass an empty quoted string when no SV failed.",
+            "If any SV ID is outside 301 to 336 or is not numeric, the simulator will not update the JSON state.",
+            "example: telsdk_event_injector -f loc_config -e nav_msg_auth_status 0x7f 1 0 3 1413 365400 304,306,309,310,311,312,316,319,323,328,331,333,336 \"\"",
+            "example: telsdk_event_injector -f loc_config -e nav_msg_auth_status 0x7f 1 0 3 1413 365400 \"\" 304,306"
         ]
     },
     "loc_mgr":{

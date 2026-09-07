@@ -1,4 +1,17 @@
 {
     "ILocationConfigurator": {
+        "NavMsgAuthStatus": {
+            "constellation": "2",
+            "GalOsnmaStatus": {
+                "validityMask": "0",
+                "featureEnabled": "0",
+                "merkleTreeProvisioned": "0",
+                "publicKeyStatusMask": "0",
+                "galWeek": "0",
+                "galSecOfWeek": "0",
+                "navDataAuthPassedMask": "0",
+                "navDataAuthFailedMask": "0"
+            }
+        }
     }
 }

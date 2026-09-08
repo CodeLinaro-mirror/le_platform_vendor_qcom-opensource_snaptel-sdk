@@ -244,6 +244,41 @@
            "ssNotificationTimeStamp" : ""   /* Last signal strength notification arrived. This
                                                is to compare with signal strength criteria to
                                                notify user. */
+        },
+        "carrierAggregationInfo" :
+        {
+            "type" : 0,
+            "pCell" :
+            {
+                "pci" : 511,
+                "freq" : 500,
+                "bandwidth" : 5,
+                "band" : 121
+            },
+            "sCell" :
+            [
+                {
+                    "pci" : 512,
+                    "freq" : 501,
+                    "bandwidth" : 5,
+                    "band" : 121,
+                    "ulConfigured" : true,
+                    "scellState" : 2
+                }
+            ]
+        },
+        "cellChannelInfo" :
+        {
+            "lteServingAndSCellArfcn" :
+            [
+                { "dlEarfcn" : 500, "ulEarfcn" : 18500, "bandwidth" : 5 }
+            ],
+            "lteNeighborArfcn" :
+            [
+                { "dlEarfcn" : 501, "ulEarfcn" : 18501, "bandwidth" : 5 }
+            ],
+            "nr5gServingAndSCellArfcn" : [ 162890 ],
+            "nr5gNeighborArfcn" : [ 162900 ]
         }
     }
 }

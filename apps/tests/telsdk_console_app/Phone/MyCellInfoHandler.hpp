@@ -37,17 +37,32 @@
 #define MYCELLINFOHANDLER_HPP
 
 #include <memory>
+#include <string>
 #include <vector>
 
-#include <telux/common/CommonDefines.hpp>
 #include <telux/tel/Phone.hpp>
+#include <telux/tel/PhoneDefines.hpp>
+#include <telux/common/CommonDefines.hpp>
 
 class MyCellInfoCallback {
  public:
     static void cellInfoListResponse(
         std::vector<std::shared_ptr<telux::tel::CellInfo>> cellInfoList,
         telux::common::ErrorCode error);
+
     static void cellInfoListRateResponse(telux::common::ErrorCode error);
+
+    static void caInfoCallback(
+        const telux::tel::CarrierAggregationInfo caInfo, telux::common::ErrorCode error);
+
+    static void channelInfoCallback(
+        telux::tel::CellChannelInfoList channelInfoList, telux::common::ErrorCode error);
+
+    // Public helpers reused by notification handlers
+    static std::string lteBandwidthToString(telux::tel::LteBandwidth bw);
+    static std::string lteSCellStateToString(telux::tel::LteSCellState state);
+
+ private:
     static std::string signalLevelToString(telux::tel::SignalStrengthLevel level);
 };
 

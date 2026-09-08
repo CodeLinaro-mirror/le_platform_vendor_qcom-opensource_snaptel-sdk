@@ -242,6 +242,38 @@ Radio and Service state call flow
 15. The application receives the voice service state, radio technology information etc.
 16. Application receives a notification when there is a change in voice service state.
 
+Carrier Aggregation Info call flow
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. figure:: /../images/carrier_aggregation_info_call_flow.png
+
+1. The application gets PhoneManager object using PhoneFactory.
+2. The application receives the PhoneManager object in order to get Phone instance.
+3. The application gets phone instance for a given phone identifier using PhoneManager object.
+4. PhoneManager returns IPhone object to the application.
+5. Application registers the listener to get notification for carrier aggregation info change.
+6. The application receives the status i.e. either SUCCESS or FAILED based on the registration of the listener.
+7. The application requests for carrier aggregation info for a given RAT (e.g. LteCa) and gets asynchronous response using CaInfoCallback.
+8. The application receives the status i.e. either SUCCESS or FAILED based on execution of requestCarrierAggregationCellInfo API in IPhone.
+9. The response for carrier aggregation info request, containing primary cell and secondary cell(s) information, is received by the application through CaInfoCallback.
+10. Application receives a notification when there is a change in carrier aggregation info.
+
+Cell Channel Info call flow
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. figure:: /../images/cell_channel_info_call_flow.png
+
+1. The application gets PhoneManager object using PhoneFactory.
+2. The application receives the PhoneManager object in order to get Phone instance.
+3. The application gets phone instance for a given phone identifier using PhoneManager object.
+4. PhoneManager returns IPhone object to the application.
+5. Application registers the listener to get notification for cell channel info change.
+6. The application receives the status i.e. either SUCCESS or FAILED based on the registration of the listener.
+7. The application requests for cell channel info and optionally, gets asynchronous response using CellChannelInfoListCallback.
+8. The application receives the status i.e. either SUCCESS or FAILED based on execution of requestCellChannelInfo API in IPhone.
+9. Optionally, the response for cell channel info request, containing LTE serving/neighbor and NR5G serving/neighbor channel information, is received by the application.
+10. Application receives a notification when there is a change in cell channel info.
+
 Network Selection Manager call flow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

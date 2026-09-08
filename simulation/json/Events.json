@@ -225,6 +225,23 @@
             "shortName:         string, Valid operator short name.",
             "plmn:              string, Valid plmn name.",
             "isHome:            bool, Valid value is 1 or 0 signifies PLMN is in home network or not. "
+        ],
+        "carrierAggregationInfoUpdate": [
+            "telsdk_event_injector -f tel_phone -e carrierAggregationInfoUpdate <slotId> <pciP> <freqP> <bandwidthP> <bandP> <pciS> <freqS> <bandwidthS> <bandS> <ulConfigured> <scellState>",
+            "slotId:            integer, valid slotIds are 1 & 2 only.",
+            "pciP/freqP/bandwidthP/bandP: integer, Primary cell LteCaCellInfo fields (physical cell id, frequency, bandwidth, RF band).",
+            "pciS/freqS/bandwidthS/bandS: integer, Secondary cell LteCaCellInfo fields (physical cell id, frequency, bandwidth, RF band).",
+            "ulConfigured:      integer, valid values are 1 or 0. Secondary cell uplink configured flag.",
+            "scellState:        integer, valid 0-DECONFIGURED, 1-CONFIGURED_DEACTIVATED, 2-CONFIGURED_ACTIVATED. Refer telux::tel::LteSCellState for more details.",
+            "example: telsdk_event_injector -f tel_phone -e \"carrierAggregationInfoUpdate 1 411 400 5 120 412 401 5 120 1 2\""
+        ],
+        "cellChannelInfoListUpdate": [
+            "telsdk_event_injector -f tel_phone -e cellChannelInfoListUpdate <slotId> <dlEarfcn> <ulEarfcn> <bandwidth> <nr5gArfcn>",
+            "slotId:            integer, valid slotIds are 1 & 2 only.",
+            "dlEarfcn/ulEarfcn: integer, LTE serving cell LteCellChannelInfo downlink/uplink EARFCN.",
+            "bandwidth:         integer, LTE serving cell LteCellChannelInfo bandwidth. Refer telux::tel::LteBandwidth for more details.",
+            "nr5gArfcn:         integer, NR5G serving cell NR-ARFCN.",
+            "example: telsdk_event_injector -f tel_phone -e \"cellChannelInfoListUpdate 1 400 18400 5 152890\""
         ]
     },
     "tel_serv": {

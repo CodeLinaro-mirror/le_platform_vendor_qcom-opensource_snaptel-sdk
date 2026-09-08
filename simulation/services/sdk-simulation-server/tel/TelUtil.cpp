@@ -882,6 +882,94 @@ JsonData TelUtil::readRequestOperatorInfoRespFromJsonFile(
     return data;
 }
 
+static void populateCarrierAggregationInfoFromJson(const Json::Value &caInfoObj,
+    telStub::CarrierAggregationType rat, telStub::CarrierAggregationInfo *caInfo) {
+    caInfo->set_type(static_cast<telStub::CarrierAggregationType>(caInfoObj["type"].asInt()));
+    if (rat == telStub::CarrierAggregationType::LTE_CA) {
+        telStub::LteCaInfo *lteInfo = caInfo->mutable_lte_info();
+        Json::Value pCellObj        = caInfoObj["pCell"];
+        lteInfo->mutable_p_cell()->mutable_cell()->set_pci(pCellObj["pci"].asUInt());
+        lteInfo->mutable_p_cell()->mutable_cell()->set_freq(pCellObj["freq"].asUInt());
+        lteInfo->mutable_p_cell()->mutable_cell()->set_bandwidth(
+            static_cast<telStub::LteBandwidth>(pCellObj["bandwidth"].asInt()));
+        lteInfo->mutable_p_cell()->mutable_cell()->set_band(
+            static_cast<telStub::RFBand>(pCellObj["band"].asInt()));
+        int sCellCount = caInfoObj["sCell"].size();
+        for (int i = 0; i < sCellCount; i++) {
+            Json::Value sCellObj         = caInfoObj["sCell"][i];
+            telStub::LteSCellInfo *sCell = lteInfo->add_s_cell();
+            sCell->mutable_cell()->set_pci(sCellObj["pci"].asUInt());
+            sCell->mutable_cell()->set_freq(sCellObj["freq"].asUInt());
+            sCell->mutable_cell()->set_bandwidth(
+                static_cast<telStub::LteBandwidth>(sCellObj["bandwidth"].asInt()));
+            sCell->mutable_cell()->set_band(static_cast<telStub::RFBand>(sCellObj["band"].asInt()));
+            sCell->set_ul_configured(sCellObj["ulConfigured"].asBool());
+            sCell->set_scell_state(
+                static_cast<telStub::LteSCellState>(sCellObj["scellState"].asInt()));
+        }
+    }
+}
+static void populateCellChannelInfoListFromJson(
+    const Json::Value &channelInfoObj, telStub::CellChannelInfoList *channelInfoList) {
+    int lteServingCount = channelInfoObj["lteServingAndSCellArfcn"].size();
+    for (int i = 0; i < lteServingCount; i++) {
+        Json::Value entry                 = channelInfoObj["lteServingAndSCellArfcn"][i];
+        telStub::LteCellChannelInfo *info = channelInfoList->add_lte_serving_and_scell_arfcn();
+        info->set_dl_earfcn(entry["dlEarfcn"].asUInt());
+        info->set_ul_earfcn(entry["ulEarfcn"].asUInt());
+        info->set_bandwidth(static_cast<telStub::LteBandwidth>(entry["bandwidth"].asInt()));
+    }
+    int lteNeighborCount = channelInfoObj["lteNeighborArfcn"].size();
+    for (int i = 0; i < lteNeighborCount; i++) {
+        Json::Value entry                 = channelInfoObj["lteNeighborArfcn"][i];
+        telStub::LteCellChannelInfo *info = channelInfoList->add_lte_neighbor_arfcn();
+        info->set_dl_earfcn(entry["dlEarfcn"].asUInt());
+        info->set_ul_earfcn(entry["ulEarfcn"].asUInt());
+        info->set_bandwidth(static_cast<telStub::LteBandwidth>(entry["bandwidth"].asInt()));
+    }
+    int nr5gServingCount = channelInfoObj["nr5gServingAndSCellArfcn"].size();
+    for (int i = 0; i < nr5gServingCount; i++) {
+        channelInfoList->add_nr5g_serving_and_scell_arfcn(
+            channelInfoObj["nr5gServingAndSCellArfcn"][i].asUInt());
+    }
+    int nr5gNeighborCount = channelInfoObj["nr5gNeighborArfcn"].size();
+    for (int i = 0; i < nr5gNeighborCount; i++) {
+        channelInfoList->add_nr5g_neighbor_arfcn(channelInfoObj["nr5gNeighborArfcn"][i].asUInt());
+    }
+}
+JsonData TelUtil::readCarrierAggregationInfoRespFromJsonFile(int phoneId,
+    telStub::CarrierAggregationType rat,
+    telStub::requestCarrierAggregationCellInfoReply *response) {
+    LOG(DEBUG, __FUNCTION__);
+    JsonData data;
+    if (ErrorCode::SUCCESS
+        != readJsonData(phoneId, TEL_PHONE_MANAGER, "requestCarrierAggregationCellInfo", data)) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed");
+        return data;
+    }
+    if (data.status == telux::common::Status::SUCCESS) {
+        Json::Value caInfoObj = data.stateRootObj[TEL_PHONE_MANAGER]["carrierAggregationInfo"];
+        populateCarrierAggregationInfoFromJson(caInfoObj, rat, response->mutable_ca_info());
+    }
+    updateResponse(response, data);
+    return data;
+}
+JsonData TelUtil::readCellChannelInfoRespFromJsonFile(
+    int phoneId, telStub::RequestCellChannelInfoReply *response) {
+    LOG(DEBUG, __FUNCTION__);
+    JsonData data;
+    if (ErrorCode::SUCCESS
+        != readJsonData(phoneId, TEL_PHONE_MANAGER, "requestCellChannelInfo", data)) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed");
+        return data;
+    }
+    if (data.status == telux::common::Status::SUCCESS) {
+        Json::Value channelInfoObj = data.stateRootObj[TEL_PHONE_MANAGER]["cellChannelInfo"];
+        populateCellChannelInfoListFromJson(channelInfoObj, response->mutable_channel_info_list());
+    }
+    updateResponse(response, data);
+    return data;
+}
 telux::common::ErrorCode TelUtil::readSignalStrengthEventFromJsonFile(
     int phoneId, telStub::SignalStrengthChangeEvent &event) {
     LOG(DEBUG, __FUNCTION__);
@@ -1487,6 +1575,40 @@ telux::common::ErrorCode TelUtil::readOperatorInfoEventFromJsonFile(
     return error;
 }
 
+telux::common::ErrorCode TelUtil::readCarrierAggregationInfoEventFromJsonFile(
+    int phoneId, telStub::CarrierAggregationInfoEvent &event) {
+    LOG(DEBUG, __FUNCTION__);
+    Json::Value stateRootObj;
+    std::string jsonfilename;
+    telux::common::ErrorCode error
+        = readFromJsonFile(phoneId, TEL_PHONE_MANAGER, stateRootObj, jsonfilename);
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed");
+        return error;
+    }
+    Json::Value caInfoObj = stateRootObj[TEL_PHONE_MANAGER]["carrierAggregationInfo"];
+    telStub::CarrierAggregationType rat
+        = static_cast<telStub::CarrierAggregationType>(caInfoObj["type"].asInt());
+    populateCarrierAggregationInfoFromJson(caInfoObj, rat, event.mutable_ca_info());
+    event.set_phone_id(phoneId);
+    return error;
+}
+telux::common::ErrorCode TelUtil::readCellChannelInfoListEventFromJsonFile(
+    int phoneId, telStub::CellChannelInfoListEvent &event) {
+    LOG(DEBUG, __FUNCTION__);
+    Json::Value stateRootObj;
+    std::string jsonfilename;
+    telux::common::ErrorCode error
+        = readFromJsonFile(phoneId, TEL_PHONE_MANAGER, stateRootObj, jsonfilename);
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed");
+        return error;
+    }
+    Json::Value channelInfoObj = stateRootObj[TEL_PHONE_MANAGER]["cellChannelInfo"];
+    populateCellChannelInfoListFromJson(channelInfoObj, event.mutable_channel_info_list());
+    event.set_phone_id(phoneId);
+    return error;
+}
 telux::common::ErrorCode TelUtil::readSignalStrengthFromJsonFile(
     int phoneId, telStub::SignalStrength &signalStrength) {
     LOG(DEBUG, __FUNCTION__);
@@ -3130,6 +3252,112 @@ telux::common::ErrorCode TelUtil::writeOperatorInfoToJsonFile(
     return JsonParser::writeToJsonFile(rootObj, jsonfilename);
 }
 
+telux::common::ErrorCode TelUtil::writeCarrierAggregationInfoToJsonFile(
+    std::string eventParams, int &phoneId) {
+    Json::Value rootObj;
+    std::string jsonfilename = "";
+    try {
+        std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        phoneId           = std::stoi(token);
+        LOG(DEBUG, __FUNCTION__, " Slot id is: ", phoneId);
+        if (phoneId < SLOT_1 || phoneId > SLOT_2) {
+            LOG(ERROR, " Invalid input for slot id");
+            return telux::common::ErrorCode::INVALID_ARGUMENTS;
+        }
+        jsonfilename = (phoneId == SLOT_1) ? PHONE_JSON_STATE_PATH1 : PHONE_JSON_STATE_PATH2;
+        telux::common::ErrorCode error = JsonParser::readFromJsonFile(rootObj, jsonfilename);
+        if (error != ErrorCode::SUCCESS) {
+            LOG(ERROR, __FUNCTION__, " Reading JSON File failed");
+            return telux::common::ErrorCode::INVALID_ARGUMENTS;
+        }
+        token            = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        int pciP         = std::stoi(token);
+        token            = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        int freqP        = std::stoi(token);
+        token            = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        int bandwidthP   = std::stoi(token);
+        token            = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        int bandP        = std::stoi(token);
+        token            = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        int pciS         = std::stoi(token);
+        token            = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        int freqS        = std::stoi(token);
+        token            = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        int bandwidthS   = std::stoi(token);
+        token            = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        int bandS        = std::stoi(token);
+        token            = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        int ulConfigured = std::stoi(token);
+        token            = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        int scellState   = std::stoi(token);
+        LOG(DEBUG, __FUNCTION__, " pciP:", pciP, " freqP:", freqP, " bandwidthP:", bandwidthP,
+            " bandP:", bandP, " pciS:", pciS, " freqS:", freqS, " bandwidthS:", bandwidthS,
+            " bandS:", bandS, " ulConfigured:", ulConfigured, " scellState:", scellState);
+        rootObj[TEL_PHONE_MANAGER]["carrierAggregationInfo"]["type"]               = 0;
+        rootObj[TEL_PHONE_MANAGER]["carrierAggregationInfo"]["pCell"]["pci"]       = pciP;
+        rootObj[TEL_PHONE_MANAGER]["carrierAggregationInfo"]["pCell"]["freq"]      = freqP;
+        rootObj[TEL_PHONE_MANAGER]["carrierAggregationInfo"]["pCell"]["bandwidth"] = bandwidthP;
+        rootObj[TEL_PHONE_MANAGER]["carrierAggregationInfo"]["pCell"]["band"]      = bandP;
+        Json::Value sCellObj;
+        sCellObj["pci"]          = pciS;
+        sCellObj["freq"]         = freqS;
+        sCellObj["bandwidth"]    = bandwidthS;
+        sCellObj["band"]         = bandS;
+        sCellObj["ulConfigured"] = static_cast<bool>(ulConfigured);
+        sCellObj["scellState"]   = scellState;
+        rootObj[TEL_PHONE_MANAGER]["carrierAggregationInfo"]["sCell"].clear();
+        rootObj[TEL_PHONE_MANAGER]["carrierAggregationInfo"]["sCell"].append(sCellObj);
+    } catch (exception const &ex) {
+        LOG(ERROR, __FUNCTION__, " Exception Occured: ", ex.what());
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    }
+    return JsonParser::writeToJsonFile(rootObj, jsonfilename);
+}
+telux::common::ErrorCode TelUtil::writeCellChannelInfoListToJsonFile(
+    std::string eventParams, int &phoneId) {
+    Json::Value rootObj;
+    std::string jsonfilename = "";
+    try {
+        std::string token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        phoneId           = std::stoi(token);
+        LOG(DEBUG, __FUNCTION__, " Slot id is: ", phoneId);
+        if (phoneId < SLOT_1 || phoneId > SLOT_2) {
+            LOG(ERROR, " Invalid input for slot id");
+            return telux::common::ErrorCode::INVALID_ARGUMENTS;
+        }
+        jsonfilename = (phoneId == SLOT_1) ? PHONE_JSON_STATE_PATH1 : PHONE_JSON_STATE_PATH2;
+        telux::common::ErrorCode error = JsonParser::readFromJsonFile(rootObj, jsonfilename);
+        if (error != ErrorCode::SUCCESS) {
+            LOG(ERROR, __FUNCTION__, " Reading JSON File failed");
+            return telux::common::ErrorCode::INVALID_ARGUMENTS;
+        }
+        token         = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        int dlEarfcn  = std::stoi(token);
+        token         = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        int ulEarfcn  = std::stoi(token);
+        token         = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        int bandwidth = std::stoi(token);
+        token         = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
+        int nr5gArfcn = std::stoi(token);
+        LOG(DEBUG, __FUNCTION__, " dlEarfcn:", dlEarfcn, " ulEarfcn:", ulEarfcn,
+            " bandwidth:", bandwidth, " nr5gArfcn:", nr5gArfcn);
+        Json::Value servingCell;
+        servingCell["dlEarfcn"]  = dlEarfcn;
+        servingCell["ulEarfcn"]  = ulEarfcn;
+        servingCell["bandwidth"] = bandwidth;
+        rootObj[TEL_PHONE_MANAGER]["cellChannelInfo"]["lteServingAndSCellArfcn"].clear();
+        rootObj[TEL_PHONE_MANAGER]["cellChannelInfo"]["lteServingAndSCellArfcn"].append(
+            servingCell);
+        rootObj[TEL_PHONE_MANAGER]["cellChannelInfo"]["lteNeighborArfcn"].clear();
+        rootObj[TEL_PHONE_MANAGER]["cellChannelInfo"]["nr5gServingAndSCellArfcn"].clear();
+        rootObj[TEL_PHONE_MANAGER]["cellChannelInfo"]["nr5gServingAndSCellArfcn"].append(nr5gArfcn);
+        rootObj[TEL_PHONE_MANAGER]["cellChannelInfo"]["nr5gNeighborArfcn"].clear();
+    } catch (exception const &ex) {
+        LOG(ERROR, __FUNCTION__, " Exception Occured: ", ex.what());
+        return telux::common::ErrorCode::GENERIC_FAILURE;
+    }
+    return JsonParser::writeToJsonFile(rootObj, jsonfilename);
+}
 telStub::SignalStrengthChangeEvent TelUtil::createSignalStrengthEvent(
     int phoneId, telStub::SignalStrength &strength) {
     LOG(DEBUG, __FUNCTION__);

@@ -76,6 +76,16 @@
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS"
+        },
+        "requestCarrierAggregationCellInfo" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
+        "requestCellChannelInfo" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
         }
     }
 }

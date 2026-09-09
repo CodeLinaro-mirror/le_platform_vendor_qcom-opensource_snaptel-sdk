@@ -1604,6 +1604,179 @@ Call flow to Delete QoS filter, Delete traffic class, Delete all QoS config
 8. The application calls the QoS manager API to delete a traffic class and provides the traffic class configuration object from the above step.
 9. To delete the traffic class and all QoS filters in one shot, the delete all QoS Configurations API can be called.
 
+DDS Recommendation Call Flows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The DualDataManager provides APIs to manage Default Data Subscription (DDS) recommendations in
+dual-SIM devices. The following call flows describe how an application interacts with
+``IDualDataManager`` and ``IDualDataListener`` to handle DDS switch recommendations across various
+DSDA/DSDS mode transition scenarios.
+
+Key concepts:
+
+- **DDS (Default Data Subscription)**: The SIM slot designated for long-running internet data calls.
+- **nDDS (non-DDS)**: The other SIM slot, used for short data or special traffic (e.g., SMS, MMS).
+- **DSDA (Dual SIM Dual Active)**: Both SIMs operate independently with two radio resources.
+- **DSDS (Dual SIM Dual Standby)**: One radio resource is time-shared between both SIMs.
+- **Temporary DDS switch**: A short-term switch to nDDS (e.g., during a voice call on nDDS).
+- **Permanent DDS switch**: A long-term switch of the DDS SIM slot.
+- **TxS (Tx Sharing) mode**: A DSDA sub-mode where the transmit (Tx) radio resource is shared
+  between both SIMs due to a frequency band combo change (e.g., triggered by an incoming voice
+  call on nDDS). In TxS mode, simultaneous high-throughput data on both SIMs is not possible;
+  the modem recommends a temporary DDS switch so that internet traffic is concentrated on the
+  active voice SIM (nDDS becomes temp DDS).
+- **FC (Full Capability) mode**: A DSDA sub-mode where both SIMs have independent Tx/Rx
+  resources and can carry long-running internet data simultaneously without restriction.
+
+DDS Recommendation - Basic Call Flow
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: /../images/data_dds_recommendation_call_flow.png
+
+This call flow describes the basic initialization and two alternative paths for receiving
+DDS recommendations: via indication (asynchronous) or via request (synchronous).
+
+1. Application requests ``DataFactory`` for an ``IDualDataManager`` instance, providing an
+   initialization callback.
+2. ``DataFactory`` returns the ``IDualDataManager`` instance. Application waits for the
+   initialization callback to confirm the service is available.
+3. Application registers an ``IDualDataListener`` with ``IDualDataManager`` using
+   ``registerListener``.
+4. Application configures DDS switch recommendation using ``configureDdsSwitchRecommendation``
+   (sets ``enableTemporaryRecommendations``, ``enablePermanentRecommendations``, and
+   ``recommBasis``).
+
+**[Indication path]**
+
+5. ``IDualDataListener::onDdsSwitchRecommendation(DdsSwitchRecommendation)`` is called when
+   the modem generates a DDS switch recommendation.
+
+**[Request path]**
+
+6. Application calls ``getDdsSwitchRecommendation`` to query the current DDS recommendation.
+7. Application calls ``requestDdsSwitch(DdsInfo)`` to perform the DDS switch based on the
+   recommendation.
+
+DSDA FC to TxS Mode Change with Active Voice Call on nDDS
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: /../images/data_dsda_fc_to_txs_mode_change_with_active_voice_call_on_ndds_call_flow.png
+
+**Initial state**: DSDA Sub-Mode with FC mode, DDS = Sub1 (Slot 1), nDDS = Sub2 (Slot 2).
+Long internet data traffic is running on both DDS (Sub1) and nDDS (Sub2).
+
+1. Application requests ``DataFactory`` for an ``IDualDataManager`` instance, providing an
+   initialization callback.
+2. ``DataFactory`` returns the ``IDualDataManager`` instance. Application waits for the
+   initialization callback to confirm the service is available.
+3. Application registers an ``IDualDataListener`` with ``IDualDataManager`` using
+   ``registerListener``.
+4. Application calls ``configureDdsSwitchRecommendation`` with:
+
+   - ``enableTemporaryRecommendations``: true
+   - ``enablePermanentRecommendations``: true
+   - ``recommBasis``: THROUGHPUT or LATENCY
+
+5. Application calls ``getDualDataCapability`` to verify the device supports dual data.
+6. ``getDualDataCapability`` returns ``isCapable: true``.
+7. Application calls ``getDualDataUsageRecommendation`` to query the current recommendation.
+8. ``getDualDataUsageRecommendation`` returns ``DualDataUsageRecommendation: ALLOWED``.
+   Long internet data traffic is running on both DDS (Sub1) and nDDS (Sub2).
+9. A voice call is received on nDDS (Sub2). The modem transitions
+   from DSDA FC mode to DSDA TxS mode (TxS is a network/RF condition driven by the band
+   combination, not the voice call itself). ``IDualDataListener::onDualDataUsageRecommendationChange``
+   is called with ``DualDataUsageRecommendation: NOT_RECOMMENDED``. Application should stop
+   data activities on nDDS (Sub2).
+10. ``IDualDataListener::onDdsSwitchRecommendation(DdsSwitchRecommendation)`` is called with:
+
+    - ``slotId``: SLOT_ID_2
+    - ``type``: TEMPORARY
+    - ``tempSwitchType``: High
+    - ``tempCause``: TEMP_CAUSE_CODE_TX_SHARING
+
+11. Application calls ``requestDdsSwitch`` with ``slotId: SLOT_ID_2, type: TEMPORARY``.
+12. ``requestDdsSwitch`` callback returns ``SUCCESS``.
+    OEM must perform TCP cleanup, release internet PDN/PDU connections on original DDS (Sub1),
+    and switch application traffic to temp DDS (Sub2).
+
+**Final state**: Temp DDS = Sub2, nDDS = Sub1.
+Long internet data traffic on temp DDS (Sub2). Short data or special traffic (e.g., SMS or MMS)
+on nDDS (Sub1).
+
+DSDA to DSDS Sub-Mode Transition with Active Voice Call on nDDS
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: /../images/data_dsda_to_dsds_sub_mode_transition_with_active_voice_call_on_ndds_call_flow.png
+
+**Initial state**: DSDA Sub-Mode with FC mode, DDS = Sub1 (Slot 1), nDDS = Sub2 (Slot 2).
+Long internet data traffic is running on both DDS (Sub1) and nDDS (Sub2).
+
+1. Application requests ``DataFactory`` for an ``IDualDataManager`` instance, providing an
+   initialization callback.
+2. ``DataFactory`` returns the ``IDualDataManager`` instance. Application waits for the
+   initialization callback to confirm the service is available.
+3. Application registers an ``IDualDataListener`` with ``IDualDataManager`` using
+   ``registerListener``.
+4. Application calls ``configureDdsSwitchRecommendation`` with:
+
+   - ``enableTemporaryRecommendations``: true
+   - ``enablePermanentRecommendations``: true
+   - ``recommBasis``: THROUGHPUT or LATENCY
+
+5. Application calls ``getDualDataCapability`` to verify the device supports dual data.
+6. ``getDualDataCapability`` returns ``isCapable: true``.
+7. Application calls ``getDualDataUsageRecommendation`` to query the current recommendation.
+8. ``getDualDataUsageRecommendation`` returns ``DualDataUsageRecommendation: ALLOWED``.
+   Long internet data traffic is running on both DDS (Sub1) and nDDS (Sub2).
+9. A voice call is received on nDDS (Sub2). The UE transitions from DSDA sub-mode to DSDS
+   sub-mode due to a RAT change or thermal mitigation. ``IDualDataListener::onDualDataUsageRecommendationChange``
+   is called with ``DualDataUsageRecommendation: NOT_ALLOWED``. Application must stop data
+   activities on nDDS (Sub2) immediately.
+10. ``IDualDataListener::onDdsSwitchRecommendation(DdsSwitchRecommendation)`` is called with:
+
+    - ``slotId``: SLOT_ID_2
+    - ``type``: TEMPORARY
+    - ``tempSwitchType``: High
+    - ``tempCause``: TEMP_CAUSE_CODE_DSDA_IMPOSSIBLE
+
+11. Application calls ``requestDdsSwitch`` with ``slotId: SLOT_ID_2, type: TEMPORARY``.
+12. ``requestDdsSwitch`` callback returns ``SUCCESS``.
+    OEM must perform TCP cleanup, release internet PDN/PDU connections on original DDS (Sub1),
+    and switch application traffic to temp DDS (Sub2).
+
+**Final state**: Temp DDS = Sub2, nDDS = Sub1.
+Long internet data traffic on temp DDS (Sub2). Short data or special traffic (e.g., SMS or MMS)
+on nDDS (Sub1).
+
+Voice Call on nDDS Ends - DDS Switch Back Call Flow
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: /../images/data_voice_call_on_ndds_ends_call_flow.png
+
+**Initial state**: DSDA Sub-Mode with Tx Sharing mode, temp DDS = Sub2 (Slot 2),
+temp nDDS = Sub1 (Slot 1). Long internet data traffic on temp DDS (Sub2). Short data or
+special traffic (e.g., SMS or MMS) on temp nDDS (Sub1). Active voice call on temp DDS (Sub2).
+
+1. The voice call on nDDS (Sub2) ends. ``IDualDataListener::onDdsSwitchRecommendation(DdsSwitchRecommendation)``
+   is called with:
+
+   - ``slotId``: SLOT_ID_1
+   - ``type``: TEMPORARY
+   - ``tempSwitchType``: REVOKE
+   - ``tempCause``: TEMP_CAUSE_CODE_CALL_STATUS_CHANGED
+
+2. OEM logic evaluates the revocation recommendation and decides to switch back to the original
+   DDS (Sub1). A ``REVOKE`` recommendation signals the OEM that the temporary DDS switch condition
+   has ended and the device should switch back to the original DDS permanently. Application calls
+   ``requestDdsSwitch`` with ``slotId: SLOT_ID_1, type: PERMANENT``.
+3. ``requestDdsSwitch`` callback returns ``SUCCESS``.
+   OEM is recommended to perform TCP cleanup, release internet PDN/PDU connections on temp DDS
+   (Sub2), and switch application traffic back to original DDS (Sub1).
+
+**Final state**: DDS = Sub1, nDDS = Sub2.
+Long internet data traffic on DDS (Sub1). Short data or special traffic (e.g., SMS or MMS)
+on nDDS (Sub2).
+
 Start TCP keep alive offload to modem
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

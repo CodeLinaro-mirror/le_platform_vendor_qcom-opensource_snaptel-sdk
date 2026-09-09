@@ -62,11 +62,10 @@ void appendGnssSystemTime(std::ostringstream &recordStream, const telux::loc::Sy
 
     if (system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GLONASS) {
         const auto &timeInfo = sysTime.time.glo;
-        recordStream << timeInfo.validityMask << "," << timeInfo.gloDays << ","
-                     << timeInfo.gloMsec << "," << timeInfo.gloClkTimeBias << ","
-                     << timeInfo.gloClkTimeUncMs << "," << timeInfo.refFCount << ","
-                     << timeInfo.numClockResets << "," << static_cast<unsigned>(timeInfo.gloFourYear)
-                     << ",";
+        recordStream << timeInfo.validityMask << "," << timeInfo.gloDays << "," << timeInfo.gloMsec
+                     << "," << timeInfo.gloClkTimeBias << "," << timeInfo.gloClkTimeUncMs << ","
+                     << timeInfo.refFCount << "," << timeInfo.numClockResets << ","
+                     << static_cast<unsigned>(timeInfo.gloFourYear) << ",";
     } else if (system != telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_SBAS) {
         const telux::loc::TimeInfo *timeInfo = &sysTime.time.gps;
         if (system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GALILEO) {
@@ -2568,38 +2567,33 @@ void MyLocationListener::onGnssSVResidualInfo(const telux::loc::GnssSvResidualRe
         recordStream << data.svId << "," << data.gnssSignalType << "," << data.validityMask << ","
                      << data.prResidual << "," << data.prUncertainty << "," << data.cpResidual
                      << "," << data.cpUncertainty << "," << data.dopplerResidual << ","
-                     << data.dopplerUncertainty << ","
-                     << static_cast<unsigned>(data.iodephemeris) << ","
-                     << static_cast<unsigned>(data.gloTbEpoch) << ","
+                     << data.dopplerUncertainty << "," << static_cast<unsigned>(data.iodephemeris)
+                     << "," << static_cast<unsigned>(data.gloTbEpoch) << ","
                      << static_cast<int>(data.gloFreqNum) << "," << data.carrierNoiseRatio << ","
                      << data.azimuth << "," << data.elevation << ",";
     }
 
     const auto &usage = svResReport.svAvailabilityUsage;
-    recordStream << usage.validityMask << "," << static_cast<unsigned>(usage.gpsSvCountMeasured)
-                 << "," << static_cast<unsigned>(usage.gpsSvCountInPositionFix) << ","
-                 << static_cast<unsigned>(usage.gpsSvCountInVelocityFix) << ","
-                 << usage.gpsSvUsedMask << ","
-                 << static_cast<unsigned>(usage.glonassSvCountMeasured) << ","
-                 << static_cast<unsigned>(usage.glonassSvCountInPositionFix) << ","
-                 << static_cast<unsigned>(usage.glonassSvCountInVelocityFix) << ","
-                 << usage.glonassSvUsedMask << ","
-                 << static_cast<unsigned>(usage.beidouSvCountMeasured) << ","
-                 << static_cast<unsigned>(usage.beidouSvCountInPositionFix) << ","
-                 << static_cast<unsigned>(usage.beidouSvCountInVelocityFix) << ","
-                 << usage.beidouSvUsedMask << ","
-                 << static_cast<unsigned>(usage.galileoSvCountMeasured) << ","
-                 << static_cast<unsigned>(usage.galileoSvCountInPositionFix) << ","
-                 << static_cast<unsigned>(usage.galileoSvCountInVelocityFix) << ","
-                 << usage.galileoSvUsedMask << ","
-                 << static_cast<unsigned>(usage.qzssSvCountMeasured) << ","
-                 << static_cast<unsigned>(usage.qzssSvCountInPositionFix) << ","
-                 << static_cast<unsigned>(usage.qzssSvCountInVelocityFix) << ","
-                 << usage.qzssSvUsedMask << ","
-                 << static_cast<unsigned>(usage.navicSvCountMeasured) << ","
-                 << static_cast<unsigned>(usage.navicSvCountInPositionFix) << ","
-                 << static_cast<unsigned>(usage.navicSvCountInVelocityFix) << ","
-                 << usage.navicSvUsedMask << ",";
+    recordStream
+        << usage.validityMask << "," << static_cast<unsigned>(usage.gpsSvCountMeasured) << ","
+        << static_cast<unsigned>(usage.gpsSvCountInPositionFix) << ","
+        << static_cast<unsigned>(usage.gpsSvCountInVelocityFix) << "," << usage.gpsSvUsedMask << ","
+        << static_cast<unsigned>(usage.glonassSvCountMeasured) << ","
+        << static_cast<unsigned>(usage.glonassSvCountInPositionFix) << ","
+        << static_cast<unsigned>(usage.glonassSvCountInVelocityFix) << ","
+        << usage.glonassSvUsedMask << "," << static_cast<unsigned>(usage.beidouSvCountMeasured)
+        << "," << static_cast<unsigned>(usage.beidouSvCountInPositionFix) << ","
+        << static_cast<unsigned>(usage.beidouSvCountInVelocityFix) << "," << usage.beidouSvUsedMask
+        << "," << static_cast<unsigned>(usage.galileoSvCountMeasured) << ","
+        << static_cast<unsigned>(usage.galileoSvCountInPositionFix) << ","
+        << static_cast<unsigned>(usage.galileoSvCountInVelocityFix) << ","
+        << usage.galileoSvUsedMask << "," << static_cast<unsigned>(usage.qzssSvCountMeasured) << ","
+        << static_cast<unsigned>(usage.qzssSvCountInPositionFix) << ","
+        << static_cast<unsigned>(usage.qzssSvCountInVelocityFix) << "," << usage.qzssSvUsedMask
+        << "," << static_cast<unsigned>(usage.navicSvCountMeasured) << ","
+        << static_cast<unsigned>(usage.navicSvCountInPositionFix) << ","
+        << static_cast<unsigned>(usage.navicSvCountInVelocityFix) << "," << usage.navicSvUsedMask
+        << ",";
 
     if (isRecordingEnabled_) {
         DETAILED_RECORDING << recordStream.str() << std::endl;

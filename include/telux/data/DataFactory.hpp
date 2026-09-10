@@ -28,10 +28,9 @@
  */
 
 /*
- *  ​​​​​Changes from Qualcomm Innovation Center are provided under the following license:
-
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -66,6 +65,8 @@
 
 namespace telux {
 namespace data {
+
+class QcmClient;
 
 /** @addtogroup telematics_data
  * @{ */
@@ -258,6 +259,7 @@ class DataFactory {
     std::shared_ptr<telux::data::net::IL2tpManager>  l2tpManager_;
     std::map<telux::data::OperationType, std::shared_ptr<telux::data::IDataSettingsManager>>
         dataSettingsManagerMap_;
+    std::shared_ptr<QcmClient> qcmClient_;
 
     DataFactory();
     ~DataFactory();

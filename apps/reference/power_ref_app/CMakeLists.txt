@@ -10,6 +10,15 @@ if (CAN_WRAPPER_LIB_FOUND)
     add_definitions(-DCAN_TRIGGER_SUPPORTED)
 endif (CAN_WRAPPER_LIB_FOUND)
 
+if (TELSDK_FEATURE_COMMONLOG_SUPPORT)
+    pkg_check_modules(CLOG libclog)
+endif (TELSDK_FEATURE_COMMONLOG_SUPPORT)
+
+if (TELSDK_FEATURE_COMMONLOG_SUPPORT AND CLOG_FOUND)
+    include_directories(${CLOG_INCLUDE_DIRS})
+    add_definitions(-DTELSDK_FEATURE_COMMONLOG_SUPPORT_ENABLED)
+endif (TELSDK_FEATURE_COMMONLOG_SUPPORT AND CLOG_FOUND)
+
 include_directories(BEFORE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${telematics-apps_SOURCE_DIR}/common
@@ -74,6 +83,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 add_executable (${TARGET_POWER_REF_DAEMON} ${TARGET_POWER_REF_DAEMON_SOURCES})
 target_link_libraries(${TARGET_POWER_REF_DAEMON} telux_common telux_tel telux_power
     telux_data pthread rt)
+
+if (TELSDK_FEATURE_COMMONLOG_SUPPORT AND CLOG_FOUND)
+    target_link_libraries(${TARGET_POWER_REF_DAEMON} ${CLOG_LDFLAGS})
+endif (TELSDK_FEATURE_COMMONLOG_SUPPORT AND CLOG_FOUND)
 
 if (TELSDK_FEATURE_SATCOM)
     target_link_libraries(${TARGET_POWER_REF_DAEMON} telux_satcom)

@@ -2205,7 +2205,10 @@ telux::common::Status LocationMenu::launchAsRecordingUtility(LocReqEngine engine
     posListener->setNmeaInfoFlag(true);
     posListener->setMeasurementsInfoFlag(true);
     posListener->setDataInfoFlag(true);
-    posListener->setDetailedEngineLocReportFlag(true);
+    if (DEFAULT_UNKNOWN != engineType) {
+        posListener->setDetailedEngineLocReportFlag(true);
+        posListener->setSvResidualInfoFlag(true);
+    }
 
     posListener->setRecordingFlag(true);
     // Registering listener for fixes
@@ -2217,6 +2220,9 @@ telux::common::Status LocationMenu::launchAsRecordingUtility(LocReqEngine engine
     reportMask |= NMEA;
     reportMask |= DATA;
     reportMask |= MEASUREMENT;
+    if (DEFAULT_UNKNOWN != engineType) {
+        reportMask |= SV_RESIDUAL;
+    }
 
     std::shared_ptr<MyLocationCommandCallback> myLocCmdResponseCb
         = std::make_shared<MyLocationCommandCallback>("Detailed report request");

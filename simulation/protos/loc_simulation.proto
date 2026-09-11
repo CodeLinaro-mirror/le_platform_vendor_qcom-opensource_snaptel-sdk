@@ -1307,6 +1307,14 @@ enum GnssReportType {
     HIGH_RATE_MEASUREMENT    = 5;
     /*Disaster Crisis Reports*/
     DISASTER_CRISIS   = 6;
+    /** Engine NMEA reports */
+    ENGINE_NMEA       = 7;
+    /** Ephemeris reports */
+    EPHEMERIS         = 8;
+    /** GNSS extended data reports */
+    EXTENDED_DATA     = 9;
+    /** SV residual reports */
+    SV_RESIDUAL       = 10;
 }
 
 message StartDetailedReportsRequest {

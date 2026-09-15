@@ -84,6 +84,7 @@ class AudioClient {
     void takeUserSlotIdInput(SlotId &slotId);
     void takeAudioFormatInput(AudioFormat &audioFormat);
     void takeUserSampleRateInput(uint32_t &userSampleRate);
+    void takeUserIsStreamingInput(bool &isStreaming);
     void takeUserChannelInput(telux::audio::ChannelTypeMask &channelType);
     void takeUserDeviceInput(
         std::vector<telux::audio::DeviceType> &devices, StreamType &streamType);

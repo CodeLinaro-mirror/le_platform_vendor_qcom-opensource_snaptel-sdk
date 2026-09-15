@@ -1019,7 +1019,7 @@ void AudioGrpcClientStub::onStopStream(google::protobuf::Any any, int cmdId, Err
 }
 
 telux::common::Status AudioGrpcClientStub::playDtmfTone(telux::audio::DtmfTone dtmfTone,
-    uint16_t duration, uint16_t gain, uint32_t streamId,
+    uint32_t duration, uint16_t gain, uint32_t streamId,
     std::shared_ptr<telux::audio::IDTMFCb> resultListener, int cmdId) {
 
     ::audioStub::AudioRequest request;
@@ -1135,7 +1135,7 @@ void AudioGrpcClientStub::onStopDtmfTone(google::protobuf::Any any, int cmdId, E
 }
 
 telux::common::Status AudioGrpcClientStub::playTone(uint32_t streamId,
-    std::vector<uint16_t> frequency, uint16_t duration, uint16_t gain,
+    std::vector<uint16_t> frequency, uint32_t duration, uint16_t gain,
     std::shared_ptr<telux::audio::IToneCb> resultListener, int cmdId) {
 
     audioStub::AudioRequest request;

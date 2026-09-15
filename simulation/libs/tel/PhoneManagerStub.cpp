@@ -602,12 +602,13 @@ void PhoneManagerStub::onEventUpdate(google::protobuf::Any event) {
 
 void PhoneManagerStub::handleSignalStrengthChanged(::telStub::SignalStrengthChangeEvent event) {
     LOG(DEBUG, __FUNCTION__);
-    int phoneId                                              = event.phone_id();
-    std::shared_ptr<SignalStrength> signalStrengthNotify     = nullptr;
-    std::shared_ptr<GsmSignalStrengthInfo> gsmSignalStrength = std::make_shared<
-        GsmSignalStrengthInfo>(
-        event.mutable_signal_strength()->mutable_gsm_signal_strength_info()->gsm_signal_strength(),
-        event.mutable_signal_strength()->mutable_gsm_signal_strength_info()->gsm_rssi());
+    int phoneId                                          = event.phone_id();
+    std::shared_ptr<SignalStrength> signalStrengthNotify = nullptr;
+    std::shared_ptr<GsmSignalStrengthInfo> gsmSignalStrength
+        = std::make_shared<GsmSignalStrengthInfo>(event.mutable_signal_strength()
+                                                      ->mutable_gsm_signal_strength_info()
+                                                      ->gsm_signal_strength(),
+            event.mutable_signal_strength()->mutable_gsm_signal_strength_info()->gsm_rssi());
     std::shared_ptr<LteSignalStrengthInfo> lteSignalStrength
         = std::make_shared<LteSignalStrengthInfo>(event.mutable_signal_strength()
                                                       ->mutable_lte_signal_strength_info()
@@ -635,9 +636,8 @@ void PhoneManagerStub::handleSignalStrengthChanged(::telStub::SignalStrengthChan
             event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->rsrq(),
             event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->rssnr(),
             event.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->rssi());
-    signalStrengthNotify = std::make_shared<SignalStrength>(
-        lteSignalStrength, gsmSignalStrength, wcdmaSignalStrength, nr5gSignalStrength,
-        nb1NtnSignalStrength);
+    signalStrengthNotify = std::make_shared<SignalStrength>(lteSignalStrength, gsmSignalStrength,
+        wcdmaSignalStrength, nr5gSignalStrength, nb1NtnSignalStrength);
     std::vector<std::weak_ptr<IPhoneListener>> applisteners;
     if (listenerMgr_) {
         listenerMgr_->getAvailableListeners(applisteners);

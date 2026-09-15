@@ -165,8 +165,7 @@ class RadioListener : public ICv2xRadioListener {
     }
 };
 
-class Cv2xStatusListener : public ICv2xListener {
-};
+class Cv2xStatusListener : public ICv2xListener {};
 
 static bool isV2xReady() {
     lock_guard<mutex> lock(gCv2xStatusMutex);

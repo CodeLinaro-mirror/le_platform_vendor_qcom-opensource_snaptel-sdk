@@ -2052,8 +2052,7 @@ telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(
                 token              = telux::common::EventParserUtil::getNextToken(
                     params[index], DEFAULT_DELIMITER);
                 int rssi = std::stoi(token);
-                LOG(DEBUG, __FUNCTION__, " signalStrength: ", signalStrength,
-                    " rssi: ", rssi);
+                LOG(DEBUG, __FUNCTION__, " signalStrength: ", signalStrength, " rssi: ", rssi);
 
                 if (servingRat == static_cast<int>(telStub::RadioTechnology::RADIO_TECH_GSM)) {
                     int oldValue = rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]
@@ -2082,9 +2081,8 @@ telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(
                 token    = telux::common::EventParserUtil::getNextToken(
                     params[index], DEFAULT_DELIMITER);
                 int rssi = std::stoi(token);
-                LOG(DEBUG, __FUNCTION__, " signalStrength: ", signalStrength,
-                    " ecio: ", ecio, " rscp: ", rscp,
-                    " rssi: ", rssi);
+                LOG(DEBUG, __FUNCTION__, " signalStrength: ", signalStrength, " ecio: ", ecio,
+                    " rscp: ", rscp, " rssi: ", rssi);
 
                 if (servingRat == static_cast<int>(telStub::RadioTechnology::RADIO_TECH_UMTS)) {
                     int oldValue
@@ -2143,8 +2141,7 @@ telux::common::ErrorCode TelUtil::writeSignalStrengthToJsonFile(
                     params[index], DEFAULT_DELIMITER);
                 int rssi = std::stoi(token);
                 LOG(DEBUG, __FUNCTION__, " signalStrength: ", signalStrength, " rsrp: ", rsrp,
-                    " rsrq: ", rsrq, " rssnr: ", rssnr,
-                    " rssi: ", rssi);
+                    " rsrq: ", rsrq, " rssnr: ", rssnr, " rssi: ", rssi);
 
                 if (servingRat == static_cast<int>(telStub::RadioTechnology::RADIO_TECH_LTE)) {
                     int oldValue = rootObj[TEL_PHONE_MANAGER]["signalStrengthInfo"]
@@ -2393,8 +2390,8 @@ telux::common::ErrorCode TelUtil::writeCellInfoListToJsonFile(
                     int bsic        = std::stoi(token);
                     token           = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
                     int signalStrength = std::stoi(token);
-                    token            = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
-                    int rssi         = std::stoi(token);
+                    token    = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+                    int rssi = std::stoi(token);
 
                     LOG(DEBUG, __FUNCTION__, " mcc:", mcc, " mnc:", mnc, " lac:", lac, " cid:", cid,
                         " arfcn:", arfcn, " bsic:", bsic, " signalStrength:", signalStrength,
@@ -2439,16 +2436,15 @@ telux::common::ErrorCode TelUtil::writeCellInfoListToJsonFile(
                     int uarfcn      = std::stoi(token);
                     token           = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
                     int signalStrength = std::stoi(token);
-                    token            = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
-                    int ecio         = std::stoi(token);
-                    token            = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
-                    int rscp         = std::stoi(token);
-                    token            = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
-                    int rssi         = std::stoi(token);
+                    token    = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+                    int ecio = std::stoi(token);
+                    token    = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+                    int rscp = std::stoi(token);
+                    token    = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+                    int rssi = std::stoi(token);
                     LOG(DEBUG, __FUNCTION__, " mcc:", mcc, " mnc:", mnc, " lac:", lac, " cid:", cid,
                         " psc:", psc, " uarfcn:", uarfcn, " signalStrength:", signalStrength,
-                        " ecio:", ecio, "rscp:", rscp,
-                        "rssi:", rssi);
+                        " ecio:", ecio, "rscp:", rscp, "rssi:", rssi);
 
                     rootObj[TEL_PHONE_MANAGER]["cellInfo"]["cellList"][i - 1]["wcdmaCellInfo"]
                            ["wcdmaCellIdentity"]["mcc"]
@@ -2495,14 +2491,14 @@ telux::common::ErrorCode TelUtil::writeCellInfoListToJsonFile(
                     int earfcn      = std::stoi(token);
                     token           = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
                     int signalStrength = std::stoi(token);
-                    token             = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
-                    int lteRsrp       = std::stoi(token);
-                    token             = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
-                    int lteRsrq       = std::stoi(token);
-                    token             = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
-                    int lteRssnr      = std::stoi(token);
-                    token             = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
-                    int rssi          = std::stoi(token);
+                    token        = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+                    int lteRsrp  = std::stoi(token);
+                    token        = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+                    int lteRsrq  = std::stoi(token);
+                    token        = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+                    int lteRssnr = std::stoi(token);
+                    token        = EventParserUtil::getNextToken(params[i], DEFAULT_DELIMITER);
+                    int rssi     = std::stoi(token);
                     LOG(DEBUG, __FUNCTION__, " mcc:", mcc, " mnc:", mnc, " ci:", ci, " pci:", pci,
                         " tac:", tac, " earfcn:", earfcn, " signalStrength:", signalStrength,
                         "lteRsrp:", lteRsrp, "lteRsrq:", lteRsrq, "lteRssnr:", lteRssnr,

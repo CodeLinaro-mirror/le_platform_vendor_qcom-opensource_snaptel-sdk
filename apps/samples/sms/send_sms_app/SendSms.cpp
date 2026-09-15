@@ -141,8 +141,7 @@ class SMSSender : public std::enable_shared_from_this<SMSSender> {
                 if (errorCode == telux::common::ErrorCode::SUCCESS) {
                     std::cout << "Message sent successfully" << std::endl;
                 } else {
-                    std::cout << "Can't send msg, err " << static_cast<int>(errorCode)
-                              << std::endl;
+                    std::cout << "Can't send msg, err " << static_cast<int>(errorCode) << std::endl;
                 }
             });
         if (status != telux::common::Status::SUCCESS) {

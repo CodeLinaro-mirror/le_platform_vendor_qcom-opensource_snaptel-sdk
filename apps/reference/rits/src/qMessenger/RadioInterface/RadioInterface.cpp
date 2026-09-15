@@ -600,7 +600,9 @@ int RadioInterface::onWraTimedout(void) {
 }
 
 shared_ptr<ICv2xRadioManager> RadioInterface::getCv2xRadioManager() {
-    if (nullptr == cv2xRadioManager_ or cv2xRadioManager_->getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+    if (nullptr == cv2xRadioManager_
+        or cv2xRadioManager_->getServiceStatus()
+               != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         cout << "cv2x radio manager is not ready." << endl;
         return nullptr;
     }

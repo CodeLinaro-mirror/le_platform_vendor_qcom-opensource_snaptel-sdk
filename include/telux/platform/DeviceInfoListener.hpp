@@ -9,7 +9,7 @@
  * @brief   DeviceInfoListener provides callback methods for listening to get the service
  *          status changed notification.
  *          Client need to implement these methods. The methods in listener can be invoked
- *          from multiple threads.So the client needs to make sure that the implementation
+ *          from multiple threads. So the client needs to make sure that the implementation
  *          is thread-safe.
  */
 
@@ -26,7 +26,7 @@ namespace platform {
  * @{ */
 
 /**
- * @brief Listener class for getting device info related notifications .
+ * @brief Listener class for getting device info related notifications.
  *        The client needs to implement these methods as briefly as possible and avoid blocking
  *        calls in it. The methods in this class can be invoked from multiple different threads.
  *        Client needs to make sure that the implementation is thread-safe.

@@ -142,6 +142,7 @@ void RttMenu::dialRttCall(std::vector<std::string> userInput) {
             return;
         }
     }
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
     static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
     if (audioClient->isReady()) {
         bool audioState = queryAudioState();
@@ -150,6 +151,9 @@ void RttMenu::dialRttCall(std::vector<std::string> userInput) {
             audioClient->startVoiceSession(static_cast<SlotId>(phoneId));
         }
     }
+#else
+    std::cout << "Audio is not supported, skipping start voice session" << std::endl;
+#endif
     telux::common::Status makeCallStatus
         = callManager_->makeRttCall(phoneId, phoneNumber, myDialCallCmdCb_);
     if (makeCallStatus == telux::common::Status::NOTALLOWED) {
@@ -243,6 +247,7 @@ void RttMenu::acceptCall(std::vector<std::string> userInput) {
         }
     }
     if (spCall) {
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
         static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
         if (audioClient->isReady()) {
             int phoneId     = spCall->getPhoneId();
@@ -251,6 +256,9 @@ void RttMenu::acceptCall(std::vector<std::string> userInput) {
                 audioClient->startVoiceSession(static_cast<SlotId>(phoneId));
             }
         }
+#else
+        std::cout << "Audio is not supported, skipping start voice session" << std::endl;
+#endif
         spCall->answer(myAnswerCb_, static_cast<telux::tel::RttMode>(mode));
     } else {
         std::cout << "No incoming/waiting call" << std::endl;

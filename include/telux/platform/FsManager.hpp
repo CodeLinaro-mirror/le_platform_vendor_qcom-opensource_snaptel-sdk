@@ -25,7 +25,7 @@ namespace platform {
  * @{ */
 
 /**
- * @brief   IFsManager provides interface to to control and get notified about file system
+ * @brief   IFsManager provides interface to control and get notified about file system
  *          operations. This includes Embedded file system (EFS) operations.
  */
 class IFsManager {
@@ -91,9 +91,9 @@ class IFsManager {
     virtual telux::common::Status prepareForEcall() = 0;
 
     /**
-     * Once ecall complete, the client should invoke this API to re-enable filesystem
+     * Once ecall is complete, the client should invoke this API to re-enable filesystem
      * operations like filesystem scrubbing.If the API invocation results in
-     * @ref telux::common::Status::NOTREADY,indicating that the sub-system is not ready,
+     * @ref telux::common::Status::NOTREADY, indicating that the sub-system is not ready,
      * the client should retry.
      *
      *

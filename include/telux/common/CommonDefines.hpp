@@ -121,7 +121,7 @@ enum class ErrorCode {
     GENERIC_FAILURE                  = 2, /**< Generic Failure */
     PASSWORD_INCORRECT               = 3, /**< For PIN/PIN2 methods only */
     SIM_PIN2                         = 4, /**< Operation requires SIM PIN2 to be entered */
-    SIM_PUK2                         = 5, /**< Operation requires SIM PIN2 to be entered */
+    SIM_PUK2                         = 5, /**< Operation requires SIM PUK2 to be entered */
     REQUEST_NOT_SUPPORTED            = 6, /**< Not Supported request */
     CANCELLED                        = 7, /**< Cancelled */
     OP_NOT_ALLOWED_DURING_VOICE_CALL = 8, /**< Data operation are not allowed during voice
@@ -186,7 +186,7 @@ enum class ErrorCode {
     ALREADY            = 66, /**< Already registered handler */
     INCOMPATIBLE_STATE = 90, /**< Operation cannot be performed because the device
                               is in incompatible state */
-    NO_EFFECT         = 101, /**< Given request had to no effect */
+    NO_EFFECT         = 101, /**< Given request had no effect */
     DEVICE_NOT_READY  = 102, /**< Device not ready */
     MISSING_ARGUMENTS = 103, /**< Missing one or more arguments */
     FILE_NOT_FOUND    = 104, /**< Required configuration file is missing */
@@ -276,7 +276,7 @@ enum class ErrorCode {
                                         an error prevented */
     POLICY_MISMATCH    = 1079, /**< Network policy does not match a valid NAT */
     SIM_FILE_NOT_FOUND = 1080, /**< File is not present on the card. */
-    EXTENDED_INTERNAL  = 1081, /**< Error from the the DS profile module,
+    EXTENDED_INTERNAL  = 1081, /**< Error from the DS profile module,
                                     the extended error */
     ACCESS_DENIED = 1082, /**< Access to the requested file is denied. This can
                                occur when there is an attempt to access a
@@ -421,7 +421,7 @@ enum class ErrorCode {
     UNSUPPORTED_KEY_VRFY_ALGO = 5021, /**< Unsupported key verification algorithm
                                            (for PKCS8 & PKCS12) */
     INVAL_IN_LEN              = 5022, /**< Invalid input length */
-    INVAL_KEY_EXPRT_OPTNS     = 5023, /**< Invalid oprions for key export */
+    INVAL_KEY_EXPRT_OPTNS     = 5023, /**< Invalid options for key export */
     DELEGATION_NOT_ALLOWED    = 5024, /**< Delegation not allowed */
     KEY_NOT_YET_VALID         = 5025, /**< Key still not valid */
     KEY_EXPIRED               = 5026, /**< Key has expired */
@@ -429,7 +429,7 @@ enum class ErrorCode {
     OUT_PARAMETER_NULL        = 5028, /**< Null output argument */
     INVAL_OPERATION_HNDL      = 5029, /**< Invalid operation handle */
     INSUFFICIENT_BUF_SPACE    = 5030, /**< Insufficient buffer space */
-    VERIFICATION_FAILED       = 5031, /**< Verifcation failed */
+    VERIFICATION_FAILED       = 5031, /**< Verification failed */
     TOO_MANY_OPS              = 5032, /**< Too many operations */
     UNEXPECTED_NULL_PTR       = 5033, /**< Unexpected null pointer */
     INVAL_KEY_BLOB            = 5034, /**< Invalid key blob */
@@ -449,7 +449,7 @@ enum class ErrorCode {
     INVAL_NONCE               = 5048, /**< Invalid nonce */
     MISSING_MAC_LEN           = 5049, /**< Missing MAC length */
     KEY_RATE_LIMIT_EXCEEDED   = 5050, /**< Key limit exceeded */
-    CALLER_NONCE_PROHIBITED   = 5051, /**< Caller nonce proibited */
+    CALLER_NONCE_PROHIBITED   = 5051, /**< Caller nonce prohibited */
     KEY_MAX_OPS_EXCEEDED      = 5052, /**< Key maximum operations exceeded */
     INVAL_MAC_LEN             = 5053, /**< Invalid MAC length */
     MISSING_MIN_MAC_LEN       = 5054, /**< Missing minimum MAC length */

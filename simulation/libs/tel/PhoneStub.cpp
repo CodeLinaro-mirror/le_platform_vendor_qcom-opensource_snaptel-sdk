@@ -529,12 +529,13 @@ telux::common::Status PhoneStub::requestSignalStrength(
             response.mutable_signal_strength()->mutable_lte_signal_strength_info()->lte_rsrq(),
             response.mutable_signal_strength()->mutable_lte_signal_strength_info()->lte_rssnr(),
             response.mutable_signal_strength()->mutable_lte_signal_strength_info()->lte_rssi());
-    std::shared_ptr<WcdmaSignalStrengthInfo> wcdmaSignalStrength = std::make_shared<
-        WcdmaSignalStrengthInfo>(
-        response.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->signal_strength(),
-        response.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->ecio(),
-        response.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->rscp(),
-        response.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->rssi());
+    std::shared_ptr<WcdmaSignalStrengthInfo> wcdmaSignalStrength
+        = std::make_shared<WcdmaSignalStrengthInfo>(response.mutable_signal_strength()
+                                                        ->mutable_wcdma_signal_strength_info()
+                                                        ->signal_strength(),
+            response.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->ecio(),
+            response.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->rscp(),
+            response.mutable_signal_strength()->mutable_wcdma_signal_strength_info()->rssi());
     std::shared_ptr<Nr5gSignalStrengthInfo> nr5gSignalStrength
         = std::make_shared<Nr5gSignalStrengthInfo>(
             response.mutable_signal_strength()->mutable_nr5g_signal_strength_info()->rsrp(),
@@ -548,9 +549,8 @@ telux::common::Status PhoneStub::requestSignalStrength(
             response.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->rsrq(),
             response.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->rssnr(),
             response.mutable_signal_strength()->mutable_nb1_ntn_signal_strength_info()->rssi());
-    signalStrengthNotify = std::make_shared<SignalStrength>(
-        lteSignalStrength, gsmSignalStrength, wcdmaSignalStrength, nr5gSignalStrength,
-        nb1NtnSignalStrength);
+    signalStrengthNotify = std::make_shared<SignalStrength>(lteSignalStrength, gsmSignalStrength,
+        wcdmaSignalStrength, nr5gSignalStrength, nb1NtnSignalStrength);
     telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
     telux::common::Status status   = static_cast<telux::common::Status>(response.status());
     bool isCallbackNeeded          = static_cast<bool>(response.iscallback());

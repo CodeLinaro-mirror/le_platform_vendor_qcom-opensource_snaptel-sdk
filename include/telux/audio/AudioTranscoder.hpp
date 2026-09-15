@@ -111,8 +111,8 @@ class ITranscoder {
      * Sends the compressed data for transcoding. First write starts the transcoding operation.
      *
      * Internally, a pipeline is maintained for the data to transcode. The application should send
-     * the next data for transcoding only when the pipeline can accomodate more data. This readiness
-     * is indicated by calling the @ref ITranscodeListener::onReadyForWrite() method.
+     * the next data for transcoding only when the pipeline can accommodate more data. This
+     * readiness is indicated by calling the @ref ITranscodeListener::onReadyForWrite() method.
      *
      * @param [in] buffer        Contains the data to transcode
      *
@@ -140,7 +140,8 @@ class ITranscoder {
     virtual telux::common::Status tearDown(telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
-     * Initiates a read request to fetch the transcoded data. Transcoded data will be by the
+     * Initiates a read request to fetch the transcoded data. Transcoded data will be received by
+     * the
      * @ref TranscoderReadResponseCb callback.
      *
      * @param [in] buffer       Buffer that will contain the transcoded data

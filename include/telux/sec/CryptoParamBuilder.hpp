@@ -69,7 +69,7 @@ class CryptoParamBuilder {
     CryptoParamBuilder setMinimumMacLength(int32_t minMacLength);
 
     /** For crypto operations, specifies requested length of a MAC or GCM (which is guaranteed
-        to be no less then minimum length of the MAC/GCM used when generating the key). */
+        to be no less than minimum length of the MAC/GCM used when generating the key). */
     CryptoParamBuilder setMacLength(int32_t macLength);
 
     /** When generating keys, specifies the block cipher mode(s) with which this key can

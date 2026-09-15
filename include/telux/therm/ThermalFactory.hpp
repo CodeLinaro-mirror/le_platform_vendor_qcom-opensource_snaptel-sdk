@@ -73,7 +73,7 @@ class ThermalFactory {
      * @param [in] callback  Optional callback pointer to get the response of the manager
      *                       initialization.
      *
-     * @param [in] oprType   Operation type @ref telux::common::ProcType. Local operation type
+     * @param [in] operType   Operation type @ref telux::common::ProcType. Local operation type
      *                       fetches the thermal zones information where the application is running.
      *                       Remote operation type fetches the thermal zones information of modem
      *                       if the application is running on external application processor(EAP)

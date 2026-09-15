@@ -53,15 +53,16 @@ void MyDataProfilesCallback::onProfileListResponse(
         std::cout
             << std::setw(2)
             << "+------------------------------------------------------------------------------"
-            << "---------------------------------------+" << std::endl;
+            << "---------------------------------------------------------+" << std::endl;
         std::cout << std::setw(14) << "| Profile # | " << std::setw(11) << "TechPref | "
                   << std::setw(15) << "      APN      " << std::setw(17) << "|  ProfileName  |"
                   << std::setw(10) << " IP Type |" << std::setw(16) << "    APN Type    |"
-                  << std::setw(20) << " Emergency Allowed | CLAT Enabled |" << std::endl;
+                  << std::setw(20) << " Emergency Allowed | CLAT Enabled |" << std::setw(20)
+                  << "   Request PCSCF Addr   |" << std::endl;
         std::cout
             << std::setw(2)
             << "+------------------------------------------------------------------------------"
-            << "---------------------------------------+" << std::endl;
+            << "---------------------------------------------------------+" << std::endl;
         for (auto it : profiles) {
             std::cout << std::left << std::setw(4) << "  " << std::setw(10) << it->getId()
                       << std::setw(11) << DataUtils::techPreferenceToString(it->getTechPreference())
@@ -70,7 +71,8 @@ void MyDataProfilesCallback::onProfileListResponse(
                       << std::setw(16) << it->getApnTypes().to_string() << std::setw(2) << " "
                       << std::setw(20)
                       << DataUtils::emergencyAllowedTypeToString(it->getIsEmergencyAllowed())
-                      << std::setw(15) << it->isClatEnabled() << std::endl;
+                      << std::setw(15) << it->isClatEnabled() << std::setw(20)
+                      << (it->isPcscfViaPcoEnabled() ? "Yes" : "No") << std::endl;
         }
         std::cout << std::endl << std::endl;
     } else {
@@ -94,7 +96,8 @@ void MyDataProfileCallback::onResponse(
             << ", IpFamilyType : " << DataUtils::ipFamilyTypeToString(profile->getIpFamilyType())
             << ", EmergencyAllowed : "
             << DataUtils::emergencyAllowedTypeToString(profile->getIsEmergencyAllowed())
-            << ", CLAT enabled: " << profile->isClatEnabled() << std::endl;
+            << ", CLAT enabled: " << profile->isClatEnabled()
+            << ", Obtain PCSCF address: " << profile->isPcscfViaPcoEnabled() << std::endl;
     } else {
         PRINT_CB << "Unable to create profile or request profile by ID, errorCode: "
                  << static_cast<int>(error)

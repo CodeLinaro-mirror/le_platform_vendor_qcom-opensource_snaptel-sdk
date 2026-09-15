@@ -572,7 +572,6 @@ enum class RadioState {
     RADIO_STATE_ON          = 10, /**< Radio is on */
 };
 
-
 /**
  * Defines all available radio access technologies
  */

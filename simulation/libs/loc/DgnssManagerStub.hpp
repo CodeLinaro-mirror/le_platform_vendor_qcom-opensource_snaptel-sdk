@@ -58,7 +58,6 @@ namespace loc {
  */
 class DgnssManagerStub : public IDgnssManager {
  public:
-
     /**
      * This status indicates whether the object is in a usable state.
      *

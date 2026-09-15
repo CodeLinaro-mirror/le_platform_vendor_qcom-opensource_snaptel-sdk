@@ -100,11 +100,9 @@ int main(int, char **) {
     auto &locationFactory = telux::loc::LocationFactory::getInstance();
 
     std::promise<telux::common::ServiceStatus> locationMgrProm;
-    std::shared_ptr<telux::loc::ILocationManager> locationMgr
-        = locationFactory.getLocationManager(
-            [&locationMgrProm](telux::common::ServiceStatus srvStatus) {
-                locationMgrProm.set_value(srvStatus);
-            });
+    std::shared_ptr<telux::loc::ILocationManager> locationMgr = locationFactory.getLocationManager(
+        [&locationMgrProm](
+            telux::common::ServiceStatus srvStatus) { locationMgrProm.set_value(srvStatus); });
     if (!locationMgr) {
         std::cout << " *** ERROR - Failed to get LocationManager instance" << std::endl;
         return 0;
@@ -131,9 +129,7 @@ int main(int, char **) {
     std::promise<telux::common::ServiceStatus> smsMgrProm;
     std::shared_ptr<telux::tel::ISmsManager> smsManager = phoneFactory.getSmsManager(
         DEFAULT_PHONE_ID,
-        [&smsMgrProm](telux::common::ServiceStatus srvStatus) {
-            smsMgrProm.set_value(srvStatus);
-        });
+        [&smsMgrProm](telux::common::ServiceStatus srvStatus) { smsMgrProm.set_value(srvStatus); });
     if (!smsManager) {
         std::cout << " *** ERROR - Failed to get SmsManager instance" << std::endl;
         exit(1);

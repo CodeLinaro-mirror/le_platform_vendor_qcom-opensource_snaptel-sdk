@@ -111,7 +111,7 @@ class IWiFiSecurityManager {
      *
      * @param [out] trustedAPList List of trusted APs ( @ref ApInfo ).
      *
-     * @returns @ref telux::common::ErrorCode::SUCCESS, if the list is retrived otherwise,
+     * @returns @ref telux::common::ErrorCode::SUCCESS, if the list is retrieved otherwise,
      *          an appropriate error code.
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to change and

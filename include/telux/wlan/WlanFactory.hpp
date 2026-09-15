@@ -52,7 +52,8 @@ class WlanFactory {
      *         break backwards compatibility.
      */
     virtual std::shared_ptr<IWlanControlManager> getWlanControlManager(
-        telux::common::InitResponseCb clientCallback = nullptr) = 0;
+        telux::common::InitResponseCb clientCallback = nullptr)
+        = 0;
 
  protected:
     WlanFactory();

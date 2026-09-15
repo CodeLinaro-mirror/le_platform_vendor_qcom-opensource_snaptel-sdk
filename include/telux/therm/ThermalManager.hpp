@@ -177,10 +177,10 @@ class IThermalManager {
      *                             de-registered - @ref ThermalNotificationType
      *                             Notifications under IThermalListener that are not listed in
      *                             @ref ThermalNotificationType would not be de-registered by
-     *                             default. If the client does not specifies mask or sets all
+     *                             default. If the client does not specify mask or sets all
      *                             the bits, this API de-registers all the notifications.
      *                             Bits that are not set in the mask are ignored and do not
-     *                             have any effect on registration or deregistration,To register,
+     *                             have any effect on registration or deregistration. To register,
      *                             the API @ref registerListener should be used.
      *                             For Example: API invoked with mask: 0x0001 disables onTripEvent
      *                             notification, next invocation with mask: 0x0002 disables
@@ -295,7 +295,7 @@ class ITripPoint {
 
 /**
  * @brief   IThermalZone provides interface to get type of the sensor, the current temperature
- *          reading, trip points and the cooling devices binded etc.
+ *          reading, trip points and the cooling devices bound etc.
  */
 class IThermalZone {
  public:

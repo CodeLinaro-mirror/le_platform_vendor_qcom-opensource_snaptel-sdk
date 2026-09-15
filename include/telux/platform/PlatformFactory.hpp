@@ -57,7 +57,7 @@ class PlatformFactory {
      * supports device info request like retrieving IMEI and platform version.
      *
      * @param [in] callback      Optional callback to get the initialization status of
-     *                           FsManager. @ref telux::common::InitResponseCb
+     *                           DeviceInfoManager. @ref telux::common::InitResponseCb
      *
      * @returns pointer of @ref IDeviceInfoManager object.
      */
@@ -66,7 +66,7 @@ class PlatformFactory {
         = 0;
 
     /**
-     * Gets a time manager (ITimeManger) instance. The time manager
+     * Gets a time manager (ITimeManager) instance. The time manager
      * supports registering for time reports.
      *
      * @param [in] callback      Optional callback to get the initialization status of

@@ -130,6 +130,25 @@ void AudioClient::takeUserSampleRateInput(uint32_t &userSampleRate) {
     }
 }
 
+void AudioClient::takeUserIsStreamingInput(bool &isStreaming) {
+    std::string userInput = "";
+    uint32_t choice       = 0;
+    while (1) {
+        std::cout << "Is this a live/streaming source (for example, eAVB)? (0-No 1-Yes) :";
+        if (std::getline(std::cin, userInput)) {
+            std::stringstream inputStream(userInput);
+            if ((inputStream >> choice) && (choice == 0 || choice == 1)) {
+                isStreaming = static_cast<bool>(choice);
+                break;
+            } else {
+                std::cout << "Invalid Input" << std::endl;
+            }
+        } else {
+            std::cout << "Invalid Input" << std::endl;
+        }
+    }
+}
+
 void AudioClient::takeUserChannelInput(telux::audio::ChannelTypeMask &channelType) {
     std::string userInput = "";
     int command           = -1;
@@ -335,6 +354,17 @@ void AudioClient::takeUserCreateStreamInput(telux::audio::StreamConfig &config) 
         }
         fclose(file);
     }
+
+    // isStreaming only applies to PLAY/CAPTURE PCM streams. AMR formats must use
+    // PAL_STREAM_COMPRESSED, and LOOPBACK/TONE_GENERATOR/VOICE_CALL don't support it.
+    if (((config.type == telux::audio::StreamType::PLAY)
+            || (config.type == telux::audio::StreamType::CAPTURE))
+        && (config.format == telux::audio::AudioFormat::PCM_16BIT_SIGNED)) {
+        takeUserIsStreamingInput(config.isStreaming);
+    } else {
+        config.isStreaming = false;
+    }
+
     takeUserDeviceInput(config.deviceTypes, config.type);
     if ((config.type == telux::audio::StreamType::PLAY)
         || (config.type == telux::audio::StreamType::CAPTURE)) {

@@ -8,7 +8,7 @@
  *
  * @brief   FsListener provides callback methods for listening to restore indications.
  *          Client need to implement these methods. The methods in listener can be invoked
- *          from multiple threads.So the client needs to make sure that the implementation
+ *          from multiple threads. So the client needs to make sure that the implementation
  *          is thread-safe.
  */
 

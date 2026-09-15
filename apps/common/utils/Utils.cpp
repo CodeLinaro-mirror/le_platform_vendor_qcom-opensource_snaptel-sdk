@@ -623,8 +623,7 @@ std::vector<int> Utils::convertStringToVector(std::string input) {
 std::string Utils::toHexString(const std::vector<uint8_t> &buffer) {
     std::ostringstream oss;
     for (uint8_t byte : buffer) {
-        oss << std::hex << std::setw(2) << std::setfill('0')
-            << static_cast<int>(byte) << " ";
+        oss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte) << " ";
     }
     return oss.str();
 }

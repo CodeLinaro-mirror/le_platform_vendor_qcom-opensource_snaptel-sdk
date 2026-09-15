@@ -163,20 +163,6 @@ bool SmsMenu::init() {
     return true;
 }
 
-bool SmsMenu::isDialable(char ch) {
-    return ('0' <= ch && ch <= '9') || ch == '*' || ch == '#' || ch == '+';
-}
-
-bool SmsMenu::isValidPhoneNumber(std::string address) {
-    int count = 0;
-    for (char &ch : address) {
-        if (!isDialable(ch)) {
-            return false;
-        }
-    }
-    return true;
-}
-
 // SMS Requests
 void SmsMenu::sendSms(std::vector<std::string> userInput) {
     auto smsManager = smsManagers_[slot_ - 1];
@@ -185,11 +171,6 @@ void SmsMenu::sendSms(std::vector<std::string> userInput) {
     std::string receiverAddress;
     std::cout << "Enter phone number: ";
     std::getline(std::cin, receiverAddress, delimiter);
-
-    if (!isValidPhoneNumber(receiverAddress)) {
-        std::cout << "Invalid Receiver Address \n";
-        return;
-    }
 
     std::string message;
     std::cout << "Enter message: ";
@@ -205,26 +186,30 @@ void SmsMenu::sendSms(std::vector<std::string> userInput) {
 
     telux::common::Status status = telux::common::Status::FAILED;
     if (deliveryReportNeeded == "y") {
-        status = smsManager->sendSmsEx(message, receiverAddress, true,
+        status = smsManager->sendSmsEx(
+            message, receiverAddress, true,
             [](std::vector<int> msgRefs, telux::common::ErrorCode errorCode,
                 telux::tel::SmsFailureCause info) {
-            if (errorCode == telux::common::ErrorCode::SUCCESS) {
-                std::cout << "SMS sent successfully\n";
-            } else {
-                std::cout << "SMS send failed, error: " << static_cast<int>(errorCode) << "\n";
-            }
-        }, "");
+                if (errorCode == telux::common::ErrorCode::SUCCESS) {
+                    std::cout << "SMS sent successfully\n";
+                } else {
+                    std::cout << "SMS send failed, error: " << static_cast<int>(errorCode) << "\n";
+                }
+            },
+            "");
     } else {
-        status = smsManager->sendSmsEx(message, receiverAddress, false,
+        status = smsManager->sendSmsEx(
+            message, receiverAddress, false,
             [](std::vector<int> msgRefs, telux::common::ErrorCode errorCode,
                 telux::tel::SmsFailureCause info) {
-            if (errorCode == telux::common::ErrorCode::SUCCESS) {
-                std::cout << "SMS sent successfully\n";
-            } else {
-                std::cout << "SMS send failed, error: " << static_cast<int>(errorCode) << "\n";
-            }
-        }, "");
-}
+                if (errorCode == telux::common::ErrorCode::SUCCESS) {
+                    std::cout << "SMS sent successfully\n";
+                } else {
+                    std::cout << "SMS send failed, error: " << static_cast<int>(errorCode) << "\n";
+                }
+            },
+            "");
+    }
     if (status == telux::common::Status::SUCCESS) {
         std::cout << "Send SMS request successful\n";
     } else if (status == telux::common::Status::INVALIDPARAM) {
@@ -241,11 +226,6 @@ void SmsMenu::sendEnhancedSms(std::vector<std::string> userInput) {
     std::string receiverAddress;
     std::cout << "Enter phone number: ";
     std::getline(std::cin, receiverAddress, delimiter);
-
-    if (!isValidPhoneNumber(receiverAddress)) {
-        std::cout << "Invalid Receiver Address \n";
-        return;
-    }
 
     std::string message;
     std::cout << "Enter message: ";

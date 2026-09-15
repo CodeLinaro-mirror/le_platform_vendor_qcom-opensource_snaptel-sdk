@@ -121,7 +121,7 @@ class IAudioBuffer {
 };
 
 /**
- *  Implements the @ref IAudioBuffer interface to give contexual meaning to its methods
+ *  Implements the @ref IAudioBuffer interface to give contextual meaning to its methods
  *  based on the @ref StreamType type associated with the stream, with which this
  *  buffer will be used.
  */
@@ -609,7 +609,7 @@ class IAudioVoiceStream : virtual public IAudioStream {
      * @returns @ref telux::common::Status::SUCCESS if the request is initiated
      *          successfully, otherwise, an appropriate error code
      */
-    virtual telux::common::Status playDtmfTone(DtmfTone dtmfTone, uint16_t duration, uint16_t gain,
+    virtual telux::common::Status playDtmfTone(DtmfTone dtmfTone, uint32_t duration, uint16_t gain,
         telux::common::ResponseCallback callback = nullptr)
         = 0;
 
@@ -825,7 +825,7 @@ class IAudioLoopbackStream : virtual public IAudioStream {
         = 0;
 
     /**
-     * Starts looping back the audio between the source and sink devices associated with this
+     * Stops looping back the audio between the source and sink devices associated with this
      * stream.
      *
      * @param [in] callback  Optional, invoked to confirm if the loopback has stopped
@@ -864,7 +864,7 @@ class IAudioToneGeneratorStream : virtual public IAudioStream {
      * @returns @ref telux::common::Status::SUCCESS if the request is initiated
      *          successfully, otherwise, an appropriate error code
      */
-    virtual telux::common::Status playTone(std::vector<uint16_t> freq, uint16_t duration,
+    virtual telux::common::Status playTone(std::vector<uint16_t> freq, uint32_t duration,
         uint16_t gain, telux::common::ResponseCallback callback = nullptr)
         = 0;
 

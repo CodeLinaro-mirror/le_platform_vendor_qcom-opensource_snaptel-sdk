@@ -544,7 +544,7 @@ class IDataSettingsManager {
         = 0;
 
     /**
-     * Register Data Settings Manager as listener for Data Service heath events like data service
+     * Register Data Settings Manager as listener for Data Service health events like data service
      * available or data service not available.
      *
      * @param [in] listener    pointer of IDataSettingsListener object that processes the
@@ -641,7 +641,7 @@ class IDataSettingsListener : public telux::common::ISDKListener {
      * Provides the current DDS state and is called whenever a DDS switch occurs.
      *
      * @param [in] currentState      Provides the current DDS status.
-     *                               - Slot ID on which the DDS switch occured.
+     *                               - Slot ID on which the DDS switch occurred.
      *                               - DDS switch type @ref telux::data::DdsType.
      *
      * @deprecated Use IDualDataListener::onDdsChange indication.

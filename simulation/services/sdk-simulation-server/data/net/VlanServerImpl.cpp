@@ -246,6 +246,12 @@ grpc::Status VlanServerImpl::BindToBackhaul(ServerContext *context,
         }
     }
 
+    if ((data.error == telux::common::ErrorCode::SUCCESS)
+        && (request->backhaul_type() == ::dataStub::BackhaulPreference::PREF_WLAN)
+        && (request->sta_id() == 1)) {
+        data.error = telux::common::ErrorCode::NOT_SUPPORTED;
+    }
+
     if (data.status == telux::common::Status::SUCCESS
         && data.error == telux::common::ErrorCode::SUCCESS) {
 
@@ -294,6 +300,12 @@ grpc::Status VlanServerImpl::UnbindFromBackhaul(ServerContext *context,
 
     if (request->operation_type() == REMOTE) {
         data.error = telux::common::ErrorCode::INVALID_OPERATION;
+    }
+
+    if ((data.error == telux::common::ErrorCode::SUCCESS)
+        && (request->backhaul_type() == ::dataStub::BackhaulPreference::PREF_WLAN)
+        && (request->sta_id() == 1)) {
+        data.error = telux::common::ErrorCode::NOT_SUPPORTED;
     }
 
     if (data.status == telux::common::Status::SUCCESS

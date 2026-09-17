@@ -9,6 +9,15 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(TELUXCOMMON REQUIRED telux-common)
 pkg_check_modules(TELUXPLATFORM REQUIRED telux-platform)
 
+if (TELSDK_FEATURE_COMMONLOG_SUPPORT)
+    pkg_check_modules(CLOG libclog)
+endif (TELSDK_FEATURE_COMMONLOG_SUPPORT)
+
+if (TELSDK_FEATURE_COMMONLOG_SUPPORT AND CLOG_FOUND)
+    include_directories(${CLOG_INCLUDE_DIRS})
+    add_definitions(-DTELSDK_FEATURE_COMMONLOG_SUPPORT_ENABLED)
+endif (TELSDK_FEATURE_COMMONLOG_SUPPORT AND CLOG_FOUND)
+
 if(TELSDK_FEATURE_POWER AND TELSDK_FEATURE_TEL)
     add_definitions(-DFEATURE_NETWORK_TIME_ENABLED)
 endif()
@@ -33,6 +42,10 @@ target_compile_options(${APP_NAME} PRIVATE ${TELUXCOMMON_CFLAGS}
                        ${TELUXPLATFORM_CFLAGS} -std=c++11 -Wall -Werror)
 target_link_libraries(${APP_NAME} rt ${GLIB_LIBRARIES}
                       ${TELUXCOMMON_LIBRARIES} ${TELUXPLATFORM_LIBRARIES} pthread)
+
+if (TELSDK_FEATURE_COMMONLOG_SUPPORT AND CLOG_FOUND)
+    target_link_libraries(${APP_NAME} ${CLOG_LDFLAGS})
+endif (TELSDK_FEATURE_COMMONLOG_SUPPORT AND CLOG_FOUND)
 
 if(TELSDK_FEATURE_POWER AND TELSDK_FEATURE_TEL)
     target_link_libraries(${APP_NAME} telux_power telux_tel)

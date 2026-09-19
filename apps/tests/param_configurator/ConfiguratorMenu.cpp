@@ -126,7 +126,6 @@ void ConfigMenu::setConfig(std::vector<std::string> userInput) {
         std::cout << "Enter the Key to be updated : ";
         std::getline(std::cin, key, delimiter);
 
-        std::cin.get();
         std::string value;
         std::cout << "Enter the new Value : ";
         std::getline(std::cin, value, delimiter);

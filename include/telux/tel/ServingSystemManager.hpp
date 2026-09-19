@@ -224,6 +224,9 @@ struct NetworkRejectInfo {
                             3GPP TS 24.501. */
     std::string mcc; /**< Mobile Country Code for rejection*/
     std::string mnc; /**< Mobile Network Code for rejection*/
+    uint64_t cellId; /**< Cell identifier of the serving cell where registration
+                          was rejected. 0xFFFFFFFFFFFFFFFF indicates cell
+                          identifier information is not present. */
 };
 
 /**

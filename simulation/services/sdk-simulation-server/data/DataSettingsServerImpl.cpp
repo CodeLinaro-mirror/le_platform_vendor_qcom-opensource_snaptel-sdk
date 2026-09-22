@@ -500,6 +500,15 @@ grpc::Status DataSettingsServerImpl::switchBackHaul(ServerContext *context,
         data.error = telux::common::ErrorCode::INVALID_OPERATION;
     }
 
+    // Simulation currently supports only WLAN STA0 for backhaul switching.
+    if ((data.error == telux::common::ErrorCode::SUCCESS)
+        && (((request->backhaul_type() == ::dataStub::BackhaulPreference::PREF_WLAN)
+                && (request->sta_id() == 1))
+            || ((request->source_backhaul_type() == ::dataStub::BackhaulPreference::PREF_WLAN)
+                && (request->source_sta_id() == 1)))) {
+        data.error = telux::common::ErrorCode::NOT_SUPPORTED;
+    }
+
     if (data.status == telux::common::Status::SUCCESS
         && data.error == telux::common::ErrorCode::SUCCESS) {
         data.stateRootObj[subsystem][method]["backhaul"] = convertEnumToBackhaulPrefString(

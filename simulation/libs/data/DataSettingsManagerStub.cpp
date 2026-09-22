@@ -543,7 +543,10 @@ telux::common::Status DataSettingsManagerStub::switchBackHaul(BackhaulInfo sourc
     request.set_backhaul_type(static_cast<::dataStub::BackhaulPreference>(dest.backhaul));
     request.set_slot_id(dest.slotId);
     request.set_profile_id(dest.profileId);
+    request.set_sta_id(dest.staId);
     request.set_operation_type(::dataStub::OperationType(oprType_));
+    request.set_source_backhaul_type(static_cast<::dataStub::BackhaulPreference>(source.backhaul));
+    request.set_source_sta_id(source.staId);
     grpc::Status reqStatus = stub_->switchBackHaul(&context, request, &response);
 
     error  = static_cast<telux::common::ErrorCode>(response.error());

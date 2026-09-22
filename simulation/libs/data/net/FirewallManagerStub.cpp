@@ -194,6 +194,7 @@ telux::common::Status FirewallManagerStub::setFirewallConfig(
     request.set_slot_id(fwConfig.bhInfo.slotId);
     request.set_backhaul_type(
         static_cast<::dataStub::BackhaulPreference>(fwConfig.bhInfo.backhaul));
+    request.set_sta_id(fwConfig.bhInfo.staId);
     grpc::Status reqStatus = stub_->SetFirewall(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
@@ -236,6 +237,7 @@ telux::common::Status FirewallManagerStub::requestFirewallConfig(
     request.set_profile_id(bhInfo.profileId);
     request.set_slot_id(bhInfo.slotId);
     request.set_backhaul_type(static_cast<::dataStub::BackhaulPreference>(bhInfo.backhaul));
+    request.set_sta_id(bhInfo.staId);
     grpc::Status reqStatus = stub_->RequestFirewallStatus(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
@@ -305,6 +307,7 @@ telux::common::Status FirewallManagerStub::addFirewallEntryRequest(
         request.set_profile_id(entry.bhInfo.profileId);
         request.set_backhaul_type(
             static_cast<::dataStub::BackhaulPreference>(entry.bhInfo.backhaul));
+        request.set_sta_id(entry.bhInfo.staId);
         request.set_is_hw_accelerated(isHwAccelerated);
         request.set_fw_direction(static_cast<::dataStub::Direction>(entry.fwEntry->getDirection()));
         request.set_protocol(
@@ -422,6 +425,7 @@ telux::common::Status FirewallManagerStub::getFirewallEntriesRequest(
     request.set_slot_id(bhInfo.slotId);
     request.set_profile_id(bhInfo.profileId);
     request.set_backhaul_type(static_cast<::dataStub::BackhaulPreference>(bhInfo.backhaul));
+    request.set_sta_id(bhInfo.staId);
     request.set_is_hw_accelerated(isHwAccelerated);
     grpc::Status reqStatus = stub_->RequestFirewallEntries(&context, request, &response);
 
@@ -580,6 +584,8 @@ telux::common::Status FirewallManagerStub::removeFirewallEntry(
     request.set_slot_id(bhInfo.slotId);
     request.set_profile_id(bhInfo.profileId);
     request.set_entry_handle(handle);
+    request.set_backhaul_type(static_cast<::dataStub::BackhaulPreference>(bhInfo.backhaul));
+    request.set_sta_id(bhInfo.staId);
     grpc::Status reqStatus = stub_->RemoveFirewallEntry(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
@@ -628,6 +634,7 @@ telux::common::Status FirewallManagerStub::enableDmz(
     }
 
     request.set_backhaul_type(static_cast<::dataStub::BackhaulPreference>(config.bhInfo.backhaul));
+    request.set_sta_id(config.bhInfo.staId);
     request.set_ip_address(config.ipAddr);
     grpc::Status reqStatus = stub_->EnableDMZ(&context, request, &response);
 
@@ -677,6 +684,7 @@ telux::common::Status FirewallManagerStub::disableDmz(
     }
 
     request.set_backhaul_type(static_cast<::dataStub::BackhaulPreference>(bhInfo.backhaul));
+    request.set_sta_id(bhInfo.staId);
     request.mutable_ip_family_type()->set_ip_family_type((::dataStub::IpFamilyType::Type)ipType);
     grpc::Status reqStatus = stub_->DisableDMZ(&context, request, &response);
 
@@ -726,6 +734,7 @@ telux::common::Status FirewallManagerStub::requestDmzEntry(
     }
 
     request.set_backhaul_type(static_cast<::dataStub::BackhaulPreference>(bhInfo.backhaul));
+    request.set_sta_id(bhInfo.staId);
 
     grpc::Status reqStatus = stub_->RequestDMZEntry(&context, request, &response);
 

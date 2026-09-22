@@ -1377,6 +1377,7 @@ message StaticNatEntryRequest {
     OperationType operation_type = 4;
     BackhaulPreference backhaul_type = 5;
     NatConfig nat_config = 6;
+    int32 sta_id = 7;
 }
 
 message StaticNatRequest {
@@ -1389,6 +1390,7 @@ message RequestStaticNatEntriesRequest {
     int32 vlan_id = 3;
     OperationType operation_type = 4;
     BackhaulPreference backhaul_type = 5;
+    int32 sta_id = 6;
 }
 
 message RequestStaticNatEntriesReply {
@@ -1402,12 +1404,14 @@ message SetFirewallRequest {
     bool allow_packets = 3;
     int32 slot_id = 4;
     BackhaulPreference backhaul_type = 5;
+    int32 sta_id = 6;
 }
 
 message FirewallStatusRequest {
     int32 slot_id = 1;
     int32 profile_id = 2;
     BackhaulPreference backhaul_type = 5;
+    int32 sta_id = 6;
 }
 
 message RequestFirewallStatusReply {
@@ -1453,6 +1457,7 @@ message BindToBackhaulConfig {
     BackhaulPreference backhaul_type = 4;
     OperationType operation_type = 5;
     int32 backhaul_vlan_id = 6;
+    int32 sta_id = 7;
 }
 
 message AddFirewallEntryRequest {
@@ -1466,6 +1471,7 @@ message AddFirewallEntryRequest {
     Ipv6Params ipv6_params = 8;
     ProtocolParams protocol_params = 9;
     bool is_hw_accelerated = 10;
+    int32 sta_id = 11;
 }
 
 message AddFirewallEntryReply {
@@ -1478,6 +1484,7 @@ message FirewallEntriesRequest {
     int32 profile_id = 2;
     BackhaulPreference backhaul_type = 3;
     bool is_hw_accelerated = 4;
+    int32 sta_id = 5;
 }
 
 message FirewallEntry {
@@ -1499,6 +1506,8 @@ message RemoveFirewallEntryRequest {
     int32 slot_id = 1;
     int32 profile_id = 2;
     int32 entry_handle = 3;
+    BackhaulPreference backhaul_type = 4;
+    int32 sta_id = 5;
 }
 
 message EnableDMZRequest {
@@ -1507,6 +1516,7 @@ message EnableDMZRequest {
     int32 vlan_id = 3;
     BackhaulPreference backhaul_type = 4;
     string ip_address = 5;
+    int32 sta_id = 6;
 }
 
 message DisableDmzRequest {
@@ -1515,6 +1525,7 @@ message DisableDmzRequest {
     int32 vlan_id = 3;
     BackhaulPreference backhaul_type = 4;
     IpFamilyType ip_family_type = 5;
+    int32 sta_id = 6;
 }
 
 message DMZEntryRequest {
@@ -1522,6 +1533,7 @@ message DMZEntryRequest {
     int32 profile_id = 2;
     int32 vlan_id = 3;
     BackhaulPreference backhaul_type = 4;
+    int32 sta_id = 6;
 }
 
 message RequestDMZEntryReply {
@@ -1636,7 +1648,10 @@ message switchBackHaulRequest {
     BackhaulPreference backhaul_type = 1;
     int32 slot_id = 2;
     int32 profile_id = 3;
+    int32 sta_id = 4;
     OperationType operation_type = 5;
+    BackhaulPreference source_backhaul_type = 6;
+    int32 source_sta_id = 7;
 }
 
 message EnableSocksRequest {

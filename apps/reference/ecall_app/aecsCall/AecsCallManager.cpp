@@ -76,7 +76,7 @@ bool AecsCallManager::init() {
             return false;
         }
 
-        std::cout << " Waiting for SMS Manager to be ready \n";
+        std::cout << "Waiting for SMS Manager to be ready \n";
         telux::common::ServiceStatus smsMgrStatus = prom.get_future().get();
         if (smsMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << "SMS Manager is ready \n";
@@ -266,6 +266,15 @@ void AecsCallManager::stopAudioIfNoCalls(int phoneId) {
 // ---------------------- Emergency mode ----------------------
 // Callback which provides response for set emergency mode
 void AecsCallManager::setEmergencyModeResponse(telux::common::ErrorCode error) {
+
+    {
+        std::lock_guard<std::mutex> lock(emergencyModeMutex_);
+        emergencyModeResult_ = error;
+        emergencyModeResponseReceived_ = true;
+    }
+
+    emergencyModeCv_.notify_one();
+
     if (error == telux::common::ErrorCode::NO_EFFECT) {
         std::cout << "Emergency mode already set" << std::endl;
     } else if (error == telux::common::ErrorCode::SUCCESS) {
@@ -284,20 +293,34 @@ Status AecsCallManager::setEmergencyMode(int phoneId, bool emergencyModeEnabled,
         return Status::FAILED;
     }
 
+    {
+        std::lock_guard<std::mutex> lock(emergencyModeMutex_);
+        emergencyModeResponseReceived_ = false;
+    }
+
     Status status = callMgr_->setEmergencyMode(
         phoneId, emergencyModeEnabled, antennaSwitchEnabled,
         std::bind(&AecsCallManager::setEmergencyModeResponse, this, std::placeholders::_1));
-    if (status == Status::SUCCESS) {
-        std::lock_guard<std::mutex> lock(emergencyModeMutex_);
+
+    if (status != Status::SUCCESS) {
+        std::cout << "AecsCallManager: Failed to set emergency mode on phoneId "
+                  << phoneId << ", status=" << (int)status << std::endl;
+        return Status::FAILED;
+    }
+
+    std::unique_lock<std::mutex> lock(emergencyModeMutex_);
+    emergencyModeCv_.wait(lock, [&] { return emergencyModeResponseReceived_; });
+
+    if (emergencyModeResult_ == telux::common::ErrorCode::SUCCESS ||
+        emergencyModeResult_ == telux::common::ErrorCode::NO_EFFECT) {
         emergencyMode_[phoneId] = emergencyModeEnabled;
         std::cout << "AecsCallManager: set Emergency mode: " << emergencyModeEnabled
                   << ", antenna switching: "<< antennaSwitchEnabled
                   << " on phoneId " << phoneId << std::endl;
-    } else {
-        std::cout << "AecsCallManager: Failed to set emergency mode on phoneId "
-                  << phoneId << ", status=" << (int)status << std::endl;
+        return Status::SUCCESS;
     }
-    return status;
+
+    return Status::FAILED;
 }
 
 bool AecsCallManager::isEmergencyMode(int phoneId) const {

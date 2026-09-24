@@ -525,6 +525,8 @@ class LocationManagerStub : public ILocationManager,
     void handleGnssDisasterCrisisReport(::locStub::GnssDisasterCrisisReport dcReport);
     void invokeSysInfoUpdateEvent(telux::loc::LocationSystemInfo &locSystemInfo);
     void parseRequest(::locStub::StartReportsEvent startEvent);
+    telux::loc::GnssSvResidualReport parseGnssSvResidualReport(
+        const std::vector<std::string> &message);
     void adjustTimeInterval(uint32_t &interval);
     void parseDetailedPvtReports(
         std::shared_ptr<LocationInfoEx> &loc, std::vector<std::string> &message);

@@ -591,6 +591,125 @@ telux::loc::LocCapability LocationManagerStub::getCapabilities() {
     return capabilities;
 }
 
+telux::loc::GnssSvResidualReport LocationManagerStub::parseGnssSvResidualReport(
+    const std::vector<std::string> &message) {
+    LOG(DEBUG, __FUNCTION__);
+    size_t itr = 2;
+    telux::loc::GnssSvResidualReport report = {};
+
+    report.locEngineType
+        = static_cast<telux::loc::LocationAggregationType>(std::stoul(message[itr++]));
+
+    telux::loc::GnssSystem system = static_cast<telux::loc::GnssSystem>(std::stoi(message[itr++]));
+    report.gnssSystemTime.gnssSystemTimeSrc = system;
+    if (system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GLONASS) {
+        report.gnssSystemTime.time.glo.validityMask    = std::stoul(message[itr++]);
+        report.gnssSystemTime.time.glo.gloDays         = std::stoul(message[itr++]);
+        report.gnssSystemTime.time.glo.gloMsec         = std::stoul(message[itr++]);
+        report.gnssSystemTime.time.glo.gloClkTimeBias  = std::stof(message[itr++]);
+        report.gnssSystemTime.time.glo.gloClkTimeUncMs = std::stof(message[itr++]);
+        report.gnssSystemTime.time.glo.refFCount       = std::stoul(message[itr++]);
+        report.gnssSystemTime.time.glo.numClockResets  = std::stoul(message[itr++]);
+        report.gnssSystemTime.time.glo.gloFourYear     = std::stoul(message[itr++]);
+    } else if (system != telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_SBAS) {
+        report.gnssSystemTime.time.gps.validityMask       = std::stoul(message[itr++]);
+        report.gnssSystemTime.time.gps.numClockResets     = std::stoul(message[itr++]);
+        report.gnssSystemTime.time.gps.refFCount          = std::stoul(message[itr++]);
+        report.gnssSystemTime.time.gps.systemClkTimeUncMs = std::stof(message[itr++]);
+        report.gnssSystemTime.time.gps.systemClkTimeBias  = std::stof(message[itr++]);
+        report.gnssSystemTime.time.gps.systemMsec         = std::stoul(message[itr++]);
+        report.gnssSystemTime.time.gps.systemWeek         = std::stoul(message[itr++]);
+    }
+
+    report.residualPVTInfo.validityMask           = std::stoul(message[itr++]);
+    report.residualPVTInfo.refPosLla[0]           = std::stod(message[itr++]);
+    report.residualPVTInfo.refPosLla[1]           = std::stod(message[itr++]);
+    report.residualPVTInfo.refPosLla[2]           = std::stod(message[itr++]);
+    report.residualPVTInfo.refVelEnu[0]           = std::stof(message[itr++]);
+    report.residualPVTInfo.refVelEnu[1]           = std::stof(message[itr++]);
+    report.residualPVTInfo.refVelEnu[2]           = std::stof(message[itr++]);
+    report.residualPVTInfo.headingAngle           = std::stof(message[itr++]);
+    report.residualPVTInfo.headingUnc             = std::stof(message[itr++]);
+    report.residualPVTInfo.posUncLatLonMeters[0]  = std::stof(message[itr++]);
+    report.residualPVTInfo.posUncLatLonMeters[1]  = std::stof(message[itr++]);
+    report.residualPVTInfo.posUncVertMeters       = std::stof(message[itr++]);
+    report.residualPVTInfo.velUncEastNorthMps[0]  = std::stof(message[itr++]);
+    report.residualPVTInfo.velUncEastNorthMps[1]  = std::stof(message[itr++]);
+    report.residualPVTInfo.velUncVertMps          = std::stof(message[itr++]);
+    report.residualPVTInfo.clockBiasMeters        = std::stof(message[itr++]);
+    report.residualPVTInfo.clockBiasUncMeters     = std::stof(message[itr++]);
+    report.residualPVTInfo.clockDriftRateMps      = std::stof(message[itr++]);
+    report.residualPVTInfo.clockDriftRateUncMps   = std::stof(message[itr++]);
+    report.residualPVTInfo.positionDop            = std::stof(message[itr++]);
+
+    size_t svResidualDataSize = std::stoul(message[itr++]);
+    for (size_t i = 0; i < svResidualDataSize; i++) {
+        telux::loc::SvResidualData data = {};
+        data.svId               = static_cast<uint16_t>(std::stoul(message[itr++]));
+        data.gnssSignalType     = std::stoul(message[itr++]);
+        data.validityMask       = std::stoul(message[itr++]);
+        data.prResidual         = std::stof(message[itr++]);
+        data.prUncertainty      = std::stof(message[itr++]);
+        data.cpResidual         = std::stof(message[itr++]);
+        data.cpUncertainty      = std::stof(message[itr++]);
+        data.dopplerResidual    = std::stof(message[itr++]);
+        data.dopplerUncertainty = std::stof(message[itr++]);
+        data.iodephemeris       = static_cast<uint8_t>(std::stoul(message[itr++]));
+        data.gloTbEpoch         = static_cast<uint8_t>(std::stoul(message[itr++]));
+        data.gloFreqNum         = static_cast<int8_t>(std::stoi(message[itr++]));
+        data.carrierNoiseRatio  = std::stof(message[itr++]);
+        data.azimuth            = std::stod(message[itr++]);
+        data.elevation          = std::stod(message[itr++]);
+        report.svResidualData.push_back(data);
+    }
+
+    report.svAvailabilityUsage.validityMask                = std::stoul(message[itr++]);
+    report.svAvailabilityUsage.gpsSvCountMeasured
+        = static_cast<uint8_t>(std::stoul(message[itr++]));
+    report.svAvailabilityUsage.gpsSvCountInPositionFix
+        = static_cast<uint8_t>(std::stoul(message[itr++]));
+    report.svAvailabilityUsage.gpsSvCountInVelocityFix
+        = static_cast<uint8_t>(std::stoul(message[itr++]));
+    report.svAvailabilityUsage.gpsSvUsedMask               = std::stoul(message[itr++]);
+    report.svAvailabilityUsage.glonassSvCountMeasured
+        = static_cast<uint8_t>(std::stoul(message[itr++]));
+    report.svAvailabilityUsage.glonassSvCountInPositionFix
+        = static_cast<uint8_t>(std::stoul(message[itr++]));
+    report.svAvailabilityUsage.glonassSvCountInVelocityFix
+        = static_cast<uint8_t>(std::stoul(message[itr++]));
+    report.svAvailabilityUsage.glonassSvUsedMask           = std::stoul(message[itr++]);
+    report.svAvailabilityUsage.beidouSvCountMeasured
+        = static_cast<uint8_t>(std::stoul(message[itr++]));
+    report.svAvailabilityUsage.beidouSvCountInPositionFix
+        = static_cast<uint8_t>(std::stoul(message[itr++]));
+    report.svAvailabilityUsage.beidouSvCountInVelocityFix
+        = static_cast<uint8_t>(std::stoul(message[itr++]));
+    report.svAvailabilityUsage.beidouSvUsedMask            = std::stoull(message[itr++]);
+    report.svAvailabilityUsage.galileoSvCountMeasured
+        = static_cast<uint8_t>(std::stoul(message[itr++]));
+    report.svAvailabilityUsage.galileoSvCountInPositionFix
+        = static_cast<uint8_t>(std::stoul(message[itr++]));
+    report.svAvailabilityUsage.galileoSvCountInVelocityFix
+        = static_cast<uint8_t>(std::stoul(message[itr++]));
+    report.svAvailabilityUsage.galileoSvUsedMask           = std::stoull(message[itr++]);
+    report.svAvailabilityUsage.qzssSvCountMeasured
+        = static_cast<uint8_t>(std::stoul(message[itr++]));
+    report.svAvailabilityUsage.qzssSvCountInPositionFix
+        = static_cast<uint8_t>(std::stoul(message[itr++]));
+    report.svAvailabilityUsage.qzssSvCountInVelocityFix
+        = static_cast<uint8_t>(std::stoul(message[itr++]));
+    report.svAvailabilityUsage.qzssSvUsedMask              = std::stoul(message[itr++]);
+    report.svAvailabilityUsage.navicSvCountMeasured
+        = static_cast<uint8_t>(std::stoul(message[itr++]));
+    report.svAvailabilityUsage.navicSvCountInPositionFix
+        = static_cast<uint8_t>(std::stoul(message[itr++]));
+    report.svAvailabilityUsage.navicSvCountInVelocityFix
+        = static_cast<uint8_t>(std::stoul(message[itr++]));
+    report.svAvailabilityUsage.navicSvUsedMask             = std::stoul(message[itr++]);
+
+    return report;
+}
+
 void LocationManagerStub::parseDetailedPvtReports(
     std::shared_ptr<LocationInfoEx> &loc, std::vector<std::string> &message) {
     LOG(DEBUG, __FUNCTION__);
@@ -1361,6 +1480,26 @@ void LocationManagerStub::parseRequest(::locStub::StartReportsEvent startEvent) 
                     auto spt = (*iter).lock();
                     if (spt != nullptr) {
                         spt->onGnssExtendedDataInfo(payload);
+                        ++iter;
+                    } else {
+                        iter = listeners_.erase(iter);
+                    }
+                }
+            }
+            break;
+        case telux::loc::GnssReportType::SV_RESIDUAL:
+            if ((reportMask_ & telux::loc::GnssReportType::SV_RESIDUAL)
+                && (sessionMask_ & telux::loc::DETAILED_ENGINE)) {
+                telux::loc::GnssSvResidualReport report = parseGnssSvResidualReport(message);
+                if (0 == (engineType_ & (0x1 << report.locEngineType))) {
+                    return;
+                }
+
+                // Send data to clients.
+                for (auto iter = listeners_.begin(); iter != listeners_.end();) {
+                    auto spt = (*iter).lock();
+                    if (spt != nullptr) {
+                        spt->onGnssSVResidualInfo(report);
                         ++iter;
                     } else {
                         iter = listeners_.erase(iter);

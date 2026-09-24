@@ -36,7 +36,6 @@ class PowerRefDaemonSlave {
     // TcuActivityMonitor instance
     std::shared_ptr<TcuActivityMonitor> tcuActivityMonitor_;
 
-    static void signalHandler(int signum);
     void printUsage(char **argv);
     telux::common::Status parseArguments(int argc, char **argv);
 };

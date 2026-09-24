@@ -82,7 +82,6 @@ class PowerRefDaemon : public ConsoleApp {
     std::shared_ptr<NtnClient> ntnClient_ = nullptr;
 #endif
 
-    static void signalHandler(int signum);
     void initConsole();
     void triggerActivityState(TcuActivityState state);
     void configureResumeTimer();

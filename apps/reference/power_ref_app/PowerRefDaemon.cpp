@@ -17,6 +17,7 @@ extern "C" {
 }
 
 #include "PowerRefDaemon.hpp"
+#include "SignalHandler.hpp"
 #include <telux/common/DeviceConfig.hpp>
 
 #define WAKELOCK_PATH "/sys/power/wake_lock"
@@ -170,15 +171,22 @@ telux::common::Status PowerRefDaemon::init() {
 int PowerRefDaemon::startDaemon(int argc, char **argv) {
     LOGFD();
 
-    struct sigaction sigAction = {};
-    sigAction.sa_handler       = signalHandler;
-    sigemptyset(&sigAction.sa_mask);
-    sigAction.sa_flags = 0;
-
-    sigaction(SIGHUP, &sigAction, NULL);
-    sigaction(SIGINT, &sigAction, NULL);
-    sigaction(SIGTERM, &sigAction, NULL);
-    sigaction(SIGTSTP, &sigAction, NULL);
+    // Process-directed signals are handled on a dedicated sigwait() thread
+    // (see SignalHandler.cpp) instead of a real signal-handler context, so
+    // stopDaemon() below can safely take mtx_ and touch the TelSDK manager
+    // shared_ptrs.
+    // SIGTSTP is intentionally not handled here: it is a stop/suspend
+    // request, not a termination request, and must not tear the daemon down.
+    sigset_t sigset;
+    sigemptyset(&sigset);
+    sigaddset(&sigset, SIGHUP);
+    sigaddset(&sigset, SIGINT);
+    sigaddset(&sigset, SIGTERM);
+    SignalHandlerCb cb = [this](int sig) {
+        LOGFD("Received signal = %d terminating program.", sig);
+        stopDaemon();
+    };
+    SignalHandler::registerSignalHandler(sigset, cb);
 
     if (init() != telux::common::Status::SUCCESS) {
 
@@ -213,11 +221,18 @@ int PowerRefDaemon::startDaemon(int argc, char **argv) {
 
 void PowerRefDaemon::stopDaemon() {
     LOGFD();
+    std::lock_guard<std::mutex> lock(mtx_);
     exiting_ = true;
     if (naoIpTrigger_)
         naoIpTrigger_.reset();
     if (smsTrigger_)
         smsTrigger_.reset();
+    if (wakeupHandler_)
+        wakeupHandler_.reset();
+#ifdef CAN_TRIGGER_SUPPORTED
+    if (canTrigger_)
+        canTrigger_.reset();
+#endif  // CAN_TRIGGER_SUPPORTED
     if (eventManager_) {
         eventManager_->cleanup();
         eventManager_.reset();
@@ -229,11 +244,6 @@ void PowerRefDaemon::stopDaemon() {
 #endif
     fflush(stdout);
     cv_.notify_all();
-}
-
-void PowerRefDaemon::signalHandler(int signum) {
-    LOGFD("Received signal = %d terminating program.", signum);
-    PowerRefDaemon::getInstance().stopDaemon();
 }
 
 void PowerRefDaemon::printUsage(char **argv) {

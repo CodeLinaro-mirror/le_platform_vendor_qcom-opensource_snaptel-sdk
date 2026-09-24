@@ -1,7 +1,8 @@
 ############################################################################
 #
-#  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
-#  SPDX-License-Identifier: BSD-3-Clause-Clear
+# Changes from Qualcomm Technologies, Inc. are provided under the following license:
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
 #
 ############################################################################
 #---------------------------------------------------------------------------
@@ -27,7 +28,7 @@ INLINE_SIMPLE_STRUCTS  = YES
 INLINE_GROUPED_CLASSES = YES
 FULL_PATH_NAMES        = YES
 STRIP_FROM_PATH        = ../../include/telux
-STRIP_FROM_INC_PATH    = 
+STRIP_FROM_INC_PATH    =
 SHORT_NAMES            = YES
 JAVADOC_AUTOBRIEF      = NO
 QT_AUTOBRIEF           = NO
@@ -170,6 +171,9 @@ ALIASES +=              "tdmultcol{2}=@htmlonly<tr><td colspan=\"\1\">@endhtmlon
 ALIASES +=              "tdmulrow{2}=@htmlonly<td rowspan=\"\1\">\2@endhtmlonly@latexonly\multirow{\1}{*}{\small\sf\textbf{\2}}@endlatexonly" \
                         "tdmulrowend=@htmlonly</td>@endhtmlonly@latexonly & @endlatexonly" \
                         "tdmulrowempty=@latexonly & @endlatexonly"
+#                       RST PASSTHROUGH:
+ALIASES +=              "rst=\verbatim embed:rst:leading-asterisk" \
+                        "endrst=\endverbatim"
 ALIASES += "deprecated=Deprecated"
 
 #@INCLUDE=$(ALIAS_INCLUDE_FILE)
@@ -237,7 +241,7 @@ WARN_IF_UNDOCUMENTED   = NO
 WARN_IF_DOC_ERROR      = YES
 WARN_NO_PARAMDOC       = NO
 WARN_FORMAT            = "$file:$line: $text"
-WARN_LOGFILE           = doxy_warn.log 
+WARN_LOGFILE           = doxy_warn.log
 #$(ENV_WARN_LOG)
 #---------------------------------------------------------------------------
 # configuration options related to the input files

@@ -27,7 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -146,7 +147,7 @@ enum class ReasonType {
     NONE              = 0, /**< Redial reason is NONE */
     CALL_ORIG_FAILURE = 1, /**< Redial will be attempted due to eCall origination failure */
     CALL_DROP         = 2, /**< Redial will be attempted as the eCall is terminated before the
-                                reciept of MSD Transmission status */
+                                receipt of MSD Transmission status */
     MAX_REDIAL_ATTEMPTED = 3, /**< Redial will not be attempted as the maximum redial count
                                    is reached */
     CALL_CONNECTED = 4, /**< Redial will not be attempted as the eCall was connected
@@ -170,9 +171,13 @@ struct ECallRedialInfo {
  */
 
 enum class RedialConfigType {
-    CALL_DROP = 0, /**< Redial configuration for eCall termination before reciept of MSD
+    CALL_DROP = 0, /**< Redial configuration for eCall termination before receipt of MSD
                         Transmission status */
-    CALL_ORIG = 1, /**< Redial configuration for eCall origination failure */
+    CALL_ORIG = 1, /**< Redial configuration for eCall origination is applicable only to CS eCall.
+                        It must not be applied on platforms that support both NG eCall and CS
+                        eCall, as redial behavior in such cases is governed by the modem’s domain
+                        selection process and redial attempts are handled internally by the
+                        modem. */
 };
 
 /**

@@ -27,11 +27,10 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -733,35 +732,37 @@ void CallMenu::swap(std::vector<std::string> userInput) {
 }
 
 void CallMenu::getCalls(std::vector<std::string> userInput) {
-   std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
-      = callManager_->getInProgressCalls();
-   if(inProgressCalls.size() == 0) {
-       std::cout << "No calls detected in the system" << std::endl;
-   }
-   for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
-       ++callIterator) {
-      std::cout << " Call State: "
-                << (std::dynamic_pointer_cast<MyCallListener>(callListener_))
-                      ->getCallStateString((*callIterator)->getCallState())
-                << " Call Index: " << (int)(*callIterator)->getCallIndex()
-                << " Call Direction: " << (int)(*callIterator)->getCallDirection()
-                << " Call Type: "
-                << (std::dynamic_pointer_cast<MyCallListener>(callListener_))
-                      ->getCallTypeString((*callIterator)->getCallType())
-                << " Phone Number: " << (*callIterator)->getRemotePartyNumber()
-                << " SlotId: " << (*callIterator)->getPhoneId()
-                << " isMpty: " << (*callIterator)->isMultiPartyCall()
-                << ", RTT mode of the call "
-                << (std::dynamic_pointer_cast<MyCallListener>(callListener_))
-                     ->getRttModeString((*callIterator)->getRttMode())
-                << ", Local capability of call "
-                << (std::dynamic_pointer_cast<MyCallListener>(callListener_))
-                     ->getRttModeString((*callIterator)->getLocalRttCapability())
-                << ", Peer capability of call "
-                << (std::dynamic_pointer_cast<MyCallListener>(callListener_))
-                     ->getRttModeString((*callIterator)->getPeerRttCapability())
-                << std::endl;
-   }
+    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
+        = callManager_->getInProgressCalls();
+    if (inProgressCalls.size() == 0) {
+        std::cout << "No calls detected in the system" << std::endl;
+    }
+    for (auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
+         ++callIterator) {
+        std::cout << " Call State: "
+                  << (std::dynamic_pointer_cast<MyCallListener>(callListener_))
+                         ->getCallStateString((*callIterator)->getCallState())
+                  << " Call Index: " << (int)(*callIterator)->getCallIndex()
+                  << " Call Direction: " << (int)(*callIterator)->getCallDirection()
+                  << " Call Type: "
+                  << (std::dynamic_pointer_cast<MyCallListener>(callListener_))
+                         ->getCallTypeString((*callIterator)->getCallType())
+                  << " Network Mode: "
+                  << (std::dynamic_pointer_cast<MyCallListener>(callListener_))
+                         ->getNetworkModeString((*callIterator)->getNetworkMode())
+                  << " Phone Number: " << (*callIterator)->getRemotePartyNumber()
+                  << " SlotId: " << (*callIterator)->getPhoneId()
+                  << " isMpty: " << (*callIterator)->isMultiPartyCall() << ", RTT mode of the call "
+                  << (std::dynamic_pointer_cast<MyCallListener>(callListener_))
+                         ->getRttModeString((*callIterator)->getRttMode())
+                  << ", Local capability of call "
+                  << (std::dynamic_pointer_cast<MyCallListener>(callListener_))
+                         ->getRttModeString((*callIterator)->getLocalRttCapability())
+                  << ", Peer capability of call "
+                  << (std::dynamic_pointer_cast<MyCallListener>(callListener_))
+                         ->getRttModeString((*callIterator)->getPeerRttCapability())
+                  << std::endl;
+    }
 }
 
 void CallMenu::resumeCall(std::vector<std::string> userInput) {

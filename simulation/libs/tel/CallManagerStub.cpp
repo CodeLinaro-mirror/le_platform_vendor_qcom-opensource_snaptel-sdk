@@ -529,14 +529,14 @@ void CallManagerStub::handleCallInfoChanged(::telStub::GetInProgressCallsData ev
         callInfo.isMpty = event.calls(i).is_mpty();
         LOG(DEBUG, "CallMgr - ", __FUNCTION__,"isMpty is ", callInfo.isMpty);
         callInfo.mode = static_cast<telux::tel::RttMode>(event.calls(i).mode());
-        callInfo.localRttCapability =
-            static_cast<telux::tel::RttMode>(event.calls(i).local_rtt_capability());
-        callInfo.peerRttCapability =
-            static_cast<telux::tel::RttMode>(event.calls(i).peer_rtt_capability());
-        callInfo.callType =
-            static_cast<telux::tel::CallType>(event.calls(i).call_type());
-        callInfo.callReason = static_cast<std::string>(event.calls(i).call_reason());
-        LOG(DEBUG, __FUNCTION__," CallState: ", static_cast<int>(callInfo.callState),
+        callInfo.localRttCapability
+            = static_cast<telux::tel::RttMode>(event.calls(i).local_rtt_capability());
+        callInfo.peerRttCapability
+            = static_cast<telux::tel::RttMode>(event.calls(i).peer_rtt_capability());
+        callInfo.callType    = static_cast<telux::tel::CallType>(event.calls(i).call_type());
+        callInfo.callReason  = static_cast<std::string>(event.calls(i).call_reason());
+        callInfo.networkMode = static_cast<telux::tel::NetworkMode>(event.calls(i).network_mode());
+        LOG(DEBUG, __FUNCTION__, " CallState: ", static_cast<int>(callInfo.callState),
             " CallIndex: ", static_cast<int>(callInfo.index),
             " Calldirection: ", static_cast<int>(callInfo.callDirection),
             " RemotePartyNumber: ", callInfo.remotePartyNumber,
@@ -550,7 +550,8 @@ void CallManagerStub::handleCallInfoChanged(::telStub::GetInProgressCallsData ev
             " Call Type: ", static_cast<int>(callInfo.callType),
             " Call Reason: ", callInfo.callReason,
             " Is AECS call drop: ", callInfo.isAecsCallDrop,
-            " Redial State: ", static_cast<int>(callInfo.redialState));
+            " Redial State: ", static_cast<int>(callInfo.redialState),
+            " Network Mode: ", static_cast<int>(callInfo.networkMode));
         auto Info = std::make_shared<CallStub>(phoneId, callInfo);
         {
             calls.emplace_back(Info);

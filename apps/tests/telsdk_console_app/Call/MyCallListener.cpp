@@ -28,39 +28,10 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  *
- *  Copyright (c) 2021, 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <chrono>
@@ -96,22 +67,21 @@ void MyCallListener::onIncomingCall(std::shared_ptr<telux::tel::ICall> call) {
 }
 
 void MyCallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) {
-   std::cout << std::endl << std::endl;
-   PRINT_NOTIFICATION << " Call State: " << getCallStateString(call->getCallState())
-                      << "\n Call Index: " << (int)call->getCallIndex()
-                      << ", Call Direction: " << (int)call->getCallDirection()
-                      << ", Call Type: " << getCallTypeString(call->getCallType())
-                      << ", Phone Number: " << call->getRemotePartyNumber()
-                      << ", Slot Id: " << call->getPhoneId()
-                      << ", RTT mode of the call: " << getRttModeString(call->getRttMode())
-                      << ", Local capability of call: "
-                      << getRttModeString(call->getLocalRttCapability())
-                      << ", Peer capability of call: "
-                      << getRttModeString(call->getPeerRttCapability())
-                      << std::endl;
-   if (!call->getCallReason().empty()) {
-       PRINT_NOTIFICATION << "Call reason: " << call->getCallReason() << std::endl;
-   }
+    std::cout << std::endl << std::endl;
+    PRINT_NOTIFICATION
+        << " Call State: " << getCallStateString(call->getCallState())
+        << "\n Call Index: " << (int)call->getCallIndex()
+        << ", Call Direction: " << (int)call->getCallDirection()
+        << ", Call Type: " << getCallTypeString(call->getCallType())
+        << ", Network Mode: " << getNetworkModeString(call->getNetworkMode())
+        << ", Phone Number: " << call->getRemotePartyNumber() << ", Slot Id: " << call->getPhoneId()
+        << ", RTT mode of the call: " << getRttModeString(call->getRttMode())
+        << ", Local capability of call: " << getRttModeString(call->getLocalRttCapability())
+        << ", Peer capability of call: " << getRttModeString(call->getPeerRttCapability())
+        << std::endl;
+    if (!call->getCallReason().empty()) {
+        PRINT_NOTIFICATION << "Call reason: " << call->getCallReason() << std::endl;
+    }
 
    if(call->getCallState() == telux::tel::CallState::CALL_ENDED) {
        int phoneId = call->getPhoneId();
@@ -214,6 +184,21 @@ std::string MyCallListener::getCallTypeString(telux::tel::CallType type) {
       default:
          return std::string("unknown");
    }
+}
+
+std::string MyCallListener::getNetworkModeString(telux::tel::NetworkMode mode) {
+    switch (mode) {
+        case telux::tel::NetworkMode::GSM:
+            return std::string("GSM mode");
+        case telux::tel::NetworkMode::WCDMA:
+            return std::string("WCDMA mode");
+        case telux::tel::NetworkMode::LTE:
+            return std::string("LTE mode");
+        case telux::tel::NetworkMode::NR5G:
+            return std::string("NR5G mode");
+        default:
+            return std::string("unknown");
+    }
 }
 
 std::string MyCallListener::getRttModeString(telux::tel::RttMode mode) {
@@ -698,4 +683,3 @@ int MyCallListener::getCallsOnSlot(SlotId slotId) {
     }
     return numCalls;
 }
-

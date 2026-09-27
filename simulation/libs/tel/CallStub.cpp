@@ -394,7 +394,8 @@ bool CallStub::isInfoStale(const std::shared_ptr<CallStub> &ci) {
             || (callInfo_.mode != ci->getRttMode())
             || (callInfo_.localRttCapability != ci->getLocalRttCapability())
             || (callInfo_.peerRttCapability != ci->getPeerRttCapability())
-            || (callInfo_.callType != ci->getCallType()));
+            || (callInfo_.callType != ci->getCallType())
+            || (callInfo_.networkMode != ci->getNetworkMode()));
 }
 
 /*
@@ -413,7 +414,8 @@ void CallStub::logCallDetails() {
         ", peerRttCapability = ", static_cast<int>(callInfo_.peerRttCapability),
         ", callType = ", static_cast<int>(callInfo_.callType),
         ", callReason = ", callInfo_.callReason,
-        ", callEndCause = ", static_cast<int>(callInfo_.callEndCause));
+        ", callEndCause = ", static_cast<int>(callInfo_.callEndCause),
+        ", networkMode = ", static_cast<int>(callInfo_.networkMode));
 }
 
 /**
@@ -428,10 +430,11 @@ telux::common::Status CallStub::updateCallInfo(std::shared_ptr<CallStub> &callIn
     callInfo_.callState = callInfo->getCallState();
     callInfo_.mode = callInfo->getRttMode();
     callInfo_.localRttCapability = callInfo->getLocalRttCapability();
-    callInfo_.peerRttCapability = callInfo->getPeerRttCapability();
-    callInfo_.callType = callInfo->getCallType();
-    callInfo_.callReason = callInfo->getCallReason();
-    callInfo_.callEndCause = callInfo->getCallEndCause();
+    callInfo_.peerRttCapability  = callInfo->getPeerRttCapability();
+    callInfo_.callType           = callInfo->getCallType();
+    callInfo_.callReason         = callInfo->getCallReason();
+    callInfo_.callEndCause       = callInfo->getCallEndCause();
+    callInfo_.networkMode        = callInfo->getNetworkMode();
     LOG(DEBUG, "Updated call details");
     logCallDetails();
     return telux::common::Status::SUCCESS;
@@ -475,8 +478,13 @@ void CallStub::setCallReason(std::string reason) {
     callInfo_.callReason = reason;
 }
 
-telux::common::Status CallStub::modify(RttMode mode,
-    std::shared_ptr<telux::common::ICommandResponseCallback> callback) {
+NetworkMode CallStub::getNetworkMode() {
+    LOG(DEBUG, __FUNCTION__, " Network mode is ", static_cast<int>(callInfo_.networkMode));
+    return callInfo_.networkMode;
+}
+
+telux::common::Status CallStub::modify(
+    RttMode mode, std::shared_ptr<telux::common::ICommandResponseCallback> callback) {
     LOG(DEBUG, __FUNCTION__, " RTT mode is : ", static_cast<int>(mode));
     if (mode == RttMode::UNKNOWN) {
         return telux::common::Status::INVALIDPARAM;

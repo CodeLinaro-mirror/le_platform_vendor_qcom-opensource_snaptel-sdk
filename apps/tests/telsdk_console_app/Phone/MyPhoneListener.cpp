@@ -43,10 +43,12 @@ extern "C" {
 }
 
 #include "MyPhoneListener.hpp"
+#include "MyServingSystemHandler.hpp"
 #include "Utils.hpp"
 
 #define PRINT_CB std::cout << "\033[1;35mCALLBACK: \033[0m"
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
+#define EARFCN_INVALID_VALUE 4294967295U
 
 // Notify PhoneManager subsystem status
 void MyPhoneListener::onServiceStatusChange(telux::common::ServiceStatus status) {
@@ -1275,8 +1277,9 @@ void MyPhoneListener::onCarrierAggregationInfoChanged(
             << "Bandwidth: "
             << MyCellInfoCallback::lteBandwidthToString(info.lteInfo->pCell.cell.bandwidth)
             << std::endl;
-        PRINT_NOTIFICATION << "Band: " << static_cast<int>(info.lteInfo->pCell.cell.band)
-                           << std::endl;
+        PRINT_NOTIFICATION
+            << "Band: " << MyServingSystemHelper::RFBandtoString(info.lteInfo->pCell.cell.band)
+            << std::endl;
         PRINT_NOTIFICATION << "Number of SCells: " << info.lteInfo->sCell.size() << std::endl;
         for (size_t i = 0; i < info.lteInfo->sCell.size(); i++) {
             const auto &sCell = info.lteInfo->sCell[i];
@@ -1286,7 +1289,8 @@ void MyPhoneListener::onCarrierAggregationInfoChanged(
             PRINT_NOTIFICATION
                 << "Bandwidth: " << MyCellInfoCallback::lteBandwidthToString(sCell.cell.bandwidth)
                 << std::endl;
-            PRINT_NOTIFICATION << "Band: " << static_cast<int>(sCell.cell.band) << std::endl;
+            PRINT_NOTIFICATION << "Band: " << MyServingSystemHelper::RFBandtoString(sCell.cell.band)
+                               << std::endl;
             PRINT_NOTIFICATION << "UL Configured: " << (sCell.ulConfigured ? "Yes" : "No")
                                << std::endl;
             PRINT_NOTIFICATION
@@ -1307,20 +1311,28 @@ void MyPhoneListener::onCellChannelInfoListChanged(
                        << channelInfoList.lteServingAndSCellArfcns.size() << "):" << std::endl;
     for (size_t i = 0; i < channelInfoList.lteServingAndSCellArfcns.size(); i++) {
         const auto &arfcn = channelInfoList.lteServingAndSCellArfcns[i];
-        PRINT_NOTIFICATION
-            << "  [" << i << "] DL EARFCN: " << arfcn.dlEarfcn << ", UL EARFCN: " << arfcn.ulEarfcn
-            << ", Bandwidth: " << MyCellInfoCallback::lteBandwidthToString(arfcn.bandwidth)
-            << std::endl;
+        PRINT_NOTIFICATION << "  [" << i << "] DL EARFCN: " << arfcn.dlEarfcn;
+        if (arfcn.ulEarfcn == EARFCN_INVALID_VALUE) {
+            std::cout << ", Only downlink is configured";
+        } else {
+            std::cout << ", UL EARFCN: " << arfcn.ulEarfcn;
+        }
+        std::cout << ", Bandwidth: " << MyCellInfoCallback::lteBandwidthToString(arfcn.bandwidth)
+                  << std::endl;
     }
     // LTE Neighbor ARFCNs
     PRINT_NOTIFICATION << "LTE Neighbor ARFCNs (" << channelInfoList.lteNeighborArfcns.size()
                        << "):" << std::endl;
     for (size_t i = 0; i < channelInfoList.lteNeighborArfcns.size(); i++) {
         const auto &arfcn = channelInfoList.lteNeighborArfcns[i];
-        PRINT_NOTIFICATION
-            << "  [" << i << "] DL EARFCN: " << arfcn.dlEarfcn << ", UL EARFCN: " << arfcn.ulEarfcn
-            << ", Bandwidth: " << MyCellInfoCallback::lteBandwidthToString(arfcn.bandwidth)
-            << std::endl;
+        PRINT_NOTIFICATION << "  [" << i << "] DL EARFCN: " << arfcn.dlEarfcn;
+        if (arfcn.ulEarfcn == EARFCN_INVALID_VALUE) {
+            std::cout << ", Only downlink is configured";
+        } else {
+            std::cout << ", UL EARFCN: " << arfcn.ulEarfcn;
+        }
+        std::cout << ", Bandwidth: " << MyCellInfoCallback::lteBandwidthToString(arfcn.bandwidth)
+                  << std::endl;
     }
     // NR5G Serving and SCell ARFCNs
     PRINT_NOTIFICATION << "NR5G Serving/SCell ARFCNs ("

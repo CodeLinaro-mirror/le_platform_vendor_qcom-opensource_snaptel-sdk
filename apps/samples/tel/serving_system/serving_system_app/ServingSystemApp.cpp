@@ -181,10 +181,12 @@ class ServingSystemInfo : public std::enable_shared_from_this<ServingSystemInfo>
 
         /* Step - 5 */
         /* Restrict the onSystemInfoChanged notification to be triggered only when the
-         * service registration state or the serving RAT changes. */
+         * service registration state changes (including RAT changes, which are now
+         * covered by SRV_STATUS) or when the service toggles between in-service and
+         * out-of-service (SRV_STATUS_TOGGLE). */
         telux::tel::SystemInfoNotificationFilterMask mask;
         mask.set(telux::tel::SystemInfoNotificationFilter::SRV_STATUS);
-        mask.set(telux::tel::SystemInfoNotificationFilter::SRV_RAT_TECH_CHANGE);
+        mask.set(telux::tel::SystemInfoNotificationFilter::SRV_STATUS_TOGGLE);
 
         errorCode = servingSystemMgr_->setSystemInfoNotificationFilter(mask);
         if (errorCode != telux::common::ErrorCode::SUCCESS) {
@@ -239,9 +241,6 @@ class ServingSystemInfo : public std::enable_shared_from_this<ServingSystemInfo>
         }
         if (mask.test(telux::tel::SystemInfoNotificationFilter::SRV_STATUS_TOGGLE)) {
             std::cout << "SRV_STATUS_TOGGLE ";
-        }
-        if (mask.test(telux::tel::SystemInfoNotificationFilter::SRV_RAT_TECH_CHANGE)) {
-            std::cout << "SRV_RAT_TECH_CHANGE ";
         }
         std::cout << std::endl;
     }

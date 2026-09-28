@@ -1229,7 +1229,6 @@ void ServingSystemMenu::setSystemInfoNotificationFilter(std::vector<std::string>
                      " 3=PS_BAR_STATUS\n"
                      " 4=LTE_SMS_STATUS\n"
                      " 5=SRV_STATUS_TOGGLE\n"
-                     " 6=SRV_RAT_TECH_CHANGE\n"
                      "Enter selection, or leave blank to reset/clear the filter"
                      " (reports all system information changes): ";
         std::getline(std::cin, filterSelection, delimiter);
@@ -1244,7 +1243,7 @@ void ServingSystemMenu::setSystemInfoNotificationFilter(std::vector<std::string>
                 while (std::getline(ss, token, ',')) {
                     int bit = std::stoi(token);
                     if (bit >= telux::tel::SystemInfoNotificationFilter::SRV_STATUS
-                        && bit <= telux::tel::SystemInfoNotificationFilter::SRV_RAT_TECH_CHANGE) {
+                        && bit <= telux::tel::SystemInfoNotificationFilter::SRV_STATUS_TOGGLE) {
                         mask.set(bit);
                     } else {
                         std::cout << "WARNING: bit value " << bit
@@ -1291,8 +1290,6 @@ void ServingSystemMenu::getSystemInfoNotificationFilter(std::vector<std::string>
                       << mask.test(telux::tel::SystemInfoNotificationFilter::LTE_SMS_STATUS)
                       << "\n SRV_STATUS_TOGGLE: "
                       << mask.test(telux::tel::SystemInfoNotificationFilter::SRV_STATUS_TOGGLE)
-                      << "\n SRV_RAT_TECH_CHANGE: "
-                      << mask.test(telux::tel::SystemInfoNotificationFilter::SRV_RAT_TECH_CHANGE)
                       << std::endl;
         } else {
             std::cout

@@ -35,7 +35,8 @@ bool ServingSystemManagerStub::shouldReportSystemInfo(const ServingSystemInfo &p
     }
     bool wasInService = prev.state == ServiceRegistrationState::IN_SERVICE;
     bool isInService  = curr.state == ServiceRegistrationState::IN_SERVICE;
-    if (mask.test(SystemInfoNotificationFilter::SRV_STATUS) && (prev.state != curr.state)) {
+    if (mask.test(SystemInfoNotificationFilter::SRV_STATUS)
+        && ((prev.state != curr.state) || (prev.rat != curr.rat))) {
         return true;
     }
     if (mask.test(SystemInfoNotificationFilter::SRV_DOMAIN) && (prev.domain != curr.domain)) {
@@ -61,10 +62,6 @@ bool ServingSystemManagerStub::shouldReportSystemInfo(const ServingSystemInfo &p
     // SRV_STATUS_TOGGLE: in-service <-> out-of-service transitions
     if (mask.test(SystemInfoNotificationFilter::SRV_STATUS_TOGGLE)
         && (wasInService != isInService)) {
-        return true;
-    }
-    // SRV_RAT_TECH_CHANGE: any RAT change
-    if (mask.test(SystemInfoNotificationFilter::SRV_RAT_TECH_CHANGE) && (prev.rat != curr.rat)) {
         return true;
     }
     return false;

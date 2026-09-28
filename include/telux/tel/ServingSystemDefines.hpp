@@ -474,25 +474,27 @@ enum class Nr5gRrcState {
  */
 enum SystemInfoNotificationFilter {
     SRV_STATUS, /**< Service status or registration state changes. Notifications are
-                         delivered through @ref IServingSystemListener::onSystemInfoChanged.
-                         1. Within the same RAT:
-                            Reports whenever the service status changes from one state to
-                            a different state (NO_SERVICE, LIMITED_SERVICE, IN_SERVICE,
-                            LIMITED_REGIONAL, or POWER_SAVE).
-                         2. Across different RATs:
-                            Reports all service status transitions, including transitions
-                            where the service status remains the same but the RAT changes. */
+                     delivered through @ref IServingSystemListener::onSystemInfoChanged.
+                     1. Within the same RAT:
+                        Reports whenever the service status changes from one state to
+                        a different state (NO_SERVICE, LIMITED_SERVICE, IN_SERVICE,
+                        LIMITED_REGIONAL, or POWER_SAVE).
+                     2. Across different RATs:
+                        Reports all service status transitions, including transitions
+                        where the service status remains the same but the RAT changes. */
     SRV_DOMAIN, /**< Service domain changes, i.e., transitions between NO_SERVICE,
                      CS_ONLY, PS_ONLY, and CS_PS registration domains. Notifications are
                      delivered through @ref IServingSystemListener::onSystemInfoChanged. */
     CS_BAR_STATUS, /**< Circuit-switched (CS) call barring status changes, i.e.,
                         when CS call barring information changed on the serving cell.
                         Notifications are delivered through @ref
-                        IServingSystemListener::onCallBarringInfoChanged. */
+                        IServingSystemListener::onCallBarringInfoChanged. This is applicable for
+                        GSM and WCDMA RATs only. */
     PS_BAR_STATUS, /**< Packet-switched (PS) call barring status changes, i.e.,
                         when PS call barring information changed on the serving cell.
                         Notifications are delivered through @ref
-                        IServingSystemListener::onCallBarringInfoChanged. */
+                        IServingSystemListener::onCallBarringInfoChanged. This is applicable for
+                        GSM and WCDMA RATs only.*/
     LTE_SMS_STATUS, /**< LTE SMS service status changes, i.e., availability of SMS
                          service while registered on LTE. Notifications are delivered
                          through @ref IServingSystemListener::onSmsCapabilityChanged. */
@@ -501,11 +503,6 @@ enum SystemInfoNotificationFilter {
                             IServingSystemListener::onSystemInfoChanged.
                             i.e., NO_SERVICE/LIMITED_SERVICE/POWER_SAVE -> IN_SERVICE and
                             IN_SERVICE -> NO_SERVICE/LIMITED_SERVICE/POWER_SAVE. */
-    SRV_RAT_TECH_CHANGE /**< Radio access technology (RAT) changes, i.e., reports
-                             whenever the serving RAT changes (e.g., LTE to NR5G), even
-                             if the service status remains the same. Notifications are
-                             delivered through @ref
-                             IServingSystemListener::onSystemInfoChanged. */
 };
 
 /**

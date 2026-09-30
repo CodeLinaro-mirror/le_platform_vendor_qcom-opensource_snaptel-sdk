@@ -576,6 +576,9 @@ void DgnssMenu::onDgnssStatusUpdate(DgnssStatus status) {
         case DgnssStatus::MESSAGE_PARSE_ERROR:
             std::cout << "RTCM message parsing error" << std::endl;
             break;
+        case DgnssStatus::DATA_SOURCE_USABLE:
+            std::cout << "RTCM data source is usable" << std::endl;
+            break;
         case DgnssStatus::DATA_SOURCE_NOT_USABLE:
             std::cout << "RTCM data source is not usable" << std::endl;
             // Demonstrate "source switching" requirement for v2x use case. If current source's data
@@ -587,8 +590,23 @@ void DgnssMenu::onDgnssStatusUpdate(DgnssStatus status) {
             //   std::cout << "Failed to create RTCM source" << std::endl;
             //}
             break;
+        case DgnssStatus::CDFW_STOP_SOURCE_INJECT:
+            std::cout << "CDFW requested to stop RTCM source injection" << std::endl;
+            break;
+        case DgnssStatus::SERVICE_DOWN:
+            // This status is only a notification from the service. The client/application is
+            // responsible for taking appropriate action, such as pausing correction data injection
+            // until READY_TO_ACCEPT_DATA is received.
+            std::cout << "DGNSS service is unreachable, wait for READY_TO_ACCEPT_DATA to retry"
+                      << " injection" << std::endl;
+            break;
+        case DgnssStatus::READY_TO_ACCEPT_DATA:
+            // This status is only a notification from the service. The client/application is
+            // responsible for deciding whether and how to resume correction data injection.
+            std::cout << "DGNSS service is ready to accept correction data" << std::endl;
+            break;
         default:
-            std::cout << "Unknown RTCM status" << std::endl;
+            std::cout << "Unknown RTCM status: " << static_cast<int>(status) << std::endl;
     }
 }
 

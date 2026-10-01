@@ -444,16 +444,21 @@ void SubsystemApp::logSubsystemStateChange(telux::common::SubsystemInfo subsyste
         return;
     }
 
+    // subsystemInfo.subsystems is a bitmask - APSS and MPSS can be set together
+    // (e.g. when multiple subsystems come up at once), so each bit must be checked
+    // independently rather than switched on as a single value.
     std::string subsysName;
-    switch (subsystemInfo.subsystems) {
-        case telux::common::Subsystem::MPSS:
-            subsysName = "MPSS";
-            break;
-        case telux::common::Subsystem::APSS:
-            subsysName = "APSS";
-            break;
-        default:
-            return;
+    if (subsystemInfo.subsystems & telux::common::Subsystem::APSS) {
+        subsysName += "APSS";
+    }
+    if (subsystemInfo.subsystems & telux::common::Subsystem::MPSS) {
+        if (!subsysName.empty()) {
+            subsysName += "+";
+        }
+        subsysName += "MPSS";
+    }
+    if (subsysName.empty()) {
+        return;
     }
 
     std::string location
@@ -473,7 +478,7 @@ void SubsystemApp::logSubsystemStateChange(telux::common::SubsystemInfo subsyste
     }
 
     // Compact format: "<subsys> <loc>:<status>"
-    // Max length: "UNKNOWN REMOTE:UNAVAILABLE" = 26 chars (well within the 50-byte limit)
+    // Max length: "APSS+MPSS REMOTE:UNAVAILABLE" = 28 chars (well within the 50-byte limit)
     KpiLogUtils::logKpiFile(subsysName + " " + location + ":" + status);
 }
 

@@ -123,6 +123,7 @@ enum class NrIconType {
     NONE, /**< Unspecified       */
     BASIC, /**< 5G basic         */
     UWB, /**< 5G ultrawide band */
+    PLUS_PLUS, /**< 5G++ UI icon */
 };
 
 /**

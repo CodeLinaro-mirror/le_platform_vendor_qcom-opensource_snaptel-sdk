@@ -358,20 +358,24 @@ int LocationMenu::init() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("43", "Xtra Consent", {},
             std::bind(&LocationMenu::provideConsentForXtra, this, std::placeholders::_1)));
 
-    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
-        = {startDetailedReportsCommand, startDetailedEngineReportsCommand, startBasicReportsCommand,
-            stopReportsCommand, enableReportLogsCommand, enableDisableTunc, enableDisablePace,
-            deleteAllAidingData, configureLeverArm, configureConstellation, configureRobustLocation,
-            registerLocationSystemInfo, deRegisterLocationSystemInfo, requestEnergyConsumedInfo,
-            dgnssInjectCommand, configureMinGpsWeek, requestMinGpsWeek, deleteAidingDataWarm,
-            configureMinSVElevation, requestMinSVElevation, requestRobustLocation,
-            configureConstellationEmpty, configureConstellationDeviceDefault, configureDR,
-            configureSecondaryBand, enableDefaultSecondaryBand, requestSecondaryBand, getYearOfHw,
-            configureEngineState, provideConsentForTerrestrialPositioning,
-            requestTerrestrialPositioning, cancelTerrestrialPositioning, configureNmeaSentence,
-            configureAllNmeaSentence, configureEngineIntegrityRisk, getCapabilities,
-            configureXtraParams, requestXtraStatus, registerConfigListener,
-            deRegisterConfigListener, injectMerkleTreeInformation, configureOsnma, xtraConsent};
+    std::shared_ptr<ConsoleAppCommand> requestNavMsgAuthStatus
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("44", "Request Nav Msg Auth Status",
+            {}, std::bind(&LocationMenu::requestNavMsgAuthStatus, this, std::placeholders::_1)));
+
+    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu = {
+        startDetailedReportsCommand, startDetailedEngineReportsCommand, startBasicReportsCommand,
+        stopReportsCommand, enableReportLogsCommand, enableDisableTunc, enableDisablePace,
+        deleteAllAidingData, configureLeverArm, configureConstellation, configureRobustLocation,
+        registerLocationSystemInfo, deRegisterLocationSystemInfo, requestEnergyConsumedInfo,
+        dgnssInjectCommand, configureMinGpsWeek, requestMinGpsWeek, deleteAidingDataWarm,
+        configureMinSVElevation, requestMinSVElevation, requestRobustLocation,
+        configureConstellationEmpty, configureConstellationDeviceDefault, configureDR,
+        configureSecondaryBand, enableDefaultSecondaryBand, requestSecondaryBand, getYearOfHw,
+        configureEngineState, provideConsentForTerrestrialPositioning,
+        requestTerrestrialPositioning, cancelTerrestrialPositioning, configureNmeaSentence,
+        configureAllNmeaSentence, configureEngineIntegrityRisk, getCapabilities,
+        configureXtraParams, requestXtraStatus, registerConfigListener, deRegisterConfigListener,
+        injectMerkleTreeInformation, configureOsnma, xtraConsent, requestNavMsgAuthStatus};
 
     addCommands(commandsListGnssSubMenu);
     ConsoleApp::displayMenu();
@@ -1819,6 +1823,68 @@ void LocationMenu::requestXtraStatus(std::vector<std::string> userInput) {
         auto getXtraStatusCb = std::bind(&MyLocationCommandCallback::onXtraStatusInfo,
             myLocCmdResponseCb_, std::placeholders::_1, std::placeholders::_2);
         telux::common::Status status = locationConfigurator_->requestXtraStatus(getXtraStatusCb);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << __FUNCTION__ << " Command Failed" << std::endl;
+        }
+    }
+}
+
+void LocationMenu::requestNavMsgAuthStatus(std::vector<std::string> userInput) {
+    if (locationConfigurator_) {
+
+        std::string constellation;
+        char delimiter          = '\n';
+        int constellationOption = 2;  // Default GALILEO
+
+        while (true) {
+            std::cout << " Enter the constellation : " << std::endl;
+            std::cout << " Enter 1 for GPS, 2 for GALILEO, 3 for SBAS, 5 for GLONASS" << std::endl;
+            std::cout << " 6 for BEIDOU, 7 for QZSS, 8 for NAVIC : " << std::endl;
+            std::cout << " constellation> ";
+
+            std::getline(std::cin, constellation, delimiter);
+
+            if (constellation.empty()) {
+                std::cout << "Empty input, enter value again" << std::endl;
+                continue;
+            }
+
+            if (constellation == "1" || constellation == "2" || constellation == "3"
+                || constellation == "5" || constellation == "6" || constellation == "7"
+                || constellation == "8") {
+                constellationOption = std::stoi(constellation);
+                break;
+            } else {
+                std::cout << "Not a valid entry, enter value again" << std::endl;
+                continue;
+            }
+        }
+
+        telux::loc::GnssConstellationType svType = telux::loc::GnssConstellationType::GALILEO;
+
+        if (constellationOption == 1) {
+            svType = telux::loc::GnssConstellationType::GPS;
+        } else if (constellationOption == 3) {
+            svType = telux::loc::GnssConstellationType::SBAS;
+        } else if (constellationOption == 5) {
+            svType = telux::loc::GnssConstellationType::GLONASS;
+        } else if (constellationOption == 6) {
+            svType = telux::loc::GnssConstellationType::BDS;
+        } else if (constellationOption == 7) {
+            svType = telux::loc::GnssConstellationType::QZSS;
+        } else if (constellationOption == 8) {
+            svType = telux::loc::GnssConstellationType::NAVIC;
+        }
+
+        myLocCmdResponseCb_
+            = std::make_shared<MyLocationCommandCallback>("Request Nav Msg Auth Status");
+
+        auto getNavMsgAuthStatusCb = std::bind(&MyLocationCommandCallback::onNavMsgAuthStatusInfo,
+            myLocCmdResponseCb_, std::placeholders::_1, std::placeholders::_2);
+
+        telux::common::Status status
+            = locationConfigurator_->requestNavMsgAuthStatus(svType, getNavMsgAuthStatusCb);
+
         if (status != telux::common::Status::SUCCESS) {
             std::cout << __FUNCTION__ << " Command Failed" << std::endl;
         }

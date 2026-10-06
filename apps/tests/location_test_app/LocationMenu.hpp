@@ -104,6 +104,7 @@ class LocationMenu : public ConsoleApp {
     void requestMinSVElevation(std::vector<std::string> userInput);
     void configureXtraParameters(std::vector<std::string> userInput);
     void requestXtraStatus(std::vector<std::string> userInput);
+    void requestNavMsgAuthStatus(std::vector<std::string> userInput);
     void registerConfigListener(std::vector<std::string> userInput);
     void deRegisterConfigListener(std::vector<std::string> userInput);
     void injectMerkleTreeInformation(std::vector<std::string> userInput);

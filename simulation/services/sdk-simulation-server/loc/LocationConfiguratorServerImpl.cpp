@@ -20,6 +20,118 @@
 #define LOC_CONFIG_API_JSON "api/loc/ILocationConfigurator.json"
 #define DEFAULT_DELIMITER " "
 
+std::string LocationConfiguratorServerImpl::getNextEventValue(
+    std::string &event, const std::string &fieldName, const std::string &defaultValue) {
+    std::string token;
+    size_t first = event.find_first_not_of(DEFAULT_DELIMITER);
+    if (first != std::string::npos) {
+        event.erase(0, first);
+    }
+    size_t position = event.find(DEFAULT_DELIMITER);
+    if (position != std::string::npos) {
+        token = event.substr(0, position);
+        event.erase(0, position + 1);
+    } else {
+        token = event;
+        event.clear();
+    }
+    if (token.empty()) {
+        LOG(INFO, __FUNCTION__, "The ", fieldName, " is not passed");
+        return defaultValue;
+    }
+    return token;
+}
+
+std::string LocationConfiguratorServerImpl::trimString(const std::string &value) {
+    size_t first = value.find_first_not_of(DEFAULT_DELIMITER);
+    if (first == std::string::npos) {
+        return "";
+    }
+    size_t last = value.find_last_not_of(DEFAULT_DELIMITER);
+    return value.substr(first, last - first + 1);
+}
+
+uint32_t LocationConfiguratorServerImpl::parseUint32(std::string value, uint32_t defaultValue) {
+    try {
+        return static_cast<uint32_t>(std::stoul(value, nullptr, 0));
+    } catch (std::exception &ex) {
+        LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+        return defaultValue;
+    }
+}
+
+uint64_t LocationConfiguratorServerImpl::parseUint64(std::string value, uint64_t defaultValue) {
+    try {
+        return static_cast<uint64_t>(std::stoull(value, nullptr, 0));
+    } catch (std::exception &ex) {
+        LOG(ERROR, __FUNCTION__, "Exception Occured: ", ex.what());
+        return defaultValue;
+    }
+}
+
+bool LocationConfiguratorServerImpl::addGalileoSvToMask(const std::string &token, uint64_t &mask) {
+    try {
+        size_t parsed = 0;
+        uint32_t svId = static_cast<uint32_t>(std::stoul(token, &parsed, 0));
+        if (parsed != token.size() || svId < telux::loc::GAL_OSNMA_FIRST_SV_ID
+            || svId >= telux::loc::GAL_OSNMA_FIRST_SV_ID + telux::loc::GAL_OSNMA_SV_COUNT) {
+            LOG(ERROR, __FUNCTION__, " Invalid Galileo SV ID: ", token);
+            return false;
+        }
+        mask |= (1ULL << (svId - telux::loc::GAL_OSNMA_FIRST_SV_ID));
+        return true;
+    } catch (std::exception &ex) {
+        LOG(ERROR, __FUNCTION__, " Invalid Galileo SV ID: ", token, " ", ex.what());
+        return false;
+    }
+}
+
+bool LocationConfiguratorServerImpl::parseGalileoSvList(const std::string &list, uint64_t &mask) {
+    if (list.empty()) {
+        return true;
+    }
+
+    std::string remaining = list;
+    while (!remaining.empty()) {
+        size_t position = remaining.find(",");
+        std::string token;
+        if (position != std::string::npos) {
+            token = remaining.substr(0, position);
+            remaining.erase(0, position + 1);
+        } else {
+            token = remaining;
+            remaining.clear();
+        }
+        token = trimString(token);
+        if (token.empty() || !addGalileoSvToMask(token, mask)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool LocationConfiguratorServerImpl::parseGalileoSvListFields(
+    const std::string &event, uint64_t &passedMask, uint64_t &failedMask) {
+    std::string passedList;
+    std::string failedList;
+    size_t position = event.find(DEFAULT_DELIMITER);
+    if (position != std::string::npos) {
+        passedList = event.substr(0, position);
+        failedList = event.substr(position + 1);
+    } else {
+        passedList = event;
+    }
+    passedList = trimString(passedList);
+    failedList = trimString(failedList);
+
+    if (failedList.find(DEFAULT_DELIMITER) != std::string::npos) {
+        LOG(ERROR, __FUNCTION__, " Too many SV list fields passed");
+        return false;
+    }
+
+    return parseGalileoSvList(passedList, passedMask) && parseGalileoSvList(failedList, failedMask);
+}
+
 LocationConfiguratorServerImpl::LocationConfiguratorServerImpl() {
     LOG(DEBUG, __FUNCTION__);
 }
@@ -84,6 +196,8 @@ void LocationConfiguratorServerImpl::handleEvent(std::string token, std::string 
         handleXtraUpdateEvent(event);
     } else if (token == "constellation_update") {
         handleGnssConstellationUpdateEvent(event);
+    } else if (token == "nav_msg_auth_status") {
+        handleNavMsgAuthStatusEvent(event);
     }
 }
 
@@ -138,6 +252,50 @@ void LocationConfiguratorServerImpl::handleGnssConstellationUpdateEvent(std::str
         this->triggerGnssConstellationUpdateEvent();
     }).share();
     taskQ_->add(f);
+}
+
+void LocationConfiguratorServerImpl::handleNavMsgAuthStatusEvent(std::string event) {
+    LOG(DEBUG, __FUNCTION__);
+    uint32_t validityMask   = parseUint32(getNextEventValue(event, "validityMask", "0"), 0);
+    uint32_t featureEnabled = parseUint32(getNextEventValue(event, "featureEnabled", "0"), 0);
+    uint32_t merkleTreeProvisioned
+        = parseUint32(getNextEventValue(event, "merkleTreeProvisioned", "0"), 0);
+    uint32_t publicKeyStatusMask
+        = parseUint32(getNextEventValue(event, "publicKeyStatusMask", "0"), 0);
+    uint32_t galWeek               = parseUint32(getNextEventValue(event, "galWeek", "0"), 0);
+    uint32_t galSecOfWeek          = parseUint32(getNextEventValue(event, "galSecOfWeek", "0"), 0);
+    uint64_t navDataAuthPassedMask = 0;
+    uint64_t navDataAuthFailedMask = 0;
+    if (!parseGalileoSvListFields(event, navDataAuthPassedMask, navDataAuthFailedMask)) {
+        LOG(ERROR, __FUNCTION__, " Nav message auth status not updated");
+        return;
+    }
+
+    CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator", "2",
+        {"ILocationConfigurator", "NavMsgAuthStatus", "constellation"});
+    CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+        std::to_string(validityMask),
+        {"ILocationConfigurator", "NavMsgAuthStatus", "GalOsnmaStatus", "validityMask"});
+    CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+        std::to_string(featureEnabled),
+        {"ILocationConfigurator", "NavMsgAuthStatus", "GalOsnmaStatus", "featureEnabled"});
+    CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+        std::to_string(merkleTreeProvisioned),
+        {"ILocationConfigurator", "NavMsgAuthStatus", "GalOsnmaStatus", "merkleTreeProvisioned"});
+    CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+        std::to_string(publicKeyStatusMask),
+        {"ILocationConfigurator", "NavMsgAuthStatus", "GalOsnmaStatus", "publicKeyStatusMask"});
+    CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator", std::to_string(galWeek),
+        {"ILocationConfigurator", "NavMsgAuthStatus", "GalOsnmaStatus", "galWeek"});
+    CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+        std::to_string(galSecOfWeek),
+        {"ILocationConfigurator", "NavMsgAuthStatus", "GalOsnmaStatus", "galSecOfWeek"});
+    CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+        std::to_string(navDataAuthPassedMask),
+        {"ILocationConfigurator", "NavMsgAuthStatus", "GalOsnmaStatus", "navDataAuthPassedMask"});
+    CommonUtils::writeSystemDataValue<string>("loc/ILocationConfigurator",
+        std::to_string(navDataAuthFailedMask),
+        {"ILocationConfigurator", "NavMsgAuthStatus", "GalOsnmaStatus", "navDataAuthFailedMask"});
 }
 
 void LocationConfiguratorServerImpl::triggerXtraStatusEvent() {
@@ -736,6 +894,66 @@ grpc::Status LocationConfiguratorServerImpl::RequestXtraStatus(ServerContext *co
         response->mutable_xtra_status()->set_xtra_data_status(0);
     }
     response->mutable_xtra_status()->set_consent(xtraConsent_);
+    return grpc::Status::OK;
+}
+
+grpc::Status LocationConfiguratorServerImpl::RequestNavMsgAuthStatus(ServerContext *context,
+    const locStub::RequestNavMsgAuthStatusRequest *request,
+    locStub::RequestNavMsgAuthStatusReply *response) {
+    LOG(DEBUG, __FUNCTION__);
+    Json::Value rootNode;
+    JsonParser::readFromJsonFile(rootNode, LOC_CONFIG_API_JSON);
+    telux::common::Status status;
+    telux::common::ErrorCode errorCode;
+    int cbDelay;
+    CommonUtils::getValues(
+        rootNode, "ILocationConfigurator", "requestNavMsgAuthStatus", status, errorCode, cbDelay);
+    response->set_status(static_cast<::commonStub::Status>(status));
+    response->set_error(static_cast<::commonStub::ErrorCode>(errorCode));
+    response->set_delay(cbDelay);
+
+    auto navMsgAuthStatus = response->mutable_nav_msg_auth_status();
+    navMsgAuthStatus->set_constellation(request->constellation());
+
+    auto galStatus = navMsgAuthStatus->mutable_gal_status();
+    if (request->constellation() == ::locStub::GnssConstellationType::GALILEO) {
+        galStatus->set_validity_mask(parseUint32(
+            CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
+                {"ILocationConfigurator", "NavMsgAuthStatus", "GalOsnmaStatus", "validityMask"}),
+            0));
+        galStatus->set_feature_enabled(parseUint32(
+            CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
+                {"ILocationConfigurator", "NavMsgAuthStatus", "GalOsnmaStatus", "featureEnabled"}),
+            0));
+        galStatus->set_merkle_tree_provisioned(
+            parseUint32(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
+                            {"ILocationConfigurator", "NavMsgAuthStatus", "GalOsnmaStatus",
+                                "merkleTreeProvisioned"}),
+                0));
+        galStatus->set_public_key_status_mask(
+            parseUint32(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
+                            {"ILocationConfigurator", "NavMsgAuthStatus", "GalOsnmaStatus",
+                                "publicKeyStatusMask"}),
+                0));
+        galStatus->set_gal_week(parseUint32(
+            CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
+                {"ILocationConfigurator", "NavMsgAuthStatus", "GalOsnmaStatus", "galWeek"}),
+            0));
+        galStatus->set_gal_sec_of_week(parseUint32(
+            CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
+                {"ILocationConfigurator", "NavMsgAuthStatus", "GalOsnmaStatus", "galSecOfWeek"}),
+            0));
+        galStatus->set_nav_data_auth_passed_mask(
+            parseUint64(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
+                            {"ILocationConfigurator", "NavMsgAuthStatus", "GalOsnmaStatus",
+                                "navDataAuthPassedMask"}),
+                0));
+        galStatus->set_nav_data_auth_failed_mask(
+            parseUint64(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
+                            {"ILocationConfigurator", "NavMsgAuthStatus", "GalOsnmaStatus",
+                                "navDataAuthFailedMask"}),
+                0));
+    }
     return grpc::Status::OK;
 }
 

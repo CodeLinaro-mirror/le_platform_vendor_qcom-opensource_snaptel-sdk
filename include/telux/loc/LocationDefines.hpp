@@ -2750,6 +2750,80 @@ struct XtraStatus {
     bool userConsent;
 };
 
+/** Bit values indicating which fields in @ref GalOsnmaStatus are valid. A clear bit means the
+ *  position engine did not report that field; it does not mean the field is false or zero. */
+enum GalOsnmaStatusValidityType {
+    /** Validity of GalOsnmaStatus::featureEnabled. */
+    GAL_OSNMA_FEATURE_ENABLED_VALID = 1u << 0,
+    /** Validity of GalOsnmaStatus::merkleTreeProvisioned. */
+    GAL_OSNMA_MERKLE_TREE_PROVISIONED_VALID = 1u << 1,
+    /** Validity of GalOsnmaStatus::publicKeyStatusMask. */
+    GAL_OSNMA_PUBLIC_KEY_STATUS_VALID = 1u << 2,
+    /** Validity of GalOsnmaStatus::galWeek. */
+    GAL_OSNMA_GAL_WEEK_VALID = 1u << 3,
+    /** Validity of GalOsnmaStatus::galSecOfWeek. */
+    GAL_OSNMA_GAL_SEC_OF_WEEK_VALID = 1u << 4,
+    /** Validity of GalOsnmaStatus::navDataAuthPassedMask. */
+    GAL_OSNMA_NAV_DATA_AUTH_PASSED_VALID = 1u << 5,
+    /** Validity of GalOsnmaStatus::navDataAuthFailedMask. */
+    GAL_OSNMA_NAV_DATA_AUTH_FAILED_VALID = 1u << 6,
+};
+
+/** Bitmask type for @ref GalOsnmaStatusValidityType. */
+using GalOsnmaStatusValidity = uint32_t;
+
+/** Bitmask type for @ref GalOsnmaPublicKeyStatusBits. */
+using GalOsnmaPublicKeyStatusMask = uint32_t;
+
+/** Bit values describing the status of the Galileo OSNMA public key. */
+enum GalOsnmaPublicKeyStatusBits {
+    /** Public key has been provisioned. */
+    GAL_OSNMA_PUBLIC_KEY_PROVISIONED = 1u << 0,
+    /** Public key has been verified. */
+    GAL_OSNMA_PUBLIC_KEY_VERIFIED = 1u << 1,
+};
+
+/** Galileo SV id represented by bit 0 of GalOsnmaStatus::navDataAuthPassedMask and
+ *  navDataAuthFailedMask. */
+const uint16_t GAL_OSNMA_FIRST_SV_ID = 301;
+
+/** Number of Galileo SVs represented in GalOsnmaStatus::navDataAuthPassedMask and
+ *  navDataAuthFailedMask. */
+const uint8_t GAL_OSNMA_SV_COUNT = 36;
+
+/** Galileo OS-NMA navigation message authentication status. */
+struct GalOsnmaStatus {
+    /** Bitmask indicating which of the fields below are valid. */
+    GalOsnmaStatusValidity validityMask;
+    /** OSNMA feature enablement state on the modem. */
+    bool featureEnabled;
+    /** Whether the Merkle tree information has been provisioned. */
+    bool merkleTreeProvisioned;
+    /** Provisioned/verified status of the OSNMA public key. See @ref GalOsnmaPublicKeyStatusBits.
+     */
+    GalOsnmaPublicKeyStatusMask publicKeyStatusMask;
+    /** Galileo week number corresponding to the reported authentication status. */
+    uint16_t galWeek;
+    /** Seconds of the Galileo week corresponding to the reported authentication status. */
+    uint32_t galSecOfWeek;
+    /** Bitmask of Galileo SVs that passed navigation data authentication. See @ref
+     *  GAL_OSNMA_FIRST_SV_ID and @ref GAL_OSNMA_SV_COUNT for the bit-to-SV-id mapping. */
+    uint64_t navDataAuthPassedMask;
+    /** Bitmask of Galileo SVs that failed navigation data authentication. See @ref
+     *  GAL_OSNMA_FIRST_SV_ID and @ref GAL_OSNMA_SV_COUNT for the bit-to-SV-id mapping. */
+    uint64_t navDataAuthFailedMask;
+};
+
+/** Navigation message authentication status for a GNSS constellation. */
+struct NavMsgAuthStatus {
+    /** GNSS constellation this status pertains to; selects the valid union member below. */
+    GnssConstellationType constellation;
+    union {
+        /** Valid when constellation is GALILEO. */
+        GalOsnmaStatus galStatus;
+    };
+};
+
 /** Enum of all the possible indications invoked by a Location Configurator listener.  */
 enum LocConfigIndicationsType {
     /** Register to receive Xtra status updates. */

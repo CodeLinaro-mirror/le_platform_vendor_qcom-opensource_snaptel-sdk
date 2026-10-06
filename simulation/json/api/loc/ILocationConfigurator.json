@@ -93,6 +93,11 @@
             "error" : "SUCCESS",
             "status": "SUCCESS"
         },
+        "requestNavMsgAuthStatus":
+        {
+            "error" : "SUCCESS",
+            "status": "SUCCESS"
+        },
         "injectMerkleTreeInformation":
         {
             "error" : "SUCCESS",

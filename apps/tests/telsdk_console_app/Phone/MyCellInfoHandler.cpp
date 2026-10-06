@@ -35,6 +35,7 @@
 
 #include "iostream"
 #include "MyCellInfoHandler.hpp"
+#include "MyServingSystemHandler.hpp"
 #include "Utils.hpp"
 
 #define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
@@ -601,7 +602,9 @@ void MyCellInfoCallback::caInfoCallback(
             PRINT_CB << "Freq (EARFCN): " << caInfo.lteInfo->pCell.cell.freq << std::endl;
             PRINT_CB << "Bandwidth: " << lteBandwidthToString(caInfo.lteInfo->pCell.cell.bandwidth)
                      << std::endl;
-            PRINT_CB << "Band: " << static_cast<int>(caInfo.lteInfo->pCell.cell.band) << std::endl;
+            PRINT_CB << "Band: "
+                     << MyServingSystemHelper::RFBandtoString(caInfo.lteInfo->pCell.cell.band)
+                     << std::endl;
             // LTE SCells
             PRINT_CB << "Number of SCells: " << caInfo.lteInfo->sCell.size() << std::endl;
             for (size_t i = 0; i < caInfo.lteInfo->sCell.size(); i++) {
@@ -611,7 +614,8 @@ void MyCellInfoCallback::caInfoCallback(
                 PRINT_CB << "Freq (EARFCN): " << sCell.cell.freq << std::endl;
                 PRINT_CB << "Bandwidth: " << lteBandwidthToString(sCell.cell.bandwidth)
                          << std::endl;
-                PRINT_CB << "Band: " << static_cast<int>(sCell.cell.band) << std::endl;
+                PRINT_CB << "Band: " << MyServingSystemHelper::RFBandtoString(sCell.cell.band)
+                         << std::endl;
                 PRINT_CB << "UL Configured: " << (sCell.ulConfigured ? "Yes" : "No") << std::endl;
                 PRINT_CB << "SCell State: " << lteSCellStateToString(sCell.scellState) << std::endl;
             }

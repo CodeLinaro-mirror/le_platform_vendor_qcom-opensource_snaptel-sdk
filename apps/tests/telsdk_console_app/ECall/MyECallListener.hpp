@@ -60,6 +60,8 @@ class MyECallListener : public telux::tel::ICallListener {
 
     std::string callDirectionToString(telux::tel::CallDirection cd);
 
+    std::string callTypeToString(telux::tel::CallType type);
+
     std::string networkModeToString(telux::tel::NetworkMode mode);
 
     /**

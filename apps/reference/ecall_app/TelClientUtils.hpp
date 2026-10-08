@@ -53,7 +53,7 @@ class TelClientUtils {
      */
     static std::string callDirectionToString(CallDirection cd);
 
-     /*
+    /*
      * Get the call type in string format
      */
     static std::string callTypeToString(CallType ct);

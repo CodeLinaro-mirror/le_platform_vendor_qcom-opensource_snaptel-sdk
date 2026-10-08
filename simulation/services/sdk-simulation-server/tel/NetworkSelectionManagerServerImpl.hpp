@@ -78,18 +78,16 @@ class NetworkSelectionManagerServerImpl final
         bool clearPrevPreferredNetworks);
     telux::tel::PreferredNetworkInfo parsePreferredNetworkInfo(telStub::PreferredNetworkInfo input);
     /**
-     * @brief Sorts the database of preferred network database.
+     * @brief Merges/upserts the preferred network database.
      * @ref [INetworkSelectionManager][PreferredNetworksInfo]
-     * Example: When user sets preferred networks and selects not to clear the exisiting preference
-     * of preferred networks then the new database elements are appended in front.
-     * Example:
-     * Current database - {1, 2, 3, 4, 5, 6}
-     * New database - {5, 6, 1, 2, 3, 4}
+     * New mcc/mnc entries not already present are added to the top of the list.
+     * Entries that already exist (matching mcc/mnc) are updated in place, preserving
+     * their original position in the list.
      * @param phoneId - Represents the phoneId for database selection.
      * @param newData - Database of new preferred networks list.
      * @param index - Size of new preferred network
      */
-    void sortDatabase(int phoneId, Json::Value newData, int index);
+    void sortDatabase(int phoneId, const Json::Value &newData, int index);
     void handleSelectionModeChanged(std::string eventParams);
     void handleNetworkScanResultsChanged(std::string eventParams);
     void triggerNetworkSelectionModeEvent(::telStub::SelectionModeChangeEvent event);

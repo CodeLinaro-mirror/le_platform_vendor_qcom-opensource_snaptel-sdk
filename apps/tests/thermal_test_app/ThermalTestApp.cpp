@@ -58,10 +58,9 @@ using namespace telux::common;
 #define REG_DEREG_MSG " Enter operation (0 - DE-REGISTER, 1 - REGISTER): "
 #define REG_TYPE_MSG " Enter registration type (0 - ALL, 1 - TRIP UPDATE, 2 - CDEV LEVEL CHANGE): "
 
-std::shared_ptr<ThermalTestApp> thermalTestApp_ = nullptr;
-auto sdkVersion                                 = telux::common::Version::getSdkVersion();
-std::string sdkReleaseName                      = telux::common::Version::getReleaseName();
-std::string APP_NAME = "Thermal Test App v" + std::to_string(sdkVersion.major) + "."
+auto sdkVersion            = telux::common::Version::getSdkVersion();
+std::string sdkReleaseName = telux::common::Version::getReleaseName();
+std::string APP_NAME       = "Thermal Test App v" + std::to_string(sdkVersion.major) + "."
                        + std::to_string(sdkVersion.minor) + "." + std::to_string(sdkVersion.patch)
                        + "\n" + "Release name: " + sdkReleaseName;
 
@@ -71,16 +70,6 @@ ThermalTestApp::ThermalTestApp(std::string appName, std::string cursor)
 
 ThermalTestApp::~ThermalTestApp() {
     cleanup();
-}
-
-void signalHandler(int signum) {
-    thermalTestApp_->signalHandler(signum);
-}
-
-void ThermalTestApp::signalHandler(int signum) {
-    std::cout << APP_NAME << ": Interrupt signal (" << signum << ") received.." << std::endl;
-    cleanup();
-    exit(1);
 }
 
 void ThermalTestApp::cleanup() {
@@ -378,11 +367,12 @@ int main(int argc, char **argv) {
     if (rc == -1) {
         std::cout << "Adding supplementary groups failed!" << std::endl;
     }
-    thermalTestApp_ = std::make_shared<ThermalTestApp>(APP_NAME, "Therm> ");
-    signal(SIGINT, signalHandler);
+    auto thermalTestApp_ = std::make_shared<ThermalTestApp>(APP_NAME, "Therm> ");
+
     // initialize commands and display
     if (!thermalTestApp_->init()) {
         return 1;
     }
+
     return thermalTestApp_->mainLoop();  // Main loop to continuously read and execute commands
 }

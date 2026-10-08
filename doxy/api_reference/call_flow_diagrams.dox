@@ -27,7 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -979,6 +980,51 @@ bytes), APDU messages will begin to be sent/received.
 16. To close the connection, application will send connection unavailable message.
 17. Status of send connection unavailable i.e. either SUCCESS or FAILED will be returned to the application.
 18. Optionally, the response to send connection unavailable can be received by the application.
+
+@subsection mep_call_flow MEP (Multiple Enabled Profiles) call flow
+
+Multiple Enabled Profiles (MEP) allows a single physical eUICC to host and activate multiple SIM
+profiles simultaneously, with each profile accessible through its logical slot. The application
+uses IMultiSimManager to configure and query logical‑to‑physical slot and port mappings, and
+receives notifications about slot status changes.
+
+@anchor fig_mep_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{mep_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{MEP (Multiple Enabled Profiles) call flow}
+  \label{fig_mep_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{mep_call_flow.png,MEP call flow,80,80,MEP (Multiple Enabled Profiles) call flow}
+
+1. The application requests a Multi SIM manager object from the phone factory.
+2. The phone factory returns an Multi SIM manager object to the application.
+3. The application waits for the initialization callback, which notifies SERVICE_AVAILABLE when the Multi SIM subsystem is ready.
+4. The application requests a card manager object from the phone factory.
+5. The phone factory returns an card manager object to the application.
+6. The application waits for the initialization callback, which notifies SERVICE_AVAILABLE when the Card Manager subsystem is ready.
+7. The application registers with the Multi SIM manager to receive slot status change notifications.
+8. Status of the listener registration request, either SUCCESS or FAILED, is returned to the application.
+9. The application requests the physical SIM slot status on the Multi SIM manager.
+10. The application receives the response with status SUCCESS or an appropriate error code, along with a map of PhysicalSlotId to SimSlotStatus, including MEP capability, MEP mode, and per‑port details.
+11. The application requests logical‑to‑physical slot configuration on the Multi SIM manager.
+12. Status of the logical slot configuration request, either SUCCESS or FAILED, is returned to the application.
+13. Optionally, the response callback for the logical slot configuration request is invoked with an appropriate error code.
+14. The application receives an asynchronous onSlotStatusChanged() notification through the registered IMultiSimListener indicating updated slot and port states.
+15. The application requests the logical‑to‑physical slot mapping on the Multi SIM manager.
+16. The application receives the response with status SUCCESS or an appropriate error code, along with a map of LogicalSlotId to physical slot and port identifiers.
+17. The application requests to get the logical slot count on the card manager.
+18. Status of the slot count request, either SUCCESS or FAILED, is returned to the application along with the number of logical slots.
+19. For each logical slot, the application requests the card object on the card manager.
+20. The card manager returns the corresponding Card object and request status to the application.
+21. The application requests MEP information for each logical slot on the card object.
+22. The application receives MEP information with status SUCCESS or FAILED, including MEP enablement, port identifier, and negotiated MEP mode.
+23. The application deregisters the listener on the Multi SIM manager.
+24. Status of listener deregistration, either SUCCESS or FAILED, is returned to the application.
 
 @section location_manager_call_flow Location Services
 

@@ -11,7 +11,7 @@
  *
  *      mkdir -p build && cd build
  *      cmake .. -DBUILD_FOR_SIMULATION=OFF   # or ON if you only have the sim build
- *      make -C public/apps/samples/phone/make_aecs_call_app
+ *      make -C public/apps/samples/tel/call/make_aecs_call_app
  *
  *  Run:
  *

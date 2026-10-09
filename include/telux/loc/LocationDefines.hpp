@@ -87,7 +87,7 @@ enum class DgnssDataFormat {
 };
 
 /**
- * Defines status reported by cdfw for RTCM injection.
+ * Defines status reported by the DGNSS subsystem for RTCM injection.
  */
 enum class DgnssStatus {
     /** Dgnss subsystem doesn't support the data source */
@@ -109,7 +109,11 @@ enum class DgnssStatus {
     DATA_SOURCE_NOT_USABLE = 6,
     /** The CDFW service asks the source client to stop
      *  injecting the correction data */
-    CDFW_STOP_SOURCE_INJECT = 7
+    CDFW_STOP_SOURCE_INJECT = 7,
+    /** The DGNSS service is unreachable */
+    SERVICE_DOWN = 8,
+    /** The DGNSS service is ready to accept correction data */
+    READY_TO_ACCEPT_DATA = 9
 };
 
 /**

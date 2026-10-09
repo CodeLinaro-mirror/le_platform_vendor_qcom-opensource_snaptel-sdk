@@ -40,6 +40,12 @@ class TrafficFilterImpl : public ITrafficFilter {
     int8_t getPCP() override;
     void setPCP(int8_t pcp);
 
+    uint32_t getDscp() override;
+    void setDscp(uint32_t dscp);
+
+    uint32_t getDscpMark() override;
+    void setDscpMark(uint32_t dscpMark);
+
     DataPath getDataPath() override;
     void setDataPath(DataPath dataPath);
 
@@ -79,6 +85,8 @@ class TrafficFilterImpl : public ITrafficFilter {
     IpProtocol ipProtocol_                 = 0;
     Direction direction_                   = Direction::UPLINK;
     int8_t pcp_                            = 0;
+    uint32_t dscp_                         = 0;
+    uint32_t dscpMark_                     = 0;
     TrafficFilterValidFields validityMask_ = 0;
     DataPath dataPath_                     = DataPath::TETHERED_TO_WAN_HW;
 };

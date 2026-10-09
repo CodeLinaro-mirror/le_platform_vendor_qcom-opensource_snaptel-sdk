@@ -145,6 +145,22 @@ void TrafficFilterImpl::setPCP(int8_t pcp) {
     pcp_          = pcp;
 }
 
+uint32_t TrafficFilterImpl::getDscp() {
+    return dscp_;
+}
+void TrafficFilterImpl::setDscp(uint32_t dscp) {
+    validityMask_ = validityMask_ | TrafficFilterValidField::TF_DSCP_VALID;
+    dscp_         = dscp;
+}
+
+uint32_t TrafficFilterImpl::getDscpMark() {
+    return dscpMark_;
+}
+void TrafficFilterImpl::setDscpMark(uint32_t dscpMark) {
+    validityMask_ = validityMask_ | TrafficFilterValidField::TF_DSCP_MARK_VALID;
+    dscpMark_     = dscpMark;
+}
+
 DataPath TrafficFilterImpl::getDataPath() {
     return dataPath_;
 }
@@ -175,6 +191,12 @@ std::string TrafficFilterImpl::toString() {
     if (validityMask_ & TF_PCP_VALID) {
         outStr << " PCP: " << static_cast<int>(pcp_) << std::endl;
     }
+    if (validityMask_ & TF_DSCP_VALID) {
+        outStr << " dscp: " << static_cast<int>(dscp_) << std::endl;
+    }
+    if (validityMask_ & TF_DSCP_MARK_VALID) {
+        outStr << " dscpMark: " << static_cast<int>(dscpMark_) << std::endl;
+    }
     if (validityMask_ & TF_SOURCE_IPV4_ADDRESS_VALID) {
         outStr << " sourceIPv4Address: " << sourceIPv4Address_ << std::endl;
     }
@@ -183,6 +205,15 @@ std::string TrafficFilterImpl::toString() {
     }
     if (validityMask_ & TF_SOURCE_PORT_VALID) {
         outStr << " sourcePorts: " << sourcePort_ << std::endl;
+    }
+    if (validityMask_ & TF_SOURCE_PORT_RANGE_VALID) {
+        outStr << " sourcePortRange: start=" << sourceStartPort_ << " range=" << sourcePortRange_
+               << std::endl;
+    }
+    if (validityMask_ & TF_SOURCE_PORT_CONFIG_VALID) {
+        outStr << " sourcePortConfig: port=" << sourcePortConfig_.port
+               << " range=" << sourcePortConfig_.range
+               << " maxActiveConnections=" << sourcePortConfig_.maxActiveConnections << std::endl;
     }
     if (validityMask_ & TF_SOURCE_VLAN_LIST_VALID) {
         outStr << " sourceVlanList: ";
@@ -200,6 +231,15 @@ std::string TrafficFilterImpl::toString() {
     }
     if (validityMask_ & TF_DESTINATION_PORT_VALID) {
         outStr << " destPorts: " << destPort_ << std::endl;
+    }
+    if (validityMask_ & TF_DESTINATION_PORT_RANGE_VALID) {
+        outStr << " destPortRange: start=" << destStartPort_ << " range=" << destPortRange_
+               << std::endl;
+    }
+    if (validityMask_ & TF_DESTINATION_PORT_CONFIG_VALID) {
+        outStr << " destPortConfig: port=" << destPortConfig_.port
+               << " range=" << destPortConfig_.range
+               << " maxActiveConnections=" << destPortConfig_.maxActiveConnections << std::endl;
     }
     if (validityMask_ & TF_DESTINATION_VLAN_LIST_VALID) {
         outStr << " destVlanList: ";
@@ -327,6 +367,22 @@ TrafficFilterBuilder &TrafficFilterBuilder::setPCP(int8_t pcp) {
         trafficFilter_ = std::make_shared<TrafficFilterImpl>();
     }
     std::static_pointer_cast<TrafficFilterImpl>(trafficFilter_)->setPCP(pcp);
+    return *this;
+}
+
+TrafficFilterBuilder &TrafficFilterBuilder::setDscp(uint32_t dscp) {
+    if (trafficFilter_ == nullptr) {
+        trafficFilter_ = std::make_shared<TrafficFilterImpl>();
+    }
+    std::static_pointer_cast<TrafficFilterImpl>(trafficFilter_)->setDscp(dscp);
+    return *this;
+}
+
+TrafficFilterBuilder &TrafficFilterBuilder::setDscpMark(uint32_t dscpMark) {
+    if (trafficFilter_ == nullptr) {
+        trafficFilter_ = std::make_shared<TrafficFilterImpl>();
+    }
+    std::static_pointer_cast<TrafficFilterImpl>(trafficFilter_)->setDscpMark(dscpMark);
     return *this;
 }
 

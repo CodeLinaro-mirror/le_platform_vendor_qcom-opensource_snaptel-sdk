@@ -394,6 +394,31 @@ std::shared_ptr<telux::data::ITrafficFilter> QoSManagementMenu::getTrafficFilter
         tfBuilder.setPCP(static_cast<int8_t>(pcp));
     }
 
+    // dscp (match)
+    std::cout << "Do you want to enter DSCP info: [0 - Skip, 1 - Yes]: ";
+    std::cin >> input;
+    Utils::validateInput(input, {0, 1});
+    if (input) {
+        uint32_t dscp;
+        std::cout << "Enter DSCP value to match: ";
+        std::cin >> dscp;
+        Utils::validateInput(dscp);
+        tfBuilder.setDscp(dscp);
+    }
+
+    // dscp_mark (remark)
+    std::cout << "Do you want to enter DSCP MARK info - remarks matching traffic to this DSCP"
+                 " value: [0 - Skip, 1 - Yes]: ";
+    std::cin >> input;
+    Utils::validateInput(input, {0, 1});
+    if (input) {
+        uint32_t dscpMark;
+        std::cout << "Enter DSCP MARK value to apply: ";
+        std::cin >> dscpMark;
+        Utils::validateInput(dscpMark);
+        tfBuilder.setDscpMark(dscpMark);
+    }
+
     // source info
     std::cout << "Do you want to enter source info (0 - Skip, 1 - Source IP, 2 - "
                  "Source VLAN list"

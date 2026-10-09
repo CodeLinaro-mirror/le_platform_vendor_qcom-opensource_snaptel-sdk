@@ -177,6 +177,9 @@ void LocationUtils::displayNavMsgAuthStatus(telux::loc::NavMsgAuthStatus navMsgA
         if (galStatus.publicKeyStatusMask & telux::loc::GAL_OSNMA_PUBLIC_KEY_VERIFIED) {
             std::cout << " verified";
         }
+        if (galStatus.publicKeyStatusMask & telux::loc::GAL_OSNMA_ACTIVE_PUBLIC_KEY_ID_AVAILABLE) {
+            std::cout << " active-pkid-available";
+        }
         std::cout << std::endl;
     } else {
         std::cout << "Public Key Status : not reported" << std::endl;

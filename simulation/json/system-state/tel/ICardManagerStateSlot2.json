@@ -327,6 +327,16 @@
     "isNtnProfileActive" :
     {
         "state" : false
+    },
+    "mepInfo":
+    {
+        "isMep": true,
+        "portId": 0,
+        "negotiatedMepMode": 1
+    },
+    "physicalSlotId":
+    {
+        "slotId": 2
     }
 }
 }

@@ -19,6 +19,13 @@
 #include "common/AsyncTaskQueue.hpp"
 #include "common/event-manager/ClientEventManager.hpp"
 #include "common/event-manager/EventParserUtil.hpp"
+#include "protos/proto-src/tel_simulation.grpc.pb.h"
+
+using grpc::Channel;
+using grpc::ClientContext;
+using grpc::Status;
+
+using telStub::MultiSimService;
 
 namespace telux {
 namespace tel {
@@ -53,7 +60,17 @@ class MultiSimManagerStub : public IMultiSimManager,
 
  private:
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
+    std::unique_ptr<::telStub::MultiSimService::Stub> stub_;
     void initSync(telux::common::InitResponseCb callback);
+    void invokeCallback(
+        telux::common::ResponseCallback callback, telux::common::ErrorCode error, int cbDelayMs);
+    std::vector<std::weak_ptr<IMultiSimListener>> listeners_;
+    std::mutex listenersMutex_;
+    int slotCount_                              = 1;
+    telux::common::ServiceStatus serviceStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    PortState toClientPortState(::telStub::PortState protoState);
+    SlotState toClientSlotState(::telStub::SlotState protoState);
+    int cbDelay_;
 };
 
 }  // end of namespace tel

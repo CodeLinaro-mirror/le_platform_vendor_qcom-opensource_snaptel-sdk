@@ -1,0 +1,19 @@
+{
+    "IMultiSimManager" :
+    {
+        "DefaultCallbackDelay" : 400,
+        "configureLogicalSlotMapping" :
+        {
+            "status" :"SUCCESS",
+            "error" : "SUCCESS"
+        },
+        "getLogicalSlotMapping" :
+        {
+            "status" : "SUCCESS"
+        },
+        "getPhysicalSlotStatus" :
+        {
+            "error" : "SUCCESS"
+        }
+    }
+}

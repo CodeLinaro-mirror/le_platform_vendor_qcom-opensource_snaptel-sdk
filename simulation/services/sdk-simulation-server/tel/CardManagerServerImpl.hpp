@@ -132,6 +132,11 @@ class CardManagerServerImpl final : public telStub::CardService::Service,
     grpc::Status IsNtnProfileActive(ServerContext *context,
         const ::telStub::IsNtnProfileActiveRequest *request,
         telStub::IsNtnProfileActiveReply *response) override;
+    grpc::Status getMepInfo(ServerContext *context, const ::telStub::GetMepInfoRequest *request,
+        telStub::GetMepInfoResponse *response) override;
+    grpc::Status getPhysicalSlotId(ServerContext *context,
+        const ::telStub::GetPhysicalSlotIdRequest *request,
+        telStub::GetPhysicalSlotIdResponse *response) override;
     void onEventUpdate(::eventService::UnsolicitedEvent event) override;
 
     ::grpc::Status setupRefreshConfig(ServerContext *context,

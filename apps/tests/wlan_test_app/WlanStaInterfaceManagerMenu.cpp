@@ -405,7 +405,9 @@ void WlanStaInterfaceManagerMenu::onStationBandChanged(telux::wlan::BandType rad
         std::cout << "Station has switched to 2G band" << std::endl;
     } else if (radio == telux::wlan::BandType::BAND_5GHZ) {
         std::cout << "Station has switched to 5G band" << std::endl;
-    } else {
+    } else if (radio == telux::wlan::BandType::BAND_6GHZ) {
         std::cout << "Station has switched to 6G band" << std::endl;
+    } else {
+        std::cout << "Station band is unknown" << std::endl;
     }
 }

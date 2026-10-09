@@ -142,6 +142,9 @@ std::string WlanUtils::apAccessToString(telux::wlan::ApInterworking interworking
 std::string WlanUtils::RadioTypeToString(telux::wlan::BandType radio) {
     std::string retString = "";
     switch (radio) {
+        case telux::wlan::BandType::UNKNOWN:
+            retString = "UNKNOWN";
+            break;
         case telux::wlan::BandType::BAND_5GHZ:
             retString = "5 GHZ";
             break;
@@ -424,6 +427,8 @@ void WlanUtils::printStaStatus(std::vector<telux::wlan::StaStatus> &staStatus) {
             std::cout
                 << "Connection status : " << WlanUtils::getStaConnectionStatus(sta.connectionStatus)
                 << std::endl;
+            std::cout << "Radio Type        : " << WlanUtils::RadioTypeToString(sta.band)
+                      << std::endl;
         }
         std::cout << std::endl;
     } else {

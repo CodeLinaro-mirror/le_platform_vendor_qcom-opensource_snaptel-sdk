@@ -26,6 +26,7 @@ namespace wlan {
  * Radio Band Types:
  */
 enum class BandType {
+    UNKNOWN   = 0,
     BAND_5GHZ = 1,
     BAND_2GHZ = 2,
     BAND_6GHZ = 3,
@@ -133,8 +134,10 @@ struct StaStatus {
     std::string ipv4Address; /**< Public IP V4 address             */
     std::string ipv6Address; /**< Public IP V6 address             */
     std::string macAddress; /**< MAC address                      */
-    StaInterfaceStatus status; /**< Interface status                 */
-    StaConnectionStatus connectionStatus; /**< Station connection status        */
+    StaInterfaceStatus status = StaInterfaceStatus::UNKNOWN; /**< Interface status */
+    StaConnectionStatus connectionStatus
+        = StaConnectionStatus::UNKNOWN; /**< Station connection status        */
+    BandType band = BandType::UNKNOWN; /**< Operation band type                 */
 };
 
 /**

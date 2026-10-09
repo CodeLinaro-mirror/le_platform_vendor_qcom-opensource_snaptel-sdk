@@ -75,7 +75,7 @@ state transitions and serving RAT changes.
    ~~~~~~{.cpp}
    telux::tel::SystemInfoNotificationFilterMask filterMask;
    filterMask.set(telux::tel::SystemInfoNotificationFilter::SRV_STATUS);
-   filterMask.set(telux::tel::SystemInfoNotificationFilter::SRV_RAT_TECH_CHANGE);
+   filterMask.set(telux::tel::SystemInfoNotificationFilter::SRV_STATUS_TOGGLE);
 
    telux::common::ErrorCode errorCode
       = servingSystemMgr->setSystemInfoNotificationFilter(filterMask);

@@ -44,6 +44,14 @@ class SensorFeatureManagerStub : public ISensorFeatureManager,
         std::weak_ptr<ISensorFeatureEventListener> listener) override;
     telux::common::Status deregisterListener(
         std::weak_ptr<ISensorFeatureEventListener> listener) override;
+    telux::common::Status getAvailableSensorInfo(std::vector<SensorInfo> &info) override;
+    telux::common::Status getMotionDetectionConfigLimits(
+        int sensorId, MotionDetectionConfigLimits &motionDetectionConfigLimits) override;
+    telux::common::Status enableMotionDetection(
+        MotionDetectionConfig motionDetectionConfig) override;
+    telux::common::Status disableMotionDetection(int sensorId) override;
+    telux::common::Status getMotionDetectionConfigs(
+        std::vector<MotionDetectionConfig> &motionDetectionConfigs) override;
     SensorFeatureManagerStub();
     ~SensorFeatureManagerStub();
     void cleanup();
@@ -60,6 +68,10 @@ class SensorFeatureManagerStub : public ISensorFeatureManager,
         std::shared_ptr<std::vector<SensorEvent>> &events, std::string &sensorName);
     void initTcuPowerManager();
     bool getSystemState();
+    void handleMotionDetectionEvent(::sensorStub::MotionDetectionEvent motionDetectionEvent);
+    void handleMotionDetectionEnabledEvent(
+        ::sensorStub::MotionDetectionEnabledEvent motionDetectionEnabledEvent);
+    void handleMotionDetectionDisabledEvent();
     std::unique_ptr<::sensorStub::SensorFeatureManagerService::Stub> stub_;
     std::vector<std::weak_ptr<ISensorFeatureEventListener>> listeners_;
     telux::common::AsyncTaskQueue<void> taskQ_;
@@ -68,6 +80,7 @@ class SensorFeatureManagerStub : public ISensorFeatureManager,
     std::mutex mutex_;
     bool isSystemSuspended_ = false;
     std::shared_ptr<ITcuActivityManager> tcuActivityMgr_;
+    std::vector<SensorInfo> sensorInfo_;
 };
 }  // namespace sensor
 

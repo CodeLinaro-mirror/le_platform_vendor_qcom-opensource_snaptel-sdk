@@ -92,6 +92,10 @@ class SensorUtils {
     static void printSensorFeatureInfo(SensorFeature feature);
     static void printSensorFeatureEvent(SensorFeatureEvent event);
     static void printTcuActivityState(telux::power::TcuActivityState state);
+    static void printMotionDetectionConfigLimits(
+        MotionDetectionConfigLimits &motionDetectionConfigLimits);
+    static void printMotionDetectionConfigs(
+        std::vector<MotionDetectionConfig> &motionDetectionConfigs);
 };
 
 struct SensorTestAppArguments {

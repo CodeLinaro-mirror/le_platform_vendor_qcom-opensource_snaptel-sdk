@@ -217,8 +217,15 @@ telux::common::Status ThermClient::disableAutoShutdown() {
 
 // Enable thermal auto-shutdown
 telux::common::Status ThermClient::enableAutoShutdown() {
+    if (isShutdownAllowed()) {
+        std::cout << CLIENT_NAME << "Already enabled auto-shutdown mode" << std::endl;
+        return telux::common::Status::SUCCESS;
+    }
     setShutdownAllowedState(true);
     auto status = sendAutoShutdownModeCommand(AutoShutdownMode::ENABLE);
+    if (status != telux::common::Status::SUCCESS) {
+        setShutdownAllowedState(false);
+    }
     deregisterForUpdates();
     return status;
 }

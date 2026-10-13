@@ -478,6 +478,9 @@ class IPhone {
      * @note Carrier Aggregation (CA) information is applicable only when the device has a serving
      * cell on a RAT that supports CA. The active serving RAT can be queried via
      * @ref IServingSystemManager::getSystemInfo().
+     * This API reports @ref telux::common::ErrorCode::NOT_PROVISIONED through the error parameter
+     * of @ref telux::tel::CaInfoCallback when the network has not configured any secondary serving
+     * cells.
      *
      * On platforms with access control enabled, the caller must have the
      * TELUX_TEL_PRIVATE_INFO_READ permission to successfully invoke this API.

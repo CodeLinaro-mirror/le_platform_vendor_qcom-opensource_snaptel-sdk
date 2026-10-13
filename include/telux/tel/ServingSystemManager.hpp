@@ -51,6 +51,7 @@
 #include <bitset>
 #include <future>
 #include <memory>
+#include <array>
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/tel/PhoneDefines.hpp>
@@ -98,6 +99,40 @@ enum class ServiceRegistrationState {
     IN_SERVICE, /**< In service. */
     LIMITED_REGIONAL, /**< Limited regional service. */
     POWER_SAVE, /**< Power save */
+};
+
+/**
+ * @brief Specifies the domain preference for voice call.
+ *
+ * Voice calls can be established using either the Circuit-Switched (CS)
+ * domain or the Packet-Switched (PS) domain (for example, VoLTE or VoNR).
+ * For preferred modes (CS_PREF and PS_PREF), the modem may attempt to use
+ * the alternate domain when the preferred domain is unavailable.
+ */
+enum class VoiceDomainPreference {
+    UNKNOWN = -1, /**< Voice domain preference is unavailable or not yet determined. */
+    CS_ONLY, /**< Circuit-Switched (CS) voice only; PS voice (e.g. VoLTE) is not used. */
+    PS_ONLY, /**< Packet-Switched (PS) voice only; CS fallback (CSFB) is not used. */
+    CS_PREF, /**< CS preferred; PS voice used as secondary if CS is unavailable. */
+    PS_PREF, /**< PS preferred (e.g. VoLTE/VoNR); CS used as fallback if PS is unavailable. */
+};
+
+/**
+ * @brief Specifies the DRX (Discontinuous Reception) cycle duration.
+ *
+ * DRX allows the modem to periodically disable receiver activity
+ * between paging or downlink monitoring occasions to reduce power
+ * consumption. The configured cycle duration defines the interval
+ * between these monitoring periods. Longer cycles provide greater
+ * power savings but may increase downlink responsiveness and paging
+ * latency.
+ */
+enum class DrxConfig {
+    UNKNOWN       = 0x00, /**< DRX cycle is unspecified or unavailable. */
+    CYCLE_320_MS  = 0x06, /**< Long DRX cycle of  320 ms. */
+    CYCLE_640_MS  = 0x07, /**< Long DRX cycle of  640 ms. */
+    CYCLE_1280_MS = 0x08, /**< Long DRX cycle of 1280 ms. */
+    CYCLE_2560_MS = 0x09, /**< Long DRX cycle of 2560 ms (maximum power saving). */
 };
 
 /**
@@ -189,6 +224,53 @@ struct NetworkRejectInfo {
                             3GPP TS 24.501. */
     std::string mcc; /**< Mobile Country Code for rejection*/
     std::string mnc; /**< Mobile Network Code for rejection*/
+    uint64_t cellId; /**< Cell identifier of the serving cell where registration
+                          was rejected. 0xFFFFFFFFFFFFFFFF indicates cell
+                          identifier information is not present. */
+};
+
+/**
+ * Specifies the LTE call type for which the RSRP offset is applied in connected mode.
+ */
+enum class LteCallType {
+    NONE         = 0, /**< None */
+    ALL_LTE_CALL = 1, /**< Applies to LTE data and voice call */
+    VOLTE_CALL   = 2, /**< Applies to VoLTE calls only */
+};
+
+/**
+ * Defines the LTE connected-mode serving-cell RSRP offset configuration for a specified
+ * @ref LteCallType.
+ */
+struct LteConnectedModeConfig {
+    LteCallType callType; /**< LTE call type for which the RSRP offset is applied in connected
+                               mode */
+    int32_t rsrqThreshold; /**< RSRQ threshold in dB. The RSRP offset is applied only when RSRQ
+                                falls below this value */
+    int32_t rsrpOffset; /**< Offset in dB subtracted from RSRP when both call type and RSRQ
+                             threshold conditions are met */
+};
+
+/**
+ * Number of DRX-cycle-length buckets in @ref telux::tel::LteIdleModeConfig::numSamples:
+ * index 0 - 320 ms DRX cycle, 1 - 640 ms, 2 - 1280 ms, 3 - 2560 ms.
+ */
+static constexpr uint8_t LTE_ML1_IDLE_RSRP_N_DRX_CYCLES = 4;
+
+/**
+ * Defines LTE idle-mode RSRP offset optimization configuration
+ */
+struct LteIdleModeConfig {
+    bool enabled; /**< Enables or disables the idle-mode RSRP offset optimization feature,
+                       When disabled, all other fields in this structure are ignored */
+    int8_t rsrqThreshold; /**< Idle-mode RSRQ threshold in dB. The RSRP offset is applied when UE
+                             RSRQ falls below this value */
+    uint8_t hysteresisDelta; /**< Hysteresis delta in dB added to rsrqThreshold before the offset
+                                takes effect; prevents rapid toggling near the threshold boundary */
+    uint8_t rsrpOffset; /**< RSRP offset in dB applied to idle-mode RSRP when enabled and the
+                       threshold condition (rsrpThreshold and hysteresisDelta) is met */
+    std::array<uint8_t, LTE_ML1_IDLE_RSRP_N_DRX_CYCLES> numSamples; /**< Number of RSRQ filter
+                       samples per DRX cycle length */
 };
 
 /**
@@ -203,8 +285,11 @@ using RatPreference = std::bitset<16>;
  * @ref IServingSystemListener
  */
 enum ServingSystemNotificationType {
-    SYSTEM_INFO, /* Represents @ref telux::tel::IServingSystemListener::onSystemInfoChanged()
-                    and @ref telux::tel::IServingSystemListener::onDcStatusChanged() */
+    SYSTEM_INFO, /* Represents @ref telux::tel::IServingSystemListener::onSystemInfoChanged,
+                    @ref telux::tel::IServingSystemListener::onDcStatusChanged,
+                    @ref IServingSystemListener::onCallBarringInfoChanged,
+                    @ref IServingSystemListener::onSmsCapabilityChanged,
+                    @ref IServingSystemListener::onLteCsCapabilityChanged. */
     RF_BAND_INFO, /* Represents @ref telux::tel::IServingSystemListener::onRFBandInfoChanged */
     NETWORK_REJ_INFO, /* Represents @ref telux::tel::IServingSystemListener::onNetworkRejection */
     LTE_SIB16_NETWORK_TIME, /* Represents @ref
@@ -703,7 +788,7 @@ class IServingSystemManager {
         = 0;
 
     /**
-     * Request for Service Domain Preference asynchronously.
+     * Request for Service Domain Preference.
      *
      * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
      * permission to successfully invoke this API.
@@ -717,6 +802,89 @@ class IServingSystemManager {
     virtual telux::common::Status requestServiceDomainPreference(
         ServiceDomainPreferenceCallback callback)
         = 0;
+
+    /**
+     * @brief Sets the preferred voice domain used for voice calls.
+     *
+     * This configuration determines whether voice calls prefer the Circuit-Switched (CS) domain,
+     * Packet-Switched (PS) domain (for example, VoLTE or VoNR), or a combination of both when
+     * multiple voice domain options are available.
+     *
+     * @ref telux::tel::ServingSystemManager::setServiceDomainPreference defines the service domains
+     * that are permitted (CS and/or PS) and takes precedence over Voice Domain Preference. If a
+     * voice domain preference is configured for a domain that is not allowed by
+     * ServiceDomainPreference, that domain will not be used.
+     *
+     * On platforms with access control enabled, the caller must have the
+     * TELUX_TEL_SRV_SYSTEM_CONFIG permission to invoke this API.
+     *
+     * The configured preference persists across subsystem restart (SSR) and device reboot.
+     *
+     * @param[in] preference Desired voice domain preference. See @ref
+     * telux::tel::VoiceDomainPreference.
+     *
+     * @return ErrorCode indicating the result of the operation. Returns an appropriate error code,
+     * such as @ref telux::common::ErrorCode::INVALID_ARG, when an invalid voice domain preference
+     * is specified.
+     *
+     * @note Eval: This is a new API under evaluation. It is subject to change and may not be
+     * backward compatible.
+     */
+    virtual telux::common::ErrorCode setVoiceDomainPreference(VoiceDomainPreference preference) = 0;
+
+    /**
+     * Gets the currently configured Voice Domain Preference synchronously.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+     * permission to successfully invoke this API.
+     *
+     * @param [out] preference  @ref telux::tel::VoiceDomainPreference, valid only if the return
+     * value is @ref telux::common::ErrorCode::SUCCESS.
+     *
+     * @returns ErrorCode of getVoiceDomainPreference i.e. success or suitable error code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode getVoiceDomainPreference(VoiceDomainPreference &preference)
+        = 0;
+
+    /**
+     * Sets the DRX (Discontinuous Reception) cycle duration.
+     *
+     * On platforms with access control enabled, the caller must have the
+     * TELUX_TEL_SRV_SYSTEM_CONFIG permission to invoke this API successfully.
+     *
+     * The DRX configuration is not persistent across SSR or device reboot.
+     * It must be configured again after an SSR or reboot, if required.
+     *
+     * @param[in] config Requested DRX cycle duration. See @ref telux::tel::DrxConfig.
+     *
+     * @return ErrorCode indicating the result of the operation. Returns success
+     *         if the DRX configuration is set successfully; otherwise, returns
+     *         an appropriate error code, such as @ref telux::tel::ErrorCode::INVALID_ARG when an
+     * invalid DRX configuration value is provided.
+     *
+     * @note Eval: This is a new API under evaluation. It is subject to
+     *       change and may not be backward compatible.
+     */
+    virtual telux::common::ErrorCode setDrxConfig(DrxConfig config) = 0;
+
+    /**
+     * Gets the currently configured DRX cycle duration.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+     * permission to successfully invoke this API.
+     *
+     * @param [out] config      @ref DrxConfig, valid only if the return value is
+     *                          @ref telux::common::ErrorCode::SUCCESS.
+     *
+     * @return ErrorCode of getDrxConfig i.e. success or suitable error code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode getDrxConfig(DrxConfig &config) = 0;
 
     /**
      * Get the Serving system information. Supports only 3GPP RATs.
@@ -909,6 +1077,84 @@ class IServingSystemManager {
         = 0;
 
     /**
+     * Set the LTE RSRP offset configuration in connected mode.
+     *
+     * The configuration specifies the call scenario, RSRQ threshold, and RSRP
+     * offset to be applied during LTE connected mode. The configured values
+     * persist across subsystem restarts (SSR) and device reboots.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param [in] config        LTE connected-mode configuration.
+     *                           @ref telux::tel::LteConnectedModeConfig
+     *
+     * @returns ErrorCode        indicating the status of the operation
+     *                           i.e. success or suitable error code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode setLteConnectedModeRsrpConfig(
+        const LteConnectedModeConfig config)
+        = 0;
+
+    /**
+     * Get the LTE RSRP offset configuration in connected mode.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+     * permission to successfully invoke this API.
+     *
+     * @param [out] config    Parameter to hold the fetched LTE connected-mode configuration.
+     *                        @ref telux::tel::LteConnectedModeConfig
+     *
+     * @returns ErrorCode     indicating the status of the operation
+     *                        i.e. success or suitable error code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode getLteConnectedModeRsrpConfig(LteConnectedModeConfig &config)
+        = 0;
+
+    /**
+     * Set the LTE idle-mode RSRP offset optimization configuration.
+     * The configuration specifies the criteria and offset values used for LTE
+     * idle-mode signal reporting optimization.
+     * The configured values persist across subsystem restarts (SSR) and device reboots.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param [in] config        LTE idle-mode optimization configuration.
+     *                           @ref telux::tel::LteIdleModeConfig
+     *
+     * @returns ErrorCode        indicating the status of the operation
+     *                           i.e. success or suitable error code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode setLteIdleModeRsrpConfig(const LteIdleModeConfig config) = 0;
+
+    /**
+     * Get the LTE RSRP offset optimization configuration in idle mode.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+     * permission to successfully invoke this API.
+     *
+     * @param [out] config    Parameter to hold the fetched LTE idle-mode configuration.
+     *                        @ref telux::tel::LteIdleModeConfig
+     *
+     * @returns ErrorCode     indicating the status of the operation
+     *                        i.e. success or suitable error code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode getLteIdleModeRsrpConfig(LteIdleModeConfig &config) = 0;
+
+    /**
      * Request supported RF band capabilities for the device.
      *
      * On platforms with access control enabled, the caller needs to have TELUX_TEL_SRV_SYSTEM_READ
@@ -988,6 +1234,131 @@ class IServingSystemManager {
     virtual telux::common::Status requestRrcState(RrcStateCallback callback) = 0;
 
     /**
+     * Configures notification filtering for @ref IServingSystemListener::onSystemInfoChanged,
+     * @ref IServingSystemListener::onCallBarringInfoChanged, and
+     * @ref IServingSystemListener::onSmsCapabilityChanged.
+     *
+     * By default, when the SYSTEM_INFO notification type is enabled through
+     * @ref IServingSystemManager::registerListener, all system information changes are reported
+     * to registered listeners. This API allows clients to limit notifications to specific system
+     * information attributes defined by @ref SystemInfoNotificationFilter.
+     *
+     * Once a filter mask is applied, notifications are generated only when one or more selected
+     * attributes change. This can significantly reduce unnecessary notifications and device
+     * wakeups caused by unrelated network state updates, making it particularly useful for
+     * power-sensitive applications interested in only a subset of system information changes.
+     *
+     * If @ref SystemInfoNotificationFilter::SRV_STATUS,
+     * @ref SystemInfoNotificationFilter::SRV_STATUS_TOGGLE, or both are included in the filter
+     * mask, @ref ServingSystemInfo updates are delivered through
+     * @ref IServingSystemListener::onSystemInfoChanged according to the following behavior:
+     *
+     * - @ref SystemInfoNotificationFilter::SRV_STATUS
+     *   - Reports every service status transition within the same RAT, including transitions
+     *     between NO_SERVICE, LIMITED_SERVICE, IN_SERVICE, LIMITED_REGIONAL, and POWER_SAVE.
+     *   - Reports RAT transitions even when the service status remains unchanged.
+     *
+     * - @ref SystemInfoNotificationFilter::SRV_STATUS_TOGGLE
+     *   - Reports only transitions crossing the in-service boundary:
+     *     - NO_SERVICE, LIMITED_SERVICE, LIMITED_REGIONAL, or POWER_SAVE -> IN_SERVICE
+     *     - IN_SERVICE -> NO_SERVICE, LIMITED_SERVICE, LIMITED_REGIONAL, or POWER_SAVE
+     *   - Does not report transitions that remain within the out-of-service states, for example:
+     *     - NO_SERVICE -> LIMITED_SERVICE
+     *     - NO_SERVICE -> LIMITED_REGIONAL
+     *     - NO_SERVICE -> POWER_SAVE
+     *
+     * - When both @ref SystemInfoNotificationFilter::SRV_STATUS and
+     *   @ref SystemInfoNotificationFilter::SRV_STATUS_TOGGLE are enabled, a notification is
+     *   generated whenever either filter condition is satisfied.
+     *   This includes all service status transitions as well as RAT changes.
+     *
+     * @note A filter takes effect only when the SYSTEM_INFO notification type is enabled through
+     * @ref IServingSystemManager::registerListener.
+     *
+     * If @ref SystemInfoNotificationFilter::SRV_STATUS,
+     * @ref SystemInfoNotificationFilter::SRV_STATUS_TOGGLE, or both are included in the filter
+     * mask, @ref ServingSystemInfo updates are delivered through
+     * @ref IServingSystemListener::onSystemInfoChanged based on the following rules:
+     *
+     * - @ref SystemInfoNotificationFilter::SRV_STATUS
+     *   - Reports every service status transition within the same RAT, including transitions
+     *     between NO_SERVICE, LIMITED_SERVICE, IN_SERVICE, LIMITED_REGIONAL, and POWER_SAVE.
+     *   - Reports all service status transitions across RATs, including cases where the service
+     *     status remains unchanged but the RAT changes.
+     *
+     * - @ref SystemInfoNotificationFilter::SRV_STATUS_TOGGLE
+     *   - Reports only in-service/out-of-service boundary transitions:
+     *       - NO_SERVICE, LIMITED_SERVICE, LIMITED_REGIONAL, or POWER_SAVE -> IN_SERVICE
+     *       - IN_SERVICE -> NO_SERVICE, LIMITED_SERVICE, LIMITED_REGIONAL, or POWER_SAVE
+     *   - Does not report transitions that do not cross the in-service boundary (for example,
+     *     NO_SERVICE -> LIMITED_SERVICE or NO_SERVICE -> LIMITED_REGIONAL or NO_SERVICE ->
+     *     POWER_SAVE).
+     *
+     * - When both filters are enabled, notifications are generated for all service status changes
+     *   covered by either filter, including status transitions within the same RAT, and
+     *   RAT changes.
+     *
+     * A filter is applied only when the SYSTEM_INFO notification type has been enabled through
+     * @ref IServingSystemManager::registerListener.
+     *
+     * On platforms with access control enabled, the caller must have
+     * TELUX_TEL_SRV_SYSTEM_CONFIG permission to invoke this API successfully.
+     *
+     * @param[in] mask    Bit mask specifying the @ref SystemInfoNotificationFilter attributes
+     *                    that should trigger:
+     *                    - @ref IServingSystemListener::onSystemInfoChanged
+     *                    - @ref IServingSystemListener::onCallBarringInfoChanged
+     *                    - @ref IServingSystemListener::onSmsCapabilityChanged
+     *
+     *                    A value of @ref FILTER_MASK_NONE clears any previously configured filter
+     *                    and restores reporting of all eligible SYSTEM_INFO-related changes.
+     *
+     * @return @ref telux::common::ErrorCode indicating whether the filter was successfully
+     *         applied or the reason for failure.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode setSystemInfoNotificationFilter(
+        SystemInfoNotificationFilterMask mask = FILTER_MASK_NONE)
+        = 0;
+
+    /**
+     * Get the currently configured filter for system information which were registered using
+     * @ref IServingSystemManager::registerListener with @ref
+     * ServingSystemNotificationType::SYSTEM_INFO.
+     *
+     * On platforms with access control enabled, the caller needs to have
+     * TELUX_TEL_SRV_SYSTEM_READ permission to successfully invoke this API.
+     *
+     * @param [out] mask       Bit mask representing the set of attributes defined in
+     *                         @ref SystemInfoNotificationFilter that are currently configured to
+     *                         trigger @ref IServingSystemListener::onSystemInfoChanged,
+     *                         @ref IServingSystemListener::onCallBarringInfoChanged and
+     *                         @ref IServingSystemListener::onSmsCapabilityChanged
+     *                         notifications. An empty mask indicates that filtering is
+     *                         disabled and all system information changes are reported.
+     *
+     * @returns @ref telux::common::ErrorCode of getSystemInfoNotificationFilter i.e. success or
+     * suitable error code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode getSystemInfoNotificationFilter(
+        SystemInfoNotificationFilterMask &mask)
+        = 0;
+
+    /**
+     * Represents no filtering for system information notifications.
+     * When this constant value is passed to
+     * @ref IServingSystemManager::setSystemInfoNotificationFilter, all filtering is
+     * disabled and notifications are generated for every supported system
+     * information change.
+     */
+    static const uint64_t FILTER_MASK_NONE = 0x00000000;
+
+    /**
      * Register a listener for specific updates from serving system.
      *
      * @param [in] listener     Pointer of IServingSystemListener object that
@@ -995,12 +1366,19 @@ class IServingSystemManager {
      * @param [in] mask         Bit mask representing a set of notifications that needs to be
      *                          registered - @ref ServingSystemNotificationMask
      *                          Notifications under IServingSystemListener that are not listed in
-     *                          in @ref ServingSystemNotificationType would always be registered by
+     *                          @ref ServingSystemNotificationType would always be registered by
      *                          default.
      *                          All the notifications will be registered when the client provides
      *                          ALL_NOTIFICATIONS as input. The bits that are not set in the mask
      * are ignored and do not have any effect on registration. To deregister, the API @ref
      * deregisterListener should be used.
+     *
+     * @note @ref IServingSystemManager::setSystemInfoNotificationFilter to receive
+     * notifications only for selected system information changes. The following notification
+     * types can be filtered.
+     * 1. @ref IServingSystemListener::onSystemInfoChanged
+     * 2. @ref IServingSystemListener::onCallBarringInfoChanged
+     * 3. @ref IServingSystemListener::onSmsCapabilityChanged
      *
      * @returns Status of registerListener i.e success or suitable status code.
      */
@@ -1023,7 +1401,7 @@ class IServingSystemManager {
      *                          an invalid operation.
      *                          To register again, the API @ref registerListener should be used.
      *
-     * @returns Status of removeListener i.e. success or suitable status code
+     * @returns Status of deregisterListener i.e. success or suitable status code
      */
     virtual telux::common::Status deregisterListener(std::weak_ptr<IServingSystemListener> listener,
         ServingSystemNotificationMask mask = ALL_NOTIFICATIONS)
@@ -1077,6 +1455,21 @@ class IServingSystemListener : public common::IServiceStatusListener {
      * @param [in] preference      @ref ServiceDomainPreference
      */
     virtual void onServiceDomainPreferenceChanged(ServiceDomainPreference preference) {
+    }
+
+    /**
+     * This function is called whenever voice domain preference changes — from the explicit
+     * setVoiceDomainPreference() call.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+     * permission to receive this notification.
+     *
+     * @param [in] preference      @ref VoiceDomainPreference
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual void onVoiceDomainPreferenceChanged(VoiceDomainPreference preference) {
     }
 
     /**

@@ -340,6 +340,7 @@ telux::common::Status VlanManagerStub::bindToBackhaul(
         static_cast<::dataStub::BackhaulPreference>(vlanBindConfig.bhInfo.backhaul));
     request.set_operation_type(::dataStub::OperationType(oprType_));
     request.set_backhaul_vlan_id(vlanBindConfig.bhInfo.vlanId);
+    request.set_sta_id(vlanBindConfig.bhInfo.staId);
     grpc::Status reqStatus = stub_->BindToBackhaul(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;
@@ -386,6 +387,7 @@ telux::common::Status VlanManagerStub::unbindFromBackhaul(
     request.set_backhaul_type(
         static_cast<::dataStub::BackhaulPreference>(vlanBindConfig.bhInfo.backhaul));
     request.set_operation_type(::dataStub::OperationType(oprType_));
+    request.set_sta_id(vlanBindConfig.bhInfo.staId);
     grpc::Status reqStatus = stub_->UnbindFromBackhaul(&context, request, &response);
 
     telux::common::ErrorCode error = telux::common::ErrorCode::SUCCESS;

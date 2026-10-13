@@ -852,23 +852,6 @@ void RefAppUtils::logKpiFile(std::shared_ptr<Event> event) {
     }
 }
 
-void RefAppUtils::logKpiFile(const std::string &message) {
-    if (!kpiLoggingEnabled_) {
-        LOGFD("KPI logging is disabled");
-        return;
-    }
-
-    struct timespec ts = {};
-    clock_gettime(CLOCK_REALTIME, &ts);
-    std::ofstream kpi_output(KPI_FILE);
-    if (kpi_output.is_open()) {
-        kpi_output << "M - Refd " << message << ": " << ts.tv_sec << "." << ts.tv_nsec;
-        kpi_output.close();
-    } else {
-        LOGFD("Unable to open KPI file %d : %s", errno, strerror(errno));
-    }
-}
-
 void RefAppUtils::logKpiFile(const char *message, size_t length) {
     if (!kpiLoggingEnabled_) {
         LOGFD("KPI logging is disabled");

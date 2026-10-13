@@ -12,9 +12,12 @@ Telephony
 
    make_call
    make_eCall
+   make_aecs_call
    make_tps_eCall_over_Ims
    request_voice_service_state
    request_set_operating_mode
+   carrier_aggregation_info
+   cell_channel_info
    ../serving_system/serving_system
    ../subscription/get_subscription
    ../card_services/card_services_app
@@ -30,9 +33,12 @@ Telephony
 ..
    * :ref:`make-call`
    * :ref:`make-eCall`
+   * :ref:`make-aecs-call`
    * :ref:`make-eCall-Over-Ims`
    * :ref:`request-voice-service-state`
    * :ref:`request_set_operating_mode`
+   * :ref:`carrier-aggregation-info`
+   * :ref:`cell-channel-info`
    * :ref:`serving-system`
    * :ref:`get-subscription`
    * :ref:`card-services-app`

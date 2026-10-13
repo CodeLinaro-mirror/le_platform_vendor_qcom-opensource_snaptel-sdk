@@ -48,6 +48,7 @@
 #include <vector>
 
 #include <telux/common/CommonDefines.hpp>
+#include <telux/tel/ServingSystemDefines.hpp>
 
 #define DEFAULT_PHONE_ID 1
 #define INVALID_PHONE_ID -1
@@ -837,6 +838,225 @@ struct SignalStrengthConfigEx {
                                                 configured. */
     RadioTechnology radioTech; /**< Radio technology. */
     std::vector<SignalStrengthConfigData> sigConfigData; /**< Signal strength data. */
+};
+
+/**
+ * Represents the state of a Secondary Serving Cells (SCell) used in LTE Carrier Aggregation.
+ * In LTE Carrier Aggregation, the network can assign one or more Secondary
+ * Serving Cells (SCells) in addition to the Primary Serving Cell (PCell) to
+ * increase available bandwidth and improve data throughput.
+ * An SCell progresses through the following 3GPP-defined states:
+ *
+ * Configured: The SCell has been added and is currently not utilized for data transmission.
+ *
+ * Activated: The SCell is enabled for data transmission.
+ *
+ */
+enum class LteSCellState {
+    DECONFIGURED = 0x00, /**< The SCell has been removed by the network. The network has released
+                              the RRC configuration for this SCell.*/
+
+    CONFIGURED_DEACTIVATED = 0x01, /**< The SCell is configured but not yet activated for data
+                                        transfer. This is the default state immediately after an
+                                        SCell is added.*/
+
+    CONFIGURED_ACTIVATED = 0x02, /**< The SCell is active and participates in data transmission
+                                       along with the Primary Cell (PCell).*/
+};
+
+/**
+ * Defines the LTE channel bandwidth expressed in megahertz (MHz). Each value represents the LTE
+ * transmission bandwidth configuration (number of Resource Blocks, NRB) and the corresponding
+ * channel bandwidth in MHz.
+ */
+enum class LteBandwidth {
+    BW_1_4_MHZ = 0, /**< 1.4 MHz  (NRB = 6)   */
+    BW_3_MHZ   = 1, /**< 3 MHz    (NRB = 15)  */
+    BW_5_MHZ   = 2, /**< 5 MHz    (NRB = 25)  */
+    BW_10_MHZ  = 3, /**< 10 MHz   (NRB = 50)  */
+    BW_15_MHZ  = 4, /**< 15 MHz   (NRB = 75)  */
+    BW_20_MHZ  = 5, /**< 20 MHz   (NRB = 100) */
+    BW_UNKNOWN = 0xFF, /**< Unknown bandwidth */
+};
+
+/**
+ * Structure containing LTE cell information for Carrier Aggregation.
+ */
+struct LteCaCellInfo {
+    uint16_t pci; /**< Physical cell identifier.
+                       Range: 0 to 503 as per 3GPP TS 36.211. */
+
+    uint32_t freq; /**< Downlink E-UTRA Absolute Radio Frequency Channel
+                        Number (DL EARFCN).
+
+                        For TDD, the UL EARFCN is equal to the DL EARFCN.
+                        For FDD, the UL EARFCN can be derived from the DL
+                        EARFCN and @ref RFBand:band using the 3GPP TS 36.101
+                        Table 5.7.3-1 band-specific offset. */
+
+    LteBandwidth bandwidth; /**< Downlink channel bandwidth. */
+
+    RFBand band; /**< LTE band number. */
+};
+
+/**
+ * Structure containing LTE Secondary Cell (SCell) information for Carrier
+ * Aggregation.
+ */
+struct LteSCellInfo {
+    LteCaCellInfo cell; /**< LTE cell information. */
+
+    bool ulConfigured; /**< Indicates whether this SCell has an uplink
+                             component carrier configured.
+
+                             - TRUE (1): Uplink CA is active on this SCell.
+                             - FALSE (0): Downlink only; no uplink resources
+                               are assigned.
+
+                             @note This structure does not expose a separate
+                             UL EARFCN field. When @ref LteSCellInfo::ulConfigured is TRUE,
+                             the UL EARFCN can be derived from
+                             @ref LteSCellInfo::LteCaCellInfo::freq
+                             and @ref LteSCellInfo::LteCaCellInfo::band for FDD deployments using
+                             3GPP TS 36.101 Table 5.7.3-1. */
+
+    LteSCellState scellState; /**< SCell state. */
+};
+
+/**
+ * Structure containing LTE Primary Cell (PCell) information for Carrier
+ * Aggregation.
+ */
+struct LtePCellInfo {
+    LteCaCellInfo cell; /**< LTE cell information. */
+};
+
+/**
+ * Identifies the technology type associated with a Carrier Aggregation
+ * configuration.
+ */
+enum class CarrierAggregationType {
+    LteCa, /**< LTE CA only. */
+};
+
+/**
+ * @brief Represents the LTE Carrier Aggregation cell information, consisting of Primary Cell and
+ * Secondary Cells.
+ */
+struct LteCaInfo {
+    /**
+     * @brief The LTE Primary Cell information.
+     *
+     * The PCell is the anchor cell responsible for RRC connection management, security and
+     *  mobility.
+     */
+    LtePCellInfo pCell;
+
+    /**
+     * @brief List of configured LTE Secondary cells information.
+     */
+    std::vector<LteSCellInfo> sCell;
+};
+
+/**
+ * @brief Represents the Carrier Aggregation information for a specific
+ *        Radio Access Technology (RAT), containing the Primary cell and Secondary cells.
+ */
+struct CarrierAggregationInfo {
+    CarrierAggregationType type; /**< Carrier Aggregation RAT type. Determines which
+                                      RAT-specific information member is populated. */
+    std::shared_ptr<LteCaInfo> lteInfo; /**< LTE Carrier Aggregation information, including the
+                                             PCell and SCells.
+                                             Valid and non-null only when
+                                             @ref CarrierAggregationType is LTE
+                                             otherwise nullptr. */
+};
+
+/**
+ * @brief Contains LTE channel information associated with a serving or neighboring cell.
+ * @note For TDD deployments, the same E-UTRA Absolute Radio Frequency Channel Number (EARFCN) is
+ * used for both uplink and downlink transmissions.
+ */
+constexpr uint32_t EARFCN_INVALID = UINT32_MAX;
+
+/**
+ * @brief Contains LTE channel information for a cell.
+ */
+
+struct LteCellChannelInfo {
+    uint32_t dlEarfcn; /**< Downlink E-UTRA Absolute Radio Frequency Channel Number */
+    uint32_t ulEarfcn; /**< Uplink E-UTRA Absolute Radio Frequency Channel Number
+                            It provides @ref EARFCN_INVALID when network configures downlink
+                            only cells.*/
+    LteBandwidth bandwidth; /**< Channel bandwidth */
+};
+
+/**
+ * Structure containing NR channel information for a serving or neighboring cell.
+ */
+struct NrCellChannelInfo {
+    uint32_t dlEarfcn; /**< Downlink NR Absolute Radio Frequency Channel Number (NR-ARFCN) */
+};
+
+/**
+ * Structure containing channel information reported for LTE and NR cells.
+ */
+struct CellChannelInfoList {
+    /**
+     * List of LTE serving cells channel information.
+     *
+     * Index 0 represents the Primary Component Carrier (PCC).
+     * Subsequent entries represent Secondary Component Carriers(SCC).
+     */
+    std::vector<LteCellChannelInfo> lteServingAndSCellArfcns;
+
+    /**
+     * List of LTE inter-frequency neighboring-cell channel information.
+     */
+    std::vector<LteCellChannelInfo> lteNeighborArfcns;
+
+    /**
+     * List of NR serving-cell NR-ARFCNs.
+     *
+     * Index 0 represents the Primary Component Carrier (PCC).
+     * Subsequent entries represent Secondary Component Carriers (SCC).
+     *
+     * @note For NR TDD deployments, uplink and downlink use the same
+     *       carrier frequency.
+     *
+     * @note For NR FDD deployments, the reported NR-ARFCN identifies the
+     *       downlink carrier only. To determine the corresponding uplink
+     *       frequency, the application must:
+     *       1. Obtain the NR band using
+     *          @ref IServingSystemManager::requestRFBandInfo(
+     *          RFBandInfoCallback).
+     *       2. Convert the reported downlink NR-ARFCN to downlink frequency
+     *          using the NR-ARFCN mapping defined in 3GPP TS 38.101-1,
+     *          Table 5.4.2.1-1.
+     *       3. Apply the uplink/downlink frequency relationship specified for
+     *          the identified NR FDD band.
+     **/
+    std::vector<NrCellChannelInfo> nr5gServingAndSCellArfcns;
+
+    /**
+     * List of NR inter-frequency neighboring-cell NR-ARFCNs.
+     *
+     * @note For NR TDD deployments, uplink and downlink use the same
+     *       carrier frequency.
+     *
+     * @note For NR FDD deployments, the reported NR-ARFCN identifies the
+     *       downlink carrier only. To determine the corresponding uplink
+     *       frequency, the application must:
+     *       1. Obtain the NR band using
+     *           @ref IServingSystemManager::requestRFBandInfo(
+     *          RFBandInfoCallback).
+     *       2. Convert the reported downlink NR-ARFCN to downlink frequency
+     *          using the NR-ARFCN mapping defined in 3GPP TS 38.101-1,
+     *          Table 5.4.2.1-1.
+     *       3. Apply the uplink/downlink frequency relationship specified for
+     *          the identified NR FDD band.
+     */
+    std::vector<NrCellChannelInfo> nr5gNeighborArfcns;
 };
 
 /** @} */ /* end_addtogroup telematics_phone */

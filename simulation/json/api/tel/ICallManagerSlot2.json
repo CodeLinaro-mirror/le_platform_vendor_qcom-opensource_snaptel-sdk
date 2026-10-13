@@ -191,6 +191,14 @@
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS"
+        },
+        "setNgEcallConfig" :
+        {
+            "error" : "SUCCESS"
+        },
+        "getNgEcallConfig" :
+        {
+            "error" : "SUCCESS"
         }
     }
 }

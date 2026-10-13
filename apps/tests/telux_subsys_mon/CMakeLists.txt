@@ -21,6 +21,7 @@ set(SUBSYS_APP_SRCS
     SubsystemApp.cpp
     UserUtils.cpp
     ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/Utils.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../common/utils/KpiLogUtils.cpp
     ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleAppCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/../../common/console_app_framework/ConsoleApp.cpp)
 

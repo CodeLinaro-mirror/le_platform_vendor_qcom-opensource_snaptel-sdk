@@ -77,6 +77,10 @@ class DataSettingsManagerStub : public IDataSettingsManager, public IDataSetting
     telux::common::ErrorCode setIpConfig(
         const IpConfigParams &ipConfigParams, const IpConfig &ipConfig) override;
 
+    telux::common::ErrorCode setMtu(const MtuConfig &config) override;
+
+    telux::common::ErrorCode getMtu(MtuConfig &config) override;
+
     bool isDeviceDataUsageMonitoringEnabled() override;
 
     telux::common::Status registerListener(std::weak_ptr<IDataSettingsListener> listener) override;

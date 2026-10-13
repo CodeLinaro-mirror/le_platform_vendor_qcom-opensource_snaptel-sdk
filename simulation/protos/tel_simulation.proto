@@ -44,6 +44,8 @@
      rpc allowCardRefresh(AllowCardRefreshReq) returns (TelCommonReply) {}
      rpc confirmRefreshHandlingCompleted(ConfirmRefreshHandlingCompleteReq) returns (TelCommonReply) {}
      rpc requestLastRefreshEvent(RequestLastRefreshEventReq) returns (RequestLastRefreshEventResp) {}
+     rpc getMepInfo (GetMepInfoRequest) returns (GetMepInfoResponse);
+     rpc getPhysicalSlotId (GetPhysicalSlotIdRequest) returns (GetPhysicalSlotIdResponse);
  }
 
  service SubscriptionService {
@@ -77,6 +79,10 @@
          (ConfigureSignalStrengthReply) {}
      rpc ConfigureSignalStrengthEx(ConfigureSignalStrengthExRequest) returns
          (ConfigureSignalStrengthExReply) {}
+     rpc requestCarrierAggregationCellInfo(requestCarrierAggregationCellInfoRequest) returns
+         (requestCarrierAggregationCellInfoReply) {}
+     rpc RequestCellChannelInfo(RequestCellChannelInfoRequest) returns
+         (RequestCellChannelInfoReply) {}
  }
  service SmsService {
      rpc InitService (commonStub.GetServiceStatusRequest) returns (commonStub.GetServiceStatusReply) {}
@@ -139,6 +145,8 @@
         returns (GetECallPostTestRegistrationTimerResponse) {}
      rpc restartECallHlapTimer(RestartECallHlapTimerRequest) returns (RestartECallHlapTimerResponse){}
      rpc setEmergencyMode(SetEmergencyModeRequest) returns (SetEmergencyModeResponse) {}
+     rpc SetNgEcallConfig(SetNgEcallConfigRequest) returns (SetNgEcallConfigResponse) {}
+     rpc GetNgEcallConfig(GetNgEcallConfigRequest) returns (GetNgEcallConfigResponse) {}
  }
 
  service ImsServingSystem {
@@ -161,6 +169,14 @@
          returns (RequestServiceDomainPreferenceReply) {}
      rpc SetServiceDomainPreference (SetServiceDomainPreferenceRequest)
          returns (SetServiceDomainPreferenceReply) {}
+     rpc GetVoiceDomainPreference (GetVoiceDomainPreferenceRequest)
+         returns (GetVoiceDomainPreferenceReply) {}
+     rpc SetVoiceDomainPreference (SetVoiceDomainPreferenceRequest)
+         returns (SetVoiceDomainPreferenceReply) {}
+     rpc GetDrxConfig (GetDrxConfigRequest)
+         returns (GetDrxConfigReply) {}
+     rpc SetDrxConfig (SetDrxConfigRequest)
+         returns (SetDrxConfigReply) {}
      rpc GetSystemInfo (GetSystemInfoRequest) returns (GetSystemInfoReply) {}
      rpc GetDcStatus (GetDcStatusRequest) returns (GetDcStatusReply) {}
      rpc RequestNetworkTime (RequestNetworkTimeRequest) returns (RequestNetworkTimeReply) {}
@@ -177,6 +193,14 @@
          returns (RequestRFBandPreferencesReply) {}
      rpc SetRFBandPreferences (SetRFBandPreferencesRequest)
          returns (SetRFBandPreferencesReply) {}
+     rpc RequestLteMl1ConnectedModeConfig (RequestLteMl1ConnectedModeConfigRequest)
+         returns (RequestLteMl1ConnectedModeConfigReply) {}
+     rpc SetLteMl1ConnectedModeConfig (SetLteMl1ConnectedModeConfigRequest)
+         returns (SetLteMl1ConnectedModeConfigReply) {}
+     rpc RequestLteMl1IdleModeConfig (RequestLteMl1IdleModeConfigRequest)
+         returns (RequestLteMl1IdleModeConfigReply) {}
+     rpc SetLteMl1IdleModeConfig (SetLteMl1IdleModeConfigRequest)
+         returns (SetLteMl1IdleModeConfigReply) {}
      rpc RequestRFBandCapability (RequestRFBandCapabilityRequest)
          returns (RequestRFBandCapabilityReply) {}
      rpc GetHplmnSearchTime (GetHplmnSearchTimeRequest) returns (GetHplmnSearchTimeReply) {}
@@ -242,6 +266,16 @@
        (ProfileListResponseReply) {}
     rpc SendProfileOperationResponse(ProfileOperationResponseRequest) returns
        (ProfileOperationResponseReply) {}
+ }
+
+ service MultiSimService {
+   rpc GetServiceStatus(commonStub.GetServiceStatusRequest)
+         returns (commonStub.GetServiceStatusReply) {}
+   rpc ConfigureLogicalSlotMapping(ConfigureLogicalSlotMappingRequest)
+        returns (ConfigureLogicalSlotMappingResponse);
+   rpc GetSimSlotStatus(google.protobuf.Empty) returns (GetSimSlotStatusResponse);
+   rpc GetLogicalSlotMapping(google.protobuf.Empty)
+      returns (GetLogicalSlotMappingResponse);
  }
 
  /*******************************************************************
@@ -312,12 +346,13 @@ message GetCardStateRequest {
  message SystemSelectionPreferenceEvent {
      int32 phone_id = 1;
      repeated RatPrefType rat_pref_types = 2;
-     ServiceDomainPreference.Pref service_domain_pref = 3;
+     optional ServiceDomainPreference.Pref service_domain_pref = 3;
      repeated GsmRFBand gsm_pref_bands = 4;
      repeated WcdmaRFBand wcdma_pref_bands = 5;
      repeated LteRFBand lte_pref_bands = 6;
      repeated NrRFBand nsa_pref_bands = 7;
      repeated NrRFBand sa_pref_bands = 8;
+     optional VoiceDomainPreference.Pref voice_domain_pref = 9;
  }
 
  message SystemInfoEvent {
@@ -817,6 +852,24 @@ message  RequestLastRefreshEventResp {
     RefreshMode mode = 5;
     repeated IccFile efFiles = 6;
     RefreshParams refreshs = 7;
+}
+
+message GetMepInfoRequest {
+    uint32 phone_id = 1;
+}
+
+message GetPhysicalSlotIdRequest {
+    uint32 phone_id = 1;
+}
+
+message GetMepInfoResponse {
+  bool is_mep = 1;
+  uint32 port_id = 2;
+  MepMode negotiated_mep_mode = 3;
+}
+
+message GetPhysicalSlotIdResponse {
+  int32 slot_id = 1;
 }
 
 message CleanupRequest {
@@ -1366,7 +1419,27 @@ enum EcallHlapTimerId {
    bool iscallback = 4;
  }
 
- message Call {
+ message SetNgEcallConfigRequest {
+    int32 phone_id = 1;
+    bool is_enable = 2;
+    commonStub.ErrorCode error = 3;
+ }
+
+ message SetNgEcallConfigResponse {
+    commonStub.ErrorCode error = 1;
+ }
+
+ message GetNgEcallConfigRequest {
+    int32 phone_id = 1;
+    commonStub.ErrorCode error = 2;
+ }
+
+ message GetNgEcallConfigResponse {
+    bool is_enable = 2;
+    commonStub.ErrorCode error = 1;
+ }
+
+message Call {
      CallState call_state = 1;
      int32 call_index = 2;
      CallDirection.Direction call_direction = 3;
@@ -2066,6 +2139,61 @@ enum NrRFBand {
      commonStub.Status status = 2;
      int32 delay = 3;
      bool is_callback = 4;
+ }
+
+ message VoiceDomainPreference {
+     enum Pref {
+         CS_ONLY = 0;
+         PS_ONLY = 1;
+         CS_PREF = 2;
+         PS_PREF = 3;
+     }
+ }
+
+ message GetVoiceDomainPreferenceRequest {
+     int32 phone_id = 1;
+ }
+
+ message GetVoiceDomainPreferenceReply {
+     commonStub.ErrorCode error = 1;
+     VoiceDomainPreference.Pref voice_domain_pref = 2;
+ }
+
+ message SetVoiceDomainPreferenceRequest {
+     int32 phone_id = 1;
+     VoiceDomainPreference.Pref voice_domain_pref = 2;
+ }
+
+ message SetVoiceDomainPreferenceReply {
+     commonStub.ErrorCode error = 1;
+ }
+
+ message DrxConfig {
+     enum Cycle {
+         UNKNOWN = 0;
+         CYCLE_320_MS = 6;
+         CYCLE_640_MS = 7;
+         CYCLE_1280_MS = 8;
+         CYCLE_2560_MS = 9;
+     }
+ }
+
+ message GetDrxConfigRequest {
+     int32 phone_id = 1;
+ }
+
+ message GetDrxConfigReply {
+     commonStub.ErrorCode error = 1;
+     DrxConfig.Cycle drx_config = 2;
+ }
+
+ message SetDrxConfigRequest {
+     int32 phone_id = 1;
+     DrxConfig.Cycle drx_config = 2;
+ }
+
+ message SetDrxConfigReply {
+     commonStub.ErrorCode error = 1;
  }
 
  message ServiceDomainInfo {
@@ -3090,6 +3218,88 @@ message OperatorInfoEvent {
     int32 phone_id = 2;
 }
 
+enum CarrierAggregationType {
+    LTE_CA = 0; // Mapped from 0
+}
+// telux::tel::LteBandwidth
+enum LteBandwidth {
+    BW_1_4_MHZ = 0;
+    BW_3_MHZ = 1;
+    BW_5_MHZ = 2;
+    BW_10_MHZ = 3;
+    BW_15_MHZ = 4;
+    BW_20_MHZ = 5;
+    BW_UNKNOWN = 255; // Mapped from 0xFF
+}
+enum LteSCellState {
+    DECONFIGURED = 0;
+    CONFIGURED_DEACTIVATED = 1;
+    CONFIGURED_ACTIVATED = 2;
+}
+message LteCaCellInfo {
+    uint32 pci = 1;
+    uint32 freq = 2;
+    LteBandwidth bandwidth = 3;
+    RFBand band = 4;
+}
+message LtePCellInfo {
+    LteCaCellInfo cell = 1;
+}
+message LteSCellInfo {
+    LteCaCellInfo cell = 1;
+    bool ul_configured = 2;
+    LteSCellState scell_state = 3;
+}
+message LteCaInfo {
+    LtePCellInfo p_cell = 1;
+    repeated LteSCellInfo s_cell = 2;
+}
+message CarrierAggregationInfo {
+    CarrierAggregationType type = 1;
+    LteCaInfo lte_info = 2;
+}
+message requestCarrierAggregationCellInfoRequest {
+    int32 phone_id = 1;
+    CarrierAggregationType rat = 2;
+}
+message requestCarrierAggregationCellInfoReply {
+    CarrierAggregationInfo ca_info = 1;
+    int32 phone_id = 2;
+    commonStub.ErrorCode error = 3;
+    commonStub.Status status = 4;
+    int32 delay = 5;
+    bool iscallback = 6;
+}
+message CarrierAggregationInfoEvent {
+    CarrierAggregationInfo ca_info = 1;
+    int32 phone_id = 2;
+}
+message LteCellChannelInfo {
+    uint32 dl_earfcn = 1;
+    uint32 ul_earfcn = 2;
+    LteBandwidth bandwidth = 3;
+}
+message CellChannelInfoList {
+    repeated LteCellChannelInfo lte_serving_and_scell_arfcn = 1;
+    repeated LteCellChannelInfo lte_neighbor_arfcn = 2;
+    repeated uint32 nr5g_serving_and_scell_arfcn = 3;
+    repeated uint32 nr5g_neighbor_arfcn = 4;
+}
+message RequestCellChannelInfoRequest {
+    int32 phone_id = 1;
+}
+message RequestCellChannelInfoReply {
+    CellChannelInfoList channel_info_list = 1;
+    int32 phone_id = 2;
+    commonStub.ErrorCode error = 3;
+    commonStub.Status status = 4;
+    int32 delay = 5;
+    bool iscallback = 6;
+}
+message CellChannelInfoListEvent {
+    CellChannelInfoList channel_info_list = 1;
+    int32 phone_id = 2;
+}
 enum SignalStrengthConfigType {
     CONFIG_NONE = 0;
     DELTA = 1;       /**< Signal strength delta provided. */
@@ -3268,6 +3478,56 @@ message SetRFBandPreferencesReply {
     commonStub.Status status = 2;
     int32 delay = 3;
     bool is_callback = 4;
+}
+
+message LteMl1ConnectedModeConfig {
+    int32 call_type = 1;    /* 0-NONE, 1-ALL_LTE_CALL, 2-VOLTE_CALL */
+    int32 rsrq_threshold = 2;    /* Serving RSRQ threshold in dB */
+    int32 rsrp_offset = 3;   /* RSRP offset in dB applied when conditions are met */
+}
+
+message RequestLteMl1ConnectedModeConfigRequest {
+    int32 phone_id = 1;
+}
+
+message RequestLteMl1ConnectedModeConfigReply {
+    LteMl1ConnectedModeConfig config = 1;
+    commonStub.ErrorCode error = 2;
+}
+
+message SetLteMl1ConnectedModeConfigRequest {
+    int32 phone_id = 1;
+    LteMl1ConnectedModeConfig config = 2;
+}
+
+message SetLteMl1ConnectedModeConfigReply {
+    commonStub.ErrorCode error = 1;
+}
+
+message LteMl1IdleModeConfig {
+    bool enabled = 1;             /* Master enable for idle-mode RSRP offset optimization */
+    int32 rsrq_threshold = 2;     /* Idle-mode RSRQ threshold in dB */
+    int32 hysteresis_delta = 3;   /* Hysteresis delta in dB */
+    int32 rsrp_offset = 4;             /* RSRP offset in dB applied when enabled */
+    repeated int32 num_samples = 5; /* RSRQ filter samples per DRX cycle length (4 entries) */
+}
+
+message RequestLteMl1IdleModeConfigRequest {
+    int32 phone_id = 1;
+}
+
+message RequestLteMl1IdleModeConfigReply {
+    LteMl1IdleModeConfig config = 1;
+    commonStub.ErrorCode error = 2;
+}
+
+message SetLteMl1IdleModeConfigRequest {
+    int32 phone_id = 1;
+    LteMl1IdleModeConfig config = 2;
+}
+
+message SetLteMl1IdleModeConfigReply {
+    commonStub.ErrorCode error = 1;
 }
 
 message RequestRFBandCapabilityRequest {
@@ -3974,3 +4234,126 @@ message ProfileOperationResponseReply {
 }
 
 // --- ApSimProfile Service end ---
+
+// Logical slot ID
+enum LogicalSlotId {
+  LOGICAL_SLOT_ID_INVALID = 0;
+  LOGICAL_SLOT_ID_1 = 1;
+  LOGICAL_SLOT_ID_2 = 2;
+}
+
+// Physical slot ID
+enum PhysicalSlotId {
+  PHYSICAL_SLOT_ID_INVALID = 0;
+  PHYSICAL_SLOT_ID_1 = 1;
+  PHYSICAL_SLOT_ID_2 = 2;
+}
+
+// Port state - matches telux::tel::PortState
+enum PortState {
+  PORT_STATE_UNKNOWN = 0;
+  PORT_STATE_INACTIVE = 1;
+  PORT_STATE_ACTIVE = 2;
+}
+
+// Slot state - matches telux::tel::SlotState
+enum SlotState {
+  SLOT_STATE_UNKNOWN = 0;
+  SLOT_STATE_INACTIVE = 1;
+  SLOT_STATE_ACTIVE = 2;
+}
+
+// MEP mode - matches telux::tel::Mode with EXACT values (0, 1, 3)
+enum MepMode {
+  MEP_MODE_NONE = 0;   // Matches Mode::NONE
+  MEP_MODE_MEP_A1 = 1; // Matches Mode::MEP_A1
+  MEP_MODE_MEP_B = 3;  // Matches Mode::MEP_B
+}
+
+// Card error - matches telux::tel::CardError
+enum CardError {
+  CARD_ERROR_NONE = 0;
+  CARD_ERROR_GENERIC = 1;
+  CARD_ERROR_NO_SIM = 2;
+  CARD_ERROR_SIM_NOT_READY = 3;
+  CARD_ERROR_SIM_LOCKED = 4;
+  CARD_ERROR_COMMUNICATION_FAILURE = 5;
+  CARD_ERROR_POWER_DOWN = 6;
+  CARD_ERROR_POLL_ERROR = 7;
+  CARD_ERROR_NO_ATR_RECEIVED = 8;
+  CARD_ERROR_VOLT_MISMATCH = 9;
+  CARD_ERROR_PARITY_ERROR = 10;
+  CARD_ERROR_POSSIBLY_REMOVED = 11;
+  CARD_ERROR_TECHNICAL_PROBLEMS = 12;
+  CARD_ERROR_NULL_BYTES = 13;
+  CARD_ERROR_SAP_CONNECTED = 14;
+  CARD_ERROR_CMD_TIMEOUT = 15;
+}
+
+// Logical slot map info - matches telux::tel::LogicalSlotMapInfo
+message LogicalSlotMapInfo {
+  PhysicalSlotId physical_slot = 1;
+  int32 port_id = 2;
+}
+
+// Port info - matches telux::tel::PortInfo
+message PortInfo {
+  PortState state = 1;
+  string icc_id = 2;
+  LogicalSlotId slot_id = 3;
+}
+
+// MEP slot info - matches telux::tel::MepSlotInfo
+message MepSlotInfo {
+  MepMode mode = 1;
+  repeated PortInfo port = 2;
+}
+
+// SIM slot status - matches telux::tel::SimSlotStatus
+message SimSlotStatus {
+  bool is_mep = 1;
+  MepSlotInfo mep_slot_info = 2;
+  SlotState slot_state = 3;
+  CardState card_state = 4;
+  CardError card_error = 5;
+}
+
+message LogicalSlotMappingEntry {
+  LogicalSlotId logical_slot_id = 1;
+  LogicalSlotMapInfo map_info = 2;
+}
+
+// Request for configureLogicalSlotMapping
+message ConfigureLogicalSlotMappingRequest {
+  repeated LogicalSlotMappingEntry map_info = 1;
+}
+
+// Response for configureLogicalSlotMapping
+message ConfigureLogicalSlotMappingResponse {
+  commonStub.ErrorCode error = 1;
+  commonStub.Status status = 2;
+  int32 delay = 3;
+  bool is_callback = 4;
+}
+
+message PhysicalSimSlotStatus {
+    PhysicalSlotId physical_slot = 1;
+    SimSlotStatus status = 2;
+}
+
+// Response for getSimSlotStatus
+message GetSimSlotStatusResponse {
+  repeated PhysicalSimSlotStatus slotstatus = 1;
+  commonStub.ErrorCode error = 2;
+}
+
+message GetLogicalSlotMappingResponse {
+  repeated LogicalSlotMappingEntry map_info = 1;
+  commonStub.ErrorCode error = 2;
+}
+
+// Event for slot status changes
+message SlotStatusChangedEvent {
+    repeated PhysicalSimSlotStatus slotstatus = 1;
+    int32 phone_id = 2;
+}

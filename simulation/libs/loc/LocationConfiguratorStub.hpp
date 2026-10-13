@@ -643,6 +643,9 @@ class LocationConfiguratorStub : public ILocationConfigurator,
 
     telux::common::Status requestXtraStatus(GetXtraStatusCallback callback) override;
 
+    telux::common::Status requestNavMsgAuthStatus(
+        GnssConstellationType constellation, GetNavMsgAuthStatusCallback callback) override;
+
     /**
      * This API is used to register a configuration listener for getting specific
      * indications/updates.

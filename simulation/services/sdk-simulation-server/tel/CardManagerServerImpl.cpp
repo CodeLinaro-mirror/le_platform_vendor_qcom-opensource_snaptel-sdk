@@ -248,6 +248,171 @@ grpc::Status CardManagerServerImpl::GetCardState(ServerContext *context,
     return readStatus;
 }
 
+grpc::Status CardManagerServerImpl::getMepInfo(ServerContext * /*context*/,
+    const ::telStub::GetMepInfoRequest *request, telStub::GetMepInfoResponse *response) {
+
+    LOG(DEBUG, __FUNCTION__);
+
+    telux::tel::MepInfo info{};
+    info.isMep             = false;
+    info.portId            = 0;
+    info.negotiatedMepMode = telux::tel::Mode::NONE;
+
+    const int phoneId = request->phone_id();
+
+    // ---------------------------------------------------------------------
+    // 1. Read MEP MODE from API JSON (ICardManagerSlotX.json) based on phoneId
+    // ---------------------------------------------------------------------
+    Json::Value apiRoot;
+    std::string apiJsonPath = (phoneId == 1) ? JSON_PATH3 : JSON_PATH4;
+
+    telux::common::ErrorCode ec = JsonParser::readFromJsonFile(apiRoot, apiJsonPath);
+
+    if (ec == telux::common::ErrorCode::SUCCESS) {
+
+        std::string modeStr = apiRoot["ICardManager"].get("mode", "NONE").asString();
+
+        LOG(DEBUG, __FUNCTION__, " phoneId=", phoneId, " ICardManager.mode=", modeStr);
+
+        if (modeStr == "MEP_A1") {
+            info.negotiatedMepMode = telux::tel::Mode::MEP_A1;
+        } else if (modeStr == "MEP_B") {
+            info.negotiatedMepMode = telux::tel::Mode::MEP_B;
+        } else {
+            info.negotiatedMepMode = telux::tel::Mode::NONE;
+        }
+
+        info.isMep = (info.negotiatedMepMode != telux::tel::Mode::NONE);
+    } else {
+        LOG(WARNING, __FUNCTION__, " Failed to read API JSON: ", apiJsonPath,
+            " defaulting mode to NONE");
+    }
+
+    // ---------------------------------------------------------------------
+    // 2. Read portId from IMultiSimManagerStateSlot1.json
+    //    based on logical slot (phoneId)
+    // ---------------------------------------------------------------------
+    Json::Value msRoot;
+    ec = JsonParser::readFromJsonFile(msRoot, MULTI_SIM_STATE_JSON_PATH1);
+
+    if (ec == telux::common::ErrorCode::SUCCESS) {
+
+        const Json::Value &mapInfo = msRoot["IMultiSimManager"]["logicalSlotMapping"]["mapInfo"];
+
+        if (mapInfo.isArray()) {
+            for (const auto &entry : mapInfo) {
+
+                const std::string logicalSlotStr = entry.get("logicalSlotId", "").asString();
+
+                if ((phoneId == 1 && logicalSlotStr == "SLOT_ID_1")
+                    || (phoneId == 2 && logicalSlotStr == "SLOT_ID_2")) {
+
+                    info.portId = entry.get("portId", 0).asInt();
+
+                    LOG(DEBUG, __FUNCTION__, " Found portId=", info.portId,
+                        " for logicalSlot=", logicalSlotStr);
+                    break;
+                }
+            }
+        } else {
+            LOG(WARNING, __FUNCTION__, " logicalSlotMapping.mapInfo missing or invalid");
+        }
+    } else {
+        LOG(WARNING, __FUNCTION__, " Failed to read IMultiSimManager state JSON: ", JSON_PATH1);
+    }
+
+    // ---------------------------------------------------------------------
+    // 3. Populate gRPC response
+    // ---------------------------------------------------------------------
+    response->set_is_mep(info.isMep);
+    response->set_port_id(info.portId);
+
+    ::telStub::MepMode protoMode = telStub::MepMode::MEP_MODE_NONE;
+    switch (info.negotiatedMepMode) {
+        case telux::tel::Mode::MEP_A1:
+            protoMode = telStub::MepMode::MEP_MODE_MEP_A1;
+            break;
+        case telux::tel::Mode::MEP_B:
+            protoMode = telStub::MepMode::MEP_MODE_MEP_B;
+            break;
+        case telux::tel::Mode::NONE:
+        default:
+            protoMode = telStub::MepMode::MEP_MODE_NONE;
+            break;
+    }
+
+    response->set_negotiated_mep_mode(protoMode);
+
+    LOG(DEBUG, __FUNCTION__, " Response: isMep=", info.isMep, " portId=", info.portId,
+        " mode=", static_cast<int>(protoMode));
+
+    return grpc::Status::OK;
+}
+
+grpc::Status CardManagerServerImpl::getPhysicalSlotId(ServerContext * /*context*/,
+    const ::telStub::GetPhysicalSlotIdRequest *request,
+    telStub::GetPhysicalSlotIdResponse *response) {
+
+    LOG(DEBUG, __FUNCTION__);
+
+    const int phoneId       = request->phone_id();
+    ::PhysicalSlotId slotId = ::INVALID_SLOT_ID;
+
+    // ---------------------------------------------------------------------
+    // Read IMultiSimManagerStateSlot1.json
+    // ---------------------------------------------------------------------
+    Json::Value rootObj;
+    telux::common::ErrorCode ec = JsonParser::readFromJsonFile(rootObj, MULTI_SIM_STATE_JSON_PATH1);
+
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__,
+            " Failed to read IMultiSimManager state JSON: ", MULTI_SIM_STATE_JSON_PATH1);
+        response->set_slot_id(static_cast<int32_t>(slotId));
+        return grpc::Status::OK;
+    }
+
+    const Json::Value &mapInfo = rootObj["IMultiSimManager"]["logicalSlotMapping"]["mapInfo"];
+
+    if (!mapInfo.isArray()) {
+        LOG(ERROR, __FUNCTION__, " logicalSlotMapping.mapInfo missing or invalid");
+        response->set_slot_id(static_cast<int32_t>(slotId));
+        return grpc::Status::OK;
+    }
+
+    // ---------------------------------------------------------------------
+    // Find physicalSlotId for the given logical slot (phoneId)
+    // ---------------------------------------------------------------------
+    for (const auto &entry : mapInfo) {
+
+        const std::string logicalSlotStr = entry.get("logicalSlotId", "").asString();
+
+        if ((phoneId == 1 && logicalSlotStr == "SLOT_ID_1")
+            || (phoneId == 2 && logicalSlotStr == "SLOT_ID_2")) {
+
+            const std::string physicalSlotStr = entry.get("physicalSlotId", "").asString();
+
+            if (physicalSlotStr == "SLOT_ID_1") {
+                slotId = ::SLOT_ID_1;
+            } else if (physicalSlotStr == "SLOT_ID_2") {
+                slotId = ::SLOT_ID_2;
+            } else {
+                slotId = ::INVALID_SLOT_ID;
+            }
+
+            LOG(DEBUG, __FUNCTION__, " phoneId=", phoneId, " logicalSlot=", logicalSlotStr,
+                " physicalSlot=", physicalSlotStr);
+
+            break;
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Populate response
+    // ---------------------------------------------------------------------
+    response->set_slot_id(static_cast<int32_t>(slotId));
+    return grpc::Status::OK;
+}
+
 grpc::Status CardManagerServerImpl::ReadEFLinearFixed(ServerContext *context,
     const ::telStub::ReadEFLinearFixedRequest *request, telStub::ReadEFLinearFixedReply *response) {
     LOG(DEBUG, __FUNCTION__);

@@ -54,6 +54,40 @@ using namespace telux::loc;
               << ","
 #define CONFIDENCE_VALUE "68"
 
+namespace {
+
+void appendGnssSystemTime(std::ostringstream &recordStream, const telux::loc::SystemTime &sysTime) {
+    telux::loc::GnssSystem system = sysTime.gnssSystemTimeSrc;
+    recordStream << static_cast<int>(system) << ",";
+
+    if (system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GLONASS) {
+        const auto &timeInfo = sysTime.time.glo;
+        recordStream << timeInfo.validityMask << "," << timeInfo.gloDays << "," << timeInfo.gloMsec
+                     << "," << timeInfo.gloClkTimeBias << "," << timeInfo.gloClkTimeUncMs << ","
+                     << timeInfo.refFCount << "," << timeInfo.numClockResets << ","
+                     << static_cast<unsigned>(timeInfo.gloFourYear) << ",";
+    } else if (system != telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_SBAS) {
+        const telux::loc::TimeInfo *timeInfo = &sysTime.time.gps;
+        if (system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GALILEO) {
+            timeInfo = &sysTime.time.gal;
+        } else if (system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_BDS
+                   || system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_COMPASS) {
+            timeInfo = &sysTime.time.bds;
+        } else if (system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_QZSS) {
+            timeInfo = &sysTime.time.qzss;
+        } else if (system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_NAVIC) {
+            timeInfo = &sysTime.time.navic;
+        }
+
+        recordStream << timeInfo->validityMask << "," << timeInfo->numClockResets << ","
+                     << timeInfo->refFCount << "," << timeInfo->systemClkTimeUncMs << ","
+                     << timeInfo->systemClkTimeBias << "," << timeInfo->systemMsec << ","
+                     << timeInfo->systemWeek << ",";
+    }
+}
+
+}  // namespace
+
 void MyLocationListener::printSbasCorrectionEx(
     std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo) {
     telux::loc::SbasCorrection correction = locationInfo->getSbasCorrection();
@@ -1359,7 +1393,7 @@ void MyLocationListener::recordLocationInfo(
     recordStream << locationInfo->getBaselineLength() << "," << locationInfo->getAgeOfCorrections()
                  << ",";
 
-    recordStream << locationInfo->getLeapSecondsUncertainty() << ",";
+    recordStream << static_cast<unsigned>(locationInfo->getLeapSecondsUncertainty()) << ",";
 
     DETAILED_RECORDING << recordStream.str() << std::endl;
 }
@@ -2511,6 +2545,60 @@ void MyLocationListener::onGnssSVResidualInfo(const telux::loc::GnssSvResidualRe
     if (!isSvResidualInfoFlagEnabled_) {
         return;
     }
+
+    std::ostringstream recordStream;
+    recordStream << std::setprecision(15);
+    recordStream << SV_RESIDUAL << "," << static_cast<int>(svResReport.locEngineType) << ",";
+    appendGnssSystemTime(recordStream, svResReport.gnssSystemTime);
+
+    const auto &pvt = svResReport.residualPVTInfo;
+    recordStream << pvt.validityMask << "," << pvt.refPosLla[0] << "," << pvt.refPosLla[1] << ","
+                 << pvt.refPosLla[2] << "," << pvt.refVelEnu[0] << "," << pvt.refVelEnu[1] << ","
+                 << pvt.refVelEnu[2] << "," << pvt.headingAngle << "," << pvt.headingUnc << ","
+                 << pvt.posUncLatLonMeters[0] << "," << pvt.posUncLatLonMeters[1] << ","
+                 << pvt.posUncVertMeters << "," << pvt.velUncEastNorthMps[0] << ","
+                 << pvt.velUncEastNorthMps[1] << "," << pvt.velUncVertMps << ","
+                 << pvt.clockBiasMeters << "," << pvt.clockBiasUncMeters << ","
+                 << pvt.clockDriftRateMps << "," << pvt.clockDriftRateUncMps << ","
+                 << pvt.positionDop << ",";
+
+    recordStream << svResReport.svResidualData.size() << ",";
+    for (const auto &data : svResReport.svResidualData) {
+        recordStream << data.svId << "," << data.gnssSignalType << "," << data.validityMask << ","
+                     << data.prResidual << "," << data.prUncertainty << "," << data.cpResidual
+                     << "," << data.cpUncertainty << "," << data.dopplerResidual << ","
+                     << data.dopplerUncertainty << "," << static_cast<unsigned>(data.iodephemeris)
+                     << "," << static_cast<unsigned>(data.gloTbEpoch) << ","
+                     << static_cast<int>(data.gloFreqNum) << "," << data.carrierNoiseRatio << ","
+                     << data.azimuth << "," << data.elevation << ",";
+    }
+
+    const auto &usage = svResReport.svAvailabilityUsage;
+    recordStream
+        << usage.validityMask << "," << static_cast<unsigned>(usage.gpsSvCountMeasured) << ","
+        << static_cast<unsigned>(usage.gpsSvCountInPositionFix) << ","
+        << static_cast<unsigned>(usage.gpsSvCountInVelocityFix) << "," << usage.gpsSvUsedMask << ","
+        << static_cast<unsigned>(usage.glonassSvCountMeasured) << ","
+        << static_cast<unsigned>(usage.glonassSvCountInPositionFix) << ","
+        << static_cast<unsigned>(usage.glonassSvCountInVelocityFix) << ","
+        << usage.glonassSvUsedMask << "," << static_cast<unsigned>(usage.beidouSvCountMeasured)
+        << "," << static_cast<unsigned>(usage.beidouSvCountInPositionFix) << ","
+        << static_cast<unsigned>(usage.beidouSvCountInVelocityFix) << "," << usage.beidouSvUsedMask
+        << "," << static_cast<unsigned>(usage.galileoSvCountMeasured) << ","
+        << static_cast<unsigned>(usage.galileoSvCountInPositionFix) << ","
+        << static_cast<unsigned>(usage.galileoSvCountInVelocityFix) << ","
+        << usage.galileoSvUsedMask << "," << static_cast<unsigned>(usage.qzssSvCountMeasured) << ","
+        << static_cast<unsigned>(usage.qzssSvCountInPositionFix) << ","
+        << static_cast<unsigned>(usage.qzssSvCountInVelocityFix) << "," << usage.qzssSvUsedMask
+        << "," << static_cast<unsigned>(usage.navicSvCountMeasured) << ","
+        << static_cast<unsigned>(usage.navicSvCountInPositionFix) << ","
+        << static_cast<unsigned>(usage.navicSvCountInVelocityFix) << "," << usage.navicSvUsedMask
+        << ",";
+
+    if (isRecordingEnabled_) {
+        DETAILED_RECORDING << recordStream.str() << std::endl;
+    }
+
     std::cout << std::endl;
     PRINT_NOTIFICATION << "\n*************** GNSS SV Residual Report ***************" << std::endl;
     printLocOutputEngineType(svResReport.locEngineType);

@@ -35,9 +35,11 @@
 
 #include "iostream"
 #include "MyCellInfoHandler.hpp"
+#include "MyServingSystemHandler.hpp"
 #include "Utils.hpp"
 
 #define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
+#define EARFCN_INVALID_VALUE 4294967295U
 
 using namespace telux::tel;
 using namespace telux::common;
@@ -501,5 +503,128 @@ void MyCellInfoCallback::cellInfoListRateResponse(telux::common::ErrorCode error
     } else {
         PRINT_CB << "Set cell info list rate request failed, errorCode: " << static_cast<int>(error)
                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    }
+}
+
+std::string MyCellInfoCallback::lteBandwidthToString(telux::tel::LteBandwidth bw) {
+    switch (bw) {
+        case telux::tel::LteBandwidth::BW_1_4_MHZ:
+            return "1.4 MHz";
+        case telux::tel::LteBandwidth::BW_3_MHZ:
+            return "3 MHz";
+        case telux::tel::LteBandwidth::BW_5_MHZ:
+            return "5 MHz";
+        case telux::tel::LteBandwidth::BW_10_MHZ:
+            return "10 MHz";
+        case telux::tel::LteBandwidth::BW_15_MHZ:
+            return "15 MHz";
+        case telux::tel::LteBandwidth::BW_20_MHZ:
+            return "20 MHz";
+        default:
+            return "Unknown";
+    }
+}
+
+std::string MyCellInfoCallback::lteSCellStateToString(telux::tel::LteSCellState state) {
+    switch (state) {
+        case telux::tel::LteSCellState::DECONFIGURED:
+            return "DECONFIGURED";
+        case telux::tel::LteSCellState::CONFIGURED_DEACTIVATED:
+            return "CONFIGURED_DEACTIVATED";
+        case telux::tel::LteSCellState::CONFIGURED_ACTIVATED:
+            return "CONFIGURED_ACTIVATED";
+        default:
+            return "Unknown";
+    }
+}
+
+void MyCellInfoCallback::channelInfoCallback(
+    telux::tel::CellChannelInfoList channelInfoList, telux::common::ErrorCode error) {
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        PRINT_CB << "Received callback for requestCellChannelInfo" << std::endl;
+        // LTE Serving and SCell ARFCNs
+        PRINT_CB << "LTE Serving/SCell ARFCNs (" << channelInfoList.lteServingAndSCellArfcns.size()
+                 << "):" << std::endl;
+        for (size_t i = 0; i < channelInfoList.lteServingAndSCellArfcns.size(); i++) {
+            const auto &arfcn = channelInfoList.lteServingAndSCellArfcns[i];
+            PRINT_CB << "  [" << i << "] DL EARFCN: " << arfcn.dlEarfcn;
+            if (arfcn.ulEarfcn == EARFCN_INVALID_VALUE) {
+                std::cout << ", Only downlink is configured";
+            } else {
+                std::cout << ", UL EARFCN: " << arfcn.ulEarfcn;
+            }
+            std::cout << ", Bandwidth: " << lteBandwidthToString(arfcn.bandwidth) << std::endl;
+        }
+        // LTE Neighbor ARFCNs
+        PRINT_CB << "LTE Neighbor ARFCNs (" << channelInfoList.lteNeighborArfcns.size()
+                 << "):" << std::endl;
+        for (size_t i = 0; i < channelInfoList.lteNeighborArfcns.size(); i++) {
+            const auto &arfcn = channelInfoList.lteNeighborArfcns[i];
+            PRINT_CB << "  [" << i << "] DL EARFCN: " << arfcn.dlEarfcn;
+            if (arfcn.ulEarfcn == EARFCN_INVALID_VALUE) {
+                std::cout << ", Only downlink is configured";
+            } else {
+                std::cout << ", UL EARFCN: " << arfcn.ulEarfcn;
+            }
+            std::cout << ", Bandwidth: " << lteBandwidthToString(arfcn.bandwidth) << std::endl;
+        }
+        // NR5G Serving and SCell ARFCNs
+        PRINT_CB << "NR5G Serving/SCell ARFCNs ("
+                 << channelInfoList.nr5gServingAndSCellArfcns.size() << "):" << std::endl;
+        for (size_t i = 0; i < channelInfoList.nr5gServingAndSCellArfcns.size(); i++) {
+            PRINT_CB << "  [" << i
+                     << "] NR-ARFCN: " << channelInfoList.nr5gServingAndSCellArfcns[i].dlEarfcn
+                     << std::endl;
+        }
+        // NR5G Neighbor ARFCNs
+        PRINT_CB << "NR5G Neighbor ARFCNs (" << channelInfoList.nr5gNeighborArfcns.size()
+                 << "):" << std::endl;
+        for (size_t i = 0; i < channelInfoList.nr5gNeighborArfcns.size(); i++) {
+            PRINT_CB << "  [" << i
+                     << "] NR-ARFCN: " << channelInfoList.nr5gNeighborArfcns[i].dlEarfcn
+                     << std::endl;
+        }
+    } else {
+        PRINT_CB << "requestCellChannelInfo failed, errorCode: " << static_cast<int>(error)
+                 << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    }
+}
+
+void MyCellInfoCallback::caInfoCallback(
+    const telux::tel::CarrierAggregationInfo caInfo, telux::common::ErrorCode error) {
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        PRINT_CB << "Received callback for requestCarrierAggregationCellInfo" << std::endl;
+        if (caInfo.type == telux::tel::CarrierAggregationType::LteCa && caInfo.lteInfo) {
+            PRINT_CB << "RAT: LTE" << std::endl;
+            // LTE PCell
+            PRINT_CB << "--- LTE PCell ---" << std::endl;
+            PRINT_CB << "PCI: " << caInfo.lteInfo->pCell.cell.pci << std::endl;
+            PRINT_CB << "Freq (EARFCN): " << caInfo.lteInfo->pCell.cell.freq << std::endl;
+            PRINT_CB << "Bandwidth: " << lteBandwidthToString(caInfo.lteInfo->pCell.cell.bandwidth)
+                     << std::endl;
+            PRINT_CB << "Band: "
+                     << MyServingSystemHelper::RFBandtoString(caInfo.lteInfo->pCell.cell.band)
+                     << std::endl;
+            // LTE SCells
+            PRINT_CB << "Number of SCells: " << caInfo.lteInfo->sCell.size() << std::endl;
+            for (size_t i = 0; i < caInfo.lteInfo->sCell.size(); i++) {
+                const auto &sCell = caInfo.lteInfo->sCell[i];
+                PRINT_CB << "--- LTE SCell[" << i << "] ---" << std::endl;
+                PRINT_CB << "PCI: " << sCell.cell.pci << std::endl;
+                PRINT_CB << "Freq (EARFCN): " << sCell.cell.freq << std::endl;
+                PRINT_CB << "Bandwidth: " << lteBandwidthToString(sCell.cell.bandwidth)
+                         << std::endl;
+                PRINT_CB << "Band: " << MyServingSystemHelper::RFBandtoString(sCell.cell.band)
+                         << std::endl;
+                PRINT_CB << "UL Configured: " << (sCell.ulConfigured ? "Yes" : "No") << std::endl;
+                PRINT_CB << "SCell State: " << lteSCellStateToString(sCell.scellState) << std::endl;
+            }
+        } else {
+            PRINT_CB << "No LTE Carrier Aggregation info available" << std::endl;
+        }
+    } else {
+        PRINT_CB
+            << "requestCarrierAggregationCellInfo failed, errorCode: " << static_cast<int>(error)
+            << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     }
 }

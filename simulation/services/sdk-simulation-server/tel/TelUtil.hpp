@@ -46,6 +46,11 @@ class TelUtil {
     static JsonData readResetWwanRespFromJsonFile(telStub::ResetWwanReply *response);
     static JsonData readRequestOperatorInfoRespFromJsonFile(
         int phoneId, telStub::RequestOperatorInfoReply *response);
+    static JsonData readCarrierAggregationInfoRespFromJsonFile(int phoneId,
+        telStub::CarrierAggregationType rat,
+        telStub::requestCarrierAggregationCellInfoReply *response);
+    static JsonData readCellChannelInfoRespFromJsonFile(
+        int phoneId, telStub::RequestCellChannelInfoReply *response);
 
     static telux::common::ErrorCode readSignalStrengthEventFromJsonFile(
         int phoneId, telStub::SignalStrengthChangeEvent &event);
@@ -63,6 +68,10 @@ class TelUtil {
         int phoneId, telStub::ECallModeInfoChangeEvent &event);
     static telux::common::ErrorCode readOperatorInfoEventFromJsonFile(
         int phoneId, telStub::OperatorInfoEvent &event);
+    static telux::common::ErrorCode readCarrierAggregationInfoEventFromJsonFile(
+        int phoneId, telStub::CarrierAggregationInfoEvent &event);
+    static telux::common::ErrorCode readCellChannelInfoListEventFromJsonFile(
+        int phoneId, telStub::CellChannelInfoListEvent &event);
 
     static telux::common::ErrorCode readSignalStrengthFromJsonFile(
         int phoneId, telStub::SignalStrength &signalStrength);
@@ -115,6 +124,10 @@ class TelUtil {
     static telux::common::ErrorCode writeEcallOperatingModeToJsonFile(
         std::string params, int &phoneId);
     static telux::common::ErrorCode writeOperatorInfoToJsonFile(std::string params, int &phoneId);
+    static telux::common::ErrorCode writeCarrierAggregationInfoToJsonFile(
+        std::string eventParams, int &phoneId);
+    static telux::common::ErrorCode writeCellChannelInfoListToJsonFile(
+        std::string eventParams, int &phoneId);
 
     static telStub::SignalStrengthChangeEvent createSignalStrengthEvent(
         int phoneId, telStub::SignalStrength &strength);

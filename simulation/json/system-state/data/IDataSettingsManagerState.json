@@ -3,6 +3,9 @@
         "requestMacSecState" : {
             "enabled" : false
         },
+        "getMtu" : {
+            "ipv4Mtu" : 1500
+        },
         "requestDdsSwitch" : {
             "DdsType" : "PERMANENT",
             "SlotId" : 1

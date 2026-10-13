@@ -5,6 +5,7 @@
 
 #include "common/RefAppUtils.hpp"
 #include "ConnectionHandler.hpp"
+#include "KpiLogUtils.hpp"
 #include "TCPServer.cpp"
 #include "UDPServer.cpp"
 #include "TCPClient.cpp"
@@ -12,6 +13,26 @@
 
 std::shared_ptr<ConnectionHandler> ConnectionHandler::instance = nullptr;
 std::once_flag ConnectionHandler::initInstanceFlag;
+
+namespace {
+// Compact status codes for the KPI log line (kept short to avoid the KPI line length limit).
+// Only the statuses that the data-call implementation actually reports are mapped here; any
+// other value maps to "UNK" so it does not appear as if it were a supported status.
+std::string shortDataCallStatus(telux::data::DataCallStatus status) {
+    switch (status) {
+        case telux::data::DataCallStatus::NET_CONNECTED:
+            return "CONN";
+        case telux::data::DataCallStatus::NET_NO_NET:
+            return "NONET";
+        case telux::data::DataCallStatus::NET_CONNECTING:
+            return "CTG";
+        case telux::data::DataCallStatus::NET_DISCONNECTING:
+            return "DCTG";
+        default:
+            return "UNK";
+    }
+}
+}  // namespace
 
 std::vector<std::shared_ptr<Connection>> ConnectionHandler::getConnectionList() {
     LOGFD();
@@ -140,6 +161,21 @@ void ConnectionHandler::cleanup() {
 void ConnectionHandler::onDataCallInfoChanged(
     const std::shared_ptr<telux::data::IDataCall> &dataCall) {
     LOGFD();
+
+    // KPI: minimal no-timestamp mark for data call status change
+    if (RefAppUtils::isKpiLoggingEnabled()) {
+        std::string kpiLog = "s" + std::to_string(static_cast<int>(dataCall->getSlotId())) + " p"
+                             + std::to_string(dataCall->getProfileId());
+        if (dataCall->getIpFamilyType() == telux::data::IpFamilyType::IPV4V6) {
+            kpiLog += " v4:" + shortDataCallStatus(dataCall->getIpv4Info().status)
+                      + " v6:" + shortDataCallStatus(dataCall->getIpv6Info().status);
+        } else if (dataCall->getIpFamilyType() == telux::data::IpFamilyType::IPV4) {
+            kpiLog += " v4:" + shortDataCallStatus(dataCall->getIpv4Info().status);
+        } else if (dataCall->getIpFamilyType() == telux::data::IpFamilyType::IPV6) {
+            kpiLog += " v6:" + shortDataCallStatus(dataCall->getIpv6Info().status);
+        }
+        KpiLogUtils::logKpiFile(kpiLog, false, "M - Refd ");
+    }
     logDataCallDetails(dataCall);
 
     for (const auto &entry : connectionConfigList_) {
@@ -162,6 +198,11 @@ void ConnectionHandler::onDataCallInfoChanged(
 }
 
 void ConnectionHandler::onServiceStatusChange(telux::common::ServiceStatus status) {
+    // KPI: minimal no-timestamp mark for DCM service status change
+    if (RefAppUtils::isKpiLoggingEnabled()) {
+        KpiLogUtils::logKpiFile(
+            "DCM " + RefAppUtils::serviceStatusToString(status), false, "M - Refd ");
+    }
     LOGFD("DataConnectionListener status = %s", RefAppUtils::serviceStatusToString(status).c_str());
     bool dcmStatus = status == telux::common::ServiceStatus::SERVICE_AVAILABLE ? true : false;
 
@@ -229,31 +270,6 @@ bool ConnectionHandler::startDataCall(std::shared_ptr<Connection> connection) {
     params.operationType = telux::data::OperationType::DATA_REMOTE;
 #endif
 
-    // Create promise and future to wait for callback
-    std::promise<void> dataCallPromise;
-    std::future<void> dataCallFuture = dataCallPromise.get_future();
-
-    // Define the lambda callback
-    auto dataCallCallback
-        = [&dataCallPromise, &connection](const std::shared_ptr<telux::data::IDataCall> &dataCall,
-              telux::common::ErrorCode error) {
-              if (error == telux::common::ErrorCode::SUCCESS) {
-                  if (telux::data::DataCallStatus::NET_CONNECTED == dataCall->getDataCallStatus()) {
-                      LOGFD("start DataCallResponseCb is successful - NO_EFFECT, data call already "
-                            "connected");
-                      connection->dataCall = dataCall;
-                  } else if (telux::data::DataCallStatus::NET_CONNECTING
-                             == dataCall->getDataCallStatus()) {
-                      LOGFD("start DataCallResponseCb is successful");
-                  }
-              } else {
-                  LOGFE("start DataCallResponseCb failed, errorCode: %d", static_cast<int>(error));
-              }
-
-              // Signal completion
-              dataCallPromise.set_value();
-          };
-
     // Before starting a data call, check whether the data service is ready to set up a data call
     // or not
     waitForDataServiceAvailability(connection);
@@ -261,6 +277,37 @@ bool ConnectionHandler::startDataCall(std::shared_ptr<Connection> connection) {
     int maxAttempts = 3;  // Define a maximum number of attempts
     int attempt     = 0;
     while (!connection->dataCall && attempt < maxAttempts) {
+        // Each attempt gets its own promise/future/callback. The SDK enqueues startDataCall
+        // asynchronously and may invoke the callback well after this attempt's wait_until below
+        // times out (or after this function has already returned). Reusing a single promise and
+        // capturing `connection` by reference across attempts leaves a dangling reference for any
+        // stale callback that fires late. The promise is heap-allocated so the callback stays
+        // copyable for std::function while each attempt still gets an independent completion
+        // signal; capturing `connection` by value is safe and free since it is already a
+        // shared_ptr.
+        auto dataCallPromise             = std::make_shared<std::promise<void>>();
+        std::future<void> dataCallFuture = dataCallPromise->get_future();
+
+        auto dataCallCallback = [dataCallPromise, connection](
+                                    const std::shared_ptr<telux::data::IDataCall> &dataCall,
+                                    telux::common::ErrorCode error) {
+            if (error == telux::common::ErrorCode::SUCCESS) {
+                if (telux::data::DataCallStatus::NET_CONNECTED == dataCall->getDataCallStatus()) {
+                    LOGFD("start DataCallResponseCb is successful - NO_EFFECT, data call already "
+                          "connected");
+                    connection->dataCall = dataCall;
+                } else if (telux::data::DataCallStatus::NET_CONNECTING
+                           == dataCall->getDataCallStatus()) {
+                    LOGFD("start DataCallResponseCb is successful");
+                }
+            } else {
+                LOGFE("start DataCallResponseCb failed, errorCode: %d", static_cast<int>(error));
+            }
+
+            // Signal completion
+            dataCallPromise->set_value();
+        };
+
         auto retStat = connection->dataConnectionManager->startDataCall(params, dataCallCallback);
         LOGFD("start DataCall return status: %d", static_cast<int>(retStat));
         if (retStat == telux::common::Status::SUCCESS) {
@@ -268,10 +315,14 @@ bool ConnectionHandler::startDataCall(std::shared_ptr<Connection> connection) {
         }
         std::unique_lock<std::mutex> lck(mtx_);
         auto timeoutTime = std::chrono::steady_clock::now() + std::chrono::seconds(10);
-        if (!cvStatusUpdate_.wait_until(lck, timeoutTime,
-                [this, connection] { return connection->dataCall || isCleanupTriggered_; })) {
+        cvStatusUpdate_.wait_until(lck, timeoutTime,
+            [this, connection] { return connection->dataCall || isCleanupTriggered_; });
+        if (!connection->dataCall) {
             attempt++;
             LOGFD("Retrying startDataCall...");
+        }
+        if (isCleanupTriggered_) {
+            break;
         }
     }
     return connection->dataCall != nullptr;

@@ -500,6 +500,15 @@ grpc::Status DataSettingsServerImpl::switchBackHaul(ServerContext *context,
         data.error = telux::common::ErrorCode::INVALID_OPERATION;
     }
 
+    // Simulation currently supports only WLAN STA0 for backhaul switching.
+    if ((data.error == telux::common::ErrorCode::SUCCESS)
+        && (((request->backhaul_type() == ::dataStub::BackhaulPreference::PREF_WLAN)
+                && (request->sta_id() == 1))
+            || ((request->source_backhaul_type() == ::dataStub::BackhaulPreference::PREF_WLAN)
+                && (request->source_sta_id() == 1)))) {
+        data.error = telux::common::ErrorCode::NOT_SUPPORTED;
+    }
+
     if (data.status == telux::common::Status::SUCCESS
         && data.error == telux::common::ErrorCode::SUCCESS) {
         data.stateRootObj[subsystem][method]["backhaul"] = convertEnumToBackhaulPrefString(
@@ -976,6 +985,55 @@ grpc::Status DataSettingsServerImpl::setIpConfig(ServerContext *context,
                 LOG(DEBUG, __FUNCTION__, " State: Invalid");
                 break;
         }
+    }
+
+    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    return grpc::Status::OK;
+}
+
+grpc::Status DataSettingsServerImpl::setMtu(ServerContext *context,
+    const dataStub::setMtuRequest *request, dataStub::setMtuReply *response) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath   = DATA_SETTINGS_API_LOCAL_JSON;
+    std::string stateJsonPath = DATA_SETTINGS_STATE_JSON;
+    std::string subsystem     = "IDataSettingsManager";
+    std::string method        = "setMtu";
+    JsonData data;
+
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    if (data.error == telux::common::ErrorCode::SUCCESS) {
+        data.stateRootObj[subsystem]["getMtu"]["ipv4Mtu"] = request->ipv4_mtu();
+        JsonParser::writeToJsonFile(data.stateRootObj, stateJsonPath);
+    }
+
+    response->set_error(static_cast<commonStub::ErrorCode>(data.error));
+    return grpc::Status::OK;
+}
+
+grpc::Status DataSettingsServerImpl::getMtu(ServerContext *context,
+    const dataStub::getMtuRequest *request, dataStub::getMtuReply *response) {
+    LOG(DEBUG, __FUNCTION__);
+    std::string apiJsonPath   = DATA_SETTINGS_API_LOCAL_JSON;
+    std::string stateJsonPath = DATA_SETTINGS_STATE_JSON;
+    std::string subsystem     = "IDataSettingsManager";
+    std::string method        = "getMtu";
+    JsonData data;
+
+    telux::common::ErrorCode error
+        = CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, data);
+
+    if (error != ErrorCode::SUCCESS) {
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    if (data.error == telux::common::ErrorCode::SUCCESS) {
+        response->set_ipv4_mtu(data.stateRootObj[subsystem]["getMtu"]["ipv4Mtu"].asUInt());
     }
 
     response->set_error(static_cast<commonStub::ErrorCode>(data.error));

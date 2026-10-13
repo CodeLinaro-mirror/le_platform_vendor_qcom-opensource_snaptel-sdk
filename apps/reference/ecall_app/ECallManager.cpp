@@ -27,7 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -492,6 +493,30 @@ telux::common::Status ECallManager::restartECallHlapTimer(
         return telux::common::Status::FAILED;
     }
     return telux::common::Status::SUCCESS;
+}
+
+telux::common::ErrorCode ECallManager::setNgEcallConfig(int phoneId, bool isEnable) {
+    if (!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+    auto errCode = telClient_->setNgEcallConfig(phoneId, isEnable);
+    if (errCode != telux::common::ErrorCode::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to send request to set NG eCall" << std::endl;
+    }
+    return errCode;
+}
+
+telux::common::ErrorCode ECallManager::getNgEcallConfig(int phoneId) {
+    if (!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+    auto errCode = telClient_->getNgEcallConfig(phoneId);
+    if (errCode != telux::common::ErrorCode::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to send request to get NG eCall" << std::endl;
+    }
+    return errCode;
 }
 
 telux::common::Status ECallManager::getEncodedOptionalAdditionalDataContent() {

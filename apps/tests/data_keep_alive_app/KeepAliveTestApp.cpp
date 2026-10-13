@@ -465,9 +465,6 @@ void KeepAliveTestApp::cleanup() {
     stopTCPClient({});
     stopTCPServer({});
 
-    std::cout << APP_NAME << " deregisterForUpdates" << std::endl;
-    deregisterForUpdates();
-
     std::cout << APP_NAME << " keepAliveMgr_ = nullptr" << std::endl;
     keepAliveMgr_ = nullptr;
 
@@ -475,6 +472,7 @@ void KeepAliveTestApp::cleanup() {
 }
 
 KeepAliveTestApp::~KeepAliveTestApp() {
+    std::cout << APP_NAME << " ~KeepAliveTestApp()" << std::endl;
     cleanup();
 }
 
@@ -555,6 +553,8 @@ int main(int argc, char **argv) {
     myKeepAliveTestApp->consoleInit(isServer);
     myKeepAliveTestApp->mainLoop();
     std::cout << "Exiting application..." << std::endl;
+    std::cout << APP_NAME << " deregisterForUpdates" << std::endl;
+    myKeepAliveTestApp->deregisterForUpdates();
     myKeepAliveTestApp = nullptr;
     return 0;
 }

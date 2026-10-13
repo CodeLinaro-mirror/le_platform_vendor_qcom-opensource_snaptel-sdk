@@ -27,7 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -358,6 +359,29 @@ class TelClient : public ICallListener,
      *
      */
     telux::common::Status restartECallHlapTimer(int phoneId, EcallHlapTimerId id, int duration);
+
+    /**
+     * Set the Next Generation (NG) eCall configuration.
+     *
+     * @param [in] phoneId  Represents phone corresponding to which the operation will be
+     *                      performed
+     * @param [in] isEnable true to enable NG eCall, false to disable it.
+     *
+     * @returns errorcode for setNgEcallConfig i.e success or suitable error code.
+     *
+     */
+    telux::common::ErrorCode setNgEcallConfig(int phoneId, bool isEnable);
+
+    /**
+     * Get the Next Generation (NG) eCall configuration.
+     *
+     * @param [in] phoneId  Represents phone corresponding to which the operation will be
+     *                      performed
+     *
+     * @returns errorcode for getNgEcallConfig i.e success or suitable error code.
+     *
+     */
+    telux::common::ErrorCode getNgEcallConfig(int phoneId);
 
     /**
      * Get ECall redial configuration.

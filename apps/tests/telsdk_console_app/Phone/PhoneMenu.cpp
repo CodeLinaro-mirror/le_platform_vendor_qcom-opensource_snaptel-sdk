@@ -241,8 +241,17 @@ bool PhoneMenu::init() {
             ConsoleAppCommand("17", "Configure_Signal_Strength_Ex", {},
                 std::bind(&PhoneMenu::configureSignalStrengthEx, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> requestCarrierAggregationCellInfoCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("18",
+            "Request_Carrier_Aggregation_Information", {},
+            std::bind(&PhoneMenu::requestCarrierAggregationCellInfo, this, std::placeholders::_1)));
+
+    std::shared_ptr<ConsoleAppCommand> requestCellChannelInfoCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("19", "Request_Cell_Channel_Info",
+            {}, std::bind(&PhoneMenu::requestCellChannelInfo, this, std::placeholders::_1)));
+
     std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("18", "Select_sim_slot", {},
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("20", "Select_sim_slot", {},
             std::bind(&PhoneMenu::selectSimSlot, this, std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListPhoneSubMenu
@@ -251,7 +260,8 @@ bool PhoneMenu::init() {
             setOperatingModeCommand, requestCellInfoListCommand, setCellInfoListRateCommand,
             networkMenuCommand, servingSystemMenuCommand, setECallOperatingModeCommand,
             requestECallOperatingModeCommand, requestOperatorNameCommand, suppServicesMenuCommand,
-            resetWwanCommand, configureSignalStrengthCommand, configureSignalStrengthExCommand};
+            resetWwanCommand, configureSignalStrengthCommand, configureSignalStrengthExCommand,
+            requestCarrierAggregationCellInfoCommand, requestCellChannelInfoCommand};
 
     if (phones_.size() > 1) {
         commandsListPhoneSubMenu.emplace_back(selectSimSlotCommand);
@@ -1196,5 +1206,32 @@ void PhoneMenu::configureSignalStrengthEx(std::vector<std::string> userInput) {
                   << '\n';
     } else {
         std::cout << "No phone found\n";
+    }
+}
+
+void PhoneMenu::requestCellChannelInfo(std::vector<std::string> userInput) {
+    auto phone = phones_[slot_ - 1];
+    if (phone) {
+        auto ret = phone->requestCellChannelInfo(MyCellInfoCallback::channelInfoCallback);
+        std::cout
+            << (ret == telux::common::Status::SUCCESS ? "Request Cell Channel Info is successful\n"
+                                                      : "Request Cell Channel Info failed")
+            << '\n';
+    } else {
+        std::cout << "No default phone found" << std::endl;
+    }
+}
+
+void PhoneMenu::requestCarrierAggregationCellInfo(std::vector<std::string> userInput) {
+    auto phone = phones_[slot_ - 1];
+    if (phone) {
+        auto ret = phone->requestCarrierAggregationCellInfo(
+            telux::tel::CarrierAggregationType::LteCa, MyCellInfoCallback::caInfoCallback);
+        std::cout << (ret == telux::common::Status::SUCCESS
+                          ? "Request Carrier Aggregation Info is successful\n"
+                          : "Request Carrier Aggregation Info failed")
+                  << '\n';
+    } else {
+        std::cout << "No default phone found" << std::endl;
     }
 }

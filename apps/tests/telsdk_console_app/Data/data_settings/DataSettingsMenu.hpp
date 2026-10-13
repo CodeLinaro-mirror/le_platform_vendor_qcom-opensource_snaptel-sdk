@@ -50,6 +50,8 @@ class DataSettingsMenu : public ConsoleApp,
     void getIpPassthroughConfig(std::vector<std::string> inputCommand);
     void getIpConfig(std::vector<std::string> inputCommand);
     void setIpConfig(std::vector<std::string> inputCommand);
+    void setMtu(std::vector<std::string> inputCommand);
+    void getMtu(std::vector<std::string> inputCommand);
     void isDeviceDataUsageMonitoringEnabled(std::vector<std::string> inputCommand);
     void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) override;
     void onDdsChange(DdsInfo currentState) override;

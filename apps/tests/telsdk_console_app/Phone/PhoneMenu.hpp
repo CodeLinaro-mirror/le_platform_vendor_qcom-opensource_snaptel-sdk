@@ -74,6 +74,8 @@ class PhoneMenu : public ConsoleApp {
     void resetWwan(std::vector<std::string> userInput);
     void configureSignalStrength(std::vector<std::string> userInput);
     void configureSignalStrengthEx(std::vector<std::string> userInput);
+    void requestCarrierAggregationCellInfo(std::vector<std::string> userInput);
+    void requestCellChannelInfo(std::vector<std::string> userInput);
 
     std::string getRadioStateAsString(telux::tel::RadioState radioState);
     std::string getServiceStateAsString(telux::tel::ServiceState serviceState);

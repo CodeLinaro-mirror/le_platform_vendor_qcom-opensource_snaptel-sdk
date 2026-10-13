@@ -920,6 +920,56 @@ telux::common::Status LocationConfiguratorStub::requestXtraStatus(GetXtraStatusC
     return status;
 }
 
+telux::common::Status LocationConfiguratorStub::requestNavMsgAuthStatus(
+    GnssConstellationType constellation, GetNavMsgAuthStatusCallback cb) {
+    LOG(DEBUG, __FUNCTION__);
+    if (cb == nullptr) {
+        return telux::common::Status::INVALIDPARAM;
+    }
+
+    ::locStub::RequestNavMsgAuthStatusRequest request;
+    ::locStub::RequestNavMsgAuthStatusReply response;
+    ClientContext context;
+    request.set_constellation(static_cast<::locStub::GnssConstellationType>(constellation));
+
+    telux::common::Status status                  = telux::common::Status::FAILED;
+    telux::common::ErrorCode errorCode            = telux::common::ErrorCode::GENERIC_FAILURE;
+    int cbDelay                                   = DEFAULT_CALLBACK_DELAY;
+    telux::loc::NavMsgAuthStatus navMsgAuthStatus = {};
+    ::grpc::Status reqstatus = stub_->RequestNavMsgAuthStatus(&context, request, &response);
+    if (reqstatus.ok()) {
+        status    = static_cast<telux::common::Status>(response.status());
+        errorCode = static_cast<telux::common::ErrorCode>(response.error());
+        cbDelay   = static_cast<int>(response.delay());
+
+        const auto &protoStatus    = response.nav_msg_auth_status();
+        const auto &protoGalStatus = protoStatus.gal_status();
+        navMsgAuthStatus.constellation
+            = static_cast<telux::loc::GnssConstellationType>(protoStatus.constellation());
+        navMsgAuthStatus.galStatus.validityMask          = protoGalStatus.validity_mask();
+        navMsgAuthStatus.galStatus.featureEnabled        = protoGalStatus.feature_enabled();
+        navMsgAuthStatus.galStatus.merkleTreeProvisioned = protoGalStatus.merkle_tree_provisioned();
+        navMsgAuthStatus.galStatus.publicKeyStatusMask   = protoGalStatus.public_key_status_mask();
+        navMsgAuthStatus.galStatus.galWeek               = protoGalStatus.gal_week();
+        navMsgAuthStatus.galStatus.galSecOfWeek          = protoGalStatus.gal_sec_of_week();
+        navMsgAuthStatus.galStatus.navDataAuthPassedMask
+            = protoGalStatus.nav_data_auth_passed_mask();
+        navMsgAuthStatus.galStatus.navDataAuthFailedMask
+            = protoGalStatus.nav_data_auth_failed_mask();
+    } else {
+        LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
+    }
+
+    auto f = std::async(std::launch::async, [=]() {
+        if (cb && (cbDelay != SKIP_CALLBACK)) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+            cb(navMsgAuthStatus, errorCode);
+        }
+    }).share();
+    taskQ_.add(f);
+    return status;
+}
+
 telux::common::Status LocationConfiguratorStub::registerListener(
     LocConfigIndications indicationList, std::weak_ptr<ILocationConfigListener> listener) {
     LOG(DEBUG, __FUNCTION__);

@@ -27,7 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -226,45 +227,45 @@ class ICallManager {
     /**
      * Initiates an automotive Accident Emergency Call System (AECS) call.
      *
-     * Prerequisites and behavior:
+     * Prerequisites and Behavior:
      * - The UE must be in full service to initiate the call.
-     * - To enable AECS call optimizations:
-     *   On multi-SIM (DSDS) devices, when the application selects a phone and initiates an AECS
-     *   call on the selected phone, the modem will suspend the other phone. After completion of
-     *   both the voice call and Minimum Set of data (MSD) delivery, the modem will resume the
-     *   suspended phone.
-     *   On single-SIM devices, and to allow the modem to distinguish AECS calls from other
-     *   incoming calls, the application must enter emergency mode by invoking @ref
-     *   telux::tel::ICallManager::setEmergencyMode before initiating the AECS call.
-     * - Any on-going call on the phone that will be suspended (in the case of multi-SIM devices)
-     *   will be terminated by the modem when entering emergency mode.
-     * - Any on-going non-AECS call on the selected phone must be terminated by the application
+     * - The application must enter emergency mode by invoking @ref telux::tel::ICallManager::
+     *   setEmergencyMode before initiating the AECS call. This is required for both single-SIM and
+     *   multi-SIM devices:
+     *   - On single-SIM devices: This allows the modem to distinguish the AECS call from other
+     *     incoming calls.
+     *   - On multi-SIM (DSDS and hybrid DSDA) devices: Enabling emergency mode on the selected
+     *     phone will suspend the other phone. The modem will resume the suspended phone only after
+     *     both the voice call and Minimum Set of Data (MSD) delivery are complete.
+     * - Any ongoing call on a phone that is about to be suspended (in multi-SIM configurations)
+     *   will be automatically terminated by the modem upon entering emergency mode.
+     * - The application must manually terminate any ongoing non-AECS calls on the selected phone
      *   before initiating the AECS call.
-     * - Once emergency mode is set, the application may transmit the Minimum Set of Data (MSD).
-     *   MSD transmission may be performed via HTTP or SMS. To send MSD over SMS, use @ref
-     *   telux::tel::ISmsManager::sendRawSms.
-     * - After the AECS call and MSD transmission are complete, the application must exit
-     *   emergency mode by invoking @ref telux::tel::ICallManager::setEmergencyMode to disable
-     *   AECS call optimizations and resume any suspended phone (in the case of multi-SIM devices).
+     * - Once emergency mode is active, the application may transmit the Minimum Set of Data (MSD)
+     *   via HTTP or SMS. To send MSD over SMS, use @ref telux::tel::ISmsManager::sendRawSms.
+     * - After the AECS call and MSD transmission are complete, the application must exit emergency
+     *   mode by invoking @ref telux::tel::ICallManager::setEmergencyMode. This resumes any
+     *   suspended phones for normal calls.
      *
      * Additional Information:
-     * - If an AECS call is already in progress, the application must not initiate another AECS
-     *   call and must not disconnect the on-going AECS call.
-     * - In case of call origination failure, the modem will silently retry for up to 45 seconds.
-     *   If the call still fails after this period, or if the modem does not initiate retries and
-     *   ends the call, the application must retry the AECS call within 2 minutes, at least for
-     *   60 minutes, in accordance with AECS specification GB-45672-2025.
-     * - If the AECS call is dropped, the application is responsible for redialing based on its own
-     *   retry logic.
-     * - If MSD delivery fails, the application must retry MSD transmission within 2 minutes, at
-     *   least for 60 minutes, in accordance with AECS specification GB-45672-2025.
-     * - The application should reject any incoming non-AECS call while an AECS call is in progress.
-     * - The AECS specification does not define T2 (call clear-down fallback timer) or T9
-     *   (NAD minimum network-registration timer) to limit prolonged emergency call connection or
-     *   to ensure post-call network registration. The application may implement equivalent T2/T9
-     *   logic outside the AECS framework, but this is not mandated by the specification.
+     * - If an AECS call is already in progress, the application must not initiate another AECS call
+     *   or disconnect the existing one.
+     * - If call origination fails, the modem will silently retry for up to 45 seconds. If the
+     *   failure persists beyond this period, or if the modem ends the call without retrying, the
+     *   application must retry the AECS call within 2 minutes and continue retrying for at least
+     *   60 minutes, per AECS specification GB-45672-2025.
+     * - If an active AECS call is dropped, the application is responsible for redialing based on
+     *   its own retry logic.
+     * - If MSD delivery fails, the application must retry transmission within 2 minutes and
+     *   continue retrying for at least 60 minutes, per AECS specification GB-45672-2025.
+     * - The application should reject any incoming non-AECS calls while an AECS call is in
+     * progress.
+     * - The AECS specification does not define T2 (call clear-down fallback timer) or T9 (NAD
+     *   minimum network-registration timer). While the application may implement equivalent logic
+     *   outside the AECS framework to manage prolonged connections or post-call registration, it
+     *   is not mandated.
      * - The application must not hang up an AECS call. The call should be terminated by the AECSP
-     *   (similar to a PSAP) after completion of the call and MSD transmission.
+     *   (similar to a PSAP) only after the call and MSD transmission are completed.
      *
      * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
      * permission to successfully invoke this API.
@@ -534,9 +535,6 @@ class ICallManager {
      * eCall number type.
      *
      * On platforms with access control enabled, the caller must have the TELUX_TEL_ECALL_MGMT
-     * permission to successfully invoke this API.
-     *
-     * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
      * permission to successfully invoke this API.
      *
      * @param [in] phoneId      Represents phone corresponding to which make
@@ -969,62 +967,180 @@ class ICallManager {
 
     /**
      * Configure eCall redial parameters.
-     * Redial of an eCall can be attempted by the modem during an eCall origination failure or when
-     * it gets terminated before receipt of the MSD transmission status.
-     * The eCall redial parameters should be configured before initiating a regulatory eCall and
-     * this configuration is not persistent after modem reset.
      *
-     * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
-     * permission to successfully invoke this API.
+     * Redial of an eCall can be attempted by the modem during an eCall origination failure
+     * or when it gets dropped before receipt of the MSD transmission status.
      *
-     * @param [in] config         Indicates eCall redial configuration
-     *                            @ref telux::tel::RedialConfigType
-     * @param [in] timeGap        Indicates time gap between successive redial attempts in
-     *                            milliseconds.
-     *                            Redial attempts can range from 1 to 10 for eCall origination
-     *                            failures. For eCall termination before the receipt of MSD
-     *                            Transmission status, the range is between 1 and 2 attempts.
-     *                            The redial minimum time duration between the successive redial
-     *                            attempts is set as per 3GPP TS22.001 annex 6 and the user is
-     *                            expected to provide a suitable value of timeGap.
-     * ---------------------------------------------------------------------------------------------
-     * -----------------------------------ECALL ORIGINATION FAILURE---------------------------------
-     * -------------------( @ref telux::tel::RedialConfigType::CALL_ORIG )--------------------------
-     * ---------------------------------------------------------------------------------------------
-     * Call attempt                                                    Minimum duration between
-     *                                                                       call attempt
-     *                                                              ( in milliseconds as per
-     *                                                                3GPP TS22.001 annex 6 )
-     *----------------------------------------------------------------------------------------------
-     * Initial call attempt                                                     NA
-     *     1                                                                    5000
-     *     2                                                                    60000
-     *     3                                                                    60000
-     *     4                                                                    60000
-     *     5 attempt and                                                        180000
-     *     subsequent attempts
-     * ---------------------------------------------------------------------------------------------
-     * -----------------------------------------ECALL DROP -----------------------------------------
-     * -----------------------( @ref telux::tel::RedialConfigType::CALL_DROP )----------------------
-     * ---------------------------------------------------------------------------------------------
-     * Call attempt                                                    Minimum duration between
-     *                                                                       call attempt
-     *                                                              ( in milliseconds as per
-     *                                                                3GPP TS22.001 annex 6 )
-     *----------------------------------------------------------------------------------------------
-     * Initial call attempt                                                      NA
-     *     1                                                                     5000
-     *     2                                                                     60000
-     *----------------------------------------------------------------------------------------------
-
+     * The eCall redial parameters should be configured before initiating a regulatory eCall
+     * and this configuration is not persistent after modem reset.
      *
-     * @param [in] callback       Callback function to get the response of the configureECallRedial
-     *                            request.
+     * On platforms with access control enabled, the caller needs to have
+     * TELUX_TEL_ECALL_MGMT permission to successfully invoke this API.
+     *
+     * **Note:**
+     *    Platform supports CS eCall only (no NG eCall).
+     *
+     *    Redial attempts for eCall origination failures can be configured to range from
+     *    0 to 10 attempts. If an eCall disconnects before the MSD transmission status is
+     *    received, the application must ensure that all retry attempts are completed within
+     *    2 minutes from the time of the initial drop. The application is expected to determine
+     *    an appropriate time gap between successive redial attempts using the tables below
+     *    (values in milliseconds).
+     *
+     * \rst
+     *
+     * **Configuration: ECALL ORIGINATION FAILURE**
+     *
+     * .. list-table::
+     *    :header-rows: 1
+     *    :widths: 40 30 30
+     *
+     *    * - Call attempt
+     *      - Minimum duration between attempts (ms)
+     *      - Maximum duration between attempts (ms)
+     *    * - Initial call attempt
+     *      - NA
+     *      - NA
+     *    * - 1
+     *      - 5000
+     *      - 30000
+     *    * - 2
+     *      - 30000
+     *      - 60000
+     *    * - 3
+     *      - 30000
+     *      - 60000
+     *    * - 4
+     *      - 30000
+     *      - 60000
+     *    * - 5 attempts and subsequent attempts
+     *      - 30000
+     *      - 60000
+     *
+     * **Configuration: ECALL DROP**
+     *
+     * .. list-table::
+     *    :header-rows: 1
+     *    :widths: 40 30 30
+     *
+     *    * - Call attempt
+     *      - Minimum duration between attempts (ms)
+     *      - Maximum duration between attempts (ms)
+     *    * - Initial call attempt
+     *      - NA
+     *      - NA
+     *    * - 1
+     *      - 5000
+     *      - 30000
+     *    * - 2 attempts and subsequent attempts
+     *      - 30000
+     *      - 60000
+     *
+     * \endrst
+     *
+     * **NOTE:**
+     *    There is a platform configuration which allows clients to use the legacy tables
+     *    below for configuring the time gap between successive redial attempts for eCall
+     *    origination and eCall drop, similar to older platforms.
+     *
+     * \rst
+     *
+     * **Legacy: ECALL ORIGINATION FAILURE**
+     *
+     * .. list-table::
+     *    :header-rows: 1
+     *    :widths: 40 30 30
+     *
+     *    * - Call attempt
+     *      - Minimum duration between attempts (ms)
+     *      - Maximum duration between attempts (ms)
+     *    * - Initial call attempt
+     *      - NA
+     *      - NA
+     *    * - 1
+     *      - 5000
+     *      - 60000
+     *    * - 2
+     *      - 60000
+     *      - 180000
+     *    * - 3
+     *      - 60000
+     *      - 180000
+     *    * - 4
+     *      - 60000
+     *      - 180000
+     *    * - 5 attempts and subsequent attempts
+     *      - 1800000
+     *      - 3000000
+     *
+     * **Legacy: ECALL DROP**
+     *
+     * .. list-table::
+     *    :header-rows: 1
+     *    :widths: 40 30 30
+     *
+     *    * - Call attempt
+     *      - Minimum duration between attempts (ms)
+     *      - Maximum duration between attempts (ms)
+     *    * - Initial call attempt
+     *      - NA
+     *      - NA
+     *    * - 1
+     *      - 5000
+     *      - 60000
+     *    * - 2 attempts and subsequent attempts
+     *      - 60000
+     *      - 180000
+     *
+     *  \endrst
+     *
+     * **Note:**
+     *    Platform supports both NG eCall and CS eCall configuration:
+     *
+     *    Application input configurations for call origination failures will not be applied
+     *    in the case of eCall origination failures. This behavior is governed by the scan times
+     *    required for domain selection by the modem (independent of NG vs. CS coverage).
+     *
+     *    To ensure timely redial attempts for eCall drops occurring before MSD status receipt,
+     *    the application must be configured to complete retries within 2 minutes. Use the
+     *    table below to determine appropriate time gaps.
+     *
+     * \rst
+     *
+     * **ECall redial configuration: ECALL DROP**
+     *
+     * .. list-table::
+     *    :header-rows: 1
+     *    :widths: 40 30 30
+     *
+     *    * - Call attempt
+     *      - Minimum duration between attempts (ms)
+     *      - Maximum duration between attempts (ms)
+     *    * - Initial call attempt
+     *      - NA
+     *      - NA
+     *    * - 1
+     *      - 5000
+     *      - 30000
+     *    * - 2 attempts and subsequent attempts
+     *      - 30000
+     *      - 60000
+     *
+     * \endrst
+     *
+     * @param [in] config   Indicates eCall redial configuration
+     *                      @ref telux::tel::RedialConfigType
+     * @param [in] timeGap  Indicates time gap between successive redial attempts in milliseconds.
+     *                      The number of elements indicates the number of configured redial
+     *                      attempts. An empty vector is valid and indicates that no redial attempt
+     *                      time gaps are configured for the selected @ref RedialConfigType.
+     * @param [in] callback  Callback function to get the response of the
+     *                       configureECallRedial request.
      *
      * @returns Status of configureECallRedial i.e. success or suitable error code.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and could break
-     *             backwards compatibility.
+     * @note Eval: This is a new API and is being evaluated. It is subject to change
+     *             and could break backwards compatibility.
      */
     virtual telux::common::Status configureECallRedial(RedialConfigType config,
         const std::vector<int> &timeGap, common::ResponseCallback callback = nullptr)
@@ -1063,6 +1179,49 @@ class ICallManager {
     virtual telux::common::Status restartECallHlapTimer(int phoneId, EcallHlapTimerId timerId,
         int duration, common::ResponseCallback callback = nullptr)
         = 0;
+
+    /**
+     * Enable or disable Next Generation (NG) eCall functionality.
+     * The configured value persists across subsystem restarts (SSR) and device reboot.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_TEL_ECALL_MGMT
+     * permission to invoke this API successfully.
+     *
+     * @param [in] phoneId  - ID of the phone/SIM slot for which the NG eCall is
+     *                        enabled or disabled.
+     * @param [in] isEnable - NG eCall configuration:
+     *                        - 'true'  : NG eCall is enabled.
+     *                        - 'false' : NG eCall is disabled.
+     *
+     * @returns ErrorCode indicating the status of the operation
+     *                    i.e. success or suitable error code.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     *
+     */
+    virtual telux::common::ErrorCode setNgEcallConfig(int phoneId, bool isEnable) = 0;
+
+    /**
+     * Get the current Next Generation (NG) eCall configuration for the specified phone/SIM slot.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_TEL_ECALL_MGMT
+     * permission to invoke this API successfully.
+     *
+     * @param [in]  phoneId - ID of the phone/SIM slot for which the NG eCall is
+     *                        enabled or disabled.
+     * @param [out] isEnable- Return the current NG eCall configuration:
+     *                        - 'true'  : NG eCall is enabled.
+     *                        - 'false' : NG eCall is disabled.
+     *
+     * @returns ErrorCode indicating the status of the operation
+     *                    i.e. success or suitable error code.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     *
+     */
+    virtual telux::common::ErrorCode getNgEcallConfig(int phoneId, bool &isEnable) = 0;
 
     /**
      * Retrieve the configured eCall redial parameters for call origination and call drop failures.
@@ -1174,13 +1333,13 @@ class ICallManager {
         = 0;
 
     /**
-     * Enable or disable emergency mode configuration for AECS (Automated Emergency Call System)
+     * Enables or disables emergency mode configuration for AECS (Automated Emergency Call System)
      * calls.
      *
      * This API enables or disables emergency mode and optionally allows antenna switching for
      * AECS call:
      *   - When emergency mode is enabled on the phone identifier, other subscriptions
-     *     in DSDS/DSDA mode will be suspended.
+     *     in DSDS/hybrid DSDA mode will be suspended.
      *   - If antenna switching is enabled, the system will automatically select the best
      *     alternative antenna if the active one becomes damaged.
      *
@@ -1193,21 +1352,21 @@ class ICallManager {
      *
      * @note Antenna switching cannot be enabled when emergency mode is disabled. i.e., Setting
      *       emergencyModeEnabled = false while antennaSwitchEnabled = true is not supported and
-     *       will return @ref telux::common::ErrorCode::INVALID_ARGUMENTS.
+     *       will return @ref telux::common::ErrorCode::NO_EFFECT.
      * @note This API is platform-dependent. Ensure the platform supports antenna switching
      *       before enabling antenna switching.
      *
      * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
      * permission to successfully invoke this API.
      *
-     * @param [in] phoneId          Represents the phone corresponding to which the emergency
-     *                              mode is configured.
-     * @param [in] emergencyModeEnabled If true, enables emergency mode in SS/DSDS/DSDA;
-     *                                  if false, disables emergency mode in SS/DSDS/DSDA.
-     * @param [in] antennaSwitchEnabled If true, enables automatic antenna switching mode;
-     *                                  if false, disables automatic antenna switching mode.
-     * @param [in] callback         Optional callback pointer to get the response of the
-     *                              setEmergencyMode request.
+     * @param [in] phoneId               Represents the phone corresponding to which the emergency
+     *                                   mode is configured.
+     * @param [in] emergencyModeEnabled  If true, enables emergency mode in SS/DSDS/hybrid DSDA;
+     *                                   if false, disables emergency mode in SS/DSDS/hybrid DSDA.
+     * @param [in] antennaSwitchEnabled  If true, enables automatic antenna switching mode;
+     *                                   if false, disables automatic antenna switching mode.
+     * @param [in] callback              Optional callback pointer to get the response of the
+     *                                   setEmergencyMode request.
      *
      * @returns Status of the setEmergencyMode request; either success or the suitable error code.
      *

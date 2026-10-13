@@ -100,6 +100,8 @@ class CallManagerStub : public ICallManager,
         const std::vector<int> &timeGap, common::ResponseCallback callback) override;
     telux::common::Status restartECallHlapTimer(int phoneId, EcallHlapTimerId timerId, int duration,
         common::ResponseCallback callback) override;
+    telux::common::ErrorCode setNgEcallConfig(int phoneId, bool isEnable) override;
+    telux::common::ErrorCode getNgEcallConfig(int phoneId, bool &isEnable) override;
     telux::common::ErrorCode getECallRedialConfig(
         std::vector<int> &callOrigTimeGap, std::vector<int> &callDropTimeGap) override;
     telux::common::Status makeECall(int phoneId, const std::string dialNumber,

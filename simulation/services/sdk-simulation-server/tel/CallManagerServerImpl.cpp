@@ -14,6 +14,7 @@
 #define INCOMING_CALL_EVENT "incomingCall"
 #define MODIFY_CALL_REQUEST "modifyCallRequest"
 #define RTT_MESSAGE_REQUEST "rttMessageRequest"
+#define ECALLTYPE_NG "NGeCall"
 #define CALL_REASON_MAX_SIZE 64
 
 #define REST_TIMERS_ON_CALL_SETUP 2
@@ -28,12 +29,12 @@
 #define MSD_VERSION_2 2
 #define MSD_VERSION_3 3
 
-#define MIN_REDIAL_CONFIG 1
+#define MIN_REDIAL_CONFIG 0
 #define MAX_CALLORIG_REDIAL_CONFIG 10
-#define MAX_CALLDROP_REDIAL_CONFIG 2
+#define MAX_CALLDROP_REDIAL_DURATION 120000
 
-#define MIN_VALUE_TIMEGAP_UNTIL_INDEX4 4
-#define MIN_VALUE_TIMEGAP_AFTER_INDEX4 5
+#define TIMEGAP_INDEX_0 0
+#define TIMEGAP_INDEX_1 1
 
 CallManagerServerImpl::CallManagerServerImpl() {
     LOG(DEBUG, __FUNCTION__);
@@ -2183,14 +2184,15 @@ grpc::Status CallManagerServerImpl::ConfigureECallRedial(ServerContext *context,
         for (int d : request->time_gap()) {
             data.emplace_back(d);
         }
-        int size                          = data.size();
-        std::string timeGapInString       = "";
-        bool isTimeGapDataAsper3GPP       = true;
-        std::vector<int> timeGapAsPer3GPP = {5000, 60000, 60000, 60000, 180000};
+        auto size                                     = data.size();
+        std::string timeGapInString                   = "";
+        bool isTimeGapDataAsper3GPP                   = true;
+        std::vector<std::pair<int, int>> timeGapRange = {{5000, 30000}, {30000, 60000}};
 
         getJsonForApiResponseSlot(SLOT_1, jsonObjApiResponseFileName, jsonObjApiResponse);
         CommonUtils::getValues(
             jsonObjApiResponse, CALL_MANAGER, "configureECallRedial", status, error, cbDelay);
+        std::string eCallType = jsonObjApiResponse["ICallManager"]["eCallType"].asString();
         if (cbDelay == -1) {
             isCallback = false;
         }
@@ -2198,31 +2200,41 @@ grpc::Status CallManagerServerImpl::ConfigureECallRedial(ServerContext *context,
         response->set_iscallback(isCallback);
         response->set_delay(cbDelay);
         if (request->config() == telStub::RedialConfigType::REDIAL_CONFIG_CALL_ORIG) {
-            if ((size < MIN_REDIAL_CONFIG) || (size >= MAX_CALLORIG_REDIAL_CONFIG)) {
+            if (size > MAX_CALLORIG_REDIAL_CONFIG) {
+                LOG(ERROR, __FUNCTION__,
+                    " Invalid call-origination redial configuration: attempt count ", size,
+                    ", eCall type ", eCallType,
+                    ". Call-origination redial supports 0 to 10 attempts.");
                 response->set_error(commonStub::ErrorCode::REQUEST_NOT_SUPPORTED);
                 return grpc::Status::OK;
             }
         } else if (request->config() == telStub::RedialConfigType::REDIAL_CONFIG_CALL_DROP) {
-            if ((size < MIN_REDIAL_CONFIG) || (size > MAX_CALLDROP_REDIAL_CONFIG)) {
+            auto totalDuration = 0;
+            for (auto duration : data) {
+                totalDuration += duration;
+            }
+            if (totalDuration > MAX_CALLDROP_REDIAL_DURATION) {
+                LOG(ERROR, __FUNCTION__,
+                    " Invalid call-drop redial configuration: cumulative time gap would "
+                    "exceed the maximum of ",
+                    MAX_CALLDROP_REDIAL_DURATION, " ms (current total ", totalDuration, " ms)");
                 response->set_error(commonStub::ErrorCode::REQUEST_NOT_SUPPORTED);
                 return grpc::Status::OK;
             }
         } else {
             return grpc::Status(grpc::StatusCode::INTERNAL, " Incorrect redial config");
         }
-        for (int i = 0; i < size; i++) {
+        for (size_t i = 0; i < size; i++) {
             LOG(DEBUG, __FUNCTION__, " data recieved from request", static_cast<int>(data.at(i)));
-            if (i <= MIN_VALUE_TIMEGAP_UNTIL_INDEX4) {
-                if (data[i] < timeGapAsPer3GPP[i]) {
-                    isTimeGapDataAsper3GPP = false;
-                    break;
-                }
-            }
-            if (i >= MIN_VALUE_TIMEGAP_AFTER_INDEX4) {
-                if (data[i] < timeGapAsPer3GPP[MIN_VALUE_TIMEGAP_UNTIL_INDEX4]) {
-                    isTimeGapDataAsper3GPP = false;
-                    break;
-                }
+            const auto timeGapIndex = i == TIMEGAP_INDEX_0 ? TIMEGAP_INDEX_0 : TIMEGAP_INDEX_1;
+
+            if ((data[i] < timeGapRange[timeGapIndex].first)
+                or (data[i] > timeGapRange[timeGapIndex].second)) {
+                LOG(ERROR, __FUNCTION__, " Invalid redial time gap at index ", i, ": ", data[i],
+                    " ms; expected range is ", timeGapRange[timeGapIndex].first, " to ",
+                    timeGapRange[timeGapIndex].second, " ms");
+                isTimeGapDataAsper3GPP = false;
+                break;
             }
         }
         if (isTimeGapDataAsper3GPP) {
@@ -2486,6 +2498,70 @@ grpc::Status CallManagerServerImpl::getInProgressCalls(ServerContext *context,
     int phoneId = request->phone_id();
     fillCallInformation(phoneId, response);
     response->set_phone_id(phoneId);
+    return grpc::Status::OK;
+}
+
+grpc::Status CallManagerServerImpl::SetNgEcallConfig(ServerContext *context,
+    const ::telStub::SetNgEcallConfigRequest *request,
+    telStub::SetNgEcallConfigResponse *response) {
+    LOG(DEBUG, __FUNCTION__);
+
+    telux::common::ErrorCode error;
+    telux::common::Status status;
+    int cbDelay;
+    int phoneId   = request->phone_id();
+    int isEnabled = request->is_enable();
+
+    Json::Value rootObj;
+    std::string jsonfilename               = "";
+    std::string jsonObjApiResponseFileName = "";
+    Json::Value jsonObjApiResponse;
+    std::string apiInput = "setNgEcallConfig";
+
+    getJsonForSystemData(phoneId, jsonfilename, rootObj);
+    getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
+    CommonUtils::getValues(jsonObjApiResponse, CALL_MANAGER, apiInput, status, error, cbDelay);
+
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! ");
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    rootObj[CALL_MANAGER]["ngEcallConfig"]["isEnable"] = isEnabled;
+    JsonParser::writeToJsonFile(rootObj, jsonfilename);
+    jsonObjSystemStateSlot_[phoneId] = rootObj;
+    response->set_error(static_cast<commonStub::ErrorCode>(error));
+    return grpc::Status::OK;
+}
+
+grpc::Status CallManagerServerImpl::GetNgEcallConfig(ServerContext *context,
+    const ::telStub::GetNgEcallConfigRequest *request,
+    telStub::GetNgEcallConfigResponse *response) {
+    LOG(DEBUG, __FUNCTION__);
+
+    telux::common::ErrorCode error;
+    telux::common::Status status;
+    std::string apiInput = "getNgEcallConfig";
+    int cbDelay;
+    int phoneId = request->phone_id();
+
+    Json::Value rootObj;
+    std::string jsonfilename               = "";
+    std::string jsonObjApiResponseFileName = "";
+    Json::Value jsonObjApiResponse;
+
+    getJsonForSystemData(phoneId, jsonfilename, rootObj);
+    getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
+    CommonUtils::getValues(jsonObjApiResponse, CALL_MANAGER, apiInput, status, error, cbDelay);
+
+    bool isEnabled = (rootObj[CALL_MANAGER]["ngEcallConfig"]["isEnable"].asInt() == 1);
+
+    if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! ");
+        return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+    response->set_is_enable(isEnabled);
+    response->set_error(static_cast<commonStub::ErrorCode>(error));
     return grpc::Status::OK;
 }
 

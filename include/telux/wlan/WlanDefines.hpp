@@ -26,6 +26,7 @@ namespace wlan {
  * Radio Band Types:
  */
 enum class BandType {
+    UNKNOWN   = 0,
     BAND_5GHZ = 1,
     BAND_2GHZ = 2,
     BAND_6GHZ = 3,
@@ -100,7 +101,13 @@ struct ApNetInfo {
 };
 
 /**
- * AP Status for enabled Networks
+ * AP Status for enabled Networks.
+ *
+ * @note   If the AP is started and controlled by the OEM via Linux OSS APIs. Its network
+ *         interface is assigned a dummy IP address and added to a bridge; the DHCP server is
+ *         bound to that bridge, and AP clients obtain their IP address from it. Consequently,
+ *         @ref ipv4Address carries no networking significance, and AP type (see @ref network
+ *         and @ref telux::wlan::ApType) does not apply and is reported as ApType::UNKNOWN.
  */
 struct ApStatus {
     Id id; /**< AP id                                 */
@@ -127,8 +134,10 @@ struct StaStatus {
     std::string ipv4Address; /**< Public IP V4 address             */
     std::string ipv6Address; /**< Public IP V6 address             */
     std::string macAddress; /**< MAC address                      */
-    StaInterfaceStatus status; /**< Interface status                 */
-    StaConnectionStatus connectionStatus; /**< Station connection status        */
+    StaInterfaceStatus status = StaInterfaceStatus::UNKNOWN; /**< Interface status */
+    StaConnectionStatus connectionStatus
+        = StaConnectionStatus::UNKNOWN; /**< Station connection status        */
+    BandType band = BandType::UNKNOWN; /**< Operation band type                 */
 };
 
 /**

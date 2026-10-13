@@ -61,6 +61,12 @@ grpc::Status FirewallServerImpl::SetFirewall(ServerContext *context,
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
     }
 
+    if ((data.error == telux::common::ErrorCode::SUCCESS)
+        && (request->backhaul_type() == ::dataStub::BackhaulPreference::PREF_WLAN)
+        && (request->sta_id() == 1)) {
+        data.error = telux::common::ErrorCode::NOT_SUPPORTED;
+    }
+
     if (data.status == telux::common::Status::SUCCESS
         && data.error == telux::common::ErrorCode::SUCCESS) {
         int idx      = 0;
@@ -110,6 +116,12 @@ grpc::Status FirewallServerImpl::RequestFirewallStatus(ServerContext *context,
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
     }
 
+    if ((data.error == telux::common::ErrorCode::SUCCESS)
+        && (request->backhaul_type() == ::dataStub::BackhaulPreference::PREF_WLAN)
+        && (request->sta_id() == 1)) {
+        data.error = telux::common::ErrorCode::NOT_SUPPORTED;
+    }
+
     if (data.status == telux::common::Status::SUCCESS
         && data.error == telux::common::ErrorCode::SUCCESS) {
         int idx      = 0;
@@ -148,6 +160,12 @@ grpc::Status FirewallServerImpl::AddFirewallEntry(ServerContext *context,
 
     if (error != ErrorCode::SUCCESS) {
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    if ((data.error == telux::common::ErrorCode::SUCCESS)
+        && (request->backhaul_type() == ::dataStub::BackhaulPreference::PREF_WLAN)
+        && (request->sta_id() == 1)) {
+        data.error = telux::common::ErrorCode::NOT_SUPPORTED;
     }
 
     if (data.status == telux::common::Status::SUCCESS
@@ -247,6 +265,12 @@ grpc::Status FirewallServerImpl::RemoveFirewallEntry(ServerContext *context,
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
     }
 
+    if ((data.error == telux::common::ErrorCode::SUCCESS)
+        && (request->backhaul_type() == ::dataStub::BackhaulPreference::PREF_WLAN)
+        && (request->sta_id() == 1)) {
+        data.error = telux::common::ErrorCode::NOT_SUPPORTED;
+    }
+
     if (data.status == telux::common::Status::SUCCESS
         && data.error == telux::common::ErrorCode::SUCCESS) {
         const Json::Value &config = data.stateRootObj[subsystem]["firewallEntry"];
@@ -312,6 +336,12 @@ grpc::Status FirewallServerImpl::RequestFirewallEntries(ServerContext *context,
 
     if (error != ErrorCode::SUCCESS) {
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    if ((data.error == telux::common::ErrorCode::SUCCESS)
+        && (request->backhaul_type() == ::dataStub::BackhaulPreference::PREF_WLAN)
+        && (request->sta_id() == 1)) {
+        data.error = telux::common::ErrorCode::NOT_SUPPORTED;
     }
 
     if (data.status == telux::common::Status::SUCCESS
@@ -429,7 +459,14 @@ grpc::Status FirewallServerImpl::EnableDMZ(ServerContext *context,
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
     }
 
-    if (!DataUtilsStub::isValidIpv4Address(request->ip_address())) {
+    if ((data.error == telux::common::ErrorCode::SUCCESS)
+        && (request->backhaul_type() == ::dataStub::BackhaulPreference::PREF_WLAN)
+        && (request->sta_id() == 1)) {
+        data.error = telux::common::ErrorCode::NOT_SUPPORTED;
+    }
+
+    if ((data.error == telux::common::ErrorCode::SUCCESS)
+        && !DataUtilsStub::isValidIpv4Address(request->ip_address())) {
         data.error = telux::common::ErrorCode::INTERNAL;
         response->set_status(static_cast<commonStub::Status>(data.status));
         response->set_error(static_cast<commonStub::ErrorCode>(data.error));
@@ -487,6 +524,12 @@ grpc::Status FirewallServerImpl::DisableDMZ(ServerContext *context,
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
     }
 
+    if ((data.error == telux::common::ErrorCode::SUCCESS)
+        && (request->backhaul_type() == ::dataStub::BackhaulPreference::PREF_WLAN)
+        && (request->sta_id() == 1)) {
+        data.error = telux::common::ErrorCode::NOT_SUPPORTED;
+    }
+
     if (data.status == telux::common::Status::SUCCESS
         && data.error == telux::common::ErrorCode::SUCCESS) {
         int idx      = 0;
@@ -540,6 +583,12 @@ grpc::Status FirewallServerImpl::RequestDMZEntry(ServerContext *context,
 
     if (error != ErrorCode::SUCCESS) {
         return grpc::Status(grpc::StatusCode::INTERNAL, "Json read failed");
+    }
+
+    if ((data.error == telux::common::ErrorCode::SUCCESS)
+        && (request->backhaul_type() == ::dataStub::BackhaulPreference::PREF_WLAN)
+        && (request->sta_id() == 1)) {
+        data.error = telux::common::ErrorCode::NOT_SUPPORTED;
     }
 
     if (data.status == telux::common::Status::SUCCESS

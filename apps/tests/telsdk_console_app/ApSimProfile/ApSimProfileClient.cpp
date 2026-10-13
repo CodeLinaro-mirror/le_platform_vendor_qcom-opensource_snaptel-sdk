@@ -56,7 +56,7 @@ class ResponseData {
     }
 
  protected:
-    telux::tel::IccResult apduResult;
+    telux::tel::IccResult apduResult{};
     int cardChannel = -1;
     std::promise<telux::common::ErrorCode> cbPromise_;
 };

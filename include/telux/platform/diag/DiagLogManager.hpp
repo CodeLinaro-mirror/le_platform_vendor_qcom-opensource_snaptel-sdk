@@ -90,7 +90,8 @@ enum class LogMethod {
 
     /**
      * Callback method - logs are provided via @ref IDiagListener::onAvailableLogs callback
-     * whenever available, in raw format.
+     * whenever available, in raw format. Clients are requested to not enable QXDM logging
+     * while enabling log collection via callback method.
      */
     CALLBACK
 };

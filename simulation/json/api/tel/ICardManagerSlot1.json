@@ -4,6 +4,11 @@
         "IsSubsystemReady" : "SERVICE_AVAILABLE",
         "IsSubsystemReadyDelay" : 300,
         "DefaultCallbackDelay" : 400,
+        "mode" : "NONE",
+        "physicalSlotId" : "SLOT_ID_1",
+        "_comment_mode" : "Valid inputs NONE, MEP_A1, MEP_B Refer telux::tel::Mode",
+        "ICCID" : "8901410331140284780",
+        "_comment_ICCID" : "Valid only when mode is MEP_A1, MEP_B.",
         "readEFLinearFixed" :
         {
             "status" : "SUCCESS",

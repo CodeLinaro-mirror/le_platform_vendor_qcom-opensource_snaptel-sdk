@@ -77,12 +77,6 @@ class RefAppUtils {
 
     /**
      * Log KPI information to the KPI file
-     * @param message The custom message to log to the KPI file
-     */
-    static void logKpiFile(const std::string &message);
-
-    /**
-     * Log KPI information to the KPI file
      * @param message Pointer to the message buffer
      * @param length Length of the message buffer
      */

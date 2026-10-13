@@ -13,6 +13,7 @@ Data
    start_or_stop_data_call
    request_profile_list
    get_and_set_data_filter_mode
+   get_and_set_mtu
    add_data_filter
    remove_data_filters
    enable_disable_firewall
@@ -33,12 +34,14 @@ Data
    set_eth_datalink_state
    create_traffic_class_and_add_qos_filter
    start_tcp_keep_alive_offload
+   dds_recommendation
 
 
 ..
    * :ref:`start-or-stop-data-call`
    * :ref:`request-profile-list`
    * :ref:`get-and-set-data-filter-mode`
+   * :ref:`get-and-set-mtu`
    * :ref:`add-data-filter`
    * :ref:`remove-data-filter`
    * :ref:`enable-disable-firewall`
@@ -56,4 +59,5 @@ Data
    * :ref:`on-demand-pdn-connectivity`
    * :ref:`create_traffic_class_and_add_qos_filter`
    * :ref:`start-tcp-keep-alive-offload`
+   * :ref:`dds-recommendation`
 

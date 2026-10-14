@@ -218,6 +218,7 @@ telux::common::Status NatManagerStub::addStaticNatEntry(const BackhaulInfo &bhIn
     } else if (bhInfo.backhaul == telux::data::BackhaulType::WLAN) {
         request.mutable_static_nat_entry()->set_backhaul_type(
             ::dataStub::BackhaulPreference::PREF_WLAN);
+        request.mutable_static_nat_entry()->set_sta_id(bhInfo.staId);
     } else {
         LOG(ERROR, __FUNCTION__, "unsupported backhaul:");
         return telux::common::Status::NOTSUPPORTED;
@@ -334,6 +335,7 @@ telux::common::Status NatManagerStub::removeStaticNatEntry(const BackhaulInfo &b
     } else if (bhInfo.backhaul == telux::data::BackhaulType::WLAN) {
         request.mutable_static_nat_entry()->set_backhaul_type(
             ::dataStub::BackhaulPreference::PREF_WLAN);
+        request.mutable_static_nat_entry()->set_sta_id(bhInfo.staId);
     } else {
         return telux::common::Status::NOTSUPPORTED;
     }
@@ -452,6 +454,7 @@ telux::common::Status NatManagerStub::requestStaticNatEntries(
         request.set_vlan_id(bhInfo.vlanId);
     } else if (bhInfo.backhaul == telux::data::BackhaulType::WLAN) {
         request.set_backhaul_type(::dataStub::BackhaulPreference::PREF_WLAN);
+        request.set_sta_id(bhInfo.staId);
     } else {
         return telux::common::Status::NOTSUPPORTED;
     }

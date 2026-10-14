@@ -61,6 +61,8 @@ service LocationConfiguratorService {
         (LocManagerCommandReply) {}
     rpc ConfigureXtraParams (ConfigureXtraParamsRequest) returns (LocManagerCommandReply) {}
     rpc RequestXtraStatus (google.protobuf.Empty) returns (RequestXtraStatusReply) {}
+    rpc RequestNavMsgAuthStatus (RequestNavMsgAuthStatusRequest)
+        returns (RequestNavMsgAuthStatusReply) {}
     rpc InjectMerkleTree (google.protobuf.Empty) returns (LocManagerCommandReply) {}
     rpc ConfigureOsnma (ConfigureOsnmaRequest) returns (LocManagerCommandReply) {}
     rpc RegisterListener (RegisterListenerRequest) returns (LocManagerCommandReply) {}
@@ -1307,6 +1309,14 @@ enum GnssReportType {
     HIGH_RATE_MEASUREMENT    = 5;
     /*Disaster Crisis Reports*/
     DISASTER_CRISIS   = 6;
+    /** Engine NMEA reports */
+    ENGINE_NMEA       = 7;
+    /** Ephemeris reports */
+    EPHEMERIS         = 8;
+    /** GNSS extended data reports */
+    EXTENDED_DATA     = 9;
+    /** SV residual reports */
+    SV_RESIDUAL       = 10;
 }
 
 message StartDetailedReportsRequest {
@@ -1875,6 +1885,33 @@ message RequestXtraStatusReply {
     commonStub.ErrorCode error = 2;
     int32 delay = 3;
     XtraStatus xtra_status = 4;
+}
+
+message RequestNavMsgAuthStatusRequest {
+    GnssConstellationType constellation = 1;
+}
+
+message GalOsnmaStatus {
+    uint32 validity_mask = 1;
+    bool feature_enabled = 2;
+    bool merkle_tree_provisioned = 3;
+    uint32 public_key_status_mask = 4;
+    uint32 gal_week = 5;
+    uint32 gal_sec_of_week = 6;
+    uint64 nav_data_auth_passed_mask = 7;
+    uint64 nav_data_auth_failed_mask = 8;
+}
+
+message NavMsgAuthStatus {
+    GnssConstellationType constellation = 1;
+    GalOsnmaStatus gal_status = 2;
+}
+
+message RequestNavMsgAuthStatusReply {
+    commonStub.Status status = 1;
+    commonStub.ErrorCode error = 2;
+    int32 delay = 3;
+    NavMsgAuthStatus nav_msg_auth_status = 4;
 }
 
 message RegisterOnXtraStatusUpdateReply {

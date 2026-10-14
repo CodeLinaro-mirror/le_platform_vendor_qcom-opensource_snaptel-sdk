@@ -46,6 +46,7 @@
 
 #include "MyServingSystemHandler.hpp"
 #include "ServingSystemMenu.hpp"
+#include "Utils.hpp"
 
 #define INVALID -1
 #define GSM_RAT 1
@@ -113,6 +114,7 @@ bool ServingSystemMenu::init() {
                 }
             }
         }
+
         for (auto index = 0; index < servingSystemMgrs_.size(); index++) {
             auto status = servingSystemMgrs_[index]->registerListener(servingSystemListener_);
             if (status != telux::common::Status::SUCCESS) {
@@ -121,6 +123,9 @@ bool ServingSystemMenu::init() {
                 return false;
             }
         }
+        std::cout << "NOTE: Registered all notifications by default, use menu items 25 and 26 "
+                  << " to control optional notifications registration and deregistration"
+                  << std::endl;
 
         std::shared_ptr<ConsoleAppCommand> getRatModePreferenceCommand
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "Get_RAT_mode_preference",
@@ -203,9 +208,63 @@ bool ServingSystemMenu::init() {
         std::shared_ptr<ConsoleAppCommand> reqRrcStateCommand
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("20", "Get_RRC_State", {},
                 std::bind(&ServingSystemMenu::requestRrcState, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> getVoiceDomainPreferenceCommand
+            = std::make_shared<ConsoleAppCommand>(
+                ConsoleAppCommand("21", "Get_voice_domain_preference", {},
+                    std::bind(&ServingSystemMenu::getVoiceDomainPreference, this,
+                        std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setVoiceDomainPreferenceCommand
+            = std::make_shared<ConsoleAppCommand>(
+                ConsoleAppCommand("22", "Set_voice_domain_preference", {},
+                    std::bind(&ServingSystemMenu::setVoiceDomainPreference, this,
+                        std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> getDrxConfigCommand
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("23", "Get_DRX_config", {},
+                std::bind(&ServingSystemMenu::getDrxConfig, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setDrxConfigCommand
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("24", "Set_DRX_config", {},
+                std::bind(&ServingSystemMenu::setDrxConfig, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> registerListenerCommand
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("25", "Register_Notifications",
+                {}, std::bind(&ServingSystemMenu::registerListener, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> deRegisterListenerCommand
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("26",
+                "Deregister_Notifications", {},
+                std::bind(&ServingSystemMenu::deregisterListener, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> getSystemInfoNotificationFilterCommand
+            = std::make_shared<ConsoleAppCommand>(
+                ConsoleAppCommand("27", "Get_SystemInfo_Notification_Filter", {},
+                    std::bind(&ServingSystemMenu::getSystemInfoNotificationFilter, this,
+                        std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setSystemInfoNotificationFilterCommand
+            = std::make_shared<ConsoleAppCommand>(
+                ConsoleAppCommand("28", "Set_SystemInfo_Notification_Filter", {},
+                    std::bind(&ServingSystemMenu::setSystemInfoNotificationFilter, this,
+                        std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> getLteConnectedModeRsrpConfigCommand
+            = std::make_shared<ConsoleAppCommand>(
+                ConsoleAppCommand("29", "Get_LTE_Connected_Mode_RSRP_Config", {},
+                    std::bind(&ServingSystemMenu::getLteConnectedModeRsrpConfig, this,
+                        std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setLteConnectedModeRsrpConfigCommand
+            = std::make_shared<ConsoleAppCommand>(
+                ConsoleAppCommand("30", "Set_LTE_Connected_Mode_RSRP_Config", {},
+                    std::bind(&ServingSystemMenu::setLteConnectedModeRsrpConfig, this,
+                        std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> getLteIdleModeRsrpConfigCommand
+            = std::make_shared<ConsoleAppCommand>(
+                ConsoleAppCommand("31", "Get_LTE_Idle_Mode_RSRP_Config", {},
+                    std::bind(&ServingSystemMenu::getLteIdleModeRsrpConfig, this,
+                        std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setLteIdleModeRsrpConfigCommand
+            = std::make_shared<ConsoleAppCommand>(
+                ConsoleAppCommand("32", "Set_LTE_Idle_Mode_RSRP_Config", {},
+                    std::bind(&ServingSystemMenu::setLteIdleModeRsrpConfig, this,
+                        std::placeholders::_1)));
         std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("21", "Select_sim_slot", {},
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("33", "Select_sim_slot", {},
                 std::bind(&ServingSystemMenu::selectSimSlot, this, std::placeholders::_1)));
+
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListNetworkSubMenu = {
             getRatModePreferenceCommand, setRatModePreferenceCommand,
             getServiceDomainPreferenceCommand, setServiceDomainPreferenceCommand,
@@ -213,7 +272,12 @@ bool ServingSystemMenu::init() {
             getRejectInfoCommand, getCallBarringInfoCommand, getSmsCapabilityCommand,
             getLteCsCapabilityCommand, requestRFBandCapabilityCommand, requestRFBandPrefCommand,
             setRFBandPrefCommand, reqSib16NetworkTimeCommand, reqNr5gRrcUtcTimeCommand,
-            setHplmnSearchTimeCommand, getHplmnSearchTimeCommand, reqRrcStateCommand};
+            setHplmnSearchTimeCommand, getHplmnSearchTimeCommand, reqRrcStateCommand,
+            getVoiceDomainPreferenceCommand, setVoiceDomainPreferenceCommand, getDrxConfigCommand,
+            setDrxConfigCommand, registerListenerCommand, deRegisterListenerCommand,
+            getSystemInfoNotificationFilterCommand, setSystemInfoNotificationFilterCommand,
+            getLteConnectedModeRsrpConfigCommand, setLteConnectedModeRsrpConfigCommand,
+            getLteIdleModeRsrpConfigCommand, setLteIdleModeRsrpConfigCommand};
 
         if (servingSystemMgrs_.size() > 1) {
             commandsListNetworkSubMenu.emplace_back(selectSimSlotCommand);
@@ -322,6 +386,95 @@ void ServingSystemMenu::setServiceDomainPreference(std::vector<std::string> user
             std::cout << "\nSet service domain preference request sent successfully\n";
         } else {
             std::cout << "\nSet service domain preference request failed \n";
+        }
+    }
+}
+
+void ServingSystemMenu::getVoiceDomainPreference(std::vector<std::string> userInput) {
+    auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+    if (servingSystemMgr) {
+        telux::tel::VoiceDomainPreference preference = telux::tel::VoiceDomainPreference::UNKNOWN;
+        auto error = servingSystemMgr->getVoiceDomainPreference(preference);
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "\n getVoiceDomainPreference is successful.\n Voice domain is "
+                      << MyServingSystemHelper::getVoiceDomainPref(preference) << std::endl;
+        } else {
+            std::cout
+                << "\n getVoiceDomainPreference failed, ErrorCode: " << static_cast<int>(error)
+                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        }
+    }
+}
+
+void ServingSystemMenu::setVoiceDomainPreference(std::vector<std::string> userInput) {
+    auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+    if (servingSystemMgr) {
+        std::string voiceDomain;
+        char delimiter = '\n';
+        int opt        = -1;
+        std::cout << "Enter voice domain preference: (0 - CS_ONLY, 1 - PS_ONLY, 2 - CS_PREF, "
+                     "3 - PS_PREF): ";
+        std::getline(std::cin, voiceDomain, delimiter);
+        if (!voiceDomain.empty()) {
+            try {
+                opt = std::stoi(voiceDomain);
+            } catch (const std::exception &e) {
+                std::cout << "ERROR: invalid input " << opt << std::endl;
+            }
+        } else {
+            std::cout << "Voice domain should not be empty";
+        }
+        telux::tel::VoiceDomainPreference voicePref
+            = static_cast<telux::tel::VoiceDomainPreference>(opt);
+        auto error = servingSystemMgr->setVoiceDomainPreference(voicePref);
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "\n setVoiceDomainPreference is successful \n" << std::endl;
+        } else {
+            std::cout
+                << "\n setVoiceDomainPreference failed, ErrorCode: " << static_cast<int>(error)
+                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        }
+    }
+}
+
+void ServingSystemMenu::getDrxConfig(std::vector<std::string> userInput) {
+    auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+    if (servingSystemMgr) {
+        telux::tel::DrxConfig config = telux::tel::DrxConfig::UNKNOWN;
+        auto error                   = servingSystemMgr->getDrxConfig(config);
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "\n getDrxConfig is successful.\n DRX cycle is "
+                      << MyServingSystemHelper::getDrxConfig(config) << std::endl;
+        } else {
+            std::cout << "\n getDrxConfig failed, ErrorCode: " << static_cast<int>(error)
+                      << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        }
+    }
+}
+
+void ServingSystemMenu::setDrxConfig(std::vector<std::string> userInput) {
+    auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+    if (servingSystemMgr) {
+        std::string drxCycle;
+        int opt = -1;
+        std::cout << "Enter DRX cycle: (6 - 320ms, 7 - 640ms, 8 - 1280ms, 9 - 2560ms): ";
+        std::cin >> drxCycle;
+        if (!drxCycle.empty()) {
+            try {
+                opt = std::stoi(drxCycle);
+            } catch (const std::exception &e) {
+                std::cout << "ERROR: invalid input " << opt << std::endl;
+            }
+        } else {
+            std::cout << "DRX cycle should not be empty";
+        }
+        telux::tel::DrxConfig config = static_cast<telux::tel::DrxConfig>(opt);
+        auto error                   = servingSystemMgr->setDrxConfig(config);
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "\n setDrxConfig is successful \n" << std::endl;
+        } else {
+            std::cout << "\n setDrxConfig failed, ErrorCode: " << static_cast<int>(error)
+                      << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
         }
     }
 }
@@ -716,6 +869,166 @@ void ServingSystemMenu::setRFBandPref(std::vector<std::string> userInput) {
     }
 }
 
+void ServingSystemMenu::getLteConnectedModeRsrpConfig(std::vector<std::string> userInput) {
+    auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+    if (servingSystemMgr) {
+        telux::tel::LteConnectedModeConfig config = {};
+        auto ret = servingSystemMgr->getLteConnectedModeRsrpConfig(config);
+        if (ret == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "\n getLteConnectedModeRsrpConfig is successful.\n"
+                      << " callType: " << static_cast<int>(config.callType)
+                      << ", rsrqThreshold: " << config.rsrqThreshold
+                      << ", rsrpOffset: " << config.rsrpOffset << std::endl;
+        } else {
+            std::cout << "\nGet LTE connected-mode RSRP config failed \n";
+        }
+    } else {
+        std::cout << "ERROR - ServingSystemManger is null \n";
+    }
+}
+
+void ServingSystemMenu::setLteConnectedModeRsrpConfig(std::vector<std::string> userInput) {
+    auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+    if (servingSystemMgr) {
+        std::string tempStr                       = "";
+        char delimiter                            = '\n';
+        telux::tel::LteConnectedModeConfig config = {};
+
+        std::cout << "Enter RSRP event offset type "
+                     "(0-NONE/1-ALL_LTE_CALL/2-VOLTE_CALL): ";
+        std::getline(std::cin, tempStr, delimiter);
+        try {
+            config.callType = static_cast<telux::tel::LteCallType>(std::stoi(tempStr));
+        } catch (const std::exception &e) {
+            std::cout << "ERROR::Invalid input, please enter a numerical value \n";
+            return;
+        }
+
+        std::cout << "Enter RSRQ threshold (dB): ";
+        std::getline(std::cin, tempStr, delimiter);
+        try {
+            config.rsrqThreshold = std::stoi(tempStr);
+        } catch (const std::exception &e) {
+            std::cout << "ERROR::Invalid input, please enter a numerical value \n";
+            return;
+        }
+
+        std::cout << "Enter RSRP offset value (dB): ";
+        std::getline(std::cin, tempStr, delimiter);
+        try {
+            config.rsrpOffset = std::stoi(tempStr);
+        } catch (const std::exception &e) {
+            std::cout << "ERROR::Invalid input, please enter a numerical value \n";
+            return;
+        }
+
+        auto ret = servingSystemMgr->setLteConnectedModeRsrpConfig(config);
+        if (ret == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "\nSet LTE connected-mode RSRP config is successful\n";
+        } else {
+            std::cout << "\nSet LTE connected-mode RSRP config failed \n";
+        }
+    } else {
+        std::cout << "ERROR - ServingSystemManger is null \n";
+    }
+}
+
+void ServingSystemMenu::getLteIdleModeRsrpConfig(std::vector<std::string> userInput) {
+    auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+    if (servingSystemMgr) {
+        telux::tel::LteIdleModeConfig config = {};
+        auto ret                             = servingSystemMgr->getLteIdleModeRsrpConfig(config);
+        if (ret == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "\n getLteIdleModeRsrpConfig is successful.\n"
+                      << " enabled: " << config.enabled
+                      << ", rsrqThreshold: " << static_cast<int>(config.rsrqThreshold)
+                      << ", hysteresisDelta: " << static_cast<int>(config.hysteresisDelta)
+                      << ", rsrpOffset: " << static_cast<int>(config.rsrpOffset)
+                      << ", numSamples: [";
+            for (auto &s : config.numSamples) {
+                std::cout << static_cast<int>(s) << " ";
+            }
+            std::cout << "]" << std::endl;
+        } else {
+            std::cout << "\nGet LTE idle-mode RSRP config failed \n";
+        }
+    } else {
+        std::cout << "ERROR - ServingSystemManger is null \n";
+    }
+}
+
+void ServingSystemMenu::setLteIdleModeRsrpConfig(std::vector<std::string> userInput) {
+    auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+    if (servingSystemMgr) {
+        std::string tempStr                  = "";
+        char delimiter                       = '\n';
+        telux::tel::LteIdleModeConfig config = {};
+
+        std::cout << "Enable idle-mode RSRP offset optimization? (1-True/0-False): ";
+        std::getline(std::cin, tempStr, delimiter);
+        try {
+            config.enabled = static_cast<bool>(std::stoi(tempStr));
+        } catch (const std::exception &e) {
+            std::cout << "ERROR::Invalid input, please enter a numerical value \n";
+            return;
+        }
+
+        std::cout << "Enter RSRQ threshold (dB): ";
+        std::getline(std::cin, tempStr, delimiter);
+        try {
+            config.rsrqThreshold = static_cast<int8_t>(std::stoi(tempStr));
+        } catch (const std::exception &e) {
+            std::cout << "ERROR::Invalid input, please enter a numerical value \n";
+            return;
+        }
+
+        std::cout << "Enter hysteresis delta (dB): ";
+        std::getline(std::cin, tempStr, delimiter);
+        try {
+            config.hysteresisDelta = static_cast<uint8_t>(std::stoi(tempStr));
+        } catch (const std::exception &e) {
+            std::cout << "ERROR::Invalid input, please enter a numerical value \n";
+            return;
+        }
+
+        std::cout << "Enter RSRP offset (dB): ";
+        std::getline(std::cin, tempStr, delimiter);
+        try {
+            config.rsrpOffset = static_cast<uint8_t>(std::stoi(tempStr));
+        } catch (const std::exception &e) {
+            std::cout << "ERROR::Invalid input, please enter a numerical value \n";
+            return;
+        }
+
+        std::cout << "Enter " << config.numSamples.size()
+                  << " RSRQ filter sample counts, comma-separated (one per DRX cycle length - "
+                     "320/640/1280/2560 ms), e.g. 20,10,5,3: ";
+        std::getline(std::cin, tempStr, delimiter);
+        std::stringstream ss(tempStr);
+        int value  = 0;
+        size_t idx = 0;
+        while (ss >> value && idx < config.numSamples.size()) {
+            config.numSamples[idx++] = static_cast<uint8_t>(value);
+            if (ss.peek() == ',' || ss.peek() == ' ') {
+                ss.ignore();
+            }
+        }
+        if (idx != config.numSamples.size()) {
+            std::cout << "ERROR::Expected " << config.numSamples.size() << " sample counts \n";
+            return;
+        }
+
+        auto ret = servingSystemMgr->setLteIdleModeRsrpConfig(config);
+        if (ret == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "\nSet LTE idle-mode RSRP config is successful\n";
+        } else {
+            std::cout << "\nSet LTE idle-mode RSRP config failed \n";
+        }
+    } else {
+        std::cout << "ERROR - ServingSystemManger is null \n";
+    }
+}
+
 void ServingSystemMenu::requestLteSib16NetworkTimeInfo(std::vector<std::string> userInput) {
     auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
     if (servingSystemMgr) {
@@ -802,5 +1115,188 @@ void ServingSystemMenu::requestRrcState(std::vector<std::string> userInput) {
         }
     } else {
         std::cout << "\nGet RRC state failed due to ServingSystem manager instance is null\n";
+    }
+}
+
+void ServingSystemMenu::registerListener(std::vector<std::string> inputCommand) {
+    std::cout << " register serving system listener " << std::endl;
+    auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+    if (!servingSystemMgr) {
+        std::cout << "ERROR - ServingSystemManager is null\n";
+        return;
+    }
+    std::string maskSelection = "";
+    char delimiter            = '\n';
+    std::cout << "Enter notification type bits to register, comma-separated:\n"
+                 " 0=SYSTEM_INFO\n"
+                 " 1=RF_BAND_INFO\n"
+                 " 2=NETWORK_REJ_INFO\n"
+                 " 3=LTE_SIB16_NETWORK_TIME\n"
+                 " 4=NR5G_RRC_UTC_TIME\n"
+                 " 5=ARFCN_INFO\n"
+                 "Enter selection, or leave blank to register all notifications: ";
+    std::getline(std::cin, maskSelection, delimiter);
+    telux::tel::ServingSystemNotificationMask mask;
+    if (maskSelection.empty()) {
+        mask = telux::tel::IServingSystemManager::ALL_NOTIFICATIONS;
+        std::cout << " No selection made, registering all notifications\n";
+    } else {
+        std::stringstream ss(maskSelection);
+        std::string token;
+        try {
+            while (std::getline(ss, token, ',')) {
+                int bit = std::stoi(token);
+                if (bit >= static_cast<int>(telux::tel::ServingSystemNotificationType::SYSTEM_INFO)
+                    && bit <= static_cast<int>(
+                           telux::tel::ServingSystemNotificationType::ARFCN_INFO)) {
+                    mask.set(bit);
+                } else {
+                    std::cout << "WARNING: bit value " << bit << " is out of range, ignoring.\n";
+                }
+            }
+        } catch (const std::exception &e) {
+            std::cout << "ERROR::Invalid input, please enter numerical values \n";
+            return;
+        }
+    }
+    auto status = servingSystemMgr->registerListener(servingSystemListener_, mask);
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "Failed to registerListener for Serving system Manager\n";
+    } else {
+        std::cout << "Successfully registered listener with mask: " << mask.to_string() << "\n";
+    }
+}
+
+void ServingSystemMenu::deregisterListener(std::vector<std::string> inputCommand) {
+    std::cout << " deregister serving system listener " << std::endl;
+    auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+    if (!servingSystemMgr) {
+        std::cout << "ERROR - ServingSystemManager is null\n";
+        return;
+    }
+    std::string maskSelection = "";
+    char delimiter            = '\n';
+    std::cout << "Enter notification type bits to deregister, comma-separated:\n"
+                 " 0=SYSTEM_INFO\n"
+                 " 1=RF_BAND_INFO\n"
+                 " 2=NETWORK_REJ_INFO\n"
+                 " 3=LTE_SIB16_NETWORK_TIME\n"
+                 " 4=NR5G_RRC_UTC_TIME\n"
+                 " 5=ARFCN_INFO\n"
+                 "Enter selection, or leave blank to deregister all notifications: ";
+    std::getline(std::cin, maskSelection, delimiter);
+    telux::tel::ServingSystemNotificationMask mask;
+    if (maskSelection.empty()) {
+        mask = telux::tel::IServingSystemManager::ALL_NOTIFICATIONS;
+        std::cout << " No selection made, deregistering all notifications\n";
+    } else {
+        std::stringstream ss(maskSelection);
+        std::string token;
+        try {
+            while (std::getline(ss, token, ',')) {
+                int bit = std::stoi(token);
+                if (bit >= static_cast<int>(telux::tel::ServingSystemNotificationType::SYSTEM_INFO)
+                    && bit <= static_cast<int>(
+                           telux::tel::ServingSystemNotificationType::ARFCN_INFO)) {
+                    mask.set(bit);
+                } else {
+                    std::cout << "WARNING: bit value " << bit << " is out of range, ignoring.\n";
+                }
+            }
+        } catch (const std::exception &e) {
+            std::cout << "ERROR::Invalid input, please enter numerical values \n";
+            return;
+        }
+    }
+    auto status = servingSystemMgr->deregisterListener(servingSystemListener_, mask);
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "Failed to deregisterListener for Serving system Manager\n";
+    } else {
+        std::cout << "Successfully deregistered listener with mask: " << mask.to_string() << "\n";
+    }
+}
+
+void ServingSystemMenu::setSystemInfoNotificationFilter(std::vector<std::string> userInput) {
+    auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+    if (servingSystemMgr) {
+        std::string filterSelection = "";
+        char delimiter              = '\n';
+
+        std::cout << "Enter filter bits to enable, comma-separated:\n"
+                     " 0=SRV_STATUS\n"
+                     " 1=SRV_DOMAIN\n"
+                     " 2=CS_BAR_STATUS\n"
+                     " 3=PS_BAR_STATUS\n"
+                     " 4=LTE_SMS_STATUS\n"
+                     " 5=SRV_STATUS_TOGGLE\n"
+                     "Enter selection, or leave blank to reset/clear the filter"
+                     " (reports all system information changes): ";
+        std::getline(std::cin, filterSelection, delimiter);
+
+        telux::tel::SystemInfoNotificationFilterMask mask;
+        if (filterSelection.empty()) {
+            std::cout << " Filter selection is empty, resetting filter \n";
+        } else {
+            std::stringstream ss(filterSelection);
+            std::string token;
+            try {
+                while (std::getline(ss, token, ',')) {
+                    int bit = std::stoi(token);
+                    if (bit >= telux::tel::SystemInfoNotificationFilter::SRV_STATUS
+                        && bit <= telux::tel::SystemInfoNotificationFilter::SRV_STATUS_TOGGLE) {
+                        mask.set(bit);
+                    } else {
+                        std::cout << "WARNING: bit value " << bit
+                                  << " is out of range, ignoring.\n";
+                    }
+                }
+            } catch (const std::exception &e) {
+                std::cout << "ERROR::Invalid input, please enter numerical values \n";
+                return;
+            }
+        }
+
+        auto error = servingSystemMgr->setSystemInfoNotificationFilter(mask);
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "\n setSystemInfoNotificationFilter is successful \n" << std::endl;
+        } else {
+            std::cout
+                << "\n setSystemInfoNotificationFilter failed, error: " << static_cast<int>(error)
+                << std::endl;
+        }
+    } else {
+        std::cout << "ERROR - ServingSystemManger is null \n";
+    }
+}
+
+void ServingSystemMenu::getSystemInfoNotificationFilter(std::vector<std::string> userInput) {
+    auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+    if (servingSystemMgr) {
+        telux::tel::SystemInfoNotificationFilterMask mask;
+        auto error = servingSystemMgr->getSystemInfoNotificationFilter(mask);
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            std::cout
+                << "\n getSystemInfoNotificationFilter is successful, mask: " << mask.to_string()
+                << std::endl;
+            std::cout << " SRV_STATUS: "
+                      << mask.test(telux::tel::SystemInfoNotificationFilter::SRV_STATUS)
+                      << "\n SRV_DOMAIN: "
+                      << mask.test(telux::tel::SystemInfoNotificationFilter::SRV_DOMAIN)
+                      << "\n CS_BAR_STATUS: "
+                      << mask.test(telux::tel::SystemInfoNotificationFilter::CS_BAR_STATUS)
+                      << "\n PS_BAR_STATUS: "
+                      << mask.test(telux::tel::SystemInfoNotificationFilter::PS_BAR_STATUS)
+                      << "\n LTE_SMS_STATUS: "
+                      << mask.test(telux::tel::SystemInfoNotificationFilter::LTE_SMS_STATUS)
+                      << "\n SRV_STATUS_TOGGLE: "
+                      << mask.test(telux::tel::SystemInfoNotificationFilter::SRV_STATUS_TOGGLE)
+                      << std::endl;
+        } else {
+            std::cout
+                << "\n getSystemInfoNotificationFilter failed, error: " << static_cast<int>(error)
+                << std::endl;
+        }
+    } else {
+        std::cout << "ERROR - ServingSystemManger is null \n";
     }
 }

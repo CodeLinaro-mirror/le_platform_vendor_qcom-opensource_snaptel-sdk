@@ -126,6 +126,12 @@ enum class RFBand {
     E_UTRA_OPERATING_BAND_87  = 177,
     E_UTRA_OPERATING_BAND_88  = 178,
     E_UTRA_OPERATING_BAND_70  = 179,
+    E_UTRA_OPERATING_BAND_44  = 180,
+    E_UTRA_OPERATING_BAND_256 = 181,
+    E_UTRA_OPERATING_BAND_106 = 182,
+    E_UTRA_OPERATING_BAND_255 = 183,
+    E_UTRA_OPERATING_BAND_253 = 184,
+    E_UTRA_OPERATING_BAND_252 = 185,
     TDSCDMA_BAND_A            = 200,
     TDSCDMA_BAND_B            = 201,
     TDSCDMA_BAND_C            = 202,
@@ -183,7 +189,24 @@ enum class RFBand {
     NR5G_BAND_91              = 298,
     NR5G_BAND_92              = 299,
     NR5G_BAND_93              = 300,
-    NR5G_BAND_94              = 301
+    NR5G_BAND_94              = 301,
+    NR5G_BAND_96              = 302,
+    NR5G_BAND_106             = 303,
+    NR5G_BAND_67              = 304,
+    NR5G_BAND_68              = 305,
+    NR5G_BAND_89              = 306,
+    NR5G_BAND_95              = 307,
+    NR5G_BAND_97              = 308,
+    NR5G_BAND_98              = 309,
+    NR5G_BAND_99              = 310,
+    NR5G_BAND_104             = 311,
+    NR5G_BAND_47              = 312,
+    NR5G_BAND_102             = 313,
+    NR5G_BAND_105             = 314,
+    NR5G_BAND_100             = 315,
+    NR5G_BAND_101             = 316,
+    NR5G_BAND_31              = 317,
+    NR5G_BAND_72              = 318
 };
 
 /**
@@ -441,6 +464,57 @@ enum class Nr5gRrcState {
     CONNECTED, /**< The UE has an active RRC connection with the gNB (5G base station). */
     INACTIVE_CAMPED /**< The UE is in RRC Inactive mode and is camped on a 5G cell. */
 };
+
+/**
+ * Defines the system information attributes that may be selected through
+ * @ref SystemInfoNotificationFilterMask to control
+ * @ref IServingSystemListener::onSystemInfoChanged,
+ * @ref IServingSystemListener::onCallBarringInfoChanged and
+ * @ref IServingSystemListener::onSmsCapabilityChanged notifications.
+ */
+enum SystemInfoNotificationFilter {
+    SRV_STATUS, /**< Service status or registration state changes. Notifications are
+                     delivered through @ref IServingSystemListener::onSystemInfoChanged.
+                     1. Within the same RAT:
+                        Reports whenever the service status changes from one state to
+                        a different state (NO_SERVICE, LIMITED_SERVICE, IN_SERVICE,
+                        LIMITED_REGIONAL, or POWER_SAVE).
+                     2. Across different RATs:
+                        Reports all service status transitions, including transitions
+                        where the service status remains the same but the RAT changes. */
+    SRV_DOMAIN, /**< Service domain changes, i.e., transitions between NO_SERVICE,
+                     CS_ONLY, PS_ONLY, and CS_PS registration domains. Notifications are
+                     delivered through @ref IServingSystemListener::onSystemInfoChanged. */
+    CS_BAR_STATUS, /**< Circuit-switched (CS) call barring status changes, i.e.,
+                        when CS call barring information changed on the serving cell.
+                        Notifications are delivered through @ref
+                        IServingSystemListener::onCallBarringInfoChanged. This is applicable for
+                        GSM and WCDMA RATs only. */
+    PS_BAR_STATUS, /**< Packet-switched (PS) call barring status changes, i.e.,
+                        when PS call barring information changed on the serving cell.
+                        Notifications are delivered through @ref
+                        IServingSystemListener::onCallBarringInfoChanged. This is applicable for
+                        GSM and WCDMA RATs only.*/
+    LTE_SMS_STATUS, /**< LTE SMS service status changes, i.e., availability of SMS
+                         service while registered on LTE. Notifications are delivered
+                         through @ref IServingSystemListener::onSmsCapabilityChanged. */
+    SRV_STATUS_TOGGLE, /**< In-service to out-of-service status transitions and vice-versa.
+                            Notifications are  delivered through @ref
+                            IServingSystemListener::onSystemInfoChanged.
+                            i.e., NO_SERVICE/LIMITED_SERVICE/POWER_SAVE -> IN_SERVICE and
+                            IN_SERVICE -> NO_SERVICE/LIMITED_SERVICE/POWER_SAVE. */
+};
+
+/**
+ * 64-bit mask specifying the system information attributes, defined in @ref
+ * SystemInfoNotificationFilter, that trigger @ref IServingSystemListener::onSystemInfoChanged,
+ * @ref IServingSystemListener::onCallBarringInfoChanged and @ref
+ * IServingSystemListener::onSmsCapabilityChanged notifications.
+ *
+ * Only changes to selected attributes generate notifications. An empty mask disables filtering
+ * and reports all system information changes.
+ */
+using SystemInfoNotificationFilterMask = std::bitset<64>;
 
 /** @} */ /* end_addtogroup telematics_serving_system */
 }  // namespace tel

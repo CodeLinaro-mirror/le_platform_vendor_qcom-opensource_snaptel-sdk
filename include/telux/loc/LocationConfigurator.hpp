@@ -126,6 +126,17 @@ class ILocationConfigurator {
     using GetXtraStatusCallback = std::function<void(
         const telux::loc::XtraStatus xtraStatus, telux::common::ErrorCode error)>;
 
+    /** This function is called with the response to requestNavMsgAuthStatus API.
+     *
+     * @param[in] status - Navigation message authentication status for the requested constellation.
+     *
+     * @param[in] error - Return code which indicates whether the operation succeeded
+     *                    or not.
+     *
+     */
+    using GetNavMsgAuthStatusCallback = std::function<void(
+        const telux::loc::NavMsgAuthStatus status, telux::common::ErrorCode error)>;
+
     /**
      * Checks the status of location configuration subsystems and returns the result.
      *
@@ -768,6 +779,21 @@ class ILocationConfigurator {
      */
 
     virtual telux::common::Status requestXtraStatus(GetXtraStatusCallback callback) = 0;
+
+    /**
+     * This API is used to query the navigation message authentication status for a GNSS
+     * constellation, e.g. Galileo OS-NMA.
+     *
+     * @param [in] constellation - GNSS constellation to query the navigation message authentication
+     *                             status for.
+     *
+     * @param [in] callback - Callback to get the navigation message authentication status.
+     *
+     */
+
+    virtual telux::common::Status requestNavMsgAuthStatus(
+        GnssConstellationType constellation, GetNavMsgAuthStatusCallback callback)
+        = 0;
 
     /**
      * This API is used to register a configuration listener for getting specific

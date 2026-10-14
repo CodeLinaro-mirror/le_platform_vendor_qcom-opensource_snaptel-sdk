@@ -62,6 +62,10 @@ class ServingSystemMenu : public ConsoleApp {
     void setRatModePreference(std::vector<std::string> userInput);
     void getServiceDomainPreference(std::vector<std::string> userInput);
     void setServiceDomainPreference(std::vector<std::string> userInput);
+    void getVoiceDomainPreference(std::vector<std::string> userInput);
+    void setVoiceDomainPreference(std::vector<std::string> userInput);
+    void getDrxConfig(std::vector<std::string> userInput);
+    void setDrxConfig(std::vector<std::string> userInput);
     void selectSimSlot(std::vector<std::string> userInput);
     void getDualConnectivityStatus(std::vector<std::string> userInput);
     void getSystemInfo(std::vector<std::string> userInput);
@@ -76,9 +80,17 @@ class ServingSystemMenu : public ConsoleApp {
     void requestRFBandCapability(std::vector<std::string> userInput);
     void requestRFBandPref(std::vector<std::string> userInput);
     void setRFBandPref(std::vector<std::string> userInput);
+    void getLteConnectedModeRsrpConfig(std::vector<std::string> userInput);
+    void setLteConnectedModeRsrpConfig(std::vector<std::string> userInput);
+    void getLteIdleModeRsrpConfig(std::vector<std::string> userInput);
+    void setLteIdleModeRsrpConfig(std::vector<std::string> userInput);
     void setHplmnSearchTime(std::vector<std::string> userInput);
     void getHplmnSearchTime(std::vector<std::string> userInput);
     void requestRrcState(std::vector<std::string> userInput);
+    void registerListener(std::vector<std::string> userInput);
+    void deregisterListener(std::vector<std::string> userInput);
+    void getSystemInfoNotificationFilter(std::vector<std::string> userInput);
+    void setSystemInfoNotificationFilter(std::vector<std::string> userInput);
 
  private:
     // Member variable to keep the Listener object alive till application ends.

@@ -68,7 +68,15 @@ grpc::Status NatServerImpl::AddStaticNatEntry(ServerContext *context,
         data.error = telux::common::ErrorCode::INVALID_OPERATION;
     }
 
-    if ((!DataUtilsStub::isValidIpv4Address(request->static_nat_entry().nat_config().address()))
+    // Static NAT is not supported for WLAN backhaul in the target implementation.
+    if ((data.error == telux::common::ErrorCode::SUCCESS)
+        && (request->static_nat_entry().backhaul_type()
+            == ::dataStub::BackhaulPreference::PREF_WLAN)) {
+        data.error = telux::common::ErrorCode::NOT_SUPPORTED;
+    }
+
+    if ((data.error != telux::common::ErrorCode::NOT_SUPPORTED)
+        && (!DataUtilsStub::isValidIpv4Address(request->static_nat_entry().nat_config().address()))
         && (!DataUtilsStub::isValidIpv6Address(
             request->static_nat_entry().nat_config().address()))) {
 
@@ -76,7 +84,8 @@ grpc::Status NatServerImpl::AddStaticNatEntry(ServerContext *context,
         data.error = telux::common::ErrorCode::INTERNAL;
     }
 
-    if (!telux::data::DataHelper::isValidProtocol(DataUtilsStub::stringToProtocol(
+    if ((data.error != telux::common::ErrorCode::NOT_SUPPORTED)
+        && !telux::data::DataHelper::isValidProtocol(DataUtilsStub::stringToProtocol(
             request->static_nat_entry().nat_config().ip_protocol()))) {
         LOG(ERROR, __FUNCTION__, " unexpected protocol");
         data.error = telux::common::ErrorCode::INTERNAL;
@@ -146,7 +155,15 @@ grpc::Status NatServerImpl::RemoveStaticNatEntry(ServerContext *context,
         data.error = telux::common::ErrorCode::INVALID_OPERATION;
     }
 
-    if ((!DataUtilsStub::isValidIpv4Address(request->static_nat_entry().nat_config().address()))
+    // Static NAT is not supported for WLAN backhaul in the target implementation.
+    if ((data.error == telux::common::ErrorCode::SUCCESS)
+        && (request->static_nat_entry().backhaul_type()
+            == ::dataStub::BackhaulPreference::PREF_WLAN)) {
+        data.error = telux::common::ErrorCode::NOT_SUPPORTED;
+    }
+
+    if ((data.error != telux::common::ErrorCode::NOT_SUPPORTED)
+        && (!DataUtilsStub::isValidIpv4Address(request->static_nat_entry().nat_config().address()))
         && (!DataUtilsStub::isValidIpv6Address(
             request->static_nat_entry().nat_config().address()))) {
 
@@ -154,7 +171,8 @@ grpc::Status NatServerImpl::RemoveStaticNatEntry(ServerContext *context,
         data.error = telux::common::ErrorCode::INTERNAL;
     }
 
-    if (!telux::data::DataHelper::isValidProtocol(DataUtilsStub::stringToProtocol(
+    if ((data.error != telux::common::ErrorCode::NOT_SUPPORTED)
+        && !telux::data::DataHelper::isValidProtocol(DataUtilsStub::stringToProtocol(
             request->static_nat_entry().nat_config().ip_protocol()))) {
         LOG(ERROR, __FUNCTION__, " unexpected protocol");
         data.error = telux::common::ErrorCode::INTERNAL;
@@ -221,6 +239,12 @@ grpc::Status NatServerImpl::RequestStaticNatEntries(ServerContext *context,
 
     if (request->operation_type() == REMOTE) {
         data.error = telux::common::ErrorCode::INVALID_OPERATION;
+    }
+
+    // Static NAT is not supported for WLAN backhaul in the target implementation.
+    if ((data.error == telux::common::ErrorCode::SUCCESS)
+        && (request->backhaul_type() == ::dataStub::BackhaulPreference::PREF_WLAN)) {
+        data.error = telux::common::ErrorCode::NOT_SUPPORTED;
     }
 
     if (data.status == telux::common::Status::SUCCESS

@@ -126,6 +126,9 @@ void ServingSystemListener::onNrIconTypeChanged(telux::data::NrIconType type) {
         case telux::data::NrIconType::UWB:
             std::cout << "Ultrawide Band" << std::endl;
             break;
+        case telux::data::NrIconType::PLUS_PLUS:
+            std::cout << "5G++" << std::endl;
+            break;
         default:
             std::cout << "Unknown" << std::endl;
             break;

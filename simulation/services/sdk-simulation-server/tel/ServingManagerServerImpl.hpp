@@ -44,6 +44,16 @@ class ServingManagerServerImpl final
     grpc::Status SetServiceDomainPreference(ServerContext *context,
         const ::telStub::SetServiceDomainPreferenceRequest *request,
         telStub::SetServiceDomainPreferenceReply *response) override;
+    grpc::Status GetVoiceDomainPreference(ServerContext *context,
+        const ::telStub::GetVoiceDomainPreferenceRequest *request,
+        telStub::GetVoiceDomainPreferenceReply *response) override;
+    grpc::Status SetVoiceDomainPreference(ServerContext *context,
+        const ::telStub::SetVoiceDomainPreferenceRequest *request,
+        telStub::SetVoiceDomainPreferenceReply *response) override;
+    grpc::Status GetDrxConfig(ServerContext *context, const ::telStub::GetDrxConfigRequest *request,
+        telStub::GetDrxConfigReply *response) override;
+    grpc::Status SetDrxConfig(ServerContext *context, const ::telStub::SetDrxConfigRequest *request,
+        telStub::SetDrxConfigReply *response) override;
     grpc::Status GetSystemInfo(ServerContext *context,
         const ::telStub::GetSystemInfoRequest *request,
         telStub::GetSystemInfoReply *response) override;
@@ -73,6 +83,18 @@ class ServingManagerServerImpl final
     grpc::Status SetRFBandPreferences(ServerContext *context,
         const ::telStub::SetRFBandPreferencesRequest *request,
         telStub::SetRFBandPreferencesReply *response) override;
+    grpc::Status RequestLteMl1ConnectedModeConfig(ServerContext *context,
+        const ::telStub::RequestLteMl1ConnectedModeConfigRequest *request,
+        telStub::RequestLteMl1ConnectedModeConfigReply *response) override;
+    grpc::Status SetLteMl1ConnectedModeConfig(ServerContext *context,
+        const ::telStub::SetLteMl1ConnectedModeConfigRequest *request,
+        telStub::SetLteMl1ConnectedModeConfigReply *response) override;
+    grpc::Status RequestLteMl1IdleModeConfig(ServerContext *context,
+        const ::telStub::RequestLteMl1IdleModeConfigRequest *request,
+        telStub::RequestLteMl1IdleModeConfigReply *response) override;
+    grpc::Status SetLteMl1IdleModeConfig(ServerContext *context,
+        const ::telStub::SetLteMl1IdleModeConfigRequest *request,
+        telStub::SetLteMl1IdleModeConfigReply *response) override;
     grpc::Status RequestRFBandCapability(ServerContext *context,
         const ::telStub::RequestRFBandCapabilityRequest *request,
         telStub::RequestRFBandCapabilityReply *response) override;

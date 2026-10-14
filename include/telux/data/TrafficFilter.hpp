@@ -47,6 +47,8 @@ enum TrafficFilterValidField {
     TF_DESTINATION_PORT_RANGE_VALID   = (1 << 13),
     TF_SOURCE_PORT_CONFIG_VALID       = (1 << 14),
     TF_DESTINATION_PORT_CONFIG_VALID  = (1 << 15),
+    TF_DSCP_VALID                     = (1 << 16),
+    TF_DSCP_MARK_VALID                = (1 << 17),
 };
 
 /**
@@ -93,13 +95,6 @@ enum class FieldType {
  *       - Client-2: Location: Tethered client-2, port range = 1-10
  *       - PortConfig = {port = 1, range = 10, maxActiveConnections = 15}
  *       - Explanation: If both clients together use 15 ports at the same time.
- *
- *  Case-3:
- *       - Client-1: Location: Apps processor, port range = 1-10
- *       - Client-2: Location: Tethered client-1, port range = 1-10
- *       - Client-3: Location: Tethered client-2, port range = 1-10
- *       - PortConfig = {port = 1, range = 10, maxActiveConnections = 30}
- *       - Explanation: If all three clients use all the ports 1-10 at the same time.
  *
  *  Case-3:
  *       - Client-1: Location: Apps processor, port range = 1-10
@@ -258,6 +253,38 @@ class ITrafficFilter {
     virtual std::string toString() = 0;
 
     /**
+     * @brief Returns the DSCP (Differentiated Services Code Point) value used to match traffic.
+     *
+     * Valid only when @ref TrafficFilterValidField::TF_DSCP_VALID is set in
+     * @ref getTrafficFilterValidFields.
+     *
+     * @return DSCP value as a uint32_t.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to
+     * change and could break backwards compatibility.
+     */
+    virtual uint32_t getDscp() = 0;
+
+    /**
+     * @brief Returns the DSCP value that matching traffic is remarked to.
+     *
+     * The DSCP mark value is applied as an action after traffic matches the filter:
+     * - An UPLINK filter is added to the modem. Matching traffic is remarked to this DSCP
+     *   value before it is transmitted over the air.
+     * - For a DOWNLINK filter, matching traffic is remarked to this DSCP value before it is
+     *   delivered to the client.
+     *
+     * Valid only when @ref TrafficFilterValidField::TF_DSCP_MARK_VALID is set in
+     * @ref getTrafficFilterValidFields.
+     *
+     * @return DSCP mark value as a uint32_t.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to
+     * change and could break backwards compatibility.
+     */
+    virtual uint32_t getDscpMark() = 0;
+
+    /**
      * Destructor for ITrafficFilter
      */
     virtual ~ITrafficFilter() {
@@ -411,6 +438,38 @@ class TrafficFilterBuilder {
      * change and could break backwards compatibility.
      */
     TrafficFilterBuilder &setVlanList(std::vector<int> vlanList, FieldType fieldType);
+
+    /**
+     * @brief Sets the DSCP (Differentiated Services Code Point) value used to match traffic.
+     *
+     * The DSCP value specified in the traffic filter is used as a packet-matching criterion
+     * against the DSCP field in the IP header. Configuring this value does not result in any
+     * changes to the DSCP value of the transmitted IP packets.
+     *
+     * @param [in] dscp     DSCP value.
+     * @return Reference to this builder for method chaining.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to
+     * change and could break backwards compatibility.
+     */
+    TrafficFilterBuilder &setDscp(uint32_t dscp);
+
+    /**
+     * @brief Sets the DSCP mark value to be applied to traffic matching this filter.
+     *
+     * The DSCP mark value is applied as an action after traffic matches the filter:
+     * - An UPLINK filter is added to the modem. Matching traffic is remarked to this DSCP
+     *   value before it is transmitted over the air.
+     * - For a DOWNLINK filter, matching traffic is remarked to this DSCP value before it is
+     *   delivered to the client.
+     *
+     * @param [in] dscpMark     DSCP mark value.
+     * @return Reference to this builder for method chaining.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to
+     * change and could break backwards compatibility.
+     */
+    TrafficFilterBuilder &setDscpMark(uint32_t dscpMark);
 
  private:
     std::shared_ptr<ITrafficFilter> trafficFilter_;

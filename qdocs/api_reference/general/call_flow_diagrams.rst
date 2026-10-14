@@ -104,6 +104,115 @@ Private eCall:
 17. Optionally, the application gets asynchronous response for hangup using CommandResponseCallback.
 18. CallManager sends call info change i.e Call Ended to the application by using onCallInfoChange callback function.
 
+Accident Emergency Call System (AECS) call flow
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Setting Emergency mode:
+
+1. The application should enable emergency mode using the setEmergencyMode API before initiating an AECS call. Any ongoing call(s) on other phones should be terminated by the modem when emergency mode is enabled, in the case of DSDS or hybrid DSDA mode.
+2. The application should disable emergency mode once the AECS call and MSD transmission are complete.
+
+.. figure:: /../images/set_emergency_mode_for_aecs_call_flow.png
+
+1. The application requests an instance of the CallManager object using PhoneFactory and provides the initialization callback.
+2. The application receives a CallManager instance.
+3. The application checks whether the CallManager subsystem is ready. If it is not ready, it waits until it becomes ready.
+4. The application receives the subsystem initialization callback, which notifies the subsystem initialization status.
+5. The application registers a listener with CallManager to receive call-info change notifications such as DIALING, ALERTING, ACTIVE, etc.
+6. The application receives a status such as SUCCESS or FAILED, based on the listener registration with CallManager.
+7. The application should enable Emergency Mode using the setEmergencyMode API before initiating or answering an AECS call. On single-SIM devices, this tells the modem to treat the next call as an emergency/AECS call, allowing it to bypass normal restrictions. On DSDS or hybrid DSDA multi-SIM devices, any ongoing call(s) on other phones will be terminated by the modem when Emergency Mode is activated. Antenna switching is platform-dependent. Ensure the platform supports antenna switching before enabling it.
+8. The application receives a status such as SUCCESS or FAILED, based on the execution of the setEmergencyMode API.
+9. Optionally, the application receives an asynchronous response for the setEmergencyMode API.
+10. Once Emergency Mode is enabled successfully, the application can dial an AECS call, answer an incoming AECS call, or send an MSD over HTTP or SMS. Once the AECS call and/or MSD transmission is complete, the Accident Emergency Call System Platform (AECSP) clears down the call. The application receives listener notifications for call-status changes such as END. CallManager sends a call-info change notification (i.e., call end) to the application using the onCallInfoChange function.
+11. The application should disable Emergency Mode using the setEmergencyMode API.
+12. The application receives a status such as SUCCESS or FAILED, based on the execution of the setEmergencyMode API.
+13. Optionally, the application receives an asynchronous response for the setEmergencyMode API.
+
+Outgoing AECS call:
+
+.. figure:: /../images/aecs_mo_call_flow.png
+
+1. The application requests an instance of the CallManager object using PhoneFactory and provides an initialization callback.
+2. The application receives a CallManager instance.
+3. The application checks whether the CallManager subsystem is ready. If it is not ready, the application waits until it becomes ready.
+4. The application waits for the subsystem initialization callback, which reports the subsystem initialization status.
+5. The application registers a listener with CallManager to receive call-info change notifications such as DIALING, ALERTING, ACTIVE, etc.
+6. The application receives a status such as SUCCESS or FAILED, based on the listener registration result from CallManager.
+7. Before initiating an AECS call, the application must enable Emergency Mode by calling the setEmergencyMode API. On single-SIM devices, this tells the modem to treat the next call as an emergency/AECS call, allowing it to bypass normal restrictions. On DSDS or hybrid DSDA multi-SIM devices, the modem terminates any ongoing calls on other phones when Emergency Mode is activated.
+8. The application receives a status such as SUCCESS or FAILED, based on the execution of the setEmergencyMode API.
+9. Optionally, the application receives an asynchronous response for the setEmergencyMode API.
+10. The application dials an AECS call (i.e., a normal voice call) using the makeAecsCall API and provides a callback to receive an asynchronous response.
+11. The application receives a status such as SUCCESS or FAILED, based on the execution of the makeAecsCall API.
+12. Optionally, the application receives an asynchronous response for makeAecsCall via makeCallResponseCallback.
+13. The application receives listener notifications for call-status changes such as DIALING, ALERTING, and ACTIVE when AECSP accepts the call.
+14. Once the AECS call and MSD transmission are complete, AECSP terminates the call.
+15. The application receives listener notifications for call-status changes such as END. CallManager sends a call-info change notification (i.e., call end) to the application using the onCallInfoChange function.
+16. Once the AECS call is disconnected, the application should disable Emergency Mode using the setEmergencyMode API.
+17. The application receives a status such as SUCCESS or FAILED, based on the execution of the setEmergencyMode API.
+18. Optionally, the application receives an asynchronous response for the setEmergencyMode API.
+
+Outgoing AECS call origination failure:
+
+.. figure:: /../images/aecs_mo_call_fail_call_flow.png
+
+This flow is similar to the outgoing AECS call flow, but it highlights failure-handling scenarios.
+
+Before initiating the AECS call, the application should initialize CallManager, register CallListener, and enable Emergency Mode.
+
+1. The application dials an AECS call (i.e., similar to a normal voice call) using the makeAecsCall API and provides a callback to receive an asynchronous response.
+2. The application receives a status such as SUCCESS or FAILED, based on the execution of the makeAecsCall API.
+3. Optionally, the application receives an asynchronous response for makeAecsCall via makeCallResponseCallback.
+4. The application receives listener notifications for call-state transitions such as DIALING → END.
+5. If the modem supports silent retries, the call state remains in DIALING for up to 45 seconds. When the call ends, the application receives a call status change notification such as END. The application should then query getRedialState() on the ICall instance.
+6. If the redial state transitions to MODEM_RETRY_END, the application must implement additional retry logic for emergency call failure handling as per AECS specification GB-45672-2025 (redial interval ≤ 2 minutes and total duration ≤ 60 minutes).
+7. If the modem does not support silent retries, the call ends immediately. The application receives a call-status change notification such as END, and should query getCallEndCause(). The application should retry based on the call end reason (i.e., except NORMAL, CLIENT_END, and RADIO_OFF), as per AECS specification GB-45672-2025 (redial interval ≤ 2 minutes and total duration ≤ 60 minutes).
+8. If the call connects during retries, the application receives listener notifications for call-status changes such as DIALING, ALERTING, and ACTIVE when AECSP accepts the call.
+9. Once the AECS call and MSD transmission are complete, AECSP clears down the call.
+10. The application receives listener notifications for call-status changes such as END. CallManager sends a call-info change notification (i.e., call end) to the application using the onCallInfoChange function.
+11. Once the AECS call is disconnected, the application should disable Emergency Mode using the setEmergencyMode API.
+
+Outgoing AECS call drop:
+
+.. figure:: /../images/aecs_mo_call_drop_call_flow.png
+
+This flow is similar to outgoing AECS call flow, but highlights the drop handling cases.
+
+Before initiating the AECS call, the application should initialize CallManager, register CallListener, and enable Emergency Mode.
+
+1. The application dials an AECS call (i.e., a normal voice call) using the makeAecsCall API and provides a callback to receive an asynchronous response.
+2. The application receives a status such as SUCCESS or FAILED, based on the execution of the makeAecsCall API.
+3. Optionally, the application receives an asynchronous response for makeAecsCall via makeCallResponseCallback.
+4. If the call connects, the call state transitions as DIALING → ALERTING → ACTIVE.
+5. If the AECS call drops after it becomes ACTIVE, the call state transitions as ACTIVE → END.
+6. The application should query isAecsCallDrop() on the ICall instance. If it returns true, the application must implement additional retry logic for call-drop handling, based on OEM-defined logic.
+7. If the call reconnects during retries, the call state transitions as DIALING → ALERTING → ACTIVE.
+8. Once the AECS call and MSD transmission are complete, AECSP clears down the call.
+9. The application receives listener notifications for call-status changes such as END. CallManager sends a call-info change notification (i.e., call end) to the application using the onCallInfoChange function.
+10. Once the AECS call is disconnected, the application should disable Emergency Mode using the setEmergencyMode API.
+
+Incoming AECS call:
+
+.. figure:: /../images/aecs_mt_call_flow.png
+
+Initialize CallManager and wait for subsystem readiness.
+
+1. The application registers a listener with CallManager to receive incoming-call notifications and call-info change notifications.
+2. The application receives a status such as SUCCESS or FAILED, based on the listener registration result from CallManager.
+3. The application receives an onIncomingCall notification when an incoming call is received. The modem does not automatically accept the incoming call; the application is responsible for determining whether the call is a callback from the AECSP and whether to accept it.
+4. Before enabling Emergency Mode, the application must disconnect any ongoing call that is not an AECS call.
+5. The application enables Emergency Mode by calling the setEmergencyMode API and providing a callback.
+6. The application receives a status such as SUCCESS or FAILED, based on the execution of the setEmergencyMode API.
+7. Optionally, the application receives an asynchronous response for setEmergencyMode via the callback.
+8. The application answers the incoming AECS call using the answer(callback) API.
+9. The application receives a status such as SUCCESS or FAILED, based on the execution of the answer API.
+10. Optionally, the application receives an asynchronous response for answer via the callback.
+11. When the call is answered, the AECS call state transitions as INCOMING → WAITING → ACTIVE.
+12. Once the AECS call and MSD transmission are complete, AECSP clears down the call.
+13. The AECS call state transitions from ACTIVE → END. CallManager sends a call-info change notification (i.e., call end) to the application using the onCallInfoChange function.
+14. Once the AECS call is disconnected, the application should disable Emergency Mode by calling the setEmergencyMode API and providing a callback.
+15. The application receives a status such as SUCCESS or FAILED, based on the execution of the setEmergencyMode API.
+16. Optionally, the application receives an asynchronous response for setEmergencyMode via the callback.
+
 Answer, Reject, RejectWithSMS call flow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -242,6 +351,38 @@ Radio and Service state call flow
 15. The application receives the voice service state, radio technology information etc.
 16. Application receives a notification when there is a change in voice service state.
 
+Carrier Aggregation Info call flow
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. figure:: /../images/carrier_aggregation_info_call_flow.png
+
+1. The application gets PhoneManager object using PhoneFactory.
+2. The application receives the PhoneManager object in order to get Phone instance.
+3. The application gets phone instance for a given phone identifier using PhoneManager object.
+4. PhoneManager returns IPhone object to the application.
+5. Application registers the listener to get notification for carrier aggregation info change.
+6. The application receives the status i.e. either SUCCESS or FAILED based on the registration of the listener.
+7. The application requests for carrier aggregation info for a given RAT (e.g. LteCa) and gets asynchronous response using CaInfoCallback.
+8. The application receives the status i.e. either SUCCESS or FAILED based on execution of requestCarrierAggregationCellInfo API in IPhone.
+9. The response for carrier aggregation info request, containing primary cell and secondary cell(s) information, is received by the application through CaInfoCallback.
+10. Application receives a notification when there is a change in carrier aggregation info.
+
+Cell Channel Info call flow
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. figure:: /../images/cell_channel_info_call_flow.png
+
+1. The application gets PhoneManager object using PhoneFactory.
+2. The application receives the PhoneManager object in order to get Phone instance.
+3. The application gets phone instance for a given phone identifier using PhoneManager object.
+4. PhoneManager returns IPhone object to the application.
+5. Application registers the listener to get notification for cell channel info change.
+6. The application receives the status i.e. either SUCCESS or FAILED based on the registration of the listener.
+7. The application requests for cell channel info and optionally, gets asynchronous response using CellChannelInfoListCallback.
+8. The application receives the status i.e. either SUCCESS or FAILED based on execution of requestCellChannelInfo API in IPhone.
+9. Optionally, the response for cell channel info request, containing LTE serving/neighbor and NR5G serving/neighbor channel information, is received by the application.
+10. Application receives a notification when there is a change in cell channel info.
+
 Network Selection Manager call flow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -303,8 +444,11 @@ for the change in network selection mode.
 Serving System Manager Call Flow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Serving system manager provides APIs to get and set RAT mode preference and get and set service domain preference.
-Registered listener will get notified for the change in RAT mode and service domain preference change.
+ServingSystemManager provides APIs to get and set RAT mode preferences and service domain
+preferences. Registered listeners are notified when these preferences change.
+It also provides setSystemInfoNotificationFilter() and getSystemInfoNotificationFilter() APIs to
+configure and query a filter that restricts onSystemInfoChanged(), onCallBarringInfoChanged(), and
+onSmsCapabilityChanged() notifications to selected system information attributes.
 
 .. figure:: /../images/serving_system_call_flow.png
 
@@ -338,6 +482,45 @@ Registered listener will get notified for the change in RAT mode and service dom
 18. Registered listener will get notified for the service domain preference change.
 19. Application can deregister a listener there by it would not get notifications.
 20. Status of deregister listener i.e. either SUCCESS or other status will be returned to the application.
+
+System Info Notification Filtering Call Flow
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: /../images/system_info_notification_filtering.png
+
+1. Application requests the PhoneFactory for a ServingSystemManager instance by calling
+getServingSystemManager(slotId, initCb).
+2. PhoneFactory returns an IServingSystemManager object, which the application uses to register
+and deregister listeners.
+3. Application registers a listener using registerListener(listener) to receive serving system
+notifications.
+4. The registration status, either SUCCESS or an error status, is returned to the application.
+5. The Modem/Network reports updates such as system information updates, LTE SMS capability
+changes, and other serving system information changes to the ServingSystemManager.
+6. The registered listener receives notifications through callbacks such as
+onSystemInfoChanged(ServingSystemInfo) and onSmsCapabilityChanged(SmsCapability).
+7. During device suspend, the application deregisters unnecessary notifications and retains only
+the required network state change notifications by calling deregisterListener(listener) with
+a notification mask that excludes SYSTEM_INFO.
+8. The deregistration status, either SUCCESS or an error status, is returned to the application.
+9. The application calls setSystemInfoNotificationFilter(SRV_STATUS_TOGGLE) to limit SYSTEM_INFO
+notifications to specific system information changes during suspend.
+10. The status of the setSystemInfoNotificationFilter() operation, either SUCCESS or an error code,
+is returned to the application.
+11. The application calls getSystemInfoNotificationFilter() to retrieve the currently applied
+filter.
+12. The currently configured filter mask is returned to the application.
+13. A network event matching the configured filter occurs, such as service loss or RAT change.
+14. The registered listener receives an onSystemInfoChanged(ServingSystemInfo) notification
+because the event matches the configured filter.
+15. Upon device resume, the application clears the notification filter by calling
+setSystemInfoNotificationFilter(FILTER_MASK_NONE) to restore unrestricted SYSTEM_INFO notifications
+and re-registers any notifications that were deregistered during suspend
+16. The status of the filter reset operation, either SUCCESS or an error status, is returned to
+the application.
+17. The Modem/Network reports updated system information to the ServingSystemManager.
+18. The registered listener receives an onSystemInfoChanged(ServingSystemInfo) notification for
+the updated system information.
 
 Card-Get applications call flow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1571,6 +1754,179 @@ Call flow to Delete QoS filter, Delete traffic class, Delete all QoS config
 7. If the parameters are set correctly, the application will get the traffic class configuration object.
 8. The application calls the QoS manager API to delete a traffic class and provides the traffic class configuration object from the above step.
 9. To delete the traffic class and all QoS filters in one shot, the delete all QoS Configurations API can be called.
+
+DDS Recommendation Call Flows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The DualDataManager provides APIs to manage Default Data Subscription (DDS) recommendations in
+dual-SIM devices. The following call flows describe how an application interacts with
+``IDualDataManager`` and ``IDualDataListener`` to handle DDS switch recommendations across various
+DSDA/DSDS mode transition scenarios.
+
+Key concepts:
+
+- **DDS (Default Data Subscription)**: The SIM slot designated for long-running internet data calls.
+- **nDDS (non-DDS)**: The other SIM slot, used for short data or special traffic (e.g., SMS, MMS).
+- **DSDA (Dual SIM Dual Active)**: Both SIMs operate independently with two radio resources.
+- **DSDS (Dual SIM Dual Standby)**: One radio resource is time-shared between both SIMs.
+- **Temporary DDS switch**: A short-term switch to nDDS (e.g., during a voice call on nDDS).
+- **Permanent DDS switch**: A long-term switch of the DDS SIM slot.
+- **TxS (Tx Sharing) mode**: A DSDA sub-mode where the transmit (Tx) radio resource is shared
+  between both SIMs due to a frequency band combo change (e.g., triggered by an incoming voice
+  call on nDDS). In TxS mode, simultaneous high-throughput data on both SIMs is not possible;
+  the modem recommends a temporary DDS switch so that internet traffic is concentrated on the
+  active voice SIM (nDDS becomes temp DDS).
+- **FC (Full Capability) mode**: A DSDA sub-mode where both SIMs have independent Tx/Rx
+  resources and can carry long-running internet data simultaneously without restriction.
+
+DDS Recommendation - Basic Call Flow
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: /../images/data_dds_recommendation_call_flow.png
+
+This call flow describes the basic initialization and two alternative paths for receiving
+DDS recommendations: via indication (asynchronous) or via request (synchronous).
+
+1. Application requests ``DataFactory`` for an ``IDualDataManager`` instance, providing an
+   initialization callback.
+2. ``DataFactory`` returns the ``IDualDataManager`` instance. Application waits for the
+   initialization callback to confirm the service is available.
+3. Application registers an ``IDualDataListener`` with ``IDualDataManager`` using
+   ``registerListener``.
+4. Application configures DDS switch recommendation using ``configureDdsSwitchRecommendation``
+   (sets ``enableTemporaryRecommendations``, ``enablePermanentRecommendations``, and
+   ``recommBasis``).
+
+**[Indication path]**
+
+5. ``IDualDataListener::onDdsSwitchRecommendation(DdsSwitchRecommendation)`` is called when
+   the modem generates a DDS switch recommendation.
+
+**[Request path]**
+
+6. Application calls ``getDdsSwitchRecommendation`` to query the current DDS recommendation.
+7. Application calls ``requestDdsSwitch(DdsInfo)`` to perform the DDS switch based on the
+   recommendation.
+
+DSDA FC to TxS Mode Change with Active Voice Call on nDDS
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: /../images/data_dsda_fc_to_txs_mode_change_with_active_voice_call_on_ndds_call_flow.png
+
+**Initial state**: DSDA Sub-Mode with FC mode, DDS = Sub1 (Slot 1), nDDS = Sub2 (Slot 2).
+Long internet data traffic is running on both DDS (Sub1) and nDDS (Sub2).
+
+1. Application requests ``DataFactory`` for an ``IDualDataManager`` instance, providing an
+   initialization callback.
+2. ``DataFactory`` returns the ``IDualDataManager`` instance. Application waits for the
+   initialization callback to confirm the service is available.
+3. Application registers an ``IDualDataListener`` with ``IDualDataManager`` using
+   ``registerListener``.
+4. Application calls ``configureDdsSwitchRecommendation`` with:
+
+   - ``enableTemporaryRecommendations``: true
+   - ``enablePermanentRecommendations``: true
+   - ``recommBasis``: THROUGHPUT or LATENCY
+
+5. Application calls ``getDualDataCapability`` to verify the device supports dual data.
+6. ``getDualDataCapability`` returns ``isCapable: true``.
+7. Application calls ``getDualDataUsageRecommendation`` to query the current recommendation.
+8. ``getDualDataUsageRecommendation`` returns ``DualDataUsageRecommendation: ALLOWED``.
+   Long internet data traffic is running on both DDS (Sub1) and nDDS (Sub2).
+9. A voice call is received on nDDS (Sub2). The modem transitions
+   from DSDA FC mode to DSDA TxS mode (TxS is a network/RF condition driven by the band
+   combination, not the voice call itself). ``IDualDataListener::onDualDataUsageRecommendationChange``
+   is called with ``DualDataUsageRecommendation: NOT_RECOMMENDED``. Application should stop
+   data activities on nDDS (Sub2).
+10. ``IDualDataListener::onDdsSwitchRecommendation(DdsSwitchRecommendation)`` is called with:
+
+    - ``slotId``: SLOT_ID_2
+    - ``type``: TEMPORARY
+    - ``tempSwitchType``: High
+    - ``tempCause``: TEMP_CAUSE_CODE_TX_SHARING
+
+11. Application calls ``requestDdsSwitch`` with ``slotId: SLOT_ID_2, type: TEMPORARY``.
+12. ``requestDdsSwitch`` callback returns ``SUCCESS``.
+    OEM must perform TCP cleanup, release internet PDN/PDU connections on original DDS (Sub1),
+    and switch application traffic to temp DDS (Sub2).
+
+**Final state**: Temp DDS = Sub2, nDDS = Sub1.
+Long internet data traffic on temp DDS (Sub2). Short data or special traffic (e.g., SMS or MMS)
+on nDDS (Sub1).
+
+DSDA to DSDS Sub-Mode Transition with Active Voice Call on nDDS
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: /../images/data_dsda_to_dsds_sub_mode_transition_with_active_voice_call_on_ndds_call_flow.png
+
+**Initial state**: DSDA Sub-Mode with FC mode, DDS = Sub1 (Slot 1), nDDS = Sub2 (Slot 2).
+Long internet data traffic is running on both DDS (Sub1) and nDDS (Sub2).
+
+1. Application requests ``DataFactory`` for an ``IDualDataManager`` instance, providing an
+   initialization callback.
+2. ``DataFactory`` returns the ``IDualDataManager`` instance. Application waits for the
+   initialization callback to confirm the service is available.
+3. Application registers an ``IDualDataListener`` with ``IDualDataManager`` using
+   ``registerListener``.
+4. Application calls ``configureDdsSwitchRecommendation`` with:
+
+   - ``enableTemporaryRecommendations``: true
+   - ``enablePermanentRecommendations``: true
+   - ``recommBasis``: THROUGHPUT or LATENCY
+
+5. Application calls ``getDualDataCapability`` to verify the device supports dual data.
+6. ``getDualDataCapability`` returns ``isCapable: true``.
+7. Application calls ``getDualDataUsageRecommendation`` to query the current recommendation.
+8. ``getDualDataUsageRecommendation`` returns ``DualDataUsageRecommendation: ALLOWED``.
+   Long internet data traffic is running on both DDS (Sub1) and nDDS (Sub2).
+9. A voice call is received on nDDS (Sub2). The UE transitions from DSDA sub-mode to DSDS
+   sub-mode due to a RAT change or thermal mitigation. ``IDualDataListener::onDualDataUsageRecommendationChange``
+   is called with ``DualDataUsageRecommendation: NOT_ALLOWED``. Application must stop data
+   activities on nDDS (Sub2) immediately.
+10. ``IDualDataListener::onDdsSwitchRecommendation(DdsSwitchRecommendation)`` is called with:
+
+    - ``slotId``: SLOT_ID_2
+    - ``type``: TEMPORARY
+    - ``tempSwitchType``: High
+    - ``tempCause``: TEMP_CAUSE_CODE_DSDA_IMPOSSIBLE
+
+11. Application calls ``requestDdsSwitch`` with ``slotId: SLOT_ID_2, type: TEMPORARY``.
+12. ``requestDdsSwitch`` callback returns ``SUCCESS``.
+    OEM must perform TCP cleanup, release internet PDN/PDU connections on original DDS (Sub1),
+    and switch application traffic to temp DDS (Sub2).
+
+**Final state**: Temp DDS = Sub2, nDDS = Sub1.
+Long internet data traffic on temp DDS (Sub2). Short data or special traffic (e.g., SMS or MMS)
+on nDDS (Sub1).
+
+Voice Call on nDDS Ends - DDS Switch Back Call Flow
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: /../images/data_voice_call_on_ndds_ends_call_flow.png
+
+**Initial state**: DSDA Sub-Mode with Tx Sharing mode, temp DDS = Sub2 (Slot 2),
+temp nDDS = Sub1 (Slot 1). Long internet data traffic on temp DDS (Sub2). Short data or
+special traffic (e.g., SMS or MMS) on temp nDDS (Sub1). Active voice call on temp DDS (Sub2).
+
+1. The voice call on nDDS (Sub2) ends. ``IDualDataListener::onDdsSwitchRecommendation(DdsSwitchRecommendation)``
+   is called with:
+
+   - ``slotId``: SLOT_ID_1
+   - ``type``: TEMPORARY
+   - ``tempSwitchType``: REVOKE
+   - ``tempCause``: TEMP_CAUSE_CODE_CALL_STATUS_CHANGED
+
+2. OEM logic evaluates the revocation recommendation and decides to switch back to the original
+   DDS (Sub1). A ``REVOKE`` recommendation signals the OEM that the temporary DDS switch condition
+   has ended and the device should switch back to the original DDS permanently. Application calls
+   ``requestDdsSwitch`` with ``slotId: SLOT_ID_1, type: PERMANENT``.
+3. ``requestDdsSwitch`` callback returns ``SUCCESS``.
+   OEM is recommended to perform TCP cleanup, release internet PDN/PDU connections on temp DDS
+   (Sub2), and switch application traffic back to original DDS (Sub1).
+
+**Final state**: DDS = Sub1, nDDS = Sub2.
+Long internet data traffic on DDS (Sub1). Short data or special traffic (e.g., SMS or MMS)
+on nDDS (Sub2).
 
 Start TCP keep alive offload to modem
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

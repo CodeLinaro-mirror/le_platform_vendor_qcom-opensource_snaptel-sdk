@@ -172,7 +172,7 @@ class IPhoneListener : public common::IServiceStatusListener {
 
     /**
      * This function is called when operator information of the device currently camped on
-     * network changes
+     * network changes.
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_TEL_PRIVATE_INFO_READ
      * permission to receive this notification.
@@ -184,6 +184,42 @@ class IPhoneListener : public common::IServiceStatusListener {
      *             could break backwards compatibility.
      */
     virtual void onOperatorInfoChange(int phoneId, telux::tel::PlmnInfo info) {
+    }
+
+    /**
+     * This function is invoked whenever the list of Primary Serving and Secondary Serving cells
+     * used for Carrier Aggregation is updated.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_PRIVATE_INFO_READ
+     * permission to receive this notification.
+     *
+     * @param [in] phoneId    Unique Id of phone for which list is changed.
+     * @param [in] info       Updated list of configured of Primary Serving and Secondary Serving
+     *                        cells.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual void onCarrierAggregationInfoChanged(
+        int phoneId, telux::tel::CarrierAggregationInfo info) {
+    }
+
+    /**
+     * This function is called when LTE or NR5G channel information for serving or neighboring
+     * cells changes.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_PRIVATE_INFO_READ
+     * permission to receive this notification.
+     *
+     * @param [in] phoneId          Unique Id of phone for which channel information is changed.
+     * @param [in] channelInfoList  Updated channel information.
+     *                              @ref telux::tel::CellChannelInfoList.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual void onCellChannelInfoListChanged(
+        int phoneId, telux::tel::CellChannelInfoList channelInfoList) {
     }
 
     virtual ~IPhoneListener() {

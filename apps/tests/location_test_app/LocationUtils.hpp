@@ -42,6 +42,7 @@ class LocationUtils {
  public:
     static void displayCapabilities(telux::loc::LocCapability capabilityMask);
     static void displayXtraStatus(telux::loc::XtraStatus xtraStatus);
+    static void displayNavMsgAuthStatus(telux::loc::NavMsgAuthStatus navMsgAuthStatus);
     static void displayDisasterCrisisReportType(telux::loc::GnssDisasterCrisisReport dcReportInfo);
     static void printGnssSignalType(telux::loc::GnssSignal signalTypeMask);
     static void displayLocEngineType(telux::loc::LocationAggregationType locEngineType);

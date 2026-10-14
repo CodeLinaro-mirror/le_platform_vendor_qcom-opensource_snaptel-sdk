@@ -5,6 +5,7 @@
 
 #include "NAOIpTrigger.hpp"
 #include "common/RefAppUtils.hpp"
+#include "KpiLogUtils.hpp"
 
 NAOIpTrigger::NAOIpTrigger(std::shared_ptr<EventManager> eventManager) {
     LOGFD();
@@ -153,7 +154,9 @@ void NAOIpTrigger::onEventProcessed(shared_ptr<Event> event, bool success) {
             }
             enableFilter();
         } else if (event->getTriggeredState() == TcuActivityState::RESUME) {
-            RefAppUtils::logKpiFile("resumed to PMD");
+            if (RefAppUtils::isKpiLoggingEnabled()) {
+                KpiLogUtils::logKpiFile("resumed", false, "M - Refd ");
+            }
             if (tcpKeepAliveHandler_) {
                 tcpKeepAliveHandler_->stopKAOffload();
             }
@@ -165,7 +168,9 @@ void NAOIpTrigger::preProcessEvent(shared_ptr<Event> event) {
     LOGFD();
     if (event->getTriggeredState() == TcuActivityState::RESUME) {
         disableFilter();
-        RefAppUtils::logKpiFile("disabled filter");
+        if (RefAppUtils::isKpiLoggingEnabled()) {
+            KpiLogUtils::logKpiFile("filter off", false, "M - Refd ");
+        }
     }
 }
 
@@ -208,22 +213,18 @@ bool NAOIpTrigger::validateTrigger(
     return false;
 }
 
-void NAOIpTrigger::onDataRestrictModeChange(DataRestrictMode mode) {
+void NAOIpTrigger::onDataFilterModeChange(DataRestrictModeType filterMode) {
+    eventManager_->holdWakeLock("DataFilterDisabled");
     LOGFD();
-    if (mode.filterMode == DataRestrictModeType::DISABLE) {
-        eventManager_->holdWakeLock("DataFilterDisabled");
-        std::unique_lock<std::mutex> lock(messageMtx_);
-        if (messageCv_.wait_for(lock, std::chrono::seconds(2)) == std::cv_status::timeout) {
-            if (eventManager_->getActivityState() == TcuActivityState::SUSPEND) {
-                if (tcpKeepAliveHandler_) {
-                    tcpKeepAliveHandler_->stopKAOffload();
-                    tcpKeepAliveHandler_->startKAOffload();
-                }
-                enableFilter();
+    if (filterMode == DataRestrictModeType::DISABLE) {
+        if (RefAppUtils::isAutoExitEnabled()) {
+            triggerEvent(TcuActivityState::RESUME, ALL_MACHINES);
+            if (tcpKeepAliveHandler_) {
+                tcpKeepAliveHandler_->stopKAOffload();
             }
         }
-        eventManager_->releaseWakeLock("DataFilterDisabled");
     }
+    eventManager_->releaseWakeLock("DataFilterDisabled");
 }
 
 void NAOIpTrigger::messageReceived(
@@ -235,9 +236,12 @@ void NAOIpTrigger::messageReceived(
     if (validateTrigger(msg.msg, length, triggerState, machineName)) {
         triggerEvent(triggerState, machineName);
     } else {
-        RefAppUtils::logKpiFile("received TCP");
+        if (RefAppUtils::isKpiLoggingEnabled()) {
+            KpiLogUtils::logKpiFile("TCP rx", false, "M - Refd ");
+        }
         LOGFE("trigger not match");
-        if (eventManager_->getActivityState() == TcuActivityState::SUSPEND) {
+        if (eventManager_->getActivityState() == TcuActivityState::SUSPEND
+            && !RefAppUtils::isAutoExitEnabled()) {
             if (tcpKeepAliveHandler_) {
                 tcpKeepAliveHandler_->stopKAOffload();
                 tcpKeepAliveHandler_->startKAOffload();

@@ -70,6 +70,7 @@
 #include "satcom/NtnServerImpl.hpp"
 #include "sec/SecurityCryptoServerImpl.hpp"
 #include "sec/SecurityCryptoAcceleratorServerImpl.hpp"
+#include "tel/MultiSimManagerServerImpl.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -308,6 +309,10 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<SecurityCryptoAcceleratorServerImpl> securityCryptoAcceleratorService
         = std::make_shared<SecurityCryptoAcceleratorServerImpl>();
     builder.RegisterService(securityCryptoAcceleratorService.get());
+
+    std::shared_ptr<MultiSimManagerServerImpl> MultiSimManagerService
+        = std::make_shared<MultiSimManagerServerImpl>();
+    builder.RegisterService(MultiSimManagerService.get());
 
     std::shared_ptr<KeepAliveServerImpl> keepAliveService
         = std::make_shared<KeepAliveServerImpl>(dcmService);

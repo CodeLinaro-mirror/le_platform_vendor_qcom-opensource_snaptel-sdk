@@ -5,6 +5,10 @@
         "_comment_RATPreference" : "Refer telux::tel::RatPrefType  for more details",
         "ServiceDomainPreference" : 2,
         "_comment_ServiceDomainPreference" : "Refer telux::tel::ServiceDomainPreference for more details",
+        "VoiceDomainPreference" : 3,
+        "_comment_VoiceDomainPreference" : "Refer telux::tel::VoiceDomainPreference for more details",
+        "DrxConfig" : 6,
+        "_comment_DrxConfig" : "Refer telux::tel::DrxConfig for more details",
         "DcStatus" :
         {
             "endcAvailability" : 0,
@@ -96,6 +100,22 @@
             "_comment_nsaBands" : "Refer telux::tel::NrRFBand for more details",
             "saBands" : "96 259",
             "_comment_saBands" : "Refer telux::tel::NrRFBand for more details"
+        },
+        "LteConnectedModeConfig" :
+        {
+            "callType" : 0,
+            "_comment_callType" : "Refer telux::tel::LteCallType for more details",
+            "rsrqThreshold" : -10,
+            "rsrpOffset" : 3
+        },
+        "LteIdleModeConfig" :
+        {
+            "enabled" : false,
+            "rsrqThreshold" : -110,
+            "hysteresisDelta" : 2,
+            "rsrpOffset" : 4,
+            "numSamples" : "20 10 5 3",
+            "_comment_numSamples" : "4 entries, one per DRX cycle length: 320/640/1280/2560 ms"
         },
         "BandCapability" :
         {

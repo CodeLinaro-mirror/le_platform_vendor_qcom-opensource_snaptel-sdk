@@ -57,6 +57,16 @@
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/platform/TimeListener.hpp>
+
+#ifdef TELSDK_FEATURE_COMMONLOG_SUPPORT_ENABLED
+#include <atomic>
+#include <clog.h>
+#include <clog_ids.h>
+
+std::atomic<clog_context_t> gClogCtx{nullptr};
+std::atomic<bool> gClogRegistered{false};
+#endif
+
 #ifdef FEATURE_NETWORK_TIME_ENABLED
 #include <telux/power/PowerFactory.hpp>
 #include <telux/tel/PhoneFactory.hpp>
@@ -188,7 +198,38 @@ void ChronySock::getTeluxConfig() {
         offsetThreshold_, enableCv2xTime_, enableNwTime_, enableDeltaUpdate_, slotId_);
 }
 
+#ifdef TELSDK_FEATURE_COMMONLOG_SUPPORT_ENABLED
+void ChronySock::deregisterClog() {
+    bool expected = true;
+    if (gClogRegistered.compare_exchange_strong(expected, false)) {
+        clog_context_t ctx = gClogCtx.exchange(nullptr);
+        if (ctx) {
+            (void)CLOG_UNREGISTER_CONTEXT(ctx);
+        }
+        (void)CLOG_UNREGISTER_APP();
+    }
+}
+#endif
+
 int ChronySock::init() {
+
+#ifdef TELSDK_FEATURE_COMMONLOG_SUPPORT_ENABLED
+    // register to CLOG
+    if (CLOG_REGISTER_APP(CLOG_APP_CHSK, "CHSK", "Telux chrony sock") != CLOG_RETURN_OK) {
+        LOGE("CLOG app registration failed!");
+    } else {
+        clog_context_t ctx = CLOG_REGISTER_CONTEXT(CLOG_ACTX_CHSK_GNRL, "GNRL",
+            "General context level in chrony sock", CLOG_DIAG_SSID_NOT_AVAILABLE, "CHSK", "CHSK");
+        gClogCtx.store(ctx);
+        if (ctx == nullptr) {
+            LOGE("CLOG context registration failed!");
+            (void)CLOG_UNREGISTER_APP();
+        } else {
+            gClogRegistered = true;
+        }
+    }
+#endif
+
     // Open chrony UNIX socket
     if (0 != setupSocket(chronyfd_)) {
         return -1;
@@ -238,6 +279,9 @@ void ChronySock::deinit() {
     // deregister from power notification and NW time
     deregisterPwrNotification();
     deregisterNetworkTime();
+#endif
+#ifdef TELSDK_FEATURE_COMMONLOG_SUPPORT_ENABLED
+    deregisterClog();
 #endif
 }
 
@@ -896,14 +940,19 @@ int main(int argc, char *argv[]) {
     std::condition_variable exitCv;
     int ret = 0;
 
-    std::shared_ptr<ChronySock> instance = std::make_shared<ChronySock>();
-    if (!instance) {
-        LOGE("Failed to create ChronySock\n");
+    std::shared_ptr<ChronySock> instance;
+    try {
+        instance = std::make_shared<ChronySock>();
+    } catch (const std::bad_alloc &) {
+        LOGE("Failed to allocate ChronySock\n");
         return -1;
     }
 
     // Exits if invalid arguments passed or initialization failed
     if (instance->parseArguments(argc, argv) || instance->init()) {
+#ifdef TELSDK_FEATURE_COMMONLOG_SUPPORT_ENABLED
+        instance->deregisterClog();
+#endif
         return -1;
     }
 
@@ -925,6 +974,9 @@ int main(int argc, char *argv[]) {
 
     // register for platform time (GNSS/CV2X)
     if (exit || (ret = instance->registerPlatformTime())) {
+#ifdef TELSDK_FEATURE_COMMONLOG_SUPPORT_ENABLED
+        instance->deregisterClog();
+#endif
         return ret;
     }
 

@@ -203,6 +203,13 @@ class ISubsystemManager {
      * Sets the system-wide EDL configuration parameters. The configuration is
      * global and persists across boot cycles.
      *
+     * This API simply writes the given values to the underlying configuration
+     * storage; it does not validate that the paths in @ref EdlConfigs exist,
+     * are readable, or point to well-formed EDL artifacts. It is the caller's
+     * responsibility to ensure the paths are valid. Invalid paths are not
+     * rejected here and will only surface as a failure later, when the paths
+     * are actually accessed (e.g. during an EDL flashing operation).
+     *
      * If multiple clients call this API the last write takes effect. All registered
      * listeners receive an @ref ISubsystemListener::onEdlConfigUpdate() notification
      * when the configuration is stored successfully.
@@ -210,7 +217,8 @@ class ISubsystemManager {
      * On platforms with Access control enabled, caller needs to have
      * TELUX_PLATFORM_SUBSYS_EDL_CTRL permission to invoke this API successfully.
      *
-     * @param[in] edlConfigs The EDL configuration parameters to apply.
+     * @param[in] edlConfigs The EDL configuration parameters to apply. Paths are
+     *                       stored as provided and are not checked for validity.
      *
      * @returns @ref telux::common::ErrorCode::SUCCESS if the configuration was
      *          accepted and stored successfully, otherwise an appropriate error code,
@@ -263,7 +271,7 @@ class ISubsystemManager {
      * notifications delivered to all registered listeners. The final outcome is
      * reported through @ref ISubsystemListener::onEdlOperationResult(). A valid EDL
      * configuration must have been set via @ref setEdlConfigurations() before calling
-     * this API, otherwise the request will be rejected.
+     * this API.
      *
      * On platforms with Access control enabled, caller needs to have
      * TELUX_PLATFORM_SUBSYS_EDL_CTRL permission to invoke this API successfully.

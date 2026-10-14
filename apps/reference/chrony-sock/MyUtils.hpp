@@ -22,11 +22,11 @@
 extern bool enableDebug;
 extern bool enableSyslog;
 
-void chronylog(int level, const char *fmt, ...);
+void chronylog(int level, const char *file, int line, const char *func, const char *fmt, ...);
 
-#define LOGI(fmt, args...) chronylog(LOG_NOTICE, "[I][%s:%d] " fmt, __func__, __LINE__, ##args)
-#define LOGD(fmt, args...) chronylog(LOG_DEBUG, "[D][%s:%d] " fmt, __func__, __LINE__, ##args)
-#define LOGE(fmt, args...) chronylog(LOG_ERR, "[E][%s:%d] " fmt, __func__, __LINE__, ##args)
+#define LOGI(fmt, ...) chronylog(LOG_NOTICE, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
+#define LOGD(fmt, ...) chronylog(LOG_DEBUG, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
+#define LOGE(fmt, ...) chronylog(LOG_ERR, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
 
 class AsyncThread {
  public:

@@ -27,7 +27,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -164,13 +165,22 @@ bool ECallApp::init() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("20",
             "Make_Self_Test_ERAGLONASS_ECall", {}, std::bind(&ECallApp::makeSelfTestECall, this)));
 
-    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {eCallCommand,
-        customNumberECallCommand, answerCallCommand, hangupCallCommand, getCallsCommand,
-        hlapTimerStatusCommand, customNumberECallOverImsCommand, stopT10TimerCommand,
-        setHlapTimerCommand, getHlapTimerCommand, getEcallConfigCommand, setEcallConfigCommand,
-        getEncodedOADContentCommand, getECallMsdPayloadCommand, setECallRedialConfigCommand,
-        restartECallHlapTimerCommand, getECallRedialConfigCommand, setPostTestRegistrationCommand,
-        getPostTestRegistrationCommand, makeSelfTestECallCommand};
+    std::shared_ptr<ConsoleAppCommand> setNgEcallConfigCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "21", "Set_Ecall_Disable_NG_Ecall", {}, std::bind(&ECallApp::setNgEcallConfig, this)));
+
+    std::shared_ptr<ConsoleAppCommand> getNgEcallConfigCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "22", "Get_Ecall_Disable_NG_Ecall", {}, std::bind(&ECallApp::getNgEcallConfig, this)));
+
+    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList
+        = {eCallCommand, customNumberECallCommand, answerCallCommand, hangupCallCommand,
+            getCallsCommand, hlapTimerStatusCommand, customNumberECallOverImsCommand,
+            stopT10TimerCommand, setHlapTimerCommand, getHlapTimerCommand, getEcallConfigCommand,
+            setEcallConfigCommand, getEncodedOADContentCommand, getECallMsdPayloadCommand,
+            setECallRedialConfigCommand, restartECallHlapTimerCommand, getECallRedialConfigCommand,
+            setPostTestRegistrationCommand, getPostTestRegistrationCommand,
+            makeSelfTestECallCommand, setNgEcallConfigCommand, getNgEcallConfigCommand};
     addCommands(commandsList);
 
     if (!eCallMgr_) {
@@ -785,6 +795,61 @@ void ECallApp::restartECallHlapTimer() {
     auto ret = eCallMgr_->restartECallHlapTimer(phoneId, id, duration);
     if (ret != telux::common::Status::SUCCESS) {
         std::cout << "Failed to send request to restart eCall HLAP timer " << std::endl;
+        return;
+    }
+}
+
+/**
+ * Function to set the Next Generation (NG) eCall configuration.
+ */
+void ECallApp::setNgEcallConfig() {
+    if (!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+    // Get phoneId from user
+    int phoneId      = getPhoneId();
+    char delimiter   = '\n';
+    std::string temp = "";
+    bool enable      = false;
+    std::cout << "Set NG eCall? (1-True/0-False): ";
+    std::getline(std::cin, temp, delimiter);
+    if (!temp.empty()) {
+        try {
+            int input = std::stoi(temp);
+            if (input != 0 && input != 1) {
+                std::cout << "ERROR: Invalid input is entered" << std::endl;
+                return;
+            }
+            enable = static_cast<bool>(input);
+        } catch (const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values." << std::endl;
+            return;
+        }
+    } else {
+        std::cout << "No input" << std::endl;
+        return;
+    }
+    auto ret = eCallMgr_->setNgEcallConfig(phoneId, enable);
+    if (ret != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "Failed to send request for set NG eCall configuration" << std::endl;
+        return;
+    }
+}
+
+/**
+ * Function to get the Next Generation (NG) eCall configuration.
+ */
+void ECallApp::getNgEcallConfig() {
+    if (!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+    // Get phoneId from user
+    int phoneId = getPhoneId();
+    auto ret    = eCallMgr_->getNgEcallConfig(phoneId);
+    if (ret != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "Failed to send request for get NG eCall configuration" << std::endl;
         return;
     }
 }

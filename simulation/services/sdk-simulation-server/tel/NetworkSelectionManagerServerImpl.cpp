@@ -276,45 +276,76 @@ void NetworkSelectionManagerServerImpl::setPreferredNetworks(int phoneId,
             JsonParser::writeToJsonFile(rootObj.stateRootObj, stateJsonPath);
         }
     } else {
-        Json::Value newData;
-        int currentCount = rootObj.stateRootObj[MANAGER]["PreferredNetworksInfo"].size();
-        LOG(DEBUG, __FUNCTION__, "Current Count is : ", currentCount);
+        // Build the new entries only. sortDatabase() performs the merge/upsert.
+        Json::Value newData(Json::arrayValue);
         for (int i = 0; i < size; i++) {
-            newData[i]["mcc"] = preferredNetworksInfo[i].mcc;
-            newData[i]["mnc"] = preferredNetworksInfo[i].mnc;
+            Json::Value entry;
+            entry["mcc"] = preferredNetworksInfo[i].mcc;
+            entry["mnc"] = preferredNetworksInfo[i].mnc;
             std::vector<uint8_t> data;
             int dataSize = preferredNetworksInfo[i].ratMask.size();
             for (int k = 0; k < dataSize; k++) {
-                if (preferredNetworksInfo[i].ratMask.test(k)) {
+                if (preferredNetworksInfo[i].ratMask.test(k))
                     data.emplace_back(k);
-                }
             }
-            std::string input      = CommonUtils::convertVectorToString(data, false);
-            newData[i]["ratTypes"] = input;
-            rootObj.stateRootObj[MANAGER]["PreferredNetworksInfo"][currentCount + i] = newData[i];
-            JsonParser::writeToJsonFile(rootObj.stateRootObj, stateJsonPath);
+            entry["ratTypes"] = CommonUtils::convertVectorToString(data, false);
+            newData.append(entry);
         }
         sortDatabase(phoneId, newData, size);
     }
 }
 
-void NetworkSelectionManagerServerImpl::sortDatabase(int phoneId, Json::Value newData, int index) {
+void NetworkSelectionManagerServerImpl::sortDatabase(
+    int phoneId, const Json::Value &newData, int index) {
     LOG(DEBUG, __FUNCTION__, "Index is : ", index);
     std::string apiJsonPath   = (phoneId == SLOT_1) ? JSON_PATH1 : JSON_PATH2;
     std::string stateJsonPath = (phoneId == SLOT_1) ? JSON_PATH3 : JSON_PATH4;
     JsonData rootObj;
-    std::string subsystem = MANAGER;
-    std::string method    = "setPreferredNetworks";
-    CommonUtils::readJsonData(apiJsonPath, stateJsonPath, subsystem, method, rootObj);
-    int currentCount = rootObj.stateRootObj[MANAGER]["PreferredNetworksInfo"].size();
-    LOG(DEBUG, __FUNCTION__, "Current count is : ", currentCount);
-    for (int i = currentCount - index - 1; i >= 0; --i) {
-        rootObj.stateRootObj[MANAGER]["PreferredNetworksInfo"][i + index]
-            = rootObj.stateRootObj[MANAGER]["PreferredNetworksInfo"][i];
+    auto error = CommonUtils::readJsonData(
+        apiJsonPath, stateJsonPath, MANAGER, "setPreferredNetworks", rootObj);
+    if (error != telux::common::ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! ");
+        return;
     }
-    for (int i = 0; i < index; i++) {
-        rootObj.stateRootObj[MANAGER]["PreferredNetworksInfo"][i] = newData[i];
+
+    Json::Value &currentData = rootObj.stateRootObj[MANAGER]["PreferredNetworksInfo"];
+
+    // ── Step 1: Build newMap from newData — O(n log n)
+    // Coalesces duplicates (last value wins) and preserves first-seen order.
+    std::map<std::string, Json::Value> newMap;
+    std::vector<std::string> newOrder;  // tracks insertion order
+    for (Json::ArrayIndex i = 0; i < newData.size(); ++i) {
+        std::string key = newData[i]["mcc"].asString() + "_" + newData[i]["mnc"].asString();
+        if (newMap.find(key) == newMap.end()) {
+            newOrder.push_back(key);  // record first-seen order
+        }
+        newMap[key] = newData[i];  // last value wins
     }
+
+    // ── Step 2: Build currentMap for O(log m) existence checks
+    std::map<std::string, Json::ArrayIndex> currentMap;
+    for (Json::ArrayIndex i = 0; i < currentData.size(); ++i) {
+        std::string key = currentData[i]["mcc"].asString() + "_" + currentData[i]["mnc"].asString();
+        currentMap[key] = i;
+    }
+
+    Json::Value result(Json::arrayValue);
+
+    // ── Step 3: Prepend truly NEW entries (not in currentData) — O(n log m)
+    for (const auto &key : newOrder) {
+        if (currentMap.find(key) == currentMap.end()) {
+            result.append(newMap.at(key));
+        }
+    }
+
+    // ── Step 4: Append existing entries, updated if present in newMap — O(m log n)
+    for (Json::ArrayIndex i = 0; i < currentData.size(); ++i) {
+        std::string key = currentData[i]["mcc"].asString() + "_" + currentData[i]["mnc"].asString();
+        auto it         = newMap.find(key);
+        result.append(it != newMap.end() ? it->second : currentData[i]);
+    }
+
+    currentData = result;
     JsonParser::writeToJsonFile(rootObj.stateRootObj, stateJsonPath);
 }
 

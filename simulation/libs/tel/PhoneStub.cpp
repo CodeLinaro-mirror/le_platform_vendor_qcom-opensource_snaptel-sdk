@@ -865,3 +865,111 @@ telux::common::Status PhoneStub::configureSignalStrength(
     }
     return status;
 }
+static LteCaCellInfo convertLteCaCellInfoFromGrpc(const telStub::LteCaCellInfo &cellInfo) {
+    LteCaCellInfo cell;
+    cell.pci       = static_cast<uint16_t>(cellInfo.pci());
+    cell.freq      = cellInfo.freq();
+    cell.bandwidth = static_cast<LteBandwidth>(cellInfo.bandwidth());
+    cell.band      = static_cast<RFBand>(cellInfo.band());
+    return cell;
+}
+telux::common::Status PhoneStub::requestCarrierAggregationCellInfo(
+    CarrierAggregationType rat, CaInfoCallback callback) {
+    LOG(DEBUG, __FUNCTION__, " phoneId ", phoneId_);
+    ::telStub::requestCarrierAggregationCellInfoRequest request;
+    ::telStub::requestCarrierAggregationCellInfoReply response;
+    ClientContext context;
+    request.set_phone_id(phoneId_);
+    request.set_rat(static_cast<telStub::CarrierAggregationType>(rat));
+    grpc::Status reqstatus = stub_->requestCarrierAggregationCellInfo(&context, request, &response);
+    if (!reqstatus.ok()) {
+        LOG(DEBUG, __FUNCTION__, " failed on phoneId ", phoneId_);
+        return telux::common::Status::FAILED;
+    }
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
+    CarrierAggregationInfo caInfo;
+    caInfo.type = static_cast<CarrierAggregationType>(response.ca_info().type());
+    if (response.ca_info().has_lte_info()) {
+        auto lteInfo = std::make_shared<LteCaInfo>();
+        lteInfo->pCell.cell
+            = convertLteCaCellInfoFromGrpc(response.ca_info().lte_info().p_cell().cell());
+        for (int i = 0; i < response.ca_info().lte_info().s_cell_size(); i++) {
+            const auto &sCellGrpc = response.ca_info().lte_info().s_cell(i);
+            LteSCellInfo sCell;
+            sCell.cell         = convertLteCaCellInfoFromGrpc(sCellGrpc.cell());
+            sCell.ulConfigured = sCellGrpc.ul_configured();
+            sCell.scellState   = static_cast<LteSCellState>(sCellGrpc.scell_state());
+            lteInfo->sCell.emplace_back(sCell);
+        }
+        caInfo.lteInfo = lteInfo;
+    }
+    bool isCallbackNeeded = static_cast<bool>(response.iscallback());
+    int cbDelay           = static_cast<int>(response.delay());
+    if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+        auto fut = std::async(std::launch::async, [this, cbDelay, error, callback, caInfo]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+            if (callback) {
+                callback(caInfo, error);
+            } else {
+                LOG(ERROR, __FUNCTION__, " Callback is null");
+            }
+        }).share();
+        taskQ_->add(fut);
+    }
+    return status;
+}
+telux::common::Status PhoneStub::requestCellChannelInfo(CellChannelInfoListCallback callback) {
+    LOG(DEBUG, __FUNCTION__, " phoneId ", phoneId_);
+    ::telStub::RequestCellChannelInfoRequest request;
+    ::telStub::RequestCellChannelInfoReply response;
+    ClientContext context;
+    request.set_phone_id(phoneId_);
+    grpc::Status reqstatus = stub_->RequestCellChannelInfo(&context, request, &response);
+    if (!reqstatus.ok()) {
+        LOG(DEBUG, __FUNCTION__, " failed on phoneId ", phoneId_);
+        return telux::common::Status::FAILED;
+    }
+    telux::common::ErrorCode error = static_cast<telux::common::ErrorCode>(response.error());
+    telux::common::Status status   = static_cast<telux::common::Status>(response.status());
+    CellChannelInfoList channelInfoList;
+    for (auto &lteInfo : response.channel_info_list().lte_serving_and_scell_arfcn()) {
+        LteCellChannelInfo info;
+        info.dlEarfcn  = lteInfo.dl_earfcn();
+        info.ulEarfcn  = lteInfo.ul_earfcn();
+        info.bandwidth = static_cast<LteBandwidth>(lteInfo.bandwidth());
+        channelInfoList.lteServingAndSCellArfcns.emplace_back(info);
+    }
+    for (auto &lteInfo : response.channel_info_list().lte_neighbor_arfcn()) {
+        LteCellChannelInfo info;
+        info.dlEarfcn  = lteInfo.dl_earfcn();
+        info.ulEarfcn  = lteInfo.ul_earfcn();
+        info.bandwidth = static_cast<LteBandwidth>(lteInfo.bandwidth());
+        channelInfoList.lteNeighborArfcns.emplace_back(info);
+    }
+    for (auto &arfcn : response.channel_info_list().nr5g_serving_and_scell_arfcn()) {
+        NrCellChannelInfo info;
+        info.dlEarfcn = arfcn;
+        channelInfoList.nr5gServingAndSCellArfcns.emplace_back(info);
+    }
+    for (auto &arfcn : response.channel_info_list().nr5g_neighbor_arfcn()) {
+        NrCellChannelInfo info;
+        info.dlEarfcn = arfcn;
+        channelInfoList.nr5gNeighborArfcns.emplace_back(info);
+    }
+    bool isCallbackNeeded = static_cast<bool>(response.iscallback());
+    int cbDelay           = static_cast<int>(response.delay());
+    if ((status == telux::common::Status::SUCCESS) && (isCallbackNeeded)) {
+        auto fut
+            = std::async(std::launch::async, [this, cbDelay, error, callback, channelInfoList]() {
+                  std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                  if (callback) {
+                      callback(channelInfoList, error);
+                  } else {
+                      LOG(ERROR, __FUNCTION__, " Callback is null");
+                  }
+              }).share();
+        taskQ_->add(fut);
+    }
+    return status;
+}

@@ -140,6 +140,49 @@ std::string MyServingSystemHelper::getServiceDomainPref(
     return prefString;
 }
 
+std::string MyServingSystemHelper::getVoiceDomainPref(
+    telux::tel::VoiceDomainPreference preference) {
+    std::string prefString = " Unknown";
+    switch (preference) {
+        case telux::tel::VoiceDomainPreference::CS_ONLY:
+            prefString = " Circuit Switched(CS) only";
+            break;
+        case telux::tel::VoiceDomainPreference::PS_ONLY:
+            prefString = " Packet Switched(PS) only";
+            break;
+        case telux::tel::VoiceDomainPreference::CS_PREF:
+            prefString = " Circuit Switched(CS) preferred";
+            break;
+        case telux::tel::VoiceDomainPreference::PS_PREF:
+            prefString = " Packet Switched(PS) preferred";
+            break;
+        default:
+            break;
+    }
+    return prefString;
+}
+
+std::string MyServingSystemHelper::getDrxConfig(telux::tel::DrxConfig config) {
+    std::string configString = " Unknown";
+    switch (config) {
+        case telux::tel::DrxConfig::CYCLE_320_MS:
+            configString = " 320 ms";
+            break;
+        case telux::tel::DrxConfig::CYCLE_640_MS:
+            configString = " 640 ms";
+            break;
+        case telux::tel::DrxConfig::CYCLE_1280_MS:
+            configString = " 1280 ms";
+            break;
+        case telux::tel::DrxConfig::CYCLE_2560_MS:
+            configString = " 2560 ms";
+            break;
+        default:
+            break;
+    }
+    return configString;
+}
+
 std::string MyServingSystemHelper::getServiceDomain(telux::tel::ServiceDomain domain) {
     std::string domainString = " Unknown ";
     switch (domain) {
@@ -430,6 +473,13 @@ void MyServingSystemListener::onServiceDomainPreferenceChanged(
                        << MyServingSystemHelper::getServiceDomainPref(preference) << std::endl;
 }
 
+void MyServingSystemListener::onVoiceDomainPreferenceChanged(
+    telux::tel::VoiceDomainPreference preference) {
+    std::cout << "\n\n";
+    PRINT_NOTIFICATION << " Voice domain preference is"
+                       << MyServingSystemHelper::getVoiceDomainPref(preference) << std::endl;
+}
+
 void MyServingSystemListener::onSystemInfoChanged(telux::tel::ServingSystemInfo sysInfo) {
     std::cout << "\n\n";
     PRINT_NOTIFICATION << " Serving System information is changed" << std::endl;
@@ -705,6 +755,18 @@ std::string MyServingSystemHelper::RFBandtoString(telux::tel::RFBand band) {
             return "E_UTRA_OPERATING_BAND_88";
         case telux::tel::RFBand::E_UTRA_OPERATING_BAND_70:
             return "E_UTRA_OPERATING_BAND_70";
+        case telux::tel::RFBand::E_UTRA_OPERATING_BAND_44:
+            return "E_UTRA_OPERATING_BAND_44";
+        case telux::tel::RFBand::E_UTRA_OPERATING_BAND_106:
+            return "E_UTRA_OPERATING_BAND_106";
+        case telux::tel::RFBand::E_UTRA_OPERATING_BAND_252:
+            return "E_UTRA_OPERATING_BAND_252";
+        case telux::tel::RFBand::E_UTRA_OPERATING_BAND_253:
+            return "E_UTRA_OPERATING_BAND_253";
+        case telux::tel::RFBand::E_UTRA_OPERATING_BAND_255:
+            return "E_UTRA_OPERATING_BAND_255";
+        case telux::tel::RFBand::E_UTRA_OPERATING_BAND_256:
+            return "E_UTRA_OPERATING_BAND_256";
         case telux::tel::RFBand::TDSCDMA_BAND_A:
             return "TDSCDMA_BAND_A";
         case telux::tel::RFBand::TDSCDMA_BAND_B:
@@ -821,6 +883,40 @@ std::string MyServingSystemHelper::RFBandtoString(telux::tel::RFBand band) {
             return "NR5G_BAND_93";
         case telux::tel::RFBand::NR5G_BAND_94:
             return "NR5G_BAND_94";
+        case telux::tel::RFBand::NR5G_BAND_31:
+            return "NR5G_BAND_31";
+        case telux::tel::RFBand::NR5G_BAND_47:
+            return "NR5G_BAND_47";
+        case telux::tel::RFBand::NR5G_BAND_67:
+            return "NR5G_BAND_67";
+        case telux::tel::RFBand::NR5G_BAND_68:
+            return "NR5G_BAND_68";
+        case telux::tel::RFBand::NR5G_BAND_72:
+            return "NR5G_BAND_72";
+        case telux::tel::RFBand::NR5G_BAND_89:
+            return "NR5G_BAND_89";
+        case telux::tel::RFBand::NR5G_BAND_95:
+            return "NR5G_BAND_95";
+        case telux::tel::RFBand::NR5G_BAND_96:
+            return "NR5G_BAND_96";
+        case telux::tel::RFBand::NR5G_BAND_97:
+            return "NR5G_BAND_97";
+        case telux::tel::RFBand::NR5G_BAND_98:
+            return "NR5G_BAND_98";
+        case telux::tel::RFBand::NR5G_BAND_99:
+            return "NR5G_BAND_99";
+        case telux::tel::RFBand::NR5G_BAND_100:
+            return "NR5G_BAND_100";
+        case telux::tel::RFBand::NR5G_BAND_101:
+            return "NR5G_BAND_101";
+        case telux::tel::RFBand::NR5G_BAND_102:
+            return "NR5G_BAND_102";
+        case telux::tel::RFBand::NR5G_BAND_104:
+            return "NR5G_BAND_104";
+        case telux::tel::RFBand::NR5G_BAND_105:
+            return "NR5G_BAND_105";
+        case telux::tel::RFBand::NR5G_BAND_106:
+            return "NR5G_BAND_106";
         default:
             return "Invalid band";
     }
@@ -1036,7 +1132,12 @@ void MyServingSystemListener::onNetworkRejection(telux::tel::NetworkRejectInfo r
         << "\n Service Domain: "
         << MyServingSystemHelper::getServiceDomain(rejectInfo.rejectSrvInfo.domain)
         << "\n Reject cause: " << static_cast<int>(rejectInfo.rejectCause)
-        << "\n MCC: " << rejectInfo.mcc << "\n MNC: " << rejectInfo.mnc;
+        << "\n MCC: " << rejectInfo.mcc << "\n MNC: " << rejectInfo.mnc << "\n Cell ID: ";
+    if (rejectInfo.cellId != 0xFFFFFFFFFFFFFFFF) {
+        std::cout << rejectInfo.cellId << std::endl;
+    } else {
+        std::cout << "UNAVAILABLE" << std::endl;
+    }
 }
 
 void MyServingSystemListener::onCallBarringInfoChanged(

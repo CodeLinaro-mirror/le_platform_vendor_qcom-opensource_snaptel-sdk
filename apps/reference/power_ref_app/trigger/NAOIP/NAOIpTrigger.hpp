@@ -79,7 +79,7 @@ class NAOIpTrigger : public IEventListener,
 
     void onDataCallInfoChanged(const std::shared_ptr<telux::data::IDataCall> &dataCall) override;
 
-    void onDataRestrictModeChange(DataRestrictMode mode) override;
+    void onDataFilterModeChange(DataRestrictModeType filterMode) override;
 
     ~NAOIpTrigger();
 };

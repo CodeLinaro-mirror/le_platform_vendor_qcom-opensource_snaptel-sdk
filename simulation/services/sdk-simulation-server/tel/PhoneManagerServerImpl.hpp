@@ -75,6 +75,12 @@ class PhoneManagerServerImpl final : public telStub::PhoneService::Service,
     grpc::Status ConfigureSignalStrengthEx(ServerContext *context,
         const telStub::ConfigureSignalStrengthExRequest *request,
         telStub::ConfigureSignalStrengthExReply *response) override;
+    grpc::Status requestCarrierAggregationCellInfo(ServerContext *context,
+        const telStub::requestCarrierAggregationCellInfoRequest *request,
+        telStub::requestCarrierAggregationCellInfoReply *response) override;
+    grpc::Status RequestCellChannelInfo(ServerContext *context,
+        const telStub::RequestCellChannelInfoRequest *request,
+        telStub::RequestCellChannelInfoReply *response) override;
     void onEventUpdate(::eventService::UnsolicitedEvent message);
 
  private:
@@ -91,6 +97,8 @@ class PhoneManagerServerImpl final : public telStub::PhoneService::Service,
     void notifyAndUpdateOperatingMode(int operatingMode);
     void handleECallOperatingModeChanged(std::string eventParams);
     void handleOperatorInfoChanged(std::string eventParams);
+    void handleCarrierAggregationInfoChanged(std::string eventParams);
+    void handleCellChannelInfoListChanged(std::string eventParams);
     void triggerChangeEvent(::eventService::EventResponse anyResponse);
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     std::shared_ptr<telux::common::ModemManagerImpl> modemMgr_;

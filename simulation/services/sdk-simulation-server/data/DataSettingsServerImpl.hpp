@@ -81,6 +81,12 @@ class DataSettingsServerImpl final : public dataStub::DataSettingsManager::Servi
     grpc::Status setIpConfig(ServerContext *context, const dataStub::setIpConfigRequest *request,
         dataStub::setIpConfigReply *response) override;
 
+    grpc::Status setMtu(ServerContext *context, const dataStub::setMtuRequest *request,
+        dataStub::setMtuReply *response) override;
+
+    grpc::Status getMtu(ServerContext *context, const dataStub::getMtuRequest *request,
+        dataStub::getMtuReply *response) override;
+
     grpc::Status GetIpPassThroughNatConfig(ServerContext *context,
         const google::protobuf::Empty *request, dataStub::getIpptNatConfigReply *response) override;
 

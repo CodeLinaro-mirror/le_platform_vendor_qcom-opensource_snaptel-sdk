@@ -24,6 +24,22 @@
             "status" : "SUCCESS",
             "error" : "SUCCESS"
         },
+        "setVoiceDomainPreference" :
+        {
+            "error" : "SUCCESS"
+        },
+        "getVoiceDomainPreference" :
+        {
+            "error" : "SUCCESS"
+        },
+        "setDrxConfig" :
+        {
+            "error" : "SUCCESS"
+        },
+        "getDrxConfig" :
+        {
+            "error" : "SUCCESS"
+        },
         "getSystemInfo" :
         {
             "status" : "SUCCESS"
@@ -62,6 +78,22 @@
         "setRFBandPreferences" :
         {
             "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
+        "getLteConnectedModeRsrpConfig" :
+        {
+            "error" : "SUCCESS"
+        },
+        "setLteConnectedModeRsrpConfig" :
+        {
+            "error" : "SUCCESS"
+        },
+        "getLteIdleModeRsrpConfig" :
+        {
+            "error" : "SUCCESS"
+        },
+        "setLteIdleModeRsrpConfig" :
+        {
             "error" : "SUCCESS"
         },
         "requestRFBandCapability" :

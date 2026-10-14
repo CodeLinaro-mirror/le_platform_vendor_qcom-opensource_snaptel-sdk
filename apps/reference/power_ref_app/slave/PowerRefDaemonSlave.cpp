@@ -13,6 +13,7 @@ extern "C" {
 #include "common/ConfigParser.hpp"
 #include "TcuActivityMonitor.hpp"
 #include "PowerRefDaemonSlave.hpp"
+#include "SignalHandler.hpp"
 
 PowerRefDaemonSlave &PowerRefDaemonSlave::getInstance() {
     LOGFD();
@@ -56,11 +57,19 @@ int PowerRefDaemonSlave::startDaemon(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    struct sigaction sigAction;
-    sigAction.sa_handler = signalHandler;
-    sigaction(SIGHUP, &sigAction, NULL);
-    sigaction(SIGINT, &sigAction, NULL);
-    sigaction(SIGTERM, &sigAction, NULL);
+    // Process-directed signals are handled on a dedicated sigwait() thread
+    // (see SignalHandler.cpp) instead of a real signal-handler context, so
+    // stopDaemon() below can safely take mtx_ and touch tcuActivityMonitor_.
+    sigset_t sigset;
+    sigemptyset(&sigset);
+    sigaddset(&sigset, SIGHUP);
+    sigaddset(&sigset, SIGINT);
+    sigaddset(&sigset, SIGTERM);
+    SignalHandlerCb cb = [this](int sig) {
+        LOGFD("Received signal = %d terminating program.", sig);
+        stopDaemon();
+    };
+    SignalHandler::registerSignalHandler(sigset, cb);
 
     if (init() != telux::common::Status::SUCCESS) {
         if (tcuActivityMonitor_) {
@@ -70,17 +79,9 @@ int PowerRefDaemonSlave::startDaemon(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    {
-        // block current thread, till we get signal
-        std::unique_lock<std::mutex> lock(mtx_);
-        cv_.wait(lock, [this] { return exiting_; });
-    }
-
-    // Clean up resources
-    if (tcuActivityMonitor_) {
-        tcuActivityMonitor_->cleanup();
-        tcuActivityMonitor_ = nullptr;
-    }
+    // block current thread, till we get signal
+    std::unique_lock<std::mutex> lock(mtx_);
+    cv_.wait(lock, [this] { return exiting_; });
 
     return EXIT_SUCCESS;
 }
@@ -88,22 +89,13 @@ int PowerRefDaemonSlave::startDaemon(int argc, char **argv) {
 void PowerRefDaemonSlave::stopDaemon() {
     LOGFD();
     std::lock_guard<std::mutex> lock(mtx_);
+    if (tcuActivityMonitor_) {
+        tcuActivityMonitor_->cleanup();
+        tcuActivityMonitor_ = nullptr;
+    }
     exiting_ = true;
     fflush(stdout);
     cv_.notify_all();
-}
-
-void PowerRefDaemonSlave::signalHandler(int signum) {
-    LOGFD("Received signal = %d terminating program.", signum);
-    PowerRefDaemonSlave::getInstance().stopDaemon();
-
-    struct sigaction defaultAction = {};
-    sigemptyset(&defaultAction.sa_mask);
-    defaultAction.sa_handler = SIG_DFL;
-    sigaction(signum, &defaultAction, NULL);
-    if (std::raise(signum) != 0) {
-        LOGFE("raise(): error \n");
-    }
 }
 
 void PowerRefDaemonSlave::printUsage(char **argv) {

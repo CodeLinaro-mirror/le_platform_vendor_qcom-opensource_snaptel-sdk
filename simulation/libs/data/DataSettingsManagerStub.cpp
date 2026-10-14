@@ -410,8 +410,8 @@ telux::common::Status DataSettingsManagerStub::requestBandInterferenceConfig(
     if (enabled) {
         config                    = std::make_shared<BandInterferenceConfig>();
         config->priority          = static_cast<BandPriority>(response.config().priority());
-        config->n79WaitTimeInSec  = response.config().wlan_wait_time_in_sec();
-        config->wlanWaitTimeInSec = response.config().n79_wait_time_in_sec();
+        config->wlanWaitTimeInSec = response.config().wlan_wait_time_in_sec();
+        config->n79WaitTimeInSec  = response.config().n79_wait_time_in_sec();
     }
 
     if (status == telux::common::Status::SUCCESS) {
@@ -543,7 +543,10 @@ telux::common::Status DataSettingsManagerStub::switchBackHaul(BackhaulInfo sourc
     request.set_backhaul_type(static_cast<::dataStub::BackhaulPreference>(dest.backhaul));
     request.set_slot_id(dest.slotId);
     request.set_profile_id(dest.profileId);
+    request.set_sta_id(dest.staId);
     request.set_operation_type(::dataStub::OperationType(oprType_));
+    request.set_source_backhaul_type(static_cast<::dataStub::BackhaulPreference>(source.backhaul));
+    request.set_source_sta_id(source.staId);
     grpc::Status reqStatus = stub_->switchBackHaul(&context, request, &response);
 
     error  = static_cast<telux::common::ErrorCode>(response.error());
@@ -748,6 +751,56 @@ telux::common::ErrorCode DataSettingsManagerStub::setIpConfig(
             LOG(ERROR, __FUNCTION__, " setIpConfig request failed");
             error = telux::common::ErrorCode::INTERNAL_ERROR;
         }
+    }
+    return error;
+}
+
+telux::common::ErrorCode DataSettingsManagerStub::setMtu(const MtuConfig &config) {
+    LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Data settings manager not ready");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+
+    ::dataStub::setMtuRequest request;
+    ::dataStub::setMtuReply response;
+    ClientContext context;
+    request.set_slot_id(static_cast<int32_t>(config.slotId));
+    request.set_ipv4_mtu(config.ipv4Mtu);
+
+    grpc::Status reqStatus = stub_->setMtu(&context, request, &response);
+    auto error             = static_cast<telux::common::ErrorCode>(response.error());
+
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        if (!reqStatus.ok()) {
+            LOG(ERROR, __FUNCTION__, " setMtu request failed");
+            error = telux::common::ErrorCode::INTERNAL_ERROR;
+        }
+    }
+    return error;
+}
+
+telux::common::ErrorCode DataSettingsManagerStub::getMtu(MtuConfig &config) {
+    LOG(DEBUG, __FUNCTION__);
+    if (getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOG(ERROR, __FUNCTION__, " Data settings manager not ready");
+        return telux::common::ErrorCode::INVALID_STATE;
+    }
+
+    ::dataStub::getMtuRequest request;
+    ::dataStub::getMtuReply response;
+    ClientContext context;
+    request.set_slot_id(static_cast<int32_t>(config.slotId));
+
+    grpc::Status reqStatus = stub_->getMtu(&context, request, &response);
+    auto error             = static_cast<telux::common::ErrorCode>(response.error());
+
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        if (!reqStatus.ok()) {
+            LOG(ERROR, __FUNCTION__, " getMtu request failed");
+            error = telux::common::ErrorCode::INTERNAL_ERROR;
+        }
+        config.ipv4Mtu = response.ipv4_mtu();
     }
     return error;
 }

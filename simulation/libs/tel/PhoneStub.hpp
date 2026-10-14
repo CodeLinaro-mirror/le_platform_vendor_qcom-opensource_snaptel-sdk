@@ -62,6 +62,9 @@ class PhoneStub : public IPhone,
     telux::common::Status configureSignalStrength(
         std::vector<SignalStrengthConfigEx> signalStrengthConfigEx, uint16_t hysteresisMs = 0,
         telux::common::ResponseCallback callback = nullptr);
+    telux::common::Status requestCarrierAggregationCellInfo(
+        CarrierAggregationType rat, CaInfoCallback callback);
+    telux::common::Status requestCellChannelInfo(CellChannelInfoListCallback callback = nullptr);
 
  private:
     int phoneId_ = INVALID;

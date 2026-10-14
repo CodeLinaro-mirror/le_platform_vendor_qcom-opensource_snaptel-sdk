@@ -22,6 +22,8 @@
 #define PHONE_EVENT_OPERATING_MODE_CHANGE "operatingModeUpdate"
 #define PHONE_EVENT_ECALL_OPERATING_MODE_CHANGE "eCallOperatingModeUpdate"
 #define PHONE_EVENT_OPERATOR_INFO_CHANGE "operatorInfoUpdate"
+#define PHONE_EVENT_CARRIER_AGGREGATION_INFO_CHANGE "carrierAggregationInfoUpdate"
+#define PHONE_EVENT_CELL_CHANNEL_INFO_CHANGE "cellChannelInfoListUpdate"
 
 #define SLOT_1 1
 #define SLOT_2 2
@@ -278,6 +280,34 @@ grpc::Status PhoneManagerServerImpl::RequestOperatorInfo(ServerContext *context,
     return grpc::Status::OK;
 }
 
+grpc::Status PhoneManagerServerImpl::requestCarrierAggregationCellInfo(ServerContext *context,
+    const telStub::requestCarrierAggregationCellInfoRequest *request,
+    telStub::requestCarrierAggregationCellInfoReply *response) {
+    LOG(DEBUG, __FUNCTION__);
+
+    int phoneId   = request->phone_id();
+    JsonData data = telux::tel::TelUtil::readCarrierAggregationInfoRespFromJsonFile(
+        phoneId, request->rat(), response);
+    if (data.status != telux::common::Status::SUCCESS) {
+        return grpc::Status(
+            grpc::StatusCode::INTERNAL, " Error in getting carrier aggregation info");
+    }
+    return grpc::Status::OK;
+}
+
+grpc::Status PhoneManagerServerImpl::RequestCellChannelInfo(ServerContext *context,
+    const telStub::RequestCellChannelInfoRequest *request,
+    telStub::RequestCellChannelInfoReply *response) {
+    LOG(DEBUG, __FUNCTION__);
+
+    int phoneId   = request->phone_id();
+    JsonData data = telux::tel::TelUtil::readCellChannelInfoRespFromJsonFile(phoneId, response);
+    if (data.status != telux::common::Status::SUCCESS) {
+        return grpc::Status(grpc::StatusCode::INTERNAL, " Error in getting cell channel info");
+    }
+    return grpc::Status::OK;
+}
+
 grpc::Status PhoneManagerServerImpl::ConfigureSignalStrength(ServerContext *context,
     const telStub::ConfigureSignalStrengthRequest *request,
     telStub::ConfigureSignalStrengthReply *response) {
@@ -516,6 +546,56 @@ void PhoneManagerServerImpl::handleOperatorInfoChanged(std::string eventParams) 
     }
 }
 
+void PhoneManagerServerImpl::handleCarrierAggregationInfoChanged(std::string eventParams) {
+    LOG(DEBUG, __FUNCTION__);
+    int phoneId;
+    telux::common::ErrorCode errorCode
+        = telux::tel::TelUtil::writeCarrierAggregationInfoToJsonFile(eventParams, phoneId);
+    if (errorCode == telux::common::ErrorCode::SUCCESS) {
+        ::telStub::CarrierAggregationInfoEvent carrierAggregationInfoEvent;
+        errorCode = telux::tel::TelUtil::readCarrierAggregationInfoEventFromJsonFile(
+            phoneId, carrierAggregationInfoEvent);
+        if (errorCode == telux::common::ErrorCode::SUCCESS) {
+            ::eventService::EventResponse anyResponse;
+            anyResponse.set_filter(telux::tel::TEL_PHONE_FILTER);
+            anyResponse.mutable_any()->PackFrom(carrierAggregationInfoEvent);
+            auto f = std::async(std::launch::async, [this, anyResponse]() {
+                this->triggerChangeEvent(anyResponse);
+            }).share();
+            taskQ_->add(f);
+        } else {
+            LOG(ERROR, __FUNCTION__, " Unable to read carrier aggregation info");
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__, " Unable to write carrier aggregation info");
+    }
+}
+
+void PhoneManagerServerImpl::handleCellChannelInfoListChanged(std::string eventParams) {
+    LOG(DEBUG, __FUNCTION__);
+    int phoneId;
+    telux::common::ErrorCode errorCode
+        = telux::tel::TelUtil::writeCellChannelInfoListToJsonFile(eventParams, phoneId);
+    if (errorCode == telux::common::ErrorCode::SUCCESS) {
+        ::telStub::CellChannelInfoListEvent cellChannelInfoListEvent;
+        errorCode = telux::tel::TelUtil::readCellChannelInfoListEventFromJsonFile(
+            phoneId, cellChannelInfoListEvent);
+        if (errorCode == telux::common::ErrorCode::SUCCESS) {
+            ::eventService::EventResponse anyResponse;
+            anyResponse.set_filter(telux::tel::TEL_PHONE_FILTER);
+            anyResponse.mutable_any()->PackFrom(cellChannelInfoListEvent);
+            auto f = std::async(std::launch::async, [this, anyResponse]() {
+                this->triggerChangeEvent(anyResponse);
+            }).share();
+            taskQ_->add(f);
+        } else {
+            LOG(ERROR, __FUNCTION__, " Unable to read cell channel info list");
+        }
+    } else {
+        LOG(ERROR, __FUNCTION__, " Unable to write cell channel info list");
+    }
+}
+
 void PhoneManagerServerImpl::onEventUpdate(::eventService::UnsolicitedEvent message) {
     if (message.filter() == telux::tel::TEL_PHONE_FILTER) {
         std::string event = message.event();
@@ -539,6 +619,10 @@ void PhoneManagerServerImpl::onEventUpdate(std::string event) {
         handleECallOperatingModeChanged(event);
     } else if (PHONE_EVENT_OPERATOR_INFO_CHANGE == token) {
         handleOperatorInfoChanged(event);
+    } else if (PHONE_EVENT_CARRIER_AGGREGATION_INFO_CHANGE == token) {
+        handleCarrierAggregationInfoChanged(event);
+    } else if (PHONE_EVENT_CELL_CHANNEL_INFO_CHANGE == token) {
+        handleCellChannelInfoListChanged(event);
     } else {
         LOG(ERROR, __FUNCTION__, " Event not supported");
     }

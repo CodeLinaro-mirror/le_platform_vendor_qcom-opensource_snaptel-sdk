@@ -910,7 +910,7 @@ void DataSettingsMenu::setMtu(std::vector<std::string> inputCommand) {
     }
 
     int64_t ipv4MtuInput = 0;
-    std::cout << "Enter IPv4 MTU value in bytes (max 9216): ";
+    std::cout << "Enter IPv4 MTU value in bytes: ";
     std::cin >> ipv4MtuInput;
     Utils::validateInput(ipv4MtuInput);
     if (ipv4MtuInput < 0 || ipv4MtuInput > std::numeric_limits<uint32_t>::max()) {

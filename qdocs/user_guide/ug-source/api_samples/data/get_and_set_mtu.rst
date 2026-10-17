@@ -69,7 +69,7 @@ carefully/sparingly rather than as a frequently-polled runtime setting.
 
    telux::data::MtuConfig mtuConfig;
    mtuConfig.slotId  = telux::data::SlotId::SLOT_ID_1;
-   mtuConfig.ipv4Mtu = 1500;  // default 1500, maximum 9216
+   mtuConfig.ipv4Mtu = 1500;
 
    telux::common::ErrorCode errCode = dataSettingsMgr->setMtu(mtuConfig);
    if (errCode == telux::common::ErrorCode::SUCCESS) {

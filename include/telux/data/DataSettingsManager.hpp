@@ -161,7 +161,7 @@ using RequestCurrentDdsResponseCb
  */
 struct MtuConfig {
     SlotId slotId    = DEFAULT_SLOT_ID; /**< Slot to which the MTU value applies. */
-    uint32_t ipv4Mtu = 0; /**< IPv4 3GPP MTU value in bytes. Maximum value: 9216. */
+    uint32_t ipv4Mtu = 0; /**< IPv4 3GPP MTU value in bytes. */
 };
 
 /**
@@ -591,9 +591,7 @@ class IDataSettingsManager {
      * to invoke this API successfully.
      *
      * @param [in] config   MTU settings to apply. @ref telux::data::MtuConfig::slotId selects the
-     *                       slot. @ref telux::data::MtuConfig::ipv4Mtu is the value in bytes
-     *                       (default 1500, maximum 9216). An out-of-range or otherwise invalid
-     * value is rejected (see @returns).
+     *                       slot. @ref telux::data::MtuConfig::ipv4Mtu is the value in bytes.
      *
      * @returns             @ref telux::common::ErrorCode as appropriate:
      *                       - SUCCESS if the value was applied successfully.

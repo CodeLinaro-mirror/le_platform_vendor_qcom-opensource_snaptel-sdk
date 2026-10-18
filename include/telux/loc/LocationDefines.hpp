@@ -2779,12 +2779,17 @@ using GalOsnmaStatusValidity = uint32_t;
 /** Bitmask type for @ref GalOsnmaPublicKeyStatusBits. */
 using GalOsnmaPublicKeyStatusMask = uint32_t;
 
-/** Bit values describing the status of the Galileo OSNMA public key. */
+/** Bit values describing the status of the Galileo OSNMA public key.
+ *  When all bits are set, the OSNMA trust material required for processing is available. These bits
+ * do not indicate whether navigation data authentication has succeeded; use the
+ * @ref GalOsnmaStatus::navDataAuthPassedMask for that result. */
 enum GalOsnmaPublicKeyStatusBits {
     /** Public key has been provisioned. */
     GAL_OSNMA_PUBLIC_KEY_PROVISIONED = 1u << 0,
     /** Public key has been verified. */
     GAL_OSNMA_PUBLIC_KEY_VERIFIED = 1u << 1,
+    /** The active public-key ID from a Galileo DSM-KROOT message has been decoded. */
+    GAL_OSNMA_ACTIVE_PUBLIC_KEY_ID_AVAILABLE = 1u << 2,
 };
 
 /** Galileo SV id represented by bit 0 of GalOsnmaStatus::navDataAuthPassedMask and
@@ -2803,8 +2808,8 @@ struct GalOsnmaStatus {
     bool featureEnabled;
     /** Whether the Merkle tree information has been provisioned. */
     bool merkleTreeProvisioned;
-    /** Provisioned/verified status of the OSNMA public key. See @ref GalOsnmaPublicKeyStatusBits.
-     */
+    /** Provisioned/verified/active-PublicKeyID status of the OSNMA public key.
+     *  See @ref GalOsnmaPublicKeyStatusBits. */
     GalOsnmaPublicKeyStatusMask publicKeyStatusMask;
     /** Galileo week number corresponding to the reported authentication status. */
     uint16_t galWeek;

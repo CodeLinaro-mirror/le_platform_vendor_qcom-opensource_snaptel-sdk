@@ -334,9 +334,6 @@ class PhoneFactory {
      *                       will no more be a valid object.
      *
      * @returns Pointer of IApSimProfileManager object or nullptr in case of failure.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and
-     *         could break backwards compatibility.
      */
     virtual std::shared_ptr<IApSimProfileManager> getApSimProfileManager(
         telux::common::InitResponseCb callback = nullptr)

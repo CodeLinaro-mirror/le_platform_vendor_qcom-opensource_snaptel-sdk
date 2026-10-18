@@ -73,6 +73,9 @@ class ChronySock : public std::enable_shared_from_this<ChronySock> {
     void deinit();
     int registerPlatformTime();
     void handleTimeUpdate(MyTimeSrc src, uint64_t utc);
+#ifdef TELSDK_FEATURE_COMMONLOG_SUPPORT_ENABLED
+    void deregisterClog();
+#endif
 
 #ifdef FEATURE_NETWORK_TIME_ENABLED
     int registerPwrNotification();

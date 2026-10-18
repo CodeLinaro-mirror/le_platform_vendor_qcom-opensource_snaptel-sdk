@@ -32,7 +32,6 @@
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 /**
  * @file  CallManager.hpp
  * @brief Call Manager is the primary interface for performing call related
@@ -216,12 +215,92 @@ class ICallManager {
      *                          - @ref telux::common::ErrorCode::GENERIC_FAILURE
      *
      * @returns Status of makeRttCall i.e. success or suitable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-     *          could break backward compatibility.
      */
     virtual telux::common::Status makeRttCall(int phoneId, const std::string &dialNumber,
         std::shared_ptr<IMakeCallCallback> callback = nullptr)
+        = 0;
+
+    /**
+     * Initiates an automotive Accident Emergency Call System (AECS) call.
+     *
+     * Prerequisites and Behavior:
+     * - The UE must be in full service to initiate the call.
+     * - The application must enter emergency mode by invoking @ref telux::tel::ICallManager::
+     *   setEmergencyMode before initiating the AECS call. This is required for both single-SIM and
+     *   multi-SIM devices:
+     *   - On single-SIM devices: This allows the modem to distinguish the AECS call from other
+     *     incoming calls.
+     *   - On multi-SIM (DSDS and hybrid DSDA) devices: Enabling emergency mode on the selected
+     *     phone will suspend the other phone. The modem will resume the suspended phone only after
+     *     both the voice call and Minimum Set of Data (MSD) delivery are complete.
+     * - Any ongoing call on a phone that is about to be suspended (in multi-SIM configurations)
+     *   will be automatically terminated by the modem upon entering emergency mode.
+     * - The application must manually terminate any ongoing non-AECS calls on the selected phone
+     *   before initiating the AECS call.
+     * - Once emergency mode is active, the application may transmit the Minimum Set of Data (MSD)
+     *   via HTTP or SMS. To send MSD over SMS, use @ref telux::tel::ISmsManager::sendRawSms.
+     * - After the AECS call and MSD transmission are complete, the application must exit emergency
+     *   mode by invoking @ref telux::tel::ICallManager::setEmergencyMode. This resumes any
+     *   suspended phones for normal calls.
+     *
+     * Additional Information:
+     * - If an AECS call is already in progress, the application must not initiate another AECS call
+     *   or disconnect the existing one.
+     * - If call origination fails, the modem will silently retry for up to 45 seconds. If the
+     *   failure persists beyond this period, or if the modem ends the call without retrying, the
+     *   application must retry the AECS call within 2 minutes and continue retrying for at least
+     *   60 minutes, per AECS specification GB-45672-2025.
+     * - If an active AECS call is dropped, the application is responsible for redialing based on
+     *   its own retry logic.
+     * - If MSD delivery fails, the application must retry transmission within 2 minutes and
+     *   continue retrying for at least 60 minutes, per AECS specification GB-45672-2025.
+     * - The application should reject any incoming non-AECS calls while an AECS call is in
+     * progress.
+     * - The AECS specification does not define T2 (call clear-down fallback timer) or T9 (NAD
+     *   minimum network-registration timer). While the application may implement equivalent logic
+     *   outside the AECS framework to manage prolonged connections or post-call registration, it
+     *   is not mandated.
+     * - The application must not hang up an AECS call. The call should be terminated by the AECSP
+     *   (similar to a PSAP) only after the call and MSD transmission are completed.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+     * permission to successfully invoke this API.
+     *
+     * @param [in] phoneId           Represents phone corresponding to which on make AECS
+     *                               call operation is performed.
+     * @param [in] eCallIdentifier   String representing the dialing number or Uniform
+     *                               Resource Name(URN) for PS based call.
+     * @param [in] callback          Optional callback pointer to get the response of
+     *                               makeAecsCall request.
+     *                               Possible(not exhaustive) error codes for callback response
+     *                               - @ref telux::common::ErrorCode::SUCCESS
+     *                               - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
+     *                               - @ref telux::common::ErrorCode::DIAL_MODIFIED_TO_USSD
+     *                               - @ref telux::common::ErrorCode::DIAL_MODIFIED_TO_SS
+     *                               - @ref telux::common::ErrorCode::DIAL_MODIFIED_TO_DIAL
+     *                               - @ref telux::common::ErrorCode::INVALID_ARGUMENTS
+     *                               - @ref telux::common::ErrorCode::NO_MEMORY
+     *                               - @ref telux::common::ErrorCode::INVALID_STATE
+     *                               - @ref telux::common::ErrorCode::NO_RESOURCES
+     *                               - @ref telux::common::ErrorCode::INTERNAL_ERR
+     *                               - @ref telux::common::ErrorCode::FDN_CHECK_FAILURE
+     *                               - @ref telux::common::ErrorCode::MODEM_ERR
+     *                               - @ref telux::common::ErrorCode::NO_SUBSCRIPTION
+     *                               - @ref telux::common::ErrorCode::NO_NETWORK_FOUND
+     *                               - @ref telux::common::ErrorCode::INVALID_CALL_ID
+     *                               - @ref telux::common::ErrorCode::DEVICE_IN_USE
+     *                               - @ref telux::common::ErrorCode::MODE_NOT_SUPPORTED
+     *                               - @ref telux::common::ErrorCode::ABORTED
+     *                               - @ref telux::common::ErrorCode::GENERIC_FAILURE
+     *
+     * @returns Status of makeAecsCall i.e. success or suitable status code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     *
+     */
+    virtual telux::common::Status makeAecsCall(
+        int phoneId, const std::string &eCallIdentifier, MakeCallCallback callback = nullptr)
         = 0;
 
     /**
@@ -230,8 +309,18 @@ class ICallManager {
      * MSD encoding for optional ERA-GLONASS additional data is not supported as per spec
      * GOST R 54620 / GOST R 33464.
      *
-     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT
-     * permission to invoke this API successfully.
+     * To initiate a custom test NG eCall using the default SDN or an SDN URI, or a
+     * user-specified SDN URI or dialing number, the application must populate the @ref
+     * telux::tel::TestECallConfig structure with the required configuration parameters.
+     *
+     * @note Before initiating a custom test NG eCall, ensure that @ref telux::tel::ECallNumType
+     * is set to @ref telux::tel::ECallNumType::DEFAULT. If it is configured to any other value,
+     * it must be reset to @ref telux::tel::ECallNumType::DEFAULT by invoking @ref
+     * telux::tel::ICallManager::setECallConfig. This action clears any previously configured
+     * eCall number type.
+     *
+     * On platforms with access control enabled, the caller must have the TELUX_TEL_ECALL_MGMT
+     * permission to successfully invoke this API.
      *
      * @param [in] phoneId      Represents phone corresponding to which make
      *                          eCall operation is performed
@@ -241,6 +330,7 @@ class ICallManager {
      * @param [in] variant      @ref ECallVariant
      * @param [in] callback     Optional callback pointer to get the response of
      *                          makeECall request.
+     * @param [in] config       Custom test NG eCall configuration.
      *                          Possible(not exhaustive) error codes for callback response
      *                          - @ref telux::common::ErrorCode::SUCCESS
      *                          - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
@@ -256,7 +346,8 @@ class ICallManager {
      * @returns Status of makeECall i.e. success or suitable status code.
      */
     virtual telux::common::Status makeECall(int phoneId, const ECallMsdData &eCallMsdData,
-        int category, int variant, std::shared_ptr<IMakeCallCallback> callback = nullptr)
+        int category, int variant, std::shared_ptr<IMakeCallCallback> callback = nullptr,
+        const TestECallConfig config = {telux::tel::TestECallConfigType::DEFAULT_SDN_URI, ""})
         = 0;
 
     /**
@@ -299,6 +390,7 @@ class ICallManager {
         const ECallMsdData &eCallMsdData, int category,
         std::shared_ptr<IMakeCallCallback> callback = nullptr)
         = 0;
+
     /**
      * Initiate an automotive Third Party Service(TPS) eCall over IMS only, to the specified phone
      * number with Minimum Set of Data(MSD) at call connect. It will be treated like a regular voice
@@ -333,13 +425,24 @@ class ICallManager {
         CustomSipHeader header    = {telux::tel::CONTENT_HEADER, ""},
         MakeCallCallback callback = nullptr)
         = 0;
+
     /**
      * Initiate an European(EU) or ERA-GLONASS automotive eCall with raw MSD pdu.
      * Regular voice calls will be blocked by device while eCall is in progress.
      * MSD encoding for optional ERA-GLONASS additional data is not supported as per spec
      * GOST R 54620 / GOST R 33464.
      *
-     * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+     * To initiate a custom test NG eCall using the default SDN or an SDN URI, or a
+     * user-specified SDN URI or dialing number, the application must populate the @ref
+     * telux::tel::TestECallConfig structure with the required configuration parameters.
+     *
+     * @note Before initiating a custom test NG eCall, ensure that @ref telux::tel::ECallNumType
+     * is set to @ref telux::tel::ECallNumType::DEFAULT. If it is configured to any other value,
+     * it must be reset to @ref telux::tel::ECallNumType::DEFAULT by invoking @ref
+     * telux::tel::ICallManager::setECallConfig. This action clears any previously configured
+     * eCall number type.
+     *
+     * On platforms with access control enabled, the caller must have the TELUX_TEL_ECALL_MGMT
      * permission to successfully invoke this API.
      *
      * @param [in] phoneId   Represents phone corresponding to which on make eCall
@@ -350,6 +453,7 @@ class ICallManager {
      * @param [in] variant   @ref ECallVariant
      * @param [in] callback  Callback function to get the response of makeECall
      *                       request.
+     * @param [in] config    Custom test NG eCall configuration.
      *                       Possible(not exhaustive) error codes for callback response
      *                       - @ref telux::common::ErrorCode::SUCCESS
      *                       - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
@@ -365,7 +469,8 @@ class ICallManager {
      * @returns Status of makeECall i.e. success or suitable status code.
      */
     virtual telux::common::Status makeECall(int phoneId, const std::vector<uint8_t> &msdPdu,
-        int category, int variant, MakeCallCallback callback = nullptr)
+        int category, int variant, MakeCallCallback callback = nullptr,
+        const TestECallConfig config = {telux::tel::TestECallConfigType::DEFAULT_SDN_URI, ""})
         = 0;
 
     /**
@@ -415,6 +520,19 @@ class ICallManager {
      * MSD encoding for optional ERA-GLONASS additional data is not supported as per spec
      * GOST R 54620 / GOST R 33464.
      *
+     * To initiate a custom test NG eCall using the default SDN or an SDN URI, or a
+     * user-specified SDN URI or dialing number, the application must populate the @ref
+     * telux::tel::TestECallConfig structure with the required configuration parameters.
+     *
+     * @note Before initiating a custom test NG eCall, ensure that @ref telux::tel::ECallNumType
+     * is set to @ref telux::tel::ECallNumType::DEFAULT. If it is configured to any other value,
+     * it must be reset to @ref telux::tel::ECallNumType::DEFAULT by invoking @ref
+     * telux::tel::ICallManager::setECallConfig. This action clears any previously configured
+     * eCall number type.
+     *
+     * On platforms with access control enabled, the caller must have the TELUX_TEL_ECALL_MGMT
+     * permission to successfully invoke this API.
+     *
      * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
      * permission to successfully invoke this API.
      *
@@ -424,6 +542,7 @@ class ICallManager {
      * @param [in] variant      @ref ECallVariant
      * @param [in] callback     Optional callback function to get the response of
      *                          makeECall request.
+     * @param [in] config       Custom test NG eCall configuration.
      *                          Possible(not exhaustive) error codes for callback response
      *                          - @ref telux::common::ErrorCode::SUCCESS
      *                          - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
@@ -438,8 +557,9 @@ class ICallManager {
      *
      * @returns Status of makeECall i.e. success or suitable status code.
      */
-    virtual telux::common::Status makeECall(
-        int phoneId, int category, int variant, MakeCallCallback callback = nullptr)
+    virtual telux::common::Status makeECall(int phoneId, int category, int variant,
+        MakeCallCallback callback    = nullptr,
+        const TestECallConfig config = {telux::tel::TestECallConfigType::DEFAULT_SDN_URI, ""})
         = 0;
 
     /**
@@ -798,9 +918,6 @@ class ICallManager {
      *        - @ref telux::common::ErrorCode::SUCCESS
      *        - @ref telux::common::ErrorCode::INVALID_ARGUMENTS
      *        - @ref telux::common::ErrorCode::GENERIC_FAILURE
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::ErrorCode encodeECallMsd(
         telux::tel::ECallMsdData eCallMsdData, std::vector<uint8_t> &data)
@@ -818,9 +935,6 @@ class ICallManager {
      *
      * @returns Status of encodeEuroNcapOptionalAdditionalData i.e. success or
      * suitable error code.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status encodeEuroNcapOptionalAdditionalData(
         telux::tel::ECallOptionalEuroNcapData optionalEuroNcapData, std::vector<uint8_t> &data)
@@ -899,9 +1013,6 @@ class ICallManager {
      *                            request.
      *
      * @returns Status of configureECallRedial i.e. success or suitable error code.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and could break
-     *             backwards compatibility.
      */
     virtual telux::common::Status configureECallRedial(RedialConfigType config,
         const std::vector<int> &timeGap, common::ResponseCallback callback = nullptr)
@@ -933,9 +1044,6 @@ class ICallManager {
      *
      * @returns Status of restartECallHlapTimer i.e. success or suitable error code.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
-     *
      */
     virtual telux::common::Status restartECallHlapTimer(int phoneId, EcallHlapTimerId timerId,
         int duration, common::ResponseCallback callback = nullptr)
@@ -953,9 +1061,6 @@ class ICallManager {
      *                              milliseconds for call drop failures.
      *
      * @returns ErrorCode for getECallRedialConfig i.e. success or suitable error code.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and could break
-     *             backwards compatibility.
      */
     virtual telux::common::ErrorCode getECallRedialConfig(
         std::vector<int> &callOrigTimeGap, std::vector<int> &callDropTimeGap)
@@ -1051,6 +1156,52 @@ class ICallManager {
         = 0;
 
     /**
+     * Enables or disables emergency mode configuration for AECS (Automated Emergency Call System)
+     * calls.
+     *
+     * This API enables or disables emergency mode and optionally allows antenna switching for
+     * AECS call:
+     *   - When emergency mode is enabled on the phone identifier, other subscriptions
+     *     in DSDS/hybrid DSDA mode will be suspended.
+     *   - If antenna switching is enabled, the system will automatically select the best
+     *     alternative antenna if the active one becomes damaged.
+     *
+     * For incoming AECS call from AECSP:
+     *   - This API must be called first to enable emergency mode.
+     *
+     * After the AECS call ends:
+     *   - The user should disable emergency mode and turn off antenna switching if previously
+     *     enabled.
+     *
+     * @note Antenna switching cannot be enabled when emergency mode is disabled. i.e., Setting
+     *       emergencyModeEnabled = false while antennaSwitchEnabled = true is not supported and
+     *       will return @ref telux::common::ErrorCode::NO_EFFECT.
+     * @note This API is platform-dependent. Ensure the platform supports antenna switching
+     *       before enabling antenna switching.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+     * permission to successfully invoke this API.
+     *
+     * @param [in] phoneId               Represents the phone corresponding to which the emergency
+     *                                   mode is configured.
+     * @param [in] emergencyModeEnabled  If true, enables emergency mode in SS/DSDS/hybrid DSDA;
+     *                                   if false, disables emergency mode in SS/DSDS/hybrid DSDA.
+     * @param [in] antennaSwitchEnabled  If true, enables automatic antenna switching mode;
+     *                                   if false, disables automatic antenna switching mode.
+     * @param [in] callback              Optional callback pointer to get the response of the
+     *                                   setEmergencyMode request.
+     *
+     * @returns Status of the setEmergencyMode request; either success or the suitable error code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     *
+     */
+    virtual telux::common::Status setEmergencyMode(int phoneId, bool emergencyModeEnabled,
+        bool antennaSwitchEnabled = false, telux::common::ResponseCallback callback = nullptr)
+        = 0;
+
+    /**
      * Add a listener to listen for incoming call, call info change and eCall MSD
      * transmission status change.
      *
@@ -1059,7 +1210,6 @@ class ICallManager {
      *
      * @returns Status of registerListener i.e. success or suitable error code.
      */
-
     virtual telux::common::Status registerListener(
         std::shared_ptr<telux::tel::ICallListener> listener)
         = 0;

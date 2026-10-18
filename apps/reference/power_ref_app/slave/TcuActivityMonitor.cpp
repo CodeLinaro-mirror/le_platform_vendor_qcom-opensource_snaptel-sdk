@@ -213,6 +213,6 @@ void TcuActivityMonitor::onServiceStatusChange(telux::common::ServiceStatus stat
     LOG(DEBUG, __FUNCTION__, " Service status changed to ", static_cast<int>(status));
 }
 
-void TcuActivityMonitor::onDataRestrictModeChange(DataRestrictMode mode) {
-    LOG(DEBUG, __FUNCTION__, " mode: ", static_cast<int>(mode.filterMode));
+void TcuActivityMonitor::onDataFilterModeChange(DataRestrictModeType filterMode) {
+    LOG(DEBUG, __FUNCTION__, " mode: ", static_cast<int>(filterMode));
 }

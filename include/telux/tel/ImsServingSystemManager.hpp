@@ -168,9 +168,6 @@ using ImsServiceInfoCb
  *                            @ref telux::tel::ImsPdpStatusInfo
  * @param [in] error          Return code which indicates whether the operation
  *                            succeeded or not. @ref telux::common::ErrorCode
- *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibility.
  */
 using ImsPdpStatusInfoCb
     = std::function<void(ImsPdpStatusInfo status, telux::common::ErrorCode error)>;
@@ -221,9 +218,6 @@ class IImsServingSystemManager {
      *                          requestPdpStatus.
      *
      * @returns Status of requestPdpStatus i.e., success or suitable status code.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status requestPdpStatus(ImsPdpStatusInfoCb callback) = 0;
 
@@ -299,9 +293,6 @@ class IImsServingSystemListener : public common::IServiceStatusListener {
      *
      * @param [in] status         Indicates which IMS PDP information has changed.
      *                            @ref telux::tel::ImsPdpStatusInfo.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void onImsPdpStatusInfoChange(ImsPdpStatusInfo status) {
     }

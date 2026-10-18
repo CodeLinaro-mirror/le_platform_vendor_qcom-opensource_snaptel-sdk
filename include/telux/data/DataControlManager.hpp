@@ -6,7 +6,6 @@
 /**
  * @file       DataControlManager.hpp
  *
- *
  * @brief      The DataControlManager class provides APIs related to data control.
  *             For example - ability to set data stall parameters.
  */
@@ -65,9 +64,6 @@ class IDataControlManager {
      *          SERVICE_UNAVAILABLE  -  If DataControlManager object is temporarily unavailable.
      *          SERVICE_FAILED       -  If DataControlManager object encountered an irrecoverable
      *                                  failure.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
@@ -86,9 +82,6 @@ class IDataControlManager {
      * @param [in]  params     Data stall parameters. @ref telux::data::DataStallParams
      *
      * @returns                @ref telux::common::ErrorCode as appropriate.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
     virtual telux::common::ErrorCode setDataStallParams(
         const SlotId &slotId, const DataStallParams &params)
@@ -101,9 +94,6 @@ class IDataControlManager {
      * notification
      *
      * @returns Status of registerListener success or suitable status code
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
     virtual telux::common::Status registerListener(std::weak_ptr<IDataControlListener> listener)
         = 0;
@@ -114,9 +104,6 @@ class IDataControlManager {
      * @param [in] listener    Pointer of IDataControlListener object that needs to be removed
      *
      * @returns Status of deregisterListener success or suitable status code
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-     *         break backwards compatibility.
      */
     virtual telux::common::Status deregisterListener(std::weak_ptr<IDataControlListener> listener)
         = 0;

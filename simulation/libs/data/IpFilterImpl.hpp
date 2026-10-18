@@ -20,9 +20,6 @@ class IpFilterImpl : virtual public IIpFilter {
      * Get the IPv4 header info
      *
      * @returns @ref telux::data::IPv4Info
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     IPv4Info getIPv4Info() override;
 
@@ -33,9 +30,6 @@ class IpFilterImpl : virtual public IIpFilter {
      *
      * @returns Immediate status of setIPv4Info() request sent
      *                   i.e. success or suitable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     telux::common::Status setIPv4Info(const IPv4Info &ipv4Info) override;
 
@@ -43,9 +37,6 @@ class IpFilterImpl : virtual public IIpFilter {
      * Get the IPv6 header info
      *
      * @returns @ref telux::data::IPv6Info
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     IPv6Info getIPv6Info() override;
 
@@ -56,9 +47,6 @@ class IpFilterImpl : virtual public IIpFilter {
      *
      * @returns Immediate status of setIPv6Info() request sent
      *                   i.e. success or suitable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     telux::common::Status setIPv6Info(const IPv6Info &ipv6Info) override;
 
@@ -66,9 +54,6 @@ class IpFilterImpl : virtual public IIpFilter {
      * Get the IpProtocol Number
      *
      * @returns @ref telux::data::IpProtocol
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     IpProtocol getIpProtocol() override;
 
@@ -76,9 +61,6 @@ class IpFilterImpl : virtual public IIpFilter {
      * Get the IP family type
      *
      * @returns @ref telux::data::IpFamilyType
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     IpFamilyType getIpFamily() override;
 
@@ -105,9 +87,6 @@ class UdpFilterImpl : public IUdpFilter, public IpFilterImpl {
      * Get the UDP header info
      *
      * @returns @ref telux::data::UdpInfo
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     UdpInfo getUdpInfo() override;
 
@@ -118,9 +97,6 @@ class UdpFilterImpl : public IUdpFilter, public IpFilterImpl {
      *
      * @returns Immediate status of setUdpInfo() request sent
      *                   i.e. success or suitable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     telux::common::Status setUdpInfo(const UdpInfo &udpInfo) override;
 
@@ -140,9 +116,6 @@ class TcpFilterImpl : public ITcpFilter, public IpFilterImpl {
      * Get the TCP header info
      *
      * @returns @ref telux::data::TcpInfo
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     TcpInfo getTcpInfo() override;
 
@@ -153,9 +126,6 @@ class TcpFilterImpl : public ITcpFilter, public IpFilterImpl {
      *
      * @returns Immediate status of setTcpInfo() request sent
      *                   i.e. success or suitable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     telux::common::Status setTcpInfo(const TcpInfo &tcpInfo) override;
 
@@ -175,9 +145,6 @@ class IcmpFilterImpl : public IIcmpFilter, public IpFilterImpl {
      * Get the ICMP header info
      *
      * @returns @ref telux::data::IcmpInfo
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     IcmpInfo getIcmpInfo() override;
 
@@ -188,9 +155,6 @@ class IcmpFilterImpl : public IIcmpFilter, public IpFilterImpl {
      *
      * @returns Immediate status of setIcmpInfo() request sent
      *                   i.e. success or suitable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     telux::common::Status setIcmpInfo(const IcmpInfo &icmpInfo) override;
 
@@ -210,9 +174,6 @@ class EspFilterImpl : public IEspFilter, public IpFilterImpl {
      * Get the ESP header info
      *
      * @returns @ref telux::data::EspInfo
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     EspInfo getEspInfo() override;
 
@@ -223,9 +184,6 @@ class EspFilterImpl : public IEspFilter, public IpFilterImpl {
      *
      * @returns Immediate status of setEspInfo() request sent
      *                   i.e. success or suitable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     telux::common::Status setEspInfo(const EspInfo &espInfo) override;
 

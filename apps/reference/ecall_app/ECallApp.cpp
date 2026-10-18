@@ -50,7 +50,6 @@
 #include "ECallApp.hpp"
 #include "../../common/utils/Utils.hpp"
 #include "../../common/utils/SignalHandler.hpp"
-#include "../../common/utils/ThreadSafeOStreamBuf.hpp"
 
 #define ECALL_CATEGORY_AUTO 1
 #define ECALL_CATEGORY_MANUAL 2
@@ -64,6 +63,9 @@
 #define CALL_ORIG 1
 #define T9 5
 #define T10 6
+#define ECALL_TEST_CONFIG_DEFAULT 1
+#define ECALL_TEST_CONFIG_CUSTOM 2
+#define ECALL_TEST_CONFIG_DIALING_NUMBER 3
 
 ECallApp::ECallApp(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -71,18 +73,17 @@ ECallApp::ECallApp(std::string appName, std::string cursor)
 }
 
 ECallApp::~ECallApp() {
-    eCallMgr_ = nullptr;
-}
 
-ECallApp &ECallApp::getInstance() {
-    static ECallApp instance("eCall App Menu", "eCall> ");
-    return instance;
+    if (eCallMgr_) {
+        eCallMgr_->cleanup();
+    }
+    eCallMgr_ = nullptr;
 }
 
 /**
  * Initialize console commands and Display
  */
-void ECallApp::init() {
+bool ECallApp::init() {
 
     std::shared_ptr<ConsoleAppCommand> eCallCommand = std::make_shared<ConsoleAppCommand>(
         ConsoleAppCommand("1", "ECall", {}, std::bind(&ECallApp::makeECall, this)));
@@ -175,13 +176,14 @@ void ECallApp::init() {
 
     if (!eCallMgr_) {
         std::cout << "Invalid eCall Manager" << std::endl;
-        return;
+        return false;
     }
     if (telux::common::Status::SUCCESS == eCallMgr_->init()) {
         ConsoleApp::displayMenu();
     } else {
         std::cout << "Failed to initialize eCall Manager" << std::endl;
     }
+    return true;
 }
 
 /**
@@ -195,6 +197,7 @@ void ECallApp::makeECall() {
     }
     // Get the emergency category from user
     telux::tel::ECallCategory emergencyCategory;
+    telux::tel::TestECallConfig testConfig = {telux::tel::TestECallConfigType::DEFAULT_SDN_URI, ""};
     if (-1 == getEcallCategory(emergencyCategory)) {
         return;
     }
@@ -226,6 +229,19 @@ void ECallApp::makeECall() {
         std::cout << "Invalid Emergency Call Variant" << std::endl;
         return;
     }
+    if (eCallVariant == telux::tel::ECallVariant::ECALL_TEST) {
+        std::string ngEcall;
+        std::cout << "Triggering Custom Test NG ECall (y/n): ";
+        std::getline(std::cin, ngEcall, delimiter);
+        if (ngEcall == "y") {
+            // Get the test eCall config from user
+            if (-1 == getEcallTestConfig(testConfig)) {
+                return;
+            }
+        } else {
+            std::cout << "Proceed with NG or CS test eCall" << std::endl;
+        }
+    }
     // Configure MSD transmission at call connect
     bool transmitMsd = true;
     std::vector<uint8_t> msdPdu;
@@ -237,8 +253,8 @@ void ECallApp::makeECall() {
     int phoneId = getPhoneId();
 
     std::cout << "eCall Triggered" << std::endl;
-    auto ret
-        = eCallMgr_->triggerECall(phoneId, emergencyCategory, eCallVariant, transmitMsd, msdPdu);
+    auto ret = eCallMgr_->triggerECall(
+        phoneId, emergencyCategory, eCallVariant, transmitMsd, msdPdu, testConfig);
     if (ret != telux::common::Status::SUCCESS) {
         std::cout << "ECall request failed" << std::endl;
     } else {
@@ -856,13 +872,6 @@ void ECallApp::getECallMsdPayload() {
 }
 
 /**
- * Executes any cleanup procedure if necessary
- */
-void ECallApp::cleanup() {
-    std::cout << "Exiting the application.." << std::endl;
-}
-
-/**
  * Function to get phoneId from the user-interface
  */
 int ECallApp::getPhoneId() {
@@ -904,7 +913,6 @@ int ECallApp::getEcallCategory(telux::tel::ECallCategory &emergencyCategory) {
         }
     } else {
         std::cout << "No input, proceeding with default category: automatic" << std::endl;
-        ;
         opt = ECALL_CATEGORY_AUTO;
     }
     if (opt == ECALL_CATEGORY_AUTO) {  // Automatically triggered eCall.
@@ -1016,35 +1024,45 @@ std::vector<uint8_t> ECallApp::getMsdPduInput() {
     return msdPdu;
 }
 
-// Main function that displays the interactive console for eCall related operations
-int main(int argc, char **argv) {
-    std::ios::sync_with_stdio(false);
-    std::cin.tie(nullptr);
-    if (isatty(fileno(stdout))) {
-        std::cout << std::unitbuf;
+/**
+ * Function to get test eCall configuration from the user-interface
+ */
+int ECallApp::getEcallTestConfig(telux::tel::TestECallConfig &config) {
+    char delimiter = '\n';
+    std::string temp;
+    std::string number = "";
+    int opt            = -1;
+    // Get test eCall config
+    std::cout << "Select config for custom test NG eCall:\n"
+              << "1) Default SDN URI \n"
+              << "2) Custom SDN URI \n"
+              << "3) Dialing number" << std::endl;
+    std::getline(std::cin, temp, delimiter);
+    if (!temp.empty()) {
+        try {
+            opt = std::stoi(temp);
+        } catch (const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values " << opt << std::endl;
+        }
+    } else {
+        std::cout << "No input, proceeding with default config: Default SDN URI" << std::endl;
+        opt = ECALL_TEST_CONFIG_DEFAULT;
     }
-    static ThreadSafeOStreamBuf safeCout;
-    sigset_t sigset;
-    sigemptyset(&sigset);
-    sigaddset(&sigset, SIGINT);
-    sigaddset(&sigset, SIGTERM);
-    sigaddset(&sigset, SIGHUP);
-    SignalHandlerCb cb = [](int sig) {
-        // We can call exit() here if no cleanups needed,
-        // or maybe just set a flag, and let the main thread to decide
-        // when to exit.
-        ECallApp::getInstance().cleanup();
-        exit(sig);
-    };
-    SignalHandler::registerSignalHandler(sigset, cb);
-
-    // Setting required secondary groups for SDK file/diag logging
-    std::vector<std::string> supplementaryGrps{"system", "diag", "locclient", "logd", "dlt"};
-    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
-    if (rc == -1) {
-        std::cout << "Adding supplementary groups failed!" << std::endl;
+    if (opt == ECALL_TEST_CONFIG_DEFAULT) {  // default SDN URI.
+        config.type = telux::tel::TestECallConfigType::DEFAULT_SDN_URI;
+    } else if (opt == ECALL_TEST_CONFIG_CUSTOM) {  // custom SDN URI.
+        config.type = telux::tel::TestECallConfigType::CUSTOM_SDN_URI;
+    } else if (opt == ECALL_TEST_CONFIG_DIALING_NUMBER) {
+        config.type = telux::tel::TestECallConfigType::DIALING_NUMBER;
+        std::cout << "Enter dialing number for custom test NG eCall: ";
+        std::getline(std::cin, number, delimiter);
+        if (number.empty()) {
+            std::cout << "No input received for dialing number " << std::endl;
+        }
+        config.dialNumber = number;
+    } else {
+        std::cout << "Invalid custom test NG eCall config" << std::endl;
+        return -1;
     }
-    auto &eCallApp = ECallApp::getInstance();
-    eCallApp.init();  // initialize commands and display
-    return eCallApp.mainLoop();  // Main loop to continuously read and execute commands
+    return 0;
 }

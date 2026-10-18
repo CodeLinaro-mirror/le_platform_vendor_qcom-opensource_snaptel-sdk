@@ -39,6 +39,11 @@
         "eCallPostTestRegistrationTimer" :
         {
             "timer" : 2
+        },
+        "emergencyMode" :
+        {
+            "emergencyModeEnabled" : 0,
+            "antennaSwitchEnabled" : 0
         }
     }
 }

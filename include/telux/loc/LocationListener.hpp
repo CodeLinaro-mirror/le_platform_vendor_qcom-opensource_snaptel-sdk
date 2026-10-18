@@ -257,9 +257,6 @@ class ILocationListener : public telux::common::ISDKListener {
      * for this listener API to be invoked.
      *
      * @param [in] payload - A blob of the GNSS extended data.
-     *
-     * @note  Eval: This is a new API and is being evaluated. It is subject to change
-     *              and could break backwards compatibility.
      */
     virtual void onGnssExtendedDataInfo(const std::vector<uint8_t> &payload) {
     }

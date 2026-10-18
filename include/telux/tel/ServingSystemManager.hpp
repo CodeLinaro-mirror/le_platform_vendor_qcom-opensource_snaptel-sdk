@@ -329,27 +329,18 @@ class IRFBandList {
      * @brief Set GSM RF bands
      *
      * @param [in] bands     List of GSM RF bands @ref telux::tel::GsmRFBand
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void setGsmBands(std::vector<GsmRFBand> bands) = 0;
     /**
      * @brief Set WCDMA RF bands
      *
      * @param [in] bands     List of WCDMA RF bands @ref telux::tel::WcdmaRFBand
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void setWcdmaBands(std::vector<WcdmaRFBand> bands) = 0;
     /**
      * @brief Set LTE RF bands
      *
      * @param [in] bands     List of LTE RF bands @ref telux::tel::LteRFBand
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void setLteBands(std::vector<LteRFBand> bands) = 0;
     /**
@@ -357,9 +348,6 @@ class IRFBandList {
      *
      * @param [in] type     NR5G type @ref telux::tel::NrType
      * @param [in] bands    List of NR5G RF bands @ref telux::tel::NrRFBand
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void setNrBands(NrType type, std::vector<NrRFBand> bands) = 0;
 
@@ -373,18 +361,12 @@ class IRFBandList {
      * @brief Check if specific WCDMA RF band is present
      *
      * @param [in] band    @ref telux::tel::WcdmaRFBand
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual bool isWcdmaBandPresent(WcdmaRFBand band) = 0;
     /**
      * @brief Check if specific LTE RF band is present
      *
      * @param [in] band    @ref telux::tel::LteRFBand
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual bool isLteBandPresent(LteRFBand band) = 0;
     /**
@@ -392,9 +374,6 @@ class IRFBandList {
      *
      * @param [in] type    NR5G type @ref telux::tel::NrType
      * @param [in] band    @ref telux::tel::NrRFBand
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual bool isNrBandPresent(NrType type, NrRFBand band) = 0;
 
@@ -402,18 +381,12 @@ class IRFBandList {
      * @brief Get GSM RF bands
      *
      * @return   List of GSM RF bands @ref telux::tel::GsmRFBand
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual std::vector<GsmRFBand> getGsmBands() = 0;
     /**
      * @brief Get WCDMA RF bands
      *
      * @return   List of WCDMA RF bands @ref telux::tel::WcdmaRFBand
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual std::vector<WcdmaRFBand> getWcdmaBands() = 0;
     /**
@@ -429,9 +402,6 @@ class IRFBandList {
      *
      * @param [in] type    NR5G type @ref telux::tel::NrType
      * @return             List of NR5G RF bands @ref telux::tel::NrRFBand
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual std::vector<NrRFBand> getNrBands(NrType type) = 0;
     /**
@@ -459,9 +429,6 @@ class RFBandListBuilder {
      *
      * @param [in] bands   List of GSM RF bands @ref telux::tel::GsmRFBand
      * @return             Reference to this builder for method chaining.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     RFBandListBuilder &addGsmRFBands(std::vector<GsmRFBand> bands);
     /**
@@ -469,9 +436,6 @@ class RFBandListBuilder {
      *
      * @param [in] bands   List of WCDMA RF bands @ref telux::tel::WcdmaRFBand
      * @return             Reference to this builder for method chaining.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     RFBandListBuilder &addWcdmaRFBands(std::vector<WcdmaRFBand> bands);
     /**
@@ -479,9 +443,6 @@ class RFBandListBuilder {
      *
      * @param [in] bands   List of LTE RF bands @ref telux::tel::LteRFBand
      * @return             Reference to this builder for method chaining.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     RFBandListBuilder &addLteRFBands(std::vector<LteRFBand> bands);
     /**
@@ -490,9 +451,6 @@ class RFBandListBuilder {
      * @param [in] type    NR5G type @ref telux::tel::NrType
      * @param [in] bands   List of NR5G RF bands @ref telux::tel::NrRFBand
      * @return             Reference to this builder for method chaining.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     RFBandListBuilder &addNrRFBands(NrType type, std::vector<NrRFBand> bands);
     /**
@@ -504,9 +462,6 @@ class RFBandListBuilder {
      *                       reasons during construction.
      *
      * @return Shared pointer to the constructed RF band list.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     std::shared_ptr<IRFBandList> build(telux::common::ErrorCode &errorCode);
 
@@ -580,9 +535,6 @@ using RFBandInfoCallback = std::function<void(RFBandInfo bandInfo, telux::common
  * @param [in] prefList     @ref telux::tel::IRFBandList instance
  * @param [in] error        Return code which indicates whether the operation
  *                          succeeded or not @ref ErrorCode
- *
- * @note   Eval: This is a new API and is being evaluated. It is subject to
- *         change and could break backwards compatibility.
  */
 using RFBandPrefCallback
     = std::function<void(std::shared_ptr<IRFBandList> prefList, telux::common::ErrorCode error)>;
@@ -596,9 +548,6 @@ using RFBandPrefCallback
  * @param [in] capabilityList     @ref telux::tel::IRFBandList instance
  * @param [in] error              Return code which indicates whether the operation
  *                                succeeded or not @ref ErrorCode
- *
- * @note   Eval: This is a new API and is being evaluated. It is subject to
- *         change and could break backwards compatibility.
  */
 using RFBandCapabilityCallback = std::function<void(
     std::shared_ptr<IRFBandList> capabilityList, telux::common::ErrorCode error)>;
@@ -612,9 +561,6 @@ using RFBandCapabilityCallback = std::function<void(
  * @param [in] rrcState     @ref telux::tel::RrcState
  * @param [in] error        Return code which indicates whether the operation
  *                          succeeded or not @ref telux::common::ErrorCode
- *
- * @note   Eval: This is a new API and is being evaluated. It is subject to
- *         change and could break backwards compatibility.
  */
 using RrcStateCallback
     = std::function<void(telux::tel::RrcState rrcState, telux::common::ErrorCode error)>;
@@ -746,9 +692,6 @@ class IServingSystemManager {
      *                         network time information request.
      *
      * @returns Status of requestLteSib16NetworkTime i.e. success or suitable error code.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status requestLteSib16NetworkTime(NetworkTimeResponseCallback callback)
         = 0;
@@ -763,9 +706,6 @@ class IServingSystemManager {
      *                         RRC(SIB9) UTC time information request.
      *
      * @returns Status of requestNr5gRrcUtcTime i.e. success or suitable error code.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status requestNr5gRrcUtcTime(NetworkTimeResponseCallback callback) = 0;
 
@@ -811,9 +751,6 @@ class IServingSystemManager {
      * @param [out] barringInfo  List of call barring information @ref CallBarringInfo
      *
      * @returns Status of getCallBarringInfo, i.e., success or a suitable error code.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual telux::common::Status getCallBarringInfo(std::vector<CallBarringInfo> &barringInfo) = 0;
 
@@ -828,9 +765,6 @@ class IServingSystemManager {
      * @param [out] smsCapability  SMS capability @ref telux::tel::SmsCapability
      *
      * @returns Status of getSmsCapabilityOverNetwork i.e. success or suitable error code.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual telux::common::Status getSmsCapabilityOverNetwork(SmsCapability &smsCapability) = 0;
 
@@ -843,9 +777,6 @@ class IServingSystemManager {
      * @param [out] lteCapability  LTE CS capability @ref LteCsCapability
      *
      * @returns Status of getLteCsCapability i.e. success or suitable error code.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual telux::common::Status getLteCsCapability(LteCsCapability &lteCapability) = 0;
 
@@ -859,9 +790,6 @@ class IServingSystemManager {
      *                         RF band preferences request.
      *
      * @returns Status of requestRFBandPreferences i.e. success or suitable error code.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual telux::common::Status requestRFBandPreferences(RFBandPrefCallback callback) = 0;
 
@@ -880,9 +808,6 @@ class IServingSystemManager {
      *                           set RF band preferences request.
      *
      * @returns  Status of setRFBandPreferences i.e. success or suitable error code.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual telux::common::Status setRFBandPreferences(
         std::shared_ptr<IRFBandList> prefList, common::ResponseCallback callback = nullptr)
@@ -900,9 +825,6 @@ class IServingSystemManager {
      *                         RF band capability request.
      *
      * @returns Status of requestRFBandCapability i.e. success or suitable error code.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual telux::common::Status requestRFBandCapability(RFBandCapabilityCallback callback) = 0;
 
@@ -927,9 +849,6 @@ class IServingSystemManager {
      *
      * @returns @ref telux::common::ErrorCode of setHplmnSearchTime i.e. success or suitable error
      *          code.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual telux::common::ErrorCode setHplmnSearchTime(uint32_t time) = 0;
 
@@ -943,9 +862,6 @@ class IServingSystemManager {
      *
      * @returns @ref telux::common::ErrorCode of getHplmnSearchTime i.e. success or suitable error
      *          code.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      *
      */
     virtual telux::common::ErrorCode getHplmnSearchTime(uint32_t &time) = 0;
@@ -961,9 +877,6 @@ class IServingSystemManager {
      *
      * @returns Status of requestRrcState i.e. success or suitable error code
      * @ref telux::common::Status
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual telux::common::Status requestRrcState(RrcStateCallback callback) = 0;
 
@@ -1118,9 +1031,6 @@ class IServingSystemListener : public common::IServiceStatusListener {
      * @param [in] radioTech    Time information changed on specified Radio technology.
      *                          @ref telux::tel::RadioTechnology
      * @param [in] info         Network time information. @ref telux::tel::NetworkTimeInfo
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void onNetworkTimeChanged(RadioTechnology radioTech, NetworkTimeInfo info) {
     }
@@ -1153,9 +1063,6 @@ class IServingSystemListener : public common::IServiceStatusListener {
      * permission to receive this notification.
      *
      * @param [in] rejectInfo       @ref NetworkRejectInfo
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual void onNetworkRejection(NetworkRejectInfo rejectInfo) {
     }
@@ -1172,9 +1079,6 @@ class IServingSystemListener : public common::IServiceStatusListener {
      * TELUX_TEL_SRV_SYSTEM_READ permission to receive this notification.
      *
      * @param [in] barringInfo       List of call barring information @ref CallBarringInfo
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual void onCallBarringInfoChanged(std::vector<CallBarringInfo> barringInfo) {
     }
@@ -1190,9 +1094,6 @@ class IServingSystemListener : public common::IServiceStatusListener {
      * permission to receive this notification.
      *
      * @param [in] smsCapability       SMS capability @ref SmsCapability
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual void onSmsCapabilityChanged(SmsCapability smsCapability) {
     }
@@ -1207,9 +1108,6 @@ class IServingSystemListener : public common::IServiceStatusListener {
      * permission to receive this notification.
      *
      * @param [in] lteCapability       LTE CS capability @ref LteCsCapability
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual void onLteCsCapabilityChanged(LteCsCapability lteCapability) {
     }
@@ -1223,9 +1121,6 @@ class IServingSystemListener : public common::IServiceStatusListener {
      * @note This API is not supported for NB1 NTN RAT.
      *
      * @param [in] prefList    @ref telux::tel::IRFBandList instance
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void onRFBandPreferenceChanged(std::shared_ptr<IRFBandList> prefList) {
     }
@@ -1240,9 +1135,6 @@ class IServingSystemListener : public common::IServiceStatusListener {
      * permission to receive this notification.
      *
      * @param [in] rrcState    @ref telux::tel::RrcState instance
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void onRrcStateChanged(telux::tel::RrcState rrcState) {
     }

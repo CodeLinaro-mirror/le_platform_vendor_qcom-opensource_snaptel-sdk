@@ -81,7 +81,7 @@ class TcuActivityMonitor : public ITcuActivityListener,
     void onServiceStatusChange(telux::common::ServiceStatus status) override;
 
     // IDataFilterListener implementation
-    void onDataRestrictModeChange(DataRestrictMode mode) override;
+    void onDataFilterModeChange(DataRestrictModeType filterMode) override;
 
     ~TcuActivityMonitor();
 

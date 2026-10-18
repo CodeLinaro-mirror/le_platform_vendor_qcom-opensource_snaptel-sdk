@@ -95,10 +95,12 @@ void TelClient::EcallScanFailHandler::setHighCapabilityResponse(telux::common::E
                 } else {
                     int dialDuration       = 5;
                     int autoAnswerDuration = 0;
-                    sp->getCacheData(dialDuration, autoAnswerDuration);
+                    telux::tel::TestECallConfig ngTestECallConfig
+                        = {telux::tel::TestECallConfigType::DEFAULT_SDN_URI, ""};
+                    sp->getCacheData(dialDuration, autoAnswerDuration, ngTestECallConfig);
                     status = sp->startECall(it->first, it->second.msdPdu, it->second.msdData,
                         it->second.category, it->second.variant, it->second.transmitMsd,
-                        dialDuration, autoAnswerDuration, callListener);
+                        dialDuration, autoAnswerDuration, ngTestECallConfig, callListener);
                 }
                 if (status == telux::common::Status::SUCCESS) {
                     std::cout << CLIENT_NAME << "Initiated an Ecall on slot: " << it->first << "\n";

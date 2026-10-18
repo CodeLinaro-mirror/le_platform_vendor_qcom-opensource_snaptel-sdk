@@ -59,22 +59,17 @@ class ECallApp : public ConsoleApp {
     /**
      * Initialize the subsystems, console commands and display the menu.
      */
-    void init();
+    bool init();
 
     /**
      * Function to get phoneId from the user-interface
      */
     static int getPhoneId();
 
-    /**
-     * Hangs up a triggered eCall and gracefully clears down the subsystems.
-     */
-    void cleanup();
-
- private:
     ECallApp(std::string appName, std::string cursor);
     ~ECallApp();
 
+ private:
     /**
      * Trigger a standard eCall using the emergency number configured in FDN (eg.112)
      */
@@ -170,6 +165,11 @@ class ECallApp : public ConsoleApp {
 
     telux::common::Status getIntegerInput(
         uint32_t &value, std::string prompt, std::vector<uint32_t> validValues);
+
+    /**
+     * Function to get test eCall configuration from the user-interface
+     */
+    int getEcallTestConfig(telux::tel::TestECallConfig &config);
 
     /**
      * Utility function to get user input for MSD PDU

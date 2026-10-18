@@ -112,9 +112,6 @@ class SecurityFactory {
      *                appropriate error code.
      *
      * @returns IRandomNumberManager instance
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject
-     *             to change and could break backwards compatibility.
      */
     virtual std::shared_ptr<IRandomNumberManager> getRandomNumberManager(
         RNGSource generatorSource, telux::common::ErrorCode &ec)

@@ -46,6 +46,7 @@
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/tel/PhoneDefines.hpp>
+#include <telux/tel/ECallDefines.hpp>
 
 namespace telux {
 
@@ -132,9 +133,6 @@ class ICall {
      * permission to invoke this API successfully.
      *
      * @returns integer representing low level call end cause.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-     *          could break backward compatibility.
      */
     virtual int getDetailedCauseCode() = 0;
 
@@ -301,7 +299,7 @@ class ICall {
     virtual CallDirection getCallDirection() = 0;
 
     /**
-     * Get the dailing number
+     * Get the dialing number
      *
      * On platforms with access control enabled, the caller needs to have
      * TELUX_TEL_CALL_PRIVATE_INFO permission to successfully invoke this API.
@@ -329,9 +327,6 @@ class ICall {
      * permission to successfully invoke this API.
      *
      * @returns integer representing SIP error code.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-     *          could break backward compatibility.
      */
     virtual int getSipErrorCode() = 0;
 
@@ -343,9 +338,6 @@ class ICall {
      * permission to successfully invoke this API.
      *
      * @returns A string representing the reason for the incoming PS call.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-     *          could break backward compatibility.
      */
     virtual std::string getCallReason() = 0;
 
@@ -378,9 +370,6 @@ class ICall {
      * permission to successfully invoke this API.
      *
      * @returns RttMode - enumeration representing RTT mode @ref telux::tel::RttMode
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual RttMode getRttMode() = 0;
 
@@ -393,9 +382,6 @@ class ICall {
      * permission to successfully invoke this API.
      *
      * @returns RttMode - enumeration representing RTT mode @ref telux::tel::RttMode
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual RttMode getLocalRttCapability() = 0;
 
@@ -407,9 +393,6 @@ class ICall {
      * permission to successfully invoke this API.
      *
      * @returns RttMode - enumeration representing RTT mode @ref telux::tel::RttMode
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual RttMode getPeerRttCapability() = 0;
 
@@ -432,9 +415,6 @@ class ICall {
      *        - @ref telux::common::ErrorCode::GENERIC_FAILURE
      *
      * @returns Status of modify i.e. success or suitable error code.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status modify(
         RttMode mode, std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)
@@ -448,7 +428,6 @@ class ICall {
      * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_MGMT
      * permission to successfully invoke this API.
      *
-     *
      * @param [in] modifyResponseType -  Send the response to accept or reject the modify request
      *                                   Accept corresponds to true and reject corresponds to false
      * @param [in] callback -            Optional, callback pointer to get the response of
@@ -460,9 +439,6 @@ class ICall {
      *        - @ref telux::common::ErrorCode::GENERIC_FAILURE
      *
      * @returns Status of respondToModifyRequest i.e. success or suitable error code.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status respondToModifyRequest(bool modifyResponseType,
         std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)
@@ -475,9 +451,6 @@ class ICall {
      * permission to successfully invoke this API.
      *
      * @returns CallType - enumeration representing call type @ref telux::tel::CallType
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual CallType getCallType() = 0;
 
@@ -490,11 +463,48 @@ class ICall {
      * permission to successfully invoke this API.
      *
      * @returns NetworkMode - enumeration representing network mode @ref telux::tel::NetworkMode
+     */
+    virtual NetworkMode getNetworkMode() = 0;
+
+    /**
+     * Determines whether the call ended due to an AECS-specific call drop.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_INFO_READ
+     * permission to successfully invoke this API.
+     *
+     * @returns true if the call ended because of an AECS call drop; false otherwise.
+     *          1. Application should listen to telux::tel::ICallListener::onCallInfoChange for
+     *             call state updates.
+     *          2. If the call ended due to an AECS-specific call drop, call state becomes
+     *             telux::tel::CallState::CALL_ENDED. At this point, the application is
+     *             responsible for initiating further redial attempts.
      *
      * @note   Eval: This is a new API and is being evaluated. It is subject to
      *         change and could break backwards compatibility.
      */
-    virtual NetworkMode getNetworkMode() = 0;
+    virtual bool isAecsCallDrop() = 0;
+
+    /**
+     * Gets the redial state for failed AECS call.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_TEL_CALL_INFO_READ
+     * permission to successfully invoke this API.
+     *
+     * @returns Redial state for an AECS call, @ref telux::tel::RedialState
+     *          1. Application should listen to telux::tel::ICallListener::onCallInfoChange for
+     *             call state updates.
+     *          2. When the modem begins retrying an AECS call after an origination failure,
+     *             the state changes to telux::tel::RedialState::MODEM_RETRY_START and the
+     *             call state becomes telux::tel::CallState::CALL_DIALING.
+     *          3. After the modem completes retry attempts, the state updates to
+     *             telux::tel::RedialState::MODEM_RETRY_END and the call state becomes
+     *             telux::tel::CallState::CALL_ENDED. At this point, the application is
+     *             responsible for initiating further redial attempts.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
+     */
+    virtual telux::tel::RedialState getRedialState() = 0;
 
     virtual ~ICall() {
     }

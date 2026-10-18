@@ -47,6 +47,7 @@
 #include <telux/power/TcuActivityListener.hpp>
 #include "ConsoleApp.hpp"
 #include "SensorClient.hpp"
+#include "SensorControlMenu.hpp"
 
 using namespace telux::sensor;
 using namespace telux::common;
@@ -72,12 +73,17 @@ class SensorFeatureControlMenu : public ITcuActivityListener,
     void disableSensorFeature(std::vector<std::string> userInput);
     void listActiveFeatures(std::vector<std::string> userInput);
     void cleanupReinit(std::vector<std::string> userInput);
-    void enableFeature(std::string name);
-    std::set<std::string>::iterator disableFeature(std::string name);
+    void enableFeature(std::string name, bool isLive);
+    std::set<std::string>::iterator disableFeature(std::string name, bool isLive);
     void initTcuPowerMgr();
     void enableSensorFeatureFifo(std::vector<std::string> userInput);
     void skipSensorFeatureOnSuspend(std::vector<std::string> userInput);
     void listSensorFeaturesQueuedOnSuspend(std::vector<std::string> userInput);
+    void listAvailableSensors(std::vector<std::string> userInput);
+    void getMotionDetectionConfigLimits(std::vector<std::string> userInput);
+    void enableMotionDetection(std::vector<std::string> userInput);
+    void disableMotionDetection(std::vector<std::string> userInput);
+    void getMotionDetectionConfigs(std::vector<std::string> userInput);
 
     // Structure instance to store the command line args passed
     SensorTestAppArguments commandLineArgs_;
@@ -86,6 +92,7 @@ class SensorFeatureControlMenu : public ITcuActivityListener,
     std::shared_ptr<ISensorFeatureEventListener> sensorFeatureEventListener_;
     std::set<std::string> enabledFeatures_;
     std::set<std::string> enabledFeaturesFifo_;
+    std::set<std::string> enabledFeaturesNonBuffered_;
     // Member variable to keep the manager object alive till application ends.
     std::shared_ptr<ITcuActivityManager> tcuActivityMgr_;
 };

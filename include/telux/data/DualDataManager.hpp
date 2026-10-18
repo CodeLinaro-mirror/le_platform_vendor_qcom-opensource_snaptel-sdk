@@ -297,9 +297,6 @@ class IDualDataManager {
      *
      * On platforms with access control enabled, the caller needs to have the TELUX_DUAL_DATA_INFO
      * permission to successfully invoke this API.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::ErrorCode getDualDataCapability(bool &isCapable) = 0;
 
@@ -312,9 +309,6 @@ class IDualDataManager {
      *
      * On platforms with access control enabled, the caller needs to have the TELUX_DUAL_DATA_INFO
      * permission to successfully invoke this API.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::ErrorCode getDualDataUsageRecommendation(
         DualDataUsageRecommendation &recommendation)
@@ -361,9 +355,6 @@ class IDualDataManager {
      * @return Error code which indicates whether the operation succeeded or not
      *         @ref telux::common::ErrorCode
      *
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and could break
-     * backwards compatibility.
      */
     virtual telux::common::ErrorCode getDdsSwitchRecommendation(
         DdsSwitchRecommendation &ddsSwitchRecommendation)
@@ -445,9 +436,6 @@ class IDualDataListener : public telux::common::ISDKListener {
      * indications.
      *
      * @param [in] ddsSwitchRecommendation      Provides the recommended DDS switch.
-     *
-     * @note Eval: This is a new indication and is being evaluated. It is subject to change and
-     * could break backwards compatibility.
      */
     virtual void onDdsSwitchRecommendation(const DdsSwitchRecommendation ddsSwitchRecommendation) {
     }

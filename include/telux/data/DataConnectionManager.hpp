@@ -491,9 +491,6 @@ class IDataConnectionManager {
      *
      * @returns Immediate status of startDataCall() request sent i.e. success or suitable
      *          status code.
-     *
-     * @note     Eval: This is a new API and is being evaluated. It is subject to
-     *                 change and could break backwards compatibility.
      */
     virtual telux::common::Status startDataCall(
         const DataCallParams &dataCallParams, DataCallResponseCb callback = nullptr)
@@ -524,9 +521,6 @@ class IDataConnectionManager {
      * @returns Immediate status of stopDataCall() request sent i.e. success or
      *          suitable status code. The client receives asynchronous notifications
      *          indicating the data call tear-down.
-     *
-     * @note     Eval: This is a new API and is being evaluated. It is subject to
-     *                 change and could break backwards compatibility.
      */
     virtual telux::common::Status stopDataCall(
         const DataCallParams &dataCallParams, DataCallResponseCb callback = nullptr)
@@ -543,9 +537,6 @@ class IDataConnectionManager {
      *                             @ref telux::data::DataConnectionIndicationsType
      *
      * @returns Status of registerListener success or suitable status code
-     *
-     * @note    Eval: This is a new API signature and is being evaluated. It is subject to change
-     *          and could break backward compatibility.
      */
     virtual telux::common::Status registerListener(std::weak_ptr<IDataConnectionListener> listener,
         DataConnectionIndications indicationList = DEFAULT_INDICATIONS)
@@ -567,9 +558,6 @@ class IDataConnectionManager {
      *                             @ref telux::data::DataConnectionIndicationsType
      *
      * @returns Status of deregisterListener success or suitable status code
-     *
-     * @note    Eval: This is a new API signature and is being evaluated. It is subject to change
-     *          and could break backward compatibility.
      */
     virtual telux::common::Status deregisterListener(
         std::weak_ptr<IDataConnectionListener> listener,
@@ -676,9 +664,6 @@ class IDataConnectionManager {
      * @ref IDataConnectionListener::onThrottledApnInfoChanged.
      *
      * @param [out] callback         Callback with a list of APN throttle information
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backward compatibility.
      */
     virtual telux::common::Status requestThrottledApnInfo(ThrottleInfoCb callback) = 0;
 
@@ -698,9 +683,6 @@ class IDataConnectionManager {
      *         - `SUCCESS` if the interval was set successfully.
      *         - Appropriate error code if the operation fails.
      *
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backward compatibility.
      */
     virtual telux::common::ErrorCode setThroughputInterval(uint32_t reportInterval) = 0;
 
@@ -714,9 +696,6 @@ class IDataConnectionManager {
      *         - `SUCCESS` if the throughput info was retrieved successfully.
      *         - Appropriate error code if the operation fails.
      *
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backward compatibility.
      */
     virtual telux::common::ErrorCode getLastThroughputInfo(std::vector<ThroughputInfo> &info) = 0;
 
@@ -941,9 +920,6 @@ class IDataConnectionListener : public telux::common::IServiceStatusListener {
      * APNs that are not throttled anymore will not appear in the list of throttled APNs.
      *
      * @param [out] throttleInfoList   List of all APN throttle information.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backward compatibility.
      */
     virtual void onThrottledApnInfoChanged(const std::vector<APNThrottleInfo> &throttleInfoList){};
 
@@ -961,9 +937,6 @@ class IDataConnectionListener : public telux::common::IServiceStatusListener {
      *     @ref telux::data::IDataConnectionManager::setThroughputInterval.
      *
      * @param [out] info           A list of throughput information for all the active profiles.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backward compatibility.
      */
     virtual void onThroughputInfoAvailable(const std::vector<ThroughputInfo> &info){};
 

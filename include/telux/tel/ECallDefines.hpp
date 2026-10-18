@@ -54,13 +54,51 @@ namespace tel {
  * @{ */
 
 /**
+ * Defines the dialing configuration types used to initiate a test NG or CS eCall.
+ */
+enum class TestECallConfigType {
+    DEFAULT_SDN_URI = 0, /**< Uses the default Fixed Dialing Number (FDN) or Service Dialing
+                              Number (SDN) or SDN URI retrieved from the SIM card to initiate a
+                              test NG or CS eCall.
+                              This configuration takes precedence over the custom SDN URI and
+                              dialing number. */
+    CUSTOM_SDN_URI, /**< Uses a custom Service Dialing Number (SDN) URI configured on the
+                         device to initiate a custom test NG eCall when the default FDN or SDN or
+                         SDN URI is not available on the SIM card. */
+    DIALING_NUMBER, /**< Uses a direct dialing number configured by the user to initiate a custom
+                         test NG eCall when the default FDN or SDN or SDN URI is not available on
+                         the SIM card. */
+};
+
+/*
+ * Represents the dialing configuration used to initiate a test NG or CS eCall.
+ */
+struct TestECallConfig {
+    TestECallConfigType type; /**< Specifies the type of eCall dialing configuration. */
+    std::string dialNumber; /**< Direct dialing number used for a custom test NG eCall. This field
+                                 is applicable only when the test ecall config type is set to
+                                 @ref TestECallConfigType::DIALING_NUMBER. */
+};
+
+/**
  * ECall Variant
  */
 enum class ECallVariant {
-    ECALL_TEST = 1, /**< Initiate a test voice eCall with a configured telephone number stored
-                       in the USIM. */
+    ECALL_TEST = 1, /**< For PS test eCall, initiate using one of the supported configuration types.
+                         TestECallConfigType::DEFAULT_SDN_URI: Uses the default FDN or SDN or SDN
+                         URI stored in the USIM.
+                         TestECallConfigType::CUSTOM_SDN_URI: Uses a custom SDN URI configured on
+                         the device.
+                         TestECallConfigType::DIALING_NUMBER: Uses a direct dialing number
+                         configured by the user.
+                         @note @ref TestECallConfigType::CUSTOM_SDN_URI and @ref
+                         TestECallConfigType::DIALING_NUMBER should be used when the default FDN or
+                         SDN or SDN URI is not present on the SIM.
+                         For CS test eCall, only supported configuration is @ref
+                         TestECallConfigType::DEFAULT_SDN_URI. Uses the default FDN or SDN stored
+                         in the USIM. */
     ECALL_EMERGENCY = 2, /**< Initiate an emergency eCall. The trigger can be a manually initiated
-                            eCall or automatically initiated eCall. */
+                              eCall or automatically initiated eCall. */
     ECALL_VOICE = 4, /**< Initiate a regular voice call with capability to transfer an MSD. */
 };
 
@@ -97,6 +135,8 @@ enum class ECallMsdTransmissionStatus {
     MSD_AL_ACK_CLEARDOWN = 14, /**< Modem can cleardown the eCall after receipt of
                                     Application-Layer Acknowledgement(AL-LCK) during in-band MSD
                                     transmission */
+    INIT_SENT     = 15, /**< Initialization frames sent to public safety answering point (PSAP) */
+    NACK_RECEIVED = 16, /**< NACK received from public safety answering point (PSAP) */
 };
 
 /*
@@ -599,6 +639,19 @@ struct EcallConfig {
                            transmission. Supported values are 1 and 2 only. This setting has no
                            relevance when an eCall is initiated using @ref ICallManager APIs, which
                            expects a valid MSD from the application */
+};
+
+/**
+ * Represents redial states for AECS (Automatic Emergency Call System) call origination fails.
+ */
+enum class RedialState {
+    UNKNOWN = -1, /**< Unknown redial state. */
+    MODEM_RETRY_START, /**< Indicates when a call failed to originate and the modem has
+                            started automatic redial attempts (duration: 45 seconds). The
+                            call will be in the dialing state. */
+    MODEM_RETRY_END, /**< Indicates when the modem has completed its automatic redial
+                          attempts and call will be ended. Upon receiving this state, the
+                          application is expected to initiate a new call. */
 };
 
 /** @} */ /* end_addtogroup telematics_phone */

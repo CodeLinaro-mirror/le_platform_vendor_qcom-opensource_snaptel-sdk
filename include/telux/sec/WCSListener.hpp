@@ -38,9 +38,6 @@ class IWiFiReportListener : public telux::common::ISDKListener {
      * sees in the vicinity.
      *
      * @param[in] report @ref WiFiSecurityReport result of the Wi-Fi security analysis.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void onReportAvailable(WiFiSecurityReport report) {
     }
@@ -49,9 +46,6 @@ class IWiFiReportListener : public telux::common::ISDKListener {
      * Notifies that a deauthentication attack is identified.
      *
      * @param[in] deauthenticationInfo @ref DeauthenticationInfo security analysis information.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void onDeauthenticationAttack(DeauthenticationInfo deauthenticationInfo) {
     }
@@ -72,9 +66,6 @@ class IWiFiReportListener : public telux::common::ISDKListener {
      * @param[in] accessPoint @ref ApInfo provides information about an AP.
      *
      * @param[out] isTrusted True if trusted; false otherwise.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void isTrustedAP(ApInfo accessPoint, bool &isTrusted) {
     }

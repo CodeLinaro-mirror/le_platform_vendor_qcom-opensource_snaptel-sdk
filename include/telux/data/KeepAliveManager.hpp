@@ -60,9 +60,6 @@ class IKeepAliveListener;
 
 /**
  * IKeepAliveManager is a primary interface to manage TCP keep-alive offloading.
- *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- * could break backwards compatibility.
  */
 class IKeepAliveManager {
  public:
@@ -73,9 +70,6 @@ class IKeepAliveManager {
      * - SERVICE_AVAILABLE: TCP keep-alive offload manager is ready for service.
      * - SERVICE_UNAVAILABLE: TCP keep-alive offload manager is temporarily unavailable.
      * - SERVICE_FAILED: TCP keep-alive offload manager encountered an irrecoverable failure.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     * could break backwards compatibility.
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
@@ -102,9 +96,6 @@ class IKeepAliveManager {
      *
      * @returns Error code indicating if the operation succeeded or not.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     * could break backwards compatibility.
-     *
      */
     virtual telux::common::ErrorCode enableTCPMonitor(
         const TCPKAParams &tcpKaParams, MonitorHandleType &monHandle)
@@ -119,9 +110,6 @@ class IKeepAliveManager {
      * @param[in] handle    Obtained from @ref enableTCPMonitor.
      *
      * @returns Error code indicating if the operation succeeded or not.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     * could break backwards compatibility.
      *
      */
     virtual telux::common::ErrorCode disableTCPMonitor(const MonitorHandleType monHandle) = 0;
@@ -155,9 +143,6 @@ class IKeepAliveManager {
      * @param[out] handle           TCP offload handle.
      *
      * @returns Error code indicating if the operation succeeded or not.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     * could break backwards compatibility.
      *
      */
     virtual telux::common::ErrorCode startTCPKeepAliveOffload(const TCPKAParams &tcpKaParams,
@@ -194,9 +179,6 @@ class IKeepAliveManager {
      *
      * @returns Error code indicating if the operation succeeded or not.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     * could break backwards compatibility.
-     *
      */
     virtual telux::common::ErrorCode startTCPKeepAliveOffload(
         const MonitorHandleType monHandle, const uint32_t interval, TCPKAOffloadHandle &handle)
@@ -216,9 +198,6 @@ class IKeepAliveManager {
      *
      * @returns Error code indicating if the operation succeeded or not.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     * could break backwards compatibility.
-     *
      */
     virtual telux::common::ErrorCode stopTCPKeepAliveOffload(const TCPKAOffloadHandle handle) = 0;
 
@@ -230,9 +209,6 @@ class IKeepAliveManager {
      *
      * @returns @ref telux::common::Status::SUCCESS if the listener is registered;
      * otherwise, an appropriate status code.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     * could break backwards compatibility.
      */
     virtual telux::common::Status registerListener(
         std::weak_ptr<telux::data::IKeepAliveListener> listener)
@@ -245,9 +221,6 @@ class IKeepAliveManager {
      *
      * @returns @ref telux::common::Status::SUCCESS if the listener is deregistered,
      * otherwise, an appropriate status code.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     * could break backwards compatibility.
      */
     virtual telux::common::Status deregisterListener(
         std::weak_ptr<telux::data::IKeepAliveListener> listener)
@@ -280,9 +253,6 @@ class IKeepAliveListener : public telux::common::ISDKListener {
      * @param[in] error     Possible values are NETWORK_ERR and SUCCESS.
      *
      * @param[in] handle    TCPKA offload handle.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     * could break backwards compatibility.
      */
     virtual void onKeepAliveStatusChange(
         telux::common::ErrorCode error, TCPKAOffloadHandle handle) {
@@ -298,9 +268,6 @@ class IKeepAliveListener : public telux::common::ISDKListener {
 
     /**
      * Destructor of IKeepAliveListener.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     * could break backwards compatibility.
      */
     virtual ~IKeepAliveListener(){};
 };

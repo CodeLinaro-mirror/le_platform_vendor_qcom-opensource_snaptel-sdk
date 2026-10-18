@@ -147,9 +147,6 @@ class AudioGrpcClientStub : public ICommunicator,
      * Checks the status of grpc Service and returns the result.
      *
      * @returns True if grpc Service is ready for service otherwise false.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     bool isReady() override;
 
@@ -158,9 +155,6 @@ class AudioGrpcClientStub : public ICommunicator,
      *
      * @returns  A future that caller can wait on to be notified when
      *           subsystem is ready.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     std::future<bool> onReady() override;
 

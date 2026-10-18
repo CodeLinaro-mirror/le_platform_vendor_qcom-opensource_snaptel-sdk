@@ -42,17 +42,22 @@ class CallManagerStub : public ICallManager,
 
     telux::common::Status makeCall(int phoneId, const std::string &dialNumber,
         std::shared_ptr<IMakeCallCallback> callback) override;
+    telux::common::Status makeAecsCall(
+        int phoneId, const std::string &eCallIdentifier, MakeCallCallback callback) override;
     telux::common::Status makeECall(int phoneId, const ECallMsdData &eCallMsdData, int category,
-        int variant, std::shared_ptr<IMakeCallCallback> callback) override;
+        int variant, std::shared_ptr<IMakeCallCallback> callback,
+        TestECallConfig config = {telux::tel::TestECallConfigType::DEFAULT_SDN_URI, ""}) override;
     telux::common::Status makeECall(int phoneId, const std::string dialNumber,
         const std::vector<uint8_t> &msdPdu, CustomSipHeader header,
         MakeCallCallback callback) override;
     telux::common::Status makeECall(int phoneId, const std::vector<uint8_t> &msdPdu, int category,
-        int variant, MakeCallCallback callback) override;
+        int variant, MakeCallCallback callback,
+        TestECallConfig config = {telux::tel::TestECallConfigType::DEFAULT_SDN_URI, ""}) override;
     telux::common::Status makeECall(int phoneId, const std::string dialNumber,
         const std::vector<uint8_t> &msdPdu, int category, MakeCallCallback callback) override;
-    telux::common::Status makeECall(
-        int phoneId, int category, int variant, MakeCallCallback callback) override;
+    telux::common::Status makeECall(int phoneId, int category, int variant,
+        MakeCallCallback callback,
+        TestECallConfig config = {telux::tel::TestECallConfigType::DEFAULT_SDN_URI, ""}) override;
     telux::common::Status makeECall(int phoneId, const std::string dialNumber, int category,
         MakeCallCallback callback) override;
     telux::common::Status makeECall(int phoneId, const std::string dialNumber,
@@ -105,6 +110,11 @@ class CallManagerStub : public ICallManager,
         int phoneId, uint32_t timer, common::ResponseCallback callback) override;
     telux::common::ErrorCode getECallPostTestRegistrationTimer(
         int phoneId, uint32_t &timer) override;
+    telux::common::Status setEmergencyMode(int phoneId, bool emergencyModeEnabled,
+        bool antennaSwitchEnabled, telux::common::ResponseCallback callback) override;
+    void updateLastFailCause(
+        bool isLastFailCauseInfoValid, CallEndCause causeCode, AecsCallEndReason reason);
+
     ~CallManagerStub();
     void cleanup();
     void onEventUpdate(google::protobuf::Any event) override;
@@ -142,12 +152,13 @@ class CallManagerStub : public ICallManager,
     void notifyIncomingCall(std::shared_ptr<ICall> call);
     void notifyCallInfoChange(std::shared_ptr<ICall> call);
     void addLatestCalls(std::vector<std::shared_ptr<CallStub>> &latestCalls);
-    void refreshCachedCalls(int phoneId, std::vector<std::shared_ptr<CallStub>> &latestCalls);
-    void notifyAndRemoveDroppedCalls();
+    void refreshCachedCalls(int phoneId, std::vector<std::shared_ptr<CallStub>> &latestCalls,
+        CallEndCause endCause, AecsCallEndReason reason);
+    void notifyAndRemoveDroppedCalls(CallEndCause causeCode, AecsCallEndReason reason);
     telux::common::Status getInProgressCallsFromServer();
     void onEventUpdate(std::string event);
     telux::common::Status dialCall(int phoneId, const std::string &dialNumber,
-        std::shared_ptr<IMakeCallCallback> callback, CallApi inputApi);
+        std::shared_ptr<IMakeCallCallback> callback, MakeCallCallback cb, CallApi inputApi);
     template <typename T>
     T createRequest(
         int phoneId, const std::string dialNumber, bool isMsdTransmitted, CallApi inputApi) {

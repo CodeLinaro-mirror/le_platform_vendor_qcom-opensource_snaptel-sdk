@@ -228,3 +228,24 @@ std::string SensorUtils::sensorResultTypeToString(SensorResultType sensorResultT
             return "UNKNOWN";
     }
 }
+
+void SensorUtils::printMotionDetectionConfigLimits(
+    MotionDetectionConfigLimits &motionDetectionConfigLimits) {
+    std::cout << "MotionDetectionConfigLimits: " << std::endl;
+    std::cout << "Min threshold: " << motionDetectionConfigLimits.minThreshold << std::endl;
+    std::cout << "Max threshold: " << motionDetectionConfigLimits.maxThreshold << std::endl;
+    std::cout << "Min duration: " << motionDetectionConfigLimits.minDuration << std::endl;
+    std::cout << "Max duration: " << motionDetectionConfigLimits.maxDuration << std::endl;
+    std::cout << "Min samplingRate: " << motionDetectionConfigLimits.minSamplingRate << std::endl;
+    std::cout << "Max samplingRate: " << motionDetectionConfigLimits.maxSamplingRate << std::endl;
+}
+
+void SensorUtils::printMotionDetectionConfigs(
+    std::vector<MotionDetectionConfig> &motionDetectionConfigs) {
+    for (auto config : motionDetectionConfigs) {
+        std::cout << "MotionDetectionConfig for sensorId: " << config.sensorId << std::endl;
+        std::cout << "Enabled threshold: " << config.threshold << std::endl;
+        std::cout << "Enabled duration: " << config.duration << std::endl;
+        std::cout << "Enabled sampling rate: " << config.samplingRate << std::endl;
+    }
+}

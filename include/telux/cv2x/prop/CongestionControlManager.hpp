@@ -46,16 +46,12 @@ class CongestionControlUtility {
      * Sets the logging level
      *
      * @param [in] loggingLevel - value to indicate level of console logging
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     static void setLoggingLevel(uint8_t loggingLevelIn);
 
     /**
      * Gets the logging level
      *
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      * @returns uin8_t - the current logging level
      */
     static uint8_t getLoggingLevel();
@@ -64,8 +60,6 @@ class CongestionControlUtility {
      * Adds an artificial density over time
      * @param [in] density - artificial density that should be incorporated
      * @param [in] initDistance - the initial distance from host vehicle to artifical density
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     static void addDensity(uint64_t density, uint64_t initDistance) {
     }
@@ -85,8 +79,6 @@ class ICongestionControlListener {
      *      send a new message. If SPS enhancements are enabled, they may
      *      also need to perform SPS periodicity change.
      * @param [in] trackErrEvent - tells the listener that there is a tracking error event
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual void onCongestionControlDataReady(
         std::shared_ptr<CongestionControlUserData> congestionControlUserData, bool trackErrEvent) {
@@ -96,8 +88,6 @@ class ICongestionControlListener {
      * The Congestion Control Manager will call this Listener API when it computes a new
      * inter-transmit time based on the smoothed density of vehicles within range of
      * the host vehicle.
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual void onIttUpdate(uint64_t newItt) {
     }
@@ -120,8 +110,6 @@ class ICongestionControlManager {
      *
      * @param [in] congestionControlConfigIn - a struct that holds various smaller config structs
      *                                         for each component of congestion control
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
     virtual CCErrorCode updateCongestionControlConfig(
@@ -132,8 +120,6 @@ class ICongestionControlManager {
      * Called to update the type of congestion control
      *
      * @param [in] congestionControlType - type of congestion control to be performed
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
     virtual CCErrorCode updateCongestionControlType(CongestionControlType congestionControlType)
@@ -145,8 +131,6 @@ class ICongestionControlManager {
      * Including channel quality, packet error rate, density, and inter-transmit
      * time calculations.
      *
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
     virtual CCErrorCode startCongestionControl() = 0;
@@ -154,8 +138,6 @@ class ICongestionControlManager {
     /**
      * Gracefully closes any lingering threads, semaphores, and cleans up any allocated data.
      *
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
     virtual CCErrorCode stopCongestionControl() = 0;
@@ -185,8 +167,6 @@ class ICongestionControlManager {
     /**
      * Called to get a shared pointer to the results of the Congestion Control periodic
      * calculations.
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      * @returns std::shared_ptr<CongestionControlUserData> - shared pointer reference to the
      *                          CongestionControlUserData that the manager will update.
      */
@@ -197,8 +177,6 @@ class ICongestionControlManager {
      *
      * @param [in] cbpWeightFactor - weight factor for channel busy percentage calculation
      * @param [in] cbpInterval -  interval for channel busy percentage calculation
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
     virtual CCErrorCode updateCbpConfig(double cbpWeightFactor, uint64_t cbpInterval) = 0;
@@ -209,8 +187,6 @@ class ICongestionControlManager {
      * @param [in] maxPacketErrorRate - maximum packet error rate
      * @param [in] packetErrorRateInterval - overall interval time for packet error calculation
      * @param [in] packetErrorRateSubInterval - sub interval time for packet error rate calculation
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
     virtual CCErrorCode updatePERConfig(
@@ -223,8 +199,6 @@ class ICongestionControlManager {
      * @param [in] densCoeff - density coefficient for evaluating maximum inter-transmit time
      * @param [in] densWeightFactor - weight factor coefficient for smoothed density
      * @param [in] distThresh - threshold for minimal distance between host and remote vehicles
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
     virtual CCErrorCode updateDensConfig(
@@ -242,8 +216,6 @@ class ICongestionControlManager {
      * @param [in] teLowerThresh - tracking error lower threshold
      * @param [in] teUpperThresh - tracking error upper threshold
      * @param [in] errSensitivity - tracking error sensitivity
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
     virtual CCErrorCode updateTeConfig(uint64_t txCtrlInterval, uint64_t hvMinTimeDiff,
@@ -259,8 +231,6 @@ class ICongestionControlManager {
      * @param [in] minIttThresh - minimum inter-transmit time
      * @param [in] maxIttThresh - maximum inter-transmit time
      * @param [in] txRand - transmission chance randomness
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
     virtual CCErrorCode updateIttConfig(uint64_t reschedThresh, uint64_t timeAccuracy,
@@ -272,8 +242,6 @@ class ICongestionControlManager {
      *
      * @param [in] txCtrlInterval - time interval for periodic
      *      calculations of tracking error and inter-transmit time.
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
     virtual CCErrorCode updateTxRateCtrlInterval(uint64_t txCtrlInterval) = 0;
@@ -286,8 +254,6 @@ class ICongestionControlManager {
      *          inter-transmit time
      * @param [in] hysterPercent - Hysteresis percentage for choosing the inter-transmit time
      *             thresholds. Used to prevent frequent changes to sps flow periodicity.
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
     virtual CCErrorCode updateSpsEnhanceConfig(
@@ -298,16 +264,12 @@ class ICongestionControlManager {
      * Enables sps ennhancements
      *
      * @param [in] enable - Boolean to enable or disable sps enhancements
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual void enableSpsEnhancements(bool enable) = 0;
 
     /**
      * Used to check if sps enhancements are enabled
      *
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
     virtual bool isSpsEnhanceEnabled() = 0;
@@ -317,8 +279,6 @@ class ICongestionControlManager {
      *
      * @param [in] pos - latest position (lat, long, elevation) of host vehicle
      * @param [in] speed - latest speed of host vehicle
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
     virtual CCErrorCode updateHostVehicleData(Position &pos, double speed) = 0;
@@ -327,8 +287,6 @@ class ICongestionControlManager {
      * Used whenever the user needs to update latest host vehicle information to manager
      *
      * @param [in] lastTxTime - latest tx time of host vehicle (if any) used for scheduling
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
     virtual CCErrorCode updateLastTxTime(uint64_t lastTxTime) = 0;
@@ -337,8 +295,6 @@ class ICongestionControlManager {
      * Update the host vehicle gnss fix time
      *
      * @param [in] gnssFixTimestamp - the new host vehicle gnss fix timestamp
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
     virtual CCErrorCode updateHvGnssFixTime(uint64_t gnssFixTimestamp) = 0;
@@ -347,8 +303,6 @@ class ICongestionControlManager {
      * Update the channel busy ratio
      *
      * @param [in] channBusyRatio - current channel busy ratio of host vehicle
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
     virtual CCErrorCode updateChannelBusyRate(double channBusyRatio) = 0;
@@ -358,8 +312,6 @@ class ICongestionControlManager {
      * This function notifies the congestion control manager about the critical event.
      * This is important so that the manager can update the internal transmit schedule
      * for a specified time.
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
     virtual CCErrorCode notifyCriticalEvent() = 0;
@@ -367,8 +319,6 @@ class ICongestionControlManager {
     /**
      * Called when user needs to notify congestion control to disable critical event
      *
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
     virtual CCErrorCode disableCriticalEvent() = 0;
@@ -384,8 +334,6 @@ class ICongestionControlManager {
      * @param [in]  - speed - speed of the vehicle
      * @param [in]  - timestamp - timestamp at which the message was received
      * @param [in]  - msgCount - Current message count taken from the decoded message
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
     virtual CCErrorCode addCongestionControlData(uint64_t id, double latitude, double longitude,
@@ -398,8 +346,6 @@ class ICongestionControlManager {
      * @param [in] id - A remote vehicle identity whose CongestionControlData will be removed
      *                  from the manager. This API is called when a remote vehicle has left
      *                  a specified range or is no longer important for congestion control.
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
     virtual CCErrorCode removeCongestionControlData(uint64_t id) = 0;
@@ -408,8 +354,6 @@ class ICongestionControlManager {
      * Called when user needs to access a nearby vehicle's latest congestion control data
      *
      * @param [in] id - A remote vehicle identity
-     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      * @returns CongestionControlData copy of the data the manager has and uses
      *          for a given vehicle id, if any.
      */

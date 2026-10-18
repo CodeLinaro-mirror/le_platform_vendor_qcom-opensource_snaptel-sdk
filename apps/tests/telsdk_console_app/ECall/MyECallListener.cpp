@@ -65,6 +65,7 @@ void MyECallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) 
                        << " Call State: " << callStateToString(call->getCallState())
                        << "\n Call Index: " << (int)call->getCallIndex()
                        << ", Call Direction: " << callDirectionToString(call->getCallDirection())
+                       << ", Call Type: " << callTypeToString(call->getCallType())
                        << ", Network Mode: " << networkModeToString(call->getNetworkMode())
                        << ", Phone Number: " << call->getRemotePartyNumber() << std::endl;
     if (call->getCallState() == telux::tel::CallState::CALL_ENDED) {
@@ -121,6 +122,21 @@ std::string MyECallListener::callDirectionToString(telux::tel::CallDirection cd)
             return std::string("none");
         default:
             std::cout << "Unexpected call direction = " << (int)cd << std::endl;
+            return std::string("unknown");
+    }
+}
+
+std::string MyECallListener::callTypeToString(telux::tel::CallType type) {
+    switch (type) {
+        case telux::tel::CallType::VOICE_CALL:
+            return std::string("Voice call");
+        case telux::tel::CallType::VOICE_IP_CALL:
+            return std::string("Voice IP call");
+        case telux::tel::CallType::EMERGENCY_CALL:
+            return std::string("Emergency call");
+        case telux::tel::CallType::EMERGENCY_IP_CALL:
+            return std::string("Emergency IP call");
+        default:
             return std::string("unknown");
     }
 }
@@ -187,6 +203,10 @@ std::string MyECallListener::eCallMsdTransmissionStatusToString(
             return std::string("OUTBAND MSD TRANSMISSION SUCCESS");
         case telux::tel::ECallMsdTransmissionStatus::OUTBAND_MSD_TRANSMISSION_FAILURE:
             return std::string("OUTBAND MSD TRANSMISSION FAILURE");
+        case telux::tel::ECallMsdTransmissionStatus::INIT_SENT:
+            return std::string("INIT SENT");
+        case telux::tel::ECallMsdTransmissionStatus::NACK_RECEIVED:
+            return std::string("NACK RECEIVED");
         default:
             std::stringstream ss;
             ss << "Unknown ECallMsdTransmissionStatus  = " << (int)status;

@@ -12,10 +12,12 @@
         "_comment_configureECallRedialFailure" : "Valid Inputs SUCCESS, CALLORIG, CALLDROP",
         "enableALACKWithClearDown" : false,
         "_comment_enableALACKWithClearDown" : "Valid Inputs true, false",
-        "callEndCause" : 16,
-        "_comment_callEndCause" : "Valid Inputs refer to telux::tel::CallEndCause",
-        "rawCauseCode" : 25,
-        "_comment_rawCauseCode" : "Valid Inputs refer to QMI definitions",
+        "configureCallEndCause" : 16,
+        "_comment_configureCallEndCause" : "Refer telux::tel::CallEndCause for cause codes",
+        "rawCauseCode": 25,
+        "_comment_rawCauseCode": "Valid Inputs refer to QMI definitions",
+        "configureAecsCallStatus" : "SUCCESS",
+        "_comment_configureAecsCallStatus" : "Valid Inputs SUCCESS, CALLORIG, CALLDROP, CALLFAIL",
         "makeCall" :
         {
             "status" : "SUCCESS",
@@ -176,6 +178,16 @@
             "error" : "SUCCESS"
         },
         "restartECallHlapTimer" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS"
+        },
+        "setEmergencyMode" :
+        {
+            "status": "SUCCESS",
+            "error": "SUCCESS"
+        },
+        "makeAecsCall" :
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS"

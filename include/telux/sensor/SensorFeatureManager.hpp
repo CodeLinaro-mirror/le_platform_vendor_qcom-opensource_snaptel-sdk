@@ -48,6 +48,8 @@
 #include <telux/common/SDKListener.hpp>
 #include <telux/common/CommonDefines.hpp>
 #include <telux/sensor/SensorDefines.hpp>
+#include <linux/iio/events.h>
+#include <linux/iio/types.h>
 
 namespace telux {
 namespace sensor {
@@ -109,6 +111,71 @@ class ISensorFeatureEventListener : public telux::common::ISDKListener {
      */
     virtual void onBufferedEvent(
         std::string sensorName, std::shared_ptr<std::vector<SensorEvent>> events, bool isLast) {
+    }
+
+    /**
+     * This API is called to notify the clients about the motion detection parameters
+     * that are currently configured and enabled.
+     *
+     * This API will only be invoked if the client sets and enables the
+     * motion detection configurations for a sensor using
+     * @ref telux::sensor::ISensorFeatureManager::enableMotionDetection API.
+     *
+     * On platforms with Access control enabled, the client needs to have
+     * TELUX_SENSOR_MOTION_DETECTION permission for this listener API to be invoked.
+     *
+     * @param [in] motionDetectionConfigs - Represents the enabled motion detection configurations.
+     *
+     */
+    virtual void onMotionDetectionEnabled(
+        std::vector<MotionDetectionConfig> motionDetectionConfigs) {
+    }
+
+    /**
+     * This API will only be invoked when a client disables the
+     * motion detection configurations for a sensor using
+     * @ref telux::sensor::ISensorFeatureManager::disableMotionDetection API.
+     *
+     * On platforms with Access control enabled, the client needs to have
+     * TELUX_SENSOR_MOTION_DETECTION permission for this listener API to be invoked.
+     *
+     */
+    virtual void onMotionDetectionDisabled() {
+    }
+
+    /**
+     * This function is called to notify about event data whenever a motion is detected.
+     *
+     * This API will only be invoked if the client sets and enables the
+     * motion detection configurations for a sensor using
+     * @ref telux::sensor::ISensorFeatureManager::enableMotionDetection API.
+     *
+     * On platforms with Access control enabled, the client needs to have
+     * TELUX_SENSOR_MOTION_DETECTION permission for this listener API to be invoked.
+     *
+     * @param [in] sensorId - The id of the sensor for which the motion is detected.
+     *
+     * @param [in] event - The sensor motion detection event defined as per the
+     * Linux Industrial I/O (IIO) subsystem. The iio_event_data represents the sensor generated
+     * event which is motion detection in this case and comprises of below information-
+     *
+     *    struct iio_event_data {
+     *       //Encoded event metadata.
+     *       __u64 id;
+     *       //Boot Timestamp of the event occurence in nanoseconds.
+     *       __s64 timestamp;
+     *     };
+     *
+     * The encoded ID uniquely describes the type of event that occurred on an IIO device.
+     * It includes:
+     * Event Type (e.g., threshold, data-ready)
+     * Channel Type (e.g., accelerometer, temperature)
+     * Modifier (e.g., axis like X, Y, Z)
+     * Direction (e.g., rising or falling)
+     * Channel Number (if applicable)
+     *
+     */
+    virtual void onMotionDetected(int sensorId, struct iio_event_data event) {
     }
 
     /**
@@ -201,6 +268,97 @@ class ISensorFeatureManager {
      */
     virtual telux::common::Status deregisterListener(
         std::weak_ptr<ISensorFeatureEventListener> listener)
+        = 0;
+
+    /**
+     * Get information related to the sensors available in the system.
+     *
+     * @param [out] info    List of information on sensors available in the system
+     *                      @ref telux::sensor::SensorInfo
+     *
+     * @returns             status of the request @ref telux::common::Status
+     *
+     */
+    virtual telux::common::Status getAvailableSensorInfo(std::vector<SensorInfo> &info) = 0;
+
+    /**
+     * Request a sensor's upper and lower bound limit for
+     * each motion detection configuration parameter.
+     *
+     * This API needs to be invoked before setting the motion detection configuration for the
+     * sensor using @ref telux::sensor::ISensorFeatureManager::enableMotionDetection API.
+     *
+     * @param [in] sensorId - The id of the sensor for which the limits for the motion detection
+     *                        configuration is requested. To provide the sensor ID, refer to
+     *                        @ref telux::sensor::ISensorManager::getAvailableSensorInfo API.
+     *
+     * @param [out] motionDetectionConfigLimits - Limits for the motion detection configurations.
+     *
+     * @returns - status of the request @ref telux::common::Status
+     *
+     */
+    virtual telux::common::Status getMotionDetectionConfigLimits(
+        int sensorId, MotionDetectionConfigLimits &motionDetectionConfigLimits)
+        = 0;
+
+    /**
+     * This API is used to enable motion detection, with a given configuration.
+     *
+     * The attributes should be set within the limits provided using
+     * @ref telux::sensor::ISensorFeatureManager::getMotionDetectionConfigLimits API.
+     *
+     * These configurations are a global setting.
+     * This API would fail if the configurations are set again
+     * without disabling an active configuration, returning @ref telux::common::Status::ALREADY
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_SENSOR_MOTION_DETECTION
+     * permission to invoke this API successfully.
+     *
+     * @param [in] motionDetectionConfig - Motion detection attributes to be set.
+     *
+     * @returns - status of the request @ref telux::common::Status
+     *
+     */
+    virtual telux::common::Status enableMotionDetection(MotionDetectionConfig motionDetectionConfig)
+        = 0;
+
+    /**
+     * This API is used to disable motion detection for the given sensor.
+     *
+     * Only the client which has set the motion configuration parameters using
+     * @ref telux::sensor::ISensorFeatureManager::enableMotionDetection API can disable
+     * an active configuration.
+     *
+     * This API would fail if the client tries to disable when there is no active configuration,
+     * returning @ref telux::common::Status::ALREADY
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_SENSOR_MOTION_DETECTION
+     * permission to invoke this API successfully.
+     *
+     * @param [in] sensorId - The id of the sensor used to set the motion detection configuration
+     *             using @ref telux::sensor::ISensorFeatureManager::enableMotionDetection API.
+     *
+     * @returns - status of the request @ref telux::common::Status
+     *
+     */
+
+    virtual telux::common::Status disableMotionDetection(int sensorId) = 0;
+
+    /**
+     * This API is used to get the motion detection configuration
+     * which is currently enabled using
+     * @ref telux::sensor::ISensorFeatureManager::enableMotionDetection API.
+     *
+     * This API would fail if no configuration is set, returning
+     * @ref telux::common::Status::NOSUCH.
+     *
+     * @param [out] motionDetectionConfigs - List of enabled Motion detection configurations.
+     *
+     * @returns - status of the request @ref telux::common::Status
+     *
+     */
+    virtual telux::common::Status getMotionDetectionConfigs(
+        std::vector<MotionDetectionConfig> &motionDetectionConfigs)
         = 0;
 
     /**

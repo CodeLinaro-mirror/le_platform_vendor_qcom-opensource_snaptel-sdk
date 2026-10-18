@@ -94,9 +94,6 @@ using EidResponseCallback
  *                              event.
  * @param [in] error            Return code which indicates whether the operation
  *                              succeeded or not. @ref ErrorCode
- *
- * @note   Eval: This is a new API and is being evaluated. It is subject to
- *         change and could break backwards compatibility.
  */
 using refreshLastEventResponseCallback = std::function<void(RefreshStage stage, RefreshMode mode,
     std::vector<IccFile> efFiles, RefreshParams refreshParams, telux::common::ErrorCode error)>;
@@ -239,9 +236,6 @@ class ICardManager {
      *                              setupRefreshConfig
      *
      * @returns Status of setupRefreshConfig i.e. success or suitable status code.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual telux::common::Status setupRefreshConfig(SlotId slotId, bool isRegister, bool doVoting,
         std::vector<IccFile> efFiles, RefreshParams refreshParams,
@@ -276,9 +270,6 @@ class ICardManager {
      *                              allowCardRefresh
      *
      * @returns Status of allowCardRefresh i.e. success or suitable status code.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual telux::common::Status allowCardRefresh(SlotId slotId, bool allowRefresh,
         RefreshParams refreshParams, common::ResponseCallback callback = nullptr)
@@ -366,9 +357,6 @@ class ICardManager {
      *                              confirmRefreshHandlingCompleted
      *
      * @returns Status of confirmRefreshHandlingCompleted i.e. success or suitable status code.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual telux::common::Status confirmRefreshHandlingCompleted(SlotId slotId, bool isCompleted,
         RefreshParams refreshParams, common::ResponseCallback callback = nullptr)
@@ -391,9 +379,6 @@ class ICardManager {
      *                              of card refresh.
      *
      * @returns Status of requestLastRefreshEvent i.e. success or suitable status code.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual telux::common::Status requestLastRefreshEvent(
         SlotId slotId, RefreshParams refreshParams, refreshLastEventResponseCallback callback)
@@ -585,7 +570,6 @@ class ICard {
     /**
      * Get file handler for reading or writing to EF on SIM.
      *
-     *
      * @returns ICardFileHandler
      */
     virtual std::shared_ptr<ICardFileHandler> getFileHandler() = 0;
@@ -594,9 +578,6 @@ class ICard {
      * Checks whether the NTN profile is activated on a given logical slot.
      *
      * @returns If true NTN profile is activated or else not-activated.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual bool isNtnProfileActive() = 0;
 
@@ -607,9 +588,6 @@ class ICard {
      * permission to invoke this API successfully.
      *
      * @param [out] info  MEP info.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual void getMepInfo(MepInfo &info) = 0;
 
@@ -760,9 +738,6 @@ class ICardListener : public common::IServiceStatusListener {
      *        *          *                                  * the application state        *
      *        *          *                                  * returned to Ready).          *
      ***************************************************************************************
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual void onRefreshEvent(int slotId, RefreshStage stage, RefreshMode mode,
         std::vector<IccFile> efFiles, RefreshParams refreshParams) {

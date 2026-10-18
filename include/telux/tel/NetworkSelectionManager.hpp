@@ -455,7 +455,6 @@ class INetworkSelectionManager {
      *
      * @returns Status of performNetworkScan i.e. success or suitable error code.
      *
-     *
      */
     virtual telux::common::Status performNetworkScan(
         NetworkScanInfo info, common::ResponseCallback callback = nullptr)
@@ -475,9 +474,6 @@ class INetworkSelectionManager {
      *                                   @ref telux::tel::LteDubiousCell
      *
      * @returns Error code which indicates whether the operation succeeded or not.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::ErrorCode setLteDubiousCell(
         const std::vector<LteDubiousCell> &lteDbCellList)
@@ -497,9 +493,6 @@ class INetworkSelectionManager {
      *                                  @ref telux::tel::NrDubiousCell
      *
      * @returns Error code which indicates whether the operation succeeded or not.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::ErrorCode setNrDubiousCell(
         const std::vector<NrDubiousCell> &nrDbCellList)
@@ -522,9 +515,6 @@ class INetworkSelectionManager {
      * TELUX_TEL_NETWORK_SELECTION_OPS permission to successfully invoke this API.
      *
      * @returns Status of abortNetworkScan i.e. success or suitable error code.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     virtual telux::common::ErrorCode abortNetworkScan() = 0;
 
@@ -662,7 +652,6 @@ class INetworkSelectionListener : public common::IServiceStatusListener {
      *                             MNC, etc. In case of partial network scan results, the
      *                             operator info will have the information of the new set of
      *                             operator info along with previous partial network scan results.
-     *
      *
      */
     virtual void onNetworkScanResults(

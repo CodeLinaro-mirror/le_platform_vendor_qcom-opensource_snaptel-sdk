@@ -246,9 +246,6 @@ class IPhone {
      * @param [in] callback - Callback function to get the response of operator information request
      *
      * @returns Status of requestOperatorInfo i.e. success or suitable error
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status requestOperatorInfo(OperatorInfoCallback callback) = 0;
 
@@ -289,7 +286,6 @@ class IPhone {
      * @param [in] signalStrengthConfig     Signal strength configuration.
      * @param [in] callback                 Callback function to get the SignalStrength
      *                                      configuration response.
-     *
      *
      * @returns Status of configureSignalStrength, i.e., success or the suitable error code.
      *
@@ -364,9 +360,6 @@ class IPhone {
      *                                      configuration response.
      *
      * @returns Status of configureSignalStrength, i.e., success or the suitable error code.
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
 
     virtual telux::common::Status configureSignalStrength(

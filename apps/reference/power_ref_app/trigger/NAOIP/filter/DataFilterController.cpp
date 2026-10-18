@@ -519,11 +519,12 @@ DataFilterController::DataFilterListener::DataFilterListener(
     LOG(DEBUG, __FUNCTION__);
 }
 
-void DataFilterController::DataFilterListener::onDataRestrictModeChange(DataRestrictMode mode) {
+void DataFilterController::DataFilterListener::onDataFilterModeChange(
+    DataRestrictModeType filterMode) {
     LOG(DEBUG, __FUNCTION__);
-    if (mode.filterMode == DataRestrictModeType::ENABLE) {
+    if (filterMode == DataRestrictModeType::ENABLE) {
         LOG(DEBUG, __FUNCTION__, "Data Filter Mode : Enable");
-    } else if (mode.filterMode == DataRestrictModeType::DISABLE) {
+    } else if (filterMode == DataRestrictModeType::DISABLE) {
         LOG(DEBUG, __FUNCTION__, "Data Filter Mode : Disable");
     } else {
         LOG(ERROR, __FUNCTION__, " ERROR: Invalid Data Filter mode notified");

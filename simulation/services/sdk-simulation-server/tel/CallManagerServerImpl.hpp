@@ -37,6 +37,14 @@ class EcallStateMachine;
 
 using namespace telux::tel;
 
+enum class AecsCallEndReason {
+    DROPPED     = 2, /* AECS call connected and failed unexpectedly */
+    ORIG_FAILED = 4, /* AECS call origination fails */
+    FAILED      = 5, /* AECS call failed permanently */
+    COMPLETED   = 6, /* AECS call ended or disconnected */
+    UNSPECIFIED = 0xffff, /* AECS call fail reason is not available */
+};
+
 struct CallInfo {
     CallState callState;
     int index                             = CALL_INDEX_INVALID;
@@ -58,6 +66,7 @@ struct CallInfo {
     NetworkMode networkMode        = NetworkMode::UNKNOWN;
     bool isEraGlonassSelfTestECall = false;
     std::string callReason         = "";
+    AecsCallEndReason aecsReason   = AecsCallEndReason::UNSPECIFIED;
 };
 
 class CallManagerServerImpl final : public telStub::DialerService::Service,
@@ -143,6 +152,9 @@ class CallManagerServerImpl final : public telStub::DialerService::Service,
     grpc::Status getInProgressCalls(ServerContext *context,
         const telStub::GetInProgressCallsRequest *request,
         telStub::GetInProgressCallsData *response);
+    grpc::Status setEmergencyMode(ServerContext *context,
+        const telStub::SetEmergencyModeRequest *request,
+        telStub::SetEmergencyModeResponse *response);
     void startTimer(std::string timer, int phoneId);
     void msdTransmissionStatus(std::string msdtransmision, int phoneId);
     void changeCallState(int phoneId, std::string callstate, int index, bool retainCache = false);
@@ -186,7 +198,7 @@ class CallManagerServerImpl final : public telStub::DialerService::Service,
     void triggerMsdPullrequestEvent(int phoneId);
     void triggerCallStateChangeEvent(
         int phoneId, std::string action, std::string remotepartyNumber);
-    void triggerCallListAfterCallEnd(int phoneId);
+    void triggerCallListAfterCallEnd(int phoneId, CallEndCause causeCode, AecsCallEndReason reason);
     std::vector<std::shared_ptr<CallInfo>> fetchSlotIdCalls(int phoneId);
     void triggerModifyCallRequestEvent(int phoneId, int callIndex);
     void triggerRttMessageEvent(int phoneId, std::string message);
@@ -214,7 +226,8 @@ class CallManagerServerImpl final : public telStub::DialerService::Service,
     std::shared_ptr<CallInfo> findMatchingCall(int slotId, int callIndex);
     bool find(std::shared_ptr<CallInfo> call, int index, int phoneId);
     void onEventUpdate(std::string event);
-    void handleCallMachine(int phoneId, int callIndex);
+    void handleCallMachine(
+        int phoneId, int callIndex, bool isAecsCall, telux::common::ErrorCode error);
     void changeCallStateofActiveCalls(int phoneId, int callIndex);
     void changeRttModeOfCall(RttMode mode, int index, int phoneId);
     void resumeBackgroundCalls(int phoneId);
@@ -231,6 +244,8 @@ class CallManagerServerImpl final : public telStub::DialerService::Service,
     telux::tel::ECallMode getEcallOperatingMode(int phoneId);
     void fillCallInformation(int phoneId, ::telStub::GetInProgressCallsData *data);
     std::string getUserConfiguredCallMode(int phoneId);
+    std::string getUserConfiguredAecsCallStatusConfig();
+    int getUserConfiguredCallEndCauseConfig();
     template <typename T>
     int addNewCallDetails(const T *request) {
         CallInfo callInfo;

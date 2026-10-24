@@ -91,7 +91,8 @@ enum class LogMethod {
     /**
      * Callback method - logs are provided via @ref IDiagListener::onAvailableLogs callback
      * whenever available, in raw format. Clients are requested to not enable QXDM logging
-     * while enabling log collection via callback method.
+     * while enabling log collection via callback method. This method is currently unsupported
+     * from both MDM as well as EAP and returns @ref telux::common::ErrorCode::NOT_SUPPORTED
      */
     CALLBACK
 };

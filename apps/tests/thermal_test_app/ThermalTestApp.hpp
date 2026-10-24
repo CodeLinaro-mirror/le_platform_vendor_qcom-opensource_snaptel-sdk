@@ -73,8 +73,6 @@ class ThermalTestApp : public ConsoleApp {
 
     void controlRegistration(std::vector<std::string> userInput);
 
-    void signalHandler(int signum);
-
  private:
     bool initThermalManager(telux::common::ProcType procType);
     telux::common::Status manageIndication(telux::common::ProcType procType, bool registerInd,

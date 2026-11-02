@@ -830,9 +830,17 @@ public:
     std::weak_ptr<ILocationConfigListener> listener) = 0;
 
 /**
- * To support the Galileo OSNMA feature, this API is used to inject the Merkle Tree information
- * via a XML configuration file. The XML configuration contains the Merkle root, Merkle nodes
- * and information for upto 2 public keys.
+ * To support Galileo OSNMA feature, this API is used to inject the public-key and Merkle-tree
+ * information via a XML configuration file
+ *
+ * The XML configuration may contain one Merkle root and up to two public keys associated with
+ * that root. Each public key must include the required Merkle authentication data.
+ *
+ * To inject public keys associated with different Merkle roots, use separate XML configurations
+ * and separate API calls. When making multiple injections, wait until the callback is invoked
+ * before issuing the next call.
+ *
+ * Public key only or Merkle root only provisioning will be no-op.
  *
  * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
  * invoke this API successfully.
